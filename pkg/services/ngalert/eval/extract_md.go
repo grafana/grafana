@@ -42,23 +42,23 @@ func extractEvalString(frame *data.Frame) (s string) {
 		return sb.String()
 	}
 
-	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
+	if captures, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
 		sb := strings.Builder{}
 
-		for i, c := range caps {
+		for i, capture := range captures {
 			sb.WriteString("[ ")
-			sb.WriteString(fmt.Sprintf("var='%s' ", c.Var))
-			sb.WriteString(fmt.Sprintf("labels={%s} ", c.Labels))
+			sb.WriteString(fmt.Sprintf("var='%s' ", capture.Var))
+			sb.WriteString(fmt.Sprintf("labels={%s} ", capture.Labels))
 
 			valString := "null"
-			if c.Value != nil {
-				valString = fmt.Sprintf("%v", *c.Value)
+			if capture.Value != nil {
+				valString = fmt.Sprintf("%v", *capture.Value)
 			}
 
 			sb.WriteString(fmt.Sprintf("value=%v ", valString))
 
 			sb.WriteString("]")
-			if i < len(caps)-1 {
+			if i < len(captures)-1 {
 				sb.WriteString(", ")
 			}
 		}
@@ -97,10 +97,10 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 		return v
 	}
 
-	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
-		v := make(map[string]NumberValueCapture, len(caps))
-		for _, c := range caps {
-			v[c.Var] = c
+	if captures, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
+		v := make(map[string]NumberValueCapture, len(captures))
+		for _, capture := range captures {
+			v[capture.Var] = capture
 		}
 		return v
 	}

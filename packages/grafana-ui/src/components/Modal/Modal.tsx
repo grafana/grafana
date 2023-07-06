@@ -84,7 +84,7 @@ export function Modal(props: PropsWithChildren<Props>) {
               typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
-              <IconButton aria-label="Close dialogue" name="times" size="xl" onClick={onDismiss} />
+              <IconButton name="times" size="xl" onClick={onDismiss} tooltip="Close" />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>

@@ -5,7 +5,7 @@ import { FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames as Fields } f
 
 export function getNonOverlappingDuration(ranges: Array<[number, number]>): number {
   ranges.sort((a, b) => a[0] - b[0]);
-  const mergedRanges = ranges.reduce((acc, range) => {
+  const mergedRanges = ranges.reduce<Array<[number, number]>>((acc, range) => {
     if (!acc.length) {
       return [range];
     }
@@ -23,8 +23,8 @@ export function getNonOverlappingDuration(ranges: Array<[number, number]>): numb
     }
 
     // We know there is overlap and current range ends later than previous so we can just extend the range
-    return [...acc.slice(0, -1), [prevStart, end]] as Array<[number, number]>;
-  }, [] as Array<[number, number]>);
+    return [...acc.slice(0, -1), [prevStart, end]];
+  }, []);
 
   return mergedRanges.reduce((acc, range) => {
     return acc + (range[1] - range[0]);

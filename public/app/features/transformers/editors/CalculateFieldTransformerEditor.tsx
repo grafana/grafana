@@ -16,6 +16,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   BinaryOptions,
@@ -37,6 +38,7 @@ interface CalculateFieldTransformerEditorState {
 const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.Index, label: 'Row index' },
 ];
 
 const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
@@ -382,5 +384,6 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
   name: 'Add field from calculation',
-  description: 'Use the row values to calculate a new field',
+  description: 'Use the row values to calculate a new field.',
+  categories: new Set([TransformerCategory.CalculateNewFields]),
 };

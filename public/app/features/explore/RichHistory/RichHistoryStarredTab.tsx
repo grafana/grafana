@@ -10,12 +10,12 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface Props {
+export interface RichHistoryStarredTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -25,7 +25,7 @@ export interface Props {
   loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -72,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function RichHistoryStarredTab(props: Props) {
+export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
   const {
     updateFilters,
     clearRichHistoryResults,
@@ -136,6 +136,7 @@ export function RichHistoryStarredTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
+              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}

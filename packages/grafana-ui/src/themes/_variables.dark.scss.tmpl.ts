@@ -354,9 +354,6 @@ $diff-json-changed-num: $text-color;
 
 $diff-json-icon: $gray-5;
 
-//Submenu
-$variable-option-bg: $dropdownLinkBackgroundHover;
-
 //Switch Slider
 // -------------------------
 $switch-bg: $input-bg;

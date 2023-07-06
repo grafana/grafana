@@ -219,7 +219,7 @@ export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserPro
 
   onClickRunRateQuery = () => {
     const selector = buildSelector(this.state.labels);
-    const query = `rate(${selector}[$__interval])`;
+    const query = `rate(${selector}[$__rate_interval])`;
     this.props.onChange(query);
   };
 

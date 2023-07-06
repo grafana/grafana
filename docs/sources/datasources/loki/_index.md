@@ -26,23 +26,28 @@ Once you've added the Loki data source, you can [configure it]({{< relref "#conf
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Loki data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Loki` in the search bar.
+1. Select **Loki**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
 
-| Name                | Description                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                            |
-| **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                            |
-| **URL**             | Sets the HTTP protocol, IP, and port of your Loki instance, such as `http://localhost:3100`.                                                                        |
-| **Allowed cookies** | Defines which cookies are forwarded to the data source. Grafana Proxy deletes all other cookies.                                                                    |
-| **Maximum lines**   | Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000. Lower this limit if your browser is sluggish when displaying logs in Explore. |
+1. Set the data source's basic configuration options:
 
-> **Note:** To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
+   | Name                | Description                                                                                                                                                         |
+   | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                            |
+   | **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                            |
+   | **URL**             | Sets the HTTP protocol, IP, and port of your Loki instance, such as `http://localhost:3100`.                                                                        |
+   | **Allowed cookies** | Defines which cookies are forwarded to the data source. Grafana Proxy deletes all other cookies.                                                                    |
+   | **Maximum lines**   | Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000. Lower this limit if your browser is sluggish when displaying logs in Explore. |
+
+{{% admonition type="note" %}}
+To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
+{{% /admonition %}}
 
 ### Configure derived fields
 
@@ -54,7 +59,9 @@ The **Derived Fields** configuration helps you:
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
 These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
 
-> **Note:** If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
+{{% admonition type="note" %}}
+If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
+{{% /admonition %}}
 
 Each derived field consists of:
 
@@ -114,13 +121,14 @@ datasources:
       maxLines: 1000
       derivedFields:
         # Field with internal link pointing to data source in Grafana.
-        # Right now, Grafana supports only Jaeger and Zipkin data sources as link targets.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
         - datasourceUid: my_jaeger_uid
           matcherRegex: "traceID=(\\w+)"
           name: TraceID
           # url will be interpreted as query for the datasource
           url: '$${__value.raw}'
+          # optional for URL Label to set a custom display label for the link.
+          urlDisplayLabel: 'View Trace'
 
         # Field with external link.
         - matcherRegex: "traceID=(\\w+)"

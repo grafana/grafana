@@ -7,16 +7,14 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 // TODO:  Minimal implementation, needs some <3
-export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransformerOptions>> = ({
-  options,
-  onChange,
-}) => {
+export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
     {
       label: 'Series to rows',
@@ -124,4 +122,5 @@ export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransfor
   transformation: standardTransformers.reduceTransformer,
   name: standardTransformers.reduceTransformer.name,
   description: standardTransformers.reduceTransformer.description,
+  categories: new Set([TransformerCategory.CalculateNewFields]),
 };

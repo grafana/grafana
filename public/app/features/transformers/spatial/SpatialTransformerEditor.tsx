@@ -9,6 +9,7 @@ import {
   StandardEditorContext,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
@@ -113,7 +114,9 @@ const supplier = (
   }
 };
 
-export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SpatialTransformOptions>> = (props) => {
+type Props = TransformerUIProps<SpatialTransformOptions>;
+
+export const SetGeometryTransformerEditor = (props: Props) => {
   // a new component is created with every change :(
   useEffect(() => {
     if (!props.options.source?.mode) {
@@ -163,4 +166,5 @@ export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransf
   name: spatialTransformer.name,
   description: spatialTransformer.description,
   state: PluginState.alpha,
+  categories: new Set([TransformerCategory.PerformSpatialOperations]),
 };

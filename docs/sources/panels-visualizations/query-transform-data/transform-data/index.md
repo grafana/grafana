@@ -47,7 +47,8 @@ The order in which Grafana applies transformations directly impacts the results.
 The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
 
 1. Navigate to the panel where you want to add one or more transformations.
-1. Click the panel title and then click **Edit**.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+1. Click the menu and select **Edit**.
 1. Click the **Transform** tab.
 1. Click a transformation.
    A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
@@ -89,6 +90,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Mode -** Select a mode:
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
+  - **Index -** Will insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
 - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
@@ -198,7 +200,9 @@ In the example below, the panel has three queries (A, B, C). I removed the B que
 
 {{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-> **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
+{{% admonition type="note" %}}
+This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
+{{% /admonition %}}
 
 ### Filter data by value
 
@@ -488,7 +492,9 @@ Here is the result after applying the Merge transformation.
 
 Use this transformation to rename, reorder, or hide fields returned by the query.
 
-> **Note:** This transformation only works in panels with a single query. If your panel has multiple queries, then you must either apply an Outer join transformation or remove the extra queries.
+{{% admonition type="note" %}}
+This transformation only works in panels with a single query. If your panel has multiple queries, then you must either apply an Outer join transformation or remove the extra queries.
+{{% /admonition %}}
 
 Grafana displays a list of fields returned by the query. You can:
 
@@ -659,9 +665,11 @@ As you can see each row in the source data becomes a separate field. Each field 
 
 ### Prepare time series
 
-> **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
+{{% admonition type="note" %}}
+This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
+{{% /admonition %}}
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/data-frames/" >}}).
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames/" >}}).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -671,7 +679,9 @@ Select the `Wide time series` option to transform the time series data frame fro
 
 ### Series to rows
 
-> **Note:** This transformation is available in Grafana 7.1+.
+{{% admonition type="note" %}}
+This transformation is available in Grafana 7.1+.
+{{% /admonition %}}
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
@@ -732,3 +742,11 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Temperature | 25    |
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
+
+### Time series to table transform
+
+{{% admonition type="note" %}}
+This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
+{{% /admonition %}}
+
+Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type]({{< relref "../../visualizations/table/#sparkline" >}}), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.

@@ -535,7 +535,7 @@ describe('optionsPickerReducer', () => {
           ],
           selectedValues: [{ text: 'All', value: '$__all', selected: true }],
           queryValue: 'A',
-          highlightIndex: -1,
+          highlightIndex: 0,
         });
     });
 
@@ -559,7 +559,7 @@ describe('optionsPickerReducer', () => {
             options: [{ text: 'All', value: '$__all', selected: true }],
             selectedValues: [{ text: 'All', value: '$__all', selected: true }],
             queryValue: 'A',
-            highlightIndex: -1,
+            highlightIndex: 0,
           });
       });
     });
@@ -583,7 +583,7 @@ describe('optionsPickerReducer', () => {
             options: [{ text: 'option:1337', value: 'option:1337', selected: false }],
             selectedValues: [],
             queryValue: 'option:1337',
-            highlightIndex: -1,
+            highlightIndex: 0,
           });
       });
     });
@@ -635,7 +635,7 @@ describe('optionsPickerReducer', () => {
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
           queryValue: 'A',
-          highlightIndex: -1,
+          highlightIndex: 0,
         })
         .whenActionIsDispatched(updateSearchQuery(''))
         .thenStateShouldEqual({
@@ -646,7 +646,7 @@ describe('optionsPickerReducer', () => {
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
           queryValue: '',
-          highlightIndex: -1,
+          highlightIndex: 0,
         })
         .whenActionIsDispatched(updateOptionsAndFilter(options))
         .thenStateShouldEqual({
@@ -658,7 +658,7 @@ describe('optionsPickerReducer', () => {
           ],
           selectedValues: [{ text: 'B', value: 'B', selected: true }],
           queryValue: '',
-          highlightIndex: -1,
+          highlightIndex: 0,
         });
     });
   });
@@ -766,7 +766,7 @@ describe('optionsPickerReducer', () => {
           options: [{ text: 'option:11256', value: 'option:11256', selected: false }],
           selectedValues: [],
           queryValue: 'option:11256',
-          highlightIndex: -1,
+          highlightIndex: 0,
         });
     });
   });

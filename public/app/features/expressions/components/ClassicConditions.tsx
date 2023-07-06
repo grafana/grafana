@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Button, Icon, InlineField, InlineFieldRow } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface Props {
   onChange: (query: ExpressionQuery) => void;
 }
 
-export const ClassicConditions: FC<Props> = ({ onChange, query, refIds }) => {
+export const ClassicConditions = ({ onChange, query, refIds }: Props) => {
   const onConditionChange = (condition: ClassicCondition, index: number) => {
     if (query.conditions) {
       onChange({

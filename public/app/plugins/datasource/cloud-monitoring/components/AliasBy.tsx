@@ -1,5 +1,5 @@
 import { debounce } from 'lodash';
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
 
 import { EditorField } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
@@ -10,7 +10,7 @@ export interface Props {
   value?: string;
 }
 
-export const AliasBy: FunctionComponent<Props> = ({ refId, value = '', onChange }) => {
+export const AliasBy = ({ refId, value = '', onChange }: Props) => {
   const [alias, setAlias] = useState(value ?? '');
 
   const propagateOnChange = debounce(onChange, 1000);

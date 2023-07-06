@@ -35,6 +35,8 @@ weight: 600
 
 The Geomap panel visualization allows you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
 
+> We would love your feedback on Geomap. Please check out the [Github discussion](https://github.com/grafana/grafana/discussions/62159) and join the conversation.
+
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
 ## Map View
@@ -82,13 +84,15 @@ There are three map layer types to choose from in the Geomap visualization.
 
 There are also five alpha layer types.
 
-- [Night / Day (alpha)]({{< relref "#night--day-layer-alpha" >}}) renders a night / day region.
+- [Night / Day layer]({{< relref "#night--day-layer" >}}) renders a night / day region.
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
-- **Route (alpha)** render data points as a route.
+- [Route layer (Alpha)]({{< relref "#route-layer-alpha" >}}) render data points as a route.
 - [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders a photo at each data point.
 
-> **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
+{{% admonition type="note" %}}
+[Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
+{{% /admonition %}}
 
 ### Layer Controls
 
@@ -332,7 +336,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
 
-## Night / Day layer (Alpha)
+## Night / Day layer
 
 The Night / Day layer displays night and day regions based on the current time range.
 
@@ -350,6 +354,27 @@ The Night / Day layer displays night and day regions based on the current time r
 ### More information
 
 - [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
+
+## Route layer (Alpha)
+
+The Route layer renders data points as a route.
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
+
+### Options
+
+- **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
+- **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
+- **Arrow** sets the arrow styling to display along route, in order of data.
+  - **None**
+  - **Forward**
+  - **Reverse**
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
 ## Photos layer (Alpha)
 
@@ -410,7 +435,9 @@ Displays scale information in the bottom left corner.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" caption="Geomap panel scale" >}}
 
-> **Note:** Currently only displays units in [m]/[km].
+{{% admonition type="note" %}}
+Currently only displays units in [m]/[km].
+{{% /admonition %}}
 
 ### Show measure tools
 
@@ -422,7 +449,9 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 - **Continue clicking** to continue measurement
 - **Double-click** to end measurement
 
-> **Note:** <br /> - When you change measurement type or units, the previous measurement is removed from the map. <br /> - If the control is closed and then re-opened, the most recent measurement is displayed. <br /> - A measurement can be modified by clicking and dragging on it.
+{{% admonition type="note" %}}
+<br /- When you change measurement type or units, the previous measurement is removed from the map. <br /- If the control is closed and then re-opened, the most recent measurement is displayed. <br /- A measurement can be modified by clicking and dragging on it.
+{{% /admonition %}}
 
 #### Length
 

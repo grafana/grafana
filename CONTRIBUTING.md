@@ -15,7 +15,7 @@ You can contribute to Grafana in several ways. Here are some examples:
 - Organize meetups and user groups in your local area.
 - Help others by answering questions about Grafana.
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for messages.po files - they will be rejected.
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation. See [Internationalization](contribute/internationalization.md).
 
 For more ways to contribute, check out the [Open Source Guides](https://opensource.guide/how-to-contribute/).
 

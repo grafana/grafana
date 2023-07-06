@@ -1,7 +1,7 @@
 ---
 aliases:
-  - ../installation/upgrading/
-  - ../setup-grafana/upgrade-grafana
+  - installation/upgrading/
+  - setup-grafana/upgrade-grafana
 description: Guide for upgrading Grafana
 keywords:
   - grafana
@@ -9,7 +9,7 @@ keywords:
   - documentation
   - upgrade
 title: Upgrade Grafana
-weight: 380
+weight: 3
 ---
 
 # Upgrade Grafana
@@ -18,7 +18,7 @@ We recommend that you upgrade Grafana often to stay current with the latest fixe
 
 Because Grafana upgrades are backward compatible, the upgrade process is straightforward, and dashboards and graphs will not change.
 
-To learn what's available in a Grafana release, refer to [What's New ]({{< relref "../whatsnew/" >}}).
+To learn what's available in a Grafana release, refer to [What's New ]({{< relref "../whatsnew" >}}).
 
 Refer to any of the following upgrade guides:
 

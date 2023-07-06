@@ -59,7 +59,8 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 	}
 
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.UserID}
-	if err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery); err != nil {
+	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
 			logger.Debug("no oauth token for user found", "userId", usr.UserID, "username", usr.Login)
@@ -69,10 +70,10 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 		return nil
 	}
 
-	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfoQuery.Result)
+	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfo)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
-			return buildOAuthTokenFromAuthInfo(authInfoQuery.Result)
+			return buildOAuthTokenFromAuthInfo(authInfo)
 		}
 
 		return nil
@@ -94,7 +95,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*l
 	}
 
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.UserID}
-	err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
+	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
@@ -103,10 +104,10 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*l
 		logger.Error("failed to fetch oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		return nil, false, err
 	}
-	if !strings.Contains(authInfoQuery.Result.AuthModule, "oauth") {
+	if !strings.Contains(authInfo.AuthModule, "oauth") {
 		return nil, false, nil
 	}
-	return authInfoQuery.Result, true, nil
+	return authInfo, true, nil
 }
 
 // TryTokenRefresh returns an error in case the OAuth token refresh was unsuccessful

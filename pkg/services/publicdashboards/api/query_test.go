@@ -83,7 +83,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
+			service.On("FindEnabledPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
 				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
@@ -267,7 +267,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
 	qds := buildQueryDataService(t, cacheService, nil, db)
 	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
-	_ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+	_, _ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 		UID:      "ds1",
 		OrgID:    1,
 		Name:     "laban",
@@ -310,22 +310,24 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// Create public dashboard
+	isEnabled := true
 	savePubDashboardCmd := &SavePublicDashboardDTO{
 		DashboardUid: dashboard.UID,
-		OrgId:        dashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled: true,
+		OrgID:        dashboard.OrgID,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled: &isEnabled,
 		},
 	}
 
 	annotationsService := annotationstest.NewFakeAnnotationsRepo()
 
 	// create public dashboard
-	store := publicdashboardsStore.ProvideStore(db)
+	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	ac := acmock.New()
+	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
 	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

@@ -3,40 +3,25 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import {
-  LogRowModel,
-  findHighlightChunksInText,
-  LogsSortOrder,
-  CoreApp,
-  DataSourceWithLogsContextSupport,
-} from '@grafana/data';
-import { IconButton, Tooltip } from '@grafana/ui';
+import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
+import { ClipboardButton, IconButton } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
-import { LogRowContext } from './LogRowContext';
-import { LogRowContextQueryErrors, HasMoreContextRows, LogRowContextRows } from './LogRowContextProvider';
 import { LogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
 
 interface Props {
   row: LogRowModel;
-  hasMoreContextRows?: HasMoreContextRows;
-  contextIsOpen: boolean;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
-  errors?: LogRowContextQueryErrors;
-  context?: LogRowContextRows;
-  showRowMenu?: boolean;
   app?: CoreApp;
-  scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
-  getRows: () => LogRowModel[];
-  onToggleContext: (method: string) => void;
-  updateLimit?: () => void;
-  runContextQuery?: () => void;
-  logsSortOrder?: LogsSortOrder | null;
+  onOpenContext: (row: LogRowModel) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
+  onPinLine?: (row: LogRowModel) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
+  pinned?: boolean;
   styles: LogRowStyles;
 }
 
@@ -78,47 +63,37 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
 });
 
 export class LogRowMessage extends PureComponent<Props> {
-  logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
-
-  onContextToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+  onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
+    const { onOpenContext } = this.props;
     e.stopPropagation();
-    this.props.onToggleContext('open');
+    onOpenContext(this.props.row);
   };
 
-  onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
-    const { scrollElement } = this.props;
-    this.onContextToggle(e);
-    if (scrollElement && this.logRowRef.current) {
-      scrollElement.scroll({
-        behavior: 'smooth',
-        top: scrollElement.scrollTop + this.logRowRef.current.getBoundingClientRect().top - window.innerHeight / 2,
-      });
-    }
+  onLogRowClick = (e: React.SyntheticEvent) => {
+    e.stopPropagation();
+  };
+
+  getLogText = () => {
+    const { row, prettifyLogMessage } = this.props;
+    const { raw } = row;
+    return restructureLog(raw, prettifyLogMessage);
   };
 
   render() {
     const {
       row,
-      errors,
-      hasMoreContextRows,
-      updateLimit,
-      runContextQuery,
-      context,
-      contextIsOpen,
-      showRowMenu,
       wrapLogMessage,
       prettifyLogMessage,
-      onToggleContext,
-      app,
-      logsSortOrder,
       showContextToggle,
-      getLogRowContextUi,
       styles,
+      onPermalinkClick,
+      onUnpinLine,
+      onPinLine,
+      pinned,
     } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const inExplore = app === CoreApp.Explore;
 
     return (
       <>
@@ -126,65 +101,91 @@ export class LogRowMessage extends PureComponent<Props> {
           // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
           // overwrite the more sepecific style definition from `styles.logsRowMessage`.
         }
-        <td
-          ref={this.logRowRef}
-          style={contextIsOpen ? { position: 'unset' } : undefined}
-          className={styles.logsRowMessage}
-        >
+        <td className={styles.logsRowMessage}>
           <div
             className={cx(
               { [styles.positionRelative]: wrapLogMessage },
               { [styles.horizontalScroll]: !wrapLogMessage }
             )}
           >
-            {contextIsOpen && context && (
-              <LogRowContext
-                row={row}
-                getLogRowContextUi={getLogRowContextUi}
-                runContextQuery={runContextQuery}
-                context={context}
-                errors={errors}
-                wrapLogMessage={wrapLogMessage}
-                hasMoreContextRows={hasMoreContextRows}
-                onOutsideClick={onToggleContext}
-                logsSortOrder={logsSortOrder}
-                onLoadMoreContext={() => {
-                  if (updateLimit) {
-                    updateLimit();
-                  }
-                }}
-              />
-            )}
-            <button className={cx(styles.logLine, styles.positionRelative, { [styles.rowWithContext]: contextIsOpen })}>
+            <button className={cx(styles.logLine, styles.positionRelative)}>
               {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
             </button>
           </div>
         </td>
-        {showRowMenu && (
-          <td
-            className={cx('log-row-menu-cell', styles.logRowMenuCell, {
-              [styles.logRowMenuCellDefaultPosition]: !inExplore,
-              [styles.logRowMenuCellExplore]: inExplore && !shouldShowContextToggle,
-              [styles.logRowMenuCellExploreWithContextButton]: inExplore && shouldShowContextToggle,
-            })}
-          >
-            <span
-              className={cx('log-row-menu', styles.rowMenu, {
-                [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-              })}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {shouldShowContextToggle && (
-                <Tooltip placement="top" content={'Show context'}>
-                  <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-                </Tooltip>
-              )}
-              <Tooltip placement="top" content={'Copy'}>
-                <IconButton size="md" name="copy" onClick={() => navigator.clipboard.writeText(restructuredEntry)} />
-              </Tooltip>
+        <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
+          {pinned && (
+            // TODO: fix keyboard a11y
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+            <span className={cx('log-row-menu', 'log-row-menu-visible', styles.rowMenu)} onClick={this.onLogRowClick}>
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="gf-pin"
+                onClick={() => onUnpinLine && onUnpinLine(row)}
+                tooltip="Unpin line"
+                tooltipPlacement="top"
+                aria-label="Unpin line"
+              />
             </span>
-          </td>
-        )}
+          )}
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+          <span className={cx('log-row-menu', styles.rowMenu, styles.hidden)} onClick={this.onLogRowClick}>
+            {shouldShowContextToggle && (
+              <IconButton
+                size="md"
+                name="gf-show-context"
+                onClick={this.onShowContextClick}
+                tooltip="Show context"
+                tooltipPlacement="top"
+                aria-label="Show context"
+              />
+            )}
+            <ClipboardButton
+              className={styles.copyLogButton}
+              icon="copy"
+              variant="secondary"
+              fill="text"
+              size="md"
+              getText={this.getLogText}
+              tooltip="Copy to clipboard"
+              tooltipPlacement="top"
+            />
+            {pinned && onUnpinLine && (
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="gf-pin"
+                onClick={() => onUnpinLine && onUnpinLine(row)}
+                tooltip="Unpin line"
+                tooltipPlacement="top"
+                aria-label="Unpin line"
+              />
+            )}
+            {!pinned && onPinLine && (
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="gf-pin"
+                onClick={() => onPinLine && onPinLine(row)}
+                tooltip="Pin line"
+                tooltipPlacement="top"
+                aria-label="Pin line"
+              />
+            )}
+            {onPermalinkClick && row.uid && (
+              <IconButton
+                tooltip="Copy shortlink"
+                aria-label="Copy shortlink"
+                tooltipPlacement="top"
+                size="md"
+                name="share-alt"
+                onClick={() => onPermalinkClick(row)}
+              />
+            )}
+          </span>
+        </td>
       </>
     );
   }

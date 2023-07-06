@@ -27,6 +27,7 @@ export const defaultTimeInterval: MuteTimingIntervalFields = {
   days_of_month: '',
   months: '',
   years: '',
+  location: '',
 };
 
 export const validateArrayField = (value: string, validateValue: (input: string) => boolean, invalidText: string) => {
@@ -48,13 +49,14 @@ const convertStringToArray = (str: string) => {
 
 export const createMuteTiming = (fields: MuteTimingFields): MuteTimeInterval => {
   const timeIntervals: TimeInterval[] = fields.time_intervals.map(
-    ({ times, weekdays, days_of_month, months, years }) => {
+    ({ times, weekdays, days_of_month, months, years, location }) => {
       const interval = {
         times: times.filter(({ start_time, end_time }) => !!start_time && !!end_time),
         weekdays: convertStringToArray(weekdays)?.map((v) => v.toLowerCase()),
         days_of_month: convertStringToArray(days_of_month),
         months: convertStringToArray(months),
         years: convertStringToArray(years),
+        location: location ? location : undefined,
       };
 
       return omitBy(interval, isUndefined);

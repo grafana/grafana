@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 
 import { getQueryHints } from './queryHints';
 
@@ -12,7 +12,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', '{"foo": "bar", "bar": "baz"}']),
+          values: ['{"foo": "bar", "bar": "baz"}', '{"foo": "bar", "bar": "baz"}'],
         },
       ],
     };
@@ -39,7 +39,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['foo="bar" bar="baz"', 'foo="bar" bar="baz"']),
+          values: ['foo="bar" bar="baz"', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -66,7 +66,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -81,11 +81,44 @@ describe('getQueryHints', () => {
     });
 
     it('does not suggest parser when parser in query', () => {
-      expect(getQueryHints('{job="grafana" | json', [jsonAndLogfmtSeries])).not.toEqual(
+      expect(getQueryHints('{job="grafana"} | json', [jsonAndLogfmtSeries])).not.toEqual(
         expect.arrayContaining([
           expect.objectContaining({ type: 'ADD_JSON_PARSER' }),
           expect.objectContaining({ type: 'ADD_LOGFMT_PARSER' }),
         ])
+      );
+    });
+  });
+
+  describe('when series with json and packed logs', () => {
+    const jsonAndPackSeries: DataFrame = {
+      name: 'logs',
+      length: 2,
+      fields: [
+        {
+          name: 'Line',
+          type: FieldType.string,
+          config: {},
+          values: ['{"_entry": "bar", "bar": "baz"}'],
+        },
+      ],
+    };
+
+    it('suggest unpack parser when no parser in query', () => {
+      expect(getQueryHints('{job="grafana"', [jsonAndPackSeries])).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_UNPACK_PARSER' })])
+      );
+    });
+
+    it('does not suggest json parser', () => {
+      expect(getQueryHints('{job="grafana"', [jsonAndPackSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_JSON_PARSER' })])
+      );
+    });
+
+    it('does not suggest unpack parser when unpack in query', () => {
+      expect(getQueryHints('{job="grafana"} | unpack', [jsonAndPackSeries])).not.toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'ADD_UNPACK_PARSER' })])
       );
     });
   });
@@ -106,18 +139,17 @@ describe('getQueryHints', () => {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+            values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: new ArrayVector([labelVariable, { job: 'baz', foo: 'bar' }]),
+            values: [labelVariable, { job: 'baz', foo: 'bar' }],
           },
         ],
       };
     };
-
     it('suggest level renaming when no level label', () => {
       expect(getQueryHints('{job="grafana"', [createSeriesWithLabel('lvl')])).toEqual(
         expect.arrayContaining([expect.objectContaining({ type: 'ADD_LEVEL_LABEL_FORMAT' })])
@@ -140,7 +172,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -167,7 +199,7 @@ describe('getQueryHints', () => {
           name: 'Line',
           type: FieldType.string,
           config: {},
-          values: new ArrayVector(['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"']),
+          values: ['{"foo": "bar", "bar": "baz"}', 'foo="bar" bar="baz"'],
         },
       ],
     };
@@ -194,7 +226,7 @@ describe('getQueryHints', () => {
           name: 'labels',
           type: FieldType.other,
           config: {},
-          values: new ArrayVector([{ __error__: 'some error', job: 'a' }]),
+          values: [{ __error__: 'some error', job: 'a' }],
         },
       ],
     };

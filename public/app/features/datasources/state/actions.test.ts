@@ -32,7 +32,7 @@ jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
 jest.mock('app/core/core');
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: jest.fn().mockReturnValue({ reload: jest.fn() }),
   getBackendSrv: jest.fn().mockReturnValue({ get: jest.fn() }),
 }));
@@ -217,7 +217,7 @@ describe('testDataSource', () => {
           ({
             get: jest.fn().mockReturnValue({
               testDatasource: jest.fn().mockReturnValue({
-                status: '',
+                status: 'success',
                 message: '',
               }),
               type: 'cloudwatch',
@@ -228,8 +228,9 @@ describe('testDataSource', () => {
       };
       const state = {
         testingStatus: {
-          status: '',
+          status: 'success',
           message: '',
+          details: {},
         },
       };
       const dispatchedActions = await thunkTester(state)

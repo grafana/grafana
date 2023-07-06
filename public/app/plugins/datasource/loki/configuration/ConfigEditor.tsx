@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { AlertingSettings, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
 
 import { DerivedFields } from './DerivedFields';
-import { MaxLinesField } from './MaxLinesField';
+import { QuerySettings } from './QuerySettings';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -24,10 +24,19 @@ const makeJsonUpdater =
   };
 
 const setMaxLines = makeJsonUpdater('maxLines');
+const setPredefinedOperations = makeJsonUpdater('predefinedOperations');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  const updatePredefinedOperations = useCallback(
+    (value: string) => {
+      reportInteraction('grafana_loki_predefined_operations_changed', { value });
+      onOptionsChange(setPredefinedOperations(options, value));
+    },
+    [options, onOptionsChange]
+  );
 
   return (
     <>
@@ -36,27 +45,20 @@ export const ConfigEditor = (props: Props) => {
         dataSourceConfig={options}
         showAccessOptions={false}
         onChange={onOptionsChange}
+        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
-
-      {config.featureToggles.secureSocksDatasourceProxy && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-      )}
 
       <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <MaxLinesField
-              value={options.jsonData.maxLines || ''}
-              onChange={(value) => onOptionsChange(setMaxLines(options, value))}
-            />
-          </div>
-        </div>
-      </div>
+      <QuerySettings
+        maxLines={options.jsonData.maxLines || ''}
+        onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
+        predefinedOperations={options.jsonData.predefinedOperations || ''}
+        onPredefinedOperationsChange={updatePredefinedOperations}
+      />
 
       <DerivedFields
-        value={options.jsonData.derivedFields}
+        fields={options.jsonData.derivedFields}
         onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
       />
     </>

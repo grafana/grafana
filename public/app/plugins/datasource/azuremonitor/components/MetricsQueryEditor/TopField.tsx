@@ -7,7 +7,7 @@ import { Field } from '../Field';
 
 import { setTop } from './setQueryValue';
 
-const TopField: React.FC<AzureQueryEditorFieldProps> = ({ onQueryChange, query }) => {
+const TopField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
   const [value, setValue] = useState<string>(query.azureMonitor?.top ?? '');
 
   // As calling onQueryChange initiates a the datasource refresh, we only want to call it once

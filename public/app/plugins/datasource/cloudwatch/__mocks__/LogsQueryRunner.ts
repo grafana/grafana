@@ -2,11 +2,11 @@ import { of } from 'rxjs';
 
 import { CustomVariableModel, DataFrame, DataSourceInstanceSettings } from '@grafana/data';
 import { BackendDataSourceResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchLogsQueryRunner } from '../query-runner/CloudWatchLogsQueryRunner';
-import { CloudWatchJsonData, CloudWatchLogsQueryStatus } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQueryStatus, CloudWatchLogsRequest } from '../types';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
 
@@ -17,11 +17,13 @@ export function setupMockedLogsQueryRunner({
   variables,
   mockGetVariableName = true,
   settings = CloudWatchSettings,
+  timeSrv = getTimeSrv(),
 }: {
   data?: BackendDataSourceResponse;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
   settings?: DataSourceInstanceSettings<CloudWatchJsonData>;
+  timeSrv?: TimeSrv;
 } = {}) {
   let templateService = new TemplateSrv();
   if (variables) {
@@ -31,7 +33,7 @@ export function setupMockedLogsQueryRunner({
     }
   }
 
-  const runner = new CloudWatchLogsQueryRunner(settings, templateService, getTimeSrv());
+  const runner = new CloudWatchLogsQueryRunner(settings, templateService, timeSrv);
   const fetchMock = jest.fn().mockReturnValue(of({ data }));
   setBackendSrv({
     ...getBackendSrv(),
@@ -65,4 +67,20 @@ export function genMockFrames(numResponses: number): DataFrame[] {
   }
 
   return mockFrames;
+}
+
+export function genMockCloudWatchLogsRequest(overrides: Partial<CloudWatchLogsRequest> = {}) {
+  const request: CloudWatchLogsRequest = {
+    queryString: 'fields @timestamp, @message | sort @timestamp desc',
+    logGroupNames: ['log-group-name-1', 'log-group-name-2'],
+    logGroups: [
+      { arn: 'log-group-arn-1', name: 'log-group-name-1' },
+      { arn: 'log-group-arn-2', name: 'log-group-name-2' },
+    ],
+    refId: 'A',
+    region: 'us-east-1',
+    ...overrides,
+  };
+
+  return request;
 }

@@ -24,7 +24,7 @@ export const findHoverIndexFromData = (xAxisDimension: Field, xPos: number) => {
       return Math.max(upper, 0);
     }
     middle = Math.floor((lower + upper) / 2);
-    const xPosition = xAxisDimension.values.get(middle);
+    const xPosition = xAxisDimension.values[middle];
 
     if (xPosition === xPos) {
       return middle;
@@ -72,8 +72,8 @@ export const getMultiSeriesGraphHoverInfo = (
     field = yAxisDimensions[i];
     const time = xAxisDimensions[i];
     hoverIndex = findHoverIndexFromData(time, xAxisPosition);
-    hoverDistance = xAxisPosition - time.values.get(hoverIndex);
-    pointTime = time.values.get(hoverIndex);
+    hoverDistance = xAxisPosition - time.values[hoverIndex];
+    pointTime = time.values[hoverIndex];
     // Take the closest point before the cursor, or if it does not exist, the closest after
     if (
       minDistance === undefined ||
@@ -84,7 +84,7 @@ export const getMultiSeriesGraphHoverInfo = (
       minTime = time.display ? formattedValueToString(time.display(pointTime)) : pointTime;
     }
 
-    const disp = field.display!(field.values.get(hoverIndex));
+    const disp = field.display!(field.values[hoverIndex]);
 
     results.push({
       value: formattedValueToString(disp),

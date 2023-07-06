@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, FormEvent } from 'react';
+import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
@@ -16,7 +16,7 @@ interface Props {
 
 const defaultThresholdFunction = EvalFunction.IsAbove;
 
-export const Threshold: FC<Props> = ({ labelWidth, onChange, refIds, query }) => {
+export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
   const styles = useStyles2(getStyles);
 
   const defaultEvaluator: ClassicCondition = {
@@ -67,41 +67,45 @@ export const Threshold: FC<Props> = ({ labelWidth, onChange, refIds, query }) =>
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Input" labelWidth={labelWidth}>
-        <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
-      </InlineField>
-      <ButtonSelect
-        className={styles.buttonSelectText}
-        options={thresholdFunctions}
-        onChange={onEvalFunctionChange}
-        value={thresholdFunction}
-      />
-      {isRange ? (
-        <>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Input" labelWidth={labelWidth}>
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <ButtonSelect
+          className={styles.buttonSelectText}
+          options={thresholdFunctions}
+          onChange={onEvalFunctionChange}
+          value={thresholdFunction}
+        />
+        {isRange ? (
+          <>
+            <Input
+              type="number"
+              width={10}
+              onChange={(event) => onEvaluateValueChange(event, 0)}
+              defaultValue={condition.evaluator.params[0]}
+            />
+            <div className={styles.button}>TO</div>
+            <Input
+              type="number"
+              width={10}
+              onChange={(event) => onEvaluateValueChange(event, 1)}
+              defaultValue={condition.evaluator.params[1]}
+            />
+          </>
+        ) : (
           <Input
             type="number"
             width={10}
             onChange={(event) => onEvaluateValueChange(event, 0)}
-            defaultValue={condition.evaluator.params[0]}
+            defaultValue={conditions[0].evaluator.params[0] || 0}
           />
-          <div className={styles.button}>TO</div>
-          <Input
-            type="number"
-            width={10}
-            onChange={(event) => onEvaluateValueChange(event, 1)}
-            defaultValue={condition.evaluator.params[1]}
-          />
-        </>
-      ) : (
-        <Input
-          type="number"
-          width={10}
-          onChange={(event) => onEvaluateValueChange(event, 0)}
-          defaultValue={conditions[0].evaluator.params[0] || 0}
-        />
-      )}
-    </InlineFieldRow>
+        )}
+      </InlineFieldRow>
+    </>
   );
 };
 

@@ -33,18 +33,16 @@ type dataSourceMockRetriever struct {
 	res []*datasources.DataSource
 }
 
-func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	for _, datasource := range d.res {
-		idMatch := query.ID != 0 && query.ID == datasource.ID
-		uidMatch := query.UID != "" && query.UID == datasource.UID
-		nameMatch := query.Name != "" && query.Name == datasource.Name
+func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	for _, dataSource := range d.res {
+		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		uidMatch := query.UID != "" && query.UID == dataSource.UID
+		nameMatch := query.Name != "" && query.Name == dataSource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			return dataSource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
@@ -429,6 +427,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, rt)
 		tr := configuredTransport
 
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.Equal(t, ds.JsonData.MustMap()["grafanaData"], opts.CustomOptions["grafanaData"])
+
 		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
 		_, err = ds.JsonData.MarshalJSON()
 		require.NoError(t, err)
@@ -703,6 +705,78 @@ func TestService_GetDecryptedValues(t *testing.T) {
 
 		require.Equal(t, jsonData, values)
 	})
+}
+
+func TestDataSource_CustomHeaders(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
+
+	dsService.cfg = setting.NewCfg()
+
+	testValue := "HeaderValue1"
+
+	encryptedValue, err := secretsService.Encrypt(context.Background(), []byte(testValue), secrets.WithoutScope())
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name             string
+		jsonData         *simplejson.Json
+		secureJsonData   map[string][]byte
+		expectedHeaders  map[string]string
+		expectedErrorMsg string
+	}{
+		{
+			name: "valid custom headers",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"httpHeaderName1": "X-Test-Header1",
+			}),
+			secureJsonData: map[string][]byte{
+				"httpHeaderValue1": encryptedValue,
+			},
+			expectedHeaders: map[string]string{
+				"X-Test-Header1": testValue,
+			},
+		},
+		{
+			name: "missing header value",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"httpHeaderName1": "X-Test-Header1",
+			}),
+			secureJsonData:  map[string][]byte{},
+			expectedHeaders: map[string]string{},
+		},
+		{
+			name: "non customer header value",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"someotherheader": "X-Test-Header1",
+			}),
+			secureJsonData:  map[string][]byte{},
+			expectedHeaders: map[string]string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ds := &datasources.DataSource{
+				JsonData:       tc.jsonData,
+				SecureJsonData: tc.secureJsonData,
+			}
+
+			headers, err := dsService.CustomHeaders(context.Background(), ds)
+
+			if tc.expectedErrorMsg != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErrorMsg)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedHeaders, headers)
+			}
+		})
+	}
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----

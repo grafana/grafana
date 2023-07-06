@@ -24,6 +24,7 @@ import {
 import alertDef, { EvalFunction } from '../state/alertDef';
 
 import { ExpressionResult } from './components/expressions/Expression';
+import { getThresholdsForQueries, ThresholdDefinition } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 
 interface GrafanaRuleViewerProps {
@@ -44,47 +45,54 @@ export function GrafanaRuleQueryViewer({
   const dsByUid = keyBy(Object.values(config.datasources), (ds) => ds.uid);
   const dataQueries = queries.filter((q) => !isExpressionQuery(q.model));
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
+  const styles = useStyles2(getExpressionViewerStyles);
+
+  const thresholds = getThresholdsForQueries(queries);
 
   return (
     <Stack gap={2} direction="column">
-      <Stack gap={2}>
-        {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-          const dataSource = dsByUid[datasourceUid];
+      <div className={styles.maxWidthContainer}>
+        <Stack gap={2}>
+          {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
+            const dataSource = dsByUid[datasourceUid];
 
-          return (
-            <QueryPreview
-              key={index}
-              refId={refId}
-              isAlertCondition={condition === refId}
-              model={model}
-              relativeTimeRange={relativeTimeRange}
-              evalTimeRange={evalTimeRanges[refId]}
-              dataSource={dataSource}
-              queryData={evalDataByQuery[refId]}
-              onEvalTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
-            />
-          );
-        })}
-      </Stack>
-
-      <Stack gap={1}>
-        {expressions.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
-          const dataSource = dsByUid[datasourceUid];
-
-          return (
-            isExpressionQuery(model) && (
-              <ExpressionPreview
+            return (
+              <QueryPreview
                 key={index}
                 refId={refId}
                 isAlertCondition={condition === refId}
                 model={model}
+                relativeTimeRange={relativeTimeRange}
+                evalTimeRange={evalTimeRanges[refId]}
                 dataSource={dataSource}
-                evalData={evalDataByQuery[refId]}
+                thresholds={thresholds[refId]}
+                queryData={evalDataByQuery[refId]}
+                onEvalTimeRangeChange={(timeRange) => onTimeRangeChange(refId, timeRange)}
               />
-            )
-          );
-        })}
-      </Stack>
+            );
+          })}
+        </Stack>
+      </div>
+      <div className={styles.maxWidthContainer}>
+        <Stack gap={1}>
+          {expressions.map(({ model, refId, datasourceUid }, index) => {
+            const dataSource = dsByUid[datasourceUid];
+
+            return (
+              isExpressionQuery(model) && (
+                <ExpressionPreview
+                  key={index}
+                  refId={refId}
+                  isAlertCondition={condition === refId}
+                  model={model}
+                  dataSource={dataSource}
+                  evalData={evalDataByQuery[refId]}
+                />
+              )
+            );
+          })}
+        </Stack>
+      </div>
     </Stack>
   );
 }
@@ -93,6 +101,7 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
   isAlertCondition: boolean;
   dataSource?: DataSourceInstanceSettings;
   queryData?: PanelData;
+  thresholds?: ThresholdDefinition;
   evalTimeRange?: RelativeTimeRange;
   onEvalTimeRangeChange: (timeRange: RelativeTimeRange) => void;
 }
@@ -100,6 +109,7 @@ interface QueryPreviewProps extends Pick<AlertQuery, 'refId' | 'relativeTimeRang
 export function QueryPreview({
   refId,
   relativeTimeRange,
+  thresholds,
   model,
   dataSource,
   queryData,
@@ -123,9 +133,10 @@ export function QueryPreview({
       {dataSource && (
         <RuleViewerVisualization
           refId={refId}
-          datasourceUid={dataSource.uid}
+          dsSettings={dataSource}
           model={model}
           data={queryData}
+          thresholds={thresholds}
           relativeTimeRange={evalTimeRange}
           onTimeRangeChange={onEvalTimeRangeChange}
           className={styles.visualization}
@@ -140,7 +151,7 @@ const getQueryPreviewStyles = (theme: GrafanaTheme2) => ({
     margin: ${theme.spacing(1)};
   `,
   contentBox: css`
-    flex: 1 0 100%; // RuleViewerVisualization uses AutoSizer which doesn't expand the box
+    flex: 1 0 100%;
   `,
   visualization: css`
     padding: ${theme.spacing(1)};
@@ -389,6 +400,9 @@ const getExpressionViewerStyles = (theme: GrafanaTheme2) => {
 
   return {
     ...common,
+    maxWidthContainer: css`
+      max-width: 100%;
+    `,
     container: css`
       padding: ${theme.spacing(1)};
       display: flex;

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "declarationDir": "dist/src",
+    "declarationDir": "dist/src/cli",
     "module": "commonjs",
-    "outDir": "dist/src",
+    "outDir": "dist/src/cli",
     "rootDirs": ["."],
     "paths": {
       "@grafana/toolkit": ["."]

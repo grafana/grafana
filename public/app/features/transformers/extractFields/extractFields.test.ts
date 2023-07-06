@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 
 import { extractFieldsTransformer } from './extractFields';
@@ -19,10 +19,10 @@ describe('Fields from JSON', () => {
     const frames = extractFieldsTransformer.transformer(cfg, ctx)([data]);
     expect(frames.length).toEqual(1);
     expect(
-      frames[0].fields.reduce((acc, v) => {
+      frames[0].fields.reduce<Record<string, FieldType>>((acc, v) => {
         acc[v.name] = v.type;
         return acc;
-      }, {} as any)
+      }, {})
     ).toMatchInlineSnapshot(`
       {
         "a": "string",
@@ -193,28 +193,28 @@ const testFieldTime: Field = {
   config: {},
   name: 'Time',
   type: FieldType.time,
-  values: new ArrayVector([1669638911691]),
+  values: [1669638911691],
 };
 
 const testFieldString: Field = {
   config: {},
   name: 'String',
   type: FieldType.string,
-  values: new ArrayVector(['Hallo World']),
+  values: ['Hallo World'],
 };
 
 const testFieldJSON: Field = {
   config: {},
   name: 'JSON',
   type: FieldType.string,
-  values: new ArrayVector([
+  values: [
     JSON.stringify({
       object: {
         nestedArray: [1, 2, 3, 4],
         nestedString: 'Hallo World',
       },
     }),
-  ]),
+  ],
 };
 
 const testDataFrame: DataFrame = {

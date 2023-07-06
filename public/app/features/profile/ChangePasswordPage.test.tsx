@@ -59,7 +59,6 @@ describe('ChangePasswordPage', () => {
 
   it('should show change password form when user has loaded', async () => {
     await getTestContext();
-    expect(screen.getByText('Change Your Password')).toBeInTheDocument();
 
     expect(screen.getByLabelText('Old password')).toBeInTheDocument();
     expect(screen.getByLabelText('New password')).toBeInTheDocument();
@@ -70,6 +69,7 @@ describe('ChangePasswordPage', () => {
     expect(screen.getByRole('link', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/profile');
   });
+
   it('should call changePassword if change password is valid', async () => {
     const { props } = await getTestContext();
 

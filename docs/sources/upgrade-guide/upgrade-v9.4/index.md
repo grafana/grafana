@@ -16,4 +16,4 @@ weight: 1995
 
 ## Technical notes
 
-There are no additional upgrade steps to complete for this version of Grafana.
+The upgrade to Grafana v9.4 includes changes to the Grafana database for Grafana alerting that are not backward compatible. As a result, when you upgrade to Grafana v9.4, do not downgrade your Grafana instance to an earlier version. Doing so might cause issues with managing your Grafana alerts.

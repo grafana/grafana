@@ -3,12 +3,9 @@ import { createAction, createReducer } from '@reduxjs/toolkit';
 import { DataQuery, getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
-} from 'app/features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -36,7 +33,7 @@ export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
 export const addNewDataQuery = createAction('addNewDataQuery');
 export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
-export const addNewExpression = createAction('addNewExpression');
+export const addNewExpression = createAction<ExpressionQueryType>('addNewExpression');
 export const removeExpression = createAction<string>('removeExpression');
 export const updateExpression = createAction<ExpressionQuery>('updateExpression');
 export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: string }>('updateExpressionRefId');
@@ -44,6 +41,10 @@ export const rewireExpressions = createAction<{ oldRefId: string; newRefId: stri
 export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
 export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
+
+export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
+  'setRecordingRulesQueries'
+);
 
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
@@ -72,6 +73,15 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
       state.queries = [...payload, ...expressionQueries];
     })
+    .addCase(setRecordingRulesQueries, (state, { payload }) => {
+      const query = payload.recordingRuleQueries[0];
+      const recordingRuleQuery = {
+        ...query,
+        ...{ expr: payload.expression, model: { expr: payload.expression, refId: query.model.refId } },
+      };
+
+      state.queries = [recordingRuleQuery];
+    })
     .addCase(updateMaxDataPoints, (state, action) => {
       state.queries = state.queries.map((query) => {
         return query.refId === action.payload.refId
@@ -88,11 +98,11 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
 
   // expressions actions
   builder
-    .addCase(addNewExpression, (state) => {
+    .addCase(addNewExpression, (state, { payload }) => {
       state.queries = addQuery(state.queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
-          type: ExpressionQueryType.math,
+          type: payload,
           conditions: [{ ...defaultCondition, query: { params: [] } }],
           expression: '',
         }),

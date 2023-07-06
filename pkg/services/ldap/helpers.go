@@ -3,7 +3,7 @@ package ldap
 import (
 	"strings"
 
-	"gopkg.in/ldap.v3"
+	"github.com/go-ldap/ldap/v3"
 )
 
 func IsMemberOf(memberOf []string, group string) bool {

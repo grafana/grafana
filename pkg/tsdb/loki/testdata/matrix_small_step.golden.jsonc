@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="error"}
@@ -27,6 +31,10 @@
         "name": "{level=\"error\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

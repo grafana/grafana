@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
+	"github.com/grafana/grafana/pkg/modules"
+	moduleRegistry "github.com/grafana/grafana/pkg/modules/registry"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -38,9 +40,11 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
+	moduleService modules.Engine,
+	_ moduleRegistry.Registry, // imported to invoke initialization via Wire
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, moduleService)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +58,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
+	moduleService modules.Engine,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -73,6 +78,7 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 		commit:              opts.Commit,
 		buildBranch:         opts.BuildBranch,
 		backgroundServices:  backgroundServiceProvider.GetServices(),
+		moduleService:       moduleService,
 	}
 
 	return s, nil
@@ -99,6 +105,7 @@ type Server struct {
 	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
+	moduleService       modules.Engine
 }
 
 // init initializes the server and its services.
@@ -112,6 +119,11 @@ func (s *Server) init() error {
 	s.isInitialized = true
 
 	if err := s.writePIDFile(); err != nil {
+		return err
+	}
+
+	// Initialize dskit modules.
+	if err := s.moduleService.Init(s.context); err != nil {
 		return err
 	}
 
@@ -134,6 +146,15 @@ func (s *Server) Run() error {
 	if err := s.init(); err != nil {
 		return err
 	}
+
+	// Start dskit modules.
+	s.childRoutines.Go(func() error {
+		err := s.moduleService.Run(s.context)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			return err
+		}
+		return nil
+	})
 
 	services := s.backgroundServices
 
@@ -178,7 +199,10 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-		// Call cancel func to stop services.
+		if err := s.moduleService.Shutdown(ctx); err != nil {
+			s.log.Error("Failed to shutdown modules", "error", err)
+		}
+		// Call cancel func to stop background services.
 		s.shutdownFn()
 		// Wait for server to shut down
 		select {

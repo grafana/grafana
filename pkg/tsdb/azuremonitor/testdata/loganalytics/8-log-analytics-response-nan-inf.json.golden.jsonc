@@ -1,0 +1,105 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "azureColumnTypes": [
+//              "real",
+//              "real",
+//              "real"
+//          ]
+//      }
+//  }
+//  Name: 
+//  Dimensions: 3 Fields by 1 Rows
+//  +------------------+------------------+------------------+
+//  | Name: XInf       | Name: XInfNeg    | Name: XNan       |
+//  | Labels:          | Labels:          | Labels:          |
+//  | Type: []*float64 | Type: []*float64 | Type: []*float64 |
+//  +------------------+------------------+------------------+
+//  | +Inf             | -Inf             | NaN              |
+//  +------------------+------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "azureColumnTypes": [
+              "real",
+              "real",
+              "real"
+            ]
+          }
+        },
+        "fields": [
+          {
+            "name": "XInf",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XInfNeg",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "XNan",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            null
+          ],
+          [
+            null
+          ],
+          [
+            null
+          ]
+        ],
+        "entities": [
+          {
+            "Inf": [
+              0
+            ]
+          },
+          {
+            "NegInf": [
+              0
+            ]
+          },
+          {
+            "NaN": [
+              0
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

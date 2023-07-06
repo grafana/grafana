@@ -591,10 +591,6 @@ func (i *searchIndex) withCtxData(ctx context.Context, params ...interface{}) []
 		params = append(params, "traceID", traceID)
 	}
 
-	if i.features.IsEnabled(featuremgmt.FlagDatabaseMetrics) {
-		params = append(params, "db_call_count", log.TotalDBCallCount(ctx))
-	}
-
 	return params
 }
 

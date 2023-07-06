@@ -14,7 +14,7 @@ title: Folder HTTP API
 
 # Folder API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Identifier (id) vs unique identifier (uid)
 
@@ -135,9 +135,12 @@ Creates a new folder.
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 
-| Action           | Scope |
-| ---------------- | ----- |
-| `folders:create` | n/a   |
+`folders:create` allows creating folders in the root level. To create a subfolder, `folders:write` scoped to the parent folder is required in addition to `folders:create`.
+
+| Action           | Scope       |
+| ---------------- | ----------- |
+| `folders:create` | n/a         |
+| `folders:write`  | `folders:*` |
 
 **Example Request**:
 
@@ -219,7 +222,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier.
+- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier. Starting with 10.0, this is **deprecated**. It will be removed in a future release. Please avoid using it because it can result in folder losing its permissions.
 - **title** – The title of the folder.
 - **version** – Provide the current version to be able to update the folder. Not needed if `overwrite=true`.
 - **overwrite** – Set to true if you want to overwrite existing folder with newer version.
@@ -280,7 +283,7 @@ Content-Length: 97
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
-If [Grafana Alerting]({{< relref "../../alerting/" >}}) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
+If [Grafana Alerting]({{< relref "/docs/grafana/latest/alerting" >}}) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
 
 **Required permissions**
 

@@ -50,13 +50,19 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) 
 		}
 		err = rows.Scan(&folder.UID, &folder.parentUID, &folder.Name, &folder.originalSlug)
 		if err != nil {
-			return err
+			break
 		}
 		all = append(all, &folder)
 	}
-	err = rows.Close()
+	errClose := rows.Close()
+	// TODO: Use some kind of multi-error.
+	// Until then, we want to prioritize errors coming from the .Scan
+	// over those coming from .Close.
 	if err != nil {
 		return err
+	}
+	if errClose != nil {
+		return errClose
 	}
 
 	root, lost, err := buildFolderTree(all)

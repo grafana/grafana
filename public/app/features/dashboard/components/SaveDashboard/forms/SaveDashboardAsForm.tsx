@@ -1,6 +1,8 @@
 import React from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -38,13 +40,7 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
-  dashboard,
-  isNew,
-  onSubmit,
-  onCancel,
-  onSuccess,
-}) => {
+export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
@@ -58,8 +54,9 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
     if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
       return 'Dashboard name cannot be the same as folder name';
     }
+
     try {
-      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid, dashboardName);
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid ?? 'general', dashboardName);
       return true;
     } catch (e) {
       return e instanceof Error ? e.message : 'Dashboard name is invalid';
@@ -106,15 +103,19 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
           </Field>
           <Field label="Folder">
             <InputControl
-              render={({ field: { ref, ...field } }) => (
-                <FolderPicker
-                  {...field}
-                  dashboardId={dashboard.id}
-                  initialFolderUid={dashboard.meta.folderUid}
-                  initialTitle={dashboard.meta.folderTitle}
-                  enableCreateNew
-                />
-              )}
+              render={({ field: { ref, ...field } }) =>
+                config.featureToggles.nestedFolderPicker ? (
+                  <NestedFolderPicker {...field} value={field.value?.uid} />
+                ) : (
+                  <FolderPicker
+                    {...field}
+                    dashboardId={dashboard.id}
+                    initialFolderUid={dashboard.meta.folderUid}
+                    initialTitle={dashboard.meta.folderTitle}
+                    enableCreateNew
+                  />
+                )
+              }
               control={control}
               name="$folder"
             />

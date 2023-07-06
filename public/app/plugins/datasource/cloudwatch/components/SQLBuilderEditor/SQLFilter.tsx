@@ -31,7 +31,7 @@ interface SQLFilterProps {
 
 const OPERATORS = COMPARISON_OPERATORS.map(toOption);
 
-const SQLFilter: React.FC<SQLFilterProps> = ({ query, onQueryChange, datasource }) => {
+const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
   const filtersFromQuery = useMemo(() => getFlattenedFilters(query.sql ?? {}), [query.sql]);
   const [filters, setFilters] = useState<QueryEditorOperatorExpression[]>(filtersFromQuery);
 
@@ -95,7 +95,7 @@ interface FilterItemProps {
   onDelete: () => void;
 }
 
-const FilterItem: React.FC<FilterItemProps> = (props) => {
+const FilterItem = (props: FilterItemProps) => {
   const { datasource, query, filter, onChange, onDelete } = props;
   const sql = query.sql ?? {};
 

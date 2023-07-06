@@ -12,8 +12,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,12 +31,19 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 
-	cfg := setting.NewCfg()
+	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{
+		PluginList: []plugins.PluginDTO{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeDataSourceService{}, nil)
 
 	s := Service{
-		cfg:               cfg,
-		dataService:       me,
-		dataSourceService: &datafakes.FakeDataSourceService{},
+		cfg:          setting.NewCfg(),
+		dataService:  me,
+		pCtxProvider: pCtxProvider,
+		features:     &featuremgmt.FeatureManager{},
+		tracer:       tracing.InitializeTracerForTest(),
+		metrics:      newMetrics(nil),
 	}
 
 	queries := []Query{
@@ -50,12 +62,12 @@ func TestService(t *testing.T) {
 		},
 		{
 			RefID:      "B",
-			DataSource: DataSourceModel(),
+			DataSource: dataSourceModel(),
 			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
 		},
 	}
 
-	req := &Request{Queries: queries}
+	req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
@@ -67,6 +79,10 @@ func TestService(t *testing.T) {
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
+	bDF.SetMeta(&data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	})
 
 	expect := &backend.QueryDataResponse{
 		Responses: backend.Responses{
@@ -107,4 +123,9 @@ func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataReq
 		Frames: me.Frames,
 	}
 	return resp, nil
+}
+
+func dataSourceModel() *datasources.DataSource {
+	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
+	return d
 }

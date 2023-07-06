@@ -1,29 +1,23 @@
-import { config } from '@grafana/runtime';
+import { extractPluginIdVersionFromUrl, getPluginCdnResourceUrl, transformPluginSourceForCDN } from '../cdn/utils';
 
 import type { SystemJSLoad } from './types';
 
-export function extractPluginNameVersionFromUrl(address: string) {
-  const path = new URL(address).pathname;
-  const match = path.split('/');
-  return { name: match[3], version: match[4] };
-}
-
+/*
+  Locate: Overrides the location of the plugin resource
+  Plugins loaded via CDN fall into this plugin via the `plugin-cdn` keyword.
+  Systemjs first resolves to an origin on the local filesystem
+  (e.g. http://localhost/public/plugin-cdn/{pluginId}/{version}/public/plugins/{pluginId})
+  we then split this url and prefix with the CDN base url giving us the correct asset location.
+ */
 export function locateFromCDN(load: SystemJSLoad) {
   const { address } = load;
-  const pluginPath = address.split('/public/plugin-cdn/');
-  return `${config.pluginsCDNBaseURL}/${pluginPath[1]}`;
+  return getPluginCdnResourceUrl(address);
 }
 
+/*
+  Translate: Returns the translated source from load.source;
+ */
 export function translateForCDN(load: SystemJSLoad) {
-  const { name, version } = extractPluginNameVersionFromUrl(load.name);
-  const baseAddress = `${config.pluginsCDNBaseURL}/${name}/${version}`;
-
-  load.source = load.source.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
-  load.source = load.source.replace(/(["|'])(plugins\/.+.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
-  load.source = load.source.replace(
-    /(\/\/#\ssourceMappingURL=)(.+)\.map/g,
-    `$1${baseAddress}/public/plugins/${name}/$2.map`
-  );
-
-  return load.source;
+  const { id, version } = extractPluginIdVersionFromUrl(load.name);
+  return transformPluginSourceForCDN({ pluginId: id, version, source: load.source });
 }

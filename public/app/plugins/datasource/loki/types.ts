@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, QueryResultMeta, ScopedVars, TimeRange } from '@grafana/data';
 
 import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
 
@@ -8,7 +8,7 @@ export interface LokiInstantQueryRequest {
   query: string;
   limit?: number;
   time?: string;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiQueryDirection;
 }
 
 export interface LokiRangeQueryRequest {
@@ -17,7 +17,7 @@ export interface LokiRangeQueryRequest {
   start?: number;
   end?: number;
   step?: number;
-  direction?: 'BACKWARD' | 'FORWARD';
+  direction?: LokiQueryDirection;
 }
 
 export enum LokiResultType {
@@ -35,6 +35,12 @@ export interface LokiQuery extends LokiQueryFromSchema {
   // the temporary fix (until this gets improved in the codegen), is to
   // override it here
   queryType?: LokiQueryType;
+
+  /**
+   * This is a property for the experimental query splitting feature.
+   * @experimental
+   */
+  splitDuration?: string;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
@@ -42,6 +48,7 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];
+  predefinedOperations?: string;
 }
 
 export interface LokiStats {
@@ -154,3 +161,5 @@ export interface ContextFilter {
   fromParser: boolean;
   description?: string;
 }
+
+export type LokiGroupedRequest = { request: DataQueryRequest<LokiQuery>; partition: TimeRange[] };

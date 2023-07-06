@@ -53,7 +53,7 @@ func (f *TestingApiHandler) RouteTestRuleConfig(ctx *contextmodel.ReqContext) re
 }
 func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
-	conf := apimodels.TestRulePayload{}
+	conf := apimodels.PostableExtendedRuleNodeExtended{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -68,7 +68,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/backtest",
-				srv.BacktestConfig,
+				api.Hooks.Wrap(srv.BacktestConfig),
 				m,
 			),
 		)
@@ -78,7 +78,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/eval",
-				srv.RouteEvalQueries,
+				api.Hooks.Wrap(srv.RouteEvalQueries),
 				m,
 			),
 		)
@@ -88,7 +88,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/{DatasourceUID}",
-				srv.RouteTestRuleConfig,
+				api.Hooks.Wrap(srv.RouteTestRuleConfig),
 				m,
 			),
 		)
@@ -98,7 +98,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/grafana",
-				srv.RouteTestRuleGrafanaConfig,
+				api.Hooks.Wrap(srv.RouteTestRuleGrafanaConfig),
 				m,
 			),
 		)

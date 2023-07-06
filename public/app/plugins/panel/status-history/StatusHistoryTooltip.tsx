@@ -19,13 +19,13 @@ interface StatusHistoryTooltipProps {
   timeZone: TimeZone;
 }
 
-export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
+export const StatusHistoryTooltip = ({
   data,
   alignedData,
   seriesIdx,
   datapointIdx,
   timeZone,
-}) => {
+}: StatusHistoryTooltipProps) => {
   const theme = useTheme2();
 
   if (!data || datapointIdx == null) {
@@ -38,7 +38,7 @@ export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
   const linkLookup = new Set<string>();
 
   if (field.getLinks) {
-    const v = field.values.get(datapointIdx);
+    const v = field.values[datapointIdx];
     const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
     field.getLinks({ calculatedValue: disp, valueRowIndex: datapointIdx }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
@@ -54,7 +54,7 @@ export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
 
   const dataFrameFieldIndex = field.state?.origin;
   const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
-  const value = field.values.get(datapointIdx!);
+  const value = field.values[datapointIdx!];
   const display = fieldFmt(value);
   const fieldDisplayName = dataFrameFieldIndex
     ? getFieldDisplayName(
@@ -67,7 +67,7 @@ export const StatusHistoryTooltip: React.FC<StatusHistoryTooltipProps> = ({
   return (
     <div>
       <div style={{ fontSize: theme.typography.bodySmall.fontSize }}>
-        <strong>{xFieldFmt(xField.values.get(datapointIdx)).text}</strong>
+        <strong>{xFieldFmt(xField.values[datapointIdx]).text}</strong>
         <br />
         <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
         {fieldDisplayName}

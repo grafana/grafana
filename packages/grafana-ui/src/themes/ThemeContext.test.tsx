@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { render } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { render, renderHook } from '@testing-library/react';
 import React from 'react';
 
 import { mockThemeContext, useStyles2 } from './ThemeContext';
@@ -34,7 +33,7 @@ describe('useStyles', () => {
   });
 
   it('passes in theme and returns style object', (done) => {
-    const Dummy: React.FC = function () {
+    const Dummy = function () {
       const styles = useStyles2((theme) => {
         return {
           someStyle: css`

@@ -57,6 +57,7 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated -- register the annotation support in the instance constructor */
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
     this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;
@@ -259,7 +260,7 @@ abstract class DataSourceApi<
    * a TestingStatus object. Unknown errors and HTTP errors can be re-thrown and will be handled here:
    * public/app/features/datasources/state/actions.ts
    */
-  abstract testDatasource(): Promise<any>;
+  abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
    * Override to skip executing a query
@@ -451,14 +452,32 @@ export interface DataQueryResponse {
 
   /**
    * Optionally include error info along with the response data
+   * @deprecated use errors instead -- will be removed in Grafana 10+
    */
   error?: DataQueryError;
+
+  /**
+   * Optionally include multiple errors for different targets
+   */
+  errors?: DataQueryError[];
 
   /**
    * Use this to control which state the response should have
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
+
+  /**
+   * traceIds related to the response, if available
+   */
+  traceIds?: string[];
+}
+
+export interface TestDataSourceResponse {
+  status: string;
+  message: string;
+  error?: Error;
+  details?: { message?: string; verboseMessage?: string };
 }
 
 export enum DataQueryErrorType {
@@ -482,6 +501,7 @@ export interface DataQueryError {
   status?: number;
   statusText?: string;
   refId?: string;
+  traceId?: string;
   type?: DataQueryErrorType;
 }
 
@@ -502,8 +522,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
-  /** @deprecate */
-  dashboardId?: number;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
 
@@ -516,6 +534,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Make it possible to hide support queries from the inspector
   hideFromInspector?: boolean;
+
+  // Used to correlate multiple related requests
+  queryGroupId?: string;
 }
 
 export interface DataQueryTimings {

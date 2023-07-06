@@ -1,29 +1,34 @@
 package social
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-)
-
-var (
-	logger = log.New("social")
 )
 
 type SocialService struct {
@@ -31,43 +36,49 @@ type SocialService struct {
 
 	socialMap     map[string]SocialConnector
 	oAuthProvider map[string]*OAuthInfo
+	log           log.Logger
 }
 
 type OAuthInfo struct {
-	ClientId, ClientSecret  string
-	Scopes                  []string
-	AuthUrl, TokenUrl       string
-	Enabled                 bool
-	EmailAttributeName      string
-	EmailAttributePath      string
-	RoleAttributePath       string
-	RoleAttributeStrict     bool
-	GroupsAttributePath     string
-	TeamIdsAttributePath    string
-	AllowedDomains          []string
-	AllowAssignGrafanaAdmin bool
-	HostedDomain            string
-	ApiUrl                  string
-	TeamsUrl                string
-	AllowSignup             bool
-	Name                    string
-	Icon                    string
-	TlsClientCert           string
-	TlsClientKey            string
-	TlsClientCa             string
-	TlsSkipVerify           bool
-	UsePKCE                 bool
-	AutoLogin               bool
+	ApiUrl                  string   `toml:"api_url"`
+	AuthUrl                 string   `toml:"auth_url"`
+	ClientId                string   `toml:"client_id"`
+	ClientSecret            string   `toml:"-"`
+	EmailAttributeName      string   `toml:"email_attribute_name"`
+	EmailAttributePath      string   `toml:"email_attribute_path"`
+	GroupsAttributePath     string   `toml:"groups_attribute_path"`
+	HostedDomain            string   `toml:"hosted_domain"`
+	Icon                    string   `toml:"icon"`
+	Name                    string   `toml:"name"`
+	RoleAttributePath       string   `toml:"role_attribute_path"`
+	TeamIdsAttributePath    string   `toml:"team_ids_attribute_path"`
+	TeamsUrl                string   `toml:"teams_url"`
+	TlsClientCa             string   `toml:"tls_client_ca"`
+	TlsClientCert           string   `toml:"tls_client_cert"`
+	TlsClientKey            string   `toml:"tls_client_key"`
+	TokenUrl                string   `toml:"token_url"`
+	AllowedDomains          []string `toml:"allowed_domains"`
+	Scopes                  []string `toml:"scopes"`
+	AllowAssignGrafanaAdmin bool     `toml:"allow_assign_grafana_admin"`
+	AllowSignup             bool     `toml:"allow_signup"`
+	AutoLogin               bool     `toml:"auto_login"`
+	Enabled                 bool     `toml:"enabled"`
+	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
+	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
+	UsePKCE                 bool     `toml:"use_pkce"`
 }
 
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,
+	bundleRegistry supportbundles.Service,
+	cache remotecache.CacheStorage,
 ) *SocialService {
-	ss := SocialService{
+	ss := &SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
+		log:           log.New("login.social"),
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
@@ -128,7 +139,7 @@ func ProvideService(cfg *setting.Cfg,
 		case "autodetect", "":
 			authStyle = oauth2.AuthStyleAutoDetect
 		default:
-			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
 			authStyle = oauth2.AuthStyleAutoDetect
 		}
 
@@ -151,7 +162,7 @@ func ProvideService(cfg *setting.Cfg,
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
-				skipOrgRoleSync:      cfg.GithubSkipOrgRoleSync,
+				skipOrgRoleSync:      cfg.GitHubSkipOrgRoleSync,
 			}
 		}
 
@@ -167,6 +178,9 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Google.
 		if name == "google" {
+			if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+				ss.log.Warn("Using legacy Google API URL, please update your configuration")
+			}
 			ss.socialMap["google"] = &SocialGoogle{
 				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				hostedDomain: info.HostedDomain,
@@ -177,10 +191,12 @@ func ProvideService(cfg *setting.Cfg,
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
-				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
-				skipOrgRoleSync:  cfg.AzureADSkipOrgRoleSync,
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				cache:                cache,
+				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
 		}
 
@@ -209,6 +225,7 @@ func ProvideService(cfg *setting.Cfg,
 				teamIdsAttributePath: sec.Key("team_ids_attribute_path").String(),
 				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
 			}
 		}
 
@@ -234,7 +251,9 @@ func ProvideService(cfg *setting.Cfg,
 		}
 	}
 
-	return &ss
+	ss.registerSupportBundleCollectors(bundleRegistry)
+
+	return ss
 }
 
 type BasicUserInfo struct {
@@ -253,7 +272,7 @@ func (b *BasicUserInfo) String() string {
 }
 
 type SocialConnector interface {
-	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
+	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
 
@@ -261,6 +280,7 @@ type SocialConnector interface {
 	Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error)
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 	TokenSource(ctx context.Context, t *oauth2.Token) oauth2.TokenSource
+	SupportBundleContent(*bytes.Buffer) error
 }
 
 type SocialBase struct {
@@ -329,6 +349,27 @@ func newSocialBase(name string,
 
 type groupStruct struct {
 	Groups []string `json:"groups"`
+}
+
+func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
+	bf.WriteString("## Client configuration\n\n")
+	bf.WriteString("```ini\n")
+	bf.WriteString(fmt.Sprintf("allow_assign_grafana_admin = %v\n", s.allowAssignGrafanaAdmin))
+	bf.WriteString(fmt.Sprintf("allow_sign_up = %v\n", s.allowSignup))
+	bf.WriteString(fmt.Sprintf("allowed_domains = %v\n", s.allowedDomains))
+	bf.WriteString(fmt.Sprintf("auto_assign_org_role = %v\n", s.autoAssignOrgRole))
+	bf.WriteString(fmt.Sprintf("role_attribute_path = %v\n", s.roleAttributePath))
+	bf.WriteString(fmt.Sprintf("role_attribute_strict = %v\n", s.roleAttributeStrict))
+	bf.WriteString(fmt.Sprintf("skip_org_role_sync = %v\n", s.skipOrgRoleSync))
+	bf.WriteString(fmt.Sprintf("client_id = %v\n", s.Config.ClientID))
+	bf.WriteString(fmt.Sprintf("client_secret = %v ; issue if empty\n", strings.Repeat("*", len(s.Config.ClientSecret))))
+	bf.WriteString(fmt.Sprintf("auth_url = %v\n", s.Config.Endpoint.AuthURL))
+	bf.WriteString(fmt.Sprintf("token_url = %v\n", s.Config.Endpoint.TokenURL))
+	bf.WriteString(fmt.Sprintf("auth_style = %v\n", s.Config.Endpoint.AuthStyle))
+	bf.WriteString(fmt.Sprintf("redirect_url = %v\n", s.Config.RedirectURL))
+	bf.WriteString(fmt.Sprintf("scopes = %v\n", s.Config.Scopes))
+	bf.WriteString("```\n\n")
+	return nil
 }
 
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
@@ -420,15 +461,25 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: info.TlsSkipVerify,
 		},
+		DialContext: (&net.Dialer{
+			Timeout:   time.Second * 10,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
 	}
+
 	oauthClient := &http.Client{
 		Transport: tr,
+		Timeout:   time.Second * 15,
 	}
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCert: %w", err)
 		}
 
@@ -438,7 +489,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCa != "" {
 		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)
 		}
 		caCertPool := x509.NewCertPool()
@@ -484,4 +535,60 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interfac
 	}
 
 	return m, nil
+}
+
+func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
+	tokenString, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
+	}
+
+	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
+	matched := jwtRegexp.FindStringSubmatch(tokenString)
+	if matched == nil {
+		return nil, fmt.Errorf("id_token is not in JWT format: %s", tokenString)
+	}
+
+	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding id_token: %w", err)
+	}
+
+	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding header: %w", err)
+	}
+
+	var header map[string]interface{}
+	if err := json.Unmarshal(headerBytes, &header); err != nil {
+		return nil, fmt.Errorf("error deserializing header: %w", err)
+	}
+
+	if compressionVal, exists := header["zip"]; exists {
+		compression, ok := compressionVal.(string)
+		if !ok {
+			return nil, fmt.Errorf("unrecognized compression header: %v", compressionVal)
+		}
+
+		if compression != "DEF" {
+			return nil, fmt.Errorf("unknown compression algorithm: %s", compression)
+		}
+
+		fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
+		if err != nil {
+			return nil, fmt.Errorf("error creating zlib reader: %w", err)
+		}
+		defer func() {
+			if err := fr.Close(); err != nil {
+				s.log.Warn("Failed closing zlib reader", "error", err)
+			}
+		}()
+
+		rawJSON, err = io.ReadAll(fr)
+		if err != nil {
+			return nil, fmt.Errorf("error decompressing payload: %w", err)
+		}
+	}
+
+	return rawJSON, nil
 }

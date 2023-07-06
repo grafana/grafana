@@ -42,13 +42,20 @@ func init() {
 func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
 	stats := map[string]interface{}{}
 
-	sqlStats, err := sa.store.GetUsageMetrics(ctx)
+	storeStats, err := sa.store.GetUsageMetrics(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	stats["stats.serviceaccounts.count"] = sqlStats.ServiceAccounts
-	stats["stats.serviceaccounts.tokens.count"] = sqlStats.Tokens
+	stats["stats.serviceaccounts.count"] = storeStats.ServiceAccounts
+	stats["stats.serviceaccounts.tokens.count"] = storeStats.Tokens
+
+	var forcedExpiryEnabled int64 = 0
+	if storeStats.ForcedExpiryEnabled {
+		forcedExpiryEnabled = 1
+	}
+
+	stats["stats.serviceaccounts.forced_expiry_enabled.count"] = forcedExpiryEnabled
 
 	var secretScanEnabled int64 = 0
 	if sa.secretScanEnabled {
@@ -57,8 +64,8 @@ func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[stri
 
 	stats["stats.serviceaccounts.secret_scan.enabled.count"] = secretScanEnabled
 
-	MStatTotalServiceAccountTokens.Set(float64(sqlStats.Tokens))
-	MStatTotalServiceAccounts.Set(float64(sqlStats.ServiceAccounts))
+	MStatTotalServiceAccountTokens.Set(float64(storeStats.Tokens))
+	MStatTotalServiceAccounts.Set(float64(storeStats.ServiceAccounts))
 
 	return stats, nil
 }

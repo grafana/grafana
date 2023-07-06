@@ -18,219 +18,257 @@
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { SelectedView, ClickedItemData, TextAlign } from '../types';
 
+import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
-import { ItemWithStart } from './dataTransform';
+import FlameGraphTooltip from './FlameGraphTooltip';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
 
 type Props = {
-  data: DataFrame;
-  app: CoreApp;
-  flameGraphHeight?: number;
-  levels: ItemWithStart[][];
-  topLevelIndex: number;
-  selectedBarIndex: number;
+  data: FlameGraphDataContainer;
+  levels: LevelItem[][];
   rangeMin: number;
   rangeMax: number;
   search: string;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
+  onItemFocused: (itemIndex: number) => void;
+  focusedItemIndex?: number;
+  textAlign: TextAlign;
 };
 
 const FlameGraph = ({
   data,
-  app,
-  flameGraphHeight,
   levels,
-  topLevelIndex,
-  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
-  setTopLevelIndex,
-  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
+  onItemFocused,
+  focusedItemIndex,
+  textAlign,
 }: Props) => {
-  const styles = getStyles(selectedView, app, flameGraphHeight);
-  const totalTicks = data.fields[1].values.get(0);
-  const valueField =
-    data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
-  if (!valueField) {
-    throw new Error('Malformed dataFrame: value field of type number is not in the query response');
-  }
+  const styles = useStyles2(getStyles);
+  const totalTicks = data.getValue(0);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [tooltipData, setTooltipData] = useState<TooltipData>();
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipItem, setTooltipItem] = useState<LevelItem>();
 
-  // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
-  // the canvas.
-  const convertPixelCoordinatesToBarCoordinates = useCallback(
-    (x: number, y: number, pixelsPerTick: number) => {
-      const levelIndex = Math.floor(y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-      const barIndex = getBarIndex(x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
-      return { levelIndex, barIndex };
-    },
-    [levels, totalTicks, rangeMin]
-  );
+  const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
   const [ufuzzy] = useState(() => {
     return new uFuzzy();
   });
 
-  const uniqueLabels = useMemo(() => {
-    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
-  }, [data]);
-
   const foundLabels = useMemo(() => {
     const foundLabels = new Set<string>();
 
     if (search) {
-      for (let idx of ufuzzy.filter(uniqueLabels, search)) {
-        foundLabels.add(uniqueLabels[idx]);
+      let idxs = ufuzzy.filter(data.getUniqueLabels(), search);
+
+      if (idxs) {
+        for (let idx of idxs) {
+          foundLabels.add(data.getUniqueLabels()[idx]);
+        }
       }
     }
 
     return foundLabels;
-  }, [ufuzzy, search, uniqueLabels]);
+  }, [ufuzzy, search, data]);
 
-  const render = useCallback(
-    (pixelsPerTick: number) => {
-      if (!levels.length) {
-        return;
+  useEffect(() => {
+    if (!levels.length) {
+      return;
+    }
+    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
+    const ctx = graphRef.current?.getContext('2d')!;
+    const graph = graphRef.current!;
+
+    const height = PIXELS_PER_LEVEL * levels.length;
+    graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
+    graph.height = Math.round(height * window.devicePixelRatio);
+    graph.style.width = `${wrapperWidth}px`;
+    graph.style.height = `${height}px`;
+
+    ctx.textBaseline = 'middle';
+    ctx.font = 12 * window.devicePixelRatio + 'px monospace';
+    ctx.strokeStyle = 'white';
+
+    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
+      const level = levels[levelIndex];
+      // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
+      // sometimes we collapse multiple bars into single rect.
+      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+      for (const rect of dimensions) {
+        const focusedLevel = focusedItemIndex ? data.getLevel(focusedItemIndex) : 0;
+        // Render each rectangle based on the computed dimensions
+        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, focusedLevel, foundLabels, textAlign);
       }
-      const ctx = graphRef.current?.getContext('2d')!;
-      const graph = graphRef.current!;
-
-      const height = PIXELS_PER_LEVEL * levels.length;
-      graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
-      graph.height = Math.round(height * window.devicePixelRatio);
-      graph.style.width = `${wrapperWidth}px`;
-      graph.style.height = `${height}px`;
-
-      ctx.textBaseline = 'middle';
-      ctx.font = 12 * window.devicePixelRatio + 'px monospace';
-      ctx.strokeStyle = 'white';
-
-      const processor = getDisplayProcessor({
-        field: valueField,
-        theme: createTheme() /* theme does not matter for us here */,
-      });
-
-      for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-        const level = levels[levelIndex];
-        // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
-        // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
-        for (const rect of dimensions) {
-          // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
-        }
-      }
-    },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
-  );
+    }
+  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
 
   useEffect(() => {
     if (graphRef.current) {
-      const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
-      render(pixelsPerTick);
-
-      // Clicking allows user to "zoom" into the flamegraph. Zooming means the x axis gets smaller so that the clicked
-      // bar takes 100% of the x axis.
       graphRef.current.onclick = (e) => {
+        setTooltipItem(undefined);
         const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
+        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+          data,
+          e,
+          pixelsPerTick,
+          levels,
+          totalTicks,
+          rangeMin
+        );
 
+        // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setTopLevelIndex(levelIndex);
-          setSelectedBarIndex(barIndex);
-          setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
-          setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
+          const item = levels[levelIndex][barIndex];
+          setClickedItemData({
+            posY: e.clientY,
+            posX: e.clientX,
+            itemIndex: item.itemIndex,
+            label: data.getLabel(item.itemIndex),
+            start: item.start,
+          });
+        } else {
+          // if clicking on the canvas but there is no block beneath the cursor
+          setClickedItemData(undefined);
         }
       };
 
       graphRef.current!.onmousemove = (e) => {
-        if (tooltipRef.current) {
-          setShowTooltip(false);
+        if (tooltipRef.current && clickedItemData === undefined) {
+          setTooltipItem(undefined);
           const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-          const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
+          const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+            data,
+            e,
+            pixelsPerTick,
+            levels,
+            totalTicks,
+            rangeMin
+          );
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-            tooltipRef.current.style.left = e.clientX + 10 + 'px';
-            tooltipRef.current.style.top = e.clientY + 'px';
+            // tooltip has a set number of lines of text so 200 should be good enough (with some buffer) without going
+            // into measuring rendered sizes
+            if (e.clientY < document.documentElement.clientHeight - 200) {
+              tooltipRef.current.style.top = e.clientY + 'px';
+              tooltipRef.current.style.bottom = 'auto';
+            } else {
+              tooltipRef.current.style.bottom = document.documentElement.clientHeight - e.clientY + 'px';
+              tooltipRef.current.style.top = 'auto';
+            }
 
-            const bar = levels[levelIndex][barIndex];
-            const tooltipData = getTooltipData(valueField, bar.label, bar.value, bar.self, totalTicks);
-            setTooltipData(tooltipData);
-            setShowTooltip(true);
+            // 400 is max width of the tooltip
+            if (e.clientX < document.documentElement.clientWidth - 400) {
+              tooltipRef.current.style.left = e.clientX + 15 + 'px';
+              tooltipRef.current.style.right = 'auto';
+            } else {
+              tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
+              tooltipRef.current.style.left = 'auto';
+            }
+
+            setTooltipItem(levels[levelIndex][barIndex]);
           }
         }
       };
 
       graphRef.current!.onmouseleave = () => {
-        setShowTooltip(false);
+        setTooltipItem(undefined);
       };
     }
   }, [
-    render,
-    convertPixelCoordinatesToBarCoordinates,
+    data,
     levels,
     rangeMin,
     rangeMax,
-    topLevelIndex,
     totalTicks,
     wrapperWidth,
-    setTopLevelIndex,
     setRangeMin,
     setRangeMax,
     selectedView,
-    valueField,
-    setSelectedBarIndex,
+    setClickedItemData,
+    clickedItemData,
   ]);
+
+  // hide context menu if outside the flame graph canvas is clicked
+  useEffect(() => {
+    const handleOnClick = (e: MouseEvent) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer') {
+        setClickedItemData(undefined);
+      }
+    };
+    window.addEventListener('click', handleOnClick);
+    return () => window.removeEventListener('click', handleOnClick);
+  }, [setClickedItemData]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
-      <FlameGraphMetadata
-        levels={levels}
-        topLevelIndex={topLevelIndex}
-        selectedBarIndex={selectedBarIndex}
-        valueField={valueField}
-        totalTicks={totalTicks}
-      />
-      <canvas ref={graphRef} data-testid="flameGraph" />
-      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
+      <FlameGraphMetadata data={data} focusedItemIndex={focusedItemIndex} totalTicks={totalTicks} />
+      <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
+        <canvas ref={graphRef} data-testid="flameGraph" />
+      </div>
+      <FlameGraphTooltip tooltipRef={tooltipRef} item={tooltipItem} data={data} totalTicks={totalTicks} />
+      {clickedItemData && (
+        <FlameGraphContextMenu
+          itemData={clickedItemData}
+          onMenuItemClick={() => {
+            setClickedItemData(undefined);
+          }}
+          onItemFocus={(itemIndex) => {
+            setRangeMin(clickedItemData.start / totalTicks);
+            setRangeMax((clickedItemData.start + data.getValue(clickedItemData.itemIndex)) / totalTicks);
+            onItemFocused(itemIndex);
+          }}
+        />
+      )}
     </div>
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
+const getStyles = () => ({
   graph: css`
-    cursor: pointer;
-    float: left;
     overflow: scroll;
-    width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
-    ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 50px)`
-      : ''}; // 50px to adjust for header pushing content down
+    height: 100%;
+    flex-grow: 1;
+    flex-basis: 50%;
+  `,
+  canvasContainer: css`
+    cursor: pointer;
   `,
 });
+
+// Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
+// the canvas.
+const convertPixelCoordinatesToBarCoordinates = (
+  data: FlameGraphDataContainer,
+  e: MouseEvent,
+  pixelsPerTick: number,
+  levels: LevelItem[][],
+  totalTicks: number,
+  rangeMin: number
+) => {
+  const levelIndex = Math.floor(e.offsetY / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  const barIndex = getBarIndex(e.offsetX, data, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  return { levelIndex, barIndex };
+};
 
 /**
  * Binary search for a bar in a level, based on the X pixel coordinate. Useful for detecting which bar did user click
@@ -238,7 +276,8 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
  */
 const getBarIndex = (
   x: number,
-  level: ItemWithStart[],
+  data: FlameGraphDataContainer,
+  level: LevelItem[],
   pixelsPerTick: number,
   totalTicks: number,
   rangeMin: number
@@ -251,7 +290,7 @@ const getBarIndex = (
       const midIndex = (start + end) >> 1;
       const startOfBar = getBarX(level[midIndex].start, totalTicks, rangeMin, pixelsPerTick);
       const startOfNextBar = getBarX(
-        level[midIndex].start + level[midIndex].value,
+        level[midIndex].start + data.getValue(level[midIndex].itemIndex),
         totalTicks,
         rangeMin,
         pixelsPerTick

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import {
   Alert,
@@ -37,6 +38,7 @@ import { RuleState } from './components/rules/RuleState';
 import { useAlertQueriesStatus } from './hooks/useAlertQueriesStatus';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
+import { useCleanAnnotations } from './utils/annotations';
 import { getRulesSourceByName } from './utils/datasource';
 import { alertRuleToQueries } from './utils/query';
 import * as ruleId from './utils/rule-id';
@@ -59,6 +61,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
+  const annotations = useCleanAnnotations(rule?.annotations || {});
 
   const [evaluationTimeRanges, setEvaluationTimeRanges] = useState<Record<string, RelativeTimeRange>>({});
 
@@ -146,7 +149,6 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }
 
-  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
@@ -167,9 +169,9 @@ export function RuleViewer({ match }: RuleViewerProps) {
       {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.AlertRule} />}
       <RuleViewerLayoutContent>
         <div>
-          <h4>
-            <Icon name="bell" size="lg" /> {rule.name}
-          </h4>
+          <Stack direction="row" alignItems="center" wrap={false} gap={1}>
+            <Icon name="bell" size="lg" /> <span className={styles.title}>{rule.name}</span>
+          </Stack>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
           <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={true} />
         </div>
@@ -198,7 +200,11 @@ export function RuleViewer({ match }: RuleViewerProps) {
           </div>
         </div>
         <div>
-          <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
+          <RuleDetailsMatchingInstances
+            rule={rule}
+            pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
+            enableFiltering
+          />
         </div>
       </RuleViewerLayoutContent>
       <Collapse
@@ -254,7 +260,7 @@ function GrafanaRuleUID({ rule }: { rule: GrafanaRuleDefinition }) {
 
   return (
     <DetailsField label="Rule UID" childrenWrapperClassName={styles.ruleUid}>
-      {rule.uid} <IconButton name="copy" onClick={copyUID} />
+      {rule.uid} <IconButton name="copy" onClick={copyUID} tooltip="Copy rule" />
     </DetailsField>
   );
 }
@@ -290,6 +296,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     queryWarning: css`
       margin: ${theme.spacing(4, 0)};
     `,
+    title: css`
+      font-size: ${theme.typography.h4.fontSize};
+      font-weight: ${theme.typography.fontWeightBold};
+
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    `,
     details: css`
       display: flex;
       flex-direction: row;
@@ -300,6 +314,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};
+
+      max-width: 360px;
+      word-break: break-all;
+      overflow: hidden;
     `,
     rightSideDetails: css`
       & > div:first-child {

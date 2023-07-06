@@ -13,6 +13,7 @@ of content of the following files is expected:
 - [Services](/contribute/backend/services.md)
 - [Communication](/contribute/backend/communication.md)
 - [Database](/contribute/backend/database.md)
+- [HTTP API](/pkg/api/README.md)
 
 Reviewers who review large changes should additionally make a habit out
 of familiarizing themselves with the content of
@@ -20,4 +21,7 @@ of familiarizing themselves with the content of
 
 ## Dependency management
 
-Refer to [UPGRADING_DEPENDENCIES.md](https://github.com/grafana/grafana/blob/main/UPGRADING_DEPENDENCIES.md).
+Refer to:
+
+- [UPGRADING_DEPENDENCIES.md](https://github.com/grafana/grafana/blob/main/UPGRADING_DEPENDENCIES.md)
+- [Upgrading dependencies](/contribute/backend/upgrading-dependencies.md)

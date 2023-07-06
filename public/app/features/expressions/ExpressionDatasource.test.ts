@@ -5,7 +5,7 @@ import { ExpressionDatasourceApi } from './ExpressionDatasource';
 import { ExpressionQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => ({
     replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),

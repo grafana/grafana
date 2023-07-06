@@ -8,6 +8,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   GroupByFieldOptions,
@@ -24,11 +25,11 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByTransformerEditor: React.FC<TransformerUIProps<GroupByTransformerOptions>> = ({
+export const GroupByTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<GroupByTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input);
 
   const onConfigChange = useCallback(
@@ -65,7 +66,7 @@ const options = [
   { label: 'Calculate', value: GroupByOperationID.aggregate },
 ];
 
-export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, config, onConfigChange }) => {
+export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const styles = getStyling();
 
   const onChange = useCallback(
@@ -145,4 +146,9 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
   transformation: standardTransformers.groupByTransformer,
   name: standardTransformers.groupByTransformer.name,
   description: standardTransformers.groupByTransformer.description,
+  categories: new Set([
+    TransformerCategory.Combine,
+    TransformerCategory.CalculateNewFields,
+    TransformerCategory.Reformat,
+  ]),
 };

@@ -6,5 +6,5 @@ import (
 )
 
 type Service interface {
-	GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*NavTreeRoot, error)
+	GetNavTree(c *contextmodel.ReqContext, prefs *pref.Preference) (*NavTreeRoot, error)
 }

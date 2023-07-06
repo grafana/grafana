@@ -4,6 +4,7 @@ import { Redirect } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { AlertLabels } from './components/AlertLabels';
@@ -13,6 +14,7 @@ import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
 const pageTitle = 'Find rule';
+const subUrl = config.appSubUrl;
 
 function useRuleFindParams() {
   // DO NOT USE REACT-ROUTER HOOKS FOR THIS CODE
@@ -22,7 +24,7 @@ function useRuleFindParams() {
   // Relevant issue: https://github.com/remix-run/history/issues/505#issuecomment-453175833
   // It was probably fixed in React-Router v6
   const location = useLocation();
-  const segments = location.pathname?.split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
+  const segments = location.pathname?.replace(subUrl, '').split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
 
   const name = decodeURIComponent(segments[3]);
   const sourceName = decodeURIComponent(segments[2]);
@@ -76,7 +78,8 @@ export function RedirectToRuleViewer(): JSX.Element | null {
 
   if (rules.length === 1) {
     const [rule] = rules;
-    return <Redirect to={createViewLink(rulesSource, rule, '/alerting/list')} />;
+    const to = createViewLink(rulesSource, rule, '/alerting/list').replace(subUrl, '');
+    return <Redirect to={to} />;
   }
 
   return (

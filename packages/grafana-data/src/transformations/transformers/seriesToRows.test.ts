@@ -1,7 +1,6 @@
 import { toDataFrame } from '../../dataframe';
 import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
@@ -245,17 +244,10 @@ describe('Series to rows', () => {
   });
 });
 
-const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {
-  return { name, type, values: new ArrayVector(values), config, labels: undefined };
+const createField = (name: string, type: FieldType, values: unknown[], config = {}): Field => {
+  return { name, type, values: values, config, labels: undefined };
 };
 
 const unwrap = (fields: Field[]): Field[] => {
-  return fields.map((field) =>
-    createField(
-      field.name,
-      field.type,
-      field.values.toArray().map((value: any) => value),
-      field.config
-    )
-  );
+  return fields.map((field) => createField(field.name, field.type, field.values, field.config));
 };

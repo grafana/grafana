@@ -3,7 +3,7 @@ Description=Grafana instance
 Documentation=http://docs.grafana.org
 Wants=network-online.target
 After=network-online.target
-After=postgresql.service mariadb.service mysql.service
+After=postgresql.service mariadb.service mysql.service influxdb.service
 
 [Service]
 EnvironmentFile=/etc/default/grafana-server

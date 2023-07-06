@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -11,13 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func DimensionKeysHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func DimensionKeysHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	dimensionKeysRequest, err := resources.GetDimensionKeysRequest(parameters)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusBadRequest, err)
 	}
 
-	service, err := newListMetricsService(pluginCtx, reqCtxFactory, dimensionKeysRequest.Region)
+	service, err := newListMetricsService(ctx, pluginCtx, reqCtxFactory, dimensionKeysRequest.Region)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionKeyHandler", http.StatusInternalServerError, err)
 	}
@@ -44,8 +45,8 @@ func DimensionKeysHandler(pluginCtx backend.PluginContext, reqCtxFactory models.
 // newListMetricsService is an list metrics service factory.
 //
 // Stubbable by tests.
-var newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
-	metricClient, err := reqCtxFactory(pluginCtx, region)
+var newListMetricsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+	metricClient, err := reqCtxFactory(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}

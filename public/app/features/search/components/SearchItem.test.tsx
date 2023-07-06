@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { DashboardSearchItemType } from '../types';
+import { DashboardViewItem } from '../types';
 
 import { Props, SearchItem } from './SearchItem';
 
@@ -11,17 +11,12 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-const data = {
-  id: 1,
+const data: DashboardViewItem = {
+  kind: 'dashboard' as const,
   uid: 'lBdLINUWk',
   title: 'Test 1',
-  uri: 'db/test1',
   url: '/d/lBdLINUWk/test1',
-  slug: '',
-  type: DashboardSearchItemType.DashDB,
   tags: ['Tag1', 'Tag2'],
-  isStarred: false,
-  checked: false,
 };
 
 const setup = (propOverrides?: Partial<Props>) => {
@@ -54,7 +49,7 @@ describe('SearchItem', () => {
   });
 
   it('should mark items as checked', () => {
-    setup({ editable: true, item: { ...data, checked: true } });
+    setup({ editable: true, isSelected: true });
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 

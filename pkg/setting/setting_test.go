@@ -31,6 +31,7 @@ func TestLoadingSettings(t *testing.T) {
 
 		require.Equal(t, "admin", cfg.AdminUser)
 		require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
+		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
 	})
 
 	t.Run("default.ini should have no semi-colon commented entries", func(t *testing.T) {
@@ -63,11 +64,10 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should be able to override via environment variables", func(t *testing.T) {
-		err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-		require.NoError(t, err)
+		t.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Equal(t, "superduper", cfg.AdminUser)
@@ -76,22 +76,20 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should replace password when defined in environment", func(t *testing.T) {
-		err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
-		require.NoError(t, err)
+		t.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Contains(t, appliedEnvOverrides, "GF_SECURITY_ADMIN_PASSWORD=*********")
 	})
 
 	t.Run("Should replace password in URL when url environment is defined", func(t *testing.T) {
-		err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
-		require.NoError(t, err)
+		t.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Contains(t, appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
@@ -141,6 +139,20 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, "test2", cfg.Domain)
+	})
+
+	t.Run("Should be able to override TLS version via command line", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{
+			HomePath: "../../",
+			Args: []string{
+				"cfg:default.server.min_tls_version=TLS1.3",
+			},
+			Config: filepath.Join(HomePath, "pkg/setting/testdata/override.ini"),
+		})
+		require.Nil(t, err)
+
+		require.Equal(t, "TLS1.3", cfg.MinTLSVersion)
 	})
 
 	t.Run("Defaults can be overridden in specified config file", func(t *testing.T) {
@@ -193,10 +205,9 @@ func TestLoadingSettings(t *testing.T) {
 
 	t.Run("Can use environment variables in config values", func(t *testing.T) {
 		if runtime.GOOS == windows {
-			err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
-			require.NoError(t, err)
+			t.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
@@ -204,10 +215,9 @@ func TestLoadingSettings(t *testing.T) {
 
 			require.Equal(t, `c:\tmp\env_override`, cfg.DataPath)
 		} else {
-			err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
-			require.NoError(t, err)
+			t.Setenv("GF_DATA_PATH", "/tmp/env_override")
 			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
@@ -267,12 +277,10 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("grafana.com API URL can be set separately from grafana.com URL", func(t *testing.T) {
-		err := os.Setenv("GF_GRAFANA_NET_URL", "https://grafana-dev.com")
-		require.NoError(t, err)
-		err = os.Setenv("GF_GRAFANA_COM_API_URL", "http://grafana-dev.internal/api")
-		require.NoError(t, err)
+		t.Setenv("GF_GRAFANA_NET_URL", "https://grafana-dev.com")
+		t.Setenv("GF_GRAFANA_COM_API_URL", "http://grafana-dev.internal/api")
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 		require.Nil(t, err)
 		require.Equal(t, "https://grafana-dev.com", cfg.GrafanaComURL)
 		require.Equal(t, "http://grafana-dev.internal/api", cfg.GrafanaComAPIURL)
@@ -764,6 +772,40 @@ func TestAlertingEnabled(t *testing.T) {
 			require.NoError(t, err)
 
 			tc.verifyCfg(t, *cfg, f)
+		})
+	}
+}
+
+func TestRedactedValue(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		key      string
+		value    string
+		expected string
+	}{
+		{
+			desc:     "non-sensitive key",
+			key:      "admin_user",
+			value:    "admin",
+			expected: "admin",
+		},
+		{
+			desc:     "sensitive key with non-empty value",
+			key:      "private_key_path",
+			value:    "/path/to/key",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "sensitive key with empty value",
+			key:      "private_key_path",
+			value:    "",
+			expected: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			require.Equal(t, tc.expected, RedactedValue(tc.key, tc.value))
 		})
 	}
 }

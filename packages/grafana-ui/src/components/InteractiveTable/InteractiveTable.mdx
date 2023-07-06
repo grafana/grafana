@@ -1,4 +1,4 @@
-import { Meta, Props, Story, Canvas } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes, Story } from '@storybook/blocks';
 
 import { InteractiveTable } from './InteractiveTable';
 import { Badge } from '../Badge/Badge';
@@ -26,7 +26,7 @@ Consider an alternative pattern where the user is presented with a summary list 
 
 ### Usage
 
-<Props of={InteractiveTable} />
+<ArgTypes of={InteractiveTable} />
 
 #### About `columns` and `data` Props
 
@@ -162,5 +162,112 @@ const columns: Array<Column<WithCustomCellData>> = [
 
 export const MyComponent = () => {
   return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
+};
+```
+
+### With pagination
+
+The table can be rendered with pagination controls by passing in the `pageSize` property. All data must be provided as
+only client side pagination is supported.
+
+<Story id="experimental-interactivetable--with-pagination" />
+
+```tsx
+interface WithPaginationData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  car: string;
+  age: number;
+}
+
+export const MyComponent = () => {
+  const pageableData: WithPaginationData[] = [
+    { id: '48a3926a-e82c-4c26-b959-3a5f473e186e', firstName: 'Brynne', lastName: 'Denisevich', car: 'Cougar', age: 47 },
+    {
+      id: 'cf281390-adbf-4407-8cf3-a52e012f63e6',
+      firstName: 'Aldridge',
+      lastName: 'Shirer',
+      car: 'Viper RT/10',
+      age: 74,
+    },
+    // ...
+    {
+      id: 'b9b0b559-acc1-4bd8-b052-160ecf3e4f68',
+      firstName: 'Ermanno',
+      lastName: 'Sinott',
+      car: 'Thunderbird',
+      age: 26,
+    },
+  ];
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name' },
+    { id: 'lastName', header: 'Last name' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age', sortType: 'number' },
+  ];
+  return <InteractiveTable columns={columns} data={pageableData} getRowId={(r) => r.id} pageSize={15} />;
+};
+```
+
+### With header tooltips
+
+It may be useful to render a tooltip on the header of a column to provide additional information about the data in that column.
+
+<Story id="experimental-interactivetable--with-header-tooltips" />
+
+```tsx
+interface WithPaginationData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  car: string;
+  age: number;
+}
+
+export const MyComponent = () => {
+  const pageableData: WithPaginationData[] = [
+    { id: '48a3926a-e82c-4c26-b959-3a5f473e186e', firstName: 'Brynne', lastName: 'Denisevich', car: 'Cougar', age: 47 },
+    {
+      id: 'cf281390-adbf-4407-8cf3-a52e012f63e6',
+      firstName: 'Aldridge',
+      lastName: 'Shirer',
+      car: 'Viper RT/10',
+      age: 74,
+    },
+    // ...
+    {
+      id: 'b9b0b559-acc1-4bd8-b052-160ecf3e4f68',
+      firstName: 'Ermanno',
+      lastName: 'Sinott',
+      car: 'Thunderbird',
+      age: 26,
+    },
+  ];
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name' },
+    { id: 'lastName', header: 'Last name' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age', sortType: 'number' },
+  ];
+
+  const headerToolTips = {
+    age: { content: 'The number of years since the person was born' },
+    lastName: {
+      content: () => {
+        return (
+          <>
+            <h4>Here is an h4</h4>
+            <div>Some content</div>
+            <div>Some more content</div>
+          </>
+        );
+      },
+      iconName: 'plus-square',
+    },
+  };
+  return (
+    <InteractiveTable columns={columns} data={pageableData} getRowId={(r) => r.id} headerToolTips={headerToolTips} />
+  );
 };
 ```

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FunctionComponent, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -12,9 +12,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: collapse;
     margin-bottom: ${theme.spacing(1)};
     background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     position: relative;
-    border-radius: 3px;
+    border-radius: ${theme.shape.radius.default};
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -105,7 +105,7 @@ export interface Props {
   className?: string;
 }
 
-export const ControlledCollapse: FunctionComponent<Props> = ({ isOpen, onToggle, ...otherProps }) => {
+export const ControlledCollapse = ({ isOpen, onToggle, ...otherProps }: React.PropsWithChildren<Props>) => {
   const [open, setOpen] = useState(isOpen);
   return (
     <Collapse

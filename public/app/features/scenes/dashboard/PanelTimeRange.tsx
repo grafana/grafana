@@ -27,6 +27,8 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     const timeZone = state.timeZone ?? getTimeZone();
     const value = evaluateTimeRange(from, to, timeZone);
     super({ from, to, timeZone, value, ...state });
+
+    this.addActivationHandler(() => this.onActivate());
   }
 
   private getTimeOverride(parentTimeRange: TimeRange): TimeOverrideResult {
@@ -73,16 +75,12 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     return newTimeData;
   }
 
-  public activate(): void {
+  public onActivate(): void {
     super.activate();
 
     const parentTimeRange = this.getParentTimeRange();
 
-    this._subs.add(
-      parentTimeRange.subscribeToState({
-        next: (state) => this.handleParentTimeRangeChanged(state.value),
-      })
-    );
+    this._subs.add(parentTimeRange.subscribeToState((state) => this.handleParentTimeRangeChanged(state.value)));
 
     this.handleParentTimeRangeChanged(parentTimeRange.state.value);
   }
@@ -106,12 +104,16 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     parentTimeRange.onTimeRangeChange(timeRange);
   };
 
-  public onIntervalChanged(interval: string): void {
-    throw new Error('Method not implemented.');
+  public onRefresh(): void {
+    this.getParentTimeRange().onRefresh();
   }
 
-  public onRefresh(): void {
-    this.handleParentTimeRangeChanged(this.getParentTimeRange().state.value);
+  public onTimeZoneChange(timeZone: string): void {
+    this.getParentTimeRange().onTimeZoneChange(timeZone);
+  }
+
+  public getTimeZone(): string {
+    return this.getParentTimeRange().getTimeZone();
   }
 
   public getOverrideInfo(): string | undefined {

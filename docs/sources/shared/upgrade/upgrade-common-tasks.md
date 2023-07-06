@@ -7,13 +7,17 @@ Because Grafana upgrades are backward compatible, the upgrade process is straigh
 
 In addition to common tasks you should complete for all versions of Grafana, there might be additional upgrade tasks to complete for a version.
 
-> **Note:** There might be minor breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for each release.
+{{% admonition type="note" %}}
+There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes/" >}}) document for releases with many breaking changes.
+{{% /admonition %}}
 
 For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
 
 When available, we list all changes with links to pull requests or issues in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
-> **Note:** When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
+{{% admonition type="note" %}}
+When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
+{{% /admonition %}}
 
 ## Back up the Grafana database
 
@@ -105,9 +109,9 @@ To upgrade Grafana installed from the binary `.tar.gz` package, complete the fol
 
 1. Extract the downloaded package and overwrite the existing files.
 
-### CentOS or RHEL
+### RPM or YUM
 
-To upgrade Grafana running on CentOS or RHEL, complete the following steps:
+To upgrade Grafana installed using RPM or YUM complete the following steps:
 
 1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
 
@@ -115,11 +119,17 @@ To upgrade Grafana running on CentOS or RHEL, complete the following steps:
 
 1. Perform one of the following steps based on your installation.
 
-   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install on RPM-based Linux]({{< relref "../../setup-grafana/installation/rpm/" >}}) to upgrade Grafana.
+   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install Grafana on Red Hat, RHEL, or Fedora]({{< relref "../../setup-grafana/installation/redhat-rhel-fedora/" >}}) or [Install Grafana on SUSE or openSUSE]({{< relref "../../setup-grafana/installation/suse-opensuse/" >}}) to upgrade Grafana.
    - If you used the Grafana YUM repository, run the following command:
 
      ```bash
      sudo yum update grafana
+     ```
+
+   - If you installed Grafana on openSUSE or SUSE, run the following command:
+
+     ```bash
+     sudo zypper update
      ```
 
 ### Docker
@@ -132,7 +142,9 @@ To upgrade Grafana running in a Docker container, complete the following steps:
 
 1. Run a commands similar to the following commands.
 
-   > **Note:** This is an example. The parameters you enter depend on how you configured your Grafana container.
+   {{% admonition type="note" %}}
+   This is an example. The parameters you enter depend on how you configured your Grafana container.
+   {{% /admonition %}}
 
    ```bash
    docker pull grafana/grafana
@@ -177,5 +189,5 @@ can make older plugins stop working properly.
 Run the following command to update plugins:
 
 ```bash
-grafana-cli plugins update-all
+grafana cli plugins update-all
 ```

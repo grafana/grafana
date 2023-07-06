@@ -53,6 +53,11 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
+	require.NotNil(t, env.SQLStore.Cfg)
+	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")
+	require.NoError(t, err)
+	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
+
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(); err != nil {
@@ -194,6 +199,15 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
 
+	authSect, err := cfg.NewSection("auth")
+	require.NoError(t, err)
+	authBrokerState := "false"
+	if len(opts) > 0 && opts[0].AuthBrokerEnabled {
+		authBrokerState = "true"
+	}
+	_, err = authSect.NewKey("broker", authBrokerState)
+	require.NoError(t, err)
+
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
 	_, err = anonSect.NewKey("enabled", "true")
@@ -209,6 +223,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
+	require.NoError(t, err)
+
+	analyticsSect, err := cfg.NewSection("analytics")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
@@ -374,9 +393,10 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+	AuthBrokerEnabled                     bool
 }
 
-func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
+func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
@@ -389,7 +409,12 @@ func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
+	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})
 	require.NoError(t, err)
-	return u.ID
+
+	cmd.OrgID = o.ID
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u
 }

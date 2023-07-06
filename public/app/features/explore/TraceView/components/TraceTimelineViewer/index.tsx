@@ -74,7 +74,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 export type TProps = TExtractUiFindFromStateReturn & {
   registerAccessors: (accessors: Accessors) => void;
   findMatchesIDs: Set<string> | TNil;
-  scrollToFirstVisibleSpan: () => void;
   traceTimeline: TTraceTimeline;
   trace: Trace;
   datasourceType: string;
@@ -91,7 +90,6 @@ export type TProps = TExtractUiFindFromStateReturn & {
   expandOne: (spans: TraceSpan[]) => void;
 
   childrenToggle: (spanID: string) => void;
-  clearShouldScrollToFirstUiFindMatch: () => void;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
@@ -110,9 +108,11 @@ export type TProps = TExtractUiFindFromStateReturn & {
   scrollElement?: Element;
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
+  showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
+  headerHeight: number;
 };
 
 type State = {

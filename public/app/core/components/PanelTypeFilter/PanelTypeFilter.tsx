@@ -32,8 +32,8 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
 
   const selectOptions = {
     defaultOptions: true,
-    getOptionLabel: (i: any) => i.label,
-    getOptionValue: (i: any) => i.value,
+    getOptionLabel: (i: SelectableValue<PanelPluginMeta>) => i.label,
+    getOptionValue: (i: SelectableValue<PanelPluginMeta>) => i.value,
     noOptionsMessage: 'No Panel types found',
     placeholder: 'Filter by type',
     maxMenuHeight,
@@ -56,7 +56,7 @@ export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Prop
           Clear types
         </Button>
       )}
-      <MultiSelect {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
+      <MultiSelect<PanelPluginMeta> {...selectOptions} prefix={<Icon name="filter" />} aria-label="Panel Type filter" />
     </div>
   );
 };

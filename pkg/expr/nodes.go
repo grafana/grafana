@@ -4,17 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 	"gonum.org/v1/gonum/graph/simple"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -91,8 +93,8 @@ func (gn *CMDNode) NodeType() NodeType {
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, _ *Service) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, now, vars)
+func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	return gn.Command.Execute(ctx, now, vars, s.tracer)
 }
 
 func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
@@ -202,19 +204,17 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
 	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(dn.datasource, s.decryptSecureJsonDataFn(ctx))
+	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
+	defer span.End()
+
+	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
 	if err != nil {
-		return mathexp.Results{}, fmt.Errorf("%v: %w", "failed to convert datasource instance settings", err)
+		return mathexp.Results{}, err
 	}
-	pc := backend.PluginContext{
-		OrgID:                      dn.orgID,
-		DataSourceInstanceSettings: dsInstanceSettings,
-		PluginID:                   dn.datasource.Type,
-		User:                       dn.request.User,
-	}
+	span.SetAttributes("datasource.type", dn.datasource.Type, attribute.Key("datasource.type").String(dn.datasource.Type))
 
 	req := &backend.QueryDataRequest{
-		PluginContext: pc,
+		PluginContext: pCtx,
 		Queries: []backend.DataQuery{
 			{
 				RefID:         dn.refID,
@@ -229,11 +229,15 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	responseType := "unknown"
+	respStatus := "success"
 	defer func() {
 		if e != nil {
 			responseType = "error"
+			respStatus = "failure"
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
+		useDataplane := strings.HasPrefix(responseType, "dataplane-")
+		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane)).Inc()
 	}()
 
 	resp, err := s.dataService.QueryData(ctx, req)
@@ -241,8 +245,14 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, err
 	}
 
+	var result mathexp.Results
+	responseType, result, err = queryDataResponseToResults(ctx, resp, dn.refID, dn.datasource.Type, s)
+	return result, err
+}
+
+func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResponse, refID string, datasourceType string, s *Service) (string, mathexp.Results, error) {
 	vals := make([]mathexp.Value, 0)
-	response, ok := resp.Responses[dn.refID]
+	response, ok := resp.Responses[refID]
 	if !ok {
 		if len(resp.Responses) > 0 {
 			keys := make([]string, 0, len(resp.Responses))
@@ -251,41 +261,46 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 			}
 			logger.Warn("Can't find response by refID. Return nodata", "responseRefIds", keys)
 		}
-		return mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
+		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
 	}
 
 	if response.Error != nil {
-		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
+		return "", mathexp.Results{}, QueryError{RefID: refID, Err: response.Error}
 	}
 
-	dataSource := dn.datasource.Type
-	if isAllFrameVectors(dataSource, response.Frames) { // Prometheus Specific Handling
-		vals, err = framesToNumbers(response.Frames)
+	var dt data.FrameType
+	dt, useDataplane, _ := shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
+	if useDataplane {
+		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
+		result, err := handleDataplaneFrames(ctx, s.tracer, dt, response.Frames)
+		return fmt.Sprintf("dataplane-%s", dt), result, err
+	}
+
+	if isAllFrameVectors(datasourceType, response.Frames) { // Prometheus Specific Handling
+		vals, err := framesToNumbers(response.Frames)
 		if err != nil {
-			return mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
+			return "", mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
 		}
-		responseType = "vector"
-		return mathexp.Results{Values: vals}, nil
+		return "vector", mathexp.Results{Values: vals}, nil
 	}
 
 	if len(response.Frames) == 1 {
 		frame := response.Frames[0]
 		// Handle Untyped NoData
 		if len(frame.Fields) == 0 {
-			return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
+			return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
 		}
 
 		// Handle Numeric Table
 		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
 			numberSet, err := extractNumberSet(frame)
 			if err != nil {
-				return mathexp.Results{}, err
+				return "", mathexp.Results{}, err
 			}
 			for _, n := range numberSet {
 				vals = append(vals, n)
 			}
-			responseType = "number set"
-			return mathexp.Results{
+			return "number set", mathexp.Results{
 				Values: vals,
 			}, nil
 		}
@@ -295,21 +310,21 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
 		// the WideToMany() function to error out, which results in unhealthy alerts.
 		// This check should be removed once inconsistencies in data source responses are solved.
-		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && dataSource == datasources.DS_INFLUXDB {
+		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && datasourceType == datasources.DS_INFLUXDB {
 			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
 			continue
 		}
+		var series []mathexp.Series
 		series, err := WideToMany(frame)
 		if err != nil {
-			return mathexp.Results{}, err
+			return "", mathexp.Results{}, err
 		}
-		for _, s := range series {
-			vals = append(vals, s)
+		for _, ser := range series {
+			vals = append(vals, ser)
 		}
 	}
 
-	responseType = "series set"
-	return mathexp.Results{
+	return "series set", mathexp.Results{
 		Values: vals, // TODO vals can be empty. Should we replace with no-data?
 	}, nil
 }

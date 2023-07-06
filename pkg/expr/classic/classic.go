@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // ConditionsCmd is a command that supports the reduction and comparison of conditions.
@@ -68,7 +69,9 @@ func (cmd *ConditionsCmd) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (cmd *ConditionsCmd) Execute(ctx context.Context, t time.Time, vars mathexp.Vars) (mathexp.Results, error) {
+func (cmd *ConditionsCmd) Execute(ctx context.Context, t time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+	ctx, span := tracer.Start(ctx, "SSE.ExecuteClassicConditions")
+	defer span.End()
 	// isFiring and isNoData contains the outcome of ConditionsCmd, and is derived from the
 	// boolean comparison of isCondFiring and isCondNoData of all conditions in ConditionsCmd
 	var isFiring, isNoData bool
