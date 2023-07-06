@@ -44,7 +44,7 @@ export interface DashboardLoaderState {
 export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   private cache: Record<string, DashboardScene> = {};
 
-  public async load(uid: string) {
+  async load(uid: string) {
     const fromCache = this.cache[uid];
     if (fromCache) {
       this.setState({ dashboard: fromCache });
@@ -82,7 +82,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
     this.setState({ dashboard, isLoading: false });
   }
 
-  public clearState() {
+  clearState() {
     this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
   }
 }
