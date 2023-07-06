@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactElement, useCallback, useRef, useState } from 'react';
+import React, { ReactElement, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -31,18 +31,12 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
     draggableRef.current?.releasePointerCapture(e.pointerId);
   }, []);
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
   if (children === undefined || React.Children.count(children) === 0) {
     return null;
   }
 
   return (
-    <div
-      className={cx(styles.container, { 'show-on-hover': !menuOpen })}
-      style={{ top: `${offset}px` }}
-      data-testid={selectors.container}
-    >
+    <div className={cx(styles.container, 'show-on-hover')} style={{ top: offset }} data-testid={selectors.container}>
       {dragClass && (
         <div
           className={cx(styles.square, styles.draggable, dragClass)}
@@ -62,7 +56,6 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
           title={title}
           placement="bottom"
           menuButtonClass={styles.menuButton}
-          onVisibleChange={setMenuOpen}
           onOpenMenu={onOpenMenu}
         />
       )}
@@ -72,10 +65,6 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    hidden: css({
-      visibility: 'hidden',
-      opacity: '0',
-    }),
     container: css({
       label: 'hover-container-widget',
       transition: `all .1s linear`,

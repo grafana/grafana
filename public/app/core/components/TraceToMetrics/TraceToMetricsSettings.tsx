@@ -12,7 +12,9 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
+import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
+import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
@@ -76,49 +78,31 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span start time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the start time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="0"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanStartTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <IntervalInput
+        label={getTimeShiftLabel('start')}
+        tooltip={getTimeShiftTooltip('start')}
+        value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+        onChange={(val) => {
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            spanStartTimeShift: val,
+          });
+        }}
+        isInvalidError={invalidTimeShiftError}
+      />
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span end time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the end time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="0"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanEndTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <IntervalInput
+        label={getTimeShiftLabel('end')}
+        tooltip={getTimeShiftTooltip('end')}
+        value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
+        onChange={(val) => {
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            spanEndTimeShift: val,
+          });
+        }}
+        isInvalidError={invalidTimeShiftError}
+      />
 
       <InlineFieldRow>
         <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>

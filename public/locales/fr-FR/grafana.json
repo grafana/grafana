@@ -25,8 +25,19 @@
   },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -37,6 +48,18 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "no-results": {
       "clear": "",
@@ -71,6 +94,14 @@
       "default": "Par défaut"
     },
     "save": "Enregistrer"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -157,6 +188,11 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
@@ -192,11 +228,15 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
@@ -252,6 +292,10 @@
     "config": {
       "title": "Administration"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Ajouter et configurer des corrélations",
       "title": "Corrélations"
@@ -274,6 +318,10 @@
     "dashboards": {
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
       "title": "Tableaux de bord"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
@@ -599,16 +647,6 @@
       "default-label": "Par défaut"
     },
     "title": "Préférences"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "",
-      "panels": ""
-    },
-    "nav-models": {
-      "alert-rules": "",
-      "manage-folder-subtitle": ""
-    }
   },
   "tag-filter": {
     "loading": "Chargement en cours...",
