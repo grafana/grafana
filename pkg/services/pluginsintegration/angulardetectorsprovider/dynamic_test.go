@@ -34,7 +34,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		t.Run("valid", func(t *testing.T) {
 			d, err := svc.patternsToDetectors(mockGCOMPatterns)
 			require.NoError(t, err)
-			checkMockDetectors(t, d)
+			checkMockDetectorsSlice(t, d)
 		})
 
 		t.Run("invalid regex", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			// Convert patterns to detector and the unknown one should be silently ignored
 			detectors, err := svc.patternsToDetectors(newPatterns)
 			require.NoError(t, err)
-			checkMockDetectors(t, detectors)
+			checkMockDetectorsSlice(t, detectors)
 		})
 	})
 
@@ -70,18 +70,21 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			err := mockStore.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
 
-			svc := provideDynamic(t, srv.URL)
-			svc.store = mockStore
+			svc := provideDynamic(t, srv.URL, provideDynamicOpts{
+				store: mockStore,
+			})
 
 			// First call to ProvideDetectors should restore from store
 			r := svc.ProvideDetectors(context.Background())
-			checkMockDetectors(t, r)
+			checkMockDetectorsSlice(t, r)
 
 			// Ensure the state is modified as well for future calls
-			checkMockDetectors(t, svc.detectors)
+			checkMockDetectors(t, svc)
 
 			// Ensure it doesn't restore on every call, by modifying the detectors directly
+			svc.mux.Lock()
 			svc.detectors = nil
+			svc.mux.Unlock()
 			newR := svc.ProvideDetectors(context.Background())
 			require.Empty(t, newR) // restore would have filled this with mockGCOMPatterns
 		})
@@ -103,7 +106,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			_, err := svc.fetch(ctx)
 			require.ErrorIs(t, err, context.DeadlineExceeded)
 			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
-			require.Empty(t, svc.detectors)
+			require.Empty(t, svc.ProvideDetectors(context.Background()))
 		})
 	})
 
@@ -121,12 +124,12 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.Zero(t, lastUpdated)
 
 			// Also check in-memory detectors
-			require.Empty(t, svc.detectors)
+			require.Empty(t, svc.ProvideDetectors(context.Background()))
 
 			// Fetch and store value
 			err = svc.updateDetectors(context.Background())
 			require.NoError(t, err)
-			checkMockDetectors(t, svc.detectors)
+			checkMockDetectors(t, svc)
 
 			// Check that the value has been updated in the kv store, by reading from the store directly
 			dbV, ok, err = svc.store.Get(context.Background())
@@ -152,7 +155,9 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			svc := provideDynamic(t, srv.URL)
 
 			// Set initial cached detectors
-			svc.setDetectors(mockGCOMDetectors)
+			svc.mux.Lock()
+			svc.detectors = mockGCOMDetectors
+			svc.mux.Unlock()
 
 			// Set initial patterns store as well
 			err = svc.store.Set(context.Background(), mockGCOMPatterns)
@@ -174,7 +179,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.Equal(t, mockGCOMPatterns, newPatterns, "store should not be modified")
 
 			// Same for in-memory detectors
-			checkMockDetectors(t, svc.detectors)
+			checkMockDetectors(t, svc)
 		})
 	})
 
@@ -184,21 +189,22 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 			err := svc.setDetectorsFromCache(context.Background())
 			require.NoError(t, err)
-			require.Empty(t, svc.detectors)
+			require.Empty(t, svc.ProvideDetectors(context.Background()))
 		})
 
-		t.Run("store is restored", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
-
+		t.Run("store is restored before returning the service", func(t *testing.T) {
 			// Populate store
-			err := svc.store.Set(context.Background(), mockGCOMPatterns)
+			store := angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
+			err := store.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
+
+			svc := provideDynamic(t, srv.URL, provideDynamicOpts{
+				store: store,
+			})
 
 			// Restore
-			require.Empty(t, svc.detectors, "initial detectors should be empty")
-			err = svc.setDetectorsFromCache(context.Background())
-			require.NoError(t, err)
-			require.Equal(t, mockGCOMDetectors, svc.detectors)
+			detectors := svc.ProvideDetectors(context.Background())
+			require.Equal(t, mockGCOMDetectors, detectors)
 		})
 	})
 }
@@ -238,7 +244,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			mockStore := &mockLastUpdatePatternsStore{
 				Service: svc.store,
 				// Expire cache
-				lastUpdated: time.Now().Add(backgroundJobInterval * -2),
+				lastUpdated: time.Now().Add(time.Hour * -24),
 			}
 			svc.store = mockStore
 
@@ -247,7 +253,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			require.NoError(t, err)
 
 			// Ensure the detectors are initially empty
-			require.Empty(t, svc.detectors)
+			require.Empty(t, svc.ProvideDetectors(context.Background()))
 
 			// Start bg service and it should call GCOM immediately
 			bg := newBackgroundServiceScenario(svc)
@@ -264,7 +270,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called once")
 
 			// Check new cached value
-			checkMockDetectors(t, svc.detectors)
+			checkMockDetectors(t, svc)
 			bg.exitAndWait()
 		})
 
@@ -329,7 +335,7 @@ func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) 
 	_, _ = writer.Write(mockGCOMResponse)
 }
 
-func checkMockDetectors(t *testing.T, detectors []angulardetector.AngularDetector) {
+func checkMockDetectorsSlice(t *testing.T, detectors []angulardetector.AngularDetector) {
 	require.Len(t, detectors, 2)
 	d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 	require.True(t, ok)
@@ -337,6 +343,10 @@ func checkMockDetectors(t *testing.T, detectors []angulardetector.AngularDetecto
 	rd, ok := detectors[1].(*angulardetector.RegexDetector)
 	require.True(t, ok)
 	require.Equal(t, `["']QueryCtrl["']`, rd.Regex.String())
+}
+
+func checkMockDetectors(t *testing.T, d *Dynamic) {
+	checkMockDetectorsSlice(t, d.ProvideDetectors(context.Background()))
 }
 
 func newMockGCOMPatterns() GCOMPatterns {
@@ -412,10 +422,21 @@ func newError500GCOMScenario() *gcomScenario {
 	}}
 }
 
-func provideDynamic(t *testing.T, gcomURL string) *Dynamic {
+type provideDynamicOpts struct {
+	store angularpatternsstore.Service
+}
+
+func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *Dynamic {
+	if len(opts) == 0 {
+		opts = []provideDynamicOpts{{}}
+	}
+	opt := opts[0]
+	if opt.store == nil {
+		opt.store = angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
+	}
 	d, err := ProvideDynamic(
 		&config.Cfg{GrafanaComURL: gcomURL},
-		angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
+		opt.store,
 		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
 	)
 	require.NoError(t, err)
