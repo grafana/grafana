@@ -196,7 +196,7 @@ This section includes examples of JMESPath expressions used for role mapping.
 
 #### Map user organization role
 
-In this example, the user is granted the `Editor` role. The role is determined by the value of the property `role` if it is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+In this example, the user has been granted the role of an `Editor`. The role assigned is based on the value of the property `role`, which must be a valid Grafana role such as `Viewer`, `Editor` or `Admin`.
 
 Payload:
 
@@ -272,7 +272,7 @@ allow_assign_grafana_admin = true
 
 With Team Sync you can map your generic OAuth2 groups to teams in Grafana so that the users are automatically added to the correct teams.
 
-Generic OAuth2 groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
+Generic OAuth2 groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 Refer to [configuration options]({{< relref "#configuration-options" >}}) for information on how to configure OAuth2 groups with Grafana using the `groups_attribute_path` configuration option.
 
 To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
