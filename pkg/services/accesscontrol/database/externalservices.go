@@ -15,8 +15,10 @@ import (
 // extServiceRoleUID generates a 160 bit unique ID using SHA-1 that fits within the 40 characters limit of the role UID.
 func extServiceRoleUID(externalServiceID string) string {
 	uid := fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, externalServiceID)
+	// Ignore gosec G505 as the hash is not used for security purposes
+	//nolint:gosec
 	hasher := sha1.New()
-	hasher.Write([]byte(uid))
+	_, _ = hasher.Write([]byte(uid))
 
 	return hex.EncodeToString(hasher.Sum(nil))
 }
