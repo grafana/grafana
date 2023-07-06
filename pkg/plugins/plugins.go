@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -155,7 +156,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// Oauth App Service Registration
-	ExternalServiceRegistration *oauth.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
+	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -485,7 +486,7 @@ func (p *Plugin) IsBundledPlugin() bool {
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return p.Class == ClassExternal
+	return !p.IsCorePlugin() && !p.IsBundledPlugin()
 }
 
 type Class string
