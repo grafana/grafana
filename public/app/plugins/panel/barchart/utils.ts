@@ -571,7 +571,12 @@ export function prepareBarChartDisplayValues(
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
     legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+      const alignedFrameField = frame.fields.find((f) => {
+        if (f.labels) {
+          return f.name === field.name && f.labels.name === field.labels?.name;
+        }
+        return f.name === field.name;
+      })!;
 
       const copy = {
         ...field,

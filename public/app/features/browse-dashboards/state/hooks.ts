@@ -129,19 +129,27 @@ export function useLoadNextChildrenPage() {
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-function createFlatTree(
+export function createFlatTree(
   folderUID: string | undefined,
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0
+  level = 0,
+  insertEmptyFolderIndicator = true
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
+    const mappedChildren = createFlatTree(
+      item.uid,
+      rootCollection,
+      childrenByUID,
+      openFolders,
+      level + 1,
+      insertEmptyFolderIndicator
+    );
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder) {
+    if (isOpen && emptyFolder && insertEmptyFolderIndicator) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -168,7 +176,9 @@ function createFlatTree(
     ? isOpen && collection?.items // keep seperate lines
     : collection?.items;
 
-  let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
+  let children = (items || []).flatMap((item) => {
+    return mapItem(item, folderUID, level);
+  });
 
   if ((level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded)) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
