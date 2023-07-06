@@ -24,23 +24,14 @@ export interface SettingsBarRenderProps {
 }
 
 export function SettingsBar({ children, title, headerElement }: SettingsBarProps) {
-  const [isContentVisible, setIsContentVisible] = useState(false);
   const styles = useStyles2(getSettingsBarStyles);
+  const [isContentVisible, setIsContentVisible] = useState(false);
+
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
 
-  const renderPropArgs: SettingsBarRenderProps = {
-    isOpen: isContentVisible,
-    onOpen: () => {
-      setIsContentVisible(true);
-    },
-    onClose: () => {
-      setIsContentVisible(false);
-    },
-  };
-
-  const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
+  const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement);
 
   return (
     <>
