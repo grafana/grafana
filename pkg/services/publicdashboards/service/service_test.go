@@ -503,21 +503,22 @@ func assertFalseIfNull(t *testing.T, expectedValue bool, nullableValue *bool) {
 }
 
 func TestUpdatePublicDashboard(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+	require.NoError(t, err)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
+	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+	dashboard2 := insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, true, []map[string]interface{}{}, nil)
+
+	service := &PublicDashboardServiceImpl{
+		log:            log.New("test.logger"),
+		store:          publicdashboardStore,
+		serviceWrapper: serviceWrapper,
+	}
+
 	t.Run("Updating public dashboard", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
-		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
-
-		service := &PublicDashboardServiceImpl{
-			log:            log.New("test.logger"),
-			store:          publicdashboardStore,
-			serviceWrapper: serviceWrapper,
-		}
-
 		isEnabled, annotationsEnabled, timeSelectionEnabled := true, false, false
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
@@ -566,22 +567,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Updating set empty time settings", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
-		require.NoError(t, err)
-		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
-		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
-
-		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
-
-		service := &PublicDashboardServiceImpl{
-			log:            log.New("test.logger"),
-			store:          publicdashboardStore,
-			serviceWrapper: serviceWrapper,
-		}
-
 		isEnabled := true
+
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
@@ -607,6 +594,34 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, &TimeSettings{}, updatedPubdash.TimeSettings)
+	})
+
+	t.Run("Should fail when public dashboard uid does not match dashboard uid", func(t *testing.T) {
+		isEnabled := true
+
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: dashboard.UID,
+			UserId:       7,
+			PublicDashboard: &PublicDashboardDTO{
+				IsEnabled: &isEnabled,
+			},
+		}
+
+		// insert initial pubdash
+		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		dto = &SavePublicDashboardDTO{
+			Uid:          savedPubdash.Uid,
+			DashboardUid: dashboard2.UID,
+			OrgID:        9,
+			UserId:       8,
+			PublicDashboard: &PublicDashboardDTO{
+				IsEnabled: &isEnabled,
+			},
+		}
+		_, err = service.Update(context.Background(), SignedInUser, dto)
+		assert.Error(t, err)
 	})
 
 	trueBooleanField := true

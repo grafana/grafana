@@ -20,9 +20,9 @@ export interface DashboardSceneState extends SceneObjectState {
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
-  public static Component = DashboardSceneRenderer;
+  static Component = DashboardSceneRenderer;
 
-  public constructor(state: DashboardSceneState) {
+  constructor(state: DashboardSceneState) {
     super(state);
 
     this.addActivationHandler(() => {
@@ -32,22 +32,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
   }
 
-  public onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
+  onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
     // Temporary hacky way to detect changes
     if (event.payload.changedObject instanceof SceneGridItem) {
       this.setState({ isDirty: true });
     }
   };
 
-  public initUrlSync() {
+  initUrlSync() {
     getUrlSyncManager().initSync(this);
   }
 
-  public onEnterEditMode = () => {
+  onEnterEditMode = () => {
     this.setState({ isEditing: true });
   };
 
-  public onDiscard = () => {
+  onDiscard = () => {
     // TODO open confirm modal if dirty
     // TODO actually discard changes
     this.setState({ isEditing: false });

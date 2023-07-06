@@ -25,7 +25,7 @@ export interface GroupByTransformerOptions {
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   name: 'Group by',
-  description: 'Group the data by a field values then process calculations for each group',
+  description: 'Group the data by a field values then process calculations for each group.',
   defaultOptions: {
     fields: {},
   },
