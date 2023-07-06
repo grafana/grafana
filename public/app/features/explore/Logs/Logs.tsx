@@ -185,7 +185,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>): void {
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
@@ -196,13 +196,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
       );
     }
 
-    if (this.props.logsFrames !== prevProps.logsFrames) {
+    if (
+      this.state.visualisationType === 'table' &&
+      (this.props.logsFrames !== prevProps.logsFrames || prevState.visualisationType === 'logs')
+    ) {
       this.prepareTableData();
     }
   }
 
   componentDidMount(): void {
-    this.prepareTableData();
+    if (this.state.visualisationType === 'table' && this.props.logsFrames) {
+      this.prepareTableData();
+    }
   }
 
   onLogRowHover = (row?: LogRowModel) => {
@@ -529,7 +534,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
           },
         ];
       });
-
     if (transformations.length > 0) {
       const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
       this.setState({
@@ -741,7 +745,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           />
           <div className={styles.logsSection}>
             {this.state.visualisationType === 'table' && hasData && this.state.tableFrame && (
-              <div className={styles.logRows}>
+              <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logsnavigation and padding */}
                 <Table
                   data={this.state.tableFrame}
