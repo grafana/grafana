@@ -52,6 +52,11 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 		httpClient: makeHttpClient(),
 		baseURL:    cfg.GrafanaComURL,
 	}
+	if d.IsDisabled() {
+		// Do not attempt to restore if the background service is disabled (no feature flag)
+		return d, nil
+	}
+
 	// Perform the initial restore from db
 	st := time.Now()
 	d.log.Debug("Restoring cache")
