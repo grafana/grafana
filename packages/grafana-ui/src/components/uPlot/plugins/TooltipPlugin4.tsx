@@ -102,7 +102,10 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     // e.g. to highlight the hovered/closest series
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
-      if (closestSeriesIdx !== seriesIdx) {
+      // don't jiggle focused series styling when there's only one series
+      const isMultiSeries = u.series.length > 2;
+
+      if (isMultiSeries && closestSeriesIdx !== seriesIdx) {
         closestSeriesIdx = seriesIdx;
 
         if (!pendingRender) {
