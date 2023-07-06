@@ -546,6 +546,13 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:         "dashboardEmbed",
+			Description:  "Allow embedding dashboard for external use in Code editors",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAsCodeSquad,
+		},
+		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
 			Stage:        FeatureStageExperimental,
@@ -613,6 +620,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "prometheusIncrementalQueryInstrumentation",
+			Description:  "Adds RudderStack events to incremental queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

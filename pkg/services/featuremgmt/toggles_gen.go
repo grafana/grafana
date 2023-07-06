@@ -327,6 +327,10 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
+	// FlagDashboardEmbed
+	// Allow embedding dashboard for external use in Code editors
+	FlagDashboardEmbed = "dashboardEmbed"
+
 	// FlagFrontendSandboxMonitorOnly
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
@@ -366,4 +370,8 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagPrometheusIncrementalQueryInstrumentation
+	// Adds RudderStack events to incremental queries
+	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 )
