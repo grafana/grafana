@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceDescription } from '@grafana/experimental';
 import { Alert, DataSourceHttpSettings, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -40,6 +41,11 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
         </Alert>
       )}
+      <DataSourceDescription
+        dataSourceName="Prometheus"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/"
+      ></DataSourceDescription>
+      <div className={styles.hrTopSpace} />
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9090"
         dataSourceConfig={options}
