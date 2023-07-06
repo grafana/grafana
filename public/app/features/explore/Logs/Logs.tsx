@@ -51,13 +51,13 @@ import {
   Collapse,
   Table,
 } from '@grafana/ui';
-import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { getState, dispatch } from 'app/store/store';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
+import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
 import { getFieldLinksForExplore } from '../utils/links';
@@ -94,7 +94,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<any>;
+  getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
   getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
@@ -116,7 +116,7 @@ interface State {
   prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
-  logsSortOrder: LogsSortOrder | null;
+  logsSortOrder: LogsSortOrder;
   isFlipping: boolean;
   displayedFields: string[];
   forceEscape: boolean;
@@ -612,7 +612,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             open={contextOpen}
             row={contextRow}
             onClose={this.onCloseContext}
-            getRowContext={getRowContext}
+            getRowContext={(row, options) => getRowContext(row, contextRow, options)}
             getRowContextQuery={getRowContextQuery}
             getLogRowContextUi={getLogRowContextUi}
             logsSortOrder={logsSortOrder}

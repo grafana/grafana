@@ -27,7 +27,7 @@ export interface ReduceTransformerOptions {
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   name: 'Reduce',
-  description: 'Reduce all rows or data points to a single value using a function like max, min, mean or last',
+  description: 'Reduce all rows or data points to a single value using a function like max, min, mean or last.',
   defaultOptions: {
     reducers: [ReducerID.max],
   },

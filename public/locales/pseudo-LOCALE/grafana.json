@@ -1,13 +1,65 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Ŗőľę",
+      "team-label": "Ŧęäm",
+      "title": "Åđđ pęřmįşşįőŉ ƒőř",
+      "user-label": "Ůşęř"
+    },
+    "add-permissions": {
+      "save": "Ŝävę"
+    },
+    "permission-list": {
+      "permission": "Pęřmįşşįőŉ"
+    },
+    "permissions": {
+      "add-label": "Åđđ ä pęřmįşşįőŉ",
+      "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
+      "permissions-change-warning": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
+      "role": "Ŗőľę",
+      "team": "Ŧęäm",
+      "title": "Pęřmįşşįőŉş",
+      "user": "Ůşęř"
+    }
+  },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "Cäŉčęľ",
       "delete-button": "Đęľęŧę",
-      "move-button": "Mővę"
+      "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "delete-modal-title": "Đęľęŧę",
+      "deleting": "Đęľęŧįŉģ...",
+      "manage-permissions-button": "Mäŉäģę pęřmįşşįőŉş",
+      "move-button": "Mővę",
+      "move-modal-alert": "Mővįŉģ ŧĥįş įŧęm mäy čĥäŉģę įŧş pęřmįşşįőŉş.",
+      "move-modal-field-label": "Főľđęř ŉämę",
+      "move-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ mővę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "move-modal-title": "Mővę",
+      "moving": "Mővįŉģ...",
+      "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
     "dashboards-tree": {
       "name-column": "Ńämę",
       "tags-column": "Ŧäģş"
+    },
+    "folder-actions-button": {
+      "delete": "Đęľęŧę",
+      "folder-actions": "Főľđęř äčŧįőŉş",
+      "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
+      "move": "Mővę"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Åľęřŧ řūľęş",
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş",
+      "permissions": "Pęřmįşşįőŉş",
+      "settings": "Ŝęŧŧįŉģş"
+    },
+    "new-folder-form": {
+      "cancel-label": "Cäŉčęľ",
+      "create-label": "Cřęäŧę",
+      "name-label": "Főľđęř ŉämę"
     },
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
@@ -42,6 +94,14 @@
       "default": "Đęƒäūľŧ"
     },
     "save": "Ŝävę"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Đäŧä şőūřčęş"
+    },
+    "search": {
+      "placeholder": "Ŝęäřčĥ äľľ"
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -128,6 +188,11 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    }
+  },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
@@ -136,6 +201,10 @@
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
       "loading": "Ŀőäđįŉģ őpŧįőŉş...",
       "no-options": "Ńő őpŧįőŉş ƒőūŉđ"
+    },
+    "select": {
+      "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
+      "placeholder": "Cĥőőşę"
     }
   },
   "library-panel": {
@@ -159,11 +228,15 @@
   },
   "login": {
     "error": {
+      "blocked": "Ÿőū ĥävę ęχčęęđęđ ŧĥę ŉūmþęř őƒ ľőģįŉ äŧŧęmpŧş ƒőř ŧĥįş ūşęř. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
       "invalid-user-or-password": "Ĩŉväľįđ ūşęřŉämę őř päşşŵőřđ",
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"
+    },
     "admin": {
       "subtitle": "Mäŉäģę şęřvęř-ŵįđę şęŧŧįŉģş äŉđ äččęşş ŧő řęşőūřčęş şūčĥ äş őřģäŉįžäŧįőŉş, ūşęřş, äŉđ ľįčęŉşęş",
       "title": "Ŝęřvęř äđmįŉ"
@@ -219,6 +292,10 @@
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
     },
+    "connections": {
+      "subtitle": "ßřőŵşę äŉđ čřęäŧę ŉęŵ čőŉŉęčŧįőŉş",
+      "title": "Cőŉŉęčŧįőŉş"
+    },
     "correlations": {
       "subtitle": "Åđđ äŉđ čőŉƒįģūřę čőřřęľäŧįőŉş",
       "title": "Cőřřęľäŧįőŉş"
@@ -241,6 +318,10 @@
     "dashboards": {
       "subtitle": "Cřęäŧę äŉđ mäŉäģę đäşĥþőäřđş ŧő vįşūäľįžę yőūř đäŧä",
       "title": "Đäşĥþőäřđş"
+    },
+    "data-sources": {
+      "subtitle": "Vįęŵ äŉđ mäŉäģę yőūř čőŉŉęčŧęđ đäŧä şőūřčę čőŉŉęčŧįőŉş",
+      "title": "Đäŧä şőūřčęş"
     },
     "datasources": {
       "subtitle": "Åđđ äŉđ čőŉƒįģūřę đäŧä şőūřčęş",

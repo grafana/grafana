@@ -16,6 +16,7 @@ type Props = {
   configPath?: string;
   authType?: string;
   badges?: JSX.Element[];
+  onClick?: () => void;
 };
 
 export function ProviderCard({
@@ -26,12 +27,13 @@ export function ProviderCard({
   configPath,
   authType,
   badges,
+  onClick,
 }: Props) {
   const styles = useStyles2(getStyles);
   configPath = BASE_PATH + (configPath || providerId);
 
   return (
-    <Card href={configPath} className={styles.container}>
+    <Card href={configPath} className={styles.container} onClick={() => onClick && onClick()}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
       {configFoundInIniFile && (
         <>

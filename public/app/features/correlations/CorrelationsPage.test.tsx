@@ -73,7 +73,14 @@ const renderWithContext = async (
     },
     fetch: (options: BackendSrvRequest) => {
       return new Observable((s) => {
-        s.next(merge(createFetchCorrelationsResponse({ url: options.url, data: correlations })));
+        s.next(
+          merge(
+            createFetchCorrelationsResponse({
+              url: options.url,
+              data: { correlations, page: 1, limit: 5, totalCount: 0 },
+            })
+          )
+        );
         s.complete();
       });
     },
