@@ -287,7 +287,12 @@ export class QueryGroup extends PureComponent<Props, State> {
     const { isDataSourceModalOpen } = this.state;
 
     const commonProps = {
+      metrics: true,
+      mixed: true,
+      dashboard: true,
+      variables: true,
       current: this.props.options.dataSource,
+      uploadFile: true,
       onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
         await this.onChangeDataSource(ds, defaultQueries);
         this.onCloseDataSourceModal();
@@ -299,7 +304,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         {isDataSourceModalOpen && config.featureToggles.advancedDataSourcePicker && (
           <DataSourceModal {...commonProps} onDismiss={this.onCloseDataSourceModal}></DataSourceModal>
         )}
-        <DataSourcePicker {...commonProps} metrics={true} mixed={true} dashboard={true} variables={true} />
+        <DataSourcePicker {...commonProps} />
       </>
     );
   };
