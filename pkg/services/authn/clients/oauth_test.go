@@ -130,7 +130,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			},
 			expectedIdentity: &authn.Identity{
 				Email:           "some@email.com",
-				AuthenticatedBy: "oauth_azuread",
+				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
 				Groups:          []string{"grp1", "grp2"},
@@ -169,7 +169,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			},
 			expectedIdentity: &authn.Identity{
 				Email:           "some@email.com",
-				AuthenticatedBy: "oauth_azuread",
+				AuthenticatedBy: login.AzureADAuthModule,
 				AuthID:          "123",
 				Name:            "name",
 				Groups:          []string{"grp1", "grp2"},

@@ -44,7 +44,7 @@ func TestAuthenticateJWT(t *testing.T) {
 		Name:            "Eai Doe",
 		Email:           "eai.doe@cor.po",
 		IsGrafanaAdmin:  boolPtr(false),
-		AuthenticatedBy: "jwt",
+		AuthenticatedBy: login.JWTModule,
 		AuthID:          "1234567890",
 		IsDisabled:      false,
 		HelpFlags1:      0,

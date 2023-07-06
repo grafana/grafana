@@ -44,7 +44,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				Login:           "test",
 				Name:            "name",
 				Email:           "email@email.com",
-				AuthenticatedBy: "authproxy",
+				AuthenticatedBy: login.AuthProxyAuthModule,
 				AuthID:          "test",
 				Groups:          []string{"grp1", "grp2"},
 				ClientParams: authn.ClientParams{
@@ -68,7 +68,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 			expectedIdentity: &authn.Identity{
 				Login:           "test@test.com",
 				Email:           "test@test.com",
-				AuthenticatedBy: "authproxy",
+				AuthenticatedBy: login.AuthProxyAuthModule,
 				AuthID:          "test@test.com",
 				ClientParams: authn.ClientParams{
 					SyncUser:     true,
