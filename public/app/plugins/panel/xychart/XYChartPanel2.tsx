@@ -15,6 +15,7 @@ import { config } from '@grafana/runtime';
 import {
   Portal,
   TooltipDisplayMode,
+  TooltipPlugin4,
   UPlotChart,
   UPlotConfigBuilder,
   VizLayout,
@@ -215,10 +216,17 @@ export const XYChartPanel2 = (props: Props) => {
     <>
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} />
+          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight}>
+            <TooltipPlugin4 config={builder} render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+              // console.log('render', dataIdxs, seriesIdx);
+              // return getRandomContent();
+              // return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
+              return <pre>{JSON.stringify({dataIdxs, seriesIdx}, null, 2)}</pre>;
+            }} />
+          </UPlotChart>
         )}
       </VizLayout>
-      <Portal>
+      {/* <Portal>
         {hover && props.options.tooltip.mode !== TooltipDisplayMode.None && (
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
@@ -255,7 +263,7 @@ export const XYChartPanel2 = (props: Props) => {
             />
           </VizTooltipContainer>
         )}
-      </Portal>
+      </Portal> */}
     </>
   );
 };
