@@ -18,11 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
-const (
-	cacheRestoreTimeout = time.Second * 10
-	gcomFetchTimeout    = time.Minute * 1
-)
-
 // backgroundJobInterval is the interval that passes between background job runs.
 // It can be overwritten in tests.
 var backgroundJobInterval = time.Hour * 1
@@ -62,9 +57,7 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 	d.mux.Lock()
 	go func() {
 		d.log.Debug("Restoring cache")
-		ctx, canc := context.WithTimeout(context.Background(), cacheRestoreTimeout)
-		defer canc()
-		if err := d.setDetectorsFromCache(ctx); err != nil {
+		if err := d.setDetectorsFromCache(context.Background()); err != nil {
 			d.log.Warn("Cache restore failed", "error", err)
 		}
 		d.mux.Unlock()
@@ -226,11 +219,9 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			st := time.Now()
 			d.log.Debug("Updating patterns")
 
-			opCtx, canc := context.WithTimeout(ctx, gcomFetchTimeout)
-			if err := d.updateDetectors(opCtx); err != nil {
+			if err := d.updateDetectors(context.Background()); err != nil {
 				d.log.Error("Error while updating detectors", "error", err)
 			}
-			canc()
 			d.log.Debug("Patterns update finished", "duration", time.Since(st))
 
 			// Restore default ticker if we run with a shorter interval the first time
