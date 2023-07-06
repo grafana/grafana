@@ -17,7 +17,7 @@ interface DashboardSceneState extends SceneObjectState {
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
-  public static Component = DashboardSceneRenderer;
+  static Component = DashboardSceneRenderer;
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
