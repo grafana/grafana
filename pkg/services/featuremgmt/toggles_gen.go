@@ -354,4 +354,8 @@ const (
 	// FlagElasticToggleableFilters
 	// Enable support to toggle filters off from the query through the Logs Details component
 	FlagElasticToggleableFilters = "elasticToggleableFilters"
+
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
 )

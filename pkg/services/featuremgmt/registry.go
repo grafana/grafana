@@ -593,5 +593,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:         "logsExploreTableVisualisation",
+			Description:  "A table visualisation for logs in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )

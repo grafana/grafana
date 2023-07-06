@@ -118,6 +118,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingLokiRangeToInstant`             | Rewrites eligible loki range queries to instant queries                                                      |
 | `flameGraphV2`                           | New version of flame graph with new features                                                                 |
 | `elasticToggleableFilters`               | Enable support to toggle filters off from the query through the Logs Details component                       |
+| `logsExploreTableVisualisation`          | A table visualisation for logs in Explore                                                                    |
 
 ## Development feature toggles
 
