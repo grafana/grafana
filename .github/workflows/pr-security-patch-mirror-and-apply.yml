@@ -16,20 +16,11 @@ jobs:
   trigger_downstream_security_mirror:
     concurrency: security-mirror-${{ github.ref }}
     if: github.event.pull_request.merged == true
-    uses: grafana/security-patch-actions/.github/workflows/mirror-branch.yml@main
+    uses: grafana/security-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
     with:
       ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
       src_repo: "${{ github.repository }}"
       dest_repo: "${{ github.repository }}-security-mirror"
-    secrets: inherit
-
-  trigger_downstream_security_patching:
-    needs: trigger_downstream_security_mirror
-    concurrency: security-mirror-${{ github.ref }}
-    if: github.event.pull_request.merged == true
-    uses: grafana/security-patch-actions/.github/workflows/apply-patches.yml@main
-    with:
-      ref: "${{ github.base_ref }}"
-      dest_repo: "${{ github.repository }}-security-mirror"
       patch_repo: "${{ github.repository }}-security-patches"
     secrets: inherit
+
