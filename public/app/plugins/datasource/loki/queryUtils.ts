@@ -25,6 +25,8 @@ import { DataQuery } from '@grafana/schema';
 
 import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -295,7 +297,11 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   return query;
 };
 
-export function formatLogqlQuery(query: string) {
+export function formatLogqlQuery(query: string, datasource?: LokiDatasource) {
+  if (datasource && isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars))) {
+    return query;
+  }
+
   let transformedQuery = replaceVariables(query);
   const transformationMatches = [];
   const tree = parser.parse(transformedQuery);

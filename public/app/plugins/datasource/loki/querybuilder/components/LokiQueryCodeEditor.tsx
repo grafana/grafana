@@ -35,7 +35,7 @@ export function LokiQueryCodeEditor({
   const styles = useStyles2(getStyles);
 
   const lokiFormatQuery = config.featureToggles.lokiFormatQuery;
-  const onClickFormatQueryButton = async () => onChange({ ...query, expr: formatLogqlQuery(query.expr) });
+  const onClickFormatQueryButton = async () => onChange({ ...query, expr: formatLogqlQuery(query.expr, datasource) });
 
   return (
     <div className={styles.wrapper}>
