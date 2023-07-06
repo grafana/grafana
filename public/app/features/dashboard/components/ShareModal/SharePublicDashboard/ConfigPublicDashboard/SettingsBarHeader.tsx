@@ -2,17 +2,20 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, useStyles2 } from '@grafana/ui';
+import { IconButton, ReactUtils, useStyles2 } from '@grafana/ui';
 
-export interface SettingsBarHeaderProps {
-  headerElement?: React.ReactNode;
-  isContentVisible: boolean;
+export interface Props {
   onRowToggle: () => void;
+  isContentVisible?: boolean;
   title?: string;
+  headerElement?: React.ReactNode | ((props: { className?: string }) => React.ReactNode);
 }
 
-export function SettingsBarHeader({ headerElement, isContentVisible, onRowToggle, title }: SettingsBarHeaderProps) {
+export function SettingsBarHeader({ headerElement, isContentVisible = false, onRowToggle, title }: Props) {
   const styles = useStyles2(getStyles);
+
+  const headerElementRendered =
+    headerElement && ReactUtils.renderOrCallToRender(headerElement, { className: styles.summaryWrapper });
 
   return (
     <div className={styles.header}>
@@ -32,7 +35,7 @@ export function SettingsBarHeader({ headerElement, isContentVisible, onRowToggle
             <div className={styles.title}>{title}</div>
           </div>
         )}
-        {headerElement}
+        {headerElementRendered}
       </div>
     </div>
   );
@@ -48,10 +51,6 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.borderRadius(1),
       background: theme.colors.background.secondary,
       minHeight: theme.spacing(4),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      whiteSpace: 'nowrap',
 
       '&:focus': {
         outline: 'none',
@@ -70,16 +69,25 @@ function getStyles(theme: GrafanaTheme2) {
     titleWrapper: css({
       display: 'flex',
       alignItems: 'center',
-      flexGrow: 1,
       cursor: 'pointer',
       overflow: 'hidden',
       marginRight: `${theme.spacing(0.5)}`,
+      [theme.breakpoints.down('sm')]: {
+        flex: '1 1',
+      },
     }),
     title: css({
       fontWeight: theme.typography.fontWeightBold,
       marginLeft: theme.spacing(0.5),
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+    }),
+    summaryWrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      [theme.breakpoints.down('sm')]: {
+        flex: '2 2',
+      },
     }),
   };
 }

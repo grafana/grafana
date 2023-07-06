@@ -12,10 +12,8 @@ import {
   Input,
   Label,
   ModalsContext,
-  Spinner,
   Switch,
   useStyles2,
-  TimeRangeLabel,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
@@ -40,6 +38,7 @@ import {
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
 import { SettingsBar } from './SettingsBar';
+import { SettingsSummary } from './SettingsSummary';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -105,26 +104,6 @@ const ConfigPublicDashboard = () => {
     });
   };
 
-  function renderCollapsedText(styles: StylesType): React.ReactNode | undefined {
-    if (isDataLoading) {
-      return (
-        <div className={styles.collapsed}>
-          <Spinner inline={true} size={14} />
-        </div>
-      );
-    }
-
-    return (
-      <>
-        <div className={styles.collapsed}>
-          Time range = <TimeRangeLabel className={styles.timeRange} value={timeRange} />
-        </div>
-        <div className={styles.collapsed}>{`Time range picker = ${publicDashboard?.timeSelectionEnabled}`}</div>
-        <div className={styles.collapsed}>{`Annotations = ${publicDashboard?.annotationsEnabled}`}</div>
-      </>
-    );
-  }
-
   return (
     <div className={styles.configContainer}>
       {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
@@ -179,7 +158,18 @@ const ConfigPublicDashboard = () => {
       </Field>
 
       <Field className={styles.fieldSpace}>
-        <SettingsBar title="Settings" headerElement={renderCollapsedText(styles)}>
+        <SettingsBar
+          title="Settings"
+          headerElement={({ className }) => (
+            <SettingsSummary
+              className={className}
+              isDataLoading={isDataLoading}
+              timeRange={timeRange}
+              timeSelectionEnabled={publicDashboard?.timeSelectionEnabled}
+              annotationsEnabled={publicDashboard?.annotationsEnabled}
+            />
+          )}
+        >
           <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
         </SettingsBar>
       </Field>
@@ -225,12 +215,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     margin-bottom: 0;
   `,
-  collapsed: css`
-    label: collapsed text;
-    margin-left: ${theme.spacing.gridSize * 2}px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    color: ${theme.colors.text.secondary};
-  `,
   timeRange: css({
     display: 'inline-block',
   }),
@@ -251,6 +235,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
 });
-type StylesType = ReturnType<typeof getStyles>;
 
 export default ConfigPublicDashboard;
