@@ -53,9 +53,12 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 		baseURL:    cfg.GrafanaComURL,
 	}
 	// Perform the initial restore from db
+	st := time.Now()
 	d.log.Debug("Restoring cache")
 	if err := d.setDetectorsFromCache(context.Background()); err != nil {
 		d.log.Warn("Cache restore failed", "error", err)
+	} else {
+		d.log.Info("Restored cache from database", "duration", time.Since(st))
 	}
 	return d, nil
 }
@@ -208,12 +211,12 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		select {
 		case <-tick:
 			st := time.Now()
-			d.log.Debug("Updating patterns")
+			d.log.Info("Updating patterns")
 
 			if err := d.updateDetectors(context.Background()); err != nil {
 				d.log.Error("Error while updating detectors", "error", err)
 			}
-			d.log.Debug("Patterns update finished", "duration", time.Since(st))
+			d.log.Info("Patterns update finished", "duration", time.Since(st))
 
 			// Restore default ticker if we run with a shorter interval the first time
 			ticker.Reset(backgroundJobInterval)
