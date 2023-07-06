@@ -143,7 +143,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 
 		if (userInfo.Role == "" || userInfo.Role == s.defaultRole()) && !s.skipOrgRoleSync {
-			role, grafanaAdmin, err := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
+			role, grafanaAdmin, err := s.extractRoleAndAdmin(data.rawJSON, []string{})
 			if err != nil {
 				return nil, err
 			}

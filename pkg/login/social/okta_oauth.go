@@ -83,7 +83,7 @@ func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *o
 	var isGrafanaAdmin *bool
 	if !s.skipOrgRoleSync {
 		var grafanaAdmin bool
-		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups, true)
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
 		if err != nil {
 			return nil, err
 		}
