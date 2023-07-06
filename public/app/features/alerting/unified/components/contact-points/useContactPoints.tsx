@@ -34,14 +34,17 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
   });
 
   // fetch the latest config from the Alertmanager
-  const fetchAlertmanagerConfiguration = alertmanagerApi.useGetAlertmanagerConfigurationQuery(selectedAlertmanager, {
-    refetchOnFocus: true,
-    refetchOnReconnect: true,
-    selectFromResult: (result) => ({
-      ...result,
-      contactPoints: result.data ? enhanceContactPointsWithStatus(result.data, fetchContactPointsStatus.data) : [],
-    }),
-  });
+  const fetchAlertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
+    selectedAlertmanager,
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      selectFromResult: (result) => ({
+        ...result,
+        contactPoints: result.data ? enhanceContactPointsWithStatus(result.data, fetchContactPointsStatus.data) : [],
+      }),
+    }
+  );
 
   // TODO kinda yucky to combine hooks like this, better alternative?
   const error = fetchAlertmanagerConfiguration.error ?? fetchContactPointsStatus.error;
