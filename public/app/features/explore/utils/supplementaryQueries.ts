@@ -15,9 +15,10 @@ import {
   LogsVolumeType,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { makeDataFramesForLogs } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types';
+
+import { makeDataFramesForLogs } from '../../logs/logsModel';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,

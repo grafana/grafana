@@ -13,7 +13,6 @@ GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 targets := $(shell echo '$(sources)' | tr "," " ")
@@ -75,7 +74,7 @@ gen-cue: ## Do all CUE/Thema code generation
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
-	go generate ./pkg/kindsys/report.go
+	go generate ./pkg/kindsysreport/codegen/report.go
 
 gen-go: $(WIRE)
 	@echo "generate go files"

@@ -22,7 +22,6 @@ import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
-import { TypeCell } from './TypeCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
@@ -36,11 +35,11 @@ interface DashboardsTreeProps {
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
-  requestLoadMore: (startIndex: number, endIndex: number) => void;
+  requestLoadMore: (folderUid: string | undefined) => void;
 }
 
-const HEADER_HEIGHT = 35;
-const ROW_HEIGHT = 35;
+const HEADER_HEIGHT = 36;
+const ROW_HEIGHT = 36;
 
 export function DashboardsTree({
   items,
@@ -85,20 +84,13 @@ export function DashboardsTree({
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
-    const typeColumn: DashboardsTreeColumn = {
-      id: 'type',
-      width: 1,
-      Header: t('browse-dashboards.dashboards-tree.type-column', 'Type'),
-      Cell: TypeCell,
-    };
-
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
       width: 2,
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
-    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+    const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, canSelect]);
@@ -127,9 +119,10 @@ export function DashboardsTree({
 
   const handleLoadMore = useCallback(
     (startIndex: number, endIndex: number) => {
-      requestLoadMore(startIndex, endIndex);
+      const { parentUID } = items[startIndex];
+      requestLoadMore(parentUID);
     },
-    [requestLoadMore]
+    [requestLoadMore, items]
   );
 
   return (
