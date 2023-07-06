@@ -80,6 +80,17 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     [item, onSelectionChange]
   );
 
+  const handleKeyDown = useCallback(
+    (ev: React.KeyboardEvent<HTMLInputElement>) => {
+      // Expand/collapse folder on arrow keys
+      if (foldersAreOpenable && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) {
+        ev.preventDefault();
+        onFolderClick(item.uid, ev.key === 'ArrowRight');
+      }
+    },
+    [item.uid, foldersAreOpenable, onFolderClick]
+  );
+
   if (item.kind !== 'folder') {
     return process.env.NODE_ENV !== 'production' ? (
       <span style={virtualStyles} className={styles.row}>
@@ -98,6 +109,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         name="folder"
         checked={item.uid === selectedFolder}
         onChange={handleRadioChange}
+        onKeyDown={handleKeyDown}
       />
 
       <div className={styles.rowBody}>
@@ -107,6 +119,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <IconButton
             size={CHEVRON_SIZE}
             onClick={handleClick}
+            // tabIndex not needed here because we handle keyboard navigation at the radio button level
+            tabIndex={-1}
             aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
             name={isOpen ? 'angle-down' : 'angle-right'}
           />

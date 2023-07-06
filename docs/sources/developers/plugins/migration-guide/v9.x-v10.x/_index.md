@@ -1,4 +1,6 @@
 ---
+title: Migrate plugins from Grafana version 9.x to 10.x
+menuTitle: v9.x to v10.x
 description: Guide for migrating plugins from Grafana v9.x to v10.x
 keywords:
   - grafana
@@ -6,8 +8,6 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana 9.x to 10.x
-menutitle: v9.x to v10.x
 weight: 1900
 ---
 

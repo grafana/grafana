@@ -25,8 +25,19 @@
   },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "Cancel",
       "delete-button": "Delete",
-      "move-button": "Move"
+      "delete-modal-text": "This action will delete the following content:",
+      "delete-modal-title": "Delete",
+      "deleting": "Deleting...",
+      "manage-permissions-button": "Manage permissions",
+      "move-button": "Move",
+      "move-modal-alert": "Moving this item may change its permissions.",
+      "move-modal-field-label": "Folder name",
+      "move-modal-text": "This action will move the following content:",
+      "move-modal-title": "Move",
+      "moving": "Moving...",
+      "new-folder-name-required-phrase": "Folder name is required."
     },
     "dashboards-tree": {
       "name-column": "Name",
@@ -37,6 +48,13 @@
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Alert rules",
+      "dashboards": "Dashboards",
+      "panels": "Panels",
+      "permissions": "Permissions",
+      "settings": "Settings"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",
@@ -629,16 +647,6 @@
       "default-label": "Default"
     },
     "title": "Preferences"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "Dashboards",
-      "panels": "Panels"
-    },
-    "nav-models": {
-      "alert-rules": "Alert rules",
-      "manage-folder-subtitle": "Manage folder dashboards and permissions"
-    }
   },
   "tag-filter": {
     "loading": "Loading...",
