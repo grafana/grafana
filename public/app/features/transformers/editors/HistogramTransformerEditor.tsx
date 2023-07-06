@@ -1,6 +1,12 @@
 import React, { useCallback } from 'react';
 
-import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  DataTransformerID,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import {
   HistogramTransformerOptions,
   histogramFieldInfo,
@@ -81,4 +87,5 @@ export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTr
   transformation: standardTransformers.histogramTransformer,
   name: standardTransformers.histogramTransformer.name,
   description: standardTransformers.histogramTransformer.description,
+  categories: new Set([TransformerCategory.CreateNewVisualization]),
 };

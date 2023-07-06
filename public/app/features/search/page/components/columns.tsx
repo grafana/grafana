@@ -246,6 +246,8 @@ export const generateColumns = (
       Header: () => <div className={styles.sortedHeader}>Score</div>,
       Cell: (p) => {
         return (
+          // TODO: fix keyboard a11y
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div
             {...p.cellProps}
             className={cx(styles.cell, styles.explainItem)}
@@ -298,6 +300,8 @@ function makeDataSourceColumn(
             const icon = settings?.meta?.info?.logos?.small;
             if (icon) {
               return (
+                // TODO: fix keyboard a11y
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                 <span
                   key={i}
                   onClick={(e) => {
