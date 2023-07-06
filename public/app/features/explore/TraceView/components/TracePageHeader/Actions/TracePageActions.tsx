@@ -15,6 +15,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     TracePageActions: css`
       label: TracePageActions;
       display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 4px;
     `,
     feedback: css`
