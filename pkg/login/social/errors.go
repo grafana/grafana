@@ -16,8 +16,8 @@ var (
 
 	errRoleAttributeStrictViolation = errutil.NewBase(errutil.StatusBadRequest,
 		"oauth.role_attribute_strict_violation",
-		errutil.WithPublicMessage("idP did not return a role attribute, please contact your administrator"))
+		errutil.WithPublicMessage("IdP did not return a role attribute, please contact your administrator"))
 
 	errInvalidRole = errutil.NewBase(errutil.StatusBadRequest, "oauth.invalid_role",
-		errutil.WithPublicMessage("idP did not return a valid role attribute, please contact your administrator"))
+		errutil.WithPublicMessage("IdP did not return a valid role attribute, please contact your administrator"))
 )
