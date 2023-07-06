@@ -16,10 +16,8 @@ import {
   Switch,
   useStyles2,
   TimeRangeLabel,
-  ControlledCollapse,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
@@ -41,6 +39,7 @@ import {
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
+import { SettingsBar } from './SettingsBar';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -54,7 +53,6 @@ const ConfigPublicDashboard = () => {
   const styles = useStyles2(getStyles);
   const isDesktop = useIsDesktop();
   const { showModal, hideModal } = useContext(ModalsContext);
-  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
@@ -108,10 +106,6 @@ const ConfigPublicDashboard = () => {
   };
 
   function renderCollapsedText(styles: StylesType): React.ReactNode | undefined {
-    if (isSettingsOpen) {
-      return undefined;
-    }
-
     if (isDataLoading) {
       return (
         <div className={styles.collapsed}>
@@ -185,26 +179,9 @@ const ConfigPublicDashboard = () => {
       </Field>
 
       <Field className={styles.fieldSpace}>
-        <QueryOperationRow
-          id="settings"
-          index={0}
-          title="Settings"
-          headerElement={renderCollapsedText(styles)}
-          isOpen={isSettingsOpen}
-        >
+        <SettingsBar title="Settings" headerElement={renderCollapsedText(styles)}>
           <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
-        </QueryOperationRow>
-      </Field>
-
-      <Field className={styles.fieldSpace}>
-        <ControlledCollapse
-          label="Settings"
-          isOpen={isSettingsOpen}
-          loading={isDataLoading}
-          className={styles.settingsContainer}
-        >
-          <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
-        </ControlledCollapse>
+        </SettingsBar>
       </Field>
 
       <Layout
