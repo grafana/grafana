@@ -555,6 +555,82 @@ describe('CorrelationsPage', () => {
     });
   });
 
+  describe('With correlations with datasources the user cannot access', () => {
+    let queryCellsByColumnName: (columnName: Matcher) => HTMLTableCellElement[];
+    beforeEach(async () => {
+      const renderResult = await renderWithContext(
+        {
+          loki: mockDataSource(
+            {
+              uid: 'loki',
+              name: 'loki',
+              readOnly: false,
+              jsonData: {},
+              access: 'direct',
+              type: 'datasource',
+            },
+            {
+              logs: true,
+            }
+          ),
+        },
+        [
+          {
+            sourceUID: 'loki',
+            targetUID: 'loki',
+            uid: '1',
+            label: 'Loki to Loki',
+            config: {
+              field: 'line',
+              target: {},
+              type: 'query',
+              transformations: [
+                { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
+              ],
+            },
+          },
+          {
+            sourceUID: 'loki',
+            targetUID: 'prometheus',
+            uid: '2',
+            label: 'Loki to Prometheus',
+            config: {
+              field: 'line',
+              target: {},
+              type: 'query',
+              transformations: [
+                { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
+              ],
+            },
+          },
+          {
+            sourceUID: 'prometheus',
+            targetUID: 'loki',
+            uid: '3',
+            label: 'Prometheus to Loki',
+            config: { field: 'label', target: {}, type: 'query' },
+          },
+          {
+            sourceUID: 'prometheus',
+            targetUID: 'prometheus',
+            uid: '4',
+            label: 'Prometheus to Prometheus',
+            config: { field: 'label', target: {}, type: 'query' },
+          },
+        ]
+      );
+      queryCellsByColumnName = renderResult.queryCellsByColumnName;
+    });
+
+    it("doesn't show correlations from source or target datasources the user doesn't have access to", async () => {
+      await screen.findByRole('table');
+
+      const labels = queryCellsByColumnName('Label');
+      expect(labels.length).toBe(1);
+      expect(labels[0].textContent).toBe('Loki to Loki');
+    });
+  });
+
   describe('Read only correlations', () => {
     const correlations: Correlation[] = [
       {
