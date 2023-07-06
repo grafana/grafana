@@ -38,7 +38,7 @@ def integration_benchmarks(prefix):
     volumes = integration_test_services_volumes()
 
     # In pull requests, attempt to clone grafana enterprise.
-    init_steps = [enterprise_setup_step()]
+    init_steps = [enterprise_setup_step(allowPromote = True)]
 
     verify_step = verify_gen_cue_step()
     verify_jsonnet_step = verify_gen_jsonnet_step()

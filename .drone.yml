@@ -1210,7 +1210,10 @@ steps:
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
+  - is_promote=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/builds/$DRONE_BUILD_NUMBER"
+    | jq .event)
+  - echo $is_promote
+  - if [ "$is_fork" != false && "$is_promote" != "promote" ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -7355,6 +7358,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 2a743d0d59621ac380d2481f696322c6217e09cc6393d912dcbd341398e56d90
+hmac: 5196e0f59269e5904c357c7b3f35d7f25c54fd2ef1807be71e4e13074a1d8e07
 
 ...
