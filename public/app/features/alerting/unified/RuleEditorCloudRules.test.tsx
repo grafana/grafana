@@ -36,6 +36,33 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
+jest.mock('./components/rule-editor/util', () => {
+  const originalModule = jest.requireActual('./components/rule-editor/util');
+  return {
+    ...originalModule,
+    getThresholdsForQueries: jest.fn(() => ({})),
+  };
+});
+
+const dataSources = {
+  default: mockDataSource(
+    {
+      type: 'prometheus',
+      name: 'Prom',
+      isDefault: true,
+    },
+    { alerting: true }
+  ),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    getInstanceSettings: () => dataSources.default,
+    get: () => dataSources.default,
+  })),
+}));
+
 jest.spyOn(config, 'getAllDataSources');
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
@@ -69,17 +96,6 @@ describe('RuleEditor cloud', () => {
   disableRBAC();
 
   it('can create a new cloud alert', async () => {
-    const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: true }
-      ),
-    };
-
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
@@ -114,7 +130,17 @@ describe('RuleEditor cloud', () => {
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    await userEvent.click(await ui.buttons.lotexAlert.find());
+    const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
+
+    expect(removeExpressionsButtons).toHaveLength(2);
+
+    userEvent.click(removeExpressionsButtons[0]);
+    userEvent.click(removeExpressionsButtons[1]);
+
+    await waitFor(() => {
+      expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
+      expect(screen.getByText('Based on the selected data sources this alert rule will be Cloud')).toBeInTheDocument();
+    });
 
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
