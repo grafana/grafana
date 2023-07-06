@@ -23,7 +23,7 @@ export function invalidatePluginInCache(pluginId: string): void {
   clearPluginSettingsCache(pluginId);
 }
 
-export function locateWithCache(url: string, defaultBust = initializedAt): string {
+export function resolveWithCache(url: string, defaultBust = initializedAt): string {
   const path = extractPath(url);
   if (!path) {
     return `${url}?_cache=${defaultBust}`;
