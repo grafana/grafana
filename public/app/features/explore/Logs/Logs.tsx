@@ -705,26 +705,23 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.radioButtons}
                   />
                   {config.featureToggles.logsExploreTableVisualisation && (
-                    <>
-                      &nbsp;
-                      <RadioButtonGroup
-                        options={[
-                          {
-                            label: 'Table',
-                            value: 'table',
-                            description: 'Show results in table visualisation',
-                          },
-                          {
-                            label: 'Logs',
-                            value: 'logs',
-                            description: 'Show results in logs visualisation',
-                          },
-                        ]}
-                        value={this.state.visualisationType}
-                        onChange={this.onChangeVisualisation}
-                        className={styles.radioButtons}
-                      />
-                    </>
+                    <RadioButtonGroup
+                      className={styles.visualisationType}
+                      options={[
+                        {
+                          label: 'Table',
+                          value: 'table',
+                          description: 'Show results in table visualisation',
+                        },
+                        {
+                          label: 'Logs',
+                          value: 'logs',
+                          description: 'Show results in logs visualisation',
+                        },
+                      ]}
+                      value={this.state.visualisationType}
+                      onChange={this.onChangeVisualisation}
+                    />
                   )}
                 </>
               </InlineField>
@@ -866,6 +863,9 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       overflow-y: visible;
       width: 100%;
       ${scrollableLogsContainer && 'max-height: calc(100vh - 170px);'}
+    `,
+    visualisationType: css`
+      margin: 0 0 0 ${theme.spacing(1)};
     `,
   };
 };
