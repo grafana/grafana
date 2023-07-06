@@ -1208,12 +1208,6 @@ services:
   name: memcached
 steps:
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - is_promote=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/builds/$DRONE_BUILD_NUMBER"
-    | jq .event)
-  - echo $is_promote
-  - if [ "$is_fork" != false && "$is_promote" != "promote" ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -7358,6 +7352,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 5196e0f59269e5904c357c7b3f35d7f25c54fd2ef1807be71e4e13074a1d8e07
+hmac: 569a03fbac81878310b8f084aa0d5d8e4a816afec7c4072828bd03923ef7d1d9
 
 ...

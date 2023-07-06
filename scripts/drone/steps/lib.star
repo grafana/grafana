@@ -88,8 +88,8 @@ def identify_runner_step(platform = "linux"):
             ],
         }
 
-def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, allowPromote = False):
-    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise", allowPromote = allowPromote)
+def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, isPromote = False):
+    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise", isPromote = isPromote)
     step["commands"] += [
         "cd ../",
         "ln -s src grafana",
@@ -122,7 +122,7 @@ def clone_enterprise_step(source = "${DRONE_COMMIT}"):
 
     return step
 
-def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise", allowPromote = False):
+def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise", isPromote = False):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
@@ -134,14 +134,11 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
       Drone step.
     """
 
-    if allowPromote:
-        check = [
-            'is_promote=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/builds/$DRONE_BUILD_NUMBER" | jq .event)',
-            "echo $is_promote",
-            'if [ "$is_fork" != false && "$is_promote" != "promote" ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
-        ]
+    if isPromote:
+        check = []
     else:
         check = [
+            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
             'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
         ]
 
@@ -152,7 +149,6 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
-            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
         ] + check + [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
