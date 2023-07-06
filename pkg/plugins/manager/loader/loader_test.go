@@ -88,8 +88,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Description: "Data source for Amazon AWS monitoring service",
 							Logos: plugins.Logos{
-								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Small: "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Large: "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
 						},
 						Includes: []*plugins.Includes{
@@ -111,8 +111,8 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:  "app/plugins/datasource/cloudwatch/module",
-					BaseURL: "public/app/plugins/datasource/cloudwatch",
+					Module:  "core:plugin/cloudwatch",
+					BaseURL: "/public/app/plugins/datasource/cloudwatch",
 
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
@@ -138,8 +138,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Version: "1.0.0",
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "/public/img/icn-datasource.svg",
+								Large: "/public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -255,8 +255,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "/public/img/icn-datasource.svg",
+								Large: "/public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -306,8 +306,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "/public/img/icn-datasource.svg",
+								Large: "/public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -408,8 +408,8 @@ func TestLoader_Load(t *testing.T) {
 							{Name: "License & Terms", URL: "http://license.com"},
 						},
 						Logos: plugins.Logos{
-							Small: "public/img/icn-app.svg",
-							Large: "public/img/icn-app.svg",
+							Small: "/public/img/icn-app.svg",
+							Large: "/public/img/icn-app.svg",
 						},
 						Updated: "2015-02-10",
 					},
@@ -636,8 +636,8 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 									URL:  "https://willbrowne.com",
 								},
 								Logos: plugins.Logos{
-									Small: "public/img/icn-datasource.svg",
-									Large: "public/img/icn-datasource.svg",
+									Small: "/public/img/icn-datasource.svg",
+									Large: "/public/img/icn-datasource.svg",
 								},
 								Description: "Test",
 								Version:     "1.0.0",
@@ -745,8 +745,8 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 							Version:     "1.0.0",
 							Links:       []plugins.InfoLink{},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-app.svg",
-								Large: "public/img/icn-app.svg",
+								Small: "/public/img/icn-app.svg",
+								Large: "/public/img/icn-app.svg",
 							},
 							Updated: "2015-02-10",
 						},
@@ -849,8 +849,8 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 						Author:      plugins.InfoLink{Name: "Will Browne", URL: "https://willbrowne.com"},
 						Description: "Test",
 						Logos: plugins.Logos{
-							Small: "public/img/icn-datasource.svg",
-							Large: "public/img/icn-datasource.svg",
+							Small: "/public/img/icn-datasource.svg",
+							Large: "/public/img/icn-datasource.svg",
 						},
 						Version: "1.0.0",
 					},
@@ -1199,8 +1199,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					URL:  "http://grafana.com",
 				},
 				Logos: plugins.Logos{
-					Small: "public/img/icn-datasource.svg",
-					Large: "public/img/icn-datasource.svg",
+					Small: "/public/img/icn-datasource.svg",
+					Large: "/public/img/icn-datasource.svg",
 				},
 				Description: "Parent plugin",
 				Version:     "1.0.0",
@@ -1232,8 +1232,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					URL:  "http://grafana.com",
 				},
 				Logos: plugins.Logos{
-					Small: "public/img/icn-panel.svg",
-					Large: "public/img/icn-panel.svg",
+					Small: "/public/img/icn-panel.svg",
+					Large: "/public/img/icn-panel.svg",
 				},
 				Description: "Child plugin",
 				Version:     "1.0.1",
@@ -1478,14 +1478,14 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			},
 			Class:   plugins.ClassCore,
 			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
-			BaseURL: "public/app/plugins/app/testdata-app",
+			BaseURL: "/public/app/plugins/app/testdata-app",
 		}
 
 		configureAppChildPlugin(parent, child)
 
 		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)
-		require.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
+		require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
 	})
 }
 
