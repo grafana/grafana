@@ -23,7 +23,7 @@ weight: 600
 This applies to Open Source only. There is no configuration required if you are using Grafana Cloud.
 {{% /admonition %}}
 
-Starting with Grafana 10, Alerting can also record all of the alert rule state changes for your Grafana managed alert rules to a Loki instance.
+Starting with Grafana 10, Alerting can record all alert rule state changes for your Grafana managed alert rules in a Loki instance.
 
 This allows you to explore the behavior of your alert rules in the Grafana explore view and levels up the existing state history modal with a powerful new visualisation.
 
@@ -31,11 +31,11 @@ This allows you to explore the behavior of your alert rules in the Grafana explo
 
 ## Configuring Loki
 
-To set up alert state history we have to make sure we have a Loki instance we can write data to. The default settings might need some tweaking, the state history modal might query up to 30 days of data.
+To set up alert state history, make sure to have a Loki instance Grafana can write data to. The default settings might need some tweaking as the state history modal might query up to 30 days of data.
 
 The following change to the default configuration should work for most instances, but we recommend looking at the full Loki configuration settings and adjust according to your needs.
 
-As this might have a performance impact on an existing Loki instance we also recommend a separate Loki instance for Alert state history if this is of concern to you.
+As this might impact the performances of an existing Loki instance, we recommend using a separate Loki instance for the alert state history.
 
 ```yaml
 limits_config:
@@ -45,9 +45,9 @@ limits_config:
 
 ## Configuring Grafana
 
-Next up we need to configure Alert state history in Grafana. To do so we'll need to add some additional configuration to its configuration file.
+We need some additional configuration in the Grafana configuration file to have it working with the alert state history.
 
-The following example below will instruct Grafana to write alert state history to a local Loki instance.
+The example below instructs Grafana to write alert state history to a local Loki instance:
 
 ```toml
 [unified_alerting.state_history]
@@ -69,7 +69,7 @@ See our instructions on [adding a data source](/docs/grafana/latest/administrati
 
 If everything is set up correctly you can use the Grafana Explore view to start querying the Loki data source.
 
-A simple litmus test to see if data is being written correctly into the Loki instance is by running the following query:
+A simple litmus test to see if data is being written correctly into the Loki instance is the following query:
 
 ```logQL
 { from="state-history" } | json
