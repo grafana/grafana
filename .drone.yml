@@ -24,7 +24,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -74,7 +74,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-starlark .
@@ -315,7 +315,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -403,7 +403,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -438,12 +438,12 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
   failure: ignore
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: validate-modfile
 trigger:
   event:
@@ -499,7 +499,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -908,7 +908,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -1127,7 +1127,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build shellcheck
@@ -1367,7 +1367,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1446,7 +1446,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -1460,12 +1460,12 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
   failure: ignore
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: validate-modfile
 - commands:
   - ./bin/build verify-drone
@@ -1519,7 +1519,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1987,7 +1987,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -2314,13 +2314,13 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build whatsnew-checker
   depends_on:
   - compile-build-cmd
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: whats-new-checker
 trigger:
   event:
@@ -2388,7 +2388,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}
@@ -2725,7 +2725,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2902,7 +2902,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -3286,7 +3286,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3487,7 +3487,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -3723,7 +3723,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -3831,7 +3831,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise
@@ -3906,7 +3906,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise2
@@ -3969,7 +3969,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise2
@@ -4033,7 +4033,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafanaenterprise
@@ -4084,7 +4084,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
@@ -4153,7 +4153,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
@@ -4222,7 +4222,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - yarn install --immutable
@@ -4288,7 +4288,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4379,7 +4379,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4749,7 +4749,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -5061,7 +5061,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5399,7 +5399,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -5787,7 +5787,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -6176,7 +6176,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -6949,7 +6949,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.4
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.5
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
@@ -6971,7 +6971,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.4
+  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.5
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
@@ -7014,7 +7014,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.5
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss
