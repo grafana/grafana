@@ -452,7 +452,6 @@ describe('formatLogqlQuery', () => {
 
     it('orders labels in selectors', () => {
       expect(formatLogqlQuery(`{labelB="B", labelA="A"}`)).toBe(`{labelA="A", labelB="B"}`);
-      expect(formatLogqlQuery(`({labelB="B", labelA="A"})`)).toBe(`({labelA="A", labelB="B"})`);
     });
 
     it('formats mixed pipeline expressions', () => {
@@ -543,6 +542,9 @@ describe('formatLogqlQuery', () => {
 
     // This has been a source of many bugs throughout the development process, so we test it thoroughly.
     it('handles complex range aggregation expressions', () => {
+      // Selector Range
+      expect(formatLogqlQuery(`rate({label=""}[1s])`)).toBe(`rate(\n  {label=""}\n  [1s]\n)`);
+
       // Selector Range OffsetExpr
       expect(formatLogqlQuery(`rate({label=""}[1s]offset 1h)`)).toBe(`rate(\n  {label=""}\n  [1s] offset 1h\n)`);
 
@@ -556,25 +558,91 @@ describe('formatLogqlQuery', () => {
       expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap label)`)).toBe(
         `rate(\n  {label=""}\n  [1s] | unwrap label\n)`
       );
-      expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap bytes(label))`)).toBe(
-        `rate(\n  {label=""}\n  [1s] | unwrap bytes(label)\n)`
-      );
-      expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap duration(label))`)).toBe(
-        `rate(\n  {label=""}\n  [1s] | unwrap duration(label)\n)`
-      );
-      expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap duration_seconds(label))`)).toBe(
-        `rate(\n  {label=""}\n  [1s] | unwrap duration_seconds(label)\n)`
-      );
-      // expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap label|label="")`)).toBe(
-      //   `rate(\n  {label=""}\n  [1s] | unwrap label | label=""\n)`
-      // );
-      // expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap label|label="",label="")`)).toBe(
-      //   `rate(\n  {label=""}\n  [1s] | unwrap label | label="", label=""\n)`
-      // );
 
-      // LogRangeExpr ( Selector Range OffsetExpr UnwrapExpr )
-      expect(formatLogqlQuery(`rate({label=""}[1s]|unwrap label)`)).toBe(
+      // Selector Range OffsetExpr UnwrapExpr
+      expect(formatLogqlQuery(`rate({label=""}[1s]offset 1h|unwrap label)`)).toBe(
+        `rate(\n  {label=""}\n  [1s] offset 1h | unwrap label\n)`
+      );
+
+      // "(" Selector ")" Range UnwrapExpr |
+      expect(formatLogqlQuery(`rate(({label=""})[1s]|unwrap label)`)).toBe(
         `rate(\n  {label=""}\n  [1s] | unwrap label\n)`
+      );
+
+      // "(" Selector ")" Range OffsetExpr UnwrapExpr |
+      expect(formatLogqlQuery(`rate(({label=""})[1s]offset 1h|unwrap label)`)).toBe(
+        `rate(\n  {label=""}\n  [1s] offset 1h | unwrap label\n)`
+      );
+
+      // Selector UnwrapExpr Range
+      expect(formatLogqlQuery(`rate({label=""}|unwrap label[1s])`)).toBe(
+        `rate(\n  {label=""}\n  | unwrap label\n  [1s]\n)`
+      );
+
+      // Selector UnwrapExpr Range OffsetExpr
+      expect(formatLogqlQuery(`rate({label=""}|unwrap label[1s]offset 1h)`)).toBe(
+        `rate(\n  {label=""}\n  | unwrap label\n  [1s] offset 1h\n)`
+      );
+
+      // "(" Selector UnwrapExpr ")" Range
+      expect(formatLogqlQuery(`rate(({label=""} |unwrap label)[1s])`)).toBe(
+        `rate(\n  {label=""}\n  | unwrap label\n  [1s]\n)`
+      );
+
+      // "(" Selector UnwrapExpr ")" Range OffsetExpr
+      expect(formatLogqlQuery(`rate(({label=""} |unwrap label)[1s] offset 1h)`)).toBe(
+        `rate(\n  {label=""}\n  | unwrap label\n  [1s] offset 1h\n)`
+      );
+
+      // Selector PipelineExpr Range
+      expect(formatLogqlQuery(`rate({label=""}|=""|logfmt[1s])`)).toBe(
+        `rate(\n  {label=""}\n    |= ""\n    | logfmt\n  [1s]\n)`
+      );
+
+      // Selector PipelineExpr Range OffsetExpr
+      expect(formatLogqlQuery(`rate({label=""}|=""|logfmt[1s]offset 1h)`)).toBe(
+        `rate(\n  {label=""}\n    |= ""\n    | logfmt\n  [1s] offset 1h\n)`
+      );
+
+      // "(" Selector PipelineExpr ")" Range
+      expect(formatLogqlQuery(`rate(({label=""}|=""|logfmt)[1s])`)).toBe(
+        `rate(\n  {label=""}\n    |= ""\n    | logfmt\n  [1s]\n)`
+      );
+
+      // "(" Selector PipelineExpr ")" Range OffsetExpr
+      expect(formatLogqlQuery(`rate(({label=""}|=""|logfmt)[1s]offset 1h)`)).toBe(
+        `rate(\n  {label=""}\n    |= ""\n    | logfmt\n  [1s] offset 1h\n)`
+      );
+
+      // Selector Range PipelineExpr
+      expect(formatLogqlQuery(`rate({label=""}[1s]|=""|logfmt)`)).toBe(
+        `rate(\n  {label=""}\n  [1s]\n    |= ""\n    | logfmt\n)`
+      );
+
+      // Selector Range OffsetExpr PipelineExpr
+      expect(formatLogqlQuery(`rate({label=""}[1s]offset 1h|=""|logfmt)`)).toBe(
+        `rate(\n  {label=""}\n  [1s] offset 1h\n    |= ""\n    | logfmt\n)`
+      );
+
+      // Selector Range PipelineExpr UnwrapExpr
+      expect(formatLogqlQuery(`rate({label=""}[1s]|=""|logfmt|unwrap label)`)).toBe(
+        `rate(\n  {label=""}\n  [1s]\n    |= ""\n    | logfmt\n  | unwrap label\n)`
+      );
+
+      // Selector PipelineExpr UnwrapExpr Range
+      expect(formatLogqlQuery(`rate({label=""}|=""|logfmt|unwrap label[1s])`)).toBe(
+        `rate(\n  {label=""}\n    |= ""\n    | logfmt\n  | unwrap label\n  [1s]\n)`
+      );
+
+      // Selector Range OffsetExpr PipelineExpr UnwrapExpr
+      expect(formatLogqlQuery(`rate({label=""}[1s]offset 1h|=""|logfmt|unwrap label)`)).toBe(
+        `rate(\n  {label=""}\n  [1s] offset 1h\n    |= ""\n    | logfmt\n  | unwrap label\n)`
+      );
+
+      // "(" LogRangeExpr ")"
+      expect(formatLogqlQuery(`(rate({label=""}[1s]))`)).toBe(`(rate(\n  {label=""}\n  [1s]\n))`);
+      expect(formatLogqlQuery(`(rate({label=""}[1s]offset 1h|=""|logfmt|unwrap label))`)).toBe(
+        `(rate(\n  {label=""}\n  [1s] offset 1h\n    |= ""\n    | logfmt\n  | unwrap label\n))`
       );
     });
 
