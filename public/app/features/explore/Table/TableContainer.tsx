@@ -40,12 +40,13 @@ export class TableContainer extends PureComponent<Props> {
     );
   }
 
-  getTableHeight(frameLength: number, isSingleTable = true) {
-    if (frameLength === 0) {
+  getTableHeight(rowCount: number, isSingleTable = true) {
+    if (rowCount === 0) {
       return 200;
     }
-    // tries to estimate table height
-    return Math.min(600, Math.max(frameLength * 36, isSingleTable ? 300 : 0) + 40 + 46);
+    // tries to estimate table height, with a min of 300 and a max of 600
+    // if there are multiple tables, there is no min
+    return Math.min(600, Math.max(rowCount * 36, isSingleTable ? 300 : 0) + 40 + 46);
   }
 
   render() {
@@ -84,28 +85,17 @@ export class TableContainer extends PureComponent<Props> {
 
     const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
     const mainFrames = this.getMainFrames(dataFrames).filter(
-      (frame: DataFrame | undefined): frame is DataFrame => !!frame
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
     );
 
-    /* 
-    if there is only one main frame, all other frames are children of that frame's rows
+    mainFrames?.forEach((frame) => {
+      const subFrames =
+        dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) ||
+        undefined;
+      tableData.push({ main: frame, sub: subFrames });
+    });
 
-    if there are multiple main frames, there will need to be a matching table key between the main frame and its children
-    */
-    if (mainFrames?.length === 1) {
-      tableData.push({
-        main: mainFrames[0],
-        sub: dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined),
-      });
-    } else if (mainFrames.length > 1) {
-      mainFrames?.forEach((frame) => {
-        const subFrames =
-          dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) || [];
-        tableData.push({ main: frame, sub: subFrames.length > 0 ? subFrames : undefined });
-      });
-    }
-
-    const isNoData = tableData.length === 0 || tableData.find((data) => data.main.length === 0);
+    const isNoData = tableData.length === 0;
 
     return (
       <>
