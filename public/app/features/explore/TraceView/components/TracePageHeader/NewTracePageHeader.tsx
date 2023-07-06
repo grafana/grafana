@@ -13,16 +13,22 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, useEffect } from 'react';
+import cx from 'classnames';
+import React, { memo, useEffect, useMemo } from 'react';
 
 import { CoreApp, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
-import { getHeaderTags } from '../model/trace-viewer';
+import ExternalLinks from '../common/ExternalLinks';
+import TraceName from '../common/TraceName';
+import { getTraceLinks } from '../model/link-patterns';
+import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
+import { formatDuration } from '../utils/date';
 
+import TracePageActions from './Actions/TracePageActions';
 import { SpanFilters } from './SpanFilters/SpanFilters';
 import { timestamp, getStyles } from './TracePageHeader';
 
@@ -46,6 +52,8 @@ export type TracePageHeaderProps = {
 export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
   const {
     trace,
+    data,
+    app,
     timeZone,
     search,
     setSearch,
@@ -64,9 +72,23 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
   }, [setHeaderHeight, showSpanFilters, styles.header]);
 
+  const links = useMemo(() => {
+    if (!trace) {
+      return [];
+    }
+    return getTraceLinks(trace);
+  }, [trace]);
+
   if (!trace) {
     return null;
   }
+
+  const title = (
+    <h1 className={cx(styles.title)}>
+      <TraceName traceName={getTraceName(trace.spans)} />
+      <small className={styles.duration}>{formatDuration(trace.duration)}</small>
+    </h1>
+  );
 
   const { method, status, url } = getHeaderTags(trace.spans);
   let statusColor: BadgeColor = 'green';
@@ -80,6 +102,11 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
 
   return (
     <header className={styles.header}>
+      <div className={styles.titleRow}>
+        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
+        {title}
+        <TracePageActions traceId={trace.traceID} data={data} app={app} />
+      </div>
       <div className={styles.subtitle}>
         <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
         <span className={styles.tagMeta}>
@@ -138,6 +165,12 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       display: flex;
       padding: 0 8px;
     `,
+    title: css`
+      color: inherit;
+      flex: 1;
+      font-size: 1.7em;
+      line-height: 1em;
+    `,
     subtitle: css`
       flex: 1;
       line-height: 1em;
@@ -145,6 +178,10 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     `,
     tag: css`
       margin: 0 0.5em 0 0;
+    `,
+    duration: css`
+      color: #aaa;
+      margin: 0 0.75em;
     `,
     timestamp: css`
       vertical-align: middle;
