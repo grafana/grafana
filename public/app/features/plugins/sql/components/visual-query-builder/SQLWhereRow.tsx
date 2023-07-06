@@ -35,8 +35,7 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
         const templateSrv = getTemplateSrv();
 
         if (templateSrv.containsTemplate(val.whereString)) {
-          const str = templateSrv.replace(val.whereString, undefined, 'singlequote');
-          val.whereString = str.replaceAll("''", "'");
+          val.whereString = val.whereString?.replaceAll("''", "'");
         }
 
         onSqlChange(val);
