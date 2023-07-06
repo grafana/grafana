@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"io"
 
-	"cuelang.org/go/cue"
 	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/thema/vmux"
+	"github.com/grafana/kindsys"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -41,10 +39,10 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 		sv.log.Info(fmt.Sprintf("did not match %s", obj.GetObjectKind().GroupVersionKind().Kind))
 		return nil
 	}
-	cv, err := unstructuredToCUE(ck.MachineName()+".json", obj.(*unstructured.Unstructured))
+
+	j, err := json.Marshal(obj.(*unstructured.Unstructured))
 	if err != nil {
-		// TODO wrap error as k8s expects
-		return err
+		return fmt.Errorf("failed to marshal unstructured to json: %w", err)
 	}
 
 	switch a.GetOperation() { //nolint:exhaustive
@@ -55,10 +53,8 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 		// handler's responsibility.
 		//
 		// TODO vanilla k8s CRDs allow specifying a subset of that kind's versions as acceptable on that server. Do we want to do that?
-		if ck.Lineage().ValidateAny(cv) != nil {
-			// TODO stop duplicating work once the ValidateAny error return is added https://github.com/grafana/thema/issues/156
-			_, err := ck.Lineage().Latest().Validate(cv)
-			// TODO wrap error as k8s expects
+		// TODO this triggers all translation/migrations and throws away the result, which is wasteful. If this ends up being how we want to do this, add a helper or a narrower method in kindsys
+		if _, err := ck.FromBytes(j, kindsys.NewJSONDecoder()); err != nil {
 			return err
 		}
 	}
@@ -82,17 +78,4 @@ func NewSchemaValidate(reg *corekind.Base) admission.Interface {
 		log: log.New("admission.schema-validate"),
 		reg: reg,
 	}
-}
-
-// unstructuredToCUE converts an [*unstructured.Unstructured] to a [cue.Value]
-// by first converting it to JSON, then decoding that JSON into CUE.
-//
-// TODO if this is more widely useful, put it somewhere else
-func unstructuredToCUE(path string, u *unstructured.Unstructured) (cue.Value, error) {
-	j, err := json.Marshal(u.Object)
-	if err != nil {
-		return cue.Value{}, fmt.Errorf("failed to marshal unstructured to json: %w", err)
-	}
-
-	return vmux.NewJSONCodec(path).Decode(cuectx.GrafanaCUEContext(), j)
 }
