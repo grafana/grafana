@@ -24,6 +24,8 @@ import {
   SceneGridItem,
   SceneDataProvider,
   getUrlSyncManager,
+  SceneObject,
+  SceneControlsSpacer,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -177,6 +179,16 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
+  const controls: SceneObject[] = [
+    new VariableValueSelectors({}),
+    new SceneControlsSpacer(),
+    new SceneTimePicker({}),
+    new SceneRefreshPicker({
+      refresh: oldModel.refresh,
+      intervals: oldModel.timepicker.refresh_intervals,
+    }),
+  ];
+
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
@@ -184,17 +196,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
     $timeRange: new SceneTimeRange(oldModel.time),
-    actions: [
-      new SceneTimePicker({}),
-      new SceneRefreshPicker({
-        refresh: oldModel.refresh,
-        intervals: oldModel.timepicker.refresh_intervals,
-      }),
-    ],
     $variables: variables,
-    ...(variables && {
-      controls: [new VariableValueSelectors({})],
-    }),
+    controls: controls,
   });
 }
 
