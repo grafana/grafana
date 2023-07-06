@@ -147,60 +147,58 @@ const Policy: FC<PolicyComponentProps> = ({
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
                 {provisioned && <Badge text="Provisioned" color="purple" />}
-                {readOnly
-                  ? null
-                  : provisioned && (
-                      <Stack direction="row" gap={0.5}>
-                        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
-                          <Button
-                            variant="secondary"
-                            icon="plus"
-                            size="sm"
-                            onClick={() => onAddPolicy(currentRoute)}
-                            disabled={provisioned}
-                            type="button"
-                          >
-                            New nested policy
-                          </Button>
-                        </ConditionalWrap>
+                {readOnly ? null : (
+                  <Stack direction="row" gap={0.5}>
+                    <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                      <Button
+                        variant="secondary"
+                        icon="plus"
+                        size="sm"
+                        onClick={() => onAddPolicy(currentRoute)}
+                        disabled={provisioned}
+                        type="button"
+                      >
+                        New nested policy
+                      </Button>
+                    </ConditionalWrap>
 
-                        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
-                          <Dropdown
-                            overlay={
-                              <Menu>
-                                <Menu.Item
-                                  icon="edit"
-                                  disabled={!isEditable}
-                                  label="Edit"
-                                  onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                                />
-                                {isDeletable && (
-                                  <>
-                                    <Menu.Divider />
-                                    <Menu.Item
-                                      destructive
-                                      icon="trash-alt"
-                                      label="Delete"
-                                      onClick={() => onDeletePolicy(currentRoute)}
-                                    />
-                                  </>
-                                )}
-                              </Menu>
-                            }
-                          >
-                            <Button
-                              icon="ellipsis-h"
-                              variant="secondary"
-                              size="sm"
-                              type="button"
-                              aria-label="more-actions"
-                              data-testid="more-actions"
-                              disabled={provisioned}
+                    <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                      <Dropdown
+                        overlay={
+                          <Menu>
+                            <Menu.Item
+                              icon="edit"
+                              disabled={!isEditable}
+                              label="Edit"
+                              onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
                             />
-                          </Dropdown>
-                        </ConditionalWrap>
-                      </Stack>
-                    )}
+                            {isDeletable && (
+                              <>
+                                <Menu.Divider />
+                                <Menu.Item
+                                  destructive
+                                  icon="trash-alt"
+                                  label="Delete"
+                                  onClick={() => onDeletePolicy(currentRoute)}
+                                />
+                              </>
+                            )}
+                          </Menu>
+                        }
+                      >
+                        <Button
+                          icon="ellipsis-h"
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          aria-label="more-actions"
+                          data-testid="more-actions"
+                          disabled={provisioned}
+                        />
+                      </Dropdown>
+                    </ConditionalWrap>
+                  </Stack>
+                )}
               </Stack>
             </div>
 
