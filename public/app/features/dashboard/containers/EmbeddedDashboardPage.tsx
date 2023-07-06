@@ -54,6 +54,8 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
       .get(`${callbackUrl}/load-dashboard`)
       .then((dashboardJson) => {
         setDashboardJson(dashboardJson);
+        // Remove dashboard UID from JSON to prevent errors from external dashboards
+        delete dashboardJson.uid;
         const dashboardModel = new DashboardModel(dashboardJson);
 
         dispatch(
