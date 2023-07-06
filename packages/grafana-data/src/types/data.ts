@@ -87,6 +87,9 @@ export interface QueryResultMeta {
    */
   pathSeparator?: string;
 
+  /** A time shift diff provided with comparison query */
+  comparisonResponseDiff?: number;
+
   /**
    * Legacy data source specific, should be moved to custom
    * */
