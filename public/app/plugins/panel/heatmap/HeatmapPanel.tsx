@@ -7,6 +7,7 @@ import { ScaleDistributionConfig } from '@grafana/schema';
 import {
   Portal,
   ScaleDistribution,
+  TooltipPlugin4,
   UPlotChart,
   usePanelContext,
   useStyles2,
@@ -193,11 +194,16 @@ export const HeatmapPanel = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
-            {/*children ? children(config, alignedFrame) : null*/}
+            <TooltipPlugin4 config={builder} render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+              // console.log('render', dataIdxs, seriesIdx);
+              // return getRandomContent();
+              // return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
+              return <pre>{JSON.stringify({dataIdxs, seriesIdx}, null, 2)}</pre>;
+            }} />
           </UPlotChart>
         )}
       </VizLayout>
-      <Portal>
+      {/* <Portal>
         {hover && options.tooltip.show && (
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
@@ -213,7 +219,7 @@ export const HeatmapPanel = ({
             />
           </VizTooltipContainer>
         )}
-      </Portal>
+      </Portal> */}
     </>
   );
 };
