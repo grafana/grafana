@@ -66,14 +66,20 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
 
+  const [refToHighlight, setRefToHighlight] = useState<HTMLElement | undefined>(undefined);
+
+  refToHighlight?.classList.add(styles.highlightedLogRecord);
+
   const onTimelinePointerMove = useCallback(
     (seriesIdx: number, pointIdx: number) => {
       const timestamp = frameSubsetTimestamps[pointIdx];
 
       const refToScroll = logsRef.current.get(timestamp);
-      refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // remove the highlight from the previous refToHighlight
+      refToHighlight?.classList.remove(styles.highlightedLogRecord);
+      setRefToHighlight(refToScroll);
     },
-    [frameSubsetTimestamps]
+    [frameSubsetTimestamps, styles.highlightedLogRecord, refToHighlight?.classList]
   );
 
   if (isLoading) {
@@ -258,6 +264,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   commonLabels: css`
     display: grid;
     grid-template-columns: max-content auto;
+  `,
+  highlightedLogRecord: css`
+    border: 1px solid ${theme.colors.text.primary};
   `,
 });
 
