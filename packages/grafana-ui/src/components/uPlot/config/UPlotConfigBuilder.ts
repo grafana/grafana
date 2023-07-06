@@ -31,7 +31,7 @@ const cursorDefaults: Cursor = {
     width: (u, seriesIdx, size) => size / 4,
   },
   focus: {
-    prox: 30,
+    prox: 10,
   },
 };
 

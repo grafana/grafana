@@ -43,6 +43,11 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     let winWidth = htmlEl.clientWidth - 16;
     let winHeight = htmlEl.clientHeight - 16;
 
+    window.addEventListener('resize', (e) => {
+      winWidth = htmlEl.clientWidth - 5;
+      winHeight = htmlEl.clientHeight - 5;
+    });
+
     let closestSeriesIdx: number | null = null;
 
     let pendingRender = false;
@@ -62,11 +67,6 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           height = entry.contentRect.width;
         }
       }
-    });
-
-    window.addEventListener('resize', (e) => {
-      winWidth = htmlEl.clientWidth - 5;
-      winHeight = htmlEl.clientHeight - 5;
     });
 
     config.addHook('init', (u) => {

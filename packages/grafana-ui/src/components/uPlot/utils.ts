@@ -26,7 +26,7 @@ export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
   },
   cursor: {
     focus: {
-      prox: 30,
+      prox: 10,
     },
   },
   legend: {
