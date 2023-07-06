@@ -61,7 +61,7 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
    Review the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
 
-1. Optional: [Configure a refresh token]({{< relref "#configure-refresh-token" >}}):
+1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
    a. Enable `accessTokenExpirationCheck` feature toggle.
 
@@ -141,9 +141,9 @@ Refer to the following table for information on what you need to configure depen
 
 | Source of display name                                                             | Required configuration                          |
 | ---------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `name` or `display_name` field of the OAuth2 ID token.                             | n/a                                             |
+| `name` or `display_name` field of the OAuth2 ID token.                             | N/A                                             |
 | Another field of the OAuth2 ID token.                                              | Set `name_attribute_path` configuration option. |
-| `name` or `display_name` field of the user information from the UserInfo endpoint. | n/a                                             |
+| `name` or `display_name` field of the user information from the UserInfo endpoint. | N/A                                             |
 | Another field of the user information from the UserInfo endpoint.                  | Set `name_attribute_path` configuration option. |
 
 ### Configure email address
@@ -214,7 +214,8 @@ Config:
 role_attribute_path = role
 ```
 
-In the following more complex example, the user is granted the `Admin` role because they have a role `admin`. If a user has a role `editor`, `Editor` role will be granted, otherwise `Viewer`.
+In the following more complex example, the user has been granted the `Admin` role. This is because they are a member of the `admin` group of their OAuth2 provider.
+If the user was a member of the `editor` group, they would be granted the `Editor` role, otherwise `Viewer`.
 
 Payload:
 
@@ -223,7 +224,7 @@ Payload:
     ...
     "info": {
         ...
-        "roles": [
+        "groups": [
             "engineer",
             "admin",
         ],
@@ -236,7 +237,7 @@ Payload:
 Config:
 
 ```bash
-role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(info.groups[*], 'admin') && 'Admin' || contains(info.groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
 #### Map server administrator role
@@ -270,10 +271,10 @@ allow_assign_grafana_admin = true
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-With Team Sync you can map your generic OAuth2 groups to teams in Grafana so that the users are automatically added to the correct teams.
+By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 
 Generic OAuth2 groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for information on how to configure OAuth2 groups with Grafana using the `groups_attribute_path` configuration option.
+For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options]({{< relref "#configuration-options" >}}).
 
 To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
 
@@ -310,16 +311,16 @@ This section includes examples of setting up generic OAuth2 integration.
 
 To set up generic OAuth2 authentication with Auth0, follow these steps:
 
-1. Create an application using the following parameters:
+1. Create an Auth0 application using the following parameters:
 
    - Name: Grafana
    - Type: Regular Web Application
 
-1. Go to the **Settings** tab and set **Allowed Callback URLs** to `https://<grafana domain>/login/generic_oauth`.
+1. Go to the **Settings** tab of the application and set **Allowed Callback URLs** to `https://<grafana domain>/login/generic_oauth`.
 
 1. Click **Save Changes**.
 
-1. Use the values from the **Settings** tab to configure Grafana:
+1. Fill in the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the **Settings** tab:
 
    ```bash
    [auth.generic_oauth]
@@ -342,7 +343,7 @@ To set up generic OAuth2 authentication with Auth0, follow these steps:
 
 To set up generic OAuth2 authentication with Bitbucket, follow these steps:
 
-1. Navigate to **Settings > Workspace setting > OAuth consumers**.
+1. Navigate to **Settings > Workspace setting > OAuth consumers** in BitBucket.
 
 1. Create an application by selecting **Add consumer** and using the following parameters:
 
@@ -350,7 +351,7 @@ To set up generic OAuth2 authentication with Bitbucket, follow these steps:
 
 1. Click **Save**.
 
-1. Use the `Key` and `Secret` from the consumer description to configure Grafana:
+1. Fill in the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the `Key` and `Secret` from the consumer description:
 
    ```bash
    [auth.generic_oauth]
@@ -376,7 +377,7 @@ By default, a refresh token is included in the response for the **Authorization 
 
 To set up generic OAuth2 authentication with OneLogin, follow these steps:
 
-1. Create a new Custom Connector with the following settings:
+1. Create a new Custom Connector in OneLogin with the following settings:
 
    - Name: Grafana
    - Sign On Method: OpenID Connect
@@ -384,15 +385,13 @@ To set up generic OAuth2 authentication with OneLogin, follow these steps:
    - Signing Algorithm: RS256
    - Login URL: `https://<grafana domain>/login/generic_oauth`
 
-1. Add an App to the Grafana Connector:
+1. Add an app to the Grafana Connector:
 
    - Display Name: Grafana
 
-1. Under the **SSO** tab on the **Grafana App details** page you'll find the Client ID and Client Secret.
+1. Fill in the `[auth.generic_oauth]` section of the Grafana configuration file using the client ID and client secret from **SSO** tab of the app details page:
 
    Your OneLogin Domain will match the URL you use to access OneLogin.
-
-1. Configure Grafana as follows:
 
    ```bash
    [auth.generic_oauth]
