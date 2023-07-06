@@ -20,9 +20,14 @@ import React from 'react';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
+import TraceName from '../common/TraceName';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
+import { getTraceLinks } from '../model/link-patterns';
+import { getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
+import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
 
 import SpanGraph from './SpanGraph';
@@ -35,6 +40,37 @@ export const getStyles = (theme: GrafanaTheme2) => {
       & > :last-child {
         border-bottom: 1px solid ${autoColor(theme, '#ccc')};
       }
+    `,
+    TracePageHeaderTitleRow: css`
+      label: TracePageHeaderTitleRow;
+      align-items: center;
+      display: flex;
+    `,
+    TracePageHeaderBack: css`
+      label: TracePageHeaderBack;
+      align-items: center;
+      align-self: stretch;
+      background-color: #fafafa;
+      border-bottom: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+      color: inherit;
+      display: flex;
+      font-size: 1.4rem;
+      padding: 0 1rem;
+      margin-bottom: -1px;
+      &:hover {
+        background-color: #f0f0f0;
+        border-color: #ccc;
+      }
+    `,
+    TracePageHeaderTitle: css`
+      label: TracePageHeaderTitle;
+      color: inherit;
+      flex: 1;
+      font-size: 1.7em;
+      line-height: 1em;
+      margin: 0 0 0 0.3em;
+      padding-bottom: 0.5em;
     `,
     TracePageHeaderOverviewItems: css`
       label: TracePageHeaderOverviewItems;
@@ -54,6 +90,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       &:hover > .trace-item-value-detail {
         color: unset;
       }
+    `,
+    TracePageHeaderArchiveIcon: css`
+      label: TracePageHeaderArchiveIcon;
+      font-size: 1.78em;
+      margin-right: 0.15em;
+    `,
+    TracePageHeaderTraceId: css`
+      label: TracePageHeaderTraceId;
+      white-space: nowrap;
+    `,
+    titleBorderBottom: css`
+      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
     `,
   };
 };
@@ -112,6 +160,13 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
   const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
 
   const styles = useStyles2(getStyles);
+  const links = React.useMemo(() => {
+    if (!trace) {
+      return [];
+    }
+    return getTraceLinks(trace);
+  }, [trace]);
+
   if (!trace) {
     return null;
   }
@@ -121,8 +176,19 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
     return { ...rest, value: renderer(trace, timeZone, styles) };
   });
 
+  const title = (
+    <h1 className={styles.TracePageHeaderTitle}>
+      <TraceName traceName={getTraceName(trace.spans)} />{' '}
+      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
+    </h1>
+  );
+
   return (
     <header className={styles.TracePageHeader}>
+      <div className={cx(styles.TracePageHeaderTitleRow, styles.titleBorderBottom)}>
+        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
+        {title}
+      </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
 
       <SpanGraph
