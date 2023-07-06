@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -438,7 +438,7 @@ func TestLoader_Load(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(tt.cfg, func(l *Loader) {
+		l := newLoader(t, tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{})
@@ -521,7 +521,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
 		}}
 
-		l := newLoader(cfg)
+		l := newLoader(t, cfg)
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassBundled
@@ -672,7 +672,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			reg := fakes.NewFakePluginRegistry()
 			procPrvdr := fakes.NewFakeBackendProcessProvider()
 			procMgr := fakes.NewFakeProcessManager()
-			l := newLoader(tt.cfg, func(l *Loader) {
+			l := newLoader(t, tt.cfg, func(l *Loader) {
 				l.pluginRegistry = reg
 				l.processManager = procMgr
 				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
@@ -793,7 +793,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(tt.cfg, func(l *Loader) {
+		l := newLoader(t, tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
@@ -872,7 +872,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(&config.Cfg{}, func(l *Loader) {
+		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
@@ -956,7 +956,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(&config.Cfg{}, func(l *Loader) {
+		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
@@ -1055,7 +1055,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			}
 		}
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(&config.Cfg{}, func(l *Loader) {
+		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
@@ -1078,6 +1078,58 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_AngularClass(t *testing.T) {
+	for _, tc := range []struct {
+		name                   string
+		class                  plugins.Class
+		expAngularDetectionRun bool
+	}{
+		{
+			name:                   "core plugin should skip angular detection",
+			class:                  plugins.ClassCore,
+			expAngularDetectionRun: false,
+		},
+		{
+			name:                   "bundled plugin should skip angular detection",
+			class:                  plugins.ClassBundled,
+			expAngularDetectionRun: false,
+		},
+		{
+			name:                   "external plugin should run angular detection",
+			class:                  plugins.ClassExternal,
+			expAngularDetectionRun: true,
+		},
+		{
+			name:                   "other-class plugin should run angular detection",
+			class:                  "CDN", // (enterprise-only class)
+			expAngularDetectionRun: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fakePluginSource := &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return tc.class
+				},
+				PluginURIsFunc: func(ctx context.Context) []string {
+					return []string{"../testdata/valid-v2-signature"}
+				},
+			}
+			l := newLoader(t, &config.Cfg{AngularSupportEnabled: true}, func(l *Loader) {
+				// So if angularDetected = true, it means that the detection has run
+				l.angularInspector = angularinspector.AlwaysAngularFakeInspector
+			})
+			p, err := l.Load(context.Background(), fakePluginSource)
+			require.NoError(t, err)
+			require.Len(t, p, 1, "should load 1 plugin")
+			if tc.expAngularDetectionRun {
+				require.True(t, p[0].AngularDetected, "angular detection should run")
+			} else {
+				require.False(t, p[0].AngularDetected, "angular detection should not run")
+			}
+		})
+	}
+}
+
 func TestLoader_Load_Angular(t *testing.T) {
 	fakePluginSource := &fakes.FakePluginSource{
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1097,24 +1149,24 @@ func TestLoader_Load_Angular(t *testing.T) {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
 				name             string
-				angularInspector angulardetector.Inspector
+				angularInspector angularinspector.Inspector
 				shouldLoad       bool
 			}{
 				{
 					name:             "angular plugin",
-					angularInspector: angulardetector.AlwaysAngularFakeInspector,
+					angularInspector: angularinspector.AlwaysAngularFakeInspector,
 					// angular plugins should load only if allowed by the cfg
 					shouldLoad: cfgTc.cfg.AngularSupportEnabled,
 				},
 				{
 					name:             "non angular plugin",
-					angularInspector: angulardetector.NeverAngularFakeInspector,
+					angularInspector: angularinspector.NeverAngularFakeInspector,
 					// non-angular plugins should always load
 					shouldLoad: true,
 				},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
-					l := newLoader(cfgTc.cfg, func(l *Loader) {
+					l := newLoader(t, cfgTc.cfg, func(l *Loader) {
 						l.angularInspector = tc.angularInspector
 					})
 					p, err := l.Load(context.Background(), fakePluginSource)
@@ -1208,7 +1260,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(&config.Cfg{}, func(l *Loader) {
+		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
@@ -1386,7 +1438,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(&config.Cfg{}, func(l *Loader) {
+		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
@@ -1437,11 +1489,13 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 	})
 }
 
-func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
+func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
+	angularInspector, err := angularinspector.NewStaticInspector()
+	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
-		signature.ProvideService(cfg, statickey.New()), angulardetector.NewDefaultPatternsListInspector())
+		signature.ProvideService(cfg, statickey.New()), angularInspector, &fakes.FakeOauthService{})
 
 	for _, cb := range cbs {
 		cb(l)

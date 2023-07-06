@@ -12,14 +12,18 @@ keywords:
   - notification channel
   - create
 title: Contact points
-weight: 410
+weight: 106
 ---
 
 # Contact points
 
-Use contact points to define how your contacts are notified when an alert rule fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert rule fires, a notification is sent to all contact point types listed for a contact point. Contact points can be configured for the Grafana Alertmanager as well as external alertmanagers.
+Contact points contain the configuration for sending notifications. A contact point is a list of integrations, each of which sends a notification to a particular email address, service or URL. Contact points can have multiple integrations of the same kind, or a combination of integrations of different kinds. For example, a contact point could contain a Pagerduty integration; an email and Slack integration; or a Pagerduty integration, a Slack integration, and two email integrations. You can also configure a contact point with no integrations; in which case no notifications are sent.
 
-You can also use notification templating to customize notification messages for contact point types.
+A contact point cannot send notifications until it has been added to a notification policy. A notification policy can only send alerts to one contact point, but a contact point can be added to a number of notification policies at the same time. When an alert matches a notification policy, the alert is sent to the contact point in that notification policy, which then sends a notification to each integration in its configuration.
+
+Contact points can be configured for the Grafana Alertmanager as well as external alertmanagers.
+
+You can also use notification templating to customize notification messages for contact point integrations.
 
 **Note:**
 
@@ -51,9 +55,3 @@ The following table lists the contact point integrations supported by Grafana.
 | Cisco Webex Teams                                | `webex`                   | Supported            | Supported                                                                                                |
 | WeCom                                            | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
-
-## Useful links
-
-[Manage contact points]({{< relref "../../manage-notifications/manage-contact-points" >}})
-
-[Create and edit notification templates]({{< relref "../../manage-notifications/template-notifications/create-notification-templates" >}})

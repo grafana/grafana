@@ -1,7 +1,8 @@
 ---
+title: Legacy snapshot mode
 aliases:
   - ../../../plugins/developing/snapshot-mode/
-title: Legacy snapshot mode
+description: Deprecated guide for Angular plugin development.
 ---
 
 # Legacy snapshot mode

@@ -6,13 +6,14 @@ import React from 'react';
 import { CoreApp } from '@grafana/data';
 
 import FlameGraphHeader from './FlameGraphHeader';
-import { SelectedView } from './types';
+import { ColorScheme, SelectedView } from './types';
 
 describe('FlameGraphHeader', () => {
   function setup(props: Partial<React.ComponentProps<typeof FlameGraphHeader>> = {}) {
     const setSearch = jest.fn();
     const setSelectedView = jest.fn();
     const onReset = jest.fn();
+    const onSchemeChange = jest.fn();
 
     const renderResult = render(
       <FlameGraphHeader
@@ -26,6 +27,8 @@ describe('FlameGraphHeader', () => {
         onTextAlignChange={jest.fn()}
         textAlign={'left'}
         showResetButton={true}
+        colorScheme={ColorScheme.ValueBased}
+        onColorSchemeChange={onSchemeChange}
         {...props}
       />
     );
@@ -36,6 +39,7 @@ describe('FlameGraphHeader', () => {
         setSearch,
         setSelectedView,
         onReset,
+        onSchemeChange,
       },
     };
   }
@@ -54,5 +58,18 @@ describe('FlameGraphHeader', () => {
     expect(resetButton).toBeInTheDocument();
     await userEvent.click(resetButton);
     expect(handlers.onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls on color scheme change when clicked', async () => {
+    const { handlers } = setup();
+    const changeButton = screen.getByLabelText(/Change color scheme/);
+    expect(changeButton).toBeInTheDocument();
+    await userEvent.click(changeButton);
+
+    const byPackageButton = screen.getByText(/By package name/);
+    expect(byPackageButton).toBeInTheDocument();
+    await userEvent.click(byPackageButton);
+
+    expect(handlers.onSchemeChange).toHaveBeenCalledTimes(1);
   });
 });

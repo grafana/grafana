@@ -9,17 +9,15 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreId, ExploreQueryParams } from 'app/types/explore';
+import { ExploreQueryParams } from 'app/types/explore';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { useExploreCorrelations } from './hooks/useExploreCorrelations';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useStateSync } from './hooks/useStateSync';
-import { useStopQueries } from './hooks/useStopQueries';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { splitSizeUpdateAction } from './state/main';
-import { selectOrderedExplorePanes } from './state/selectors';
+import { isSplit, selectPanesEntries } from './state/selectors';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -32,11 +30,14 @@ const styles = {
 };
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
-  useStopQueries();
   useTimeSrvFix();
   useStateSync(props.queryParams);
-  useExplorePageTitle();
-  useExploreCorrelations();
+  // We want  to set the title according to the URL and not to the state because the URL itself may lag
+  // (due to how useStateSync above works) by a few milliseconds.
+  // When a URL is pushed to the history, the browser also saves the title of the page and
+  // if we were to update the URL on state change, the title would not match the URL.
+  // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
+  useExplorePageTitle(props.queryParams);
   const dispatch = useDispatch();
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
@@ -45,7 +46,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const minWidth = 200;
   const exploreState = useSelector((state) => state.explore);
 
-  const panes = useSelector(selectOrderedExplorePanes);
+  const panes = useSelector(selectPanesEntries);
+  const hasSplit = useSelector(isSplit);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -65,7 +67,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     } else {
       dispatch(
         splitSizeUpdateAction({
-          largerExploreId: size > evenSplitWidth ? ExploreId.right : ExploreId.left,
+          largerExploreId: size > evenSplitWidth ? panes[1][0] : panes[0][0],
         })
       );
     }
@@ -73,11 +75,10 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     setRightPaneWidthRatio(size / windowWidth);
   };
 
-  const hasSplit = Object.entries(panes).length > 1;
   let widthCalc = 0;
   if (hasSplit) {
     if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-      widthCalc = exploreState.maxedExploreId === ExploreId.right ? windowWidth - minWidth : minWidth;
+      widthCalc = exploreState.maxedExploreId === panes[1][0] ? windowWidth - minWidth : minWidth;
     } else if (exploreState.evenSplitPanes) {
       widthCalc = Math.floor(windowWidth / 2);
     } else if (rightPaneWidthRatio !== undefined) {
@@ -87,7 +88,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
   return (
     <div className={styles.pageScrollbarWrapper}>
-      <ExploreActions exploreIdLeft={ExploreId.left} exploreIdRight={ExploreId.right} />
+      <ExploreActions />
 
       <SplitPaneWrapper
         splitOrientation="vertical"
@@ -97,16 +98,12 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         primary="second"
         splitVisible={hasSplit}
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-        onDragFinished={(size) => {
-          if (size) {
-            updateSplitSize(size);
-          }
-        }}
+        onDragFinished={(size) => size && updateSplitSize(size)}
       >
-        {Object.keys(panes).map((exploreId) => {
+        {panes.map(([exploreId]) => {
           return (
             <ErrorBoundaryAlert key={exploreId} style="page">
-              <ExplorePaneContainer exploreId={exploreId as ExploreId} />
+              <ExplorePaneContainer exploreId={exploreId} />
             </ErrorBoundaryAlert>
           );
         })}

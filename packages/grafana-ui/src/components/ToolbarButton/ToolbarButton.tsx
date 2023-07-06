@@ -240,7 +240,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     highlight: css`
       background-color: ${theme.colors.success.main};
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       width: 6px;
       height: 6px;
       position: absolute;

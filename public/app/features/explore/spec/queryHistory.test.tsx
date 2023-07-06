@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
@@ -72,6 +71,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
     default(props: any) {
       return <div>{props.children({ width: 1000 })}</div>;
     },
+  };
+});
+
+jest.mock('../../correlations/utils', () => {
+  return {
+    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
   };
 });
 
@@ -155,26 +160,26 @@ describe('Explore: Query History', () => {
     const { datasources } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
     await waitForExplore();
-    await waitForExplore(ExploreId.right);
+    await waitForExplore('right');
 
     // queries in history
-    await openQueryHistory(ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
-    await openQueryHistory(ExploreId.right);
-    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.right);
+    await openQueryHistory('left');
+    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'left');
+    await openQueryHistory('right');
+    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'right');
 
     // star one one query
-    await starQueryHistory(1, ExploreId.left);
-    await assertQueryHistoryIsStarred([false, true], ExploreId.left);
-    await assertQueryHistoryIsStarred([false, true], ExploreId.right);
+    await starQueryHistory(1, 'left');
+    await assertQueryHistoryIsStarred([false, true], 'left');
+    await assertQueryHistoryIsStarred([false, true], 'right');
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
       queryHistoryEnabled: false,
       newValue: true,
     });
 
-    await deleteQueryHistory(0, ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
-    await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
+    await deleteQueryHistory(0, 'left');
+    await assertQueryHistory(['{"expr":"query #1"}'], 'left');
+    await assertQueryHistory(['{"expr":"query #1"}'], 'right');
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
       queryHistoryEnabled: false,
     });
@@ -193,10 +198,10 @@ describe('Explore: Query History', () => {
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
     await waitForExplore();
     await openQueryHistory();
-    await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
+    await assertQueryHistory(['{"expr":"query #1"}'], 'left');
 
     await commentQueryHistory(0, 'test comment');
-    await assertQueryHistoryComment(['test comment'], ExploreId.left);
+    await assertQueryHistoryComment(['test comment'], 'left');
   });
 
   it('updates query history settings', async () => {
