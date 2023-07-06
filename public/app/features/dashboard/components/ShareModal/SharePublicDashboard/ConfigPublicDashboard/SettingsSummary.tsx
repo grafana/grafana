@@ -22,8 +22,8 @@ export function SettingsSummary({
   const styles = useStyles2(getStyles);
 
   return isDataLoading ? (
-    <div className={styles.summary}>
-      <Spinner inline={true} size={14} />
+    <div className={(styles.summaryWrapper, className)}>
+      <Spinner className={styles.summary} inline={true} size={14} />
     </div>
   ) : (
     <div className={(styles.summaryWrapper, className)}>

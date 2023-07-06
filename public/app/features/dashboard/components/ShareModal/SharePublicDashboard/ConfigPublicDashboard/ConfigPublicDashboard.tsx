@@ -218,22 +218,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   timeRange: css({
     display: 'inline-block',
   }),
-  settingsContainer: css`
-    label: Settings;
-    padding: ${theme.spacing(0.5, 0.5)};
-    border-radius: ${theme.shape.borderRadius(1)};
-    background: ${theme.colors.background.secondary};
-    min-height: ${theme.spacing(4)};
-    display: grid;
-    grid-template-columns: minmax(100px, max-content) min-content;
-    align-items: center;
-    justify-content: space-between;
-    white-space: nowrap;
-
-    &:focus {
-      outline: none;
-    }
-  `,
 });
 
 export default ConfigPublicDashboard;

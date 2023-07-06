@@ -18,8 +18,8 @@ export function SettingsBarHeader({ headerElement, isContentVisible = false, onR
     headerElement && ReactUtils.renderOrCallToRender(headerElement, { className: styles.summaryWrapper });
 
   return (
-    <div className={styles.header}>
-      <div className={styles.column}>
+    <div className={styles.wrapper}>
+      <div className={styles.header}>
         <IconButton
           name={isContentVisible ? 'angle-down' : 'angle-right'}
           tooltip={isContentVisible ? 'Collapse settings' : 'Expand settings'}
@@ -45,7 +45,7 @@ SettingsBarHeader.displayName = 'SettingsBarHeader';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    header: css({
+    wrapper: css({
       label: 'header',
       padding: theme.spacing(0.5, 0.5),
       borderRadius: theme.shape.borderRadius(1),
@@ -56,7 +56,7 @@ function getStyles(theme: GrafanaTheme2) {
         outline: 'none',
       },
     }),
-    column: css({
+    header: css({
       label: 'column',
       display: 'flex',
       alignItems: 'center',

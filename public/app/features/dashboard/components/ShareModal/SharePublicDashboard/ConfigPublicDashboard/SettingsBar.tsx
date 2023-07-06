@@ -38,8 +38,8 @@ SettingsBar.displayName = 'SettingsBar';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     content: css({
-      marginTop: theme.spacing(0.5),
-      marginLeft: theme.spacing(3),
+      marginTop: theme.spacing(1),
+      marginLeft: theme.spacing(4),
     }),
   };
 };
