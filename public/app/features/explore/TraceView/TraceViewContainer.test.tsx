@@ -200,11 +200,4 @@ describe('TraceViewContainer', () => {
     await user.click(matchesSwitch);
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(1);
   });
-
-  it('renders duration in PanelChrome header', async () => {
-    config.featureToggles.newTraceViewHeader = true;
-    renderTraceViewContainer();
-    const duration = document.querySelector('div[data-testid="title-items-container"]');
-    expect(duration).toHaveTextContent('1.1ms');
-  });
 });

@@ -15,6 +15,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { getTraceName } from '../model/trace-viewer';
+
 import TracePageHeader, { TracePageHeaderProps } from './TracePageHeader';
 
 export const trace = {
@@ -115,6 +117,15 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByRole('banner')).not.toBeInTheDocument();
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
     expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
+  });
+
+  it('should render the trace title', () => {
+    setup();
+    expect(
+      screen.getByRole('heading', {
+        name: (content) => content.replace(/ /g, '').startsWith(getTraceName(trace!.spans).replace(/ /g, '')),
+      })
+    ).toBeInTheDocument();
   });
 
   it('should render the header items', () => {
