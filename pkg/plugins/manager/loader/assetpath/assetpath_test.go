@@ -70,7 +70,7 @@ func TestService(t *testing.T) {
 
 				base, err = svc.Base(jsonData["table-old"], plugins.ClassCore, tableOldPath)
 				require.NoError(t, err)
-				require.Equal(t, "public/app/plugins/table-old", base)
+				require.Equal(t, "/public/app/plugins/table-old", base)
 			})
 
 			t.Run("Module", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestService(t *testing.T) {
 
 				module, err = svc.Module(jsonData["table-old"], plugins.ClassCore, tableOldPath)
 				require.NoError(t, err)
-				require.Equal(t, "app/plugins/table-old/module", module)
+				require.Equal(t, "core:plugin/table-old", module)
 			})
 
 			t.Run("RelativeURL", func(t *testing.T) {
