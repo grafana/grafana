@@ -465,7 +465,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const { timeIndex } = getTimeField(frame);
     const sortedFrame = sortDataFrame(frame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
 
-    // `getLinks` and `applyFieldOverrides` is taken from TableContainer.tsx
+    // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
     for (const field of sortedFrame.fields) {
       field.getLinks = (config: ValueLinkConfig) => {
         return getFieldLinksForExplore({
