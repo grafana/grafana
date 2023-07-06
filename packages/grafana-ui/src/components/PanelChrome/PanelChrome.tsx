@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode, useState } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -24,6 +24,7 @@ export interface PanelChromeProps {
   width: number;
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
+  collapsible?: boolean;
   padding?: PanelPadding;
   hoverHeaderOffset?: number;
   title?: string;
@@ -88,9 +89,12 @@ export function PanelChrome({
   actions,
   onCancelQuery,
   onOpenMenu,
+  collapsible = false,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+
+  const [isOpen, setIsOpen] = useState(true);
 
   const hasHeader = !hoverHeader;
 
@@ -98,14 +102,21 @@ export function PanelChrome({
   const showOnHoverClass = 'show-on-hover';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
-  const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
+  const { contentStyle, innerWidth, innerHeight } = getContentStyle(
+    padding,
+    theme,
+    width,
+    headerHeight,
+    height,
+    isOpen
+  );
 
   const headerStyles: CSSProperties = {
     height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const containerStyles: CSSProperties = { width, height };
+  const containerStyles: CSSProperties = { width, height: isOpen ? height : headerHeight };
   if (displayMode === 'transparent') {
     containerStyles.backgroundColor = 'transparent';
     containerStyles.border = 'none';
@@ -120,11 +131,19 @@ export function PanelChrome({
 
   const headerContent = (
     <>
-      {title && (
-        <h6 title={title} className={styles.title}>
-          {title}
-        </h6>
-      )}
+      {title &&
+        (!collapsible ? (
+          <h6 title={title} className={styles.title}>
+            {title}
+          </h6>
+        ) : (
+          <button type="button" className={styles.clearButtonStyles} onClick={() => setIsOpen(!isOpen)}>
+            <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
+            <h6 title={title} className={styles.title}>
+              {title}
+            </h6>
+          </button>
+        ))}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
         <PanelDescription description={description} className={dragClassCancel} />
@@ -207,9 +226,11 @@ export function PanelChrome({
         </div>
       )}
 
-      <div className={styles.content} style={contentStyle}>
-        {children(innerWidth, innerHeight)}
-      </div>
+      {isOpen && (
+        <div className={styles.content} style={contentStyle}>
+          {children(innerWidth, innerHeight)}
+        </div>
+      )}
     </div>
   );
 }
@@ -232,7 +253,8 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   width: number,
   headerHeight: number,
-  height: number
+  height: number,
+  isOpen: boolean
 ) => {
   const chromePadding = (padding === 'md' ? theme.components.panel.padding : 0) * theme.spacing.gridSize;
 
@@ -240,7 +262,11 @@ const getContentStyle = (
   const panelBorder = 1 * 2;
 
   const innerWidth = width - panelPadding - panelBorder;
-  const innerHeight = height - headerHeight - panelPadding - panelBorder;
+  let innerHeight = height - headerHeight - panelPadding - panelBorder;
+
+  if (!isOpen) {
+    innerHeight = headerHeight;
+  }
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
@@ -296,7 +322,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
-      contain: 'strict',
+      contain: 'content',
     }),
     headerContainer: css({
       label: 'panel-header',
@@ -365,6 +391,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     titleItems: css({
       display: 'flex',
       height: '100%',
+    }),
+    clearButtonStyles: css({
+      display: 'flex',
+      alignItems: 'center',
+      background: 'transparent',
+      color: theme.colors.text.primary,
+      border: 'none',
+      padding: 0,
     }),
   };
 };
