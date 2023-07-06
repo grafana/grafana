@@ -7,14 +7,14 @@ import 'vendor/bootstrap/bootstrap';
 import angular from 'angular'; // eslint-disable-line no-duplicate-imports
 import { extend } from 'lodash';
 
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, SystemJS } from '@grafana/runtime';
 import { coreModule, angularModules } from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { buildImportMap } from 'app/features/plugins/plugin_loader';
+import { buildImportMap } from 'app/features/plugins/loader/utils';
 import * as sdk from 'app/plugins/sdk';
 
 import { registerAngularDirectives } from './angular_wrappers';
@@ -123,7 +123,7 @@ export class AngularApp {
 
     const imports = buildImportMap(importMap);
     // pass the map of module names so systemjs can resolve them
-    window.System.addImportMap({ imports });
+    SystemJS.addImportMap({ imports });
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;

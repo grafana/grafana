@@ -1,179 +1,30 @@
-import * as emotion from '@emotion/css';
-import * as emotionReact from '@emotion/react';
-import * as d3 from 'd3';
-import jquery from 'jquery';
-import _ from 'lodash'; // eslint-disable-line lodash/import-scope
-import moment from 'moment'; // eslint-disable-line no-restricted-imports
-import prismjs from 'prismjs';
-import react from 'react';
-import reactDom from 'react-dom';
-import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
-import * as reactRouterDom from 'react-router-dom';
-import * as reactRouterCompat from 'react-router-dom-v5-compat';
-import * as redux from 'redux';
-import * as rxjs from 'rxjs';
-import * as rxjsOperators from 'rxjs/operators';
-import slate from 'slate';
-import slatePlain from 'slate-plain-serializer';
-import slateReact from 'slate-react';
-
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
-import 'vendor/flot/jquery.flot.crosshair';
-import 'vendor/flot/jquery.flot.dashes';
-import 'vendor/flot/jquery.flot.gauge';
-
-import * as grafanaData from '@grafana/data';
-import * as grafanaRuntime from '@grafana/runtime';
-import * as grafanaUIraw from '@grafana/ui';
-import TableModel from 'app/core/TableModel';
-import config from 'app/core/config';
-import { appEvents, contextSrv } from 'app/core/core';
-import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import impressionSrv from 'app/core/services/impression_srv';
-import TimeSeries from 'app/core/time_series2';
-import * as flatten from 'app/core/utils/flatten';
-import kbn from 'app/core/utils/kbn';
-import * as ticks from 'app/core/utils/ticks';
+import {
+  AppPlugin,
+  DataSourceApi,
+  DataSourceJsonData,
+  DataSourcePlugin,
+  DataSourcePluginMeta,
+  PluginMeta,
+} from '@grafana/data';
+import { SystemJS, config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
+import { registerPluginInCache, resolveWithCache } from './loader/cache';
+import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, IS_SYSTEM_MODULE_REGEX } from './loader/constants';
+import { sharedDependenciesMap } from './loader/sharedDependencies';
+import {
+  buildImportMap,
+  getBackWardsCompatibleUrl,
+  jsPluginCDNTransform,
+  preventAMDLoaderCollision,
+} from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
-// Help the 6.4 to 6.5 migration
-// The base classes were moved from @grafana/ui to @grafana/data
-// This exposes the same classes on both import paths
-const grafanaUI = grafanaUIraw as Record<string, unknown>;
-grafanaUI.PanelPlugin = grafanaData.PanelPlugin;
-grafanaUI.DataSourcePlugin = grafanaData.DataSourcePlugin;
-grafanaUI.AppPlugin = grafanaData.AppPlugin;
-grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
-
-const { SystemJS } = grafanaRuntime;
-
-const jQueryFlotDeps = [
-  'jquery.flot.crosshair',
-  'jquery.flot.events',
-  'jquery.flot.fillbelow',
-  'jquery.flot.gauge',
-  'jquery.flot.pie',
-  'jquery.flot.selection',
-  'jquery.flot.stack',
-  'jquery.flot.stackpercent',
-  'jquery.flot.time',
-  'jquery.flot',
-].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
-
-const importMap = {
-  '@emotion/css': emotion,
-  '@emotion/react': emotionReact,
-  '@grafana/data': grafanaData,
-  '@grafana/runtime': grafanaRuntime,
-  '@grafana/slate-react': slateReact, // for backwards compatibility with older plugins
-  '@grafana/ui': grafanaUI,
-  'app/core/app_events': {
-    default: appEvents,
-    __useDefault: true,
-  },
-  'app/core/config': {
-    default: config,
-    __useDefault: true,
-  },
-  'app/core/core': {
-    appEvents: appEvents,
-    contextSrv: contextSrv,
-  },
-  'app/core/services/backend_srv': {
-    BackendSrv,
-    getBackendSrv,
-  },
-  'app/core/table_model': { default: TableModel, __useDefault: true },
-  'app/core/time_series': { default: TimeSeries, __useDefault: true },
-  'app/core/time_series2': { default: TimeSeries, __useDefault: true },
-  'app/core/utils/datemath': grafanaData.dateMath,
-  'app/core/utils/flatten': flatten,
-  'app/core/utils/kbn': {
-    default: kbn,
-    __useDefault: true,
-  },
-  'app/core/utils/ticks': ticks,
-  'app/features/dashboard/impression_store': {
-    impressions: impressionSrv,
-  },
-  d3: d3,
-  emotion: emotion,
-  jquery: {
-    default: jquery,
-    __useDefault: true,
-  },
-  ...jQueryFlotDeps,
-  lodash: {
-    default: _,
-    __useDefault: true,
-  },
-  moment: {
-    default: moment,
-    __useDefault: true,
-  },
-  prismjs: prismjs,
-  react: react,
-  'react-dom': reactDom,
-  'react-redux': reactRedux,
-  // Migration - React Router v5 -> v6
-  // =================================
-  // Plugins that still use "react-router-dom@v5" don't depend on react-router directly, so they will not use this import.
-  // (The react-router-dom@v5 that we expose for them depends on the "react-router" package internally from core.)
-  //
-  // Plugins that would like update to "react-router-dom@v6" will need to bundle "react-router-dom",
-  // however they cannot bundle "react-router" - this would mean that we have two instances of "react-router"
-  // in the app, which would casue issues. As the "react-router-dom-v5-compat" package re-exports everything from "react-router-dom@v6"
-  // which then re-exports everything from "react-router@v6", we are in the lucky state to be able to expose a compatible v6 version of the router to plugins by
-  // just exposing "react-router-dom-v5-compat".
-  //
-  // (This means that we are exposing two versions of the same package).
-  'react-router-dom': reactRouterDom, // react-router-dom@v5
-  'react-router': reactRouterCompat, // react-router-dom@v6, react-router@v6 (included)
-  redux: redux,
-  rxjs: rxjs,
-  'rxjs/operators': rxjsOperators,
-  slate: slate,
-  'slate-plain-serializer': slatePlain,
-  'slate-react': slateReact,
-} as Record<string, System.Module>;
-
-export function buildImportMap(importMap: Record<string, System.Module>) {
-  return Object.keys(importMap).reduce((acc, key) => {
-    // Use the 'package:' prefix to act as a URL instead of a bare specifier
-    const module_name = `${SHARED_DEP_PREFIX}:${key}`;
-    // expose dependency to SystemJS
-    SystemJS.set(module_name, importMap[key]);
-
-    // expose dependency to sandboxed plugins
-    sandboxPluginDependencies.set(key, importMap[key]);
-
-    acc[key] = module_name;
-    return acc;
-  }, {} as Record<string, string>);
-}
-
-const SHARED_DEP_PREFIX = 'package';
-const imports = buildImportMap(importMap);
-
-// pass the map of module names so systemjs can resolve them
-// to the imports above.
+const imports = buildImportMap(sharedDependenciesMap);
 SystemJS.addImportMap({ imports });
-
-const loadPluginCssRegEx = /^plugins.+\.css$/i;
-const jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
-const endsWithFileExtension = /\/?\.[a-zA-Z]{2,}$/;
-const isSystemModule = /System.register\(/;
 
 const systemJSPrototype = SystemJS.constructor.prototype;
 const systemJSFetch = systemJSPrototype.fetch;
@@ -186,10 +37,10 @@ systemJSPrototype.fetch = function (url: string, options: Record<string, unknown
   return systemJSFetch(url, options).then(async (res: Response) => {
     const contentType = res.headers.get('content-type') || '';
 
-    if (jsContentTypeRegEx.test(contentType)) {
+    if (JS_CONTENT_TYPE_REGEX.test(contentType)) {
       const source = await res.text();
       let transformedSrc = source;
-      if (!isSystemModule.test(transformedSrc)) {
+      if (!IS_SYSTEM_MODULE_REGEX.test(transformedSrc)) {
         transformedSrc = preventAMDLoaderCollision(source);
       }
 
@@ -220,11 +71,11 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
     // CDN hosted plugins contain the version in the path so skip
     const shouldAddCacheQueryParam = cleanedUrl.endsWith('module.js') && !isHostedAtCDN;
 
-    return shouldAddCacheQueryParam ? locateWithCache(cleanedUrl) : cleanedUrl;
+    return shouldAddCacheQueryParam ? resolveWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
     // For backwards compatiblity with older plugins that use `loadPluginCss`
     // we need to translate the path for systemjs 6.x.x to understand
-    if (loadPluginCssRegEx.test(id)) {
+    if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
       return `/public/${id}`;
     }
     console.log(`SystemJS: failed to resolve '${id}'`);
@@ -232,19 +83,9 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   }
 };
 
-// Handle legacy SystemJS ! in urls to understand which loader to use and provide
-// support for legacy config.defaultExtension for System.register deps like './my_ctrl' that lack an extension
-function getBackWardsCompatibleUrl(url: string) {
-  if (url.endsWith('!')) {
-    url = url.slice(0, -1);
-  }
-  const shouldAddDefaultExtension = !url.startsWith(`${SHARED_DEP_PREFIX}:`) && !endsWithFileExtension.test(url);
-  return shouldAddDefaultExtension ? url + '.js' : url;
-}
-
-// Older plugins load .css files which results in a module that matches the CSS Module spec.
+// Older plugins load .css files which resolves to a CSS Module.
 // https://github.com/WICG/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md#importing-a-css-module
-// Because they can be nested deps here we listen for any css files which are loaded and apply their styles onload.
+// Any css files loaded via SystemJS have their styles applied onload.
 systemJSPrototype.onload = function (err: unknown, id: string, deps: string[], isErrSource: boolean) {
   if (id.endsWith('.css') && !err) {
     const module = SystemJS.get(id);
@@ -254,27 +95,6 @@ systemJSPrototype.onload = function (err: unknown, id: string, deps: string[], i
     }
   }
 };
-
-// This transform prevents a conflict between systemjs and requirejs which Monaco Editor
-// depends on. See packages/grafana-runtime/src/utils/plugin.ts for more.
-function preventAMDLoaderCollision(source: string) {
-  return `(function(define) {
-    ${source}
-  })(System.define);`;
-}
-
-// TODO: this should replace translateForCDN from './systemjsPlugins/pluginCDN'
-function jsPluginCDNTransform(source: string, baseAddress: string, pluginId: string) {
-  let transformedSrc = source;
-  transformedSrc = transformedSrc.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
-  transformedSrc = transformedSrc.replace(/(["|'])(plugins\/.+?.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
-  // TODO: SystemJS 6 already does this transform, do we need it for sandbox?
-  transformedSrc = transformedSrc.replace(
-    /(\/\/#\ssourceMappingURL=)(.+)\.map/g,
-    `$1${baseAddress}/public/plugins/${pluginId}/$2.map`
-  );
-  return transformedSrc;
-}
 
 export async function importPluginModule({
   path,
@@ -322,7 +142,7 @@ function isFrontendSandboxSupported({ isAngular, pluginId }: { isAngular?: boole
   );
 }
 
-export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
+export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
@@ -336,10 +156,10 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
     }
 
     if (pluginExports.Datasource) {
-      const dsPlugin = new grafanaData.DataSourcePlugin<
-        grafanaData.DataSourceApi<grafanaData.DataQuery, grafanaData.DataSourceJsonData>,
-        grafanaData.DataQuery,
-        grafanaData.DataSourceJsonData
+      const dsPlugin = new DataSourcePlugin<
+        DataSourceApi<DataQuery, DataSourceJsonData>,
+        DataQuery,
+        DataSourceJsonData
       >(pluginExports.Datasource);
       dsPlugin.setComponentsFromLegacyExports(pluginExports);
       dsPlugin.meta = meta;
@@ -350,14 +170,14 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
   });
 }
 
-export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {
+export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
     isAngular: meta.angularDetected,
     pluginId: meta.id,
   }).then((pluginExports) => {
-    const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();
+    const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;
     plugin.setComponentsFromLegacyExports(pluginExports);
