@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
 	"crypto/sha1"
 	"encoding/hex"
 	"errors"
