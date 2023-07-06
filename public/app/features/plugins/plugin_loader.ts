@@ -106,7 +106,7 @@ export async function importPluginModule({
   pluginId: string;
   version?: string;
   isAngular?: boolean;
-}): Promise<any> {
+}): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version });
   }
@@ -150,7 +150,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
-      const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
+      const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
       dsPlugin.meta = meta;
       return dsPlugin;
     }
@@ -177,7 +177,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     isAngular: meta.angularDetected,
     pluginId: meta.id,
   }).then((pluginExports) => {
-    const plugin = pluginExports.plugin ? (pluginExports.plugin as AppPlugin) : new AppPlugin();
+    const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;
     plugin.setComponentsFromLegacyExports(pluginExports);
