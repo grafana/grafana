@@ -260,7 +260,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.DisableInternalAlertmanager = ua.Key("disable_internal_alertmanager").MustBool(false)
 	uaCfg.MainAlertmanagerURL = ua.Key("main_alertmanager_url").MustString("")
 	uaCfg.MainAlertmanagerTenantID = ua.Key("main_alertmanager_tenant_id").MustString("")
-	uaCfg.MainAlertmanagerBasicAuthUser = ua.Key("main_alertmanager_basic_auth_user").MustString("")
+	uaCfg.MainAlertmanagerBasicAuthUser = ua.Key("main_alertmanager_basic_auth_username").MustString("")
 	uaCfg.MainAlertmanagerBasicAuthPassword = ua.Key("main_alertmanager_basic_auth_password").MustString("")
 
 	// TODO load from ini file
