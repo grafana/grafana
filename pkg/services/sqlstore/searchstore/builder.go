@@ -126,7 +126,7 @@ func (b *Builder) applyFilters() (ordering string) {
 		}
 	}
 
-	b.sql.WriteString("SELECT dashboard.id FROM dashboard")
+	b.sql.WriteString("SELECT dashboard.id FROM dashboard LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id")
 	b.sql.WriteString(strings.Join(joins, ""))
 
 	if len(wheres) > 0 {
