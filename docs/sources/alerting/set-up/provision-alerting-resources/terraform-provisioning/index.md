@@ -52,7 +52,7 @@ Grafana Alerting support is included as part of the [Grafana Terraform provider]
 
 The following is an example you can use to configure the Terraform provider.
 
-```terraform
+```HCL
 terraform {
     required_providers {
         grafana = {
@@ -78,7 +78,7 @@ To provision contact points and templates, complete the following steps.
 
 This example creates a contact point that sends alert notifications to Slack.
 
-```terraform
+```HCL
 resource "grafana_contact_point" "my_slack_contact_point" {
     name = "Send to My Slack Channel"
 
@@ -114,7 +114,7 @@ You can re-use the same templates across many contact points. In the example abo
 
 This fragment can then be managed separately in Terraform:
 
-```terraform
+```HCL
 resource "grafana_message_template" "my_alert_template" {
     name = "Alert Instance Template"
 
@@ -139,7 +139,7 @@ In this example, the alerts are grouped by `alertname`, which means that any not
 
 If you want to route specific notifications differently, you can add sub-policies. Sub-policies allow you to apply routing to different alerts based on label matching. In this example, we apply a mute timing to all alerts with the label a=b.
 
-```terraform
+```HCL
 resource "grafana_notification_policy" "my_policy" {
     group_by = ["alertname"]
     contact_point = grafana_contact_point.my_slack_contact_point.name
@@ -193,7 +193,7 @@ To provision mute timings, complete the following steps.
 
 In this example, alert notifications are muted on weekends.
 
-```terraform
+```HCL
 resource "grafana_mute_timing" "my_mute_timing" {
     name = "My Mute Timing"
 
@@ -232,7 +232,7 @@ In this example, the [TestData]({{< relref "../../../../datasources/testdata" >}
 
 Alerts can be defined against any backend datasource in Grafana.
 
-```terraform
+```HCL
 resource "grafana_data_source" "testdata_datasource" {
     name = "TestData"
     type = "testdata"
@@ -251,7 +251,7 @@ For more information on alert rules, refer to [how to create Grafana-managed ale
 
 In this example, the `grafana_rule_group` resource group is used.
 
-```terraform
+```HCL
 resource "grafana_rule_group" "my_rule_group" {
     name = "My Alert Rules"
     folder_uid = grafana_folder.rule_folder.uid

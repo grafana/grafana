@@ -165,6 +165,22 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	if cmd.UID != "" {
+		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+
+		canView, err := g.CanView()
+		if err != nil {
+			return nil, err
+		}
+
+		if !canView {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
+	}
+
 	children, err := s.store.GetChildren(ctx, *cmd)
 	if err != nil {
 		return nil, err
@@ -178,6 +194,15 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
 			continue
 		}
+		// always expose the dashboard store sequential ID
+		f.ID = dashFolder.ID
+
+		if cmd.UID != "" {
+			// parent access has been checked already
+			// the subfolder must be accessible as well (due to inheritance)
+			filtered = append(filtered, f)
+			continue
+		}
 
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
@@ -188,8 +213,6 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			return nil, err
 		}
 		if canView {
-			// always expose the dashboard store sequential ID
-			f.ID = dashFolder.ID
 			filtered = append(filtered, f)
 		}
 	}
@@ -454,8 +477,21 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
+
+	guard, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return err
+	}
+
+	if canSave, err := guard.CanDelete(); err != nil || !canSave {
+		if err != nil {
+			return toFolderError(err)
+		}
+		return dashboards.ErrFolderAccessDenied
+	}
+
 	result := []string{cmd.UID}
-	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			subfolders, err := s.nestedFolderDelete(ctx, cmd)
 
@@ -470,18 +506,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
 			if err != nil {
 				return err
-			}
-
-			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-			if err != nil {
-				return err
-			}
-
-			if canSave, err := guard.CanDelete(); err != nil || !canSave {
-				if err != nil {
-					return toFolderError(err)
-				}
-				return dashboards.ErrFolderAccessDenied
 			}
 
 			if cmd.ForceDeleteRules {

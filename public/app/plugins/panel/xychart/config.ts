@@ -12,6 +12,8 @@ import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
 import { ScatterFieldConfig, ScatterShow } from './types';
 
+export const DEFAULT_POINT_SIZE = 5;
+
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {
     standardOptions: {
@@ -72,7 +74,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Point size',
-          defaultValue: cfg.pointSize?.fixed,
+          defaultValue: cfg.pointSize?.fixed ?? DEFAULT_POINT_SIZE,
           settings: {
             min: 1,
             max: 100,
