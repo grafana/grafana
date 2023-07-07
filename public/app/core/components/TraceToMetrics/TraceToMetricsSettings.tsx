@@ -7,11 +7,14 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
-import { DocsLinkButton } from '../DocsLinkButton';
+import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
+import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
+import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
@@ -37,13 +40,6 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to metrics</h3>
-
-      <div className={styles.infoText}>
-        Navigate from a trace span to the selected data source&apos;s metrics
-        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-metrics`} />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField
           tooltip="The Prometheus data source the trace is going to navigate to"
@@ -82,49 +78,31 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span start time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the start time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="0"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanStartTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <IntervalInput
+        label={getTimeShiftLabel('start')}
+        tooltip={getTimeShiftTooltip('start')}
+        value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+        onChange={(val) => {
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            spanStartTimeShift: val,
+          });
+        }}
+        isInvalidError={invalidTimeShiftError}
+      />
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span end time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the end time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="0"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanEndTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <IntervalInput
+        label={getTimeShiftLabel('end')}
+        tooltip={getTimeShiftTooltip('end')}
+        value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
+        onChange={(val) => {
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            spanEndTimeShift: val,
+          });
+        }}
+        isInvalidError={invalidTimeShiftError}
+      />
 
       <InlineFieldRow>
         <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>
@@ -216,6 +194,25 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
+export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to metrics"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's metrics."
+          suffix={`${options.type}/#trace-to-metrics`}
+          feature="trace to metrics"
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToMetricsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
     padding-bottom: ${theme.spacing(2)};
@@ -226,6 +223,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: baseline;
   `,
   queryRow: css`
+    label: queryRow;
     display: flex;
+    flex-flow: wrap;
   `,
 });

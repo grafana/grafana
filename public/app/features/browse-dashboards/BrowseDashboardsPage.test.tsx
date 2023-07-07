@@ -73,11 +73,22 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
   };
 }
 
-jest.mock('app/features/search/service/folders', () => {
+jest.mock('app/features/browse-dashboards/api/services', () => {
+  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
+
   return {
-    getFolderChildren(parentUID?: string) {
+    ...orig,
+    listFolders(parentUID?: string) {
       const childrenForUID = mockTree
-        .filter((v) => v.item.kind !== 'ui-empty-folder' && v.item.parentUID === parentUID)
+        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
+        .map((v) => v.item);
+
+      return Promise.resolve(childrenForUID);
+    },
+
+    listDashboards(parentUID?: string) {
+      const childrenForUID = mockTree
+        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
         .map((v) => v.item);
 
       return Promise.resolve(childrenForUID);

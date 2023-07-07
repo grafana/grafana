@@ -61,6 +61,8 @@ export const LayerDragDropList = <T extends LayerElement>({
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (
+                      // TODO: fix keyboard a11y
+                      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                       <div
                         className={getRowStyle(isSelected)}
                         ref={provided.innerRef}
@@ -80,8 +82,7 @@ export const LayerDragDropList = <T extends LayerElement>({
                             {onDuplicate ? (
                               <IconButton
                                 name="copy"
-                                title={'Duplicate'}
-                                ariaLabel={'Duplicate button'}
+                                tooltip="Duplicate"
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
                               />
@@ -89,8 +90,7 @@ export const LayerDragDropList = <T extends LayerElement>({
 
                             <IconButton
                               name="trash-alt"
-                              title={'remove'}
-                              ariaLabel={'Remove button'}
+                              tooltip="Remove"
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
                             />

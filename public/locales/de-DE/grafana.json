@@ -1,5 +1,71 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "",
+      "delete-button": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Kopiert"
@@ -28,6 +94,14 @@
       "default": "Standard"
     },
     "save": "Speichern"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -114,14 +188,10 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
-    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
-    "new-dashboard": "Neues Dashboard",
-    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
-    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
-    "viewAll": "Alle anzeigen",
-    "welcome": "Willkommen bei Grafana Dashboards!"
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
@@ -131,6 +201,10 @@
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",
       "no-options": "Keine Optionen gefunden"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -152,7 +226,17 @@
       "success": "Bibliotheks-Panel wurde gespeichert"
     }
   },
+  "login": {
+    "error": {
+      "blocked": "",
+      "invalid-user-or-password": "",
+      "unknown": ""
+    }
+  },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
@@ -208,6 +292,10 @@
     "config": {
       "title": "Verwaltung"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
       "title": "Korrelationen"
@@ -230,6 +318,10 @@
     "dashboards": {
       "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
       "title": "Dashboards"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
@@ -393,6 +485,10 @@
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
       "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Live-Streaming einschalten",
       "label": "Live"
@@ -441,6 +537,12 @@
     "search-input": {
       "include-panels-placeholder": "Nach Dashboards und Panels suchen",
       "placeholder": "Nach Dashboards suchen"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {
@@ -518,6 +620,15 @@
       "copy-button": "In Zwischenablage kopieren"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zeitzone"
@@ -533,10 +644,7 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "dark-label": "Dunkel",
-      "default-label": "Standard",
-      "light-label": "Hell",
-      "system-label": "System"
+      "default-label": "Standard"
     },
     "title": "Einstellungen"
   },

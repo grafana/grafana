@@ -40,7 +40,7 @@ To configure basic settings for the data source, complete the following steps:
 
 ## Create mock data
 
-{{< figure src="/static/img/docs/v41/test_data_add.png" class="docs-image--no-shadow" caption="Adding test data" >}}
+{{< figure src="/media/docs/grafana/data-sources/screenshot-testdata-add-10.0.png" class="docs-image--no-shadow" caption="Adding test data" >}}
 
 Once you've added the TestData data source, your Grafana instance's users can use it as a data source in any metric panel.
 
@@ -50,7 +50,7 @@ Instead of providing a query editor, the TestData data source helps you select a
 
 You can assign an **Alias** to each scenario, and many have their own options that appear when selected.
 
-{{< figure src="/static/img/docs/v41/test_data_csv_example.png" class="docs-image--no-shadow" caption="Using CSV Metric Values" >}}
+{{< figure src="/media/docs/grafana/data-sources/screenshot-testdata-csv-example-10.0.png" class="docs-image--no-shadow" caption="Using CSV Metric Values" >}}
 
 **Available scenarios:**
 

@@ -440,8 +440,25 @@ export const PromSettings = (props: Props) => {
             </InlineField>
           )}
         </div>
-      </div>
 
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <InlineField
+              label="Disable recording rules (beta)"
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
+              interactive={true}
+              className={styles.switchField}
+              disabled={options.readOnly}
+            >
+              <Switch
+                value={options.jsonData.disableRecordingRules ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
+              />
+            </InlineField>
+          </div>
+        </div>
+      </div>
       <h3 className="page-heading">Other</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">

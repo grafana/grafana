@@ -14,7 +14,7 @@ weight: -37
 
 Welcome to Grafana 10.0! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
 
-For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}). For information about breaking changes in this release, refer to [Breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
+For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
 
 <!-- Template below
 ## Feature
@@ -25,6 +25,10 @@ Description. Include an overview of the feature and problem it solves, and where
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
 {{% /admonition %}}
 -->
+
+## Breaking changes
+
+For Grafana v10.0, we've also provided a list of [breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
 
 ## Correlations
 
@@ -46,9 +50,9 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 <!--Dominik Prokop & Natalia Bernarte -->
 
-_Experimental in all editions of Grafana._
+_Available in public preview in all editions of Grafana._
 
-Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
+Scenes is a new front-end library by Grafana that empowers Grafana plugin developers to effortlessly build stunning dashboard-like experiences into their Grafana app plugins. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
 To try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
 
@@ -197,7 +201,7 @@ _Generally available in all editions of Grafana._
 
 You can now query multiple data sources simultaneously in Explore. Select "Mixed" from the data source picker and specify a data source for each query.
 
-The "Mixed" data source in Explore is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source or Enterprise, you can disable this feature using the `exploreMixedDatasource` feature toggle.
+If you’re using Grafana Open Source or Enterprise, you can disable this feature using the `exploreMixedDatasource` feature toggle.
 
 ## Public dashboards
 
@@ -310,7 +314,7 @@ To try it out, enable the `newTraceViewHeader` feature toggle. This feature is e
 
 _Generally available in all editions of Grafana._
 
-We've started the work to migrate to OpenTelemetry in Grafana version 8.4; now we're removing OpenTracing and, for those who still have it configured, replacing it under the hood with OpenTelemetry. These changes are backwards compatible, so you don't need to change anything the feature will continue working as it did before.
+We've started the work to migrate to OpenTelemetry in Grafana version 8.4; now we're removing OpenTracing and, for those who still have it configured, replacing it under the hood with OpenTelemetry. These changes are backwards compatible, so you don't need to change anything and the feature will continue working as it did before.
 
 ## Data sources
 
@@ -409,7 +413,3 @@ Some data sources, like MySQL databases, Prometheus instances or Elasticsearch c
 To query these data sources from Grafana Cloud, you've had to open your private network to a range of IP addresses, a non-starter for many IT Security teams. The challenge is, how do you connect to your private data from Grafana Cloud, without exposing your network?
 
 The answer is Private Data Source Connect (PDC), available now in public preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [Private data source connect documentation](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect).
-
-## Deprecations
-
-Changing the folder UID through the API is deprecated. This functionality will be removed in a future release.

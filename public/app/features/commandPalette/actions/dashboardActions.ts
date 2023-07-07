@@ -1,7 +1,6 @@
 import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
-import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -43,7 +42,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRORITY,
-      url: locationUtil.stripBaseFromUrl(url),
+      url,
     };
   });
 
@@ -72,7 +71,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
           ? t('command-palette.section.dashboard-search-results', 'Dashboards')
           : t('command-palette.section.folder-search-results', 'Folders'),
       priority: SEARCH_RESULTS_PRORITY,
-      url: locationUtil.stripBaseFromUrl(url),
+      url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
     };
   });
