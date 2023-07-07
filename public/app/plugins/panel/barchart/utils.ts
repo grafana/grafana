@@ -7,7 +7,7 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
-  getFieldDisplayName,
+  cacheFieldDisplayNames,
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
@@ -363,6 +363,8 @@ export function prepareBarChartDisplayValues(
     return { warn: 'No data in response' };
   }
 
+  cacheFieldDisplayNames(series);
+
   // Bar chart requires a single frame
   const frame =
     series.length === 1
@@ -396,7 +398,6 @@ export function prepareBarChartDisplayValues(
   let timeField: Field | undefined = undefined;
   let fields: Field[] = [];
   for (const field of frame.fields) {
-    getFieldDisplayName(field, frame, series);
     if (field === xField) {
       continue;
     }
