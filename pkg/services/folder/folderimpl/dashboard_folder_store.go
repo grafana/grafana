@@ -83,6 +83,5 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 		return nil, err
 	}
 
-	res := dashboards.FromDashboard(&dashboard)
-	return res, nil
+	return dashboards.FromDashboard(&dashboard), nil
 }
