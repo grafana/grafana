@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -17,7 +18,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { isPromOrLokiQuery } from '../../../utils/rule-form';
+import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
@@ -267,6 +268,33 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const styles = useStyles2(getStyles);
 
+  // ExpressionEditor for cloud query needs to update queries in the reducer and in the form
+  // otherwise the value is not updated in the form
+  const onChangeExpression = (value: string) => {
+    const newQueries = cloneDeep(queries);
+
+    if (newQueries[0].model) {
+      if (isPromOrLokiQuery(newQueries[0].model)) {
+        newQueries[0].model.expr = value;
+      } else {
+        // first time we come from grafana-managed type
+        // we need to convert the model to PromOrLokiQuery
+        const promLoki: PromOrLokiQuery = {
+          ...cloneDeep(newQueries[0].model),
+          expr: value,
+        };
+        newQueries[0].model = promLoki;
+      }
+    }
+
+    setValue('queries', newQueries, { shouldValidate: false });
+
+    updateExpressionAndDatasource(newQueries);
+
+    dispatch(setDataQueries(newQueries));
+    runQueriesPreview();
+  };
+
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
       {/* This is the cloud data source selector */}
@@ -298,6 +326,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                   {...field}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
+                  onChange={onChangeExpression}
                 />
               );
             }}
