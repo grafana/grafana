@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { DragDropContext, OnDragEndResponder, useMouseSensor } from 'react-beautiful-dnd';
 import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -27,6 +28,7 @@ import {
   useEditPolicyModal,
   useDeletePolicyModal,
   useAlertGroupsModal,
+  UpdatingModal,
 } from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
 import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
@@ -38,7 +40,12 @@ import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { normalizeMatchers } from './utils/matchers';
 import { initialAsyncRequestState } from './utils/redux';
-import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
+import {
+  addRouteToParentRoute,
+  mergePartialAmRouteWithRouteTree,
+  omitRouteFromRouteTree,
+  reorderRouteTree,
+} from './utils/routeTree';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
@@ -128,6 +135,27 @@ const AmRoutes = () => {
     updateRouteTree(newRouteTree);
   }
 
+  const handleDragEnd: OnDragEndResponder = (result) => {
+    if (!result.destination || !rootRoute) {
+      return;
+    }
+
+    const { source, destination } = result;
+
+    const from = source.index;
+    const to = destination.index;
+    const parentRouteId = destination.droppableId;
+
+    // don't dispatch anything if the drag and drag is not updating any indices
+    if (from === to) {
+      return;
+    }
+
+    const newRouteTree = reorderRouteTree(rootRoute, parentRouteId, from, to);
+
+    updateRouteTree(newRouteTree);
+  };
+
   function updateRouteTree(routeTree: Route) {
     if (!result) {
       return;
@@ -135,7 +163,7 @@ const AmRoutes = () => {
 
     setUpdatingTree(true);
 
-    dispatch(
+    return dispatch(
       updateAlertManagerConfigAction({
         newConfig: {
           ...result,
@@ -165,14 +193,13 @@ const AmRoutes = () => {
   }
 
   // edit, add, delete modals
-  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd, updatingTree);
+  const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
     selectedAlertmanager ?? '',
     receivers,
-    handleSave,
-    updatingTree
+    handleSave
   );
-  const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete, updatingTree);
+  const [deleteModal, openDeleteModal, closeDeleteModal] = useDeletePolicyModal(handleDelete);
   const [alertInstancesModal, showAlertGroupsModal] = useAlertGroupsModal();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
@@ -215,55 +242,59 @@ const AmRoutes = () => {
         />
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
-        {haveError && (
-          <Alert severity="error" title="Error loading Alertmanager config">
-            {resultError.message || 'Unknown error.'}
-          </Alert>
-        )}
-        {haveData && (
-          <>
-            {policyTreeTabActive && (
-              <>
-                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
-                <Stack direction="column" gap={1}>
-                  {rootRoute && (
-                    <NotificationPoliciesFilter
-                      receivers={receivers}
-                      onChangeMatchers={setLabelMatchersFilter}
-                      onChangeReceiver={setContactPointFilter}
-                    />
-                  )}
-                  {rootRoute && (
-                    <Policy
-                      receivers={receivers}
-                      routeTree={rootRoute}
-                      currentRoute={rootRoute}
-                      alertGroups={alertGroups ?? []}
-                      contactPointsState={contactPointsState.receivers}
-                      readOnly={readOnlyPolicies}
-                      provisioned={isProvisioned}
-                      alertManagerSourceName={selectedAlertmanager}
-                      onAddPolicy={openAddModal}
-                      onEditPolicy={openEditModal}
-                      onDeletePolicy={openDeleteModal}
-                      onShowAlertInstances={showAlertGroupsModal}
-                      routesMatchingFilters={routesMatchingFilters}
-                      matchingInstancesPreview={{ groupsMap: routeAlertGroupsMap, enabled: !instancesPreviewError }}
-                    />
-                  )}
-                </Stack>
-                {addModal}
-                {editModal}
-                {deleteModal}
-                {alertInstancesModal}
-              </>
-            )}
-            {muteTimingsTabActive && (
-              <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={readOnlyMuteTimings} />
-            )}
-          </>
-        )}
+        {/* this is the Drag and Drop context, for now we only support the mouse */}
+        <DragDropContext sensors={[useMouseSensor]} onDragEnd={handleDragEnd}>
+          {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+          {haveError && (
+            <Alert severity="error" title="Error loading Alertmanager config">
+              {resultError.message || 'Unknown error.'}
+            </Alert>
+          )}
+          {haveData && (
+            <>
+              {policyTreeTabActive && (
+                <>
+                  <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
+                  <Stack direction="column" gap={1}>
+                    {rootRoute && (
+                      <NotificationPoliciesFilter
+                        receivers={receivers}
+                        onChangeMatchers={setLabelMatchersFilter}
+                        onChangeReceiver={setContactPointFilter}
+                      />
+                    )}
+                    {rootRoute && (
+                      <Policy
+                        receivers={receivers}
+                        routeTree={rootRoute}
+                        currentRoute={rootRoute}
+                        alertGroups={alertGroups ?? []}
+                        contactPointsState={contactPointsState.receivers}
+                        readOnly={readOnlyPolicies}
+                        provisioned={isProvisioned}
+                        alertManagerSourceName={selectedAlertmanager}
+                        onAddPolicy={openAddModal}
+                        onEditPolicy={openEditModal}
+                        onDeletePolicy={openDeleteModal}
+                        onShowAlertInstances={showAlertGroupsModal}
+                        routesMatchingFilters={routesMatchingFilters}
+                        matchingInstancesPreview={{ groupsMap: routeAlertGroupsMap, enabled: !instancesPreviewError }}
+                      />
+                    )}
+                  </Stack>
+                  {!updatingTree && addModal}
+                  {!updatingTree && editModal}
+                  {!updatingTree && deleteModal}
+                  {!updatingTree && alertInstancesModal}
+                  <UpdatingModal isOpen={updatingTree} />
+                </>
+              )}
+              {muteTimingsTabActive && (
+                <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={readOnlyMuteTimings} />
+              )}
+            </>
+          )}
+        </DragDropContext>
       </TabContent>
     </>
   );

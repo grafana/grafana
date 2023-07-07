@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
+import { Draggable, Droppable } from 'react-beautiful-dnd';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -270,32 +271,49 @@ const Policy: FC<PolicyComponentProps> = ({
           </Stack>
         </div>
       </div>
-      <div className={styles.childPolicies}>
-        {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
-        {childPolicies.map((child) => {
-          const childInheritedProperties = getInheritedProperties(currentRoute, child, inheritedProperties);
 
-          return (
-            <Policy
-              key={uniqueId()}
-              routeTree={routeTree}
-              currentRoute={child}
-              receivers={receivers}
-              contactPointsState={contactPointsState}
-              readOnly={readOnly || provisioned}
-              inheritedProperties={childInheritedProperties}
-              onAddPolicy={onAddPolicy}
-              onEditPolicy={onEditPolicy}
-              onDeletePolicy={onDeletePolicy}
-              onShowAlertInstances={onShowAlertInstances}
-              alertManagerSourceName={alertManagerSourceName}
-              alertGroups={alertGroups}
-              routesMatchingFilters={routesMatchingFilters}
-              matchingInstancesPreview={matchingInstancesPreview}
-            />
-          );
-        })}
-      </div>
+      <Droppable
+        droppableId={currentRoute.id}
+        isDropDisabled={readOnly || provisioned}
+        direction="vertical"
+        type={currentRoute.id}
+      >
+        {(provided, _snapshot) => (
+          <div ref={provided.innerRef} className={styles.childPolicies} {...provided.droppableProps}>
+            {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
+            {childPolicies.map((child, index) => {
+              const childInheritedProperties = getInheritedProperties(currentRoute, child, inheritedProperties);
+
+              return (
+                <Draggable key={child.id} draggableId={child.id} index={index}>
+                  {(provided, _snapshot) => (
+                    <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                      <Policy
+                        routeTree={routeTree}
+                        currentRoute={child}
+                        receivers={receivers}
+                        contactPointsState={contactPointsState}
+                        readOnly={readOnly || provisioned}
+                        inheritedProperties={childInheritedProperties}
+                        onAddPolicy={onAddPolicy}
+                        onEditPolicy={onEditPolicy}
+                        onDeletePolicy={onDeletePolicy}
+                        onShowAlertInstances={onShowAlertInstances}
+                        alertManagerSourceName={alertManagerSourceName}
+                        alertGroups={alertGroups}
+                        routesMatchingFilters={routesMatchingFilters}
+                        matchingInstancesPreview={matchingInstancesPreview}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              );
+            })}
+            {/* we need this placeholder for react beautiful drag-and-drop */}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
     </Stack>
   );
 };
@@ -484,7 +502,6 @@ const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
           <Strong>{contactPoint}</Strong>
         </MetaText>
       }
-      key={uniqueId()}
       content={
         <Stack direction="row" gap={0.5}>
           {/* use "label" to indicate how many of that type we have in the contact point */}
@@ -601,6 +618,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-top: 0;
       margin-left: -20px;
     }
+  `,
+  dropping: css`
+    background: ${theme.colors.primary.transparent};
+  `,
+  dragging: css`
+    opacity: 0.9;
   `,
   policyItemWrapper: css`
     padding: ${theme.spacing(1.5)};

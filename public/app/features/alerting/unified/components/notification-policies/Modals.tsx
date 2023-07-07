@@ -25,8 +25,7 @@ type EditModalHook = [JSX.Element, (item: RouteWithID, isDefaultRoute?: boolean)
 
 const useAddPolicyModal = (
   receivers: Receiver[] = [],
-  handleAdd: (route: Partial<FormAmRoute>, parentRoute: RouteWithID) => void,
-  loading: boolean
+  handleAdd: (route: Partial<FormAmRoute>, parentRoute: RouteWithID) => void
 ): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
   const [parentRoute, setParentRoute] = useState<RouteWithID>();
@@ -43,35 +42,32 @@ const useAddPolicyModal = (
   }, []);
 
   const modalElement = useMemo(
-    () =>
-      loading ? (
-        <UpdatingModal isOpen={showModal} />
-      ) : (
-        <Modal
-          isOpen={showModal}
-          onDismiss={handleDismiss}
-          closeOnBackdropClick={true}
-          closeOnEscape={true}
-          title="Add notification policy"
-        >
-          <AmRoutesExpandedForm
-            receivers={AmRouteReceivers}
-            defaults={{
-              groupBy: parentRoute?.group_by,
-            }}
-            onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
-            actionButtons={
-              <Modal.ButtonRow>
-                <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                  Cancel
-                </Button>
-                <Button type="submit">Save policy</Button>
-              </Modal.ButtonRow>
-            }
-          />
-        </Modal>
-      ),
-    [AmRouteReceivers, handleAdd, handleDismiss, loading, parentRoute, showModal]
+    () => (
+      <Modal
+        isOpen={showModal}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Add notification policy"
+      >
+        <AmRoutesExpandedForm
+          receivers={AmRouteReceivers}
+          defaults={{
+            groupBy: parentRoute?.group_by,
+          }}
+          onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
+          actionButtons={
+            <Modal.ButtonRow>
+              <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
+                Cancel
+              </Button>
+              <Button type="submit">Save policy</Button>
+            </Modal.ButtonRow>
+          }
+        />
+      </Modal>
+    ),
+    [AmRouteReceivers, handleAdd, handleDismiss, parentRoute, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -80,8 +76,7 @@ const useAddPolicyModal = (
 const useEditPolicyModal = (
   alertManagerSourceName: string,
   receivers: Receiver[],
-  handleSave: (route: Partial<FormAmRoute>) => void,
-  loading: boolean
+  handleSave: (route: Partial<FormAmRoute>) => void
 ): EditModalHook => {
   const [showModal, setShowModal] = useState(false);
   const [isDefaultPolicy, setIsDefaultPolicy] = useState(false);
@@ -100,59 +95,56 @@ const useEditPolicyModal = (
   }, []);
 
   const modalElement = useMemo(
-    () =>
-      loading ? (
-        <UpdatingModal isOpen={showModal} />
-      ) : (
-        <Modal
-          isOpen={showModal}
-          onDismiss={handleDismiss}
-          closeOnBackdropClick={true}
-          closeOnEscape={true}
-          title="Edit notification policy"
-        >
-          {isDefaultPolicy && route && (
-            <AmRootRouteForm
-              // TODO *sigh* this alertmanagersourcename should come from context or something
-              // passing it down all the way here is a code smell
-              alertManagerSourceName={alertManagerSourceName}
-              onSubmit={handleSave}
-              receivers={AmRouteReceivers}
-              route={route}
-              actionButtons={
-                <Modal.ButtonRow>
-                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                    Cancel
-                  </Button>
-                  <Button type="submit">Update default policy</Button>
-                </Modal.ButtonRow>
-              }
-            />
-          )}
-          {!isDefaultPolicy && (
-            <AmRoutesExpandedForm
-              receivers={AmRouteReceivers}
-              route={route}
-              onSubmit={handleSave}
-              actionButtons={
-                <Modal.ButtonRow>
-                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
-                    Cancel
-                  </Button>
-                  <Button type="submit">Update policy</Button>
-                </Modal.ButtonRow>
-              }
-            />
-          )}
-        </Modal>
-      ),
-    [AmRouteReceivers, alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, loading, route, showModal]
+    () => (
+      <Modal
+        isOpen={showModal}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Edit notification policy"
+      >
+        {isDefaultPolicy && route && (
+          <AmRootRouteForm
+            // TODO *sigh* this alertmanagersourcename should come from context or something
+            // passing it down all the way here is a code smell
+            alertManagerSourceName={alertManagerSourceName}
+            onSubmit={handleSave}
+            receivers={AmRouteReceivers}
+            route={route}
+            actionButtons={
+              <Modal.ButtonRow>
+                <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
+                  Cancel
+                </Button>
+                <Button type="submit">Update default policy</Button>
+              </Modal.ButtonRow>
+            }
+          />
+        )}
+        {!isDefaultPolicy && (
+          <AmRoutesExpandedForm
+            receivers={AmRouteReceivers}
+            route={route}
+            onSubmit={handleSave}
+            actionButtons={
+              <Modal.ButtonRow>
+                <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
+                  Cancel
+                </Button>
+                <Button type="submit">Update policy</Button>
+              </Modal.ButtonRow>
+            }
+          />
+        )}
+      </Modal>
+    ),
+    [AmRouteReceivers, alertManagerSourceName, handleDismiss, handleSave, isDefaultPolicy, route, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
 };
 
-const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loading: boolean): ModalHook<RouteWithID> => {
+const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void): ModalHook<RouteWithID> => {
   const [showModal, setShowModal] = useState(false);
   const [route, setRoute] = useState<RouteWithID>();
 
@@ -173,31 +165,28 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
   }, [handleDelete, route]);
 
   const modalElement = useMemo(
-    () =>
-      loading ? (
-        <UpdatingModal isOpen={showModal} />
-      ) : (
-        <Modal
-          isOpen={showModal}
-          onDismiss={handleDismiss}
-          closeOnBackdropClick={true}
-          closeOnEscape={true}
-          title="Delete notification policy"
-        >
-          <p>Deleting this notification policy will permanently remove it.</p>
-          <p>Are you sure you want to delete this policy?</p>
+    () => (
+      <Modal
+        isOpen={showModal}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Delete notification policy"
+      >
+        <p>Deleting this notification policy will permanently remove it.</p>
+        <p>Are you sure you want to delete this policy?</p>
 
-          <Modal.ButtonRow>
-            <Button type="button" variant="destructive" onClick={handleSubmit}>
-              Yes, delete policy
-            </Button>
-            <Button type="button" variant="secondary" onClick={handleDismiss}>
-              Cancel
-            </Button>
-          </Modal.ButtonRow>
-        </Modal>
-      ),
-    [handleDismiss, handleSubmit, loading, showModal]
+        <Modal.ButtonRow>
+          <Button type="button" variant="destructive" onClick={handleSubmit}>
+            Yes, delete policy
+          </Button>
+          <Button type="button" variant="secondary" onClick={handleDismiss}>
+            Cancel
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
+    ),
+    [handleDismiss, handleSubmit, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
@@ -272,7 +261,7 @@ const useAlertGroupsModal = (): [
   return [modalElement, handleShow, handleDismiss];
 };
 
-const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
+export const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
   <Modal
     isOpen={isOpen}
     onDismiss={() => {}}

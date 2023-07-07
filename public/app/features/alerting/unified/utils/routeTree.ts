@@ -2,6 +2,7 @@
  * Various helper functions to modify (immutably) the route tree, aka "notification policies"
  */
 
+import produce from 'immer';
 import { omit } from 'lodash';
 
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -114,4 +115,29 @@ export const addRouteToParentRoute = (
 
 export function findExistingRoute(id: string, routeTree: RouteWithID): RouteWithID | undefined {
   return routeTree.id === id ? routeTree : routeTree.routes?.find((route) => findExistingRoute(id, route));
+}
+
+/**
+ * This function will reorder child policies in a sub tree
+ */
+export function reorderRouteTree(routeTree: RouteWithID, parentRouteId: string, from: number, to: number): RouteWithID {
+  return produce(routeTree, (draft) => {
+    // first, find the policy we want to modify its children for
+    const route = findExistingRoute(parentRouteId, draft);
+
+    if (!route) {
+      return draft;
+    }
+
+    if (!route?.routes) {
+      return draft;
+    }
+
+    // now swap indices of the children for this route
+    let temp = route.routes[to];
+    route.routes[to] = route.routes[from];
+    route.routes[from] = temp;
+
+    return draft;
+  });
 }
