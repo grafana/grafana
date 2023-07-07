@@ -112,6 +112,7 @@ Experimental features might be changed or removed without prior notice.
 | `extraThemes`                               | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`                  | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                         |
+| `dashboardEmbed`                            | Allow embedding dashboard for external use in Code editors                                                   |
 | `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
 | `cloudWatchLogsMonacoEditor`                | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
@@ -123,6 +124,7 @@ Experimental features might be changed or removed without prior notice.
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
+| `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
 
 ## Development feature toggles
 

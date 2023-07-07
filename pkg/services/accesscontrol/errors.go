@@ -8,6 +8,7 @@ import (
 var (
 	ErrFixedRolePrefixMissing = errors.New("fixed role should be prefixed with '" + FixedRolePrefix + "'")
 	ErrInvalidBuiltinRole     = errors.New("built-in role is not valid")
+	ErrNoneRoleAssignment     = errors.New("none role cannot receive permissions")
 	ErrInvalidScope           = errors.New("invalid scope")
 	ErrResolverNotFound       = errors.New("no resolver found")
 	ErrPluginIDRequired       = errors.New("plugin ID is required")

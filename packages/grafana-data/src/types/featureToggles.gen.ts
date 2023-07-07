@@ -98,6 +98,7 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
+  dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
@@ -110,4 +111,5 @@ export interface FeatureToggles {
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
+  awsDatasourcesTempCredentials?: boolean;
 }

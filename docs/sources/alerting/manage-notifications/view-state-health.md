@@ -79,34 +79,13 @@ Use the State history view to get insight into how your alert instances behave o
 
 ### Configure the state history view
 
-**Note:** This applies to Open Source only. There is no configuration required if you are using Grafana Cloud.
-
-To enable the state history view, complete the following steps.
-
-1. Ensure you have a Loki instance running to save your history to.
-1. Configure the following settings in your Grafana configuration:
-
-   a. Enable the Loki backend and Loki remote URL.
-
-   b. Enable the three feature toggles for alert state history.
-
-**Example:**
-
-```
-[unified_alerting.state_history]
-enabled = true
-backend = loki
-loki_remote_url = http://localhost:3100
-
-[feature_toggles]
-enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStateHistoryLokiOnly
-```
+To enable the state history view, see [Configuring alert state history]({{< relref "../set-up/configure-alert-state-history/index.md" >}}).
 
 ### View state history
 
 To use the State history view, complete the following steps.
 
-1. Navigate to **Alerts&IRM** -> **Alerting** -> **Alert rules**.
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Click an alert rule.
 1. Select **Show state history**.
 
