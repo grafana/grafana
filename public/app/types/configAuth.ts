@@ -12,7 +12,7 @@ export interface AuthProviderStatus {
   enabled: boolean;
   configuredInIni: boolean;
   enabledInUI: boolean;
-  configuredInUI?: boolean;
+  configuredInUI: boolean;
 }
 
 export interface SettingsError {
