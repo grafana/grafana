@@ -13,6 +13,7 @@ export const mockExplorePanelData = (props?: MockProps): Observable<ExplorePanel
     flameGraphFrames: [],
     graphFrames: [],
     graphResult: [],
+    customFrames: [],
     logsFrames: [],
     logsResult: {
       hasUniqueLabels: false,
