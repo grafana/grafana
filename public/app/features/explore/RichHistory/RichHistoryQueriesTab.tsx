@@ -32,8 +32,6 @@ export interface RichHistoryQueriesTabProps {
 }
 
 const getStyles = (theme: GrafanaTheme2, height: number) => {
-  const bgColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.dark4;
-
   return {
     container: css`
       display: flex;
