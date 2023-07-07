@@ -3,6 +3,8 @@ import React from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
+import { ColorScheme } from '../types';
+
 import FlameGraph from './FlameGraph';
 import { FlameGraphDataContainer } from './dataTransform';
 import { data } from './testData/dataNestedSet';
@@ -45,6 +47,7 @@ describe('FlameGraph', () => {
         onSandwich={onSandwich}
         onFocusPillClick={onFocusPillClick}
         onSandwichPillClick={onSandwichPillClick}
+        colorScheme={ColorScheme.ValueBased}
       />
     );
     return {
