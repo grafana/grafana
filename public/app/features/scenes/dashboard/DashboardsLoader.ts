@@ -26,6 +26,7 @@ import {
   getUrlSyncManager,
   SceneObject,
   SceneControlsSpacer,
+  VizPanelMenu,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -34,6 +35,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
+import { panelMenuBehavior } from './PanelMenuBehavior';
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 import { getVizPanelKeyForPanelId } from './utils';
 
@@ -272,8 +274,6 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     y: panel.gridPos.y,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    isDraggable: true,
-    isResizable: true,
     body: new VizPanel({
       key: getVizPanelKeyForPanelId(panel.id),
       title: panel.title,
@@ -285,6 +285,9 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       // To be replaced with it's own option persited option instead derived
       hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
       $data: createPanelDataProvider(panel),
+      menu: new VizPanelMenu({
+        $behaviors: [panelMenuBehavior],
+      }),
     }),
   });
 }
