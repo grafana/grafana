@@ -33,9 +33,14 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
       sql={query.sql!}
       onSqlChange={(val: SQLExpression) => {
         const templateSrv = getTemplateSrv();
+        const templateVars = templateSrv.getVariables();
 
-        if (templateSrv.containsTemplate(val.whereString)) {
-          val.whereString = val.whereString?.replaceAll("''", "'");
+        if (
+          templateVars.some((tv) => {
+            return tv.multi && val.whereString?.includes('${' + tv.name + '}');
+          })
+        ) {
+          val.whereString = val.whereString?.replaceAll("'", '');
         }
 
         onSqlChange(val);
