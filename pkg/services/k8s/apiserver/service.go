@@ -170,9 +170,9 @@ func (s *service) start(ctx context.Context) error {
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
 	grafanaAdmission.RegisterSchemaValidate(o.RecommendedOptions.Admission.Plugins, s.corereg)
 	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaTranslate, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaTranslate, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
