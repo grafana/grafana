@@ -40,6 +40,7 @@ export enum TestDataQueryType {
   Trace = 'trace',
   USA = 'usa',
   VariablesQuery = 'variables-query',
+  ComparisonQuery = 'comparison_query',
 }
 
 export interface StreamingQuery {
@@ -130,6 +131,7 @@ export interface TestData extends common.DataQuery {
   stream?: StreamingQuery;
   stringInput?: string;
   usa?: USAQuery;
+  timeShift?: string;
 }
 
 export const defaultTestData: Partial<TestData> = {

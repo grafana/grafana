@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -166,7 +167,7 @@ func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
 	model := simplejson.New()
-	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
+	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0, false, time.Duration(0))}
 
 	return response
 }

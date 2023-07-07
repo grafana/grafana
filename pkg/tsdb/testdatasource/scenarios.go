@@ -15,10 +15,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 const (
 	randomWalkQuery                   queryType = "random_walk"
+	comparisonQuery                   queryType = "comparison_query"
 	randomWalkSlowQuery               queryType = "slow_query"
 	randomWalkWithErrorQuery          queryType = "random_walk_with_error"
 	randomWalkTableQuery              queryType = "random_walk_table"
@@ -74,6 +76,12 @@ func (s *Service) registerScenarios() {
 		ID:      string(randomWalkQuery),
 		Name:    "Random Walk",
 		handler: s.handleRandomWalkScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:      string(comparisonQuery),
+		Name:    "Comparison Query",
+		handler: s.handleComparisonQueryScenario,
 	})
 
 	s.registerScenario(&Scenario{
@@ -289,7 +297,36 @@ func (s *Service) handleRandomWalkScenario(ctx context.Context, req *backend.Que
 
 		for i := 0; i < seriesCount; i++ {
 			respD := resp.Responses[q.RefID]
-			respD.Frames = append(respD.Frames, RandomWalk(q, model, i))
+			respD.Frames = append(respD.Frames, RandomWalk(q, model, i, false, time.Duration(0)))
+			resp.Responses[q.RefID] = respD
+		}
+	}
+
+	return resp, nil
+}
+
+func (s *Service) handleComparisonQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	for _, q := range req.Queries {
+		model, err := simplejson.NewJson(q.JSON)
+		if err != nil {
+			continue
+		}
+		timeShift := model.Get("timeShift").MustString("")
+		timeShiftDuration, err := intervalv2.ParseIntervalStringToTimeDuration(timeShift)
+		if err != nil {
+			timeShiftDuration = time.Duration(0)
+		}
+		seriesCount := model.Get("seriesCount").MustInt(1)
+
+		for i := 0; i < seriesCount; i++ {
+			respD := resp.Responses[q.RefID]
+			respD.Frames = append(respD.Frames, RandomWalk(q, model, i, true, time.Duration(0)))
+
+			if timeShiftDuration.Milliseconds() != 0 {
+				respD.Frames = append(respD.Frames, RandomWalk(q, model, i, true, timeShiftDuration))
+			}
 			resp.Responses[q.RefID] = respD
 		}
 	}
@@ -375,7 +412,7 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 		}
 
 		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0, false, time.Duration(0)))
 		respD.Error = fmt.Errorf("this is an error and it can include URLs http://grafana.com/")
 		resp.Responses[q.RefID] = respD
 	}
@@ -397,7 +434,7 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 		time.Sleep(parsedInterval)
 
 		respD := resp.Responses[q.RefID]
-		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0, false, time.Duration(0)))
 		resp.Responses[q.RefID] = respD
 	}
 
@@ -651,10 +688,11 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 	return resp, nil
 }
 
-func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int, useTimeOffset bool, timeShift time.Duration) *data.Frame {
+	timeShiftDurationMs := timeShift.Milliseconds()
 	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
-	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
-	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
+	timeWalkerMs := query.TimeRange.From.UnixNano()/int64(time.Millisecond) - timeShiftDurationMs
+	to := query.TimeRange.To.UnixNano()/int64(time.Millisecond) - timeShiftDurationMs
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := model.Get("spread").MustFloat64(1)
 	noise := model.Get("noise").MustFloat64(0)
@@ -666,6 +704,7 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 	hasMax := err == nil
 
 	timeVec := make([]*time.Time, 0)
+	offsetTimeVec := make([]*time.Duration, 0)
 	floatVec := make([]*float64, 0)
 
 	walker := startValue
@@ -687,7 +726,12 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 			// skip value
 		} else {
 			t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-			timeVec = append(timeVec, &t)
+			if useTimeOffset {
+				offset := time.Duration(t.UnixNano()/int64(time.Millisecond) - query.TimeRange.From.UnixNano()/int64(time.Millisecond))
+				offsetTimeVec = append(offsetTimeVec, &offset)
+			} else {
+				timeVec = append(timeVec, &t)
+			}
 			floatVec = append(floatVec, &nextValue)
 		}
 
@@ -695,13 +739,26 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
-	return data.NewFrame("",
-		data.NewField("time", nil, timeVec).
+	timeField := data.NewField("time", nil, timeVec)
+	if useTimeOffset {
+		timeField = data.NewField("time", nil, offsetTimeVec)
+	}
+
+	frame := data.NewFrame("",
+		timeField.
 			SetConfig(&data.FieldConfig{
 				Interval: float64(query.Interval.Milliseconds()),
 			}),
 		data.NewField(frameNameForQuery(query, model, index), parseLabels(model, index), floatVec),
 	)
+
+	if useTimeOffset {
+		frame.Meta = &data.FrameMeta{
+			FromEpochMS: query.TimeRange.From.UnixNano() / int64(time.Millisecond),
+		}
+	}
+
+	return frame
 }
 
 func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Frame {

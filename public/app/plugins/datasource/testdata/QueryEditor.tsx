@@ -278,9 +278,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
       </InlineFieldRow>
 
-      {scenarioId === TestDataQueryType.RandomWalk && (
-        <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />
-      )}
+      {scenarioId === TestDataQueryType.RandomWalk ||
+        (scenarioId === TestDataQueryType.ComparisonQuery && (
+          <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />
+        ))}
       {scenarioId === TestDataQueryType.StreamingClient && (
         <StreamingClientEditor onChange={onStreamClientChange} query={query} ds={datasource} />
       )}
@@ -371,6 +372,19 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             width={32}
             onChange={onInputChange}
             placeholder="10"
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === TestDataQueryType.ComparisonQuery && (
+        <InlineField labelWidth={14} label="Time shift">
+          <Input
+            type="string"
+            name="timeShift"
+            value={query.timeShift}
+            width={32}
+            onChange={onInputChange}
+            placeholder="1d"
           />
         </InlineField>
       )}
