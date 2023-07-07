@@ -42,13 +42,25 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   }, [loadSettings]);
 
   const authProviders = getRegisteredAuthProviders();
+  const checkProviderStatus = (provider: AuthProviderInfo) => {
+    // if it is configured in the UI, that takes precidence it is enabled in the UI
+    // might want to refactor to just have a enabled field from the backend that is specified
+    console.log(`configuredinUI`);
+    console.log(providerStatuses[provider.id]?.configuredInUI);
+    console.log(`enabledInUI`);
+    console.log(providerStatuses[provider.id]?.enabledInUI);
+    console.log(`enabled`);
+    console.log(providerStatuses[provider.id]?.enabled);
+    if (providerStatuses[provider.id]?.configuredInUI !== undefined) {
+      return providerStatuses[provider.id]?.configuredInUI || providerStatuses[provider.id]?.enabledInUI;
+    }
+    // check if it is enabled in the backend from the inifile
+    return providerStatuses[provider.id]?.enabled;
+  };
   const alreadyConfiguredProviders = authProviders.filter((p) => {
-    console.log(providerStatuses[p.id]?.configuredInUI);
-    console.log(providerStatuses[p.id]?.enabledInUI);
-    console.log(providerStatuses[p.id]?.enabled);
-    return (
-      providerStatuses[p.id]?.configuredInUI || providerStatuses[p.id]?.enabledInUI || providerStatuses[p.id]?.enabled
-    );
+    console.log(`checkProviderStatus`);
+    console.log(checkProviderStatus(p));
+    return checkProviderStatus(p);
   });
 
   {
@@ -85,7 +97,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 providerId={provider.id}
                 displayName={provider.displayName}
                 authType={provider.type}
-                enabled={providerStatuses[provider.id]?.enabled || providerStatuses[provider.id]?.enabledInUI}
+                enabled={checkProviderStatus(provider)}
                 configPath={provider.configPath}
                 onClick={() => {
                   onProviderCardClick(provider);
