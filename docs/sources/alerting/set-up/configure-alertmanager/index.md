@@ -16,6 +16,9 @@ weight: 200
 
 Set up Grafana to use an external Alertmanager as a single Alertmanager to receive all of your alerts. This external Alertmanager can then be configured and administered from within Grafana itself.
 
+**Note:**
+Grafana Alerting does not support sending alerts to the AWS Managed Service for Prometheus due to the lack of sivv4 support in Prometheus.
+
 Once you have added the Alertmanager, you can use the Grafana Alerting UI to manage silences, contact points, and notification policies. A drop-down option in these pages allows you to switch between alertmanagers.
 
 **Note:**
