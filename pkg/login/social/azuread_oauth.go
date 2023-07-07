@@ -334,7 +334,7 @@ func (s *SocialAzureAD) SupportBundleContent(bf *bytes.Buffer) error {
 
 func (s *SocialAzureAD) extractTenantID(authURL string) (string, error) {
 	if s.compiledTenantRegex == nil {
-		compiledTenantRegex, err := regexp.Compile(`https://login.microsoftonline.com/([^/]+)/oauth2`)
+		compiledTenantRegex, err := regexp.Compile(`https://login.microsoftonline.(com|us)/([^/]+)/oauth2`)
 		if err != nil {
 			return "", err
 		}
@@ -342,10 +342,10 @@ func (s *SocialAzureAD) extractTenantID(authURL string) (string, error) {
 	}
 
 	matches := s.compiledTenantRegex.FindStringSubmatch(authURL)
-	if len(matches) < 2 {
+	if len(matches) < 3 {
 		return "", fmt.Errorf("unable to extract tenant ID from URL")
 	}
-	return matches[1], nil
+	return matches[2], nil
 }
 
 func (s *SocialAzureAD) retrieveJWKS(client *http.Client) (*jose.JSONWebKeySet, error) {
