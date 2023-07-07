@@ -1,7 +1,7 @@
 import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, VariableWithMultiSupport } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { QueryWithDefaults } from '../../defaults';
@@ -33,14 +33,15 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
       sql={query.sql!}
       onSqlChange={(val: SQLExpression) => {
         const templateSrv = getTemplateSrv();
-        const templateVars = templateSrv.getVariables();
+        const templateVars = templateSrv.getVariables() as VariableWithMultiSupport[];
 
         if (
           templateVars.some((tv) => {
             return tv.multi && val.whereString?.includes('${' + tv.name + '}');
           })
         ) {
-          val.whereString = val.whereString?.replaceAll("'", '');
+          val.whereString = val.whereString?.replaceAll("('", '(');
+          val.whereString = val.whereString?.replaceAll("')", ')');
         }
 
         onSqlChange(val);
