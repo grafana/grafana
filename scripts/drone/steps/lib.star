@@ -1222,6 +1222,27 @@ def publish_images_step(edition, ver_mode, docker_repo, trigger = None):
 
     return step
 
+def integration_tests_step(name, cmds, environment = None):
+    step = {
+        "name": "{}-integration-tests".format(name),
+        "image": images["build_image"],
+        "depends_on": ["wire-install"],
+        "commands": cmds,
+    }
+
+    if environment:
+        step["environment"] = environment
+    
+    return step
+
+def integration_benchmarks_step(name, environment = None):
+    cmds = [
+        "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
+        "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
+    ]
+
+    return integration_tests_step("{}-benchmark".format(name), cmds, environment)
+
 def postgres_integration_tests_step():
     cmds = [
         "apt-get update",
@@ -1232,17 +1253,14 @@ def postgres_integration_tests_step():
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
-    return {
-        "name": "postgres-integration-tests",
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "PGPASSWORD": "grafanatest",
-            "GRAFANA_TEST_DB": "postgres",
-            "POSTGRES_HOST": "postgres",
-        },
-        "commands": cmds,
+
+    environment = {
+        "PGPASSWORD": "grafanatest",
+        "GRAFANA_TEST_DB": "postgres",
+        "POSTGRES_HOST": "postgres",
     }
+
+    return integration_tests_step("postgres", cmds, environment)
 
 def mysql_integration_tests_step(hostname, version):
     cmds = [
@@ -1253,46 +1271,39 @@ def mysql_integration_tests_step(hostname, version):
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
-    return {
-        "name": "mysql-{}-integration-tests".format(version),
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "GRAFANA_TEST_DB": "mysql",
-            "MYSQL_HOST": hostname,
-        },
-        "commands": cmds,
+
+    environment = {
+        "GRAFANA_TEST_DB": "mysql",
+        "MYSQL_HOST": hostname,
     }
+
+    return integration_tests_step("mysql-{}".format(version), cmds, environment)
 
 def redis_integration_tests_step():
-    return {
-        "name": "redis-integration-tests",
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "REDIS_URL": "redis://redis:6379/0",
-        },
-        "commands": [
-            "dockerize -wait tcp://redis:6379/0 -timeout 120s",
-            "go clean -testcache",
-            "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
-        ],
+    cmds = [
+        "dockerize -wait tcp://redis:6379/0 -timeout 120s",
+        "go clean -testcache",
+        "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
+    ]
+
+    environment = {
+        "REDIS_URL": "redis://redis:6379/0",
     }
 
+    return integration_tests_step("redis", cmds, environment)
+
 def memcached_integration_tests_step():
-    return {
-        "name": "memcached-integration-tests",
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "MEMCACHED_HOSTS": "memcached:11211",
-        },
-        "commands": [
-            "dockerize -wait tcp://memcached:11211 -timeout 120s",
-            "go clean -testcache",
-            "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
-        ],
+    cmds = [
+        "dockerize -wait tcp://memcached:11211 -timeout 120s",
+        "go clean -testcache",
+        "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
+    ]
+
+    environment = {
+        "MEMCACHED_HOSTS": "memcached:11211",
     }
+
+    return integration_tests_step("memcached", cmds, environment)
 
 def release_canary_npm_packages_step(trigger = None):
     """Releases canary NPM packages.

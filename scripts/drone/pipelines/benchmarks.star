@@ -6,6 +6,7 @@ load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "enterprise_setup_step",
+    "integration_benchmarks_step",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
@@ -18,10 +19,6 @@ load(
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
-)
-load(
-    "scripts/drone/utils/images.star",
-    "images",
 )
 
 def integration_benchmarks(prefix):
@@ -55,49 +52,21 @@ def integration_benchmarks(prefix):
         wire_install_step(),
     ]
 
-    cmd = [
-        "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
-        "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
-    ]
-
     benchmark_steps = [
-        {
-            "name": "sqlite-integration-benchmarks",
-            "image": images["build_image"],
-            "depends_on": ["wire-install"],
-            "commands": cmd,
-        },
-        {
-            "name": "postgres-integration-benchmarks",
-            "image": images["build_image"],
-            "depends_on": ["wire-install"],
-            "environment": {
-                "PGPASSWORD": "grafanatest",
-                "GRAFANA_TEST_DB": "postgres",
-                "POSTGRES_HOST": "postgres",
-            },
-            "commands": cmd,
-        },
-        {
-            "name": "mysql-integration-benchmarks-5.7",
-            "image": images["build_image"],
-            "depends_on": ["wire-install"],
-            "environment": {
-                "GRAFANA_TEST_DB": "mysql",
-                "MYSQL_HOST": "mysql57",
-            },
-            "commands": cmd,
-        },
-        {
-            "name": "mysql8-integration-benchmarks-8.0",
-            "image": images["build_image"],
-            "depends_on": ["wire-install"],
-            "environment": {
-                "GRAFANA_TEST_DB": "mysql",
-                "MYSQL_HOST": "mysql80",
-            },
-            "commands": cmd,
-        },
+        integration_benchmarks_step("sqlite"),
+        integration_benchmarks_step("postgres", {
+            "PGPASSWORD": "grafanatest",
+            "GRAFANA_TEST_DB": "postgres",
+            "POSTGRES_HOST": "postgres",
+        }),
+        integration_benchmarks_step("mysql-5.7", {
+            "GRAFANA_TEST_DB": "mysql",
+            "MYSQL_HOST": "mysql57",
+        }),
+        integration_benchmarks_step("mysql-8.0", {
+            "GRAFANA_TEST_DB": "mysql",
+            "MYSQL_HOST": "mysql80",
+        }),
     ]
 
     return pipeline(

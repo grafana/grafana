@@ -1262,7 +1262,7 @@ steps:
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
-  name: sqlite-integration-benchmarks
+  name: sqlite-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
@@ -1273,7 +1273,7 @@ steps:
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
   image: grafana/build-container:1.7.4
-  name: postgres-integration-benchmarks
+  name: postgres-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
@@ -1283,7 +1283,7 @@ steps:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
-  name: mysql-integration-benchmarks-5.7
+  name: mysql-5.7-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
@@ -1293,7 +1293,7 @@ steps:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
   image: grafana/build-container:1.7.4
-  name: mysql8-integration-benchmarks-8.0
+  name: mysql-8.0-benchmark-integration-tests
 trigger:
   event:
   - promote
@@ -7352,6 +7352,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 569a03fbac81878310b8f084aa0d5d8e4a816afec7c4072828bd03923ef7d1d9
+hmac: 80038c08bedd62d8a0e4250e12e3dbb27712dd640694ff9f57ef14a82282ab76
 
 ...
