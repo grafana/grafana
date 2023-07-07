@@ -99,19 +99,22 @@ export function SmartAlertTypeDetector({
 
   // texts and labels for the alert box
   const typeTitle = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud alert rule' : 'Grafana-managed alert rule';
-  const typeLabel = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
   const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
   const contentText =
     ruleFormType === RuleFormType.cloudAlerting
       ? 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.'
       : 'Cloud alert rules are stored in the Grafana Cloud database and are managed by Grafana Cloud.';
-  const titleLabel = `Based on the selected data sources this alert rule will be ${typeLabel}`;
-
+  const titleLabel =
+    ruleFormType === RuleFormType.cloudAlerting
+      ? 'This rule is going to be managed by the data source. The use of expressions or multiple queries is not supported. If your data source does not have an Alert manager configured or you wish to use expressions or multiple queries, switch to a Grafana-managed alert.'
+      : 'This is a Grafana-managed alert rule. You can switch it to a data source-managed alert rule if you have a Mimir / Loki / Cortex data source configured with an Alert manager.';
+  const cantSwitchLabel = `Based on the selected data sources this alert rule will be Grafana-managed.`;
   return (
     <div className={styles.alert}>
       <Alert severity="info" title={typeTitle}>
         <Stack gap={1} direction="row" alignItems={'center'}>
-          {!editingExistingRule && titleLabel}
+          {!editingExistingRule && !canSwitch && cantSwitchLabel}
+          {!editingExistingRule && canSwitch && titleLabel}
           <NeedHelpInfo
             contentText={contentText}
             externalLink={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/`}
