@@ -9,17 +9,6 @@ import (
 
 func AddScopeSplitMigrations(mg *migrator.Migrator) {
 	permissionTable := migrator.Table{Name: "permission"}
-	mg.AddMigration("permission kind migration", migrator.NewAddColumnMigration(permissionTable, &migrator.Column{
-		Name: "kind", Type: migrator.DB_NVarchar, Length: 100, Default: "''",
-	}))
-
-	mg.AddMigration("permission attribute migration", migrator.NewAddColumnMigration(permissionTable, &migrator.Column{
-		Name: "attribute", Type: migrator.DB_NVarchar, Length: 100, Default: "''",
-	}))
-
-	mg.AddMigration("permission identifier migration", migrator.NewAddColumnMigration(permissionTable, &migrator.Column{
-		Name: "identifier", Type: migrator.DB_NVarchar, Length: 100, Default: "''",
-	}))
 
 	mg.AddMigration("permission scope split migration", &scopeSplitMigrator{})
 
@@ -30,7 +19,6 @@ func AddScopeSplitMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionTable, &migrator.Index{
 		Cols: []string{"identifier"},
 	}))
-
 }
 
 type scopeSplitMigrator struct {
