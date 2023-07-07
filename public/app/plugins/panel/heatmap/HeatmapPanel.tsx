@@ -20,6 +20,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
+import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { Options } from './types';
@@ -194,12 +195,15 @@ export const HeatmapPanel = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
-            <TooltipPlugin4 config={builder} render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-              // console.log('render', dataIdxs, seriesIdx);
-              // return getRandomContent();
-              // return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
-              return <pre>{JSON.stringify({dataIdxs, seriesIdx}, null, 2)}</pre>;
-            }} />
+            <TooltipPlugin4
+              config={builder}
+              render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                // console.log('render', dataIdxs, seriesIdx);
+                // return getRandomContent();
+                // return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
+                return <HeatmapTooltip dataIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned} u={u} />;
+              }}
+            />
           </UPlotChart>
         )}
       </VizLayout>
