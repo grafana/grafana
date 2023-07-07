@@ -34,8 +34,8 @@ export const assertQueryHistoryComment = async (expectedQueryComments: string[],
 
 export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
-  const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
-  // const starButtons = selector.getAllByTestId('query-history-card-star');
+  // const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
+  const starButtons = selector.getAllByTestId('query-history-card-star');
 
   await waitFor(() =>
     expectedStars.forEach((starred, queryIndex) => {
