@@ -4184,7 +4184,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -4263,12 +4264,13 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
+depends_on:
+- main-test-backend
+- main-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging
-  to main'
+name: rgm-main-prerelease
 node:
   type: no-parallel
 platform:
@@ -4277,14 +4279,8 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_main.sh
+  - cd /src && ./scripts/drone_publish_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4294,8 +4290,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -4304,6 +4306,65 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-prerelease
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_publish_tag.sh
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    DESTINATION:
+      from_secret: destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+  failure: ignore
+  image: grafana/grafana-build:main
+  name: rgm-build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
@@ -4313,12 +4374,11 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- main-test-backend
-- main-test-frontend
+- rgm-tag-prerelease
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging'
+name: rgm-tag-verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -4327,29 +4387,19 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker
-  - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_tag.sh
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
+  depends_on:
+  - clone
   environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-  failure: ignore
-  image: golang:1.20.3-alpine
-  name: rgm-build
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
+    BUCKET: grafana-prerelease-dev
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk:431.0.0
+  name: gsutil-stat
 trigger:
   event:
     exclude:
@@ -6669,6 +6719,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 1c99d8f1cd6f853098597fb9a2963ee0cccdc77a3134362ff8f8b8a90c951a77
+hmac: 9bfe4bc300691707c646e0bd63522add18e6e4e5ea72d2e23c0a9bd37d78073f
 
 ...
