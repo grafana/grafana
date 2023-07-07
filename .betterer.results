@@ -463,8 +463,7 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-data/src/types/select.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-data/src/types/templateVars.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1062,16 +1061,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/QueryField/QueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
-    "packages/grafana-ui/src/components/Segment/Segment.story.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "packages/grafana-ui/src/components/Segment/SegmentAsync.story.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
