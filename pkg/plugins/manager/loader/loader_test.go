@@ -1506,7 +1506,7 @@ func TestLoader_Unload(t *testing.T) {
 		require.Equal(t, 1, len(l.PluginErrors()))
 
 		err := l.Unload(context.Background(), fakeId)
-		require.NoError(t, err)
+		require.ErrorIs(t, err, plugins.ErrPluginNotInstalled)
 
 		require.Equal(t, 0, len(l.PluginErrors()))
 	})
