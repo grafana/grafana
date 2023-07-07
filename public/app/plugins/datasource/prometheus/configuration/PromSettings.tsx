@@ -62,8 +62,7 @@ const durationError = 'Value is not valid, you can use number with time unit spe
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
  * Advantages: We don't need to maintain a list of every possible version for each release
  *
- * This function will return the closest version from PromFlavorVersions that is equal or lower to the version argument,
- * unless the versions are a major release apart.
+ * This function will return the closest version from PromFlavorVersions that is equal or lower to the version argument
  */
 const getVersionString = (version: string, flavor?: string): string | undefined => {
   if (!flavor || !PromFlavorVersions[flavor]) {
@@ -76,18 +75,7 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
     ?.filter((el) => !!el.value && semver.lte(el.value, version))
     .map((el) => el.value);
 
-  const closestVersion = versionsLessThanOrEqual[versionsLessThanOrEqual.length - 1];
-
-  if (closestVersion) {
-    const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
-
-    // Only return versions if the target is close to the actual.
-    if (['patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
-      return closestVersion;
-    }
-  }
-
-  return;
+  return versionsLessThanOrEqual[versionsLessThanOrEqual.length - 1];
 };
 
 const unableToDeterminePrometheusVersion = (error?: Error): void => {
