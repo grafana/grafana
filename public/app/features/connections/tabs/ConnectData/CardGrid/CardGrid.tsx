@@ -82,11 +82,11 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             <img className={styles.logo} src={item.logo} alt="" />
           </Card.Figure>
 
-          {item.angularDetected && (
+          {item.angularDetected ? (
             <Card.Meta className={styles.meta}>
               <PluginAngularBadge />
             </Card.Meta>
-          )}
+          ) : null}
         </Card>
       ))}
     </ul>
