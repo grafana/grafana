@@ -54,9 +54,9 @@ func (r *Registry) start(ctx context.Context) error {
     return err
   }
 
-  //_, _ = clientSet.GrafanaKinds().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
- 
-  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+  //_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
+
+  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
   for _, v := range {{ $k.Props.MachineName }}GRD.Spec.Versions {
     subresource := applyConfig.GrafanaResourceSubresources()
     if v.Subresources != nil && v.Subresources.Status != nil {
@@ -71,7 +71,7 @@ func (r *Registry) start(ctx context.Context) error {
       subresource = subresource.WithHistory(*v.Subresources.History)
     }
 
-    version := applyConfig.GrafanaKindVersion().
+    version := applyConfig.GrafanaResourceDefinitionVersion().
       WithName(v.Name).
       WithServed(v.Served).
       WithStorage(v.Storage).
@@ -83,7 +83,7 @@ func (r *Registry) start(ctx context.Context) error {
     {{ $k.Props.MachineName }}ApplyVersions = append({{ $k.Props.MachineName }}ApplyVersions, version)
   }
 
-  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaKindNames().
+  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaResourceDefinitionNames().
     WithKind({{ $k.Props.MachineName }}GRD.Spec.Names.Kind).
     WithListKind({{ $k.Props.MachineName }}GRD.Spec.Names.ListKind).
     WithSingular({{ $k.Props.MachineName }}GRD.Spec.Names.Singular).
@@ -91,17 +91,17 @@ func (r *Registry) start(ctx context.Context) error {
     WithCategories({{ $k.Props.MachineName }}GRD.Spec.Names.Categories...).
     WithShortNames({{ $k.Props.MachineName }}GRD.Spec.Names.ShortNames...)
 
-  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaKindSpec().
+  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
     WithGroup({{ $k.Props.MachineName }}GRD.Spec.Group).
     WithNames({{ $k.Props.MachineName }}ApplyNames).
     WithScope({{ $k.Props.MachineName }}GRD.Spec.Scope).
     WithVersions({{ $k.Props.MachineName }}ApplyVersions...).
     WithPreserveUnknownFields({{ $k.Props.MachineName }}GRD.Spec.PreserveUnknownFields)
 
-  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaKind({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
+  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaResourceDefinition({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
     WithSpec({{ $k.Props.MachineName }}ApplySpec)
 
-  _, err = clientSet.GrafanaKinds().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
   if err != nil {
     return err
   }
@@ -114,7 +114,7 @@ func (r *Registry) run(ctx context.Context) error {
   return nil
 }
 
-func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
+func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, error) {
 	kind, is := k.(kindsys.Core)
 	if !is {
 		return nil, nil
@@ -129,24 +129,24 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 		return nil, err
 	}
 
-	resource := kindsv1.GrafanaKind{
+	resource := kindsv1.GrafanaResourceDefinition{
     TypeMeta: metav1.TypeMeta{
       APIVersion: "kinds.grafana.com/v1",
-      Kind: "GrafanaKind",
+      Kind: "GrafanaResourceDefinition",
     },
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, "core.kinds.grafana.com"),
 		},
-		Spec: kindsv1.GrafanaKindSpec{
+		Spec: kindsv1.GrafanaResourceDefinitionSpec{
 			Group: "core.kinds.grafana.com",
 			Scope: "Namespaced",
-			Names: kindsv1.GrafanaKindNames{
+			Names: kindsv1.GrafanaResourceDefinitionNames{
 				Kind:   props.Name,
         ListKind: props.Name + "List",
         Singular: props.MachineName,
 				Plural: props.PluralMachineName,
 			},
-			Versions: make([]kindsv1.GrafanaKindVersion, 0),
+			Versions: make([]kindsv1.GrafanaResourceDefinitionVersion, 0),
 		},
 	}
 	latest := lin.Latest().Version()
@@ -157,7 +157,7 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 			vstr = "v0-alpha"
 		}
 
-		ver := kindsv1.GrafanaKindVersion{
+		ver := kindsv1.GrafanaResourceDefinitionVersion{
 			Name:       vstr,
 			Served:     true,
 			Storage:    sch.Version() == latest,
