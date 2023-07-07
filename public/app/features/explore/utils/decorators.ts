@@ -20,6 +20,7 @@ import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
+import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -34,8 +35,13 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
+  const customFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
+    if (canFindPanel(frame)) {
+      customFrames.push(frame);
+      continue;
+    }
     switch (frame.meta?.preferredVisualisationType) {
       case 'logs':
         logsFrames.push(frame);
@@ -76,6 +82,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    customFrames,
     flameGraphFrames,
     rawPrometheusFrames,
     graphResult: null,
@@ -269,4 +276,16 @@ function isTimeSeries(frame: DataFrame): boolean {
   return Boolean(
     Object.keys(grouped).length === 2 && grouped[FieldType.time]?.length === 1 && grouped[FieldType.number]
   );
+}
+
+/**
+ * Can we find a panel that matches the type defined on the frame
+ *
+ * @param frame
+ */
+function canFindPanel(frame: DataFrame): boolean {
+  if (!!frame.meta?.preferredVisualisationPluginId) {
+    return hasPanelPlugin(frame.meta?.preferredVisualisationPluginId);
+  }
+  return false;
 }
