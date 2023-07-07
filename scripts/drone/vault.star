@@ -9,6 +9,11 @@ azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
 
+rgm_gcp_key_base64 = "gcp_key_base64"
+rgm_destination = "destination"
+rgm_github_token = "github_token"
+rgm_dagger_token = "dagger_token"
+
 def from_secret(secret):
     return {"from_secret": secret}
 
@@ -104,6 +109,31 @@ def secrets():
             "infra/data/ci/grafana-release-eng/enterprise2",
             "cdn_path",
         ),
+        vault_secret(
+            "enterprise2_security_prefix",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "security_prefix",
+        ),
+        vault_secret(
+            rgm_gcp_key_base64,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "gcp_service_account_base64",
+        ),
+        vault_secret(
+            rgm_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "destination",
+        ),
+        vault_secret(
+            rgm_dagger_token,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "dagger_token",
+        ),
+        vault_secret(
+            rgm_github_token,
+            "infra/data/ci/github/grafanabot",
+            "pat",
+        ),
         # grafana-delivery-bot secrets
         vault_secret(
             "delivery-bot-app-id",
@@ -119,5 +149,20 @@ def secrets():
             "delivery-bot-app-private-key",
             "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
             "app-private-key",
+        ),
+        vault_secret(
+            rgm_gcp_key_base64,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "gcp_service_account_base64",
+        ),
+        vault_secret(
+            rgm_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "destination",
+        ),
+        vault_secret(
+            rgm_github_token,
+            "infra/data/ci/github/grafanabot",
+            "pat",
         ),
     ]
