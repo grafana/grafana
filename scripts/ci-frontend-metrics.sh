@@ -50,7 +50,7 @@ echo "Metrics: {
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
   \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
-  \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\"
+  \"grafana.ci-code.props.className\": \"${CLASSNAME_PROP}\",
   \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
   \"grafana.ci-code.tsFiles\": \"${TS_FILES}\"
 }"
