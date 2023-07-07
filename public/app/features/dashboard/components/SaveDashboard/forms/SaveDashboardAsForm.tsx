@@ -40,7 +40,14 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm = ({ dashboard, isLoading, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
+export const SaveDashboardAsForm = ({
+  dashboard,
+  isLoading,
+  isNew,
+  onSubmit,
+  onCancel,
+  onSuccess,
+}: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
