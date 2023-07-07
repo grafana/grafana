@@ -32,7 +32,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
 
   // Add support to show widgets in the visualization picker
   const isWidget = !!plugin.meta.skipDataQuery;
-  const isWidgetEnabled = !!(isWidget && config.featureToggles.vizAndWidgetSplit);
+  const isWidgetEnabled = Boolean(isWidget && config.featureToggles.vizAndWidgetSplit);
 
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
@@ -123,7 +123,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
                 onClose={() => {}}
               />
             )}
-            {listMode === VisualizationSelectPaneTab.Widgets && isWidgetEnabled && (
+            {listMode === VisualizationSelectPaneTab.Widgets && (
               <VizTypePicker
                 current={plugin.meta}
                 onChange={onVizChange}
