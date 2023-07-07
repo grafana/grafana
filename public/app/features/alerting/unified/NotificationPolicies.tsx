@@ -163,7 +163,7 @@ const AmRoutes = () => {
 
     setUpdatingTree(true);
 
-    return dispatch(
+    dispatch(
       updateAlertManagerConfigAction({
         newConfig: {
           ...result,
