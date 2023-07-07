@@ -10,6 +10,8 @@ import {
   CSVConfig,
   DataFrame,
   DataTransformerID,
+  DynamicConfigValue,
+  FieldConfigSource,
   SelectableValue,
   TimeZone,
   transformDataFrame,
@@ -171,26 +173,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return applyRawFieldOverrides(data);
     }
 
-    // We need to apply field config even though it was already applied in the PanelQueryRunner.
-    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
-    let fieldConfig = panel.fieldConfig;
+    const fieldConfig = this.cleanTableConfigFromFieldConfig(panel.type, panel.fieldConfig);
 
-    if (panel.type === 'table') {
-      fieldConfig = cloneDeep(fieldConfig);
-
-      if (fieldConfig.defaults.custom?.filterable) {
-        fieldConfig.defaults.custom.filterable = undefined;
-      }
-
-      const overrideProp = fieldConfig.overrides.find((override) =>
-        override.properties.find((prop) => prop.id === 'filterable')
-      );
-
-      if (overrideProp) {
-        overrideProp.properties = overrideProp.properties.filter((x) => x.id === 'filterable');
-      }
-    }
-
+    // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
+    // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
     return applyFieldOverrides({
       data,
       theme: config.theme2,
@@ -200,6 +186,29 @@ export class InspectDataTab extends PureComponent<Props, State> {
         return value;
       },
     });
+  }
+
+  // Because we visualize this data in a table we have to remove any custom table display settings
+  cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: FieldConfigSource): FieldConfigSource {
+    if (panelPluginId !== 'table') {
+      return fieldConfig;
+    }
+
+    fieldConfig = cloneDeep(fieldConfig);
+    // clear all table specific options
+    fieldConfig.defaults.custom = {};
+
+    // clear all table override properties
+    for (const override of fieldConfig.overrides) {
+      for (const prop of override.properties) {
+        if (prop.id.startsWith('custom.')) {
+          const index = override.properties.indexOf(prop);
+          override.properties.slice(index, 1);
+        }
+      }
+    }
+
+    return fieldConfig;
   }
 
   render() {
