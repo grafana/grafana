@@ -33,19 +33,31 @@ type Command interface {
 	Execute(from, to time.Time, sendRequest func(method string, path string, payload []byte) (response.Response, error)) (*backend.QueryDataResponse, error)
 }
 
-// UnmarshalCommand parses a query parameters and creates a command. Requires key `type` to be specified.
+// UnmarshalCommand parses a config parameters and creates a command. Requires key `type` to be specified.
 // It does not perform payload validation and only extracts required field. Returns Command that is ready to be executed.
-func UnmarshalCommand(query map[string]interface{}, appURL string) (Command, error) {
-	q := jsoniter.Wrap(query)
-	typeNode := q.Get("type")
-	if typeNode.ValueType() != jsoniter.StringValue {
-		return nil, fmt.Errorf("field 'type' is required and should be string")
+func UnmarshalCommand(query []byte, appURL string) (Command, error) {
+	var expr CommandConfiguration
+	err := json.Unmarshal(query, &expr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshall Machine learning command: %w", err)
+	}
+	if len(expr.Type) == 0 {
+		return nil, fmt.Errorf("required field 'type' is not specified or empty.  Should be one of [%s]", Outlier)
 	}
 
-	switch mlType := strings.ToLower(typeNode.ToString()); mlType {
-	case string(Outlier):
-		return unmarshalOutlierCommand(q, appURL)
-	default:
-		return nil, fmt.Errorf("unsupported command type '%v'. Supported only '%s'", mlType, Outlier)
+	if len(expr.Config) == 0 {
+		return nil, fmt.Errorf("required field 'config' is not specified")
 	}
+
+	var cmd Command
+	switch mlType := strings.ToLower(expr.Type); mlType {
+	case string(Outlier):
+		cmd, err = unmarshalOutlierCommand(expr, appURL)
+	default:
+		return nil, fmt.Errorf("unsupported command type. Should be one of [%s]", Outlier)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal Machine learning %s command: %w", expr.Type, err)
+	}
+	return cmd, nil
 }

@@ -6,23 +6,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/api/response"
 )
 
 // OutlierCommand sends a request to Machine Learning Outlier Proxy API and parses the request fro
 type OutlierCommand struct {
-	query         jsoniter.RawMessage
-	datasourceUID string
-	appURL        string
-	interval      time.Duration
+	config   OutlierCommandConfiguration
+	appURL   string
+	interval time.Duration
 }
 
 var _ Command = OutlierCommand{}
 
 func (c OutlierCommand) DatasourceUID() string {
-	return c.datasourceUID
+	return c.config.DatasourceUID
 }
 
 // Execute copies the original configuration JSON and appends (overwrites) a field "start_end_attributes" and "grafana_url" to the root object.
@@ -33,25 +31,15 @@ func (c OutlierCommand) DatasourceUID() string {
 // Other statuses are considered unsuccessful and result in error. Tries to extract error from the structured payload.
 // Otherwise, mentions the full message in error
 func (c OutlierCommand) Execute(from, to time.Time, sendRequest func(method string, path string, payload []byte) (response.Response, error)) (*backend.QueryDataResponse, error) {
-	var dataMap map[string]interface{}
-	err := json.Unmarshal(c.query, &dataMap)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal query: %w", err)
-	}
-
-	dataMap["start_end_attributes"] = map[string]interface{}{
-		"start":    from.Format(timeFormat),
-		"end":      to.Format(timeFormat),
-		"interval": c.interval.Milliseconds(),
-	}
-	dataMap["grafana_url"] = c.appURL
-
-	payload := map[string]interface{}{
-		"data": map[string]interface{}{
-			"attributes": dataMap,
+	payload := OutlierRequestBody{
+		Data: outlierData{
+			Attributes: outlierAttributes{
+				OutlierCommandConfiguration: c.config,
+				GrafanaURL:                  c.appURL,
+				StartEndAttributes:          newTimeRangeAndInterval(from, to, c.interval),
+			},
 		},
 	}
-
 	requestBody, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
@@ -97,53 +85,39 @@ func (c OutlierCommand) Execute(from, to time.Time, sendRequest func(method stri
 // "intervalMs" (optional) must be number, converted to int - represents interval parameter that is used during execution
 // "config" (required) a JSON object that is used as a template during command execution, that adds\updates some fields (see Execute for more details).
 // The "config" object must contain a field "datasource_uid". Other fields are not validated
-func unmarshalOutlierCommand(q jsoniter.Any, appURL string) (*OutlierCommand, error) {
-	interval := defaultInterval
-	switch intervalNode := q.Get("intervalMs"); intervalNode.ValueType() { //nolint:exhaustive
-	case jsoniter.NilValue: // has explicit null
-	case jsoniter.InvalidValue: // means that it does not exist
-	case jsoniter.NumberValue:
-		interval = time.Duration(intervalNode.ToInt64()) * time.Millisecond
-	default:
-		return nil, fmt.Errorf("field `intervalMs` is expected to be a number")
-	}
-
-	cfgNode := q.Get("config")
-	// config is expected to be a JSON object like
-	// {
-	//		"datasource_uid": "a4ce599c-4c93-44b9-be5b-76385b8c01be",
-	//		"datasource_type": "prometheus",
-	//		"query_params": {
-	//			"expr": "go_goroutines{}",
-	//			"range": true,
-	//			"refId": "A"
-	//		},
-	//		"response_type": "binary"|"label"|"score",
-	//		"algorithm": {
-	//			"name": "dbscan"|"mad",
-	//			"config": {
-	//				"epsilon": 7.667
-	//			},
-	//			"sensitivity": 0.83
-	//		}
-	//	}
-	if cfgNode.ValueType() != jsoniter.ObjectValue {
-		return nil, fmt.Errorf("field `config` is required and should be object")
-	}
-	ds := cfgNode.Get("datasource_uid").ToString()
-	if len(ds) == 0 {
-		return nil, fmt.Errorf("field `config.datasource_uid` is required and should be string")
-	}
-
-	d, err := json.Marshal(cfgNode.GetInterface())
+func unmarshalOutlierCommand(expr CommandConfiguration, appURL string) (*OutlierCommand, error) {
+	var cfg OutlierCommandConfiguration
+	err := json.Unmarshal(expr.Config, &cfg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal outlier command: %w", err)
+	}
+	if len(cfg.DatasourceUID) == 0 {
+		return nil, fmt.Errorf("required field `config.datasource_uid` is not specified")
+	}
+
+	if len(cfg.Query) == 0 && len(cfg.QueryParams) == 0 {
+		return nil, fmt.Errorf("neither of required fields `config.query_params` or `config.query` are specified")
+	}
+
+	if len(cfg.ResponseType) == 0 {
+		return nil, fmt.Errorf("required field `config.response_type` is not specified")
+	}
+
+	if len(cfg.Algorithm) == 0 {
+		return nil, fmt.Errorf("required field `config.algorithm` is not specified")
+	}
+
+	interval := defaultInterval
+	if expr.IntervalMs != nil {
+		i := time.Duration(*expr.IntervalMs) * time.Millisecond
+		if i > 0 {
+			interval = i
+		}
 	}
 
 	return &OutlierCommand{
-		query:         d,
-		datasourceUID: ds,
-		interval:      interval,
-		appURL:        appURL,
+		config:   cfg,
+		interval: interval,
+		appURL:   appURL,
 	}, nil
 }

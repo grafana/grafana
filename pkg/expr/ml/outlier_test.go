@@ -7,44 +7,39 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 func TestOutlierExec(t *testing.T) {
 	outlier := OutlierCommand{
-		query: jsoniter.RawMessage(`
-		{
-			"datasource_uid": "a4ce599c-4c93-44b9-be5b-76385b8c01be",
-			"datasource_type": "prometheus",
-			"query_params": {
-				"expr": "go_goroutines{}",
+		config: OutlierCommandConfiguration{
+			DatasourceType: "prometheus",
+			DatasourceUID:  "a4ce599c-4c93-44b9-be5b-76385b8c01be",
+			QueryParams: map[string]interface{}{
+				"expr":  "go_goroutines{}",
 				"range": true,
-				"refId": "A"
+				"refId": "A",
 			},
-			"response_type": "binary",
-			"algorithm": {
+			Algorithm: map[string]interface{}{
 				"name": "dbscan",
-				"config": {
-					"epsilon": 7.667
+				"config": map[string]interface{}{
+					"epsilon": 7.667,
 				},
-				"sensitivity": 0.83
-			}
-		}	
-		`),
-		datasourceUID: "a4ce599c-4c93-44b9-be5b-76385b8c01be",
-		appURL:        "https://grafana.com",
-		interval:      1000 * time.Second,
+				"sensitivity": 0.83,
+			},
+			ResponseType: "binary",
+		},
+		appURL:   "https://grafana.com",
+		interval: 1000 * time.Second,
 	}
 
 	t.Run("should generate expected parameters for request", func(t *testing.T) {
-		to := time.Now()
+		to := time.Now().UTC()
 		from := to.Add(-10 * time.Hour)
 
 		called := false
@@ -52,26 +47,14 @@ func TestOutlierExec(t *testing.T) {
 			require.Equal(t, "POST", method)
 			require.Equal(t, "/proxy/api/v1/outlier", path)
 
-			var payloadMap map[string]interface{}
-			payloadAny := jsoniter.Get(payload, "data", "attributes").MustBeValid()
-			payloadAny.ToVal(&payloadMap)
+			var body OutlierRequestBody
+			require.NoError(t, jsoniter.Unmarshal(payload, &body))
 
-			var templateMap map[string]interface{}
-			require.NoError(t, json.Unmarshal(outlier.query, &templateMap))
-
-			var reporter cmputil.DiffReporter
-			cmp.Diff(templateMap, payloadMap, cmp.Reporter(&reporter))
-
-			require.ElementsMatch(t, []string{
-				"[start_end_attributes]",
-				"[grafana_url]",
-			}, reporter.Diffs.Paths())
-
-			require.EqualValues(t, from.Format(timeFormat), payloadAny.Get("start_end_attributes", "start").ToString())
-			require.EqualValues(t, to.Format(timeFormat), payloadAny.Get("start_end_attributes", "end").ToString())
-			require.EqualValues(t, outlier.interval.Milliseconds(), payloadAny.Get("start_end_attributes", "interval").ToInt64())
-
-			require.EqualValues(t, outlier.appURL, payloadAny.Get("grafana_url").ToString())
+			require.Equal(t, outlier.config, body.Data.Attributes.OutlierCommandConfiguration)
+			require.Equal(t, outlier.appURL, body.Data.Attributes.GrafanaURL)
+			require.Equal(t, mlTime(from), body.Data.Attributes.StartEndAttributes.Start)
+			require.Equal(t, mlTime(to), body.Data.Attributes.StartEndAttributes.End)
+			require.Equal(t, outlier.interval.Milliseconds(), body.Data.Attributes.StartEndAttributes.Interval)
 
 			called = true
 			return nil, nil
