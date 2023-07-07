@@ -1343,8 +1343,8 @@ steps:
   name: compile-build-cmd
 - commands:
   - make swagger-api-spec
-  - git diff --exit-code || (echo "Swagger API spec is out of date, please run `make
-    swagger-api-spec` and commit the changes" && exit 1)
+  - git diff --exit-code || (echo "Swagger API spec is out of date, please run 'make
+    swagger-api-spec' and commit the changes" && exit 1)
   depends_on:
   - compile-build-cmd
   image: grafana/build-container:1.7.4
@@ -7404,6 +7404,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 9400c42cb5c8b87ebd319a478f974fac3977c1f9f755c97fd8282ece8764748d
+hmac: 2cade0c84b3309b10950feb7f80c2e2d4f72fe1bc6c68e3f4da479ceb23b8055
 
 ...
