@@ -143,7 +143,7 @@ describe('RuleEditor cloud', () => {
 
     await waitFor(() => {
       expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
-      expect(screen.getByText('Based on the selected data sources this alert rule will be Cloud')).toBeInTheDocument();
+      expect(screen.getByText('Cloud alert rule')).toBeInTheDocument();
     });
 
     const dataSourceSelect = ui.inputs.dataSource.get();
