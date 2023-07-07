@@ -30,15 +30,39 @@ type registry struct {
 }
 
 func (r *registry) Core(ctx context.Context) []kindsys.Core {
-	return []kindsys.Core{}
+	kinds := []kindsys.Core{}
+
+	for _, pa := range r.all {
+		for _, ck := range pa.CoreKinds {
+			kinds = append(kinds, ck)
+		}
+	}
+
+	return kinds
 }
 
 func (r *registry) Custom(ctx context.Context) []kindsys.Custom {
-	return []kindsys.Custom{}
+	kinds := []kindsys.Custom{}
+
+	for _, pa := range r.all {
+		for _, ck := range pa.CustomKinds {
+			kinds = append(kinds, ck)
+		}
+	}
+
+	return kinds
 }
 
 func (r *registry) Composable(ctx context.Context) []kindsys.Composable {
-	return []kindsys.Composable{}
+	kinds := []kindsys.Composable{}
+
+	for _, pa := range r.all {
+		for _, ck := range pa.ComposableKinds {
+			kinds = append(kinds, ck)
+		}
+	}
+
+	return kinds
 }
 
 func (r *registry) All(ctx context.Context) []kindsys.Kind {
@@ -46,6 +70,14 @@ func (r *registry) All(ctx context.Context) []kindsys.Kind {
 
 	for _, pa := range r.all {
 		for _, ck := range pa.ComposableKinds {
+			kinds = append(kinds, ck)
+		}
+
+		for _, ck := range pa.CoreKinds {
+			kinds = append(kinds, ck)
+		}
+
+		for _, ck := range pa.CustomKinds {
 			kinds = append(kinds, ck)
 		}
 	}
