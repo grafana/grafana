@@ -823,7 +823,7 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 ### default_language
 
 If a supported IETF language tag like `en-US` is available, this option will set the default UI language.
-If this setting is not a supported language tag, such as `detector`, the default UI language will be determined by a browser detector (see [default detector options](https://github.com/i18next/i18next-browser-languageDetector#detector-options)).
+If set to `detect`, the default UI language will be determined by browser preference.
 The default is `en-US`.
 
 ### home_page
