@@ -4,7 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, InlineLabel, Input, InputControl, Switch, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, InlineLabel, Input, InputControl, Label, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
@@ -20,6 +20,7 @@ import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/Ed
 
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
+import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
@@ -226,14 +227,15 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
 
   return (
     <Stack direction="row" justify-content="flex-start" align-items="flex-start">
-      <InlineLabel
-        htmlFor={evaluateForId}
-        width={7}
-        tooltip='Once the condition is breached, the alert goes into pending state. If the alert is pending longer than the "for" value, it becomes a firing alert.'
-      >
-        for
-      </InlineLabel>
       <Field
+        label={
+          <Label
+            htmlFor="evaluateFor"
+            description="Period in which an alert rule can be in breach of the condition until the alert rule fires"
+          >
+            Pending period
+          </Label>
+        }
         className={styles.inlineField}
         error={errors.evaluateFor?.message}
         invalid={!!errors.evaluateFor?.message}
@@ -241,6 +243,22 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
+    </Stack>
+  );
+}
+
+function getDescription() {
+  const textToRender = 'Define how the alert rule is evaluated.';
+  const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
+  return (
+    <Stack gap={0.5}>
+      {`${textToRender}`}
+      <NeedHelpInfo
+        contentText="Evaluation groups are containers for evaluating alert and recording rules. An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially"
+        externalLink={docsLink}
+        linkText={`Read about evaluation`}
+        title="Evaluation"
+      />
     </Stack>
   );
 }
@@ -263,7 +281,7 @@ export function GrafanaEvaluationBehavior({
 
   return (
     // TODO remove "and alert condition" for recording rules
-    <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription()}>
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
         <FolderGroupAndEvaluationInterval setEvaluateEvery={setEvaluateEvery} evaluateEvery={evaluateEvery} />
         <ForInput evaluateEvery={evaluateEvery} />

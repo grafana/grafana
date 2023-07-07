@@ -104,7 +104,7 @@ export function FolderAndGroup() {
     <div className={styles.container}>
       <Field
         label={
-          <Label htmlFor="folder" description={'Select a folder for your rule.'}>
+          <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
             <Stack gap={0.5}>
               Folder
               <InfoIcon
@@ -144,9 +144,9 @@ export function FolderAndGroup() {
       </Field>
 
       <Field
-        label="Evaluation group (interval)"
+        label="Evaluation group"
         data-testid="group-picker"
-        description="Select a group to evaluate all rules in the same group over the same time interval."
+        description="Rules within the same group are evaluated sequentially over the same time interval"
         className={styles.formInput}
         error={errors.group?.message}
         invalid={!!errors.group?.message}
@@ -201,17 +201,14 @@ export function FolderAndGroup() {
 }
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
+    margin-top: ${theme.spacing(1)};
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: baseline;
     max-width: ${theme.breakpoints.values.sm}px;
     justify-content: space-between;
   `,
   formInput: css`
-    width: 275px;
-
-    & + & {
-      margin-left: ${theme.spacing(3)};
-    }
+    width: 100%;
   `,
 });
