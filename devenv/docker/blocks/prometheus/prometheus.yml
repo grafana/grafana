@@ -4,12 +4,19 @@ global:
   evaluation_interval: 10s # By default, scrape targets every 15 seconds.
   # scrape_timeout is set to the global default (10s).
 
+
+
 # Load and evaluate rules in this file every 'evaluation_interval' seconds.
 rule_files:
   - "alert.yml"
   - "recording.yml"
 # - "second.rules"
 
+remote_write:
+  - url: http://localhost:9090/api/v1/write
+    basic_auth:
+      username: admin
+      password: admin
 alerting:
   alertmanagers:
   - scheme: http
