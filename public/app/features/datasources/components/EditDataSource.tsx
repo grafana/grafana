@@ -217,6 +217,7 @@ export function EditDataSourceView({
               context={{
                 dataSource: omit(dataSource, ['secureJsonData']),
                 dataSourceMeta: dataSourceMeta,
+                testingStatus,
                 setJsonData: (jsonData) =>
                   onOptionsChange({
                     ...dataSource,

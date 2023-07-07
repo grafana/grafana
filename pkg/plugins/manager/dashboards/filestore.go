@@ -2,7 +2,7 @@ package dashboards
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -34,11 +34,11 @@ var openDashboardFile = func(ctx context.Context, pluginFileStore plugins.FileSt
 
 func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error) {
 	if args == nil {
-		return nil, fmt.Errorf("args cannot be nil")
+		return nil, errors.New("args cannot be nil")
 	}
 
 	if len(strings.TrimSpace(args.PluginID)) == 0 {
-		return nil, fmt.Errorf("args.PluginID cannot be empty")
+		return nil, errors.New("args.PluginID cannot be empty")
 	}
 
 	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
@@ -58,15 +58,15 @@ func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *L
 
 func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error) {
 	if args == nil {
-		return nil, fmt.Errorf("args cannot be nil")
+		return nil, errors.New("args cannot be nil")
 	}
 
 	if len(strings.TrimSpace(args.PluginID)) == 0 {
-		return nil, fmt.Errorf("args.PluginID cannot be empty")
+		return nil, errors.New("args.PluginID cannot be empty")
 	}
 
 	if len(strings.TrimSpace(args.FileReference)) == 0 {
-		return nil, fmt.Errorf("args.FileReference cannot be empty")
+		return nil, errors.New("args.FileReference cannot be empty")
 	}
 
 	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
@@ -83,7 +83,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 	}
 
 	if includedFile == nil {
-		return nil, fmt.Errorf("plugin dashboard file not found")
+		return nil, errors.New("plugin dashboard file not found")
 	}
 
 	cleanPath, err := util.CleanRelativePath(includedFile.Path)

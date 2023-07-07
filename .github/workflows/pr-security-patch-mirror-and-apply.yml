@@ -1,0 +1,26 @@
+# Owned by grafana-delivery-squad
+# Intended to be dropped into the base repo, Ex: grafana/grafana
+name: Sync to security mirror
+run-name: sync-to-security-mirror-${{ github.base_ref }}-${{ github.head_ref }}
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - "main"
+      - "v*.*.*"
+      - "release-*"
+
+# This is run after the pull request has been merged, so we'll run against the target branch
+jobs:
+  trigger_downstream_security_mirror:
+    concurrency: security-mirror-${{ github.ref }}
+    if: github.event.pull_request.merged == true
+    uses: grafana/security-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
+    with:
+      ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
+      src_repo: "${{ github.repository }}"
+      dest_repo: "${{ github.repository }}-security-mirror"
+      patch_repo: "${{ github.repository }}-security-patches"
+    secrets: inherit
+

@@ -1,71 +1,99 @@
-import InfluxDatasource from './datasource';
-import { InfluxQueryBuilder } from './influxql_query_builder';
-import { replaceHardCodedRetentionPolicy } from './queryUtils';
-import { InfluxQueryTag } from './types';
+import { ScopedVars } from '@grafana/data/src';
+import config from 'app/core/config';
 
-const runExploreQuery = (
-  type: string,
-  withKey: string | undefined,
-  withMeasurementFilter: string | undefined,
-  target: { measurement: string | undefined; tags: InfluxQueryTag[]; policy: string | undefined },
-  datasource: InfluxDatasource
-): Promise<Array<{ text: string }>> => {
-  const builder = new InfluxQueryBuilder(target, datasource.database);
-  const q = builder.buildExploreQuery(type, withKey, withMeasurementFilter);
-  const options = { policy: replaceHardCodedRetentionPolicy(target.policy, datasource.retentionPolicies) };
-  return datasource.metricFindQuery(q, options);
+import InfluxDatasource from './datasource';
+import { buildMetadataQuery } from './influxql_query_builder';
+import { replaceHardCodedRetentionPolicy } from './queryUtils';
+import { InfluxQuery, InfluxQueryTag, MetadataQueryType } from './types';
+
+type MetadataQueryOptions = {
+  type: MetadataQueryType;
+  datasource: InfluxDatasource;
+  scopedVars?: ScopedVars;
+  measurement?: string;
+  retentionPolicy?: string;
+  tags?: InfluxQueryTag[];
+  withKey?: string;
+  withMeasurementFilter?: string;
+};
+
+const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
+  const { type, datasource, scopedVars, measurement, retentionPolicy, tags, withKey, withMeasurementFilter } = options;
+  const query = buildMetadataQuery({
+    type,
+    scopedVars,
+    measurement,
+    retentionPolicy,
+    tags,
+    withKey,
+    withMeasurementFilter,
+    templateService: datasource.templateSrv,
+    database: datasource.database,
+  });
+  const policy = retentionPolicy ? datasource.templateSrv.replace(retentionPolicy, {}, 'regex') : '';
+  const target: InfluxQuery = {
+    query,
+    rawQuery: true,
+    refId: 'metadataQuery',
+    policy: replaceHardCodedRetentionPolicy(policy, datasource.retentionPolicies),
+  };
+  if (config.featureToggles.influxdbBackendMigration) {
+    return datasource.runMetadataQuery(target);
+  } else {
+    const options = { policy: target.policy };
+    return datasource.metricFindQuery(query, options);
+  }
 };
 
 export async function getAllPolicies(datasource: InfluxDatasource): Promise<string[]> {
-  const target = { tags: [], measurement: undefined, policy: undefined };
-  const data = await runExploreQuery('RETENTION POLICIES', undefined, undefined, target, datasource);
+  const data = await runExploreQuery({ type: 'RETENTION_POLICIES', datasource });
   return data.map((item) => item.text);
 }
 
 export async function getAllMeasurementsForTags(
-  measurementFilter: string | undefined,
+  datasource: InfluxDatasource,
   tags: InfluxQueryTag[],
-  datasource: InfluxDatasource
+  withMeasurementFilter?: string
 ): Promise<string[]> {
-  const target = { tags, measurement: undefined, policy: undefined };
-  const data = await runExploreQuery('MEASUREMENTS', undefined, measurementFilter, target, datasource);
+  const data = await runExploreQuery({ type: 'MEASUREMENTS', datasource, tags, withMeasurementFilter });
   return data.map((item) => item.text);
 }
 
 export async function getTagKeysForMeasurementAndTags(
-  measurement: string | undefined,
-  policy: string | undefined,
+  datasource: InfluxDatasource,
   tags: InfluxQueryTag[],
-  datasource: InfluxDatasource
+  measurement?: string,
+  retentionPolicy?: string
 ): Promise<string[]> {
-  const target = { tags, measurement, policy };
-  const data = await runExploreQuery('TAG_KEYS', undefined, undefined, target, datasource);
+  const data = await runExploreQuery({ type: 'TAG_KEYS', datasource, measurement, retentionPolicy });
   return data.map((item) => item.text);
 }
 
 export async function getTagValues(
-  tagKey: string,
-  measurement: string | undefined,
-  policy: string | undefined,
+  datasource: InfluxDatasource,
   tags: InfluxQueryTag[],
-  datasource: InfluxDatasource
+  tagKey: string,
+  measurement?: string,
+  retentionPolicy?: string
 ): Promise<string[]> {
-  const target = { tags, measurement, policy };
-
   if (tagKey.endsWith('::field')) {
     return [];
   }
-
-  const data = await runExploreQuery('TAG_VALUES', tagKey, undefined, target, datasource);
+  const data = await runExploreQuery({
+    type: 'TAG_VALUES',
+    withKey: tagKey,
+    datasource,
+    measurement,
+    retentionPolicy,
+  });
   return data.map((item) => item.text);
 }
 
 export async function getFieldKeysForMeasurement(
+  datasource: InfluxDatasource,
   measurement: string,
-  policy: string | undefined,
-  datasource: InfluxDatasource
+  retentionPolicy?: string
 ): Promise<string[]> {
-  const target = { tags: [], measurement, policy };
-  const data = await runExploreQuery('FIELDS', undefined, undefined, target, datasource);
+  const data = await runExploreQuery({ type: 'FIELDS', datasource, measurement, retentionPolicy });
   return data.map((item) => item.text);
 }

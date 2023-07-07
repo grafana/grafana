@@ -4,8 +4,6 @@ import React from 'react';
 import { Route } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
-import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
-import { byRole } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
@@ -32,6 +30,10 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
+}));
+
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
 jest.mock('./api/buildInfo');
@@ -153,8 +155,8 @@ describe('RuleEditor grafana managed rules', () => {
     expect(nameInput).toHaveValue('my great new rule');
     //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
-    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some summary');
+    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some description');
 
     //check that slashed folders are not in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
@@ -170,9 +172,9 @@ describe('RuleEditor grafana managed rules', () => {
     // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
-    await clickSelectOptionMatch(ui.inputs.annotationKey(2).get(), /Add new/);
-    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
-    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
+    await userEvent.click(screen.getByText('Add custom annotation'));
+    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
+    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
     //add a label
     await userEvent.type(getLabelInput(ui.inputs.labelKey(2).get()), 'custom{enter}');

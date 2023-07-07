@@ -4,7 +4,7 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import pluginJson from './plugin.json';
-import { ElasticsearchQuery } from './types';
+import { ElasticsearchAnnotationQuery, ElasticsearchQuery } from './types';
 
 type ElasticSearchOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -141,16 +141,7 @@ export function trackQuery(
   }
 }
 
-export function trackAnnotationQuery(annotation: {
-  target: ElasticsearchQuery;
-  timeField?: string;
-  timeEndField?: string;
-  query?: string;
-  tagsField?: string;
-  textField?: string;
-  index?: string;
-  [key: string]: unknown;
-}): void {
+export function trackAnnotationQuery(annotation: ElasticsearchAnnotationQuery): void {
   reportInteraction('grafana_elasticsearch_annotation_query_executed', {
     grafana_version: config.buildInfo.version,
     has_target_query: !!annotation.target?.query,
