@@ -84,6 +84,7 @@ export interface QueryResultMeta {
    */
   executedQueryString?: string;
 
+  fromEpochMs?: number;
   /**
    * A browsable path on the datasource
    */
