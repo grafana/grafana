@@ -66,7 +66,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
-| `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 
 ## Experimental feature toggles
