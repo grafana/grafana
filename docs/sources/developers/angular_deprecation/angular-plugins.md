@@ -79,10 +79,6 @@ Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 
 > **Note:** Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 
-### [Kentik Connect Pro](https://grafana.com/grafana/plugins/kentik-connect-app/)
-
-Latest Version: 1.6.2 | Signature: Commercial | Last Updated: 2023
-
 ### [Moogsoft AIOps](https://grafana.com/grafana/plugins/moogsoft-aiops-app)
 
 Latest Version: 8.0.2 | Signature: Commercial | Last Updated: 2022
