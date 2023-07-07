@@ -22,6 +22,11 @@ const defaultPaths: Array<SelectableValue<string>> = [
     description: 'Lookup airports by id or code',
     value: 'public/gazetteer/airports.geojson',
   },
+  {
+    label: 'Cloudflare COLO',
+    description: 'Lookup Cloudflare COLO by ID or CODE',
+    value: 'public/gazetteer/cloudflare-colo.geojson',
+  },
 ];
 
 export interface GazetteerPathEditorConfigSettings {
