@@ -10,10 +10,24 @@ of components. i.e in the info section of the header.
 
 ### Usage
 
+#### When to use
+
+When creating separation between large sections of page content. Or smaller parts of components like in the page info section of the header.
+
+#### When not to use
+
+Dividers should be used sparingly.
+
+Don’t use dividers when white space (padding / margins) is sufficient to separate out sections. When sections are related to each other, they may not need dividers (ex: filtering / search related to a table).
+
+#### Anatomy
+
+- Horizontal
+
 ```tsx
 import { Divider } from '@grafana/ui';
 
-   <header>
+    <header>
         <h1>My title here</h1>
         <img src="logo.png" alt="logo" />
     </header>
@@ -22,6 +36,22 @@ import { Divider } from '@grafana/ui';
         <p>Main content goes here</p>
     </main>
 
+
+```
+
+- Vertical
+
+```tsx
+import { Divider } from '@grafana/ui';
+
+    <header>
+        <h1>My title here</h1>
+        <Divider direction="vertical" />
+        <img src="logo.png" alt="logo" />
+    </header>
+    <main>
+        <p>Main content goes here</p>
+    </main>
 
 ```
 
