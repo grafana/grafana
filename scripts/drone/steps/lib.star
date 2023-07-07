@@ -1232,7 +1232,7 @@ def integration_tests_step(name, cmds, environment = None):
 
     if environment:
         step["environment"] = environment
-    
+
     return step
 
 def integration_benchmarks_step(name, environment = None):
