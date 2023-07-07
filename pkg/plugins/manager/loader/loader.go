@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/kinds"
@@ -262,23 +261,19 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 }
 
 func (l *Loader) registerKinds(ctx context.Context, p *plugins.Plugin) error {
-	rt := cuectx.GrafanaThemaRuntime()
-	provider, err := pfs.CompilePluginProvider(p.FS, rt)
+	provider, err := pfs.CompilePluginProvider(p.FS, nil)
 	if err != nil {
 		return err
 	}
-
 	l.kindRegistry.Register(ctx, provider)
 	return nil
 }
 
 func (l *Loader) unregisterKinds(ctx context.Context, p *plugins.Plugin) error {
-	rt := cuectx.GrafanaThemaRuntime()
-	provider, err := pfs.CompilePluginProvider(p.FS, rt)
+	provider, err := pfs.CompilePluginProvider(p.FS, nil)
 	if err != nil {
 		return err
 	}
-
 	l.kindRegistry.Unregister(ctx, provider)
 	return nil
 }
