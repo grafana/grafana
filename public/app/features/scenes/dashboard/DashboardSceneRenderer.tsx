@@ -8,16 +8,17 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { ScenePanelInspector } from './ScenePanelInspector';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, body, controls } = model.useState();
+  const { body, controls, inspectPanel } = model.useState();
   const styles = useStyles2(getStyles);
 
   return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Custom}>
+    <Page navId="scenes" pageNav={model.getPageNav()} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
-          <NavToolbarActions model={model} />
+          <NavToolbarActions dashboard={model} />
           {controls && (
             <div className={styles.controls}>
               {controls.map((control) => (
@@ -30,6 +31,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           </div>
         </div>
       </CustomScrollbar>
+      {inspectPanel && <ScenePanelInspector panel={inspectPanel} dashboard={model} />}
     </Page>
   );
 }

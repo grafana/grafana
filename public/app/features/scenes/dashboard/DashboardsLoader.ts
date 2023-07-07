@@ -23,7 +23,6 @@ import {
   SceneDataTransformer,
   SceneGridItem,
   SceneDataProvider,
-  getUrlSyncManager,
   SceneObject,
   SceneControlsSpacer,
   VizPanelMenu,
@@ -80,7 +79,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
     // We initialize URL sync here as it better to do that before mounting and doing any rendering.
     // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
-    getUrlSyncManager().initSync(dashboard);
+    dashboard.initUrlSync();
 
     this.cache[rsp.dashboard.uid] = dashboard;
     this.setState({ dashboard, isLoading: false });

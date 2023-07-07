@@ -9,11 +9,11 @@ import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNav
 import { DashboardScene } from './DashboardScene';
 
 interface Props {
-  model: DashboardScene;
+  dashboard: DashboardScene;
 }
 
-export const NavToolbarActions = React.memo<Props>(({ model }) => {
-  const { actions = [], isEditing, isDirty, uid } = model.useState();
+export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
+  const { actions = [], isEditing, isDirty, uid } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {
@@ -33,7 +33,7 @@ export const NavToolbarActions = React.memo<Props>(({ model }) => {
     // TODO check permissions
     toolbarActions.push(
       <Button
-        onClick={model.onEnterEditMode}
+        onClick={dashboard.onEnterEditMode}
         tooltip="Enter edit mode"
         key="edit"
         variant="primary"
@@ -46,17 +46,17 @@ export const NavToolbarActions = React.memo<Props>(({ model }) => {
   } else {
     // TODO check permissions
     toolbarActions.push(
-      <Button onClick={model.onEnterEditMode} tooltip="Save as copy" fill="text" key="save-as">
+      <Button onClick={dashboard.onEnterEditMode} tooltip="Save as copy" fill="text" key="save-as">
         Save as
       </Button>
     );
     toolbarActions.push(
-      <Button onClick={model.onDiscard} tooltip="Save changes" fill="text" key="discard" variant="destructive">
+      <Button onClick={dashboard.onDiscard} tooltip="Save changes" fill="text" key="discard" variant="destructive">
         Discard
       </Button>
     );
     toolbarActions.push(
-      <Button onClick={model.onEnterEditMode} tooltip="Save changes" key="save" disabled={!isDirty}>
+      <Button onClick={dashboard.onEnterEditMode} tooltip="Save changes" key="save" disabled={!isDirty}>
         Save
       </Button>
     );
