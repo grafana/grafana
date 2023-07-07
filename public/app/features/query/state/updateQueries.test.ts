@@ -215,6 +215,68 @@ describe('updateQueries', () => {
     expect(updated[0].datasource).toEqual({ type: 'old-type', uid: 'old-uid' });
     expect(updated[1].datasource).toEqual({ type: 'other-type', uid: 'other-uid' });
   });
+
+  it('should preserve query when switching from mixed to a datasource where a query exists for the new datasource', async () => {
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    expect(updated.length).toEqual(1);
+  });
+
+  it('should update query refs when switching from mixed to a datasource where queries exist for new datasource', async () => {
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+        {
+          refId: 'C',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated.length).toEqual(2);
+    expect(updated[0].refId).toEqual('A');
+    expect(updated[1].refId).toEqual('B');
+  });
 });
 
 describe('updateQueries with import', () => {
