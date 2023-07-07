@@ -88,8 +88,9 @@ func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceR
 	}
 
 	callResponse := &backend.CallResourceResponse{
-		Status: 200,
-		Body:   resp.Body,
+		Status:  200,
+		Body:    resp.Body,
+		Headers: resp.Headers,
 	}
 
 	return callResponse, nil

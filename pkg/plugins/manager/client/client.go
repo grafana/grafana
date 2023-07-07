@@ -337,9 +337,6 @@ func ensureContentTypeHeader(res *backend.CallResourceResponse) {
 	}
 
 	if !hasContentType && res.Status != http.StatusNoContent {
-		if res.Headers == nil {
-			res.Headers = make(map[string][]string)
-		}
 		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
 }
