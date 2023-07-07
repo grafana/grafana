@@ -143,7 +143,8 @@ describe('Explore: Query History', () => {
   });
 
   // FIXME: flaky test
-  it.skip('updates the state in both Explore panes', async () => {
+  it('updates the state in both Explore panes', async () => {
+    console.time('QUERY HISTORY TEST TIME');
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -183,6 +184,7 @@ describe('Explore: Query History', () => {
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
       queryHistoryEnabled: false,
     });
+    console.timeEnd('QUERY HISTORY TEST TIME');
   });
 
   it('add comments to query history', async () => {
