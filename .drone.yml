@@ -1322,6 +1322,56 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: pr-verify-swagger
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.4
+  name: compile-build-cmd
+- commands:
+  - make swagger-api-spec
+  - git diff --exit-code || (echo "Swagger API spec is out of date, please run `make
+    swagger-api-spec` and commit the changes" && exit 1)
+  depends_on:
+  - compile-build-cmd
+  image: grafana/build-container:1.7.4
+  name: verify-swagger
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/services/ngalert/api/tooling/definitions/*.go
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: main-docs
 node:
   type: no-parallel
@@ -7354,6 +7404,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 804a6690ecc4900ed6d0ed55902de1858562f2a07e359204d5c0e2313e5f61ca
+hmac: 9400c42cb5c8b87ebd319a478f974fac3977c1f9f755c97fd8282ece8764748d
 
 ...

@@ -48,6 +48,10 @@ load(
     "scripts/drone/pipelines/benchmarks.star",
     "integration_benchmarks",
 )
+load(
+    "scripts/drone/pipelines/verify_swagger.star",
+    "verify_swagger",
+)
 
 ver_mode = "pr"
 trigger = {
@@ -139,6 +143,14 @@ def pr_pipelines():
         shellcheck_pipeline(),
         integration_benchmarks(
             prefix = ver_mode,
+        ),
+        verify_swagger(
+            get_pr_trigger(
+                include_paths = [
+                    "pkg/services/ngalert/api/tooling/definitions/*.go",
+                ],
+            ),
+            ver_mode,
         ),
     ]
 
