@@ -1,7 +1,7 @@
 import { PluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
-import { getPluginCdnResourceUrl, extractPluginIdVersionFromUrl, transformPluginSourceForCDN } from '../cdn/utils';
-import { PLUGIN_CDN_URL_KEY } from '../constants';
+import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { SandboxEnvironment } from './types';
 
@@ -21,14 +21,11 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
     scriptCode = patchPluginSourceMap(meta, scriptCode);
 
     // cdn loaded
-  } else if (url.includes(PLUGIN_CDN_URL_KEY)) {
+  } else if (url.startsWith(config.pluginsCDNBaseURL)) {
     const response = await fetch(url);
     scriptCode = await response.text();
-    const pluginUrl = getPluginCdnResourceUrl(`/public/${meta.module}`) + '.js';
-    const { version } = extractPluginIdVersionFromUrl(pluginUrl);
     scriptCode = transformPluginSourceForCDN({
-      pluginId: meta.id,
-      version,
+      url,
       source: scriptCode,
     });
   }
@@ -41,15 +38,13 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
 }
 
 export async function getPluginCode(meta: PluginMeta): Promise<string> {
-  if (meta.module.includes(`${PLUGIN_CDN_URL_KEY}/`)) {
+  if (meta.module.startsWith(config.pluginsCDNBaseURL)) {
     // should load plugin from a CDN
-    const pluginUrl = getPluginCdnResourceUrl(`/public/${meta.module}`) + '.js';
-    const response = await fetch(pluginUrl);
+    const url = meta.module;
+    const response = await fetch(url);
     let pluginCode = await response.text();
-    const { version } = extractPluginIdVersionFromUrl(pluginUrl);
     pluginCode = transformPluginSourceForCDN({
-      pluginId: meta.id,
-      version,
+      url,
       source: pluginCode,
     });
     return pluginCode;
@@ -79,7 +74,7 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
       replaceWith += `//# sourceURL=module.js\n`;
     }
     // modify the source map url to point to the correct location
-    const sourceCodeMapUrl = `/public/${meta.module}.js.map`;
+    const sourceCodeMapUrl = `/public/${meta.module}.map`;
     replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
 
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);

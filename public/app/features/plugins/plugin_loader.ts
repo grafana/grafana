@@ -12,15 +12,11 @@ import { DataQuery } from '@grafana/schema';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { transformPluginSourceForCDN } from './cdn/utils';
 import { registerPluginInCache, resolveWithCache } from './loader/cache';
 import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, IS_SYSTEM_MODULE_REGEX } from './loader/constants';
 import { sharedDependenciesMap } from './loader/sharedDependencies';
-import {
-  buildImportMap,
-  getBackWardsCompatibleUrl,
-  jsPluginCDNTransform,
-  preventAMDLoaderCollision,
-} from './loader/utils';
+import { buildImportMap, getBackWardsCompatibleUrl, preventAMDLoaderCollision } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 
 const imports = buildImportMap(sharedDependenciesMap);
@@ -46,10 +42,7 @@ systemJSPrototype.fetch = function (url: string, options: Record<string, unknown
 
       // JS files on the CDN need their asset paths transformed in the source
       if (res.url.startsWith(config.pluginsCDNBaseURL)) {
-        const splitUrl = res.url.split('/public/plugins/');
-        const baseAddress = splitUrl[0];
-        const pluginId = splitUrl[1].split('/')[0];
-        const cdnTransformedSrc = jsPluginCDNTransform(transformedSrc, baseAddress, pluginId);
+        const cdnTransformedSrc = transformPluginSourceForCDN({ url: res.url, source: transformedSrc });
         return new Response(new Blob([cdnTransformedSrc], { type: 'text/javascript' }));
       }
 
@@ -63,7 +56,6 @@ const originalResolve = systemJSPrototype.resolve;
 
 systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && id.startsWith(config.pluginsCDNBaseURL);
-
   try {
     let url = originalResolve.apply(this, [id, parentUrl]);
     const cleanedUrl = getBackWardsCompatibleUrl(url);
@@ -73,8 +65,7 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
 
     return shouldAddCacheQueryParam ? resolveWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
-    // For backwards compatiblity with older plugins that use `loadPluginCss`
-    // we need to translate the path for systemjs 6.x.x to understand
+    // Provide fallback for old plugins that use `loadPluginCss` to load theme styles
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
       return `/public/${id}`;
     }

@@ -27,9 +27,6 @@ export function getBackWardsCompatibleUrl(url: string) {
   if (url.endsWith('!')) {
     url = url.slice(0, -1);
   }
-  if (url.startsWith('app/')) {
-    url = `${SHARED_DEPENDENCY_PREFIX}:${url}`;
-  }
 
   const shouldAddDefaultExtension =
     !url.startsWith(`${SHARED_DEPENDENCY_PREFIX}:`) && !ENDS_WITH_FILE_EXTENSION_REGEX.test(url);
@@ -42,17 +39,4 @@ export function preventAMDLoaderCollision(source: string) {
   return `(function(define) {
     ${source}
   })(System.define);`;
-}
-
-// TODO: this should replace translateForCDN from './systemjsPlugins/pluginCDN'
-export function jsPluginCDNTransform(source: string, baseAddress: string, pluginId: string) {
-  let transformedSrc = source;
-  transformedSrc = transformedSrc.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
-  transformedSrc = transformedSrc.replace(/(["|'])(plugins\/.+?.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
-  // TODO: SystemJS 6 already does this transform, do we need it for sandbox?
-  transformedSrc = transformedSrc.replace(
-    /(\/\/#\ssourceMappingURL=)(.+)\.map/g,
-    `$1${baseAddress}/public/plugins/${pluginId}/$2.map`
-  );
-  return transformedSrc;
 }
