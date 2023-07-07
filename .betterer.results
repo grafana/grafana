@@ -5784,3 +5784,641 @@ exports[`no undocumented stories`] = {
     ]
   }`
 };
+
+exports[`no borderRadius without token`] = {
+  value: `{
+    "packages/grafana-data/src/themes/createShape.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Alert/Alert.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Badge/Badge.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/BarGauge/BarGauge.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/BigValue/BigValueLayout.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/BrowserLabel/Label.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Button/Button.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Button/ButtonGroup.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/CallToActionCard/CallToActionCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Card/Card.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Card/CardContainer.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Collapse/Collapse.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorInput.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorPickerPopover.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/ColorSwatch.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ColorPicker/SpectrumPalette.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/CustomScrollbar/CustomScrollbar.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/DatePicker/DatePicker.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/DateTimePicker/DateTimePicker.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/CalendarBody.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerCalendar.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeZonePicker/TimeZoneOffset.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/EmptySearchResult/EmptySearchResult.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/FileDropzone/FileDropzone.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/FileDropzone/FileListItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/FilterPill/FilterPill.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Checkbox.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/FieldValidationMessage.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/InlineLabel.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButton.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Forms/RadioButtonList/RadioButtonDot.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/IconButton/IconButton.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/InlineToast/InlineToast.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Input/Input.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/LoadingBar/LoadingBar.story.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Menu/Menu.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Menu/SubMenu.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Modal/getModalStyles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Monaco/CodeEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PageLayout/PageToolbar.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/HoverWidget.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/PanelChrome.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/PanelStatus.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/TitleItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/PanelContainer/PanelContainer.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/SecretFormField/SecretFormField.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Select/getSelectStyles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Slider/styles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Switch/Switch.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Table/FilterPopup.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Table/styles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Tabs/Counter.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Tabs/Tab.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Tabs/VerticalTab.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/TagsInput/TagItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/TextArea/TextArea.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButton.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/ToolbarButton/ToolbarButtonRow.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/UsersIndicator/UserIcon.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLayout/VizLayout.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/components/VizLegend/SeriesIcon.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/themes/GlobalStyles/card.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/themes/_variables.scss.tmpl.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/themes/mixins.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "packages/grafana-ui/src/utils/tooltipUtils.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/AppChrome/MegaMenu/NavBarItemIcon.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/AppChrome/MegaMenu/NavBarMenuItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/AppChrome/MegaMenu/NavBarMenuSection.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/AppChrome/MegaMenu/NavFeatureHighlight.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/AppChrome/SectionNav/SectionNavItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/AppChrome/TopBar/TopSearchBar.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/CardButton.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/ColorScale/ColorScale.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/Layers/LayerDragDropList.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/Layers/LayerName.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/Login/LoginLayout.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/NestedFolderPicker/NestedFolderList.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/OptionsUI/fieldColor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/Page/Page.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/QueryOperationRow/OperationRowHelp.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/QueryOperationRow/QueryOperationAction.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/QueryOperationRow/QueryOperationRowHeader.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/RolePicker/styles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/SplitPaneWrapper/SplitPaneWrapper.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/Upgrade/ProBadge.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/Upgrade/UpgradeBox.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/core/components/help/HelpModal.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/admin/LicenseChrome.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/Home.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/AlertLabel.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/AlertStateDot.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/DynamicTable.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/HoverCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/Label.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/StateTag.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/Tokenize.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/Well.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/contact-points/ContactPoints.v2.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/expressions/Expression.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/notification-policies/Matchers.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/notification-policies/Policy.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/receivers/form/ChannelSubForm.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/receivers/form/fields/styles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/receivers/grafanaAppReceivers/GrafanaAppBadge.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/AlertRuleForm.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/PreviewRuleResult.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/QueryWrapper.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/RuleEditorSection.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/VizWrapper.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/notificaton-preview/NotificationRoute.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.v1.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rule-viewer/RuleViewerLayout.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/rules/RulesTable.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/components/silences/SilencesTable.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/alerting/unified/styles/table.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/canvas/runtime/ables.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/commandPalette/CommandPalette.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/commandPalette/ResultItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/AddPanelButton/AddPanelButton.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemOverrides.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/OptionsPaneOptions.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/PanelEditorTabs.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/TransformationsEditor/TransformationEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/TransformationsEditor/TransformationFilter.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/components/VersionHistory/DiffValues.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderLoadingIndicator.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderNotice.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dashboard/dashgrid/PanelLinks.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/datasources/components/picker/DataSourceCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dimensions/editors/FileUploader.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dimensions/editors/ResourceCards.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/dimensions/editors/ResourcePickerPopover.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/ExploreDrawer.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/FlameGraph/FlameGraphExploreContainer.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/Logs/Logs.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/NoData.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryQueriesTab.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/RichHistory/RichHistoryStarredTab.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/TraceView/TraceViewContainer.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/TraceView/components/TracePageHeader/TracePageSearchBar.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBar.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanBarRow.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/expressions/components/Condition.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/expressions/components/Threshold.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/library-panels/components/LibraryPanelInfo/LibraryPanelInfo.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/library-panels/styles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/logs/components/LogDetailsRow.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/logs/components/LogLabels.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/logs/components/getLogRowStyles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/logs/components/log-context/LogRowContextModal.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/notifications/StoredNotifications.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/panel/components/VizTypePicker/VisualizationSuggestionCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/plugins/admin/components/PluginListItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/query/components/QueryEditorRowHeader.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/search/components/SearchCard.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/search/components/SearchCardExpanded.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/variables/pickers/shared/VariableLink.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/variables/pickers/shared/VariableOptions.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/features/visualization/data-hover/DataHoverView.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/EditorRow.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/grafana-pyroscope-datasource/QueryEditor/LabelsEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/grafana/components/TimePickerInput.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/graphite/components/GraphiteFunctionEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/loki/components/monaco-query-field/MonacoQueryField.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/parca/QueryEditor/EditorRow.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/parca/QueryEditor/LabelsEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/ResultsTable.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationInfoButton.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/tempo/QueryEditor/TagsField/TagsField.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/datasource/tempo/traceql/TraceQLEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/alertlist/AlertList.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/alertlist/UnifiedAlertList.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/alertlist/unified-alerting/UngroupedView.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/annolist/AnnotationListItem.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/canvas/components/connections/ConnectionAnchors.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/canvas/globalStyles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/dashlist/DashList.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/datagrid/utils.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/flamegraph/components/FlameGraph/FlameGraphTooltip.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/flamegraph/flamegraphV2/components/FlameGraph/FlameGraphMetadata.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/flamegraph/flamegraphV2/components/FlameGraph/FlameGraphTooltip.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/flamegraph/flamegraphV2/components/FlameGraphHeader.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/geomap/components/DebugOverlay.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/geomap/components/MarkersLegend.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/geomap/components/MeasureOverlay.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/gettingstarted/components/sharedStyles.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/heatmap/utils.ts:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/news/component/News.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/nodeGraph/NodeGraph.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/text/TextPanelEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/ThresholdDragHandle.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditorForm.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationTooltip.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/xychart/AutoEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ],
+    "public/app/plugins/panel/xychart/ManualEditor.tsx:5381": [
+      [0, 0, 0, "No borderRadius with custom value, please use the tokens instead", "5381"]
+    ]
+  }`
+};
