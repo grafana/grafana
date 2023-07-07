@@ -14,7 +14,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: 80px;
   `,
   heading: css({
-    fontSize: theme.v1.typography.heading.h5,
+    fontSize: theme.typography.h5.fontSize,
     fontWeight: 'inherit',
   }),
   figure: css({
@@ -30,7 +30,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   description: css({
     margin: '0px',
-    fontSize: theme.typography.size.sm,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   card: css({
     gridTemplateAreas: `
@@ -40,8 +40,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
         "Figure     -       Actions"`,
   }),
   logo: css({
-    marginRight: theme.v1.spacing.lg,
-    marginLeft: theme.v1.spacing.sm,
+    marginRight: theme.spacing(3),
+    marginLeft: theme.spacing(1),
     width: theme.spacing(7),
     maxHeight: theme.spacing(7),
   }),
@@ -82,9 +82,6 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             <img className={styles.logo} src={item.logo} alt="" />
           </Card.Figure>
 
-          {/* <Card.Description className={styles.description}>{item.description}</Card.Description> */}
-
-          {/* Signature */}
           {item.angularDetected && (
             <Card.Meta className={styles.meta}>
               <PluginAngularBadge />
