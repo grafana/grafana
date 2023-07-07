@@ -82,7 +82,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             <img className={styles.logo} src={item.logo} alt="" />
           </Card.Figure>
 
-          <Card.Description className={styles.description}>{item.description}</Card.Description>
+          {/* <Card.Description className={styles.description}>{item.description}</Card.Description> */}
 
           {/* Signature */}
           {item.angularDetected && (
