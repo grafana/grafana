@@ -2,12 +2,12 @@ package registry
 
 import (
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry/coregrd"
-	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -23,7 +23,7 @@ func ProvideRegistry(
 	moduleManager modules.Manager,
 	apiServer apiserver.Service,
 	clientset client.Service,
-	certGenerator certgenerator.Service,
+	certGenerator certgenerator.ServiceInterface,
 	httpServer *api.HTTPServer,
 	provisioning *provisioning.ProvisioningServiceImpl,
 	coreGRDRegistry *coregrd.Registry,

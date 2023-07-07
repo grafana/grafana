@@ -29,7 +29,7 @@ replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.open
 
 replace go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.35.0
 
-// replace github.com/grafana/grafana-apiserver => /Users/charandas/go/src/github.com/grafana/grafana-apiserver
+replace github.com/grafana/grafana-apiserver => /Users/charandas/go/src/github.com/grafana/grafana-apiserver
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
