@@ -1489,6 +1489,29 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 	})
 }
 
+func TestLoader_Unload(t *testing.T) {
+	t.Run("Unload plugin should clean plugin errors", func(t *testing.T) {
+		reg := fakes.NewFakePluginRegistry()
+		procPrvdr := fakes.NewFakeBackendProcessProvider()
+		procMgr := fakes.NewFakeProcessManager()
+		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
+			l.pluginRegistry = reg
+			l.processManager = procMgr
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, &fakes.FakeLicensingService{})
+		})
+
+		fakeId := "fake-id"
+		l.errs[fakeId] = &plugins.SignatureError{}
+
+		require.Equal(t, 1, len(l.PluginErrors()))
+
+		l.Unload(context.Background(), fakeId)
+
+		require.Equal(t, 0, len(l.PluginErrors()))
+
+	})
+}
+
 func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
