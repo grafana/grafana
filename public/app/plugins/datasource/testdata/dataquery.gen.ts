@@ -19,7 +19,6 @@ export enum TestDataQueryType {
   DataPointsOutsideRange = 'datapoints_outside_range',
   ExponentialHeatmapBucketData = 'exponential_heatmap_bucket_data',
   FlameGraph = 'flame_graph',
-  FlameGraphEmpty = 'flame_graph_empty',
   GrafanaAPI = 'grafana_api',
   LinearHeatmapBucketData = 'linear_heatmap_bucket_data',
   Live = 'live',

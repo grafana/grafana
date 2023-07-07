@@ -41,7 +41,6 @@ const (
 	logsQuery                         queryType = "logs"
 	nodeGraphQuery                    queryType = "node_graph"
 	flameGraphQuery                   queryType = "flame_graph"
-	flameGraphEmptyQuery              queryType = "flame_graph_empty"
 	rawFrameQuery                     queryType = "raw_frame"
 	csvFileQueryType                  queryType = "csv_file"
 	csvContentQueryType               queryType = "csv_content"
@@ -202,11 +201,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	s.registerScenario(&Scenario{
 		ID:   string(flameGraphQuery),
 		Name: "Flame Graph",
-	})
-
-	s.registerScenario(&Scenario{
-		ID:   string(flameGraphEmptyQuery),
-		Name: "Flame Graph - Empty",
 	})
 
 	s.registerScenario(&Scenario{
