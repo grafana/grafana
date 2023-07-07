@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -98,7 +99,7 @@ type FolderUIDFilter struct {
 }
 
 func (f FolderUIDFilter) Where() (string, []interface{}) {
-	if len(f.UIDs) == 1 && f.UIDs[0] == "" {
+	if len(f.UIDs) == 1 && f.UIDs[0] == folder.GeneralFolderUID {
 		return "dashboard.folder_id = 0", nil
 	}
 	innerSelect, params := sqlUIDin("uid", f.UIDs)
