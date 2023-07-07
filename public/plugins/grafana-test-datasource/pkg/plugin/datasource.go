@@ -15,11 +15,12 @@ import (
 var (
 	_ backend.QueryDataHandler      = (*Datasource)(nil)
 	_ backend.CheckHealthHandler    = (*Datasource)(nil)
+	_ backend.StreamHandler         = (*Datasource)(nil)
 	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewDatasource(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	return &Datasource{
 		Service: ProvideService(),
 	}, nil
@@ -59,4 +60,16 @@ func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequ
 		Status:  backend.HealthStatusOk,
 		Message: "Data source is working",
 	}, nil
+}
+
+func (d *Datasource) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	return d.Service.SubscribeStream(ctx, req)
+}
+
+func (d *Datasource) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	return d.Service.PublishStream(ctx, req)
+}
+
+func (d *Datasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	return d.Service.RunStream(ctx, req, sender)
 }

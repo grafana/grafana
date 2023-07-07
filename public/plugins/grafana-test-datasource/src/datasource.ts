@@ -171,7 +171,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
   buildFakeAnnotationEvents(range: TimeRange, count: number): AnnotationEvent[] {
     let timeWalker = range.from.valueOf();
     const to = range.to.valueOf();
-    const events = [];
+    const events: AnnotationEvent[] = [];
     const step = (to - timeWalker) / count;
 
     for (let i = 0; i < count; i++) {
@@ -342,8 +342,8 @@ function runGrafanaLiveQuery(target: TestData, req: DataQueryRequest<TestData>):
   }
   return getGrafanaLiveSrv().getDataStream({
     addr: {
-      scope: LiveChannelScope.Plugin,
-      namespace: 'testdata',
+      scope: LiveChannelScope.DataSource,
+      namespace: target.datasource?.uid ?? 'testdata',
       path: target.channel,
     },
     key: `testStream.${liveQueryCounter++}`,
