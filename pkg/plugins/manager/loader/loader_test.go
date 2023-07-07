@@ -1192,14 +1192,14 @@ func TestLoader_Load_DisableAngularUIFeatures(t *testing.T) {
 		},
 	}
 	for _, tc := range []struct {
-		name          string
-		pluginCfg     map[string]string
-		expUIFeatures bool
+		name                  string
+		pluginCfg             map[string]string
+		expUIFeaturesDisabled bool
 	}{
-		{name: "ui features are enabled by default", expUIFeatures: true},
+		{name: "ui features are not disabled by default", expUIFeaturesDisabled: false},
 		{name: "ui features are disabled if disabled in plugin config", pluginCfg: map[string]string{
-			"disable_deprecation_ui_features": "true",
-		}, expUIFeatures: false},
+			"disable_angular_deprecation_ui": "true",
+		}, expUIFeaturesDisabled: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			l := newLoader(t, &config.Cfg{PluginSettings: setting.PluginSettings{
@@ -1208,7 +1208,7 @@ func TestLoader_Load_DisableAngularUIFeatures(t *testing.T) {
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
-			require.Equal(t, p[0].AngularMeta.DisableDeprecationUIFeatures, false, "should not disable deprecation UI features by default")
+			require.Equal(t, p[0].AngularMeta.DisableDeprecationUIFeatures, tc.expUIFeaturesDisabled)
 		})
 	}
 }
