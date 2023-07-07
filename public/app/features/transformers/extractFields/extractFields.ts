@@ -77,7 +77,7 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
       }
     }
 
-    if (!obj) {
+    if (obj == null) {
       continue;
     }
 

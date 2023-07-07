@@ -1,4 +1,5 @@
 const http = require('http');
+const { now } = require('lodash');
 
 if (process.argv.length !== 3) {
   throw new Error('invalid command line: use node sendLogs.js LOKIC_BASE_URL');
@@ -195,8 +196,31 @@ async function sendNewLogs() {
 }
 
 async function main() {
-  // we generate both old-logs and new-logs at the same time
-  await Promise.all([sendOldLogs(), sendNewLogs()])
+  function myFunction() {
+    // Perform your desired actions here
+    console.log("This function will be executed at exact 10-second intervals.");
+    
+    // Calculate the time for the next execution
+    var now = new Date();
+    var seconds = now.getSeconds();
+    var milliseconds = now.getMilliseconds();
+    var delay = (10 - (seconds % 10)) * 1000 - milliseconds;
+    
+    // Call the function again after the calculated delay
+    setTimeout(()=>{
+      setInterval(async () => {
+        console.log("SEND LOG")
+        globalCounter += 1;
+        const item = getRandomLogItem(globalCounter);
+        const nowMs = new Date().getTime();
+        const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
+        await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels});
+      }, 1000);
+    }, delay);
+  }
+  
+  // Start the initial execution
+  myFunction();
 }
 
 // when running in docker, we catch the needed stop-signal, to shutdown fast
