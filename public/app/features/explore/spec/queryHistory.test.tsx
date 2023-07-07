@@ -143,7 +143,7 @@ describe('Explore: Query History', () => {
   });
 
   // FIXME: flaky test
-  it('updates the state in both Explore panes', async () => {
+  it.only('updates the state in both Explore panes', async () => {
     console.time('QUERY HISTORY TEST TIME');
     const urlParams = {
       left: serializeStateToUrlParam({
