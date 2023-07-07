@@ -8,8 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -28,6 +31,7 @@ import (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
+	kindRegistry            kinds.Registry
 	pluginFinder            finder.Finder
 	processManager          process.Service
 	pluginRegistry          registry.Service
@@ -48,17 +52,18 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry, kindsRegistry kinds.Registry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry, kindsRegistry)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry, kindsRegistry kinds.Registry) *Loader {
 	return &Loader{
+		kindRegistry:            kindsRegistry,
 		pluginFinder:            pluginFinder,
 		pluginRegistry:          pluginRegistry,
 		pluginInitializer:       initializer.New(cfg, backendProvider, license),
@@ -256,9 +261,35 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 	return nil
 }
 
+func (l *Loader) registerKinds(ctx context.Context, p *plugins.Plugin) error {
+	rt := cuectx.GrafanaThemaRuntime()
+	provider, err := pfs.CompilePluginProvider(p.FS, rt)
+	if err != nil {
+		return err
+	}
+
+	l.kindRegistry.Register(ctx, provider)
+	return nil
+}
+
+func (l *Loader) unregisterKinds(ctx context.Context, p *plugins.Plugin) error {
+	rt := cuectx.GrafanaThemaRuntime()
+	provider, err := pfs.CompilePluginProvider(p.FS, rt)
+	if err != nil {
+		return err
+	}
+
+	l.kindRegistry.Unregister(ctx, provider)
+	return nil
+}
+
 func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 	if err := l.pluginRegistry.Add(ctx, p); err != nil {
 		return err
+	}
+
+	if err := l.registerKinds(ctx, p); err != nil {
+		l.log.Error("Could not register kinds for plugin", "pluginId", p.ID, "err", err)
 	}
 
 	if !p.IsCorePlugin() {
@@ -270,6 +301,10 @@ func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 
 func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
+
+	if err := l.unregisterKinds(ctx, p); err != nil {
+		l.log.Error("Could not unregister kinds for plugin", "pluginId", p.ID, "err", err)
+	}
 
 	if err := l.processManager.Stop(ctx, p.ID); err != nil {
 		return err
