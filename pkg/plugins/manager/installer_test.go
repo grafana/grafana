@@ -212,7 +212,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			})
 		}
 	})
-
 }
 
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {

@@ -1505,10 +1505,10 @@ func TestLoader_Unload(t *testing.T) {
 
 		require.Equal(t, 1, len(l.PluginErrors()))
 
-		l.Unload(context.Background(), fakeId)
+		err := l.Unload(context.Background(), fakeId)
+		require.NoError(t, err)
 
 		require.Equal(t, 0, len(l.PluginErrors()))
-
 	})
 }
 
