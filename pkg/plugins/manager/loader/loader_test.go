@@ -1182,6 +1182,37 @@ func TestLoader_Load_Angular(t *testing.T) {
 	}
 }
 
+func TestLoader_Load_DisableAngularUIFeatures(t *testing.T) {
+	fakePluginSource := &fakes.FakePluginSource{
+		PluginClassFunc: func(ctx context.Context) plugins.Class {
+			return plugins.ClassExternal
+		},
+		PluginURIsFunc: func(ctx context.Context) []string {
+			return []string{"../testdata/valid-v2-signature"}
+		},
+	}
+	for _, tc := range []struct {
+		name          string
+		pluginCfg     map[string]string
+		expUIFeatures bool
+	}{
+		{name: "ui features are enabled by default", expUIFeatures: true},
+		{name: "ui features are disabled if disabled in plugin config", pluginCfg: map[string]string{
+			"disable_deprecation_ui_features": "true",
+		}, expUIFeatures: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			l := newLoader(t, &config.Cfg{PluginSettings: setting.PluginSettings{
+				"test-datasource": tc.pluginCfg,
+			}})
+			p, err := l.Load(context.Background(), fakePluginSource)
+			require.NoError(t, err)
+			require.Len(t, p, 1, "should load 1 plugin")
+			require.Equal(t, p[0].AngularMeta.DisableDeprecationUIFeatures, false, "should not disable deprecation UI features by default")
+		})
+	}
+}
+
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	rootDir, err := filepath.Abs("../")
 	if err != nil {
