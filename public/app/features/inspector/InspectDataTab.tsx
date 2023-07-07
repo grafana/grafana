@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -172,10 +173,28 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
     // We need to apply field config even though it was already applied in the PanelQueryRunner.
     // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
+    let fieldConfig = panel.fieldConfig;
+
+    if (panel.type === 'table') {
+      fieldConfig = cloneDeep(fieldConfig);
+
+      if (fieldConfig.defaults.custom?.filterable) {
+        fieldConfig.defaults.custom.filterable = undefined;
+      }
+
+      const overrideProp = fieldConfig.overrides.find((override) =>
+        override.properties.find((prop) => prop.id === 'filterable')
+      );
+
+      if (overrideProp) {
+        overrideProp.properties = overrideProp.properties.filter((x) => x.id === 'filterable');
+      }
+    }
+
     return applyFieldOverrides({
       data,
       theme: config.theme2,
-      fieldConfig: panel.fieldConfig,
+      fieldConfig,
       timeZone,
       replaceVariables: (value: string) => {
         return value;
