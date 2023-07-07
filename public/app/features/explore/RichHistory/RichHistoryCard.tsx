@@ -312,7 +312,6 @@ export function RichHistoryCard(props: Props) {
       )}
       <IconButton name="trash-alt" title="Delete query" tooltip="Delete query" onClick={onDeleteQuery} />
       <IconButton
-        data-testid="query-history-card-star"
         name={query.starred ? 'favorite' : 'star'}
         iconType={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}

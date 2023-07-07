@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react';
+import { waitFor, within } from '@testing-library/react';
 
 import { withinExplore } from './setup';
 
@@ -35,7 +35,8 @@ export const assertQueryHistoryComment = async (expectedQueryComments: string[],
 export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
   // Test ID is used to avoid test timeouts reported in #70158, #59116 and #47635
-  const starButtons = selector.getAllByTestId('query-history-card-star');
+  const queriesContainer = selector.getByTestId('query-history-queries-tab');
+  const starButtons = within(queriesContainer).getAllByRole('button', { name: /Star query|Unstar query/ });
 
   await waitFor(() =>
     expectedStars.forEach((starred, queryIndex) => {
