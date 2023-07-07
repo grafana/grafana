@@ -21,6 +21,7 @@ import { getInheritedProperties, InhertitableProperties } from '../../utils/noti
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
+import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
@@ -146,7 +147,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 <Spacer />
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
-                {provisioned && <Badge text="Provisioned" color="purple" />}
+                {provisioned && <ProvisioningBadge />}
                 {readOnly ? null : (
                   <Stack direction="row" gap={0.5}>
                     <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>

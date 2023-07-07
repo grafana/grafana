@@ -106,6 +106,8 @@ const ui = {
 
   confirmDeleteModal: byRole('dialog'),
   confirmDeleteButton: byLabelText('Confirm Modal Danger Button'),
+
+  provisionedBadge: byText('provisioned'),
 };
 
 describe('NotificationPolicies', () => {
@@ -229,7 +231,7 @@ describe('NotificationPolicies', () => {
       template_files: {},
     });
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
 
@@ -284,7 +286,7 @@ describe('NotificationPolicies', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(ui.rootGroupBy.get()).toHaveTextContent('alertname');
 
@@ -346,7 +348,7 @@ describe('NotificationPolicies', () => {
       template_files: {},
     });
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
@@ -410,7 +412,7 @@ describe('NotificationPolicies', () => {
       refetch: jest.fn(),
     }));
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
     expect(ui.rootReceiver.query()).not.toBeInTheDocument();
@@ -445,7 +447,7 @@ describe('NotificationPolicies', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
+    renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
@@ -515,7 +517,7 @@ describe('NotificationPolicies', () => {
 
     mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
 
-    await renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
+    renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
 
     const deleteButtons = await ui.deleteRouteButton.findAll();
@@ -571,7 +573,7 @@ describe('NotificationPolicies', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderNotificationPolicies(dataSources.am.name);
+    renderNotificationPolicies(dataSources.am.name);
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
@@ -617,7 +619,7 @@ describe('NotificationPolicies', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderNotificationPolicies(dataSources.promAlertManager.name);
+    renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
     const rows = await ui.row.findAll();
@@ -647,7 +649,7 @@ describe('NotificationPolicies', () => {
       refetch: jest.fn(),
     }));
 
-    await renderNotificationPolicies(dataSources.promAlertManager.name);
+    renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     await waitFor(() =>
       expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instances')
@@ -686,7 +688,7 @@ describe('NotificationPolicies', () => {
 
     mocks.api.fetchAlertManagerConfig.mockResolvedValue(defaultConfig);
 
-    await renderNotificationPolicies(dataSources.am.name);
+    renderNotificationPolicies(dataSources.am.name);
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
     await userEvent.click(ui.editRouteButton.get(rows[0]));
@@ -732,7 +734,7 @@ describe('NotificationPolicies', () => {
       message: 'alertmanager storage object not found',
     });
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
 
