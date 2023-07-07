@@ -31,6 +31,7 @@ export enum PrometheusCacheLevel {
 }
 
 export interface PromOptions extends DataSourceJsonData {
+  sigV4Auth: boolean;
   timeInterval?: string;
   queryTimeout?: string;
   httpMethod?: string;

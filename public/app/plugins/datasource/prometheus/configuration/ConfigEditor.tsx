@@ -11,6 +11,7 @@ import { PromOptions } from '../types';
 import { AlertingSettingsOverhaul } from './AlertingSettingsOverhaul';
 import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
+import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
@@ -40,6 +41,15 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Prometheus data source is no longer available. Switch to server access mode.
         </Alert>
       )}
+      {/* WRAP IN FEATURE TOGGLE */}
+      <DataSourcehttpSettingsOverhaul
+        options={options}
+        onOptionsChange={onOptionsChange}
+        azureAuthSettings={azureAuthSettings}
+        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      />
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9090"
         dataSourceConfig={options}
