@@ -4469,7 +4469,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -4622,7 +4623,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -7189,6 +7191,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d207728c70f4191d87781b127b5220af3110523bc7e945d8ac0828210d6f23eb
+hmac: b61e5a408c6a90a8bc1e6858ecef0d1cc5f0986ee6293fb1fd6059472b54887a
 
 ...
