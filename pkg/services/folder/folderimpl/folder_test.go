@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"runtime"
 	"testing"
 	"time"
 
@@ -62,7 +63,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
-		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}), runtime.NumCPU())
 
 		folderStore := foldertest.NewFakeFolderStore(t)
 
@@ -340,7 +341,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
+	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn, runtime.NumCPU())
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(cfg)
@@ -417,7 +418,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff, runtime.NumCPU())
 
 			serviceWithFlagOff := &Service{
 				cfg:                  cfg,
@@ -554,7 +555,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff, runtime.NumCPU())
 
 			dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
 			require.NoError(t, err)
@@ -1142,7 +1143,7 @@ func TestNestedFolderService(t *testing.T) {
 
 func TestService_GetChildren(t *testing.T) {
 	t.Run("get children with no parentUID", func(t *testing.T) {
-		serviceWithFlagOn, signedInUser := setupGetChildren(t, 100, "", DEFAULT_CONCURRENCY, true)
+		serviceWithFlagOn, signedInUser := setupGetChildren(t, 100, "", runtime.NumCPU(), true)
 		res, err := serviceWithFlagOn.GetChildren(context.Background(), &folder.GetChildrenQuery{
 			OrgID:        orgID,
 			UID:          "",

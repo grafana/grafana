@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -27,8 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-const DEFAULT_CONCURRENCY = 8
 
 type Service struct {
 	store                store
@@ -60,7 +59,8 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	cacheService *localcache.CacheService,
 ) folder.Service {
-	store := ProvideStore(db, cfg, features)
+	concurrencyFactor := runtime.NumCPU()
+	store := ProvideStore(db, cfg, features, concurrencyFactor)
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
@@ -73,7 +73,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 		cacheService:         cacheService,
-		concurrencyFactor:    DEFAULT_CONCURRENCY,
+		concurrencyFactor:    concurrencyFactor,
 		caching:              true,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {

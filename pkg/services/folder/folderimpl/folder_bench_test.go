@@ -65,7 +65,7 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
 	require.NoError(b, err)
-	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
+	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn, overrideConcurrencyFactor)
 
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
