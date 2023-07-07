@@ -22,9 +22,15 @@ func AddScopeSplitMigrations(mg *migrator.Migrator) {
 	}))
 
 	mg.AddMigration("permission scope split migration", &scopeSplitMigrator{})
+
 	mg.AddMigration("add permission kind_attribute_identifier index", migrator.NewAddIndexMigration(permissionTable, &migrator.Index{
-		Cols: []string{"kind", "attribute", "identifier"},
+		Cols: []string{"kind", "attribute", "identifier"}, Type: migrator.UniqueIndex,
 	}))
+
+	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionTable, &migrator.Index{
+		Cols: []string{"identifier"},
+	}))
+
 }
 
 type scopeSplitMigrator struct {
