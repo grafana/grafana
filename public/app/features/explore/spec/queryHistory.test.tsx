@@ -143,6 +143,7 @@ describe('Explore: Query History', () => {
   });
 
   it('updates the state in both Explore panes', async () => {
+    console.time('test');
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -182,6 +183,7 @@ describe('Explore: Query History', () => {
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
       queryHistoryEnabled: false,
     });
+    console.timeEnd('test');
   });
 
   it('add comments to query history', async () => {
