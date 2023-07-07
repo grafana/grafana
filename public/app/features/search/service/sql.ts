@@ -55,13 +55,7 @@ export class SQLSearcher implements GrafanaSearcher {
     if (query.uid) {
       apiQuery.dashboardUID = query.uid;
     } else if (query.location?.length) {
-      // SQL search API doesn't support special folder UID of 'general', so we revert back
-      // to old folderIds param to specify the general folder
-      if (query.location === 'general') {
-        apiQuery.folderIds = [0];
-      } else {
-        apiQuery.folderUIDs = [query.location];
-      }
+      apiQuery.folderUIDs = [query.location];
     }
 
     return apiQuery;
