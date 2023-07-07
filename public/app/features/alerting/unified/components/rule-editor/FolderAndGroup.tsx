@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Badge, Field, InputControl, Label, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Field, InputControl, Label, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
@@ -18,6 +18,7 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
+import { ProvisioningBadge } from '../Provisioning';
 
 import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
@@ -174,7 +175,7 @@ export function FolderAndGroup() {
                   {option.isDisabled && (
                     <>
                       {' '}
-                      <Badge color="purple" text="Provisioned" />
+                      <ProvisioningBadge />
                     </>
                   )}
                 </div>
