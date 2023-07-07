@@ -1,7 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrame, DataFrameType, Field, getLinksSupplier, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  Field,
+  getLinksSupplier,
+  GrafanaTheme2,
+  outerJoinDataFrames,
+  PanelProps,
+  TimeRange,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -16,6 +25,10 @@ import {
 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
@@ -41,7 +54,9 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync } = usePanelContext();
+  const { sync, canAddAnnotations } = usePanelContext();
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -176,6 +191,8 @@ export const HeatmapPanel = ({
     );
   };
 
+  const alignedDataFrame = outerJoinDataFrames({ frames: data.series });
+
   if (info.warning || !info.heatmap) {
     return (
       <PanelDataErrorView
@@ -194,6 +211,40 @@ export const HeatmapPanel = ({
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
+            )}
+            {enableAnnotationCreation && (
+              <AnnotationEditorPlugin data={alignedDataFrame!} timeZone={timeZone} config={builder}>
+                {({ startAnnotating }) => {
+                  return (
+                    <ContextMenuPlugin
+                      data={alignedDataFrame!}
+                      config={builder}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={[
+                        {
+                          items: [
+                            {
+                              label: 'Add annotation',
+                              ariaLabel: 'Add annotation',
+                              icon: 'comment-alt',
+                              onClick: (e, p) => {
+                                if (!p) {
+                                  return;
+                                }
+                                startAnnotating({ coords: p.coords });
+                              },
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  );
+                }}
+              </AnnotationEditorPlugin>
+            )}
           </UPlotChart>
         )}
       </VizLayout>
