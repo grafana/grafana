@@ -1,0 +1,5565 @@
+{
+    "features": [
+        {
+            "geometry": {
+                "coordinates": [
+                    19.7206001282,
+                    41.4146995544
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TIA",
+                "gps_code": null,
+                "iata_code": "TIA",
+                "location": "terminal",
+                "name": "Tirana",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    3.2154099941,
+                    36.6910018921
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ALG",
+                "gps_code": null,
+                "iata_code": "ALG",
+                "location": "terminal",
+                "name": "Algiers",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    7.79207,
+                    36.85596
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "AAE",
+                "gps_code": null,
+                "iata_code": "AAE",
+                "location": "terminal",
+                "name": "Annaba",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -0.6416,
+                    35.6911
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ORN",
+                "gps_code": null,
+                "iata_code": "ORN",
+                "location": "terminal",
+                "name": "Oran",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    13.2312002182,
+                    -8.8583698273
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LAD",
+                "gps_code": null,
+                "iata_code": "LAD",
+                "location": "terminal",
+                "name": "Luanda",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -58.5358,
+                    -34.8222
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "EZE",
+                "gps_code": null,
+                "iata_code": "EZE",
+                "location": "terminal",
+                "name": "Buenos Aires",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -64.208333,
+                    -31.31
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "COR",
+                "gps_code": null,
+                "iata_code": "COR",
+                "location": "terminal",
+                "name": "Córdoba",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -68.1557006836,
+                    -38.9490013123
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NQN",
+                "gps_code": null,
+                "iata_code": "NQN",
+                "location": "terminal",
+                "name": "Neuquen",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    44.3959007263,
+                    40.1473007202
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "EVN",
+                "gps_code": null,
+                "iata_code": "EVN",
+                "location": "terminal",
+                "name": "Yerevan",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    138.5335637,
+                    -34.9431729
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ADL",
+                "gps_code": null,
+                "iata_code": "ADL",
+                "location": "terminal",
+                "name": "Adelaide",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    153.117004394,
+                    -27.3841991425
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BNE",
+                "gps_code": null,
+                "iata_code": "BNE",
+                "location": "terminal",
+                "name": "Brisbane",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    149.1950073242,
+                    -35.3069000244
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CBR",
+                "gps_code": null,
+                "iata_code": "CBR",
+                "location": "terminal",
+                "name": "Canberra",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    147.331665,
+                    -42.883209
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HBA",
+                "gps_code": null,
+                "iata_code": "HBA",
+                "location": "terminal",
+                "name": "Hobart",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    144.843002319,
+                    -37.6733016968
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MEL",
+                "gps_code": null,
+                "iata_code": "MEL",
+                "location": "terminal",
+                "name": "Melbourne",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    115.967002869,
+                    -31.9402999878
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PER",
+                "gps_code": null,
+                "iata_code": "PER",
+                "location": "terminal",
+                "name": "Perth",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    151.177001953,
+                    -33.9460983276
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SYD",
+                "gps_code": null,
+                "iata_code": "SYD",
+                "location": "terminal",
+                "name": "Sydney",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    16.5697002411,
+                    48.1102981567
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "VIE",
+                "gps_code": null,
+                "iata_code": "VIE",
+                "location": "terminal",
+                "name": "Vienna",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    48.8180007935,
+                    38.7463989258
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LLK",
+                "gps_code": null,
+                "iata_code": "LLK",
+                "location": "terminal",
+                "name": "Astara",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    50.0466995239,
+                    40.4674987793
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GYD",
+                "gps_code": null,
+                "iata_code": "GYD",
+                "location": "terminal",
+                "name": "Baku",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    50.6335983276,
+                    26.2707996368
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BAH",
+                "gps_code": null,
+                "iata_code": "BAH",
+                "location": "terminal",
+                "name": "Manama",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    91.8133011,
+                    22.2495995
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CGP",
+                "gps_code": null,
+                "iata_code": "CGP",
+                "location": "terminal",
+                "name": "Chittagong",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    90.397783,
+                    23.843347
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DAC",
+                "gps_code": null,
+                "iata_code": "DAC",
+                "location": "terminal",
+                "name": "Dhaka",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    89.1607971191,
+                    23.1837997437
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JSR",
+                "gps_code": null,
+                "iata_code": "JSR",
+                "location": "terminal",
+                "name": "Jashore",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    27.599,
+                    53.9006
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MSQ",
+                "gps_code": null,
+                "iata_code": "MSQ",
+                "location": "terminal",
+                "name": "Minsk",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    4.4844398499,
+                    50.9014015198
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BRU",
+                "gps_code": null,
+                "iata_code": "BRU",
+                "location": "terminal",
+                "name": "Brussels",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    89.6339,
+                    27.4712
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PBH",
+                "gps_code": null,
+                "iata_code": "PBH",
+                "location": "terminal",
+                "name": "Thimphu",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    25.9231,
+                    -24.6282
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GBE",
+                "gps_code": null,
+                "iata_code": "GBE",
+                "location": "terminal",
+                "name": "Gaborone",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -47.334,
+                    -22.738
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "QWJ",
+                "gps_code": null,
+                "iata_code": "QWJ",
+                "location": "terminal",
+                "name": "Americana",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -48.5013,
+                    -1.4563
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BEL",
+                "gps_code": null,
+                "iata_code": "BEL",
+                "location": "terminal",
+                "name": "Belém",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -43.971944,
+                    -19.624444
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CNF",
+                "gps_code": null,
+                "iata_code": "CNF",
+                "location": "terminal",
+                "name": "Belo Horizonte",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -49.07696,
+                    -26.89245
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BNU",
+                "gps_code": null,
+                "iata_code": "BNU",
+                "location": "terminal",
+                "name": "Blumenau",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -47.90859,
+                    -15.79824
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BSB",
+                "gps_code": null,
+                "iata_code": "BSB",
+                "location": "terminal",
+                "name": "Brasilia",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -51.0125,
+                    -26.7762
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CFC",
+                "gps_code": null,
+                "iata_code": "CFC",
+                "location": "terminal",
+                "name": "Cacador",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -47.08576,
+                    -22.90662
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "VCP",
+                "gps_code": null,
+                "iata_code": "VCP",
+                "location": "terminal",
+                "name": "Campinas",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -41.301700592,
+                    -21.698299408
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CAW",
+                "gps_code": null,
+                "iata_code": "CAW",
+                "location": "terminal",
+                "name": "Campos dos Goytacazes",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -56.09667,
+                    -15.59611
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CGB",
+                "gps_code": null,
+                "iata_code": "CGB",
+                "location": "terminal",
+                "name": "Cuiaba",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -49.1758003235,
+                    -25.5284996033
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CWB",
+                "gps_code": null,
+                "iata_code": "CWB",
+                "location": "terminal",
+                "name": "Curitiba",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -48.5525016785,
+                    -27.6702785492
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FLN",
+                "gps_code": null,
+                "iata_code": "FLN",
+                "location": "terminal",
+                "name": "Florianopolis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -38.5326004028,
+                    -3.7762799263
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FOR",
+                "gps_code": null,
+                "iata_code": "FOR",
+                "location": "terminal",
+                "name": "Fortaleza",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -49.26851,
+                    -16.69727
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GYN",
+                "gps_code": null,
+                "iata_code": "GYN",
+                "location": "terminal",
+                "name": "Goiania",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -48.6727790833,
+                    -27.6116676331
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ITJ",
+                "gps_code": null,
+                "iata_code": "ITJ",
+                "location": "terminal",
+                "name": "Itajai",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -48.846383,
+                    -26.304408
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JOI",
+                "gps_code": null,
+                "iata_code": "JOI",
+                "location": "terminal",
+                "name": "Joinville",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -39.313,
+                    -7.2242
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JDO",
+                "gps_code": null,
+                "iata_code": "JDO",
+                "location": "terminal",
+                "name": "Juazeiro do Norte",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -60.01949,
+                    -3.11286
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MAO",
+                "gps_code": null,
+                "iata_code": "MAO",
+                "location": "terminal",
+                "name": "Manaus",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -51.1713981628,
+                    -29.9944000244
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "POA",
+                "gps_code": null,
+                "iata_code": "POA",
+                "location": "terminal",
+                "name": "Porto Alegre",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -34.9235992432,
+                    -8.1264896393
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "REC",
+                "gps_code": null,
+                "iata_code": "REC",
+                "location": "terminal",
+                "name": "Recife",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -47.7766685486,
+                    -21.1363887787
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "RAO",
+                "gps_code": null,
+                "iata_code": "RAO",
+                "location": "terminal",
+                "name": "Ribeirao Preto",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -43.2505569458,
+                    -22.8099994659
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GIG",
+                "gps_code": null,
+                "iata_code": "GIG",
+                "location": "terminal",
+                "name": "Rio de Janeiro",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -38.3224983215,
+                    -12.9086112976
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SSA",
+                "gps_code": null,
+                "iata_code": "SSA",
+                "location": "terminal",
+                "name": "Salvador",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -49.378994,
+                    -20.807157
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SJP",
+                "gps_code": null,
+                "iata_code": "SJP",
+                "location": "terminal",
+                "name": "São José do Rio Preto",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -45.8872,
+                    -23.1791
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SJK",
+                "gps_code": null,
+                "iata_code": "SJK",
+                "location": "terminal",
+                "name": "São José dos Campos",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -46.4730567932,
+                    -23.4355564117
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GRU",
+                "gps_code": null,
+                "iata_code": "GRU",
+                "location": "terminal",
+                "name": "São Paulo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -46.63445,
+                    -23.54389
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SOD",
+                "gps_code": null,
+                "iata_code": "SOD",
+                "location": "terminal",
+                "name": "Sorocaba",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -49.2695,
+                    -26.8251
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NVT",
+                "gps_code": null,
+                "iata_code": "NVT",
+                "location": "terminal",
+                "name": "Timbo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -48.225276947,
+                    -18.8836116791
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "UDI",
+                "gps_code": null,
+                "iata_code": "UDI",
+                "location": "terminal",
+                "name": "Uberlandia",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -41.90857,
+                    -20.64871
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "VIX",
+                "gps_code": null,
+                "iata_code": "VIX",
+                "location": "terminal",
+                "name": "Vitoria",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    114.939819,
+                    4.903052
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BWN",
+                "gps_code": null,
+                "iata_code": "BWN",
+                "location": "terminal",
+                "name": "Bandar Seri Begawan",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    23.4114360809,
+                    42.6966934204
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SOF",
+                "gps_code": null,
+                "iata_code": "SOF",
+                "location": "terminal",
+                "name": "Sofia",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -1.5124200583,
+                    12.3531999588
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "OUA",
+                "gps_code": null,
+                "iata_code": "OUA",
+                "location": "terminal",
+                "name": "Ouagadougou",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    104.84400177,
+                    11.5466003418
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PNH",
+                "gps_code": null,
+                "iata_code": "PNH",
+                "location": "terminal",
+                "name": "Phnom Penh",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -114.019996643,
+                    51.113899231
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YYC",
+                "gps_code": null,
+                "iata_code": "YYC",
+                "location": "terminal",
+                "name": "Calgary",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -123.183998108,
+                    49.193901062
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YVR",
+                "gps_code": null,
+                "iata_code": "YVR",
+                "location": "terminal",
+                "name": "Vancouver",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -97.2398986816,
+                    49.9099998474
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YWG",
+                "gps_code": null,
+                "iata_code": "YWG",
+                "location": "terminal",
+                "name": "Winnipeg",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -75.6691970825,
+                    45.3224983215
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YOW",
+                "gps_code": null,
+                "iata_code": "YOW",
+                "location": "terminal",
+                "name": "Ottawa",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -79.6305999756,
+                    43.6772003174
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YYZ",
+                "gps_code": null,
+                "iata_code": "YYZ",
+                "location": "terminal",
+                "name": "Toronto",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -73.7407989502,
+                    45.4706001282
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YUL",
+                "gps_code": null,
+                "iata_code": "YUL",
+                "location": "terminal",
+                "name": "Montréal",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -106.699996948,
+                    52.1707992554
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "YXE",
+                "gps_code": null,
+                "iata_code": "YXE",
+                "location": "terminal",
+                "name": "Saskatoon",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -70.338889,
+                    -18.348611
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ARI",
+                "gps_code": null,
+                "iata_code": "ARI",
+                "location": "terminal",
+                "name": "Arica",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -73.0444,
+                    -36.8201
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CCP",
+                "gps_code": null,
+                "iata_code": "CCP",
+                "location": "terminal",
+                "name": "Concepción",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -70.7857971191,
+                    -33.3930015564
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SCL",
+                "gps_code": null,
+                "iata_code": "SCL",
+                "location": "terminal",
+                "name": "Santiago",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -74.1469,
+                    4.70159
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BOG",
+                "gps_code": null,
+                "iata_code": "BOG",
+                "location": "terminal",
+                "name": "Bogotá",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -75.4231,
+                    6.16454
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MDE",
+                "gps_code": null,
+                "iata_code": "MDE",
+                "location": "terminal",
+                "name": "Medellín",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    15.4446001053,
+                    -4.3857498169
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FIH",
+                "gps_code": null,
+                "iata_code": "FIH",
+                "location": "terminal",
+                "name": "Kinshasa",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -84.2088012695,
+                    9.9938602448
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SJO",
+                "gps_code": null,
+                "iata_code": "SJO",
+                "location": "terminal",
+                "name": "San José",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    16.0687999725,
+                    45.7429008484
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ZAG",
+                "gps_code": null,
+                "iata_code": "ZAG",
+                "location": "terminal",
+                "name": "Zagreb",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -68.9598007202,
+                    12.1888999939
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CUR",
+                "gps_code": null,
+                "iata_code": "CUR",
+                "location": "terminal",
+                "name": "Willemstad",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    33.6249008179,
+                    34.8750991821
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LCA",
+                "gps_code": null,
+                "iata_code": "LCA",
+                "location": "terminal",
+                "name": "Nicosia",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    14.2600002289,
+                    50.1007995605
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PRG",
+                "gps_code": null,
+                "iata_code": "PRG",
+                "location": "terminal",
+                "name": "Prague",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    12.6560001373,
+                    55.6179008484
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CPH",
+                "gps_code": null,
+                "iata_code": "CPH",
+                "location": "terminal",
+                "name": "Copenhagen",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    43.1595001221,
+                    11.5473003387
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JIB",
+                "gps_code": null,
+                "iata_code": "JIB",
+                "location": "terminal",
+                "name": "Djibouti",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -69.6688995361,
+                    18.4297008514
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SDQ",
+                "gps_code": null,
+                "iata_code": "SDQ",
+                "location": "terminal",
+                "name": "Santo Domingo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -79.8891,
+                    -2.1894
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GYE",
+                "gps_code": null,
+                "iata_code": "GYE",
+                "location": "terminal",
+                "name": "Guayaquil",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -78.3575,
+                    -0.1291666667
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "UIO",
+                "gps_code": null,
+                "iata_code": "UIO",
+                "location": "terminal",
+                "name": "Quito",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    24.8327999115,
+                    59.4132995605
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TLL",
+                "gps_code": null,
+                "iata_code": "TLL",
+                "location": "terminal",
+                "name": "Tallinn",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    24.963300705,
+                    60.317199707
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HEL",
+                "gps_code": null,
+                "iata_code": "HEL",
+                "location": "terminal",
+                "name": "Helsinki",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    5.0908,
+                    45.7263
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LYS",
+                "gps_code": null,
+                "iata_code": "LYS",
+                "location": "terminal",
+                "name": "Lyon",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    5.2214241028,
+                    43.439271922
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MRS",
+                "gps_code": null,
+                "iata_code": "MRS",
+                "location": "terminal",
+                "name": "Marseille",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    2.5499999523,
+                    49.0127983093
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CDG",
+                "gps_code": null,
+                "iata_code": "CDG",
+                "location": "terminal",
+                "name": "Paris",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -149.606994629,
+                    -17.5536994934
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PPT",
+                "gps_code": null,
+                "iata_code": "PPT",
+                "location": "terminal",
+                "name": "Tahiti",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    44.95470047,
+                    41.6692008972
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TBS",
+                "gps_code": null,
+                "iata_code": "TBS",
+                "location": "terminal",
+                "name": "Tbilisi",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    13.2876996994,
+                    52.5597000122
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TXL",
+                "gps_code": null,
+                "iata_code": "TXL",
+                "location": "terminal",
+                "name": "Berlin",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    6.7667798996,
+                    51.2895011902
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DUS",
+                "gps_code": null,
+                "iata_code": "DUS",
+                "location": "terminal",
+                "name": "Düsseldorf",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    8.543129921,
+                    50.0264015198
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FRA",
+                "gps_code": null,
+                "iata_code": "FRA",
+                "location": "terminal",
+                "name": "Frankfurt",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    9.9882297516,
+                    53.6304016113
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HAM",
+                "gps_code": null,
+                "iata_code": "HAM",
+                "location": "terminal",
+                "name": "Hamburg",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    11.7861003876,
+                    48.3538017273
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MUC",
+                "gps_code": null,
+                "iata_code": "MUC",
+                "location": "terminal",
+                "name": "Munich",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    9.183333,
+                    48.783333
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "STR",
+                "gps_code": null,
+                "iata_code": "STR",
+                "location": "terminal",
+                "name": "Stuttgart",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -0.205874,
+                    5.614818
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ACC",
+                "gps_code": null,
+                "iata_code": "ACC",
+                "location": "terminal",
+                "name": "Accra",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    23.9444999695,
+                    37.9364013672
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ATH",
+                "gps_code": null,
+                "iata_code": "ATH",
+                "location": "terminal",
+                "name": "Athens",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    22.9708995819,
+                    40.5196990967
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SKG",
+                "gps_code": null,
+                "iata_code": "SKG",
+                "location": "terminal",
+                "name": "Thessaloniki",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -61.7882288,
+                    12.007116
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GND",
+                "gps_code": null,
+                "iata_code": "GND",
+                "location": "terminal",
+                "name": "St. George's",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    144.796005249,
+                    13.4834003448
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GUM",
+                "gps_code": null,
+                "iata_code": "GUM",
+                "location": "terminal",
+                "name": "Hagatna",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -90.5274963379,
+                    14.5832996368
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GUA",
+                "gps_code": null,
+                "iata_code": "GUA",
+                "location": "terminal",
+                "name": "Guatemala City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -58.163756,
+                    6.825648
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GEO",
+                "gps_code": null,
+                "iata_code": "GEO",
+                "location": "terminal",
+                "name": "Georgetown",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -72.2925033569,
+                    18.5799999237
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PAP",
+                "gps_code": null,
+                "iata_code": "PAP",
+                "location": "terminal",
+                "name": "Port-au-Prince",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -87.2172,
+                    14.0608
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TGU",
+                "gps_code": null,
+                "iata_code": "TGU",
+                "location": "terminal",
+                "name": "Tegucigalpa",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    113.915000916,
+                    22.3089008331
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HKG",
+                "gps_code": null,
+                "iata_code": "HKG",
+                "location": "terminal",
+                "name": "Hong Kong",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    19.2555999756,
+                    47.4369010925
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BUD",
+                "gps_code": null,
+                "iata_code": "BUD",
+                "location": "terminal",
+                "name": "Budapest",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -22.6056003571,
+                    63.9850006104
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KEF",
+                "gps_code": null,
+                "iata_code": "KEF",
+                "location": "terminal",
+                "name": "Reykjavík",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    72.5714,
+                    23.0225
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "AMD",
+                "gps_code": null,
+                "iata_code": "AMD",
+                "location": "terminal",
+                "name": "Ahmedabad",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    76.6165937,
+                    13.7835719
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BLR",
+                "gps_code": null,
+                "iata_code": "BLR",
+                "location": "terminal",
+                "name": "Bangalore",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    85.8245,
+                    20.2961
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BBI",
+                "gps_code": null,
+                "iata_code": "BBI",
+                "location": "terminal",
+                "name": "Bhubaneswar",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    76.7884979248,
+                    30.673500061
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "IXC",
+                "gps_code": null,
+                "iata_code": "IXC",
+                "location": "terminal",
+                "name": "Chandigarh",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    80.1692962646,
+                    12.9900054932
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MAA",
+                "gps_code": null,
+                "iata_code": "MAA",
+                "location": "terminal",
+                "name": "Chennai",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    78.4298553467,
+                    17.2313175201
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HYD",
+                "gps_code": null,
+                "iata_code": "HYD",
+                "location": "terminal",
+                "name": "Hyderabad",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    75.55094,
+                    11.915858
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CNN",
+                "gps_code": null,
+                "iata_code": "CNN",
+                "location": "terminal",
+                "name": "Kannur",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    80.3319,
+                    26.4499
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KNU",
+                "gps_code": null,
+                "iata_code": "KNU",
+                "location": "terminal",
+                "name": "Kanpur",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    76.2673,
+                    9.9312
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "COK",
+                "gps_code": null,
+                "iata_code": "COK",
+                "location": "terminal",
+                "name": "Kochi",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    88.4349249,
+                    22.6476933
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CCU",
+                "gps_code": null,
+                "iata_code": "CCU",
+                "location": "terminal",
+                "name": "Kolkata",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    72.8678970337,
+                    19.0886993408
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BOM",
+                "gps_code": null,
+                "iata_code": "BOM",
+                "location": "terminal",
+                "name": "Mumbai",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    79.0024702,
+                    21.1610714
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NAG",
+                "gps_code": null,
+                "iata_code": "NAG",
+                "location": "terminal",
+                "name": "Nagpur",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    77.1031036377,
+                    28.5664997101
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DEL",
+                "gps_code": null,
+                "iata_code": "DEL",
+                "location": "terminal",
+                "name": "New Delhi",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    85.0879974365,
+                    25.591299057
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PAT",
+                "gps_code": null,
+                "iata_code": "PAT",
+                "location": "terminal",
+                "name": "Patna",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    115.1669998169,
+                    -8.748169899
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DPS",
+                "gps_code": null,
+                "iata_code": "DPS",
+                "location": "terminal",
+                "name": "Denpasar",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    106.6515118,
+                    -6.1275229
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CGK",
+                "gps_code": null,
+                "iata_code": "CGK",
+                "location": "terminal",
+                "name": "Jakarta",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    110.4319992065,
+                    -7.7881798744
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JOG",
+                "gps_code": null,
+                "iata_code": "JOG",
+                "location": "terminal",
+                "name": "Yogyakarta",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    44.2346000671,
+                    33.2625007629
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BGW",
+                "gps_code": null,
+                "iata_code": "BGW",
+                "location": "terminal",
+                "name": "Baghdad",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    47.6621017456,
+                    30.5491008759
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BSR",
+                "gps_code": null,
+                "iata_code": "BSR",
+                "location": "terminal",
+                "name": "Basra",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    43.993,
+                    36.1901
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "EBL",
+                "gps_code": null,
+                "iata_code": "EBL",
+                "location": "terminal",
+                "name": "Erbil",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    44.404167,
+                    31.989722
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NJF",
+                "gps_code": null,
+                "iata_code": "NJF",
+                "location": "terminal",
+                "name": "Najaf",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    46.0900993347,
+                    30.9358005524
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "XNH",
+                "gps_code": null,
+                "iata_code": "XNH",
+                "location": "terminal",
+                "name": "Nasiriyah",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    45.4161,
+                    35.5668
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ISU",
+                "gps_code": null,
+                "iata_code": "ISU",
+                "location": "terminal",
+                "name": "Sulaymaniyah",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -8.491109848,
+                    51.8413009644
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ORK",
+                "gps_code": null,
+                "iata_code": "ORK",
+                "location": "terminal",
+                "name": "Cork",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -6.270070076,
+                    53.4212989807
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DUB",
+                "gps_code": null,
+                "iata_code": "DUB",
+                "location": "terminal",
+                "name": "Dublin",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    34.96069,
+                    32.78492
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HFA",
+                "gps_code": null,
+                "iata_code": "HFA",
+                "location": "terminal",
+                "name": "Haifa",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    34.8866996765,
+                    32.0113983154
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TLV",
+                "gps_code": null,
+                "iata_code": "TLV",
+                "location": "terminal",
+                "name": "Tel Aviv",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    8.7281103134,
+                    45.6305999756
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MXP",
+                "gps_code": null,
+                "iata_code": "MXP",
+                "location": "terminal",
+                "name": "Milan",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    13.31546,
+                    38.16114
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PMO",
+                "gps_code": null,
+                "iata_code": "PMO",
+                "location": "terminal",
+                "name": "Palermo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    12.2508001328,
+                    41.8045005798
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FCO",
+                "gps_code": null,
+                "iata_code": "FCO",
+                "location": "terminal",
+                "name": "Rome",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -76.7846,
+                    17.9951
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KIN",
+                "gps_code": null,
+                "iata_code": "KIN",
+                "location": "terminal",
+                "name": "Kingston",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    130.4017,
+                    33.5902
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FUK",
+                "gps_code": null,
+                "iata_code": "FUK",
+                "location": "terminal",
+                "name": "Fukuoka",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    127.646,
+                    26.1958
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "OKA",
+                "gps_code": null,
+                "iata_code": "OKA",
+                "location": "terminal",
+                "name": "Naha",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    135.244003296,
+                    34.4272994995
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KIX",
+                "gps_code": null,
+                "iata_code": "KIX",
+                "location": "terminal",
+                "name": "Osaka",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    140.386001587,
+                    35.7647018433
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NRT",
+                "gps_code": null,
+                "iata_code": "NRT",
+                "location": "terminal",
+                "name": "Tokyo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    35.9931983948,
+                    31.7226009369
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "AMM",
+                "gps_code": null,
+                "iata_code": "AMM",
+                "location": "terminal",
+                "name": "Amman",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    77.0404968262,
+                    43.3521003723
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ALA",
+                "gps_code": null,
+                "iata_code": "ALA",
+                "location": "terminal",
+                "name": "Almaty",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    39.5942001343,
+                    -4.0348300934
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MBA",
+                "gps_code": null,
+                "iata_code": "MBA",
+                "location": "terminal",
+                "name": "Mombasa",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    36.9277992249,
+                    -1.319239974
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NBO",
+                "gps_code": null,
+                "iata_code": "NBO",
+                "location": "terminal",
+                "name": "Nairobi",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    126.450996399,
+                    37.4691009521
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ICN",
+                "gps_code": null,
+                "iata_code": "ICN",
+                "location": "terminal",
+                "name": "Seoul",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    47.9688987732,
+                    29.226600647
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KWI",
+                "gps_code": null,
+                "iata_code": "KWI",
+                "location": "terminal",
+                "name": "Kuwait City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    102.5683,
+                    17.9757
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "VTE",
+                "gps_code": null,
+                "iata_code": "VTE",
+                "location": "terminal",
+                "name": "Vientiane",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    23.9710998535,
+                    56.9235992432
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "RIX",
+                "gps_code": null,
+                "iata_code": "RIX",
+                "location": "terminal",
+                "name": "Riga",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    35.4883995056,
+                    33.8208999634
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BEY",
+                "gps_code": null,
+                "iata_code": "BEY",
+                "location": "terminal",
+                "name": "Beirut",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    25.2858009338,
+                    54.6341018677
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "VNO",
+                "gps_code": null,
+                "iata_code": "VNO",
+                "location": "terminal",
+                "name": "Vilnius",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    6.211520195,
+                    49.6265983582
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LUX",
+                "gps_code": null,
+                "iata_code": "LUX",
+                "location": "terminal",
+                "name": "Luxembourg City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    113.592002869,
+                    22.1495990753
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MFM",
+                "gps_code": null,
+                "iata_code": "MFM",
+                "location": "terminal",
+                "name": "Macau",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    47.53613,
+                    -18.91368
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TNR",
+                "gps_code": null,
+                "iata_code": "TNR",
+                "location": "terminal",
+                "name": "Antananarivo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    103.665943,
+                    1.635848
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JHB",
+                "gps_code": null,
+                "iata_code": "JHB",
+                "location": "terminal",
+                "name": "Johor Bahru",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    101.709999084,
+                    2.745579958
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KUL",
+                "gps_code": null,
+                "iata_code": "KUL",
+                "location": "terminal",
+                "name": "Kuala Lumpur",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    73.50888,
+                    4.1748
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MLE",
+                "gps_code": null,
+                "iata_code": "MLE",
+                "location": "terminal",
+                "name": "Male",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    57.6836013794,
+                    -20.4302005768
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MRU",
+                "gps_code": null,
+                "iata_code": "MRU",
+                "location": "terminal",
+                "name": "Port Louis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -103.3109970093,
+                    20.5217990875
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GDL",
+                "gps_code": null,
+                "iata_code": "GDL",
+                "location": "terminal",
+                "name": "Guadalajara",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -99.0720977783,
+                    19.4363002777
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MEX",
+                "gps_code": null,
+                "iata_code": "MEX",
+                "location": "terminal",
+                "name": "Mexico City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -100.185997009,
+                    20.6173000336
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "QRO",
+                "gps_code": null,
+                "iata_code": "QRO",
+                "location": "terminal",
+                "name": "Queretaro",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    28.9309997559,
+                    46.9277000427
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KIV",
+                "gps_code": null,
+                "iata_code": "KIV",
+                "location": "terminal",
+                "name": "Chișinău",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    106.766998291,
+                    47.8431015015
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ULN",
+                "gps_code": null,
+                "iata_code": "ULN",
+                "location": "terminal",
+                "name": "Ulaanbaatar",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -7.5899701118,
+                    33.3675003052
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CMN",
+                "gps_code": null,
+                "iata_code": "CMN",
+                "location": "terminal",
+                "name": "Casablanca",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    32.5726013184,
+                    -25.9207992554
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MPM",
+                "gps_code": null,
+                "iata_code": "MPM",
+                "location": "terminal",
+                "name": "Maputo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    95.9695206,
+                    21.7051697
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MDL",
+                "gps_code": null,
+                "iata_code": "MDL",
+                "location": "terminal",
+                "name": "Mandalay",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    96.1332015991,
+                    16.9073009491
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "RGN",
+                "gps_code": null,
+                "iata_code": "RGN",
+                "location": "terminal",
+                "name": "Yangon",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    85.3591003418,
+                    27.6965999603
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KTM",
+                "gps_code": null,
+                "iata_code": "KTM",
+                "location": "terminal",
+                "name": "Kathmandu",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    4.7638897896,
+                    52.3086013794
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "AMS",
+                "gps_code": null,
+                "iata_code": "AMS",
+                "location": "terminal",
+                "name": "Amsterdam",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    166.212997436,
+                    -22.0146007538
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "NOU",
+                "gps_code": null,
+                "iata_code": "NOU",
+                "location": "terminal",
+                "name": "Noumea",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    174.792007446,
+                    -37.0080986023
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "AKL",
+                "gps_code": null,
+                "iata_code": "AKL",
+                "location": "terminal",
+                "name": "Auckland",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    172.5319976807,
+                    -43.4893989563
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CHC",
+                "gps_code": null,
+                "iata_code": "CHC",
+                "location": "terminal",
+                "name": "Christchurch",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    3.321160078,
+                    6.5773701668
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LOS",
+                "gps_code": null,
+                "iata_code": "LOS",
+                "location": "terminal",
+                "name": "Lagos",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    11.100399971,
+                    60.193901062
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "OSL",
+                "gps_code": null,
+                "iata_code": "OSL",
+                "location": "terminal",
+                "name": "Oslo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    58.2844009399,
+                    23.5932998657
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MCT",
+                "gps_code": null,
+                "iata_code": "MCT",
+                "location": "terminal",
+                "name": "Muscat",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    73.0991973877,
+                    33.6166992188
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ISB",
+                "gps_code": null,
+                "iata_code": "ISB",
+                "location": "terminal",
+                "name": "Islamabad",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    67.1607971191,
+                    24.9064998627
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KHI",
+                "gps_code": null,
+                "iata_code": "KHI",
+                "location": "terminal",
+                "name": "Karachi",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    74.4036026001,
+                    31.5216007233
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LHE",
+                "gps_code": null,
+                "iata_code": "LHE",
+                "location": "terminal",
+                "name": "Lahore",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    35.0194,
+                    32.2719
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ZDM",
+                "gps_code": null,
+                "iata_code": "ZDM",
+                "location": "terminal",
+                "name": "Ramallah",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -79.3834991455,
+                    9.0713596344
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PTY",
+                "gps_code": null,
+                "iata_code": "PTY",
+                "location": "terminal",
+                "name": "Panama City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -57.5200004578,
+                    -25.2399997711
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ASU",
+                "gps_code": null,
+                "iata_code": "ASU",
+                "location": "terminal",
+                "name": "Asunción",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -77.1143035889,
+                    -12.021900177
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LIM",
+                "gps_code": null,
+                "iata_code": "LIM",
+                "location": "terminal",
+                "name": "Lima",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    124.611000061,
+                    8.4156198502
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CGY",
+                "gps_code": null,
+                "iata_code": "CGY",
+                "location": "terminal",
+                "name": "Cagayan de Oro",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    123.978996277,
+                    10.3074998856
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CEB",
+                "gps_code": null,
+                "iata_code": "CEB",
+                "location": "terminal",
+                "name": "Cebu",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    121.019996643,
+                    14.508600235
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MNL",
+                "gps_code": null,
+                "iata_code": "MNL",
+                "location": "terminal",
+                "name": "Manila",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    20.9671001434,
+                    52.1656990051
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "WAW",
+                "gps_code": null,
+                "iata_code": "WAW",
+                "location": "terminal",
+                "name": "Warsaw",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -9.1359195709,
+                    38.7812995911
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LIS",
+                "gps_code": null,
+                "iata_code": "LIS",
+                "location": "terminal",
+                "name": "Lisbon",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    51.6137665,
+                    25.2605946
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DOH",
+                "gps_code": null,
+                "iata_code": "DOH",
+                "location": "terminal",
+                "name": "Doha",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    55.5102996826,
+                    -20.8871002197
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "RUN",
+                "gps_code": null,
+                "iata_code": "RUN",
+                "location": "terminal",
+                "name": "Saint-Denis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    26.1021995544,
+                    44.5722007751
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "OTP",
+                "gps_code": null,
+                "iata_code": "OTP",
+                "location": "terminal",
+                "name": "Bucharest",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    135.18800354,
+                    48.5279998779
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KHV",
+                "gps_code": null,
+                "iata_code": "KHV",
+                "location": "terminal",
+                "name": "Khabarovsk",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    92.8932,
+                    56.0153
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KJA",
+                "gps_code": null,
+                "iata_code": "KJA",
+                "location": "terminal",
+                "name": "Krasnoyarsk",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    37.9062995911,
+                    55.4087982178
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DME",
+                "gps_code": null,
+                "iata_code": "DME",
+                "location": "terminal",
+                "name": "Moscow",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    30.2625007629,
+                    59.8003005981
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LED",
+                "gps_code": null,
+                "iata_code": "LED",
+                "location": "terminal",
+                "name": "Saint Petersburg",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    35.9176,
+                    56.8587
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KLD",
+                "gps_code": null,
+                "iata_code": "KLD",
+                "location": "terminal",
+                "name": "Tver",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    60.6454,
+                    56.8431
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SVX",
+                "gps_code": null,
+                "iata_code": "SVX",
+                "location": "terminal",
+                "name": "Yekaterinburg",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    30.1394996643,
+                    -1.9686299563
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KGL",
+                "gps_code": null,
+                "iata_code": "KGL",
+                "location": "terminal",
+                "name": "Kigali",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    49.7979011536,
+                    26.471200943
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DMM",
+                "gps_code": null,
+                "iata_code": "DMM",
+                "location": "terminal",
+                "name": "Dammam",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    39.15650177,
+                    21.679599762
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JED",
+                "gps_code": null,
+                "iata_code": "JED",
+                "location": "terminal",
+                "name": "Jeddah",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    46.6987991333,
+                    24.9575996399
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "RUH",
+                "gps_code": null,
+                "iata_code": "RUH",
+                "location": "terminal",
+                "name": "Riyadh",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -17.4889771,
+                    14.7412099
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DKR",
+                "gps_code": null,
+                "iata_code": "DKR",
+                "location": "terminal",
+                "name": "Dakar",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    20.3090991974,
+                    44.8184013367
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BEG",
+                "gps_code": null,
+                "iata_code": "BEG",
+                "location": "terminal",
+                "name": "Belgrade",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    103.994003296,
+                    1.3501900434
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SIN",
+                "gps_code": null,
+                "iata_code": "SIN",
+                "location": "terminal",
+                "name": "Singapore",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    17.1077,
+                    48.1486
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BTS",
+                "gps_code": null,
+                "iata_code": "BTS",
+                "location": "terminal",
+                "name": "Bratislava",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    18.6016998291,
+                    -33.9648017883
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CPT",
+                "gps_code": null,
+                "iata_code": "CPT",
+                "location": "terminal",
+                "name": "Cape Town",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    31.1197222222,
+                    -29.6144444444
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DUR",
+                "gps_code": null,
+                "iata_code": "DUR",
+                "location": "terminal",
+                "name": "Durban",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    28.25,
+                    -26.133333
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JNB",
+                "gps_code": null,
+                "iata_code": "JNB",
+                "location": "terminal",
+                "name": "Johannesburg",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    2.0784599781,
+                    41.2971000671
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BCN",
+                "gps_code": null,
+                "iata_code": "BCN",
+                "location": "terminal",
+                "name": "Barcelona",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -3.56676,
+                    40.4936
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MAD",
+                "gps_code": null,
+                "iata_code": "MAD",
+                "location": "terminal",
+                "name": "Madrid",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    79.8841018677,
+                    7.1807599068
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CMB",
+                "gps_code": null,
+                "iata_code": "CMB",
+                "location": "terminal",
+                "name": "Colombo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -55.187783,
+                    5.452831
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PBM",
+                "gps_code": null,
+                "iata_code": "PBM",
+                "location": "terminal",
+                "name": "Paramaribo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    12.279800415,
+                    57.6627998352
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GOT",
+                "gps_code": null,
+                "iata_code": "GOT",
+                "location": "terminal",
+                "name": "Gothenburg",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    17.9186000824,
+                    59.6519012451
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ARN",
+                "gps_code": null,
+                "iata_code": "ARN",
+                "location": "terminal",
+                "name": "Stockholm",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    6.1089501381,
+                    46.2380981445
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "GVA",
+                "gps_code": null,
+                "iata_code": "GVA",
+                "location": "terminal",
+                "name": "Geneva",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    8.5491695404,
+                    47.4646987915
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ZRH",
+                "gps_code": null,
+                "iata_code": "ZRH",
+                "location": "terminal",
+                "name": "Zurich",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    120.3499984741,
+                    22.5771007538
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KHH",
+                "gps_code": null,
+                "iata_code": "KHH",
+                "location": "terminal",
+                "name": "Kaohsiung City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    121.233001709,
+                    25.0776996613
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TPE",
+                "gps_code": null,
+                "iata_code": "TPE",
+                "location": "terminal",
+                "name": "Taipei",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    39.2025985718,
+                    -6.8781099319
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DAR",
+                "gps_code": null,
+                "iata_code": "DAR",
+                "location": "terminal",
+                "name": "Dar es Salaam",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    100.747001648,
+                    13.6810998917
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BKK",
+                "gps_code": null,
+                "iata_code": "BKK",
+                "location": "terminal",
+                "name": "Bangkok",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    98.962600708,
+                    18.7667999268
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CNX",
+                "gps_code": null,
+                "iata_code": "CNX",
+                "location": "terminal",
+                "name": "Chiang Mai",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    99.135597229,
+                    9.1325998306
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "URT",
+                "gps_code": null,
+                "iata_code": "URT",
+                "location": "terminal",
+                "name": "Surat Thani",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    10.2271995544,
+                    36.8510017395
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TUN",
+                "gps_code": null,
+                "iata_code": "TUN",
+                "location": "terminal",
+                "name": "Tunis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    28.8145999908,
+                    40.9768981934
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "IST",
+                "gps_code": null,
+                "iata_code": "IST",
+                "location": "terminal",
+                "name": "Istanbul",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    27.14317,
+                    38.32377
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ADB",
+                "gps_code": null,
+                "iata_code": "ADB",
+                "location": "terminal",
+                "name": "Izmir",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    30.8946990967,
+                    50.3450012207
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "KBP",
+                "gps_code": null,
+                "iata_code": "KBP",
+                "location": "terminal",
+                "name": "Kyiv",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    55.3643989563,
+                    25.2527999878
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DXB",
+                "gps_code": null,
+                "iata_code": "DXB",
+                "location": "terminal",
+                "name": "Dubai",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -3.3724999428,
+                    55.9500007629
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "EDI",
+                "gps_code": null,
+                "iata_code": "EDI",
+                "location": "terminal",
+                "name": "Edinburgh",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -0.4619410038,
+                    51.4706001282
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LHR",
+                "gps_code": null,
+                "iata_code": "LHR",
+                "location": "terminal",
+                "name": "London",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -2.2749500275,
+                    53.3536987305
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MAN",
+                "gps_code": null,
+                "iata_code": "MAN",
+                "location": "terminal",
+                "name": "Manchester",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -86.39399719,
+                    32.30059814
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MGM",
+                "gps_code": null,
+                "iata_code": "MGM",
+                "location": "terminal",
+                "name": "Montgomery",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -112.012001038,
+                    33.434299469
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PHX",
+                "gps_code": null,
+                "iata_code": "PHX",
+                "location": "terminal",
+                "name": "Phoenix",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -118.4079971,
+                    33.94250107
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LAX",
+                "gps_code": null,
+                "iata_code": "LAX",
+                "location": "terminal",
+                "name": "Los Angeles",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -121.591003418,
+                    38.695400238
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SMF",
+                "gps_code": null,
+                "iata_code": "SMF",
+                "location": "terminal",
+                "name": "Sacramento",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -117.190002441,
+                    32.7336006165
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SAN",
+                "gps_code": null,
+                "iata_code": "SAN",
+                "location": "terminal",
+                "name": "San Diego",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -122.375,
+                    37.6189994812
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SFO",
+                "gps_code": null,
+                "iata_code": "SFO",
+                "location": "terminal",
+                "name": "San Francisco",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -121.929000855,
+                    37.3625984192
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SJC",
+                "gps_code": null,
+                "iata_code": "SJC",
+                "location": "terminal",
+                "name": "San Jose",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -104.672996521,
+                    39.8616981506
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DEN",
+                "gps_code": null,
+                "iata_code": "DEN",
+                "location": "terminal",
+                "name": "Denver",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -81.6878967285,
+                    30.4941005707
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "JAX",
+                "gps_code": null,
+                "iata_code": "JAX",
+                "location": "terminal",
+                "name": "Jacksonville",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -80.2906036377,
+                    25.7931995392
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MIA",
+                "gps_code": null,
+                "iata_code": "MIA",
+                "location": "terminal",
+                "name": "Miami",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -84.3503036499,
+                    30.3964996338
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TLH",
+                "gps_code": null,
+                "iata_code": "TLH",
+                "location": "terminal",
+                "name": "Tallahassee",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -84.4281005859,
+                    33.6366996765
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ATL",
+                "gps_code": null,
+                "iata_code": "ATL",
+                "location": "terminal",
+                "name": "Atlanta",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -157.9219970703,
+                    21.3187007904
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HNL",
+                "gps_code": null,
+                "iata_code": "HNL",
+                "location": "terminal",
+                "name": "Honolulu",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -87.90480042,
+                    41.97859955
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ORD",
+                "gps_code": null,
+                "iata_code": "ORD",
+                "location": "terminal",
+                "name": "Chicago",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -86.2944030762,
+                    39.717300415
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "IND",
+                "gps_code": null,
+                "iata_code": "IND",
+                "location": "terminal",
+                "name": "Indianapolis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -68.795,
+                    44.8081
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BGR",
+                "gps_code": null,
+                "iata_code": "BGR",
+                "location": "terminal",
+                "name": "Bangor",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -71.00520325,
+                    42.36429977
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BOS",
+                "gps_code": null,
+                "iata_code": "BOS",
+                "location": "terminal",
+                "name": "Boston",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -83.3534011841,
+                    42.2123985291
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DTW",
+                "gps_code": null,
+                "iata_code": "DTW",
+                "location": "terminal",
+                "name": "Detroit",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -93.2218017578,
+                    44.8819999695
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MSP",
+                "gps_code": null,
+                "iata_code": "MSP",
+                "location": "terminal",
+                "name": "Minneapolis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -94.7138977051,
+                    39.2975997925
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MCI",
+                "gps_code": null,
+                "iata_code": "MCI",
+                "location": "terminal",
+                "name": "Kansas City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -90.3700027466,
+                    38.7486991882
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "STL",
+                "gps_code": null,
+                "iata_code": "STL",
+                "location": "terminal",
+                "name": "St. Louis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -95.8940963745,
+                    41.3031997681
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "OMA",
+                "gps_code": null,
+                "iata_code": "OMA",
+                "location": "terminal",
+                "name": "Omaha",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -115.1520004,
+                    36.08010101
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "LAS",
+                "gps_code": null,
+                "iata_code": "LAS",
+                "location": "terminal",
+                "name": "Las Vegas",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -74.1687011719,
+                    40.6925010681
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "EWR",
+                "gps_code": null,
+                "iata_code": "EWR",
+                "location": "terminal",
+                "name": "Newark",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -106.6504,
+                    35.0844
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ABQ",
+                "gps_code": null,
+                "iata_code": "ABQ",
+                "location": "terminal",
+                "name": "Albuquerque",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -78.73220062,
+                    42.94049835
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BUF",
+                "gps_code": null,
+                "iata_code": "BUF",
+                "location": "terminal",
+                "name": "Buffalo",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -80.9430999756,
+                    35.2140007019
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CLT",
+                "gps_code": null,
+                "iata_code": "CLT",
+                "location": "terminal",
+                "name": "Charlotte",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -82.8918991089,
+                    39.9980010986
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "CMH",
+                "gps_code": null,
+                "iata_code": "CMH",
+                "location": "terminal",
+                "name": "Columbus",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -122.5979996,
+                    45.58869934
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PDX",
+                "gps_code": null,
+                "iata_code": "PDX",
+                "location": "terminal",
+                "name": "Portland",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -75.2410964966,
+                    39.8718986511
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PHL",
+                "gps_code": null,
+                "iata_code": "PHL",
+                "location": "terminal",
+                "name": "Philadelphia",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -80.23290253,
+                    40.49150085
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "PIT",
+                "gps_code": null,
+                "iata_code": "PIT",
+                "location": "terminal",
+                "name": "Pittsburgh",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -96.65511577730963,
+                    43.540819819502
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "FSD",
+                "gps_code": null,
+                "iata_code": "FSD",
+                "location": "terminal",
+                "name": "Sioux Falls",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -89.9766998291,
+                    35.0424003601
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MEM",
+                "gps_code": null,
+                "iata_code": "MEM",
+                "location": "terminal",
+                "name": "Memphis",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -86.6781997681,
+                    36.1245002747
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "BNA",
+                "gps_code": null,
+                "iata_code": "BNA",
+                "location": "terminal",
+                "name": "Nashville",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -97.6664,
+                    30.1975
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "AUS",
+                "gps_code": null,
+                "iata_code": "AUS",
+                "location": "terminal",
+                "name": "Austin",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -97.0380020142,
+                    32.8968009949
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "DFW",
+                "gps_code": null,
+                "iata_code": "DFW",
+                "location": "terminal",
+                "name": "Dallas",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -95.3414001465,
+                    29.9843997955
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "IAH",
+                "gps_code": null,
+                "iata_code": "IAH",
+                "location": "terminal",
+                "name": "Houston",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -98.23860168,
+                    26.17580032
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "MFE",
+                "gps_code": null,
+                "iata_code": "MFE",
+                "location": "terminal",
+                "name": "McAllen",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -111.977996826,
+                    40.7883987427
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SLC",
+                "gps_code": null,
+                "iata_code": "SLC",
+                "location": "terminal",
+                "name": "Salt Lake City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -77.45580292,
+                    38.94449997
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "IAD",
+                "gps_code": null,
+                "iata_code": "IAD",
+                "location": "terminal",
+                "name": "Ashburn",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -76.2012023926,
+                    36.8945999146
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "ORF",
+                "gps_code": null,
+                "iata_code": "ORF",
+                "location": "terminal",
+                "name": "Norfolk",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -77.3197021484,
+                    37.5051994324
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "RIC",
+                "gps_code": null,
+                "iata_code": "RIC",
+                "location": "terminal",
+                "name": "Richmond",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    -122.308998108,
+                    47.4490013123
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SEA",
+                "gps_code": null,
+                "iata_code": "SEA",
+                "location": "terminal",
+                "name": "Seattle",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    69.2811965942,
+                    41.257900238
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "TAS",
+                "gps_code": null,
+                "iata_code": "TAS",
+                "location": "terminal",
+                "name": "Tashkent",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    105.806999206,
+                    21.221200943
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HAN",
+                "gps_code": null,
+                "iata_code": "HAN",
+                "location": "terminal",
+                "name": "Hanoi",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    106.652000427,
+                    10.8187999725
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "SGN",
+                "gps_code": null,
+                "iata_code": "SGN",
+                "location": "terminal",
+                "name": "Ho Chi Minh City",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        },
+        {
+            "geometry": {
+                "coordinates": [
+                    31.0928001404,
+                    -17.9318008423
+                ],
+                "type": "Point"
+            },
+            "properties": {
+                "abbrev": "HRE",
+                "gps_code": null,
+                "iata_code": "HRE",
+                "location": "terminal",
+                "name": "Harare",
+                "natlscale": null,
+                "type": "mid",
+                "wikipedia": null
+            },
+            "type": "Feature"
+        }
+    ],
+    "type": "FeatureCollection"
+}
