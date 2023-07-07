@@ -140,6 +140,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
 				"pluginID", plugin.ID, "status", signingError.SignatureStatus)
+			plugin.SignatureError = signingError
 			l.errs[plugin.ID] = signingError
 			// skip plugin so it will not be loaded any further
 			continue
