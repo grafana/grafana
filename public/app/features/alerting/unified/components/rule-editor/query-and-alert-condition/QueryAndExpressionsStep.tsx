@@ -49,6 +49,25 @@ interface Props {
   onDataChange: (error: string) => void;
 }
 
+const useSetExpressionAndDataSource = () => {
+  const { setValue } = useFormContext<RuleFormValues>();
+  return (updatedQueries: AlertQuery[]) => {
+    // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
+    const query = updatedQueries[0];
+    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    if (!dataSourceSettings) {
+      throw new Error('The Data source has not been defined.');
+    }
+    setValue('dataSourceName', dataSourceSettings.name);
+
+    if (isPromOrLokiQuery(query.model)) {
+      const expression = query.model.expr;
+
+      setValue('expression', expression);
+    }
+  };
+};
+
 export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
   const {
     setValue,
@@ -143,6 +162,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [condition, queries, handleSetCondition]
   );
 
+  const updateExpressionAndDatasource = useSetExpressionAndDataSource();
+
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
       // Most data sources triggers onChange and onRunQueries consecutively
@@ -152,19 +173,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
       setValue('queries', updatedQueries, { shouldValidate: false });
 
-      // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
-      const query = updatedQueries[0];
-      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-      if (!dataSourceSettings) {
-        throw new Error('The Data source has not been defined.');
-      }
-      setValue('dataSourceName', dataSourceSettings.name);
-
-      if (isPromOrLokiQuery(query.model)) {
-        const expression = query.model.expr;
-
-        setValue('expression', expression);
-      }
+      updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
@@ -178,7 +187,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         }
       });
     },
-    [queries, setValue]
+    [queries, setValue, updateExpressionAndDatasource]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
