@@ -75,7 +75,18 @@ const getVersionString = (version: string, flavor?: string): string | undefined 
     ?.filter((el) => !!el.value && semver.lte(el.value, version))
     .map((el) => el.value);
 
-  return versionsLessThanOrEqual[versionsLessThanOrEqual.length - 1];
+  const closestVersion = versionsLessThanOrEqual[versionsLessThanOrEqual.length - 1];
+
+  if (closestVersion) {
+    const differenceBetweenActualAndClosest = semver.diff(closestVersion, version);
+
+    // Only return versions if the target is close to the actual.
+    if (['patch', 'prepatch', 'prerelease', null].includes(differenceBetweenActualAndClosest)) {
+      return closestVersion;
+    }
+  }
+
+  return;
 };
 
 const unableToDeterminePrometheusVersion = (error?: Error): void => {
