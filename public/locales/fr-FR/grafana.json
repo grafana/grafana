@@ -289,6 +289,9 @@
       "subtitle": "Plugins d'application qui prolongent l'expérience Grafana",
       "title": "Applications"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administration"
     },
@@ -368,6 +371,9 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
       "title": "Préférences par défaut"
@@ -391,6 +397,12 @@
     },
     "public": {
       "title": "Tableaux de bord publics"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Scènes"
@@ -421,6 +433,9 @@
     },
     "starred-empty": {
       "title": "Vos tableaux de bord favoris apparaîtront ici"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "Gérer le stockage de fichiers",

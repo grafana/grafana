@@ -36,6 +36,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'reports':
+      return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':
       return t('nav.public.title', 'Public dashboards');
     case 'dashboards/new':
@@ -50,6 +52,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.explore.title', 'Explore');
     case 'alerting':
       return t('nav.alerting.title', 'Alerting');
+    case 'plugin-page-grafana-oncall-app':
+      return t('nav.oncall.title', 'OnCall');
     case 'alerting-legacy':
       return t('nav.alerting-legacy.title', 'Alerting (legacy)');
     case 'alert-home':
@@ -72,6 +76,12 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.config.title', 'Administration');
     case 'datasources':
       return t('nav.datasources.title', 'Data sources');
+    case 'authentication':
+      return t('nav.authentication.title', 'Authentication');
+    case 'licensing':
+      return t('nav.statistics-and-licensing.title', 'Statistics and licensing');
+    case 'recordedQueries':
+      return t('nav.recorded-queries.title', 'Recorded queries');
     case 'correlations':
       return t('nav.correlations.title', 'Correlations');
     case 'users':

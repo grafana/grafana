@@ -289,6 +289,9 @@
       "subtitle": "App plugins that extend the Grafana experience",
       "title": "Apps"
     },
+    "authentication": {
+      "title": "Authentication"
+    },
     "config": {
       "title": "Administration"
     },
@@ -368,6 +371,9 @@
     "new-folder": {
       "title": "New folder"
     },
+    "oncall": {
+      "title": "OnCall"
+    },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
@@ -391,6 +397,12 @@
     },
     "public": {
       "title": "Public dashboards"
+    },
+    "recorded-queries": {
+      "title": "Recorded queries"
+    },
+    "reporting": {
+      "title": "Reporting"
     },
     "scenes": {
       "title": "Scenes"
@@ -421,6 +433,9 @@
     },
     "starred-empty": {
       "title": "Your starred dashboards will appear here"
+    },
+    "statistics-and-licensing": {
+      "title": "Statistics and licensing"
     },
     "storage": {
       "subtitle": "Manage file storage",
