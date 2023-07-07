@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -18,27 +19,29 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginRepo     repo.Service
-	pluginStorage  storage.ZipExtractor
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	log            log.Logger
+	pluginRepo          repo.Service
+	pluginStorage       storage.ZipExtractor
+	pluginRegistry      registry.Service
+	pluginLoader        loader.Service
+	pluginErrorResolver plugins.ErrorResolver
+	log                 log.Logger
 }
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo,
+	pluginRepo repo.Service, pluginErrorResolver plugins.ErrorResolver) *PluginInstaller {
+	return New(pluginRegistry, pluginLoader, pluginRepo, pluginErrorResolver,
 		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor) *PluginInstaller {
+	pluginErrorResolver plugins.ErrorResolver, pluginStorage storage.ZipExtractor) *PluginInstaller {
 	return &PluginInstaller{
-		pluginLoader:   pluginLoader,
-		pluginRegistry: pluginRegistry,
-		pluginRepo:     pluginRepo,
-		pluginStorage:  pluginStorage,
-		log:            log.New("plugin.installer"),
+		pluginLoader:        pluginLoader,
+		pluginRegistry:      pluginRegistry,
+		pluginRepo:          pluginRepo,
+		pluginStorage:       pluginStorage,
+		pluginErrorResolver: pluginErrorResolver,
+		log:                 log.New("plugin.installer"),
 	}
 }
 
@@ -128,6 +131,28 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	if err != nil {
 		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
 		return err
+	}
+
+	pluginErrs := m.pluginErrorResolver.PluginErrors()
+	if len(pluginErrs) > 0 {
+		for _, pluginErr := range pluginErrs {
+			if pluginErr.PluginID == pluginID {
+				// There is an error related to the plugin so uninstall it
+				err := m.pluginLoader.Unload(ctx, pluginID)
+				if err != nil {
+					if errors.Is(err, plugins.ErrPluginNotInstalled) {
+						// The plugin was not fully installed, remove the plugin files
+						remerr := os.RemoveAll(extractedArchive.Path)
+						if remerr != nil {
+							m.log.Error("Failed to delete plugin files", "pluginID", pluginID, "err", remerr)
+						}
+					} else {
+						m.log.Error("Failed to unload plugin", "pluginID", pluginID, "err", err)
+					}
+				}
+				return fmt.Errorf("failed to load plugin %s: %v", pluginID, pluginErr.ErrorCode)
+			}
+		}
 	}
 
 	return nil

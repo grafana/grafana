@@ -432,3 +432,14 @@ type FakeOauthService struct {
 func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
 	return f.Result, nil
 }
+
+type FakePluginErrorResolver struct {
+	PluginErrorsFunc func() []*plugins.Error
+}
+
+func (f *FakePluginErrorResolver) PluginErrors() []*plugins.Error {
+	if f.PluginErrorsFunc != nil {
+		return f.PluginErrorsFunc()
+	}
+	return []*plugins.Error{}
+}

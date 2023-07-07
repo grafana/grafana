@@ -62,7 +62,9 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
+		errResolver := &fakes.FakePluginErrorResolver{}
+
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, errResolver, fs)
 		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
@@ -147,6 +149,35 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)
 			})
 		})
+
+		t.Run("Won't add if there is a error for pluging", func(t *testing.T) {
+			errResolver.PluginErrorsFunc = func() []*plugins.Error {
+				return []*plugins.Error{
+					{
+						ErrorCode: "dummy error",
+						PluginID:  pluginID,
+					},
+				}
+			}
+
+			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				loadedPaths = append(loadedPaths, src.PluginURIs(ctx)...)
+				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
+				return []*plugins.Plugin{pluginV1}, nil
+			}
+
+			fs.ExtractFunc = func(_ context.Context, id string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+				require.Equal(t, pluginID, id)
+				require.Equal(t, mockZipV1, z)
+				return &storage.ExtractedPluginArchive{
+					Path: zipNameV1,
+				}, nil
+			}
+
+			inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, errResolver, fs)
+			err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("Can't update core or bundled plugin", func(t *testing.T) {
@@ -168,7 +199,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
+			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginErrorResolver{}, &fakes.FakePluginStorage{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
@@ -181,6 +212,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			})
 		}
 	})
+
 }
 
 func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, backend bool, cbs ...func(*plugins.Plugin)) *plugins.Plugin {
