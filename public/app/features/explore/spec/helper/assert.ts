@@ -34,7 +34,7 @@ export const assertQueryHistoryComment = async (expectedQueryComments: string[],
 
 export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
-  // const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
+  // Test ID is used to avoid test timeouts reported in #70158, #59116 and #47635
   const starButtons = selector.getAllByTestId('query-history-card-star');
 
   await waitFor(() =>

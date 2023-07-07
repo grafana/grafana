@@ -142,9 +142,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  // FIXME: flaky test
-  it.only('updates the state in both Explore panes', async () => {
-    console.time('QUERY HISTORY TEST TIME');
+  it('updates the state in both Explore panes', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -184,7 +182,6 @@ describe('Explore: Query History', () => {
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
       queryHistoryEnabled: false,
     });
-    console.timeEnd('QUERY HISTORY TEST TIME');
   });
 
   it('add comments to query history', async () => {
