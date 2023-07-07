@@ -148,6 +148,7 @@ export function getStackingGroups(frame: DataFrame) {
 export function preparePlotData2(
   frame: DataFrame,
   stackingGroups: StackingGroup[],
+  allFrames: DataFrame[],
   onStackMeta?: (meta: StackMeta) => void
 ) {
   let data = Array(frame.fields.length) as AlignedData;
@@ -189,6 +190,11 @@ export function preparePlotData2(
     if (i === 0) {
       if (field.type === FieldType.time) {
         data[i] = ensureTimeField(field).values;
+      } else if (field.type === FieldType.timeOffset) {
+        // TODO: This is a hack, doesn't work when you refresh
+        // We need access to the original frame to get the reference for the time offsets as frame meta is lost when aligning frames
+        const origFrame = allFrames![field.state?.origin?.frameIndex!];
+        data[i] = field.values.map((v) => v + (origFrame.meta?.fromEpochMs ?? 0));
       } else {
         data[i] = vals;
       }

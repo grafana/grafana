@@ -77,6 +77,7 @@ export function prepareGraphableFields(
 
       switch (field.type) {
         case FieldType.time:
+        case FieldType.timeOffset:
           hasTimeField = true;
           fields.push(field);
           break;

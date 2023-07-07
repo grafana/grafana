@@ -169,6 +169,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
       field.state = field.state || {};
 
       if (!join && joinFieldMatcher(field, frame, options.frames)) {
+        console.log('joinDataFrames', 'found join field', field);
         join = field;
       } else {
         if (options.keep && !options.keep(field, frame, options.frames)) {
@@ -213,7 +214,22 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     }
 
     nullModes.push(nullModesFrame);
-    const a: AlignedData = [join.values]; //
+    let a: AlignedData = []; //
+    if (join.type === FieldType.timeOffset) {
+      // HACK TIME: align time offsets relative to 0 aaaaaaaaaaa!
+      let acc = 0;
+      a = [
+        join.values.map((v, i) => {
+          if (i === 0) {
+            return acc;
+          }
+          acc += v - join!.values[i - 1];
+          return acc;
+        }),
+      ];
+    } else {
+      a = [join.values];
+    }
 
     for (const field of fields) {
       a.push(field.values);
@@ -225,6 +241,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     allData.push(a);
   }
 
+  console.log('allData', allData);
   const joined = join(allData, nullModes, options.mode);
 
   return {

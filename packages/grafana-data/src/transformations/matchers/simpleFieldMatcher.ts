@@ -26,7 +26,10 @@ const firstTimeFieldMatcher: FieldMatcherInfo = {
 
   get: (type: FieldType) => {
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      return field.type === FieldType.time && field === frame.fields.find((f) => f.type === FieldType.time);
+      return (
+        (field.type === FieldType.time || field.type === FieldType.timeOffset) &&
+        field === frame.fields.find((f) => f.type === FieldType.time || f.type === FieldType.timeOffset)
+      );
     };
   },
 

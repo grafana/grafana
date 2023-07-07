@@ -96,7 +96,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     // cache alignedFrame
     alignedFrame = frames[0];
 
-    return preparePlotData2(frames[0], builder.getStackingGroups());
+    return preparePlotData2(frames[0], builder.getStackingGroups(), allFrames);
   });
 
   // X is the first field in the aligned frame
@@ -113,7 +113,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden;
   const xFieldAxisShow = xField.config.custom?.axisPlacement !== AxisPlacement.Hidden;
 
-  if (xField.type === FieldType.time) {
+  if (xField.type === FieldType.time || xField.type === FieldType.timeOffset) {
     xScaleUnit = 'time';
     builder.addScale({
       scaleKey: xScaleKey,
