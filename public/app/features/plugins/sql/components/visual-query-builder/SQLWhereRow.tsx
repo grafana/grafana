@@ -40,8 +40,8 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
             return tv.multi && val.whereString?.includes('${' + tv.name + '}');
           })
         ) {
-          val.whereString = val.whereString?.replaceAll("('", '(');
           val.whereString = val.whereString?.replaceAll("')", ')');
+          val.whereString = val.whereString?.replaceAll("('", '(');
         }
 
         onSqlChange(val);
