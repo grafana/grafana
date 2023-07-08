@@ -11,8 +11,10 @@ import { NavToolbarActions } from './NavToolbarActions';
 import { ScenePanelInspector } from './ScenePanelInspector';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { body, controls, inspectPanel } = model.useState();
+  const { body, controls, inspectPanelKey, viewPanelKey } = model.useState();
   const styles = useStyles2(getStyles);
+  const inspectPanel = model.findPanel(inspectPanelKey);
+  const viewPanel = model.findPanel(viewPanelKey);
 
   return (
     <Page navId="scenes" pageNav={model.getPageNav()} layout={PageLayoutType.Custom}>
@@ -27,7 +29,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             </div>
           )}
           <div className={styles.body}>
-            <body.Component model={body} />
+            {!viewPanel && <body.Component model={body} />}
+            {viewPanel && <viewPanel.Component model={viewPanel} />}
           </div>
         </div>
       </CustomScrollbar>

@@ -27,7 +27,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     );
   }
 
-  toolbarActions.push(<NavToolbarSeparator leftActionsSeparator />);
+  toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
 
   if (!isEditing) {
     // TODO check permissions
