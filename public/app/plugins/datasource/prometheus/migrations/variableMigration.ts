@@ -1,3 +1,5 @@
+import { promQueryModeller } from '../querybuilder/PromQueryModeller';
+import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
 
 export const PrometheusLabelNamesRegex = /^label_names\(\)\s*$/;
@@ -41,12 +43,15 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   if (labelValues) {
     const label = labelValues[2];
     const metric = labelValues[1];
+
     if (metric) {
+      const visQuery = buildVisualQueryFromString(metric);
       return {
         ...queryBase,
         qryType: QueryType.LabelValues,
         label,
-        metric,
+        metric: visQuery.query.metric,
+        labelFilters: visQuery.query.labels,
       };
     } else {
       return {
@@ -97,7 +102,14 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       return 'label_names()';
     case QueryType.LabelValues:
       if (QueryVariable.metric) {
-        return `label_values(${QueryVariable.metric},${QueryVariable.label})`;
+        const visualQueryQuery = {
+          metric: QueryVariable.metric,
+          labels: QueryVariable.labelFilters ?? [],
+          operations: [],
+        };
+
+        const metric = promQueryModeller.renderQuery(visualQueryQuery);
+        return `label_values(${metric},${QueryVariable.label})`;
       } else {
         return `label_values(${QueryVariable.label})`;
       }
