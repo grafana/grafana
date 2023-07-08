@@ -61,9 +61,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, accesspolicyGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, accesspolicyGRD, metav1.CreateOptions{})
 
-	accesspolicyApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	accesspolicyApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range accesspolicyGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -78,7 +78,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -90,7 +90,7 @@ func (r *Registry) start(ctx context.Context) error {
 		accesspolicyApplyVersions = append(accesspolicyApplyVersions, version)
 	}
 
-	accesspolicyApplyNames := applyConfig.GrafanaKindNames().
+	accesspolicyApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(accesspolicyGRD.Spec.Names.Kind).
 		WithListKind(accesspolicyGRD.Spec.Names.ListKind).
 		WithSingular(accesspolicyGRD.Spec.Names.Singular).
@@ -98,17 +98,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(accesspolicyGRD.Spec.Names.Categories...).
 		WithShortNames(accesspolicyGRD.Spec.Names.ShortNames...)
 
-	accesspolicyApplySpec := applyConfig.GrafanaKindSpec().
+	accesspolicyApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(accesspolicyGRD.Spec.Group).
 		WithNames(accesspolicyApplyNames).
 		WithScope(accesspolicyGRD.Spec.Scope).
 		WithVersions(accesspolicyApplyVersions...).
 		WithPreserveUnknownFields(accesspolicyGRD.Spec.PreserveUnknownFields)
 
-	accesspolicyApplyConfig := applyConfig.GrafanaKind(accesspolicyGRD.ObjectMeta.Name).
+	accesspolicyApplyConfig := applyConfig.GrafanaResourceDefinition(accesspolicyGRD.ObjectMeta.Name).
 		WithSpec(accesspolicyApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, accesspolicyApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, accesspolicyApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -119,9 +119,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, dashboardGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, dashboardGRD, metav1.CreateOptions{})
 
-	dashboardApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	dashboardApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range dashboardGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -136,7 +136,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -148,7 +148,7 @@ func (r *Registry) start(ctx context.Context) error {
 		dashboardApplyVersions = append(dashboardApplyVersions, version)
 	}
 
-	dashboardApplyNames := applyConfig.GrafanaKindNames().
+	dashboardApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(dashboardGRD.Spec.Names.Kind).
 		WithListKind(dashboardGRD.Spec.Names.ListKind).
 		WithSingular(dashboardGRD.Spec.Names.Singular).
@@ -156,17 +156,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(dashboardGRD.Spec.Names.Categories...).
 		WithShortNames(dashboardGRD.Spec.Names.ShortNames...)
 
-	dashboardApplySpec := applyConfig.GrafanaKindSpec().
+	dashboardApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(dashboardGRD.Spec.Group).
 		WithNames(dashboardApplyNames).
 		WithScope(dashboardGRD.Spec.Scope).
 		WithVersions(dashboardApplyVersions...).
 		WithPreserveUnknownFields(dashboardGRD.Spec.PreserveUnknownFields)
 
-	dashboardApplyConfig := applyConfig.GrafanaKind(dashboardGRD.ObjectMeta.Name).
+	dashboardApplyConfig := applyConfig.GrafanaResourceDefinition(dashboardGRD.ObjectMeta.Name).
 		WithSpec(dashboardApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, dashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, dashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -177,9 +177,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, folderGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, folderGRD, metav1.CreateOptions{})
 
-	folderApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	folderApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range folderGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -194,7 +194,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -206,7 +206,7 @@ func (r *Registry) start(ctx context.Context) error {
 		folderApplyVersions = append(folderApplyVersions, version)
 	}
 
-	folderApplyNames := applyConfig.GrafanaKindNames().
+	folderApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(folderGRD.Spec.Names.Kind).
 		WithListKind(folderGRD.Spec.Names.ListKind).
 		WithSingular(folderGRD.Spec.Names.Singular).
@@ -214,17 +214,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(folderGRD.Spec.Names.Categories...).
 		WithShortNames(folderGRD.Spec.Names.ShortNames...)
 
-	folderApplySpec := applyConfig.GrafanaKindSpec().
+	folderApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(folderGRD.Spec.Group).
 		WithNames(folderApplyNames).
 		WithScope(folderGRD.Spec.Scope).
 		WithVersions(folderApplyVersions...).
 		WithPreserveUnknownFields(folderGRD.Spec.PreserveUnknownFields)
 
-	folderApplyConfig := applyConfig.GrafanaKind(folderGRD.ObjectMeta.Name).
+	folderApplyConfig := applyConfig.GrafanaResourceDefinition(folderGRD.ObjectMeta.Name).
 		WithSpec(folderApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, folderApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, folderApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -235,9 +235,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, librarypanelGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, librarypanelGRD, metav1.CreateOptions{})
 
-	librarypanelApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	librarypanelApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range librarypanelGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -252,7 +252,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -264,7 +264,7 @@ func (r *Registry) start(ctx context.Context) error {
 		librarypanelApplyVersions = append(librarypanelApplyVersions, version)
 	}
 
-	librarypanelApplyNames := applyConfig.GrafanaKindNames().
+	librarypanelApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(librarypanelGRD.Spec.Names.Kind).
 		WithListKind(librarypanelGRD.Spec.Names.ListKind).
 		WithSingular(librarypanelGRD.Spec.Names.Singular).
@@ -272,17 +272,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(librarypanelGRD.Spec.Names.Categories...).
 		WithShortNames(librarypanelGRD.Spec.Names.ShortNames...)
 
-	librarypanelApplySpec := applyConfig.GrafanaKindSpec().
+	librarypanelApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(librarypanelGRD.Spec.Group).
 		WithNames(librarypanelApplyNames).
 		WithScope(librarypanelGRD.Spec.Scope).
 		WithVersions(librarypanelApplyVersions...).
 		WithPreserveUnknownFields(librarypanelGRD.Spec.PreserveUnknownFields)
 
-	librarypanelApplyConfig := applyConfig.GrafanaKind(librarypanelGRD.ObjectMeta.Name).
+	librarypanelApplyConfig := applyConfig.GrafanaResourceDefinition(librarypanelGRD.ObjectMeta.Name).
 		WithSpec(librarypanelApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, librarypanelApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, librarypanelApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -293,9 +293,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, playlistGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, playlistGRD, metav1.CreateOptions{})
 
-	playlistApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	playlistApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range playlistGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -310,7 +310,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -322,7 +322,7 @@ func (r *Registry) start(ctx context.Context) error {
 		playlistApplyVersions = append(playlistApplyVersions, version)
 	}
 
-	playlistApplyNames := applyConfig.GrafanaKindNames().
+	playlistApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(playlistGRD.Spec.Names.Kind).
 		WithListKind(playlistGRD.Spec.Names.ListKind).
 		WithSingular(playlistGRD.Spec.Names.Singular).
@@ -330,17 +330,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(playlistGRD.Spec.Names.Categories...).
 		WithShortNames(playlistGRD.Spec.Names.ShortNames...)
 
-	playlistApplySpec := applyConfig.GrafanaKindSpec().
+	playlistApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(playlistGRD.Spec.Group).
 		WithNames(playlistApplyNames).
 		WithScope(playlistGRD.Spec.Scope).
 		WithVersions(playlistApplyVersions...).
 		WithPreserveUnknownFields(playlistGRD.Spec.PreserveUnknownFields)
 
-	playlistApplyConfig := applyConfig.GrafanaKind(playlistGRD.ObjectMeta.Name).
+	playlistApplyConfig := applyConfig.GrafanaResourceDefinition(playlistGRD.ObjectMeta.Name).
 		WithSpec(playlistApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, playlistApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, playlistApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -351,9 +351,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, preferencesGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, preferencesGRD, metav1.CreateOptions{})
 
-	preferencesApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	preferencesApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range preferencesGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -368,7 +368,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -380,7 +380,7 @@ func (r *Registry) start(ctx context.Context) error {
 		preferencesApplyVersions = append(preferencesApplyVersions, version)
 	}
 
-	preferencesApplyNames := applyConfig.GrafanaKindNames().
+	preferencesApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(preferencesGRD.Spec.Names.Kind).
 		WithListKind(preferencesGRD.Spec.Names.ListKind).
 		WithSingular(preferencesGRD.Spec.Names.Singular).
@@ -388,17 +388,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(preferencesGRD.Spec.Names.Categories...).
 		WithShortNames(preferencesGRD.Spec.Names.ShortNames...)
 
-	preferencesApplySpec := applyConfig.GrafanaKindSpec().
+	preferencesApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(preferencesGRD.Spec.Group).
 		WithNames(preferencesApplyNames).
 		WithScope(preferencesGRD.Spec.Scope).
 		WithVersions(preferencesApplyVersions...).
 		WithPreserveUnknownFields(preferencesGRD.Spec.PreserveUnknownFields)
 
-	preferencesApplyConfig := applyConfig.GrafanaKind(preferencesGRD.ObjectMeta.Name).
+	preferencesApplyConfig := applyConfig.GrafanaResourceDefinition(preferencesGRD.ObjectMeta.Name).
 		WithSpec(preferencesApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, preferencesApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, preferencesApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -409,9 +409,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, publicdashboardGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, publicdashboardGRD, metav1.CreateOptions{})
 
-	publicdashboardApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	publicdashboardApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range publicdashboardGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -426,7 +426,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -438,7 +438,7 @@ func (r *Registry) start(ctx context.Context) error {
 		publicdashboardApplyVersions = append(publicdashboardApplyVersions, version)
 	}
 
-	publicdashboardApplyNames := applyConfig.GrafanaKindNames().
+	publicdashboardApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(publicdashboardGRD.Spec.Names.Kind).
 		WithListKind(publicdashboardGRD.Spec.Names.ListKind).
 		WithSingular(publicdashboardGRD.Spec.Names.Singular).
@@ -446,17 +446,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(publicdashboardGRD.Spec.Names.Categories...).
 		WithShortNames(publicdashboardGRD.Spec.Names.ShortNames...)
 
-	publicdashboardApplySpec := applyConfig.GrafanaKindSpec().
+	publicdashboardApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(publicdashboardGRD.Spec.Group).
 		WithNames(publicdashboardApplyNames).
 		WithScope(publicdashboardGRD.Spec.Scope).
 		WithVersions(publicdashboardApplyVersions...).
 		WithPreserveUnknownFields(publicdashboardGRD.Spec.PreserveUnknownFields)
 
-	publicdashboardApplyConfig := applyConfig.GrafanaKind(publicdashboardGRD.ObjectMeta.Name).
+	publicdashboardApplyConfig := applyConfig.GrafanaResourceDefinition(publicdashboardGRD.ObjectMeta.Name).
 		WithSpec(publicdashboardApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, publicdashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, publicdashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -467,9 +467,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, roleGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, roleGRD, metav1.CreateOptions{})
 
-	roleApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	roleApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range roleGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -484,7 +484,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -496,7 +496,7 @@ func (r *Registry) start(ctx context.Context) error {
 		roleApplyVersions = append(roleApplyVersions, version)
 	}
 
-	roleApplyNames := applyConfig.GrafanaKindNames().
+	roleApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(roleGRD.Spec.Names.Kind).
 		WithListKind(roleGRD.Spec.Names.ListKind).
 		WithSingular(roleGRD.Spec.Names.Singular).
@@ -504,17 +504,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(roleGRD.Spec.Names.Categories...).
 		WithShortNames(roleGRD.Spec.Names.ShortNames...)
 
-	roleApplySpec := applyConfig.GrafanaKindSpec().
+	roleApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(roleGRD.Spec.Group).
 		WithNames(roleApplyNames).
 		WithScope(roleGRD.Spec.Scope).
 		WithVersions(roleApplyVersions...).
 		WithPreserveUnknownFields(roleGRD.Spec.PreserveUnknownFields)
 
-	roleApplyConfig := applyConfig.GrafanaKind(roleGRD.ObjectMeta.Name).
+	roleApplyConfig := applyConfig.GrafanaResourceDefinition(roleGRD.ObjectMeta.Name).
 		WithSpec(roleApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, roleApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, roleApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -525,9 +525,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, rolebindingGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, rolebindingGRD, metav1.CreateOptions{})
 
-	rolebindingApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	rolebindingApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range rolebindingGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -542,7 +542,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -554,7 +554,7 @@ func (r *Registry) start(ctx context.Context) error {
 		rolebindingApplyVersions = append(rolebindingApplyVersions, version)
 	}
 
-	rolebindingApplyNames := applyConfig.GrafanaKindNames().
+	rolebindingApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(rolebindingGRD.Spec.Names.Kind).
 		WithListKind(rolebindingGRD.Spec.Names.ListKind).
 		WithSingular(rolebindingGRD.Spec.Names.Singular).
@@ -562,17 +562,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(rolebindingGRD.Spec.Names.Categories...).
 		WithShortNames(rolebindingGRD.Spec.Names.ShortNames...)
 
-	rolebindingApplySpec := applyConfig.GrafanaKindSpec().
+	rolebindingApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(rolebindingGRD.Spec.Group).
 		WithNames(rolebindingApplyNames).
 		WithScope(rolebindingGRD.Spec.Scope).
 		WithVersions(rolebindingApplyVersions...).
 		WithPreserveUnknownFields(rolebindingGRD.Spec.PreserveUnknownFields)
 
-	rolebindingApplyConfig := applyConfig.GrafanaKind(rolebindingGRD.ObjectMeta.Name).
+	rolebindingApplyConfig := applyConfig.GrafanaResourceDefinition(rolebindingGRD.ObjectMeta.Name).
 		WithSpec(rolebindingApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, rolebindingApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, rolebindingApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -583,9 +583,9 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	//_, _ = clientSet.GrafanaKinds().Create(ctx, teamGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, teamGRD, metav1.CreateOptions{})
 
-	teamApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	teamApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
 	for _, v := range teamGRD.Spec.Versions {
 		subresource := applyConfig.GrafanaResourceSubresources()
 		if v.Subresources != nil && v.Subresources.Status != nil {
@@ -600,7 +600,7 @@ func (r *Registry) start(ctx context.Context) error {
 			subresource = subresource.WithHistory(*v.Subresources.History)
 		}
 
-		version := applyConfig.GrafanaKindVersion().
+		version := applyConfig.GrafanaResourceDefinitionVersion().
 			WithName(v.Name).
 			WithServed(v.Served).
 			WithStorage(v.Storage).
@@ -612,7 +612,7 @@ func (r *Registry) start(ctx context.Context) error {
 		teamApplyVersions = append(teamApplyVersions, version)
 	}
 
-	teamApplyNames := applyConfig.GrafanaKindNames().
+	teamApplyNames := applyConfig.GrafanaResourceDefinitionNames().
 		WithKind(teamGRD.Spec.Names.Kind).
 		WithListKind(teamGRD.Spec.Names.ListKind).
 		WithSingular(teamGRD.Spec.Names.Singular).
@@ -620,17 +620,17 @@ func (r *Registry) start(ctx context.Context) error {
 		WithCategories(teamGRD.Spec.Names.Categories...).
 		WithShortNames(teamGRD.Spec.Names.ShortNames...)
 
-	teamApplySpec := applyConfig.GrafanaKindSpec().
+	teamApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
 		WithGroup(teamGRD.Spec.Group).
 		WithNames(teamApplyNames).
 		WithScope(teamGRD.Spec.Scope).
 		WithVersions(teamApplyVersions...).
 		WithPreserveUnknownFields(teamGRD.Spec.PreserveUnknownFields)
 
-	teamApplyConfig := applyConfig.GrafanaKind(teamGRD.ObjectMeta.Name).
+	teamApplyConfig := applyConfig.GrafanaResourceDefinition(teamGRD.ObjectMeta.Name).
 		WithSpec(teamApplySpec)
 
-	_, err = clientSet.GrafanaKinds().Apply(ctx, teamApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	_, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, teamApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
 	if err != nil {
 		return err
 	}
@@ -643,7 +643,7 @@ func (r *Registry) run(ctx context.Context) error {
 	return nil
 }
 
-func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
+func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, error) {
 	kind, is := k.(kindsys.Core)
 	if !is {
 		return nil, nil
@@ -658,24 +658,24 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 		return nil, err
 	}
 
-	resource := kindsv1.GrafanaKind{
+	resource := kindsv1.GrafanaResourceDefinition{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kinds.grafana.com/v1",
-			Kind:       "GrafanaKind",
+			Kind:       "GrafanaResourceDefinition",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, "core.kinds.grafana.com"),
 		},
-		Spec: kindsv1.GrafanaKindSpec{
+		Spec: kindsv1.GrafanaResourceDefinitionSpec{
 			Group: "core.kinds.grafana.com",
 			Scope: "Namespaced",
-			Names: kindsv1.GrafanaKindNames{
+			Names: kindsv1.GrafanaResourceDefinitionNames{
 				Kind:     props.Name,
 				ListKind: props.Name + "List",
 				Singular: props.MachineName,
 				Plural:   props.PluralMachineName,
 			},
-			Versions: make([]kindsv1.GrafanaKindVersion, 0),
+			Versions: make([]kindsv1.GrafanaResourceDefinitionVersion, 0),
 		},
 	}
 	latest := lin.Latest().Version()
@@ -686,7 +686,7 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 			vstr = "v0-alpha"
 		}
 
-		ver := kindsv1.GrafanaKindVersion{
+		ver := kindsv1.GrafanaResourceDefinitionVersion{
 			Name:       vstr,
 			Served:     true,
 			Storage:    sch.Version() == latest,

@@ -149,8 +149,8 @@ func getItems(listObj runtime.Object) ([]runtime.Object, error) {
 	out := make([]runtime.Object, 0)
 
 	switch list := listObj.(type) {
-	case *kindsv1.GrafanaKindList:
-	case *grafanaApiServerKinds.GrafanaKindList:
+	case *kindsv1.GrafanaResourceDefinitionList:
+	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
 	case *unstructured.UnstructuredList:
 		for _, item := range list.Items {
 			out = append(out, item.DeepCopyObject())
@@ -288,7 +288,7 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 	switch s.gr.Group {
 	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
 	case grafanaApiServerKinds.GroupName:
-		listObj = &grafanaApiServerKinds.GrafanaKindList{}
+		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
 		break
 	default:
 		listObj = &unstructured.UnstructuredList{}
