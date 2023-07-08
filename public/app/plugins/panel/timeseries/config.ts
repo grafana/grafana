@@ -42,7 +42,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
 
 const categoryStyles = ['Graph styles'];
 
-export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
+export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -166,6 +166,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
           shouldApply: (field) => field.type !== FieldType.time,
           process: identityOverrideProcessor,
+          settings: { isTime },
         })
         .addRadio({
           path: 'showPoints',

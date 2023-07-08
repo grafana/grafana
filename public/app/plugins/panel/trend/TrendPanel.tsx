@@ -1,9 +1,17 @@
 import React, { useMemo } from 'react';
 
-import { FieldType, PanelProps } from '@grafana/data';
+import { DataFrame, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TimeSeries, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
+import {
+  KeyboardPlugin,
+  preparePlotFrame,
+  TimeSeries,
+  TooltipDisplayMode,
+  TooltipPlugin,
+  usePanelContext,
+} from '@grafana/ui';
+import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
@@ -11,6 +19,9 @@ import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/u
 
 import { Options } from './panelcfg.gen';
 
+const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
+  return preparePlotFrame(frames, dimFields);
+};
 export const TrendPanel = ({
   data,
   timeRange,
@@ -90,6 +101,7 @@ export const TrendPanel = ({
       height={height}
       legend={options.legend}
       options={options}
+      preparePlotFrame={preparePlotFrameTimeless}
     >
       {(config, alignedDataFrame) => {
         if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {

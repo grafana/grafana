@@ -8,15 +8,23 @@ export enum InputPrefix {
   GreaterThan = 'greaterthan',
 }
 
-type Props = { value: number; onChange: (value?: number | boolean | undefined) => void; inputPrefix?: InputPrefix };
+type Props = {
+  value: number;
+  onChange: (value?: number | boolean | undefined) => void;
+  inputPrefix?: InputPrefix;
+  isTime: boolean;
+};
 
-export const NullsThresholdInput = ({ value, onChange, inputPrefix }: Props) => {
-  const formattedTime = rangeUtil.secondsToHms(value / 1000);
+export const NullsThresholdInput = ({ value, onChange, inputPrefix, isTime }: Props) => {
+  let defaultValue = rangeUtil.secondsToHms(value / 1000);
+  if (!isTime) {
+    defaultValue = '10';
+  }
   const checkAndUpdate = (txt: string) => {
     let val: boolean | number = false;
     if (txt) {
       try {
-        if (rangeUtil.isValidTimeSpan(txt)) {
+        if (isTime && rangeUtil.isValidTimeSpan(txt)) {
           val = rangeUtil.intervalToMs(txt);
         } else {
           val = Number(txt);
@@ -51,7 +59,7 @@ export const NullsThresholdInput = ({ value, onChange, inputPrefix }: Props) => 
       autoFocus={false}
       placeholder="never"
       width={10}
-      defaultValue={formattedTime}
+      defaultValue={defaultValue}
       onKeyDown={handleEnterKey}
       onBlur={handleBlur}
       prefix={prefix}
