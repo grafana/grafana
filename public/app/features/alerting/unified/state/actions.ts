@@ -40,18 +40,16 @@ import {
   deleteAlertManagerConfig,
   expireSilence,
   fetchAlertGroups,
-  fetchAlertManagerConfig,
   fetchAlerts,
   fetchExternalAlertmanagerConfig,
   fetchExternalAlertmanagers,
   fetchSilences,
-  fetchStatus,
   testReceivers,
   updateAlertManagerConfig,
 } from '../api/alertmanager';
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
-import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -68,16 +66,13 @@ import {
   getRulesDataSource,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
-  isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
-import { makeAMLink, retryWhile } from '../utils/misc';
-import { AsyncRequestMapSlice, messageFromError, withAppEvents, withSerializedError } from '../utils/redux';
+import { makeAMLink } from '../utils/misc';
+import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
 import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
 import { safeParseDurationstr } from '../utils/time';
-
-const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   const dataSources = (getState() as StoreState).unifiedAlerting.dataSources;
@@ -133,72 +128,10 @@ export const fetchPromRulesAction = createAsyncThunk(
 
 export const fetchAlertManagerConfigAction = createAsyncThunk(
   'unifiedalerting/fetchAmConfig',
-  (alertManagerSourceName: string, thunkAPI): Promise<AlertManagerCortexConfig> =>
-    withSerializedError(
-      (async () => {
-        // for vanilla prometheus, there is no config endpoint. Only fetch config from status
-        if (isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName)) {
-          return fetchStatus(alertManagerSourceName).then((status) => ({
-            alertmanager_config: status.config,
-            template_files: {},
-          }));
-        }
-
-        const { data: amFeatures } = await thunkAPI.dispatch(
-          featureDiscoveryApi.endpoints.discoverAmFeatures.initiate({
-            amSourceName: alertManagerSourceName,
-          })
-        );
-
-        const lazyConfigInitSupported = amFeatures?.lazyConfigInit ?? false;
-        const fetchAMconfigWithLogging = withPerformanceLogging(
-          fetchAlertManagerConfig,
-          `[${alertManagerSourceName}] Alertmanager config loaded`,
-          {
-            dataSourceName: alertManagerSourceName,
-            thunk: 'unifiedalerting/fetchAmConfig',
-          }
-        );
-
-        return retryWhile(
-          () => fetchAMconfigWithLogging(alertManagerSourceName),
-          // if config has been recently deleted, it takes a while for cortex start returning the default one.
-          // retry for a short while instead of failing
-          (e) => !!messageFromError(e)?.includes('alertmanager storage object not found') && !lazyConfigInitSupported,
-          FETCH_CONFIG_RETRY_TIMEOUT
-        )
-          .then((result) => {
-            // if user config is empty for cortex alertmanager, try to get config from status endpoint
-            if (
-              isEmpty(result.alertmanager_config) &&
-              isEmpty(result.template_files) &&
-              alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
-            ) {
-              return fetchStatus(alertManagerSourceName).then((status) => ({
-                alertmanager_config: status.config,
-                template_files: {},
-                template_file_provenances: result.template_file_provenances,
-                last_applied: result.last_applied,
-                id: result.id,
-              }));
-            }
-            return result;
-          })
-          .catch((e) => {
-            // When mimir doesn't have fallback AM url configured the default response will be as above
-            // However it's fine, and it's possible to create AM configuration
-            if (lazyConfigInitSupported && messageFromError(e)?.includes('alertmanager storage object not found')) {
-              return Promise.resolve<AlertManagerCortexConfig>({
-                alertmanager_config: {},
-                template_files: {},
-                template_file_provenances: {},
-              });
-            }
-
-            throw e;
-          });
-      })()
-    )
+  (alertManagerSourceName: string, thunkAPI): Promise<AlertManagerCortexConfig> => {
+    const fetchConfig = alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName);
+    return withSerializedError(thunkAPI.dispatch(fetchConfig).unwrap());
+  }
 );
 
 export const fetchExternalAlertmanagersAction = createAsyncThunk(

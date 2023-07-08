@@ -1,26 +1,23 @@
+import { SerializedError } from '@reduxjs/toolkit';
 import { useEffect } from 'react';
 
-import { useDispatch } from 'app/types';
+import { alertmanagerApi } from '../api/alertmanagerApi';
 
-import { fetchAlertManagerConfigAction } from '../state/actions';
-import { initialAsyncRequestState } from '../utils/redux';
-
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-
+// TODO refactor this so we can just call "alertmanagerApi.endpoints.getAlertmanagerConfiguration" everywhere
+// and remove this hook
 export function useAlertmanagerConfig(amSourceName?: string) {
-  const dispatch = useDispatch();
+  const [fetchConfig, fetchState] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
 
   useEffect(() => {
     if (amSourceName) {
-      dispatch(fetchAlertManagerConfigAction(amSourceName));
+      fetchConfig(amSourceName);
     }
-  }, [amSourceName, dispatch]);
+  }, [amSourceName, fetchConfig]);
 
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const { result, loading, error } = (amSourceName && amConfigs[amSourceName]) || initialAsyncRequestState;
-
-  const config = result?.alertmanager_config;
-
-  return { result, config, loading, error };
+  return {
+    result: fetchState.data,
+    config: fetchState.data?.alertmanager_config,
+    loading: fetchState.isLoading,
+    error: fetchState.error as SerializedError,
+  };
 }
