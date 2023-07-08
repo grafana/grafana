@@ -10,7 +10,6 @@ import {
   CSVConfig,
   DataFrame,
   DataTransformerID,
-  DynamicConfigValue,
   FieldConfigSource,
   SelectableValue,
   TimeZone,
