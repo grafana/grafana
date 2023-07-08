@@ -29,23 +29,10 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     insertMode = INSERT_MODES.threshold;
   }
 
-  let refField = frame.fields.find((field) => {
-    // note: getFieldDisplayName() would require full DF[]
-    return refFieldName != null ? field.name === refFieldName : null;
-    // field.type === FieldType.time
-  });
-
-  if (refField == null) {
-    refField = frame.fields.find((field) => {
-      return field.type === FieldType.time;
-    });
-  }
-
-  if (refField == null) {
-    refField = frame.fields.find((field) => {
-      return field.type === FieldType.number;
-    });
-  }
+  const refField =
+    frame.fields.find((field) => field.name === refFieldName) ??
+    frame.fields.find((field) => field.type === FieldType.time) ??
+    frame.fields.find((field) => field.type === FieldType.number);
 
   if (refField == null) {
     return frame;
@@ -56,7 +43,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     nullThresholdApplied: true,
   };
 
-  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls || refField?.config.interval || null);
+  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls || refField.config.interval || null);
 
   const uniqueThresholds = new Set<number>(thresholds);
 
