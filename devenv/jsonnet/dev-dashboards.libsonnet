@@ -513,6 +513,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('panel_tests_flame_graph', import '../dev-dashboards/panel-flamegraph/panel_tests_flame_graph.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('panels_without_title', import '../dev-dashboards/panel-common/panels_without_title.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
