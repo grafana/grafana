@@ -9,6 +9,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
   fetchGrafanaNotifiersAction,
@@ -77,7 +78,9 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
         successMessage: existing ? 'Contact point updated.' : 'Contact point created',
         redirectPath: '/alerting/notifications',
       })
-    );
+    ).then(() => {
+      dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
+    });
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {

@@ -4,7 +4,18 @@ import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Badge, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Dropdown,
+  Icon,
+  LinkButton,
+  LoadingPlaceholder,
+  Menu,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -38,6 +49,12 @@ const ContactPoints = () => {
   return (
     <>
       <Stack direction="column">
+        <Stack direction="row" alignItems="center">
+          <Spacer />
+          <LinkButton icon="plus" variant="primary" href="/alerting/notifications/receivers/new">
+            Add contact point
+          </LinkButton>
+        </Stack>
         {contactPoints.map((contactPoint) => {
           const contactPointKey = selectedAlertmanager + contactPoint.name;
           const provisioned = isProvisioned(contactPoint);
@@ -146,43 +163,64 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             </Tooltip>
           )}
         >
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="edit"
-            type="button"
-            disabled={disableActions}
-            aria-label="edit-action"
-            data-testid="edit-action"
+          {/* TODO maybe we can make an abstraction around these disabled buttons with conditional tooltip for provisioned resources? */}
+          <ConditionalWrap
+            shouldWrap={provisioned}
+            wrap={(children) => (
+              <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
+                <span>{children}</span>
+              </Tooltip>
+            )}
           >
-            Edit
-          </Button>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              icon="edit"
+              type="button"
+              disabled={disableActions}
+              aria-label="edit-action"
+              data-testid="edit-action"
+              href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
+            >
+              Edit
+            </LinkButton>
+          </ConditionalWrap>
         </ConditionalWrap>
-        <Dropdown
-          overlay={
-            <Menu>
-              <Menu.Item label="Export" icon="download-alt" />
-              <Menu.Divider />
-              <Menu.Item
-                label="Delete"
-                icon="trash-alt"
-                destructive
-                disabled={disableActions}
-                onClick={() => onDelete(name)}
-              />
-            </Menu>
-          }
+
+        <ConditionalWrap
+          shouldWrap={provisioned}
+          wrap={(children) => (
+            <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
+              <span>{children}</span>
+            </Tooltip>
+          )}
         >
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="ellipsis-h"
-            type="button"
-            aria-label="more-actions"
-            data-testid="more-actions"
-            disabled={disableActions}
-          />
-        </Dropdown>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item label="Export" icon="download-alt" />
+                <Menu.Divider />
+                <Menu.Item
+                  label="Delete"
+                  icon="trash-alt"
+                  destructive
+                  disabled={disableActions}
+                  onClick={() => onDelete(name)}
+                />
+              </Menu>
+            }
+          >
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="ellipsis-h"
+              type="button"
+              aria-label="more-actions"
+              data-testid="more-actions"
+              disabled={disableActions}
+            />
+          </Dropdown>
+        </ConditionalWrap>
       </Stack>
     </div>
   );

@@ -34,6 +34,10 @@ export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): 
       const topicName = receiver.settings['kafkaTopic'];
       return topicName;
     }
+    case 'webhook': {
+      const url = receiver.settings['url'];
+      return url;
+    }
     default:
       return undefined;
   }
