@@ -1,4 +1,4 @@
-import { split } from 'lodash';
+import { split, trim } from 'lodash';
 import { ReactNode } from 'react';
 
 import {
@@ -47,9 +47,10 @@ export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): 
 // output: foo+1@bar.com, foo+2@bar.com, +2 more
 function summarizeEmailAddresses(addresses: string): string {
   const MAX_ADDRESSES_SHOWN = 3;
-  const SUPPORTED_SEPARATORS = /,|;|\\n/;
+  const SUPPORTED_SEPARATORS = /,|;|\n+/g;
 
-  const emails = addresses.trim().split(SUPPORTED_SEPARATORS);
+  const emails = addresses.trim().split(SUPPORTED_SEPARATORS).map(trim);
+
   const notShown = emails.length - MAX_ADDRESSES_SHOWN;
 
   const truncatedAddresses = split(addresses, SUPPORTED_SEPARATORS, MAX_ADDRESSES_SHOWN);
