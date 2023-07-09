@@ -146,6 +146,12 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           })
         );
 
+        const defaultConfig = {
+          alertmanager_config: {},
+          template_files: {},
+          template_file_provenances: {},
+        };
+
         const lazyConfigInitSupported = alertmanagerFeatures?.lazyConfigInit ?? false;
 
         // wrap our fetchConfig function with some performance logging functions
@@ -186,24 +192,24 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
 
             return result;
           })
+          .then((result) => result ?? defaultConfig)
           .then((result) => ({ data: result }))
           .catch((error) => {
             // When mimir doesn't have fallback AM url configured the default response will be as above
             // However it's fine, and it's possible to create AM configuration
             if (lazyConfigInitSupported && messageFromError(error)?.includes('alertmanager storage object not found')) {
               return {
-                data: {
-                  alertmanager_config: {},
-                  template_files: {},
-                  template_file_provenances: {},
-                },
+                data: defaultConfig,
               };
             }
 
             throw error;
           });
 
-        return withSerializedError(tryFetchingConfiguration);
+        return withSerializedError(tryFetchingConfiguration).catch((err) => ({
+          error: err,
+          data: undefined,
+        }));
       },
       providesTags: ['AlertmanagerConfiguration'],
     }),
