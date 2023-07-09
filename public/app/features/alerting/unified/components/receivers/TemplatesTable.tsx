@@ -15,7 +15,6 @@ import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
-import { ReceiversSection } from './ReceiversSection';
 import { TemplateEditor } from './TemplateEditor';
 
 interface Props {
@@ -48,13 +47,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   };
 
   return (
-    <ReceiversSection
-      title="Notification templates"
-      description="Create notification templates to customize your notifications."
-      addButtonLabel="Add template"
-      addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
-      showButton={contextSrv.hasPermission(permissions.create)}
-    >
+    <>
       <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
           <col className={tableStyles.colExpand} />
@@ -171,6 +164,6 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
           onDismiss={() => setTemplateToDelete(undefined)}
         />
       )}
-    </ReceiversSection>
+    </>
   );
 };

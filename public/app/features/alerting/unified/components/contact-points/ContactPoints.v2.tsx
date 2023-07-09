@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqueId, upperFirst } from 'lodash';
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -13,64 +13,137 @@ import {
   LinkButton,
   LoadingPlaceholder,
   Menu,
+  Tab,
+  TabContent,
+  TabsBar,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
+import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
+import { getNotificationsPermissions } from '../../utils/access-control';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
+import { GlobalConfigAlert } from '../receivers/ReceiversAndTemplatesView';
 
+import { MessageTemplates } from './MessageTemplates';
 import { useDeleteContactPointModal } from './Modals';
 import { RECEIVER_STATUS_KEY, useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
 import { getReceiverDescription, isProvisioned, ReceiverConfigWithStatus } from './utils';
 
+enum ActiveTab {
+  ContactPoints,
+  MessageTemplates,
+}
+
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
+  // TODO hook up to query params
+  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
   const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager!);
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
 
-  if (error) {
-    return <Alert title="Failed to fetch contact points">{String(error)}</Alert>;
-  }
+  const showingContactPoints = activeTab === ActiveTab.ContactPoints;
+  const showingMessageTemplates = activeTab === ActiveTab.MessageTemplates;
 
-  if (isLoading) {
-    return <LoadingPlaceholder text={'Loading...'} />;
-  }
+  const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const isVanillaAlertmanager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager!);
+  const permissions = getNotificationsPermissions(selectedAlertmanager!);
+
+  const allowedToAddContactPoint = contextSrv.hasPermission(permissions.create);
 
   return (
     <>
       <Stack direction="column">
-        <Stack direction="row" alignItems="center">
+        <TabsBar>
+          <Tab
+            label="Contact Points"
+            active={showingContactPoints}
+            counter={contactPoints.length}
+            onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
+          />
+          <Tab
+            label="Message Templates"
+            active={showingMessageTemplates}
+            onChangeTab={() => setActiveTab(ActiveTab.MessageTemplates)}
+          />
           <Spacer />
-          <LinkButton icon="plus" variant="primary" href="/alerting/notifications/receivers/new">
-            Add contact point
-          </LinkButton>
-        </Stack>
-        {contactPoints.map((contactPoint) => {
-          const contactPointKey = selectedAlertmanager + contactPoint.name;
-          const provisioned = isProvisioned(contactPoint);
-          const disabled = updateAlertmanagerState.isLoading;
+          {showingContactPoints && (
+            <LinkButton
+              icon="plus"
+              variant="primary"
+              href="/alerting/notifications/receivers/new"
+              // TODO clarify why the button has been disabled
+              disabled={!allowedToAddContactPoint || isVanillaAlertmanager}
+            >
+              Add contact point
+            </LinkButton>
+          )}
+          {showingMessageTemplates && (
+            <LinkButton icon="plus" variant="primary" href="/alerting/notifications/templates/new">
+              Add message template
+            </LinkButton>
+          )}
+        </TabsBar>
+        <TabContent>
+          <Stack direction="column">
+            <>
+              {isLoading && <LoadingPlaceholder text={'Loading...'} />}
+              {/* Contact Points tab */}
+              {showingContactPoints && (
+                <>
+                  {error ? (
+                    <Alert title="Failed to fetch contact points">{String(error)}</Alert>
+                  ) : (
+                    <>
+                      {/* TODO we can add some additional info here with a ToggleTip */}
+                      <Span variant="body" color="secondary">
+                        Define where notifications are sent, a contact point can contain multiple integrations.
+                      </Span>
+                      {contactPoints.map((contactPoint) => {
+                        const contactPointKey = selectedAlertmanager + contactPoint.name;
+                        const provisioned = isProvisioned(contactPoint);
+                        const disabled = updateAlertmanagerState.isLoading;
 
-          return (
-            <ContactPoint
-              key={contactPointKey}
-              name={contactPoint.name}
-              disabled={disabled}
-              onDelete={showDeleteModal}
-              receivers={contactPoint.grafana_managed_receiver_configs}
-              provisioned={provisioned}
-            />
-          );
-        })}
+                        return (
+                          <ContactPoint
+                            key={contactPointKey}
+                            name={contactPoint.name}
+                            disabled={disabled}
+                            onDelete={showDeleteModal}
+                            receivers={contactPoint.grafana_managed_receiver_configs}
+                            provisioned={provisioned}
+                          />
+                        );
+                      })}
+                      {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
+                      {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
+                    </>
+                  )}
+                </>
+              )}
+              {/* Message Templates tab */}
+              {showingMessageTemplates && (
+                <>
+                  <Span variant="body" color="secondary">
+                    Create message templates to customize your notifications.
+                  </Span>
+                  <MessageTemplates />
+                </>
+              )}
+            </>
+          </Stack>
+        </TabContent>
       </Stack>
       {DeleteModal}
     </>
@@ -151,6 +224,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             is used by <Strong>{policies.length}</Strong> notification policies
           </MetaText>
         ) : (
+          // TODO implement the number of linked policies
           <MetaText>is not used in any policy</MetaText>
         )}
         {provisioned && <Badge color="purple" text="Provisioned" />}
@@ -198,6 +272,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           <Dropdown
             overlay={
               <Menu>
+                {/* TODO make this work */}
                 <Menu.Item label="Export" icon="download-alt" />
                 <Menu.Divider />
                 <Menu.Item
