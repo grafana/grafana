@@ -26,7 +26,7 @@ export interface DashboardSceneState extends SceneObjectState {
   isDirty?: boolean;
   /** Scene object key for object to inspect */
   inspectPanelKey?: string;
-  /** Scene object key for object to view in full */
+  /** Scene object key for object to view in fullscreen */
   viewPanelKey?: string;
 }
 

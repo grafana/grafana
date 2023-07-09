@@ -50,6 +50,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
     }),
     body: css({
+      label: 'body',
       flexGrow: 1,
       display: 'flex',
       gap: '8px',

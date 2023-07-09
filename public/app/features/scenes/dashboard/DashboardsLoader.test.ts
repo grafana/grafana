@@ -1,3 +1,5 @@
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config } from '@grafana/runtime';
 import {
   CustomVariable,
   DataSourceVariable,
@@ -324,10 +326,11 @@ describe('DashboardLoader', () => {
         transparent: true,
       };
 
-      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
+      const vizPanel = gridItem.state.body as VizPanel;
 
-      expect((vizPanelSceneObject.state.body as VizPanel)?.state.displayMode).toEqual('transparent');
-      expect((vizPanelSceneObject.state.body as VizPanel)?.state.hoverHeader).toEqual(true);
+      expect(vizPanel.state.displayMode).toEqual('transparent');
+      expect(vizPanel.state.hoverHeader).toEqual(true);
     });
 
     it('should handle a dashboard query data source', () => {
@@ -343,6 +346,25 @@ describe('DashboardLoader', () => {
       const vizPanel = createVizPanelFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
 
       expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+    });
+
+    it('should not set SceneQueryRunner for plugins with skipDataQuery', () => {
+      const panel = {
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        targets: [{ refId: 'A' }],
+      };
+
+      config.panels['text-plugin-34'] = getPanelPlugin({
+        skipDataQuery: true,
+      }).meta;
+
+      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
+      const vizPanel = gridItem.state.body as VizPanel;
+
+      expect(vizPanel.state.$data).toBeUndefined();
     });
   });
 

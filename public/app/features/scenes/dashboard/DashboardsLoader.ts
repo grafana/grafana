@@ -5,6 +5,7 @@ import {
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -292,7 +293,13 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
 }
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+  // Skip setting query runner for panels without queries
   if (!panel.targets?.length) {
+    return undefined;
+  }
+
+  // Skip setting query runner for panel plugins with skipDataQuery
+  if (config.panels[panel.type]?.skipDataQuery) {
     return undefined;
   }
 
