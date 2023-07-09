@@ -5,36 +5,16 @@ import { NavModelItem } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { fetchAlertManagerConfigAction } from './state/actions';
-import { initialAsyncRequestState } from './utils/redux';
 
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
-  const dispatch = useDispatch();
   const { selectedAlertmanager } = useAlertmanager();
-
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const fetchConfig = useCallback(() => {
-    if (selectedAlertmanager) {
-      dispatch(fetchAlertManagerConfigAction(selectedAlertmanager));
-    }
-  }, [selectedAlertmanager, dispatch]);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
-
-  const { result, error, loading } =
-    (selectedAlertmanager && amConfigs[selectedAlertmanager]) || initialAsyncRequestState;
-
-  const config = result?.alertmanager_config;
+  const { config, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
@@ -56,12 +36,12 @@ const MuteTimings = () => {
 
   return (
     <>
-      {error && !loading && !result && (
+      {error && !loading && !config && (
         <Alert severity="error" title={`Error loading Alertmanager config for ${selectedAlertmanager}`}>
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {result && !error && (
+      {config && !error && (
         <Switch>
           <Route exact path="/alerting/routes/mute-timing/new">
             <MuteTimingForm loading={loading} />

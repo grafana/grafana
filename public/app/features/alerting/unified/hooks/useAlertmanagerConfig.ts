@@ -3,10 +3,15 @@ import { useEffect } from 'react';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 
+type Options = {
+  refetchOnFocus?: boolean;
+  refetchOnReconnect?: boolean;
+};
+
 // TODO refactor this so we can just call "alertmanagerApi.endpoints.getAlertmanagerConfiguration" everywhere
-// and remove this hook
-export function useAlertmanagerConfig(amSourceName?: string) {
-  const [fetchConfig, fetchState] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
+// and remove this hook since it adds little value
+export function useAlertmanagerConfig(amSourceName?: string, options?: Options) {
+  const [fetchConfig, fetchState] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery(options);
 
   useEffect(() => {
     if (amSourceName) {

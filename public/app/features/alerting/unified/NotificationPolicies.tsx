@@ -64,7 +64,15 @@ const AmRoutes = () => {
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
-  const { result, config, loading: resultLoading, error: resultError } = useAlertmanagerConfig(selectedAlertmanager);
+  const {
+    result,
+    config,
+    loading: resultLoading,
+    error: resultError,
+  } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },

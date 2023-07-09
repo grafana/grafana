@@ -518,8 +518,9 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
     withAppEvents(
       withSerializedError(
         (async () => {
-          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
-          const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
+          const latestConfig = await thunkAPI
+            .dispatch(alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName))
+            .unwrap();
 
           const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
           const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
@@ -531,7 +532,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
           if (refetch) {
-            await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+            thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
           }
           if (redirectPath) {
             const options = new URLSearchParams(redirectSearch ?? '');
@@ -587,8 +588,11 @@ export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceA
 );
 
 export const deleteReceiverAction = (receiverName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const config = getState().unifiedAlerting.amConfigs?.[alertManagerSourceName]?.result;
+  return async (dispatch) => {
+    const config = await dispatch(
+      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
+    ).unwrap();
+
     if (!config) {
       throw new Error(`Config for ${alertManagerSourceName} not found`);
     }
@@ -615,8 +619,11 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
 };
 
 export const deleteTemplateAction = (templateName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const config = getState().unifiedAlerting.amConfigs?.[alertManagerSourceName]?.result;
+  return async (dispatch) => {
+    const config = await dispatch(
+      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
+    ).unwrap();
+
     if (!config) {
       throw new Error(`Config for ${alertManagerSourceName} not found`);
     }
@@ -672,7 +679,7 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
       withSerializedError(
         (async () => {
           await deleteAlertManagerConfig(alertManagerSourceName);
-          await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+          await thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
         })()
       ),
       {
@@ -684,8 +691,10 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
 );
 
 export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimingName: string): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const config = getState().unifiedAlerting.amConfigs[alertManagerSourceName].result;
+  return async (dispatch) => {
+    const config = await dispatch(
+      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
+    ).unwrap();
 
     const muteIntervals =
       config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
