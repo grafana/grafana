@@ -26,7 +26,7 @@ require k8s.io/apimachinery v0.26.2
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
-replace github.com/grafana/kindsys => ../../as-code/kindsys
+replace github.com/grafana/kindsys => github.com/grafana/kindsys v0.0.0-20230710131454-b32d409778ea
 
 require (
 	cloud.google.com/go/storage v1.28.1
