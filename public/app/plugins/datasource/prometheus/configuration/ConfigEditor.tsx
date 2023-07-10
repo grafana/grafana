@@ -3,6 +3,7 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { Alert, DataSourceHttpSettings, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -13,10 +14,14 @@ import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
+import { AdvancedHttpSettings } from './overhaul/AdvancedHttpSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
+
+export const prometheusAuthOverhaul = true;
+
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 
@@ -42,37 +47,58 @@ export const ConfigEditor = (props: Props) => {
         </Alert>
       )}
       {/* WRAP IN FEATURE TOGGLE */}
-      <DataSourcehttpSettingsOverhaul
-        options={options}
-        onOptionsChange={onOptionsChange}
-        azureAuthSettings={azureAuthSettings}
-        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
-      />
-      <DataSourceHttpSettings
-        defaultUrl="http://localhost:9090"
-        dataSourceConfig={options}
-        showAccessOptions={showAccessOptions.current}
-        onChange={onOptionsChange}
-        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        azureAuthSettings={azureAuthSettings}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
-        urlLabel="Prometheus server URL"
-        urlDocs={docsTip()}
-      />
-      <>
-        <hr className={styles.hrTopSpace} />
-        <h3 className={styles.sectionHeaderPadding}>Additional settings</h3>
-        <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
-          Additional settings are optional settings that can be configured for more control over your data source.
-        </p>
+      {prometheusAuthOverhaul ? (
+        <DataSourcehttpSettingsOverhaul
+          options={options}
+          onOptionsChange={onOptionsChange}
+          azureAuthSettings={azureAuthSettings}
+          sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+          renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+          secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+        />
+      ) : (
+        <DataSourceHttpSettings
+          defaultUrl="http://localhost:9090"
+          dataSourceConfig={options}
+          showAccessOptions={showAccessOptions.current}
+          onChange={onOptionsChange}
+          sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+          azureAuthSettings={azureAuthSettings}
+          renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+          secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+          urlLabel="Prometheus server URL"
+          urlDocs={docsTip()}
+        />
+      )}
+      {prometheusAuthOverhaul ? (
+        <>
+          {/* STYLE: ADD PADDING */}
+          <hr />
+          {/* STYLE: ADD PADDING */}
+          <ConfigSection
+            title="Advanced settings"
+            description="Additional settings are optional settings that can be configured for more control over your data source."
+          >
+            {/* Does this component go here or does it go in the auth section? */}
+            <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+            {/* STYLE: ADD PADDING */}
+            <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
+            <PromSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSection>
+        </>
+      ) : (
+        <>
+          <hr className={styles.hrTopSpace} />
+          <h3 className={styles.sectionHeaderPadding}>Additional settings</h3>
+          <p className={`${styles.secondaryGrey} ${styles.subsectionText}`}>
+            Additional settings are optional settings that can be configured for more control over your data source.
+          </p>
 
-        <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
+          <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
 
-        <PromSettings options={options} onOptionsChange={onOptionsChange} />
-      </>
+          <PromSettings options={options} onOptionsChange={onOptionsChange} />
+        </>
+      )}
     </>
   );
 };

@@ -31,7 +31,6 @@ export enum PrometheusCacheLevel {
 }
 
 export interface PromOptions extends DataSourceJsonData {
-  sigV4Auth: boolean;
   timeInterval?: string;
   queryTimeout?: string;
   httpMethod?: string;
@@ -46,6 +45,7 @@ export interface PromOptions extends DataSourceJsonData {
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
   disableRecordingRules?: boolean;
+  sigV4Auth?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {

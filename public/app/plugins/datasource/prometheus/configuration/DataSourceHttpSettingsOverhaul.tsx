@@ -8,6 +8,9 @@ import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings
 
 import { PromOptions } from '../types';
 
+import { docsTip } from './ConfigEditor';
+import { ConnectionSettings } from './overhaul/ConnectionSettings';
+
 type Props = {
   options: DataSourceSettings<PromOptions, {}>;
   onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
@@ -87,13 +90,42 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
     return newAuthProps.selectedMethod;
   }
 
+  // Do we need this switch anymore? Update the language.
+  let urlTooltip;
+  switch (options.access) {
+    case 'direct':
+      urlTooltip = (
+        <>
+          Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          {docsTip()}
+        </>
+      );
+      break;
+    case 'proxy':
+      urlTooltip = (
+        <>
+          Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
+          backend/server.
+          {docsTip()}
+        </>
+      );
+      break;
+    default:
+      urlTooltip = <>Specify a complete HTTP URL (for example http://your_server:8080) {docsTip()}</>;
+  }
+
   return (
     <>
-      {/* NEED TO ADD <ConnectionSettings
-        config={props.options}
-        onChange={props.onOptionsChange}
-      /> */}
-
+      <ConnectionSettings
+        urlPlaceholder="http://localhost:9090"
+        config={options}
+        onChange={onOptionsChange}
+        urlLabel="Prometheus server URL"
+        urlTooltip={docsTip()}
+      />
+      {/* STYLE: ADD PADDING */}
+      <hr />
+      {/* STYLE: ADD PADDING */}
       <Auth
         // Reshaped legacy props
         {...newAuthProps}
@@ -116,8 +148,6 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         // otherwise pass the id from converted legacy data
         selectedMethod={returnSelectedMethod()}
       />
-
-      {/* NEED TO ADD BELOW <AdvancedHttpSettings/> */}
       {secureSocksDSProxyEnabled && <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />}
     </>
   );
