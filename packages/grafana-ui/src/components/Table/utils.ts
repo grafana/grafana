@@ -130,7 +130,7 @@ export function getColumns(
       Cell,
       id: fieldIndex.toString(),
       field: field,
-      Header: fieldTableOptions.hideHeader ? () => null : getFieldDisplayName(field, data),
+      Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
       accessor: (_row: any, i: number) => {
         return field.values[i];
       },
