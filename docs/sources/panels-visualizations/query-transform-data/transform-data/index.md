@@ -67,13 +67,13 @@ The input and output results sets can help you debug a transformation.
 
 ## Disable a transformation
 
-You can disable or hide one or more transformation clicking on the eye icon on the top right side of the transformation row. This will disable the actions applied of that especific transformation and can help to identify issues when several transformations are chaned one after another.
+You can disable or hide one or more transformations by clicking on the eye icon on the top right side of the transformation row. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
 
 ## Filter a transformation
 
-If your panel uses more than one query you can filter these and apply the selected transformation only to one of the queries. For that, click on the filter icon on the right side of the transformation row. This will open a dropdown with a list of queries used on the panel where you can select one of them. 
+If your panel uses more than one query, you can filter these and apply the selected transformation to only one of the queries. To do this, click the filter icon on the top right of the transformation row. This opens a drop-down with a list of queries used on the panel. From here, you can select the query you want to transform.
 
-Note that the filter icon will always appear if your panel has more than one query, but it may not work if previous transformations for merging the queries output are aplied, as one transformation takes the output of the previous one. 
+Note that the filter icon is always displayed if your panel has more than one query, but it may not work if previous transformations for merging the queries' outputs are applied. This is because one transformation takes the output of the previous one. 
 
 ## Delete a transformation
 
@@ -178,31 +178,46 @@ The result:
 
 ### Create heatmap
 
-Use this transformation to prepare histogram data to be visualize over time. Similar to the [Heatmap panel] ({{< relref "../visualizations/heatmap" >}}) this transformation allows you to convert histograms metrics to buckets over time.
+Use this transformation to prepare histogram data to be visualized over time. Similar to the [Heatmap panel] ({{< relref "../visualizations/heatmap" >}}), this transformation allows you to convert histogram metrics to buckets over time.
 
 #### X Bucket
 
-This setting determines how the X-axis is split into buckets. You can specify a time interval in the Size input. For example, a time range of 1h makes the cells 1-hour wide on the X-axis. Or in the case of not time related series you can use Count, to define the number of elements in a bucket.
+This setting determines how the x-axis is split into buckets. 
+
+- **Size** - Specify a time interval in the input field. For example, a time range of `1h` makes the cells one hour wide on the x-axis. 
+- **Count** - For non-time related series, use this option to define the number of elements in a bucket.
 
 #### Y Bucket
 
-This setting determines how the Y-axis is split into buckets.
+This setting determines how the y-axis is split into buckets.
 
 #### Y Bucket scale
 
-Used for selecting the scale on the Y-axes. You can select between linear scale and Logarithmic scale with base 2 or base 10 or Symetrical Logarithmic scale (which allows negative values) with  base 2 or base 10.
+Use this option to set the scale of the y-axes. Select from:
+
+- **Linear**
+- **Logarithmic** - Use a base 2 or base 10
+- **Symlog** - A symmetrical logarithmic scale - Use a base 2 or base 10; allows negative values
 
 ### Extract fields
 
-Use this transfromation to select one source of data and extract content from it in different formats:
+Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
 
-- **JSON** To parse JSON content from the source
-- **Key+value parse** To parse content in the format a=b or c:d from the source
-- **Auto** To discover fields automatically
+- **Source** - Select the field for the source of data.
+- **Format** - Select one of the following:
+  - **JSON** To parse JSON content from the source
+  - **Key+value parse** To parse content in the format a=b or c:d from the source
+  - **Auto** To discover fields automatically
+- **Replace all fields** -  (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 ### Field lookup
 
-Use this transformation on a field value to lookup additional fields from an external source (currently available: Countries, USA States and Airports). This currently supports spatial data, but will eventually support more formats
+Use this transformation on a field value to look up additional fields from an external source.
+
+- **Field** - Select a text field.
+- **Lookup** - Select from **Countries**, **USA States**, and **Airports**)
+
+This transformation currently supports spatial data.
  
 ### Filter by name
 
@@ -364,19 +379,19 @@ This transformation enables you to extract key information from your time series
 
 ### Grouping to matrix
 
-Use this transformation to combine three fields that will be used as input for Column, Row and Cell value, from the query output and generate a Matrix. This matrix will be calculated as follows:
+Use this transformation to combine three fields, that will be used as input for the **Column**, **Row**, and **Cell value** fields, from the query output and generate a matrix. This matrix will be calculated as follows:
 
-Given the original data
+**Original data**
 
 | Server ID | CPU Temperature | Server Status |
 | --------- | --------------- | ------------- |
-| server 1  | 82              | Ok            |
+| server 1  | 82              | OK            |
 | server 2  | 88.6            | OK            |
 | server 3  | 59.6            | Shutdown      |
 
-We can generate a Matrix using the values of `Server Status` as colum names, the `Server ID` values as rows name and the `CPU Temperatue` as content of each cell. The content of each cell will apear for the existing column (Server Statues) and row combination (Server ID), for the rest of the cells we can select which value to display between: Null, True, False or Empty.
+We can generate a matrix using the values of `Server Status` as column names, the `Server ID` values as row names, and the `CPU Temperature` as content of each cell. The content of each cell will appear for the existing column (`Server Status`) and row combination (`Server ID`). For the rest of the cells, you can select which value to display between: **Null**, **True**, **False**, or **Empty**.
 
-Thus, the output is:
+**Output**
 
 | Server ID\Server Status | OK    | Shutdown |
 | ----------------------- | ----- | -------- |
@@ -386,9 +401,11 @@ Thus, the output is:
 
 ### Histogram
 
-Use this transformation to generate a histogram based on the input data. You can select the bucket size as the distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax), and its offset (for non-zero based bucket).
+Use this transformation to generate a histogram based on the input data. 
 
-Additionally, you can toggle the Combine Series option to create an Histogram using all the available series.
+- **Bucket size** - The distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax).
+- **Bucket offset** - The offset for non-zero based buckets.
+- **Combine series** - Create a histogram using all the available series.
 
 ### Join by field
 
@@ -466,12 +483,14 @@ I applied a transformation to join the query results using the time field. Now I
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
-### Join by Labels
+### Join by labels
 
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
 time series results into a single wide table with a shared Label field.
 
-Select the label to `Join` by between the labels available or common accross all time series, and the `Value` name for the output result. 
+
+- **Join** - Select the label to join by between the labels available or common across all time series.
+- **Value** - The name for the output result. 
 
 ### Labels to fields
 
