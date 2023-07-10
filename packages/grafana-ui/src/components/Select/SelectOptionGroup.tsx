@@ -81,6 +81,8 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
 
     return (
       <div>
+        {/* TODO: fix keyboard a11y */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={styles.header} onClick={this.onToggleChildren}>
           <span className={styles.label}>{label}</span>
           <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />{' '}

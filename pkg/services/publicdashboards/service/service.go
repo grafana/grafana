@@ -215,6 +215,11 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.Uid)
 	}
 
+	// validate the public dashboard belongs to the dashboard
+	if existingPubdash.DashboardUid != dto.DashboardUid {
+		return nil, ErrInvalidUid.Errorf("Update: the public dashboard does not belong to the dashboard")
+	}
+
 	publicDashboard := newUpdatePublicDashboard(dto, existingPubdash)
 
 	// set values to update
@@ -408,11 +413,6 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	annotationsEnabled := returnValueOrDefault(dto.PublicDashboard.AnnotationsEnabled, false)
 	timeSelectionEnabled := returnValueOrDefault(dto.PublicDashboard.TimeSelectionEnabled, false)
 
-	timeSettings := dto.PublicDashboard.TimeSettings
-	if dto.PublicDashboard.TimeSettings == nil {
-		timeSettings = &TimeSettings{}
-	}
-
 	share := dto.PublicDashboard.Share
 	if dto.PublicDashboard.Share == "" {
 		share = PublicShareType
@@ -427,7 +427,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,
-		TimeSettings:         timeSettings,
+		TimeSettings:         &TimeSettings{},
 		Share:                share,
 		CreatedBy:            dto.UserId,
 		CreatedAt:            now,
@@ -443,15 +443,6 @@ func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 	isEnabled := returnValueOrDefault(pubdashDTO.IsEnabled, pd.IsEnabled)
 	annotationsEnabled := returnValueOrDefault(pubdashDTO.AnnotationsEnabled, pd.AnnotationsEnabled)
 
-	timeSettings := pubdashDTO.TimeSettings
-	if pubdashDTO.TimeSettings == nil {
-		if pd.TimeSettings == nil {
-			timeSettings = &TimeSettings{}
-		} else {
-			timeSettings = pd.TimeSettings
-		}
-	}
-
 	share := pubdashDTO.Share
 	if pubdashDTO.Share == "" {
 		share = pd.Share
@@ -462,7 +453,7 @@ func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,
-		TimeSettings:         timeSettings,
+		TimeSettings:         pd.TimeSettings,
 		Share:                share,
 		UpdatedBy:            dto.UserId,
 		UpdatedAt:            time.Now(),

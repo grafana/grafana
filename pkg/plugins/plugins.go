@@ -486,7 +486,7 @@ func (p *Plugin) IsBundledPlugin() bool {
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return p.Class == ClassExternal
+	return !p.IsCorePlugin() && !p.IsBundledPlugin()
 }
 
 type Class string

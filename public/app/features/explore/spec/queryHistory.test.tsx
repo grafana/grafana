@@ -75,6 +75,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
+jest.mock('../../correlations/utils', () => {
+  return {
+    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
+  };
+});
+
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
@@ -137,46 +143,53 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  // FIXME: flaky test
-  it.skip('updates the state in both Explore panes', async () => {
-    const urlParams = {
-      left: serializeStateToUrlParam({
-        datasource: 'loki',
-        queries: [{ refId: 'A', expr: 'query #1' }],
-        range: { from: 'now-1h', to: 'now' },
-      }),
-      right: serializeStateToUrlParam({
-        datasource: 'loki',
-        queries: [{ refId: 'A', expr: 'query #2' }],
-        range: { from: 'now-1h', to: 'now' },
-      }),
-    };
+  describe('updates the state in both Explore panes', () => {
+    beforeEach(async () => {
+      const urlParams = {
+        left: serializeStateToUrlParam({
+          datasource: 'loki',
+          queries: [{ refId: 'A', expr: 'query #1' }],
+          range: { from: 'now-1h', to: 'now' },
+        }),
+        right: serializeStateToUrlParam({
+          datasource: 'loki',
+          queries: [{ refId: 'A', expr: 'query #2' }],
+          range: { from: 'now-1h', to: 'now' },
+        }),
+      };
 
-    const { datasources } = setupExplore({ urlParams });
-    jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
-    await waitForExplore();
-    await waitForExplore('right');
+      const { datasources } = setupExplore({ urlParams });
+      jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
+      await waitForExplore();
+      await waitForExplore('right');
 
-    // queries in history
-    await openQueryHistory('left');
-    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'left');
-    await openQueryHistory('right');
-    await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'right');
-
-    // star one query
-    await starQueryHistory(1, 'left');
-    await assertQueryHistoryIsStarred([false, true], 'left');
-    await assertQueryHistoryIsStarred([false, true], 'right');
-    expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
-      queryHistoryEnabled: false,
-      newValue: true,
+      await openQueryHistory('left');
+      await openQueryHistory('right');
     });
 
-    await deleteQueryHistory(0, 'left');
-    await assertQueryHistory(['{"expr":"query #1"}'], 'left');
-    await assertQueryHistory(['{"expr":"query #1"}'], 'right');
-    expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
-      queryHistoryEnabled: false,
+    it('initial state is in sync', async () => {
+      await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'left');
+      await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'right');
+    });
+
+    it('starred queries are synced', async () => {
+      // star one one query
+      await starQueryHistory(1, 'left');
+      await assertQueryHistoryIsStarred([false, true], 'left');
+      await assertQueryHistoryIsStarred([false, true], 'right');
+      expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
+        queryHistoryEnabled: false,
+        newValue: true,
+      });
+    });
+
+    it('deleted queries are synced', async () => {
+      await deleteQueryHistory(0, 'left');
+      await assertQueryHistory(['{"expr":"query #1"}'], 'left');
+      await assertQueryHistory(['{"expr":"query #1"}'], 'right');
+      expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
+        queryHistoryEnabled: false,
+      });
     });
   });
 
