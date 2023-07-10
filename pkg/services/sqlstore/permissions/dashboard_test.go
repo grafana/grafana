@@ -192,6 +192,12 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 			expectedResult: 100,
 		},
 		{
+			desc:                    "Should not be able to view any dashboards or folders without any permissions",
+			permission:              dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{},
+			expectedResult:          0,
+		},
+		{
 			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
 			permission: dashboards.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
