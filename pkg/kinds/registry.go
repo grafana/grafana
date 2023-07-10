@@ -11,8 +11,8 @@ type Registry interface {
 	Custom(ctx context.Context) []kindsys.Custom
 	Composable(ctx context.Context) []kindsys.Composable
 	All(ctx context.Context) []kindsys.Kind
-	Register(ctx context.Context, p kindsys.Provider)
-	Unregister(ctx context.Context, p kindsys.Provider)
+	Register(ctx context.Context, p *kindsys.Provider)
+	Unregister(ctx context.Context, p *kindsys.Provider)
 }
 
 func ProvideService() Registry {
@@ -21,12 +21,12 @@ func ProvideService() Registry {
 
 func NewRegistry() Registry {
 	return &registry{
-		all: []kindsys.Provider{},
+		all: []*kindsys.Provider{},
 	}
 }
 
 type registry struct {
-	all []kindsys.Provider
+	all []*kindsys.Provider
 }
 
 func (r *registry) Core(ctx context.Context) []kindsys.Core {
@@ -85,12 +85,12 @@ func (r *registry) All(ctx context.Context) []kindsys.Kind {
 	return kinds
 }
 
-func (r *registry) Register(ctx context.Context, p kindsys.Provider) {
+func (r *registry) Register(ctx context.Context, p *kindsys.Provider) {
 	r.all = append(r.all, p)
 }
 
-func (r *registry) Unregister(ctx context.Context, p kindsys.Provider) {
-	all := []kindsys.Provider{}
+func (r *registry) Unregister(ctx context.Context, p *kindsys.Provider) {
+	all := []*kindsys.Provider{}
 
 	for _, pa := range r.all {
 		if p.Name != pa.Name {

@@ -148,7 +148,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 
 	gpv := loadGP(rt.Context())
 
-	fsys, err = ensureCueMod(fsys, pp.Properties)
+	fsys, err = ensureCueMod(fsys, pp.Properties.Id)
 	if err != nil {
 		return ParsedPlugin{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
 	}
@@ -248,7 +248,7 @@ func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kinds
 		},
 	}
 
-	fsys, err := ensureCueMod(fsys, pp.Properties)
+	fsys, err := ensureCueMod(fsys, pp.Properties.Id)
 	if err != nil {
 		return kindsys.Def[kindsys.ComposableProperties]{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
 	}
@@ -290,9 +290,9 @@ func ensureCueMod(fsys fs.FS, pluginID string) (fs.FS, error) {
 	return fsys, nil
 }
 
-func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, error) {
+func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (*kindsys.Provider, error) {
 	if fsys == nil {
-		return kindsys.Provider{}, ErrEmptyFS
+		return &kindsys.Provider{}, ErrEmptyFS
 	}
 	if rt == nil {
 		rt = cuectx.GrafanaThemaRuntime()
@@ -307,16 +307,16 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, err
 	b, err := fs.ReadFile(fsys, "plugin.json")
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return kindsys.Provider{}, ErrNoRootFile
+			return &kindsys.Provider{}, ErrNoRootFile
 		}
-		return kindsys.Provider{}, fmt.Errorf("error reading plugin.json: %w", err)
+		return &kindsys.Provider{}, fmt.Errorf("error reading plugin.json: %w", err)
 	}
 
 	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
 	pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))(b)
 	if err != nil {
-		return kindsys.Provider{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
+		return &kindsys.Provider{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
 	}
 	pluginDef := pinst.ValueP()
 	provider := kindsys.Provider{
@@ -325,16 +325,16 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, err
 	}
 
 	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
-		return kindsys.Provider{}, fmt.Errorf("error globbing for cue files in fsys: %w", err)
+		return &kindsys.Provider{}, fmt.Errorf("error globbing for cue files in fsys: %w", err)
 	} else if len(cuefiles) == 0 {
-		return provider, nil
+		return &provider, nil
 	}
 
 	gpv := loadGP(rt.Context())
 
 	fsys, err = ensureCueMod(fsys, provider.Name)
 	if err != nil {
-		return kindsys.Provider{}, fmt.Errorf("%s has invalid cue.mod: %w", provider.Name, err)
+		return &kindsys.Provider{}, fmt.Errorf("%s has invalid cue.mod: %w", provider.Name, err)
 	}
 
 	bi, err := cuectx.LoadInstanceWithGrafana(fsys, "", load.Package(PackageName))
@@ -342,7 +342,7 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, err
 		if err == nil {
 			err = bi.Err
 		}
-		return kindsys.Provider{}, errors.Wrap(errors.Newf(token.NoPos, "%s did not load", provider.Name), err)
+		return &kindsys.Provider{}, errors.Wrap(errors.Newf(token.NoPos, "%s did not load", provider.Name), err)
 	}
 
 	f, _ := parser.ParseFile("plugin.json", fmt.Sprintf(`{
@@ -388,30 +388,8 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, err
 		gpi = gpi.Unify(gpv)
 	}
 	if gpi.Err() != nil {
-		return kindsys.Provider{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, provider.Name), gpi.Err())
+		return &kindsys.Provider{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, provider.Name), gpi.Err())
 	}
 
-	for _, si := range allsi {
-		iv := gpi.LookupPath(cue.MakePath(cue.Str("composableKinds"), cue.Str(si.Name())))
-		if !iv.Exists() {
-			continue
-		}
-
-		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
-		if err != nil {
-			return kindsys.Provider{}, err
-		}
-
-		compo, err := kindsys.BindComposable(rt, kindsys.Def[kindsys.ComposableProperties]{
-			Properties: props,
-			V:          iv,
-		})
-		if err != nil {
-			return kindsys.Provider{}, err
-		}
-		provider.ComposableKinds[si.Name()] = compo
-	}
-
-	// TODO custom kinds
-	return provider, nil
+	return kindsys.BindProvider(rt, gpi)
 }
