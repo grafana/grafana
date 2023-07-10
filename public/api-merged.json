@@ -10564,7 +10564,7 @@
         "operationId": "searchUsersWithPaging",
         "responses": {
           "200": {
-            "$ref": "#/responses/searchUsersResponse"
+            "$ref": "#/responses/searchUsersWithPagingResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -21170,6 +21170,15 @@
       }
     },
     "searchUsersResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/UserSearchHitDTO"
+        }
+      }
+    },
+    "searchUsersWithPagingResponse": {
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchUserQueryResult"

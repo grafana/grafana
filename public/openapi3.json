@@ -1690,6 +1690,19 @@
         "content": {
           "application/json": {
             "schema": {
+              "items": {
+                "$ref": "#/components/schemas/UserSearchHitDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "searchUsersWithPagingResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
               "$ref": "#/components/schemas/SearchUserQueryResult"
             }
           }
@@ -22508,7 +22521,7 @@
         "operationId": "searchUsersWithPaging",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/searchUsersResponse"
+            "$ref": "#/components/responses/searchUsersWithPagingResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"
