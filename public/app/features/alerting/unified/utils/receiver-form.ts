@@ -1,5 +1,4 @@
-import { isArray, isEmpty, isNil, isPlainObject, omitBy } from 'lodash';
-import { string } from 'yargs';
+import { isArray, isNil, omitBy } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
