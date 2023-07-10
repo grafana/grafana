@@ -319,9 +319,22 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, err
 		return kindsys.Provider{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
 	}
 	pluginDef := pinst.ValueP()
+	// FIXME remove this once it's being correctly populated coming out of lineage
+	if pluginDef.PascalName == "" {
+		pluginDef.PascalName = plugindef.DerivePascalName(*pluginDef)
+	}
+
 	provider := kindsys.Provider{
-		Name:    pluginDef.Id,
-		Version: *pluginDef.Info.Version,
+		Name:            pluginDef.Id,
+		Metadata:        *pluginDef,
+		ComposableKinds: make(map[string]kindsys.Composable),
+	}
+
+	// TODO this should never be nil, need to fix plugin.json files
+	if pluginDef.Info.Version != nil {
+		provider.Version = *pluginDef.Info.Version
+	} else {
+		provider.Version = "1.0.0"
 	}
 
 	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {

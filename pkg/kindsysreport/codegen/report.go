@@ -224,10 +224,15 @@ func buildKindStateReport() *KindStateReport {
 	}
 
 	all := kindsys.SchemaInterfaces(nil)
-	for _, pp := range corelist.New(nil) {
+	for _, p := range corelist.New(nil) {
+		pluginDef, ok := p.Metadata.(plugindef.PluginDef)
+		if !ok {
+			fmt.Fprintln(os.Stderr, "provider metadata is not of plugindef.Plugindef type")
+			os.Exit(1)
+		}
 		for _, si := range all {
-			if ck, has := pp.ComposableKinds[si.Name()]; has {
-				links := buildComposableLinks(pp.Properties, ck.Def().Properties)
+			if ck, has := p.ComposableKinds[si.Name()]; has {
+				links := buildComposableLinks(pluginDef, ck.Def().Properties)
 				r.add(Kind{
 					SomeKindProperties:   ck.Props(),
 					Category:             "composable",
@@ -235,8 +240,8 @@ func buildKindStateReport() *KindStateReport {
 					GrafanaMaturityCount: grafanaMaturityAttrCount(ck.Lineage().Latest().Underlying()),
 					CodeOwners:           findCodeOwners(of, links),
 				})
-			} else if may := si.Should(string(pp.Properties.Type)); may {
-				n := plugindef.DerivePascalName(pp.Properties) + si.Name()
+			} else if may := si.Should(string(pluginDef.Type)); may {
+				n := plugindef.DerivePascalName(pluginDef) + si.Name()
 				ck := kindsys.ComposableProperties{
 					SchemaInterface: si.Name(),
 					CommonProperties: kindsys.CommonProperties{
