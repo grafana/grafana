@@ -32,20 +32,17 @@ function getAvailableRuleTypes() {
   return { enabledRuleTypes, defaultRuleType };
 }
 
-export function SmartAlertTypeDetector({
+const getCanSwitch = ({
+  queries,
+  ruleFormType,
   editingExistingRule,
   rulesSourcesWithRuler,
-  queries,
 }: {
-  editingExistingRule: boolean;
   rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
-}) {
-  const { getValues, setValue } = useFormContext<RuleFormValues>();
-
-  const ruleFormType = getValues('type');
-  const styles = useStyles2(getStyles);
-
+  ruleFormType: RuleFormType | undefined;
+  editingExistingRule: boolean;
+}) => {
   // get available rule types
   const availableRuleTypes = getAvailableRuleTypes();
   // check if we have only one query in queries and if it's a cloud datasource
@@ -69,6 +66,25 @@ export function SmartAlertTypeDetector({
     !isRecordingRuleType &&
     ((cloudTypeEnabled && canBeCloud && ruleFormType === RuleFormType.grafana) ||
       (ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled));
+  return canSwitch;
+};
+
+export function SmartAlertTypeDetector({
+  editingExistingRule,
+  rulesSourcesWithRuler,
+  queries,
+}: {
+  editingExistingRule: boolean;
+  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  queries: AlertQuery[];
+}) {
+  const { getValues, setValue } = useFormContext<RuleFormValues>();
+
+  const ruleFormType = getValues('type');
+  const styles = useStyles2(getStyles);
+  const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
+
+  const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
 
   const [buttonClicked, setButtonClicked] = useState(false);
 
