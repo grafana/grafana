@@ -24,8 +24,6 @@ jobs:
 
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
       - name: "Generate token"
         id: generate_token

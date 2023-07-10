@@ -1,8 +1,11 @@
 package main
 
 import (
+	"archive/zip"
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -37,31 +40,17 @@ const (
 // If kind names are given as parameters, the script will make the above actions only for the
 // given kinds.
 func main() {
-	var kindArgs []string
-	if len(os.Args) > 1 {
-		kindArgs = os.Args[1:]
-	}
-
 	var corek []kindsys.Kind
 	var compok []kindsys.Composable
 
-	// This script will reach the GH API rate limit if ran for all kinds without token.
-	// If you don't have a GH token, run the script with kind names as parameters to run
-	// it only for a limited set of kinds.
-	var ts oauth2.TokenSource
-	token, ok := os.LookupEnv("GITHUB_TOKEN")
-	if ok {
-		ts = oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: token},
-		)
+	kindRegistry, err := NewKindRegistry()
+	defer os.Remove(kindRegistry.zipDir)
+	if err != nil {
+		die(err)
 	}
 
-	ctx := context.Background()
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-
 	// Search for the latest version directory present in the kind-registry repo
-	latestRegistryDir, err := findLatestDir(ctx, client)
+	latestRegistryDir, err := kindRegistry.findLatestDir()
 	if err != nil {
 		die(fmt.Errorf("failed to get latest directory for published kinds: %s", err))
 	}
@@ -70,12 +59,8 @@ func main() {
 
 	// Kind verification
 	for _, kind := range corekind.NewBase(nil).All() {
-		if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
-			continue
-		}
-
 		name := kind.Props().Common().MachineName
-		err := verifyKind(kind, name, "core", latestRegistryDir)
+		err := verifyKind(kindRegistry, kind, name, "core", latestRegistryDir)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -92,10 +77,6 @@ func main() {
 		}
 
 		for _, kind := range pp.ComposableKinds {
-			if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
-				continue
-			}
-
 			si, err := kindsys.FindSchemaInterface(kind.Def().Properties.SchemaInterface)
 			if err != nil {
 				errs = append(errs, err)
@@ -103,7 +84,7 @@ func main() {
 			}
 
 			name := strings.ToLower(fmt.Sprintf("%s/%s", strings.TrimSuffix(kind.Lineage().Name(), si.Name()), si.Name()))
-			err = verifyKind(kind, name, "composable", latestRegistryDir)
+			err = verifyKind(kindRegistry, kind, name, "composable", latestRegistryDir)
 			if err != nil {
 				errs = append(errs, err)
 				continue
@@ -121,11 +102,11 @@ func main() {
 
 	// File generation
 	jfs := codejen.NewFS()
-	registryPath := filepath.Join(".github", "workflows", "scripts", "kinds")
+	outputPath := filepath.Join(".github", "workflows", "scripts", "kinds")
 
 	coreJennies := codejen.JennyList[kindsys.Kind]{}
 	coreJennies.Append(
-		KindRegistryJenny(registryPath, kindArgs),
+		KindRegistryJenny(outputPath),
 	)
 	corefs, err := coreJennies.GenerateFS(corek...)
 	die(err)
@@ -133,7 +114,7 @@ func main() {
 
 	composableJennies := codejen.JennyList[kindsys.Composable]{}
 	composableJennies.Append(
-		ComposableKindRegistryJenny(registryPath, kindArgs),
+		ComposableKindRegistryJenny(outputPath),
 	)
 	composablefs, err := composableJennies.GenerateFS(compok...)
 	die(err)
@@ -149,15 +130,14 @@ func die(errs ...error) {
 		for _, err := range errs {
 			fmt.Fprint(os.Stderr, err, "\n")
 		}
-		fmt.Println("Run `go run verify-kinds.go <kind name> <kind name>` to run the script on a limited set of kinds.")
 		os.Exit(1)
 	}
 }
 
 // verifyKind verifies that stable kinds are not updated once published (new schemas
 // can be added but existing ones cannot be updated)
-func verifyKind(kind kindsys.Kind, name string, category string, latestRegistryDir string) error {
-	oldKindString, err := getPublishedKind(name, category, latestRegistryDir)
+func verifyKind(registry *kindRegistry, kind kindsys.Kind, name string, category string, latestRegistryDir string) error {
+	oldKindString, err := registry.getPublishedKind(name, category, latestRegistryDir)
 	if err != nil {
 		return err
 	}
@@ -198,77 +178,6 @@ func verifyKind(kind kindsys.Kind, name string, category string, latestRegistryD
 	}
 
 	return nil
-}
-
-// getPublishedKind retrieves the latest published kind from the kind registry
-func getPublishedKind(name string, category string, latestRegistryDir string) (string, error) {
-	var ts oauth2.TokenSource
-	token, ok := os.LookupEnv("GITHUB_TOKEN")
-	if ok {
-		ts = oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: token},
-		)
-	}
-
-	ctx := context.Background()
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-
-	if latestRegistryDir == "" {
-		return "", nil
-	}
-
-	file, _, resp, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, fmt.Sprintf("grafana/%s/%s/%s.cue", latestRegistryDir, category, name), nil)
-	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
-			return "", nil
-		}
-		return "", fmt.Errorf("error retrieving published kind from GH, %d: %w", resp.StatusCode, err)
-	}
-	content, err := file.GetContent()
-	if err != nil {
-		return "", fmt.Errorf("error decoding published kind content: %w", err)
-	}
-
-	return content, nil
-}
-
-// findLatestDir get the latest version directory published in the kind registry
-func findLatestDir(ctx context.Context, client *github.Client) (string, error) {
-	re := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)`)
-	latestVersion := []uint64{0, 0, 0}
-	latestDir := ""
-
-	_, dir, resp, err := client.Repositories.GetContents(ctx, GITHUB_OWNER, GITHUB_REPO, "grafana", nil)
-	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
-			return "", nil
-		}
-		return "", err
-	}
-
-	for _, content := range dir {
-		if content.GetType() != "dir" {
-			continue
-		}
-
-		parts := re.FindStringSubmatch(content.GetName())
-		if parts == nil || len(parts) < 4 {
-			continue
-		}
-
-		version := make([]uint64, len(parts)-1)
-		for i := 1; i < len(parts); i++ {
-			version[i-1], _ = strconv.ParseUint(parts[i], 10, 32)
-		}
-
-		if isLess(latestVersion, version) {
-			latestVersion = version
-			latestDir = content.GetName()
-		}
-	}
-
-	return latestDir, nil
 }
 
 func isLess(v1 []uint64, v2 []uint64) bool {
@@ -319,16 +228,14 @@ func loadComposableKind(name string, kind string) (kindsys.Kind, error) {
 }
 
 // KindRegistryJenny generates kind files into the "next" folder of the local kind registry.
-func KindRegistryJenny(path string, kindSet []string) codegen.OneToOne {
+func KindRegistryJenny(path string) codegen.OneToOne {
 	return &kindregjenny{
-		path:    path,
-		kindSet: kindSet,
+		path: path,
 	}
 }
 
 type kindregjenny struct {
-	path    string
-	kindSet []string
+	path string
 }
 
 func (j *kindregjenny) JennyName() string {
@@ -336,10 +243,6 @@ func (j *kindregjenny) JennyName() string {
 }
 
 func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
-	if len(j.kindSet) > 0 && !contains(j.kindSet, kind.Name()) {
-		return nil, nil
-	}
-
 	name := kind.Props().Common().MachineName
 	core, ok := kind.(kindsys.Core)
 	if !ok {
@@ -367,16 +270,14 @@ func kindToBytes(kind cue.Value) ([]byte, error) {
 }
 
 // ComposableKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
-func ComposableKindRegistryJenny(path string, kindSet []string) codejen.OneToOne[kindsys.Composable] {
+func ComposableKindRegistryJenny(path string) codejen.OneToOne[kindsys.Composable] {
 	return &ckrJenny{
-		path:    path,
-		kindSet: kindSet,
+		path: path,
 	}
 }
 
 type ckrJenny struct {
-	path    string
-	kindSet []string
+	path string
 }
 
 func (j *ckrJenny) JennyName() string {
@@ -384,10 +285,6 @@ func (j *ckrJenny) JennyName() string {
 }
 
 func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
-	if len(j.kindSet) > 0 && !contains(j.kindSet, k.Name()) {
-		return nil, nil
-	}
-
 	si, err := kindsys.FindSchemaInterface(k.Def().Properties.SchemaInterface)
 	if err != nil {
 		panic(err)
@@ -413,4 +310,114 @@ func contains(array []string, value string) bool {
 	}
 
 	return false
+}
+
+type kindRegistry struct {
+	zipDir string
+}
+
+func NewKindRegistry() (*kindRegistry, error) {
+	ctx := context.Background()
+	tc := oauth2.NewClient(ctx, nil)
+	client := github.NewClient(tc)
+
+	// Create a temporary file to store the downloaded archive
+	file, err := ioutil.TempFile("", "*.zip")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary file: %w", err)
+	}
+	defer file.Close()
+
+	// Get the repository archive URL
+	archiveURL, _, err := client.Repositories.GetArchiveLink(ctx, GITHUB_OWNER, GITHUB_REPO, github.Zipball, &github.RepositoryContentGetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get archive URL: %w", err)
+	}
+
+	// Download the archive file
+	httpClient := http.DefaultClient
+	resp, err := httpClient.Get(archiveURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to download archive: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Save the downloaded archive to the temporary file
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save archive: %w", err)
+	}
+
+	return &kindRegistry{
+		zipDir: file.Name(),
+	}, nil
+}
+
+// findLatestDir get the latest version directory published in the kind registry
+func (registry *kindRegistry) findLatestDir() (string, error) {
+	re := regexp.MustCompile(`([0-9]+)\.([0-9]+)\.([0-9]+)`)
+	latestVersion := []uint64{0, 0, 0}
+	latestDir := ""
+
+	// Open the zip file for reading
+	zipFile, err := zip.OpenReader(registry.zipDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to open zip file %s: %w", registry.zipDir, err)
+	}
+	defer zipFile.Close()
+
+	for _, file := range zipFile.File {
+		if !file.FileInfo().IsDir() {
+			continue
+		}
+
+		parts := re.FindStringSubmatch(file.Name)
+		if parts == nil || len(parts) < 4 {
+			continue
+		}
+
+		version := make([]uint64, len(parts)-1)
+		for i := 1; i < len(parts); i++ {
+			version[i-1], _ = strconv.ParseUint(parts[i], 10, 32)
+		}
+
+		if isLess(latestVersion, version) {
+			latestVersion = version
+			latestDir = file.Name
+		}
+	}
+
+	return latestDir, nil
+}
+
+// getPublishedKind retrieves the latest published kind from the kind registry
+func (registry *kindRegistry) getPublishedKind(name string, category string, latestRegistryDir string) (string, error) {
+	if latestRegistryDir == "" {
+		return "", nil
+	}
+
+	// Open the zip file for reading
+	zipFile, err := zip.OpenReader(registry.zipDir)
+	if err != nil {
+		return "", fmt.Errorf("failed to open zip file: %w", err)
+	}
+	defer zipFile.Close()
+
+	kindPath := filepath.Join(
+		registry.zipDir,
+		fmt.Sprintf("grafana/%s/%s/%s.cue", latestRegistryDir, category, name),
+	)
+
+	file, err := zipFile.Open(kindPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+
+	return string(data), nil
 }

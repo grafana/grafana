@@ -17,6 +17,7 @@ jobs:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v3"
         with:
+          # required for the `grafana/grafana-github-actions/has-matching-release-tag` action to work
           fetch-depth: 0
 
       - name: "Setup Go"
@@ -26,8 +27,6 @@ jobs:
 
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
       - name: "Checkout Actions library"
         uses: "actions/checkout@v3"
