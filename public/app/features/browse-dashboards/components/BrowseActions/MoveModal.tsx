@@ -29,7 +29,6 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const handleFolderChange = (newFolder: FolderChange) => {
-    // setMoveTarget(newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid);
     setMoveTarget({
       uid: newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid,
       title: newFolder.title,
