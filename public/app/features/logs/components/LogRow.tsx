@@ -228,6 +228,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               showDetectedFields={displayedFields!}
               getFieldLinks={getFieldLinks}
               wrapLogMessage={wrapLogMessage}
+              onOpenContext={this.onOpenContext}
+              onPermalinkClick={this.props.onPermalinkClick}
+              styles={styles}
+              onPinLine={this.props.onPinLine}
+              onUnpinLine={this.props.onUnpinLine}
+              pinned={this.props.pinned}
             />
           ) : (
             <LogRowMessage

@@ -3,6 +3,8 @@ import React from 'react';
 
 import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 
+import { LogRowMenuCell } from './LogRowMenuCell';
+import { LogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
 export interface Props {
@@ -10,12 +12,19 @@ export interface Props {
   showDetectedFields: string[];
   wrapLogMessage: boolean;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  styles: LogRowStyles;
+  showContextToggle?: (row?: LogRowModel) => boolean;
+  onOpenContext: (row: LogRowModel) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
+  onPinLine?: (row: LogRowModel) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
+  pinned?: boolean;
 }
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
-  const { row, showDetectedFields, getFieldLinks, wrapLogMessage } = props;
+  const { row, showDetectedFields, getFieldLinks, wrapLogMessage, styles, ...rest } = props;
   const fields = getAllFields(row, getFieldLinks);
-  const wrapClassName = wrapLogMessage ? '' : styles.noWrap;
+  const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   // only single key/value rows are filterable, so we only need the first field key for filtering
   const line = showDetectedFields
     .map((parsedKey) => {
@@ -37,10 +46,19 @@ export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
     .filter((s) => s !== null)
     .join(' ');
 
-  return <td className={wrapClassName}>{line}</td>;
+  return (
+    <>
+      <td className={styles.logsRowMessage}>
+        <div className={wrapClassName}>{line}</div>
+      </td>
+      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
+        <LogRowMenuCell logText={line} row={row} styles={styles} {...rest} />
+      </td>
+    </>
+  );
 });
 
-const styles = {
+const displayedFieldsStyles = {
   noWrap: css`
     white-space: nowrap;
   `,
