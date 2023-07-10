@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { selectors } from '@grafana/e2e-selectors';
-import { InlineField, LegacyForms, Select, StatsPicker } from '@grafana/ui';
+import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
@@ -82,22 +82,14 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
         />
       </InlineField>
       {options.mode === ReduceTransformerMode.ReduceFields && (
-        <>
-          <LegacyForms.Switch
-            label="Include time"
-            labelClass="width-8"
-            checked={!!options.includeTimeField}
-            onChange={onToggleTime}
-          />
-        </>
+        <InlineField htmlFor="include-time-field" labelWidth={16} label="Include time">
+          <InlineSwitch id="include-time-field" value={!!options.includeTimeField} onChange={onToggleTime} />
+        </InlineField>
       )}
       {options.mode !== ReduceTransformerMode.ReduceFields && (
-        <LegacyForms.Switch
-          label="Labels to fields"
-          labelClass="width-8"
-          checked={!!options.labelsToFields}
-          onChange={onToggleLabels}
-        />
+        <InlineField htmlFor="labels-to-fields" labelWidth={16} label="Labels to fields">
+          <InlineSwitch id="labels-to-fields" value={!!options.labelsToFields} onChange={onToggleLabels} />
+        </InlineField>
       )}
     </>
   );
