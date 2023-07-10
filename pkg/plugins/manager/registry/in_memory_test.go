@@ -61,9 +61,7 @@ func TestInMemory_Add(t *testing.T) {
 			},
 			args: args{
 				p: &plugins.Plugin{
-					JSONData: plugins.JSONData{
-						ID: pluginUID,
-					},
+					UID: pluginUID,
 				},
 			},
 		},
@@ -72,17 +70,13 @@ func TestInMemory_Add(t *testing.T) {
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginUID: {
-						JSONData: plugins.JSONData{
-							ID: pluginUID,
-						},
+						UID: pluginUID,
 					},
 				},
 			},
 			args: args{
 				p: &plugins.Plugin{
-					JSONData: plugins.JSONData{
-						ID: pluginUID,
-					},
+					UID: pluginUID,
 				},
 			},
 			err: fmt.Errorf("plugin %s is already registered", pluginUID),
@@ -118,9 +112,7 @@ func TestInMemory_Plugin(t *testing.T) {
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginUID: {
-						JSONData: plugins.JSONData{
-							ID: pluginUID,
-						},
+						UID: pluginUID,
 					},
 				},
 			},
@@ -128,9 +120,7 @@ func TestInMemory_Plugin(t *testing.T) {
 				pluginUID: pluginUID,
 			},
 			expected: &plugins.Plugin{
-				JSONData: plugins.JSONData{
-					ID: pluginUID,
-				},
+				UID: pluginUID,
 			},
 			exists: true,
 		},
@@ -174,27 +164,19 @@ func TestInMemory_Plugins(t *testing.T) {
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginUID: {
-						JSONData: plugins.JSONData{
-							ID: pluginUID,
-						},
+						UID: pluginUID,
 					},
 					"test-panel": {
-						JSONData: plugins.JSONData{
-							ID: "test-panel",
-						},
+						UID: "test-panel",
 					},
 				},
 			},
 			expected: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID: pluginUID,
-					},
+					UID: pluginUID,
 				},
 				{
-					JSONData: plugins.JSONData{
-						ID: "test-panel",
-					},
+					UID: "test-panel",
 				},
 			},
 		},
@@ -240,9 +222,7 @@ func TestInMemory_Remove(t *testing.T) {
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
 					pluginUID: {
-						JSONData: plugins.JSONData{
-							ID: pluginUID,
-						},
+						UID: pluginUID,
 					},
 				},
 			},

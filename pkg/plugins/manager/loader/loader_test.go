@@ -78,6 +78,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
+					UID: "cloudwatch",
 					JSONData: plugins.JSONData{
 						ID:   "cloudwatch",
 						Type: plugins.TypeDataSource,
@@ -128,6 +129,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{"../testdata/valid-v2-signature"},
 			want: []*plugins.Plugin{
 				{
+					UID: "test-datasource",
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
 						Type: plugins.TypeDataSource,
@@ -168,6 +170,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
 			want: []*plugins.Plugin{
 				{
+					UID: "test-app",
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
 						Type: "app",
@@ -246,6 +249,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{
 				{
+					UID: "test-datasource",
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
 						Type: plugins.TypeDataSource,
@@ -283,7 +287,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginUID: "test-datasource",
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureMissing",
 				},
 			},
@@ -297,6 +301,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want: []*plugins.Plugin{
 				{
+					UID: "test-datasource",
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
 						Type: plugins.TypeDataSource,
@@ -335,7 +340,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginUID: "test-datasource",
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureInvalid",
 				},
 			},
@@ -350,7 +355,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginUID: "test-datasource",
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureInvalid",
 				},
 			},
@@ -365,7 +370,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginUID: "test-datasource",
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureModified",
 				},
 			},
@@ -380,7 +385,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginUID: "test-datasource",
+					PluginID:  "test-datasource",
 					ErrorCode: "signatureModified",
 				},
 			},
@@ -393,38 +398,40 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/test-app-with-includes"},
 			want: []*plugins.Plugin{
-				{JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: plugins.TypeApp,
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
+				{
+					UID: "test-app",
+					JSONData: plugins.JSONData{
+						ID:   "test-app",
+						Type: plugins.TypeApp,
+						Name: "Test App",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Test Inc.",
+								URL:  "http://test.com",
+							},
+							Description: "Official Grafana Test App & Dashboard bundle",
+							Version:     "1.0.0",
+							Links: []plugins.InfoLink{
+								{Name: "Project site", URL: "http://project.com"},
+								{Name: "License & Terms", URL: "http://license.com"},
+							},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-app.svg",
+								Large: "public/img/icn-app.svg",
+							},
+							Updated: "2015-02-10",
 						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
+						Dependencies: plugins.Dependencies{
+							GrafanaDependency: ">=8.0.0",
+							GrafanaVersion:    "*",
+							Plugins:           []plugins.Dependency{},
 						},
-						Logos: plugins.Logos{
-							Small: "public/img/icn-app.svg",
-							Large: "public/img/icn-app.svg",
+						Includes: []*plugins.Includes{
+							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
+							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 						},
-						Updated: "2015-02-10",
+						Backend: false,
 					},
-					Dependencies: plugins.Dependencies{
-						GrafanaDependency: ">=8.0.0",
-						GrafanaVersion:    "*",
-						Plugins:           []plugins.Dependency{},
-					},
-					Includes: []*plugins.Includes{
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
-						{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
-					},
-					Backend: false,
-				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app-with-includes")),
 					Class:         plugins.ClassExternal,
@@ -455,7 +462,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrs := l.PluginErrors()
 			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
-				require.Equal(t, tt.pluginErrors[pluginErr.PluginUID], pluginErr)
+				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
 
 			verifyState(t, tt.want, reg, procPrvdr, procMgr)
@@ -480,6 +487,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 
 		pluginPaths := []string{"../testdata/cdn"}
 		expected := []*plugins.Plugin{{
+			UID: "grafana-worldmap-panel",
 			JSONData: plugins.JSONData{
 				ID:   "grafana-worldmap-panel",
 				Type: plugins.TypePanel,
@@ -627,6 +635,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				},
 				want: []*plugins.Plugin{
 					{
+						UID: "test-datasource",
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
 							Type: plugins.TypeDataSource,
@@ -662,7 +671,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				},
 				pluginErrors: map[string]*plugins.Error{
 					"test-panel": {
-						PluginUID: "test-panel",
+						PluginID:  "test-panel",
 						ErrorCode: "signatureMissing",
 					},
 				},
@@ -703,7 +712,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				pluginErrs := l.PluginErrors()
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 				for _, pluginErr := range pluginErrs {
-					require.Equal(t, tt.pluginErrors[pluginErr.PluginUID], pluginErr)
+					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 				}
 				verifyState(t, tt.want, reg, procPrvdr, procMgr)
 			})
@@ -733,6 +742,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			pluginPaths: []string{"../testdata/test-app-with-roles"},
 			want: []*plugins.Plugin{
 				{
+					UID: "test-app",
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
 						Type: plugins.TypeApp,
@@ -842,6 +852,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 
 		expected := []*plugins.Plugin{
 			{
+				UID: "test-datasource",
 				JSONData: plugins.JSONData{
 					ID:   "test-datasource",
 					Type: plugins.TypeDataSource,
@@ -904,6 +915,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		}
 		expected := []*plugins.Plugin{
 			{
+				UID: "test-app",
 				JSONData: plugins.JSONData{
 					ID:   "test-app",
 					Type: plugins.TypeApp,
@@ -994,6 +1006,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		}
 		expected := []*plugins.Plugin{
 			{
+				UID: "test-app",
 				JSONData: plugins.JSONData{
 					ID:   "test-app",
 					Type: plugins.TypeApp,
@@ -1190,6 +1203,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		return
 	}
 	parent := &plugins.Plugin{
+		UID: "test-datasource",
 		JSONData: plugins.JSONData{
 			ID:   "test-datasource",
 			Type: plugins.TypeDataSource,
@@ -1223,6 +1237,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	}
 
 	child := &plugins.Plugin{
+		UID: "test-panel",
 		JSONData: plugins.JSONData{
 			ID:   "test-panel",
 			Type: plugins.TypePanel,
@@ -1315,6 +1330,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 	t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
 		parent := &plugins.Plugin{
+			UID: "myorgid-simple-app",
 			JSONData: plugins.JSONData{
 				ID:   "myorgid-simple-app",
 				Type: plugins.TypeApp,
@@ -1395,6 +1411,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		}
 
 		child := &plugins.Plugin{
+			UID: "myorgid-simple-panel",
 			JSONData: plugins.JSONData{
 				ID:   "myorgid-simple-panel",
 				Type: plugins.TypePanel,
@@ -1473,6 +1490,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
 		}
 		parent := &plugins.Plugin{
+			UID: "testdata-app",
 			JSONData: plugins.JSONData{
 				Type: plugins.TypeApp,
 				ID:   "testdata-app",
