@@ -81,16 +81,16 @@ export function SmartAlertTypeDetector({
   queries,
   removeExpressionsInQueriesReducer,
   addExpressionsInQueries,
-  antExpressions,
-  setAntExpressions,
+  prevExpressions,
+  setPrevExpressions,
 }: {
   editingExistingRule: boolean;
   rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
   removeExpressionsInQueriesReducer: () => void;
   addExpressionsInQueries: (expressions: AlertQuery[]) => void;
-  antExpressions: AlertQuery[];
-  setAntExpressions: (expressions: AlertQuery[]) => void;
+  prevExpressions: AlertQuery[];
+  setPrevExpressions: (expressions: AlertQuery[]) => void;
 }) {
   const { getValues, setValue } = useFormContext<RuleFormValues>();
 
@@ -100,28 +100,27 @@ export function SmartAlertTypeDetector({
   const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
 
   const restoreExpressionsInQueries = useCallback(() => {
-    addExpressionsInQueries(antExpressions);
-  }, [antExpressions, addExpressionsInQueries]);
+    addExpressionsInQueries(prevExpressions);
+  }, [prevExpressions, addExpressionsInQueries]);
 
   const onClickSwitch = useCallback(() => {
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
-      antExpressions.length > 0 && restoreExpressionsInQueries();
+      setPrevExpressions.length > 0 && restoreExpressionsInQueries();
     } else {
       setValue('type', RuleFormType.cloudAlerting);
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
-      setAntExpressions(expressions);
+      setPrevExpressions(expressions);
       removeExpressionsInQueriesReducer();
     }
   }, [
     getValues,
     setValue,
     queries,
-    antExpressions,
     removeExpressionsInQueriesReducer,
     restoreExpressionsInQueries,
-    setAntExpressions,
+    setPrevExpressions,
   ]);
 
   const typeTitle =

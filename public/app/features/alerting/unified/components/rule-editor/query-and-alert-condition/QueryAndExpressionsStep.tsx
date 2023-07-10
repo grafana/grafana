@@ -304,7 +304,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [dispatch]
   );
 
-  const [antExpressions, setAntExpressions] = useState<AlertQuery[]>([]);
+  const [prevExpressions, setPrevExpressions] = useState<AlertQuery[]>([]);
 
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
@@ -354,8 +354,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             addExpressionsInQueries={addExpressionsInQueries}
             removeExpressionsInQueriesReducer={removeExpressionsInQueries}
             queries={queries}
-            setAntExpressions={setAntExpressions}
-            antExpressions={antExpressions}
+            setPrevExpressions={setPrevExpressions}
+            prevExpressions={prevExpressions}
           />
         </Stack>
       )}
@@ -410,8 +410,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             addExpressionsInQueries={addExpressionsInQueries}
             removeExpressionsInQueriesReducer={removeExpressionsInQueries}
             queries={queries}
-            setAntExpressions={setAntExpressions}
-            antExpressions={antExpressions}
+            setPrevExpressions={setPrevExpressions}
+            prevExpressions={prevExpressions}
           />
           {/* Expression Queries */}
           <H5>Expressions</H5>
