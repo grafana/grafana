@@ -28,11 +28,7 @@ body:
         Describe your bug. What happened? What did you expect to happen?
         **Hot Tip:** Record your screen and add it here as a gif. 
       placeholder: Tell us what you see!
-      value: |
-        * Made an XYChart
-        * Tried to use Base 10 Logarithmic axis
-        * Nothing changes, still a linear axis
-        * Tried to use series overrides as well
+      value:
     validations:
       required: true
 
@@ -41,8 +37,7 @@ body:
       label: What did you expect to happen?
       description: What did you expect to happen?
       placeholder: Tell us what you expect!
-      value: |
-        - Base10 Log axis on Y axis
+      value:
     validations:
       required: true
 
@@ -63,9 +58,9 @@ body:
         **This is very helpful info**
       placeholder: "Step 1:..."
       value: |
-        1. Open Grafana and do X
-        2. Now click button Y
-        3. Wait for the browser to crash. Error message says: "Error..."
+        1.
+        2.
+        3.
     validations:
       required: true
 
@@ -96,6 +91,18 @@ body:
         - A downloaded binary
         - Other
         - I don't know
+    validations:
+      required: false
+
+  - type: dropdown
+    id: regression
+    attributes:
+      label: Is this a Regression?
+      description: |
+        A regression means that the feature was working, then you upgraded, and now it's broken.
+      options:
+        - 'No'
+        - 'Yes'
     validations:
       required: false
 
