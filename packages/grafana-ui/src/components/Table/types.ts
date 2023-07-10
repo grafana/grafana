@@ -89,7 +89,7 @@ export interface Props {
 
 export interface CustomCellRendererProps {
   field: Field;
-  index: number;
+  rowIndex: number;
   frame: DataFrame;
   // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
   // types could be propagated here.
