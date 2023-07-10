@@ -122,7 +122,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	require.NoError(t, err)
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()),
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(statickey.New()),
 		angularInspector, &fakes.FakeOauthService{})
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
