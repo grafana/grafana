@@ -25,7 +25,7 @@ def verify_swagger_step():
         ],
         "commands": [
             "make swagger-api-spec",
-            "git diff --exit-code || (echo \"Swagger API spec is out of date, please run 'make swagger-api-spec' and commit the changes\" && exit 1)",
+            "git diff --exit-code || (printf \"\\nSwagger API spec is out of date, please run 'make swagger-api-spec' and commit the changes\\n\" && exit 1)",
         ],
     }
 
