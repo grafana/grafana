@@ -90,7 +90,7 @@ export interface Props {
 
 export interface CustomCellRendererProps {
   field: Field;
-  index: number;
+  rowIndex: number;
   frame: DataFrame;
   value: unknown;
 }

@@ -31,7 +31,7 @@ export const DefaultCell = (props: TableCellProps) => {
 
   if (cellOptions.type === TableCellDisplayMode.Custom) {
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
-    value = <CustomCellComponent field={field} value={cell.value} index={row.index} frame={frame} />;
+    value = <CustomCellComponent field={field} value={cell.value} rowIndex={row.index} frame={frame} />;
   } else {
     if (React.isValidElement(cell.value)) {
       value = cell.value;

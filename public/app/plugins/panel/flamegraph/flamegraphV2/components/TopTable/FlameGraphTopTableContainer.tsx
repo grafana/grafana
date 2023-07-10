@@ -94,7 +94,7 @@ function buildTableDataFrame(
   const options: TableCustomCellOptions = {
     type: TableCellDisplayMode.Custom,
     cellComponent: (props) => {
-      const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.index);
+      const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.rowIndex);
       const isSearched = search === symbol;
       const isSandwiched = sandwichItem === symbol;
 
