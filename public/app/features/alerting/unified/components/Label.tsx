@@ -6,12 +6,14 @@ import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+export type LabelSize = 'md' | 'sm';
+
 interface Props {
   icon?: IconName;
   label?: ReactNode;
   value: ReactNode;
   color?: string;
-  size?: 'md' | 'sm';
+  size?: LabelSize;
 }
 
 // TODO allow customization with color prop

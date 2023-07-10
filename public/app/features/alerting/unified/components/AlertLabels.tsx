@@ -5,11 +5,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
 
-import { Label } from './Label';
+import { Label, LabelSize } from './Label';
 
 interface Props {
   labels: Record<string, string>;
-  size?: 'md' | 'sm';
+  size?: LabelSize;
 }
 
 export const AlertLabels = ({ labels, size }: Props) => {
@@ -31,7 +31,7 @@ function getLabelColor(input: string): string {
 
 const isPrivateKey = ([key, _]: [string, string]) => key.startsWith('__') && key.endsWith('__');
 
-const getStyles = (theme: GrafanaTheme2, size?: string) => ({
+const getStyles = (theme: GrafanaTheme2, size?: LabelSize) => ({
   wrapper: css`
     display: flex;
     flex-wrap: wrap;
