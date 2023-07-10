@@ -213,10 +213,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	if hs.License.FeatureEnabled("saml") {
-		// TODO change the scope when we extend the auth UI to more providers
-		r.Get("/admin/authentication/", authorize(ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML)), hs.Index)
-	}
+	r.Get("/admin/authentication/", authorize(evalAuthenticationSettings()), hs.Index)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -648,4 +645,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
+}
+
+func evalAuthenticationSettings() ac.Evaluator {
+	return ac.EvalAny(ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
+	), ac.EvalPermission(ac.ActionLDAPStatusRead))
 }
