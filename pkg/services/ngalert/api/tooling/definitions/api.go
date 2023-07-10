@@ -43,5 +43,3 @@ func (b Backend) String() string {
 		return ""
 	}
 }
-
-// TODO: remove after testing CI pipeline
