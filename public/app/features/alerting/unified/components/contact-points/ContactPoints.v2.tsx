@@ -272,8 +272,8 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           <Dropdown
             overlay={
               <Menu>
-                {/* TODO make this work */}
-                <Menu.Item label="Export" icon="download-alt" />
+                {/* TODO we don't support exporting a single contact point yet */}
+                {/* <Menu.Item label="Export" icon="download-alt" /> */}
                 <Menu.Divider />
                 <Menu.Item
                   label="Delete"
