@@ -25,8 +25,8 @@ func NewInMemory() *InMemory {
 	}
 }
 
-func (i *InMemory) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {
-	return i.plugin(pluginID)
+func (i *InMemory) Plugin(_ context.Context, pluginUID string) (*plugins.Plugin, bool) {
+	return i.plugin(pluginUID)
 }
 
 func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
@@ -42,12 +42,12 @@ func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
 }
 
 func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
-	if i.isRegistered(p.ID) {
-		return fmt.Errorf("plugin %s is already registered", p.ID)
+	if i.isRegistered(p.UID) {
+		return fmt.Errorf("plugin %s is already registered", p.UID)
 	}
 
 	i.mu.Lock()
-	i.store[p.ID] = p
+	i.store[p.UID] = p
 	if p.Alias != "" {
 		i.alias[p.Alias] = p
 	}
@@ -56,14 +56,14 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (i *InMemory) Remove(_ context.Context, pluginID string) error {
-	p, ok := i.plugin(pluginID)
+func (i *InMemory) Remove(_ context.Context, pluginUID string) error {
+	p, ok := i.plugin(pluginUID)
 	if !ok {
-		return fmt.Errorf("plugin %s is not registered", pluginID)
+		return fmt.Errorf("plugin %s is not registered", pluginUID)
 	}
 
 	i.mu.Lock()
-	delete(i.store, pluginID)
+	delete(i.store, pluginUID)
 	if p != nil && p.Alias != "" {
 		delete(i.alias, p.Alias)
 	}
@@ -72,13 +72,13 @@ func (i *InMemory) Remove(_ context.Context, pluginID string) error {
 	return nil
 }
 
-func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {
+func (i *InMemory) plugin(pluginUID string) (*plugins.Plugin, bool) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
-	p, exists := i.store[pluginID]
+	p, exists := i.store[pluginUID]
 
 	if !exists {
-		p, exists = i.alias[pluginID]
+		p, exists = i.alias[pluginUID]
 		if !exists {
 			return nil, false
 		}
@@ -87,9 +87,9 @@ func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {
 	return p, true
 }
 
-func (i *InMemory) isRegistered(pluginID string) bool {
-	p, exists := i.plugin(pluginID)
+func (i *InMemory) isRegistered(pluginUID string) bool {
+	p, exists := i.plugin(pluginUID)
 
 	// This may have matched based on an alias
-	return exists && p.ID == pluginID
+	return exists && p.UID == pluginUID
 }

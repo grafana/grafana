@@ -679,7 +679,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
 				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
 				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
-				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
+				{SaveError: dashboards.UpdatePluginDashboardError{PluginUID: "plug"}, ExpectedStatusCode: 412},
 			}
 
 			cmd := dashboards.SaveDashboardCommand{

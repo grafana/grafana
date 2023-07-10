@@ -379,7 +379,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 
 	// do not allow plugin dashboard updates without overwrite flag
 	if existing.PluginID != "" && !overwrite {
-		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
+		return isParentFolderChanged, dashboards.UpdatePluginDashboardError{PluginUID: existing.PluginID}
 	}
 
 	return isParentFolderChanged, nil
@@ -449,7 +449,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 		// do not allow plugin dashboard updates without overwrite flag
 		if existing.PluginID != "" && !cmd.Overwrite {
-			return nil, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
+			return nil, dashboards.UpdatePluginDashboardError{PluginUID: existing.PluginID}
 		}
 	}
 

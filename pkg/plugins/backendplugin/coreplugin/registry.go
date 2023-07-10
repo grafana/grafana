@@ -99,7 +99,7 @@ func (cr *Registry) BackendFactoryProvider() func(_ context.Context, p *plugins.
 			return nil
 		}
 
-		return cr.Get(p.ID)
+		return cr.Get(p.UID)
 	}
 }
 

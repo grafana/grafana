@@ -392,7 +392,7 @@ func TestPluginMarkdown(t *testing.T) {
 
 		pluginID := "test-datasource"
 		md, err := hs.pluginMarkdown(context.Background(), pluginID, "test")
-		require.ErrorAs(t, err, &plugins.NotFoundError{PluginID: pluginID})
+		require.ErrorAs(t, err, &plugins.NotFoundError{PluginUID: pluginID})
 		require.Equal(t, []byte{}, md)
 	})
 

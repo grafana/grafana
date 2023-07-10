@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/uidgen"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -40,6 +41,8 @@ type Loader struct {
 	log                     log.Logger
 	cfg                     *config.Cfg
 
+	uidGen uidgen.Generator
+
 	angularInspector angularinspector.Inspector
 
 	errs map[string]*plugins.SignatureError
@@ -48,16 +51,19 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
+	uidGenerator uidgen.Generator) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry,
+		uidGenerator)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
+	uidGenerator uidgen.Generator) *Loader {
 	return &Loader{
 		pluginFinder:            pluginFinder,
 		pluginRegistry:          pluginRegistry,
@@ -72,6 +78,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		assetPath:               assetPath,
 		angularInspector:        angularInspector,
 		externalServiceRegistry: externalServiceRegistry,
+		uidGen:                  uidGenerator,
 	}
 }
 
@@ -89,19 +96,20 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	loadedPlugins := make([]*plugins.Plugin, 0, len(found))
 
 	for _, p := range found {
-		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
+		pUID := l.uidGen.UID(p.Primary.JSONData)
+		if _, exists := l.pluginRegistry.Plugin(ctx, pUID); exists {
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginUID", pUID)
 			continue
 		}
 
 		sig, err := l.signatureCalculator.Calculate(ctx, src, p.Primary)
 		if err != nil {
-			l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
+			l.log.Warn("Could not calculate plugin signature state", "pluginUID", pUID, "err", err)
 			continue
 		}
 		plugin, err := l.createPluginBase(p.Primary.JSONData, src.PluginClass(ctx), p.Primary.FS)
 		if err != nil {
-			l.log.Error("Could not create primary plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)
+			l.log.Error("Could not create primary plugin base", "pluginUID", pUID, "err", err)
 			continue
 		}
 
@@ -112,14 +120,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		loadedPlugins = append(loadedPlugins, plugin)
 
 		for _, c := range p.Children {
-			if _, exists := l.pluginRegistry.Plugin(ctx, c.JSONData.ID); exists {
-				l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
+			cUID := l.uidGen.UID(c.JSONData)
+			if _, exists := l.pluginRegistry.Plugin(ctx, cUID); exists {
+				l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginUID", cUID)
 				continue
 			}
 
 			cp, err := l.createPluginBase(c.JSONData, plugin.Class, c.FS)
 			if err != nil {
-				l.log.Error("Could not create child plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)
+				l.log.Error("Could not create child plugin base", "pluginUID", cUID, "err", err)
 				continue
 			}
 			cp.Parent = plugin
@@ -139,15 +148,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
-				"pluginID", plugin.ID, "status", signingError.SignatureStatus)
+				"pluginUID", plugin.ID, "status", signingError.SignatureStatus)
 			plugin.SignatureError = signingError
-			l.errs[plugin.ID] = signingError
+			l.errs[plugin.UID] = signingError
 			// skip plugin so it will not be loaded any further
 			continue
 		}
 
 		// clear plugin error if a pre-existing error has since been resolved
-		delete(l.errs, plugin.ID)
+		delete(l.errs, plugin.UID)
 
 		// Hardcoded alias changes
 		switch plugin.ID {
@@ -163,12 +172,12 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			f, err := plugin.FS.Open("module.js")
 			if err != nil {
 				if errors.Is(err, plugins.ErrFileNotExist) {
-					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
+					l.log.Warn("Plugin missing module.js", "pluginUID", plugin.UID,
 						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 				}
 			} else if f != nil {
 				if err := f.Close(); err != nil {
-					l.log.Warn("Could not close module.js", "pluginID", plugin.ID, "err", err)
+					l.log.Warn("Could not close module.js", "pluginUID", plugin.UID, "err", err)
 				}
 			}
 		}
@@ -196,20 +205,20 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			canc()
 
 			if err != nil {
-				l.log.Warn("Could not inspect plugin for angular", "pluginID", p.ID, "err", err)
+				l.log.Warn("Could not inspect plugin for angular", "pluginUID", p.UID, "err", err)
 			}
 
 			// Do not initialize plugins if they're using Angular and Angular support is disabled
 			if p.AngularDetected && !l.cfg.AngularSupportEnabled {
-				l.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginID", p.ID)
+				l.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginUID", p.UID)
 				continue
 			}
 		}
 
 		if p.ExternalServiceRegistration != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-			s, err := l.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
+			s, err := l.externalServiceRegistry.RegisterExternalService(ctx, p.UID, p.ExternalServiceRegistration)
 			if err != nil {
-				l.log.Error("Could not register an external service. Initialization skipped", "pluginID", p.ID, "err", err)
+				l.log.Error("Could not register an external service. Initialization skipped", "pluginUID", p.UID, "err", err)
 				continue
 			}
 			p.ExternalService = s
@@ -217,11 +226,11 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
-			l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
+			l.log.Error("Could not initialize plugin", "pluginUID", p.UID, "err", err)
 			continue
 		}
-		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); errDeclareRoles != nil {
-			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", errDeclareRoles)
+		if errDeclareRoles := l.roleRegistry.DeclarePluginRoles(ctx, p.UID, p.Name, p.Roles); errDeclareRoles != nil {
+			l.log.Warn("Declare plugin roles failed.", "pluginUID", p.UID, "err", errDeclareRoles)
 		}
 
 		initializedPlugins = append(initializedPlugins, p)
@@ -229,19 +238,19 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 
 	for _, p := range initializedPlugins {
 		if err := l.load(ctx, p); err != nil {
-			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+			l.log.Error("Could not start plugin", "pluginUID", p.UID, "err", err)
 		}
 
 		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
-			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
+			metrics.SetPluginBuildInformation(p.UID, string(p.Type), p.Info.Version, string(p.Signature))
 		}
 	}
 
 	return initializedPlugins, nil
 }
 
-func (l *Loader) Unload(ctx context.Context, pluginID string) error {
-	plugin, exists := l.pluginRegistry.Plugin(ctx, pluginID)
+func (l *Loader) Unload(ctx context.Context, pluginUID string) error {
+	plugin, exists := l.pluginRegistry.Plugin(ctx, pluginUID)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -262,23 +271,23 @@ func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
 	}
 
 	if !p.IsCorePlugin() {
-		l.log.Info("Plugin registered", "pluginID", p.ID)
+		l.log.Info("Plugin registered", "pluginUID", p.UID)
 	}
 
-	return l.processManager.Start(ctx, p.ID)
+	return l.processManager.Start(ctx, p.UID)
 }
 
 func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
-	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	l.log.Debug("Stopping plugin process", "pluginUID", p.UID)
 
-	if err := l.processManager.Stop(ctx, p.ID); err != nil {
+	if err := l.processManager.Stop(ctx, p.UID); err != nil {
 		return err
 	}
 
-	if err := l.pluginRegistry.Remove(ctx, p.ID); err != nil {
+	if err := l.pluginRegistry.Remove(ctx, p.UID); err != nil {
 		return err
 	}
-	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	l.log.Debug("Plugin unregistered", "pluginUID", p.UID)
 
 	if remover, ok := p.FS.(plugins.FSRemover); ok {
 		if err := remover.Remove(); err != nil {
@@ -299,6 +308,7 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 		return nil, fmt.Errorf("module url: %w", err)
 	}
 	plugin := &plugins.Plugin{
+		UID:      l.uidGen.UID(pluginJSON),
 		JSONData: pluginJSON,
 		FS:       files,
 		BaseURL:  baseURL,
@@ -306,7 +316,7 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 		Class:    class,
 	}
 
-	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
+	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.UID)))
 	if err := l.setImages(plugin); err != nil {
 		return nil, err
 	}
@@ -344,7 +354,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 		}
 
 		if include.Type == "page" {
-			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
+			p.DefaultNavURL = path.Join("/plugins/", p.UID, "/page/", include.Slug)
 		}
 		if include.Type == "dashboard" {
 			dboardURL := include.DashboardURLPath()

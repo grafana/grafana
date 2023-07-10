@@ -176,8 +176,8 @@ func NewFakePluginRegistry() *FakePluginRegistry {
 	}
 }
 
-func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
-	p, exists := f.Store[id]
+func (f *FakePluginRegistry) Plugin(_ context.Context, uid string) (*plugins.Plugin, bool) {
+	p, exists := f.Store[uid]
 	return p, exists
 }
 
@@ -191,12 +191,12 @@ func (f *FakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
 }
 
 func (f *FakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
-	f.Store[p.ID] = p
+	f.Store[p.UID] = p
 	return nil
 }
 
-func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
-	delete(f.Store, id)
+func (f *FakePluginRegistry) Remove(_ context.Context, uid string) error {
+	delete(f.Store, uid)
 	return nil
 }
 
@@ -289,7 +289,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 		Invoked:   make(map[string]int),
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-		f.Requested[p.ID]++
+		f.Requested[p.UID]++
 		return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil

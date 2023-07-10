@@ -37,9 +37,9 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, er
 
 	var pluginErr dashboards.UpdatePluginDashboardError
 	if ok := errors.As(err, &pluginErr); ok {
-		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
+		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginUID)
 		// look up plugin name
-		if plugin, exists := pluginStore.Plugin(ctx, pluginErr.PluginId); exists {
+		if plugin, exists := pluginStore.Plugin(ctx, pluginErr.PluginUID); exists {
 			message = fmt.Sprintf("The dashboard belongs to plugin %s.", plugin.Name)
 		}
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "plugin-dashboard", "message": message})

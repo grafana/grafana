@@ -18,19 +18,19 @@ var (
 )
 
 type NotFoundError struct {
-	PluginID string
+	PluginUID string
 }
 
 func (e NotFoundError) Error() string {
-	return fmt.Sprintf("plugin with ID '%s' not found", e.PluginID)
+	return fmt.Sprintf("plugin with UID '%s' not found", e.PluginUID)
 }
 
 type DuplicateError struct {
-	PluginID string
+	PluginUID string
 }
 
 func (e DuplicateError) Error() string {
-	return fmt.Sprintf("plugin with ID '%s' already exists", e.PluginID)
+	return fmt.Sprintf("plugin with UID '%s' already exists", e.PluginUID)
 }
 
 func (e DuplicateError) Is(err error) bool {

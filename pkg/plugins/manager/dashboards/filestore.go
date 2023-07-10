@@ -43,7 +43,7 @@ func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *L
 
 	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
 	if !exists {
-		return nil, plugins.NotFoundError{PluginID: args.PluginID}
+		return nil, plugins.NotFoundError{PluginUID: args.PluginID}
 	}
 
 	references := []string{}
@@ -71,7 +71,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 
 	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
 	if !exists {
-		return nil, plugins.NotFoundError{PluginID: args.PluginID}
+		return nil, plugins.NotFoundError{PluginUID: args.PluginID}
 	}
 
 	var includedFile *plugins.Includes
@@ -92,7 +92,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 		return nil, err
 	}
 
-	file, err := openDashboardFile(ctx, m.pluginFileStore, plugin.ID, cleanPath)
+	file, err := openDashboardFile(ctx, m.pluginFileStore, plugin.UID, cleanPath)
 	if err != nil {
 		return nil, err
 	}

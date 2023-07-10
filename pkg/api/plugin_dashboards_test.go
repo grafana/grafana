@@ -129,5 +129,5 @@ func (m *pluginDashboardServiceMock) ListPluginDashboards(ctx context.Context, r
 		return nil, err
 	}
 
-	return nil, plugins.NotFoundError{PluginID: req.PluginID}
+	return nil, plugins.NotFoundError{PluginUID: req.PluginID}
 }

@@ -11,29 +11,29 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-const pluginID = "test-ds"
+const pluginUID = "test-ds"
 
 func TestInMemory(t *testing.T) {
 	t.Run("Test mix of registry operations", func(t *testing.T) {
 		i := NewInMemory()
 		ctx := context.Background()
 
-		p, exists := i.Plugin(ctx, pluginID)
+		p, exists := i.Plugin(ctx, pluginUID)
 		require.False(t, exists)
 		require.Nil(t, p)
 
-		err := i.Remove(ctx, pluginID)
-		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", pluginID).Error())
+		err := i.Remove(ctx, pluginUID)
+		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", pluginUID).Error())
 
-		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}
+		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginUID}}
 		err = i.Add(ctx, p)
 		require.NoError(t, err)
 
-		existingP, exists := i.Plugin(ctx, pluginID)
+		existingP, exists := i.Plugin(ctx, pluginUID)
 		require.True(t, exists)
 		require.Equal(t, p, existingP)
 
-		err = i.Remove(ctx, pluginID)
+		err = i.Remove(ctx, pluginUID)
 		require.NoError(t, err)
 
 		existingPlugins := i.Plugins(ctx)
@@ -62,7 +62,7 @@ func TestInMemory_Add(t *testing.T) {
 			args: args{
 				p: &plugins.Plugin{
 					JSONData: plugins.JSONData{
-						ID: pluginID,
+						ID: pluginUID,
 					},
 				},
 			},
@@ -71,9 +71,9 @@ func TestInMemory_Add(t *testing.T) {
 			name: "Cannot add a plugin to the registry if it already exists",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginID: {
+					pluginUID: {
 						JSONData: plugins.JSONData{
-							ID: pluginID,
+							ID: pluginUID,
 						},
 					},
 				},
@@ -81,11 +81,11 @@ func TestInMemory_Add(t *testing.T) {
 			args: args{
 				p: &plugins.Plugin{
 					JSONData: plugins.JSONData{
-						ID: pluginID,
+						ID: pluginUID,
 					},
 				},
 			},
-			err: fmt.Errorf("plugin %s is already registered", pluginID),
+			err: fmt.Errorf("plugin %s is already registered", pluginUID),
 		},
 	}
 	for _, tt := range tests {
@@ -104,7 +104,7 @@ func TestInMemory_Plugin(t *testing.T) {
 		store map[string]*plugins.Plugin
 	}
 	type args struct {
-		pluginID string
+		pluginUID string
 	}
 	tests := []struct {
 		name     string
@@ -117,19 +117,19 @@ func TestInMemory_Plugin(t *testing.T) {
 			name: "Can retrieve a plugin",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginID: {
+					pluginUID: {
 						JSONData: plugins.JSONData{
-							ID: pluginID,
+							ID: pluginUID,
 						},
 					},
 				},
 			},
 			args: args{
-				pluginID: pluginID,
+				pluginUID: pluginUID,
 			},
 			expected: &plugins.Plugin{
 				JSONData: plugins.JSONData{
-					ID: pluginID,
+					ID: pluginUID,
 				},
 			},
 			exists: true,
@@ -140,7 +140,7 @@ func TestInMemory_Plugin(t *testing.T) {
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
-				pluginID: pluginID,
+				pluginUID: pluginUID,
 			},
 			expected: nil,
 			exists:   false,
@@ -151,7 +151,7 @@ func TestInMemory_Plugin(t *testing.T) {
 			i := &InMemory{
 				store: tt.mocks.store,
 			}
-			p, exists := i.Plugin(context.Background(), tt.args.pluginID)
+			p, exists := i.Plugin(context.Background(), tt.args.pluginUID)
 			if exists != tt.exists {
 				t.Errorf("Plugin() got1 = %v, expected %v", exists, tt.exists)
 			}
@@ -173,9 +173,9 @@ func TestInMemory_Plugins(t *testing.T) {
 			name: "Can retrieve a list of plugin",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginID: {
+					pluginUID: {
 						JSONData: plugins.JSONData{
-							ID: pluginID,
+							ID: pluginUID,
 						},
 					},
 					"test-panel": {
@@ -188,7 +188,7 @@ func TestInMemory_Plugins(t *testing.T) {
 			expected: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
-						ID: pluginID,
+						ID: pluginUID,
 					},
 				},
 				{
@@ -239,15 +239,15 @@ func TestInMemory_Remove(t *testing.T) {
 			name: "Can remove a plugin",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginID: {
+					pluginUID: {
 						JSONData: plugins.JSONData{
-							ID: pluginID,
+							ID: pluginUID,
 						},
 					},
 				},
 			},
 			args: args{
-				pluginID: pluginID,
+				pluginID: pluginUID,
 			},
 		}, {
 			name: "Cannot remove a plugin from the registry if it doesn't exist",
@@ -255,9 +255,9 @@ func TestInMemory_Remove(t *testing.T) {
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
-				pluginID: pluginID,
+				pluginID: pluginUID,
 			},
-			err: fmt.Errorf("plugin %s is not registered", pluginID),
+			err: fmt.Errorf("plugin %s is not registered", pluginUID),
 		},
 	}
 	for _, tt := range tests {

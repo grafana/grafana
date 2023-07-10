@@ -32,7 +32,7 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 		if err != nil {
 			return err
 		}
-		if backendClient, err := backendFactory(p.ID, p.Logger(), env); err != nil {
+		if backendClient, err := backendFactory(p.UID, p.Logger(), env); err != nil {
 			return err
 		} else {
 			p.RegisterClient(backendClient)

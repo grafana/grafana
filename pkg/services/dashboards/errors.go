@@ -157,7 +157,7 @@ func (e DashboardErr) Body() util.DynMap {
 }
 
 type UpdatePluginDashboardError struct {
-	PluginId string
+	PluginUID string
 }
 
 func (d UpdatePluginDashboardError) Error() string {

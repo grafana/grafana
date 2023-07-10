@@ -19,7 +19,7 @@ func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
 
 func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	if plugin.Signature.IsValid() {
-		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
+		s.log.Debug("Plugin has valid signature", "pluginUID", plugin.UID)
 		return nil
 	}
 
@@ -27,15 +27,15 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	if plugin.Parent != nil {
 		if plugin.IsCorePlugin() || plugin.Signature.IsInternal() {
 			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
-				"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin())
+				"pluginUID", plugin.UID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin())
 		} else {
-			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.ID,
-				"root", plugin.Parent.ID, "signature", plugin.Signature, "rootSignature", plugin.Parent.Signature)
+			s.log.Debug("Setting descendant plugin's signature to that of root", "pluginUID", plugin.UID,
+				"parentUID", plugin.Parent.UID, "signature", plugin.Signature, "parentSignature", plugin.Parent.Signature)
 			plugin.Signature = plugin.Parent.Signature
 			plugin.SignatureType = plugin.Parent.SignatureType
 			plugin.SignatureOrg = plugin.Parent.SignatureOrg
 			if plugin.Signature.IsValid() {
-				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.ID)
+				s.log.Debug("Plugin has valid signature (inherited from root)", "pluginUID", plugin.UID)
 				return nil
 			}
 		}
@@ -48,28 +48,28 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	switch plugin.Signature {
 	case plugins.SignatureStatusUnsigned:
 		if authorized := s.authorizer.CanLoadPlugin(plugin); !authorized {
-			s.log.Debug("Plugin is unsigned", "pluginID", plugin.ID)
+			s.log.Debug("Plugin is unsigned", "pluginUID", plugin.UID)
 			return &plugins.SignatureError{
 				PluginID:        plugin.ID,
 				SignatureStatus: plugins.SignatureStatusUnsigned,
 			}
 		}
-		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID)
+		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginUID", plugin.UID)
 		return nil
 	case plugins.SignatureStatusInvalid:
-		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
+		s.log.Debug("Plugin has an invalid signature", "pluginUID", plugin.UID)
 		return &plugins.SignatureError{
 			PluginID:        plugin.ID,
 			SignatureStatus: plugins.SignatureStatusInvalid,
 		}
 	case plugins.SignatureStatusModified:
-		s.log.Debug("Plugin has a modified signature", "pluginID", plugin.ID)
+		s.log.Debug("Plugin has a modified signature", "pluginUID", plugin.UID)
 		return &plugins.SignatureError{
 			PluginID:        plugin.ID,
 			SignatureStatus: plugins.SignatureStatusModified,
 		}
 	default:
-		s.log.Debug("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",
+		s.log.Debug("Plugin has an unrecognized plugin signature state", "pluginUID", plugin.UID, "signature",
 			plugin.Signature)
 		return &plugins.SignatureError{
 			PluginID: plugin.ID,

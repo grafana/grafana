@@ -33,6 +33,7 @@ var (
 type Plugin struct {
 	JSONData
 
+	UID   string
 	FS    FS
 	Class Class
 
@@ -73,6 +74,7 @@ type PluginDTO struct {
 	logger            log.Logger
 	supportsStreaming bool
 
+	UID   string
 	Class Class
 
 	// App fields
@@ -265,7 +267,7 @@ func (p *Plugin) SetLogger(l log.Logger) {
 
 func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
-		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
+		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.UID)
 	}
 	return p.client.Start(ctx)
 }

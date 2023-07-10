@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/plugins/uidgen"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -56,6 +57,8 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
+	uidgen.ProvideService,
+	wire.Bind(new(uidgen.Generator), new(*uidgen.SimpleUIDGenerator)),
 
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,

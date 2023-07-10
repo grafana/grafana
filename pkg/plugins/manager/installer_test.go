@@ -75,7 +75,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			err = inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 			require.Equal(t, plugins.DuplicateError{
-				PluginID: pluginV1.ID,
+				PluginUID: pluginV1.ID,
 			}, err)
 		})
 
@@ -187,6 +187,7 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 	t.Helper()
 
 	p := &plugins.Plugin{
+		UID:   pluginID,
 		Class: class,
 		JSONData: plugins.JSONData{
 			ID:      pluginID,

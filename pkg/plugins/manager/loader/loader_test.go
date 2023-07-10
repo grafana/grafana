@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/plugins/uidgen"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -282,7 +283,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginID:  "test-datasource",
+					PluginUID: "test-datasource",
 					ErrorCode: "signatureMissing",
 				},
 			},
@@ -334,7 +335,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginID:  "test-datasource",
+					PluginUID: "test-datasource",
 					ErrorCode: "signatureInvalid",
 				},
 			},
@@ -349,7 +350,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginID:  "test-datasource",
+					PluginUID: "test-datasource",
 					ErrorCode: "signatureInvalid",
 				},
 			},
@@ -364,7 +365,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginID:  "test-datasource",
+					PluginUID: "test-datasource",
 					ErrorCode: "signatureModified",
 				},
 			},
@@ -379,7 +380,7 @@ func TestLoader_Load(t *testing.T) {
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
-					PluginID:  "test-datasource",
+					PluginUID: "test-datasource",
 					ErrorCode: "signatureModified",
 				},
 			},
@@ -454,7 +455,7 @@ func TestLoader_Load(t *testing.T) {
 			pluginErrs := l.PluginErrors()
 			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
-				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
+				require.Equal(t, tt.pluginErrors[pluginErr.PluginUID], pluginErr)
 			}
 
 			verifyState(t, tt.want, reg, procPrvdr, procMgr)
@@ -661,7 +662,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				},
 				pluginErrors: map[string]*plugins.Error{
 					"test-panel": {
-						PluginID:  "test-panel",
+						PluginUID: "test-panel",
 						ErrorCode: "signatureMissing",
 					},
 				},
@@ -702,7 +703,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				pluginErrs := l.PluginErrors()
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 				for _, pluginErr := range pluginErrs {
-					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
+					require.Equal(t, tt.pluginErrors[pluginErr.PluginUID], pluginErr)
 				}
 				verifyState(t, tt.want, reg, procPrvdr, procMgr)
 			})
@@ -1495,7 +1496,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
-		signature.ProvideService(cfg, statickey.New()), angularInspector, &fakes.FakeOauthService{})
+		signature.ProvideService(cfg, statickey.New()), angularInspector, &fakes.FakeOauthService{}, uidgen.ProvideService())
 
 	for _, cb := range cbs {
 		cb(l)

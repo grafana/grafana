@@ -21,8 +21,8 @@ func ProvideService(pluginRegistry registry.Service) *Service {
 	}
 }
 
-func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
-	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID); exists {
+func (s *Service) File(ctx context.Context, pluginUID, filename string) (*plugins.File, error) {
+	if p, exists := s.pluginRegistry.Plugin(ctx, pluginUID); exists {
 		f, err := p.File(filename)
 		if err != nil {
 			return nil, err
@@ -30,7 +30,7 @@ func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins
 		defer func() {
 			err = f.Close()
 			if err != nil {
-				s.log.Error("Could not close plugin file", "pluginID", p.ID, "file", filename)
+				s.log.Error("Could not close plugin file", "pluginUID", p.UID, "file", filename)
 			}
 		}()
 

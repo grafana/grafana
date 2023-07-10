@@ -38,8 +38,8 @@ func (m *Manager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (m *Manager) Start(ctx context.Context, pluginID string) error {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *Manager) Start(ctx context.Context, pluginUID string) error {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginUID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -59,12 +59,12 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-func (m *Manager) Stop(ctx context.Context, pluginID string) error {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *Manager) Stop(ctx context.Context, pluginUID string) error {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginUID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-	m.log.Debug("Stopping plugin process", "pluginID", p.ID)
+	m.log.Debug("Stopping plugin process", "pluginUID", p.UID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

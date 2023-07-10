@@ -56,7 +56,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 		if plugin.Info.Version == version {
 			return plugins.DuplicateError{
-				PluginID: plugin.ID,
+				PluginUID: plugin.UID,
 			}
 		}
 
@@ -69,7 +69,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		// if existing plugin version is the same as the target update version
 		if pluginArchiveInfo.Version == plugin.Info.Version {
 			return plugins.DuplicateError{
-				PluginID: plugin.ID,
+				PluginUID: plugin.UID,
 			}
 		}
 
@@ -78,7 +78,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// remove existing installation of plugin
-		err = m.Remove(ctx, plugin.ID)
+		err = m.Remove(ctx, plugin.UID)
 		if err != nil {
 			return err
 		}
@@ -110,7 +110,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	// download dependency plugins
 	pathsToScan := []string{extractedArchive.Path}
 	for _, dep := range extractedArchive.Dependencies {
-		m.log.Info("Fetching %s dependencies...", dep.ID)
+		m.log.Info(fmt.Sprintf("Fetching %s dependencies...", dep.ID))
 		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
@@ -133,8 +133,8 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	return nil
 }
 
-func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(ctx, pluginID)
+func (m *PluginInstaller) Remove(ctx context.Context, pluginUID string) error {
+	plugin, exists := m.plugin(ctx, pluginUID)
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -143,15 +143,15 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	if err := m.pluginLoader.Unload(ctx, plugin.ID); err != nil {
+	if err := m.pluginLoader.Unload(ctx, pluginUID); err != nil {
 		return err
 	}
 	return nil
 }
 
 // plugin finds a plugin with `pluginID` from the store
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *PluginInstaller) plugin(ctx context.Context, pluginUID string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginUID)
 	if !exists {
 		return nil, false
 	}
