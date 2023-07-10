@@ -263,32 +263,6 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS,
-	sig plugins.Signature) (*plugins.Plugin, error) {
-	baseURL, err := l.assetPath.Base(pluginJSON, class, files.Base())
-	if err != nil {
-		return nil, fmt.Errorf("base url: %w", err)
-	}
-	moduleURL, err := l.assetPath.Module(pluginJSON, class, files.Base())
-	if err != nil {
-		return nil, fmt.Errorf("module url: %w", err)
-	}
-	plugin := &plugins.Plugin{
-		JSONData:      pluginJSON,
-		FS:            files,
-		BaseURL:       baseURL,
-		Module:        moduleURL,
-		Class:         class,
-		Signature:     sig.Status,
-		SignatureType: sig.Type,
-		SignatureOrg:  sig.SigningOrg,
-	}
-
-	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
-
-	return plugin, nil
-}
-
 func (l *Loader) setImages(p *plugins.Plugin) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
