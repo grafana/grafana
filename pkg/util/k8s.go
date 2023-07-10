@@ -20,7 +20,10 @@ func NamespaceToOrgID(ns string) (int64, error) {
 		if parts[0] == "default" {
 			return 1, nil
 		}
-		return 0, fmt.Errorf("invalid namespace")
+		if parts[0] == "" {
+			return 0, nil // no orgId, cluster scope
+		}
+		return 0, fmt.Errorf("invalid namespace (expected default)")
 	case 2:
 		if !(parts[0] == "org" || parts[0] == "tenant") {
 			return 0, fmt.Errorf("invalid namespace (org|tenant)")
@@ -31,5 +34,5 @@ func NamespaceToOrgID(ns string) (int64, error) {
 		}
 		return n, nil
 	}
-	return 0, fmt.Errorf("invalid namespace")
+	return 0, fmt.Errorf("invalid namespace (%d parts)", len(parts))
 }
