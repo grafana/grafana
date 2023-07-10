@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
@@ -14,15 +13,9 @@ import { DashboardScenePage, Props } from './DashboardScenePage';
 
 // Mocking AutoSizer to allow testing of the SceneGridLayout component rendering
 // Does not work
-jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: AutoSizerProps) => children({ height: 1000, width: 1000 });
-});
-
-// Does not work
-jest.mock('react-use', () => ({
-  ...jest.requireActual('react-use'),
-  useMeasure: () => [() => {}, { width: 100, height: 100 }],
-}));
+// jest.mock('react-virtualized-auto-sizer', () => {
+//   return ({ children }: AutoSizerProps) => children({ height: 1000, width: 1000 });
+// });
 
 function setup() {
   const context = getGrafanaContextMock();
@@ -73,24 +66,25 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
-let listener: ((rect: any) => void) | undefined = undefined;
-
 describe('DashboardScenePage', () => {
+  let listener: ((rect: any) => void) | undefined = undefined;
+
   beforeAll(() => {
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-  });
 
-  it('Can render dashboard', async () => {
-    (global.window as any).ResizeObserver = class ResizeObserver {
-      constructor(ls: (rect: any) => void) {
+    (window as any).ResizeObserver = class ResizeObserver {
+      constructor(ls: any) {
+        console.log('ResizeObserver constructor');
         listener = ls;
       }
       observe() {}
       disconnect() {}
     };
+  });
 
+  it('Can render dashboard', async () => {
     const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
     setDashboardLoaderSrv({
       loadDashboard: loadDashboardMock,
@@ -98,9 +92,28 @@ describe('DashboardScenePage', () => {
 
     setup();
 
-    expect(loadDashboardMock.mock.calls.length).toBe(1);
-
+    // Wait for a scene to be rendered
     expect(await screen.findByText('Last 6 hours')).toBeInTheDocument();
+
+    // Run ResizeObserver callback to update size of ReactUse.useMeasure hook
+    act(() => {
+      listener!([
+        {
+          contentRect: {
+            x: 1,
+            y: 2,
+            width: 200,
+            height: 200,
+            top: 100,
+            bottom: 0,
+            left: 100,
+            right: 0,
+          },
+        },
+      ]);
+    });
+
+    expect(loadDashboardMock.mock.calls.length).toBe(1);
     expect(await screen.findByText('Text panel title')).toBeInTheDocument();
   });
 });
