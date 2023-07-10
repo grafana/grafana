@@ -61,11 +61,16 @@ export function ChannelSubForm<R extends ChannelValues>({
     register(`${pathPrefix}.secureFields`);
   }, [register, pathPrefix]);
 
-  // Restore values when switching back from a changed integration to the default one
+  // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
+    // Restore values when switching back from a changed integration to the default one
     const subscription = watch((_, { name, type, value }) => {
       if (initialValues && name === fieldName('type') && value === initialValues.type && type === 'change') {
         setValue(fieldName('settings'), initialValues.settings);
+      }
+      // Restore initial value of an existing oncall integration
+      if (initialValues && name === fieldName('settings.integration_type') && value === 'existing_oncall_integration') {
+        setValue(fieldName('settings.oncall_url'), initialValues.settings['oncall_url']);
       }
     });
 
