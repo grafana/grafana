@@ -121,12 +121,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.cfg.LDAPAuthEnabled && hasAccess(ac.EvalPermission(ac.ActionLDAPStatusRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
-		})
-	}
-
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
 		storage := &navtree.NavLink{
 			Text:     "Storage",
