@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"strings"
 )
 
@@ -50,5 +52,25 @@ func main() {
 		fmt.Printf("Import: %s, Team: %s\n", importName, teamName)
 	}
 
-	// TODO: parse go.mod, find current module in ownersMap, append owner to the comment
+	// TODO: parse go.mod, find current module in ownersMap, if doesn't currently have an owner, append owner to the comment
+
+	// Get relative path to root directory
+	curDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	rootDir := strings.Replace(curDir, "/scripts/modowners", "", -1)
+	m, err := parseGoMod(os.DirFS(rootDir), "go.mod")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Iterate over modules, look up current mod name in ownersMap, append owner as comment
+	for _, mod := range m {
+		if mod.Name == ownersMap[mod.Name] {
+			// append ownersMap[mod.Name] to comment
+		}
+	}
+	fmt.Println("m", m)
 }
