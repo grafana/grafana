@@ -21,6 +21,7 @@ type Props = FieldOverrideEditorProps<boolean | number, unknown>;
 export const InsertNullsEditor = ({ value, onChange, item }: Props) => {
   const isThreshold = typeof value === 'number';
   DISCONNECT_OPTIONS[1].value = isThreshold ? value : 3600000; // 1h
+
   return (
     <HorizontalGroup>
       <RadioButtonGroup value={value} options={DISCONNECT_OPTIONS} onChange={onChange} />

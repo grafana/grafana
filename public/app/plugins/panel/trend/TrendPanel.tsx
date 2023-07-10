@@ -22,6 +22,7 @@ import { Options } from './panelcfg.gen';
 const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
   return preparePlotFrame(frames, dimFields);
 };
+
 export const TrendPanel = ({
   data,
   timeRange,
