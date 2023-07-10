@@ -62,6 +62,10 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
       }
     }
 
+    if (obj == null) {
+      continue;
+    }
+
     if (options.format === FieldExtractorID.JSON && options.jsonPaths && options.jsonPaths?.length > 0) {
       const newObj: { [k: string]: unknown } = {};
       // filter out empty paths
@@ -75,10 +79,6 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
 
         obj = newObj;
       }
-    }
-
-    if (obj == null) {
-      continue;
     }
 
     for (const [key, val] of Object.entries(obj)) {

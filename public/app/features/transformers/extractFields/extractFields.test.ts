@@ -200,7 +200,7 @@ describe('Fields from JSON', () => {
         { config: {}, name: 'Time', type: FieldType.time, values: [1, 2] },
         { config: {}, name: 'line', type: FieldType.other, values: ['{"foo":"bar"}', null] },
       ],
-      length: 1,
+      length: 2,
     };
 
     const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrame]);
@@ -225,12 +225,12 @@ describe('Fields from JSON', () => {
         },
         {
           name: 'foo',
-          values: ['bar'],
+          values: ['bar', undefined],
           type: 'string',
           config: {},
         },
       ],
-      length: 1,
+      length: 2,
     });
   });
 });
