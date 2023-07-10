@@ -16,10 +16,6 @@ type Catalog interface {
 	Unregister(ctx context.Context, p *kindsys.Provider)
 }
 
-func ProvideService() Catalog {
-	return NewCatalog()
-}
-
 func NewCatalog() Catalog {
 	return &registry{
 		providers: []*kindsys.Provider{},

@@ -26,6 +26,7 @@ import (
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
+	"github.com/grafana/grafana/pkg/kinds"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
@@ -361,6 +362,7 @@ var wireBasicSet = wire.NewSet(
 	moduleRegistry.WireSet,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	kinds.WireSet,
 )
 
 var wireSet = wire.NewSet(
