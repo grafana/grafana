@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -771,7 +770,7 @@ func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64
 	}
 
 	// delete the permissions
-	_, err = sess.In("id", permissionIDs).Delete(&accesscontrol.Permission{})
+	_, err = sess.In("id", permissionIDs).Delete(&ac.Permission{})
 	return err
 }
 
