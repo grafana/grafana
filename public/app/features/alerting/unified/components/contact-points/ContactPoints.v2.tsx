@@ -4,7 +4,7 @@ import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Badge, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -13,6 +13,7 @@ import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
+import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
@@ -136,7 +137,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         ) : (
           <MetaText>is not used in any policy</MetaText>
         )}
-        {provisioned && <Badge color="purple" text="Provisioned" />}
+        {provisioned && <ProvisioningBadge />}
         <Spacer />
         <ConditionalWrap
           shouldWrap={provisioned}
