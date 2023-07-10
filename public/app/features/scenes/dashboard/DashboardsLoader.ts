@@ -48,42 +48,38 @@ export interface DashboardLoaderState {
 export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   private cache: Record<string, DashboardScene> = {};
 
-  async load(uid: string) {
-    const fromCache = this.cache[uid];
-    if (fromCache) {
-      this.setState({ dashboard: fromCache });
-      return;
-    }
-
-    this.setState({ isLoading: true });
-
+  async loadAndInit(uid: string) {
     try {
-      const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+      const scene = await this.loadScene(uid);
+      scene.initUrlSync();
 
-      if (rsp.dashboard) {
-        this.initDashboard(rsp);
-      } else {
-        throw new Error('Dashboard not found');
-      }
+      this.cache[uid] = scene;
+      this.setState({ dashboard: scene, isLoading: false });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
   }
 
-  private initDashboard(rsp: DashboardDTO) {
-    // Just to have migrations run
-    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-      autoMigrateOldPanels: true,
-    });
+  private async loadScene(uid: string): Promise<DashboardScene> {
+    const fromCache = this.cache[uid];
+    if (fromCache) {
+      return fromCache;
+    }
 
-    const dashboard = createDashboardSceneFromDashboardModel(oldModel);
+    this.setState({ isLoading: true });
 
-    // We initialize URL sync here as it better to do that before mounting and doing any rendering.
-    // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
-    dashboard.initUrlSync();
+    const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
 
-    this.cache[rsp.dashboard.uid] = dashboard;
-    this.setState({ dashboard, isLoading: false });
+    if (rsp.dashboard) {
+      // Just to have migrations run
+      const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
+        autoMigrateOldPanels: true,
+      });
+
+      return createDashboardSceneFromDashboardModel(oldModel);
+    }
+
+    throw new Error('Dashboard not found');
   }
 
   clearState() {

@@ -1,8 +1,10 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   CustomVariable,
   DataSourceVariable,
+  DeepPartial,
+  getUrlSyncManager,
   QueryVariable,
   SceneDataTransformer,
   SceneGridItem,
@@ -17,6 +19,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
+import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import {
@@ -27,81 +30,85 @@ import {
 } from './DashboardsLoader';
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
+function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
+  const loadDashboardMock = jest.fn().mockResolvedValue(rsp);
+  setDashboardLoaderSrv({
+    loadDashboard: loadDashboardMock,
+  } as unknown as DashboardLoaderSrv);
+  return loadDashboardMock;
+}
+
 describe('DashboardLoader', () => {
   describe('when fetching/loading a dashboard', () => {
     beforeEach(() => {
       new DashboardLoader({});
     });
 
-    it('should load the dashboard from the cache if it exists', () => {
-      const loader = new DashboardLoader({});
-      const dashboard = new DashboardScene({
-        title: 'cached',
-        uid: 'fake-uid',
-        body: new SceneGridLayout({ children: [] }),
-      });
-      // @ts-expect-error
-      loader.cache['fake-uid'] = dashboard;
-      loader.load('fake-uid');
-      expect(loader.state.dashboard).toBe(dashboard);
-      expect(loader.state.isLoading).toBe(undefined);
-    });
-
     it('should call dashboard loader server if the dashboard is not cached', async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
 
       expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+
+      // should use cache second time
+      await loader.loadAndInit('fake-dash');
+      expect(loadDashboardMock.mock.calls.length).toBe(1);
     });
 
     it("should error when the dashboard doesn't exist", async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: undefined, meta: undefined });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      setupLoadDashboardMock({ dashboard: undefined, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
-      // @ts-expect-error - private
-      expect(loader.cache['fake-dash']).toBeUndefined();
       expect(loader.state.loadError).toBe('Error: Dashboard not found');
     });
 
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
 
       expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
       expect(loader.state.loadError).toBe(undefined);
       expect(loader.state.isLoading).toBe(false);
-      // It updates the cache
-      // @ts-expect-error - private
-      expect(loader.cache['fake-dash']).toBeDefined();
     });
 
     it('should use DashboardScene creator to initialize the scene', async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
+
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    it('should initialize url sync', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      locationService.partial({ from: 'now-5m', to: 'now' });
+
+      const loader = new DashboardLoader({});
+      await loader.loadAndInit('fake-dash');
+      const dash = loader.state.dashboard;
+
+      expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
+
+      getUrlSyncManager().cleanUp(dash!);
+
+      // try loading again (and hitting cache)
+      locationService.partial({ from: 'now-10m', to: 'now' });
+
+      await loader.loadAndInit('fake-dash');
+      const dash2 = loader.state.dashboard;
+
+      expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
     });
   });
 
