@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -30,11 +30,13 @@ import { errorFromSeries, refIdExists } from '../util';
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import {
+  addExpressions,
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
   queriesAndExpressionsReducer,
   removeExpression,
+  removeExpressions,
   rewireExpressions,
   setDataQueries,
   setRecordingRulesQueries,
@@ -295,6 +297,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     runQueriesPreview();
   };
 
+  const removeExpressionsInQueries = useCallback(() => dispatch(removeExpressions()), [dispatch]);
+
+  const addExpressionsInQueries = useCallback(
+    (expressions: AlertQuery[]) => dispatch(addExpressions(expressions)),
+    [dispatch]
+  );
+
+  const [antExpressions, setAntExpressions] = useState<AlertQuery[]>([]);
+
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
       {/* This is the cloud data source selector */}
@@ -340,7 +351,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <SmartAlertTypeDetector
             editingExistingRule={editingExistingRule}
             rulesSourcesWithRuler={rulesSourcesWithRuler}
+            addExpressionsInQueries={addExpressionsInQueries}
+            removeExpressionsInQueriesReducer={removeExpressionsInQueries}
             queries={queries}
+            setAntExpressions={setAntExpressions}
+            antExpressions={antExpressions}
           />
         </Stack>
       )}
@@ -392,7 +407,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <SmartAlertTypeDetector
             editingExistingRule={editingExistingRule}
             rulesSourcesWithRuler={rulesSourcesWithRuler}
+            addExpressionsInQueries={addExpressionsInQueries}
+            removeExpressionsInQueriesReducer={removeExpressionsInQueries}
             queries={queries}
+            setAntExpressions={setAntExpressions}
+            antExpressions={antExpressions}
           />
           {/* Expression Queries */}
           <H5>Expressions</H5>

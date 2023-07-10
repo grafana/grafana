@@ -7,6 +7,7 @@ import { Stack } from '@grafana/experimental';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -32,6 +33,9 @@ function getAvailableRuleTypes() {
   return { enabledRuleTypes, defaultRuleType };
 }
 
+const onlyOneDSInQueries = (queries: AlertQuery[]) => {
+  return queries.filter((q) => q.datasourceUid !== ExpressionDatasourceUID).length === 1;
+};
 const getCanSwitch = ({
   queries,
   ruleFormType,
@@ -45,15 +49,17 @@ const getCanSwitch = ({
 }) => {
   // get available rule types
   const availableRuleTypes = getAvailableRuleTypes();
+
   // check if we have only one query in queries and if it's a cloud datasource
-  const dataSourceIdFromQueries = queries.length === 1 ? queries[0]?.datasourceUid : '';
+  const onlyOneDS = onlyOneDSInQueries(queries);
+  const dataSourceIdFromQueries = queries[0]?.datasourceUid ?? '';
   const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
   // it's a smart type if we are creating a new rule and it's not a recording rule type
   const showSmartTypeSwitch = !editingExistingRule && !isRecordingRuleType;
   //let's check if we have a smart cloud type
   const canBeCloud =
     showSmartTypeSwitch &&
-    queries.length === 1 &&
+    onlyOneDS &&
     rulesSourcesWithRuler.some(
       (dsJsonData: DataSourceInstanceSettings<DataSourceJsonData>) => dsJsonData.uid === dataSourceIdFromQueries
     );
@@ -73,10 +79,18 @@ export function SmartAlertTypeDetector({
   editingExistingRule,
   rulesSourcesWithRuler,
   queries,
+  removeExpressionsInQueriesReducer,
+  addExpressionsInQueries,
+  antExpressions,
+  setAntExpressions,
 }: {
   editingExistingRule: boolean;
   rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
+  removeExpressionsInQueriesReducer: () => void;
+  addExpressionsInQueries: (expressions: AlertQuery[]) => void;
+  antExpressions: AlertQuery[];
+  setAntExpressions: (expressions: AlertQuery[]) => void;
 }) {
   const { getValues, setValue } = useFormContext<RuleFormValues>();
 
@@ -85,14 +99,30 @@ export function SmartAlertTypeDetector({
 
   const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
 
+  const restoreExpressionsInQueries = useCallback(() => {
+    addExpressionsInQueries(antExpressions);
+  }, [antExpressions, addExpressionsInQueries]);
+
   const onClickSwitch = useCallback(() => {
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
+      antExpressions.length > 0 && restoreExpressionsInQueries();
     } else {
       setValue('type', RuleFormType.cloudAlerting);
+      const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
+      setAntExpressions(expressions);
+      removeExpressionsInQueriesReducer();
     }
-  }, [getValues, setValue]);
+  }, [
+    getValues,
+    setValue,
+    queries,
+    antExpressions,
+    removeExpressionsInQueriesReducer,
+    restoreExpressionsInQueries,
+    setAntExpressions,
+  ]);
 
   const typeTitle =
     ruleFormType === RuleFormType.cloudAlerting ? 'Data source-managed alert rule' : 'Grafana-managed alert rule';
