@@ -1,4 +1,5 @@
-import { isArray } from 'lodash';
+import { isArray, isEmpty, isNil, isPlainObject, omitBy } from 'lodash';
+import { string } from 'yargs';
 
 import {
   AlertManagerCortexConfig,
@@ -221,7 +222,7 @@ export function formChannelValuesToGrafanaChannelConfig(
       ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
       ...(values.settings ?? {}),
     }),
-    secureSettings: omitEmptyUnlessExisting({ ...(values.secureSettings ?? {}) }, existing?.secureFields ?? {}),
+    secureSettings: omitEmptyUnlessExisting(values.secureSettings, existing?.secureFields),
     type: values.type,
     name,
     disableResolveMessage:
@@ -233,6 +234,9 @@ export function formChannelValuesToGrafanaChannelConfig(
   return channel;
 }
 
+// null, undefined and '' are deemed unacceptable
+const isUnacceptableValue = (value: unknown) => isNil(value) || value === '';
+
 // will remove properties that have empty ('', null, undefined) object properties.
 // traverses nested objects and arrays as well. in place, mutates the object.
 // this is needed because form will submit empty string for not filled in fields,
@@ -243,7 +247,7 @@ export function omitEmptyValues<T>(obj: T): T {
     obj.forEach(omitEmptyValues);
   } else if (typeof obj === 'object' && obj !== null) {
     Object.entries(obj).forEach(([key, value]) => {
-      if (value === '' || value === null || value === undefined) {
+      if (isUnacceptableValue(value)) {
         delete (obj as any)[key];
       } else {
         omitEmptyValues(value);
@@ -255,17 +259,6 @@ export function omitEmptyValues<T>(obj: T): T {
 
 // Will remove empty ('', null, undefined) object properties unless they were previously defined.
 // existing is a map of property names that were previously defined.
-export function omitEmptyUnlessExisting<T>(
-  settings: Record<string, T>,
-  existing: Record<string, boolean>
-): Record<string, T> {
-  if (settings === null) {
-    return settings;
-  }
-  Object.entries(settings).forEach(([key, value]) => {
-    if ((value === '' || value === null || value === undefined) && !existing[key]) {
-      delete settings[key];
-    }
-  });
-  return settings;
+export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
+  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
 }
