@@ -11,6 +11,7 @@
     // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
     "react/no-unknown-property": ["error", { "ignore": ["css"] }],
     "@emotion/jsx-import": "error",
+    "@emotion/syntax-preference": [2, "object"],
     "lodash/import-scope": [2, "member"],
     "jest/no-focused-tests": "error",
     "import/order": [
