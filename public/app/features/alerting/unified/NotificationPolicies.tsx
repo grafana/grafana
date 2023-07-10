@@ -16,7 +16,6 @@ import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
 import {
   computeInheritedTree,
@@ -183,7 +182,7 @@ const AmRoutes = () => {
   }
 
   const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager);
-  const readOnlyPolicies = vanillaPrometheusAlertManager || isProvisioned;
+  const readOnlyPolicies = vanillaPrometheusAlertManager;
   const readOnlyMuteTimings = vanillaPrometheusAlertManager;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
@@ -227,7 +226,6 @@ const AmRoutes = () => {
             {policyTreeTabActive && (
               <>
                 <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
-                {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
@@ -244,6 +242,7 @@ const AmRoutes = () => {
                       alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
                       readOnly={readOnlyPolicies}
+                      provisioned={isProvisioned}
                       alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
                       onEditPolicy={openEditModal}
