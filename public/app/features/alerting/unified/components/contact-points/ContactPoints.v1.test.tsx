@@ -19,6 +19,7 @@ import {
 import { AccessControlAction, ContactPointsState } from 'app/types';
 
 import 'whatwg-fetch';
+import 'core-js/stable/structured-clone';
 
 import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from '../../api/alertmanager';
 import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';

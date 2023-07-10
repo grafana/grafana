@@ -2,6 +2,7 @@ import { screen, render, within } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { setBackendSrv } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -10,12 +11,13 @@ import {
 import { configureStore } from 'app/store/configureStore';
 import { ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
 
-import * as onCallApi from '../../api/onCallApi';
+import { backendSrv } from '../../../../../core/services/backend_srv';
 import * as receiversApi from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
 import { ReceiversTable } from './ReceiversTable';
 import * as grafanaApp from './grafanaAppReceivers/grafanaApp';
+import type { ReceiverMetadata } from './grafanaAppReceivers/grafanaApp';
 
 const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierDTO[]) => {
   const config: AlertManagerCortexConfig = {
@@ -51,16 +53,17 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
-jest.spyOn(onCallApi, 'useGetOnCallIntegrationsQuery');
-const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
+const useReceiversMetadata = jest.spyOn(grafanaApp, 'useReceiversMetadata');
 const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
+
+setBackendSrv(backendSrv);
 
 describe('ReceiversTable', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
     useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
-    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
+    useReceiversMetadata.mockReturnValue(new Map<Receiver, ReceiverMetadata>());
   });
 
   it('render receivers with grafana notifiers', async () => {
