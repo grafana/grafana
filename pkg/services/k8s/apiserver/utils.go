@@ -117,6 +117,7 @@ func contextWithFakeGrafanaUser(ctx context.Context) (context.Context, error) {
 		user.OrgID = 1
 		user.UserID = 1
 	}
+
 	v, ok := info.GetExtra()["user-id"]
 	if ok && len(v) > 0 {
 		user.UserID, err = strconv.ParseInt(v[0], 10, 64)
@@ -139,16 +140,17 @@ func contextWithFakeGrafanaUser(ctx context.Context) (context.Context, error) {
 		// return nil, fmt.Errorf("insufficient information on user context, couldn't determine UserID and OrgID")
 	}
 
-	// HACK alert... change to the reqested org
+	// HACK alert... change to the requested org
 	// TODO: should validate that user has access to that org/tenant
 	ns, ok := request.NamespaceFrom(ctx)
-	if ok {
+	if ok && ns != "" {
 		nsorg, err := util.NamespaceToOrgID(ns)
 		if err != nil {
 			return nil, err
 		}
 		user.OrgID = nsorg
 	}
+
 	return appcontext.WithUser(ctx, user), nil
 }
 
