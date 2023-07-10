@@ -32,7 +32,6 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
-import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { panelMenuBehavior } from './PanelMenuBehavior';

@@ -3,7 +3,6 @@ import { config, locationService } from '@grafana/runtime';
 import {
   CustomVariable,
   DataSourceVariable,
-  DeepPartial,
   getUrlSyncManager,
   QueryVariable,
   SceneDataTransformer,
@@ -14,12 +13,10 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
-import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import {
@@ -29,14 +26,7 @@ import {
   DashboardLoader,
 } from './DashboardsLoader';
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
-
-function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
-  const loadDashboardMock = jest.fn().mockResolvedValue(rsp);
-  setDashboardLoaderSrv({
-    loadDashboard: loadDashboardMock,
-  } as unknown as DashboardLoaderSrv);
-  return loadDashboardMock;
-}
+import { setupLoadDashboardMock } from './test-utils';
 
 describe('DashboardLoader', () => {
   describe('when fetching/loading a dashboard', () => {
