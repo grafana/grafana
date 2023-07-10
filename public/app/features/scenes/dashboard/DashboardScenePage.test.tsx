@@ -1,10 +1,10 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { PanelPlugin, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -77,12 +77,13 @@ let listener: ((rect: any) => void) | undefined = undefined;
 
 describe('DashboardScenePage', () => {
   beforeAll(() => {
+    // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
   });
 
   it('Can render dashboard', async () => {
-    (window as any).ResizeObserver = class ResizeObserver {
+    (global.window as any).ResizeObserver = class ResizeObserver {
       constructor(ls: (rect: any) => void) {
         listener = ls;
       }
