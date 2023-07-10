@@ -1,6 +1,5 @@
 import { cx } from '@emotion/css';
-import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
@@ -51,7 +50,7 @@ function renderLogMessage(
   }
 }
 
-const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
+const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
     try {
       return JSON.stringify(JSON.parse(line), undefined, 2);
@@ -60,56 +59,53 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
     }
   }
   return line;
+};
+
+export const LogRowMessage = React.memo((props: Props) => {
+  const {
+    row,
+    wrapLogMessage,
+    prettifyLogMessage,
+    showContextToggle,
+    styles,
+    onOpenContext,
+    onPermalinkClick,
+    onUnpinLine,
+    onPinLine,
+    pinned,
+  } = props;
+  const { hasAnsi, raw } = row;
+  const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  return (
+    <>
+      {
+        // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
+        // overwrite the more sepecific style definition from `styles.logsRowMessage`.
+      }
+      <td className={styles.logsRowMessage}>
+        <div
+          className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
+        >
+          <button className={cx(styles.logLine, styles.positionRelative)}>
+            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
+          </button>
+        </div>
+      </td>
+      <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
+        <LogRowMenuCell
+          logText={restructuredEntry}
+          row={row}
+          showContextToggle={showContextToggle}
+          onOpenContext={onOpenContext}
+          onPermalinkClick={onPermalinkClick}
+          onPinLine={onPinLine}
+          onUnpinLine={onUnpinLine}
+          pinned={pinned}
+          styles={styles}
+        />
+      </td>
+    </>
+  );
 });
 
-export class LogRowMessage extends PureComponent<Props> {
-  render() {
-    const {
-      row,
-      wrapLogMessage,
-      prettifyLogMessage,
-      showContextToggle,
-      styles,
-      onOpenContext,
-      onPermalinkClick,
-      onUnpinLine,
-      onPinLine,
-      pinned,
-    } = this.props;
-    const { hasAnsi, raw } = row;
-    const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    return (
-      <>
-        {
-          // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
-          // overwrite the more sepecific style definition from `styles.logsRowMessage`.
-        }
-        <td className={styles.logsRowMessage}>
-          <div
-            className={cx(
-              { [styles.positionRelative]: wrapLogMessage },
-              { [styles.horizontalScroll]: !wrapLogMessage }
-            )}
-          >
-            <button className={cx(styles.logLine, styles.positionRelative)}>
-              {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
-            </button>
-          </div>
-        </td>
-        <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <LogRowMenuCell
-            logText={restructuredEntry}
-            row={row}
-            showContextToggle={showContextToggle}
-            onOpenContext={onOpenContext}
-            onPermalinkClick={onPermalinkClick}
-            onPinLine={onPinLine}
-            onUnpinLine={onUnpinLine}
-            pinned={pinned}
-            styles={styles}
-          />
-        </td>
-      </>
-    );
-  }
-}
+LogRowMessage.displayName = 'LogRowMessage';
