@@ -221,7 +221,7 @@ export function formChannelValuesToGrafanaChannelConfig(
       ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
       ...(values.settings ?? {}),
     }),
-    secureSettings: values.secureSettings ?? {},
+    secureSettings: omitEmptyUnlessExisting({ ...(values.secureSettings ?? {}) }, existing?.secureFields ?? {}),
     type: values.type,
     name,
     disableResolveMessage:
@@ -251,4 +251,21 @@ export function omitEmptyValues<T>(obj: T): T {
     });
   }
   return obj;
+}
+
+// Will remove empty ('', null, undefined) object properties unless they were previously defined.
+// existing is a map of property names that were previously defined.
+export function omitEmptyUnlessExisting<T>(
+  settings: Record<string, T>,
+  existing: Record<string, boolean>
+): Record<string, T> {
+  if (settings === null) {
+    return settings;
+  }
+  Object.entries(settings).forEach(([key, value]) => {
+    if ((value === '' || value === null || value === undefined) && !existing[key]) {
+      delete settings[key];
+    }
+  });
+  return settings;
 }
