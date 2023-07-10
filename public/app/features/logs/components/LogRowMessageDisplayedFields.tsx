@@ -9,7 +9,7 @@ import { getAllFields } from './logParser';
 
 export interface Props {
   row: LogRowModel;
-  showDetectedFields: string[];
+  detectedFields: string[];
   wrapLogMessage: boolean;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   styles: LogRowStyles;
@@ -22,11 +22,11 @@ export interface Props {
 }
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
-  const { row, showDetectedFields, getFieldLinks, wrapLogMessage, styles, ...rest } = props;
+  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, ...rest } = props;
   const fields = getAllFields(row, getFieldLinks);
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   // only single key/value rows are filterable, so we only need the first field key for filtering
-  const line = showDetectedFields
+  const line = detectedFields
     .map((parsedKey) => {
       const field = fields.find((field) => {
         const { keys } = field;

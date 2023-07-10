@@ -225,7 +225,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           {displayedFields && displayedFields.length > 0 ? (
             <LogRowMessageDisplayedFields
               row={processedRow}
-              showDetectedFields={displayedFields!}
+              showContextToggle={showContextToggle}
+              detectedFields={displayedFields}
               getFieldLinks={getFieldLinks}
               wrapLogMessage={wrapLogMessage}
               onOpenContext={this.onOpenContext}
