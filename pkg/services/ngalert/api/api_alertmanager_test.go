@@ -236,6 +236,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		getResponse := sut.RouteGetAlertingConfig(&rc)
 		require.Equal(t, 200, getResponse.Status())
 		postable, err := notifier.Load(getResponse.Body())
+		require.NoError(t, err)
 
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
