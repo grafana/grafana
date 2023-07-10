@@ -3,7 +3,7 @@ package plugindef
 import (
 	"regexp"
 	"strings"
-
+	
 	"github.com/grafana/thema"
 )
 
@@ -413,7 +413,7 @@ schemas: [{
 			// Impersonation describes the permissions that the external service will have on behalf of the user
 			impersonation?: #Impersonation
 			// Self describes the permissions that the external service will have on behalf of itself
-			self?: 		#Self
+			self?: #Self
 		}
 
 		#Impersonation: {
@@ -437,8 +437,10 @@ schemas: [{
 			permissions?: [...#Permission]
 		}
 
+		// Should not be here but lets remove them from the plugins and then
+		// remove them from here.
 		defaultMatchFormat?: "pipe" | "regex values"
-		mixed?: bool
+		mixed?:              bool
 	}
 }]
 lenses: []
