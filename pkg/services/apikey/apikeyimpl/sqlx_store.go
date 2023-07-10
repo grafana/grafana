@@ -44,7 +44,7 @@ func (ss *sqlxStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQue
 	ws := fmt.Sprint(strings.Join(where[:], " AND "))
 	qr := fmt.Sprintf(`SELECT * FROM api_key WHERE %s ORDER BY name ASC LIMIT 100`, ws)
 	keys := make([]*apikey.APIKey, 0)
-	err := ss.sess.Select(ctx, &keys, qr, args...)
+	err = ss.sess.Select(ctx, &keys, qr, args...)
 	return keys, err
 }
 
