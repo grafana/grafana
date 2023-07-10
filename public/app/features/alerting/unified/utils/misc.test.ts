@@ -34,7 +34,7 @@ function permute(inputArray: any[]): any[] {
 }
 
 describe('wrapWithQuotes', () => {
-  it('should not wrap already wrapper input', () => {
+  it('should work as expected', () => {
     expect(wrapWithQuotes('"hello, world!"')).toBe('"hello, world!"');
     expect(wrapWithQuotes('hello, world!')).toBe('"hello, world!"');
     expect(wrapWithQuotes('hello, "world"!')).toBe('"hello, \\"world\\"!"');
