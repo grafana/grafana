@@ -1,4 +1,3 @@
-import { cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
@@ -83,15 +82,13 @@ export const LogRowMessage = React.memo((props: Props) => {
         // overwrite the more sepecific style definition from `styles.logsRowMessage`.
       }
       <td className={styles.logsRowMessage}>
-        <div
-          className={cx({ [styles.positionRelative]: wrapLogMessage }, { [styles.horizontalScroll]: !wrapLogMessage })}
-        >
-          <button className={cx(styles.logLine, styles.positionRelative)}>
+        <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
+          <button className={`${styles.logLine} ${styles.positionRelative}`}>
             {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
           </button>
         </div>
       </td>
-      <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
+      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
         <LogRowMenuCell
           logText={restructuredEntry}
           row={row}
