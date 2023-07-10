@@ -61,6 +61,10 @@ export function getStyles(theme: GrafanaTheme2) {
       overflow: auto;
       padding: ${theme.spacing(0.75, 1)};
       width: inherit;
+
+      ${theme.breakpoints.down('sm')} {
+        width: 100%;
+      }
     `,
   };
 }

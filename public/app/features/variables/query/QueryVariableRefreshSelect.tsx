@@ -1,4 +1,5 @@
 import React, { PropsWithChildren, useMemo } from 'react';
+import useWindowSize from 'react-use/lib/useWindowSize';
 
 import { VariableRefresh } from '@grafana/data';
 import { Field, RadioButtonGroup } from '@grafana/ui';
@@ -14,6 +15,7 @@ const REFRESH_OPTIONS = [
 ];
 
 export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChildren<Props>) {
+  const { width } = useWindowSize();
   const value = useMemo(
     () => REFRESH_OPTIONS.find((o) => o.value === refresh)?.value ?? REFRESH_OPTIONS[0].value,
     [refresh]
@@ -21,7 +23,7 @@ export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChild
 
   return (
     <Field label="Refresh" description="When to update the values of this variable">
-      <RadioButtonGroup options={REFRESH_OPTIONS} onChange={onChange} value={value} />
+      <RadioButtonGroup options={REFRESH_OPTIONS} onChange={onChange} value={value} size={width < 375 ? 'sm' : 'md'} />
     </Field>
   );
 }
