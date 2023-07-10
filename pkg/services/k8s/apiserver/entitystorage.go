@@ -287,6 +287,7 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 
 	switch s.gr.Group {
 	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
+	// this is copied from filestorage, currently not active since we are letting file storage handle GRDs
 	case grafanaApiServerKinds.GroupName:
 		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
 		break

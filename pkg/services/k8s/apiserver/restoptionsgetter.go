@@ -51,7 +51,7 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	if resource.Resource == "grafanakinds" {
+	if resource.Resource == "grafanaresourcedefinitions" {
 		return f.fallback.GetRESTOptions(resource)
 	}
 
