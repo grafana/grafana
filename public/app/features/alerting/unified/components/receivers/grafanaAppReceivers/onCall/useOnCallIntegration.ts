@@ -13,16 +13,21 @@ import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 const GRAFANA_INTEGRATION_TYPE = 'grafana';
 
 export function useOnCallIntegration() {
-  const { installed: isOnCallEnabled, loading: isPluginBridgeLoading } = usePluginBridge(SupportedPlugin.OnCall);
+  const {
+    installed: isOnCallEnabled,
+    loading: isPluginBridgeLoading,
+    error: pluginError,
+  } = usePluginBridge(SupportedPlugin.OnCall);
 
   const { useCreateIntegrationMutation, useGetOnCallIntegrationsQuery } = onCallApi;
 
   const [createIntegrationMutation] = useCreateIntegrationMutation();
 
-  const { data: onCallIntegrations = [], isLoading: isLoadingOnCallIntegrations } = useGetOnCallIntegrationsQuery(
-    undefined,
-    { skip: !isOnCallEnabled }
-  );
+  const {
+    data: onCallIntegrations = [],
+    isLoading: isLoadingOnCallIntegrations,
+    isError: isIntegrationsQueryError,
+  } = useGetOnCallIntegrationsQuery(undefined, { skip: !isOnCallEnabled });
 
   const { useGrafanaNotifiersQuery } = alertmanagerApi;
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery(undefined, {
@@ -132,6 +137,7 @@ export function useOnCallIntegration() {
     mapWebhookReceiversToOnCalls,
     mapOnCallReceiversToWebhooks,
     isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isLoadingNotifiers || isPluginBridgeLoading,
+    hasOnCallError: Boolean(pluginError) || isIntegrationsQueryError,
   };
 }
 

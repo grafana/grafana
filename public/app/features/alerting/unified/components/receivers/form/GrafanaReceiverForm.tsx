@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -51,6 +51,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     mapWebhookReceiversToOnCalls,
     mapOnCallReceiversToWebhooks,
     isLoadingOnCallIntegration,
+    hasOnCallError,
   } = useOnCallIntegration();
 
   const { useGrafanaNotifiersQuery } = alertmanagerApi;
@@ -136,6 +137,13 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
 
   return (
     <>
+      {hasOnCallError && (
+        <Alert severity="error" title="Loading OnCall integration failed">
+          Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
+          plugin configuration
+        </Alert>
+      )}
+
       {hasProvisionedItems && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
       <ReceiverForm<GrafanaChannelValues>
