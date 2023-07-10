@@ -37,7 +37,7 @@ describe('inspector download', () => {
       },
     };
 
-    it.each([[dataFrameFromJSON(json), 'test', '"time","name","value"\r\n100,a,1\r\n\r\n']])(
+    it.each([[dataFrameFromJSON(json), 'test', '"time","name","value"\r\n100,a,1']])(
       'should, when logsModel is %s and title is %s, resolve in %s',
       async (dataFrame, title, expected) => {
         downloadDataFrameAsCsv(dataFrame, title);

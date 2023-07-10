@@ -33,8 +33,6 @@ export interface ExploreState {
 
   panes: Record<string, ExploreItemState | undefined>;
 
-  correlations?: CorrelationData[];
-
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
    */
@@ -171,6 +169,7 @@ export interface ExploreItemState {
   showTrace?: boolean;
   showNodeGraph?: boolean;
   showFlameGraph?: boolean;
+  showCustom?: boolean;
 
   /**
    * History of all queries
@@ -192,6 +191,8 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
+
+  correlations?: CorrelationData[];
 }
 
 export interface ExploreUpdateState {
@@ -230,6 +231,7 @@ export interface ExplorePanelData extends PanelData {
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
+  customFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
   rawPrometheusFrames: DataFrame[];
   flameGraphFrames: DataFrame[];
