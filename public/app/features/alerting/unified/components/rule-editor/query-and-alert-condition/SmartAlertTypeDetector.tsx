@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,7 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { RuleFormValues, RuleFormType } from '../../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 function getAvailableRuleTypes() {
@@ -98,12 +98,13 @@ export function SmartAlertTypeDetector({
   }
 
   // texts and labels for the alert box
-  const typeTitle = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud alert rule' : 'Grafana-managed alert rule';
+  const typeTitle =
+    ruleFormType === RuleFormType.cloudAlerting ? 'Data source-managed alert rule' : 'Grafana-managed alert rule';
   const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'data source-managed' : 'Grafana-managed';
   const contentText =
     ruleFormType === RuleFormType.cloudAlerting
-      ? 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.'
-      : 'Cloud alert rules are stored in the Grafana Cloud database and are managed by Grafana Cloud.';
+      ? 'Data source-managed alert rules are stored in the data source and are managed by the data source.'
+      : 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.';
   const titleLabel =
     ruleFormType === RuleFormType.cloudAlerting
       ? 'This rule is going to be managed by the data source. The use of expressions or multiple queries is not supported. If your data source does not have an Alert manager configured or you wish to use expressions or multiple queries, switch to a Grafana-managed alert.'

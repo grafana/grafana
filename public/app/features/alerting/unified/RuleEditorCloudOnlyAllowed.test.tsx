@@ -193,7 +193,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     await waitFor(() => {
       expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
-      expect(screen.getByText('Cloud alert rule')).toBeInTheDocument();
+      expect(screen.getByText('Data source-managed alert rule')).toBeInTheDocument();
     });
 
     // check that only rules sources that have ruler available are there

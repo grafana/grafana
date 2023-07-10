@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -143,7 +143,7 @@ describe('RuleEditor cloud', () => {
 
     await waitFor(() => {
       expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
-      expect(screen.getByText('Cloud alert rule')).toBeInTheDocument();
+      expect(screen.getByText('Data source-managed alert rule')).toBeInTheDocument();
     });
 
     const dataSourceSelect = ui.inputs.dataSource.get();
