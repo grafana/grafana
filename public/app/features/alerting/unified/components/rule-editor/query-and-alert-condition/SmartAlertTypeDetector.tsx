@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -82,13 +82,10 @@ export function SmartAlertTypeDetector({
 
   const ruleFormType = getValues('type');
   const styles = useStyles2(getStyles);
-  const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
 
   const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
 
-  const [buttonClicked, setButtonClicked] = useState(false);
-
-  const switchType = useCallback(() => {
+  const onClickSwitch = useCallback(() => {
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
@@ -97,23 +94,6 @@ export function SmartAlertTypeDetector({
     }
   }, [getValues, setValue]);
 
-  const onClickSwitch = useCallback(() => {
-    setButtonClicked(true);
-    switchType();
-  }, [switchType, setButtonClicked]);
-
-  useEffect(() => {
-    if (!buttonClicked && canSwitch) {
-      switchType();
-    }
-  }, [canSwitch, buttonClicked, switchType]);
-
-  // we don't show any alert box if this is a recording rule
-  if (isRecordingRuleType) {
-    return null;
-  }
-
-  // texts and labels for the alert box
   const typeTitle =
     ruleFormType === RuleFormType.cloudAlerting ? 'Data source-managed alert rule' : 'Grafana-managed alert rule';
   const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'data source-managed' : 'Grafana-managed';

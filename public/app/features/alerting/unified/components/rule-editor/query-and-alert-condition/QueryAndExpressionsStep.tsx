@@ -317,25 +317,32 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       {/* This is the PromQL Editor for Cloud rules */}
       {isCloudAlertRuleType && dataSourceName && (
-        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-          <InputControl
-            name="expression"
-            render={({ field: { ref, ...field } }) => {
-              return (
-                <ExpressionEditor
-                  {...field}
-                  dataSourceName={dataSourceName}
-                  showPreviewAlertsButton={!isRecordingRuleType}
-                  onChange={onChangeExpression}
-                />
-              );
-            }}
-            control={control}
-            rules={{
-              required: { value: true, message: 'A valid expression is required' },
-            }}
+        <Stack direction="column">
+          <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+            <InputControl
+              name="expression"
+              render={({ field: { ref, ...field } }) => {
+                return (
+                  <ExpressionEditor
+                    {...field}
+                    dataSourceName={dataSourceName}
+                    showPreviewAlertsButton={!isRecordingRuleType}
+                    onChange={onChangeExpression}
+                  />
+                );
+              }}
+              control={control}
+              rules={{
+                required: { value: true, message: 'A valid expression is required' },
+              }}
+            />
+          </Field>
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            queries={queries}
           />
-        </Field>
+        </Stack>
       )}
 
       {/* This is the editor for Grafana managed rules */}
@@ -382,6 +389,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               Add query
             </Button>
           </Tooltip>
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            queries={queries}
+          />
           {/* Expression Queries */}
           <H5>Expressions</H5>
           <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
@@ -425,11 +437,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           )}
         </Stack>
       )}
-      <SmartAlertTypeDetector
-        editingExistingRule={editingExistingRule}
-        rulesSourcesWithRuler={rulesSourcesWithRuler}
-        queries={queries}
-      />
     </RuleEditorSection>
   );
 };
