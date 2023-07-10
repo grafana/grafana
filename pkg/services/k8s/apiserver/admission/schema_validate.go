@@ -7,7 +7,7 @@ import (
 	"io"
 
 	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/kindsys"
+	"github.com/grafana/kindsys/encoding"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 
@@ -54,7 +54,7 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 		//
 		// TODO vanilla k8s CRDs allow specifying a subset of that kind's versions as acceptable on that server. Do we want to do that?
 		// TODO this triggers all translation/migrations and throws away the result, which is wasteful. If this ends up being how we want to do this, add a helper or a narrower method in kindsys
-		if _, err := ck.FromBytes(j, kindsys.NewJSONDecoder()); err != nil {
+		if err := ck.Validate(j, &encoding.KubernetesJSONDecoder{}); err != nil {
 			return err
 		}
 	}
