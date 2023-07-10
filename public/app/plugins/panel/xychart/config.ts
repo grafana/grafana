@@ -7,12 +7,12 @@ import {
 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
-import { MediaType, ResourceFolderName } from 'app/features/dimensions';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { SymbolEditor } from './SymbolEditor';
-import { FieldConfig, ScatterShow, defaultFieldConfig } from './panelcfg.gen';
+import { FieldConfig, ScatterShow } from './panelcfg.gen';
+
+export const DEFAULT_POINT_SIZE = 5;
 
 export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsArgs<FieldConfig> {
   return {
@@ -71,29 +71,29 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             ],
           },
         })
-        .addGenericEditor(
-          {
-            path: 'pointSymbol',
-            name: 'Point symbol',
-            defaultValue: defaultFieldConfig.pointSymbol ?? {
-              mode: 'fixed',
-              fixed: 'img/icons/marker/circle.svg',
-            },
-            settings: {
-              resourceType: MediaType.Icon,
-              folderName: ResourceFolderName.Marker,
-              placeholderText: 'Select a symbol',
-              placeholderValue: 'img/icons/marker/circle.svg',
-              showSourceRadio: false,
-            },
-            showIf: (c) => c.show !== ScatterShow.Lines,
-          },
-          SymbolEditor // ResourceDimensionEditor
-        )
+        // .addGenericEditor(
+        //   {
+        //     path: 'pointSymbol',
+        //     name: 'Point symbol',
+        //     defaultValue: defaultFieldConfig.pointSymbol ?? {
+        //       mode: 'fixed',
+        //       fixed: 'img/icons/marker/circle.svg',
+        //     },
+        //     settings: {
+        //       resourceType: MediaType.Icon,
+        //       folderName: ResourceFolderName.Marker,
+        //       placeholderText: 'Select a symbol',
+        //       placeholderValue: 'img/icons/marker/circle.svg',
+        //       showSourceRadio: false,
+        //     },
+        //     showIf: (c) => c.show !== ScatterShow.Lines,
+        //   },
+        //   SymbolEditor // ResourceDimensionEditor
+        // )
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Point size',
-          defaultValue: 5, // cfg.pointSize?.fixed,
+          defaultValue: cfg.pointSize?.fixed ?? DEFAULT_POINT_SIZE,
           settings: {
             min: 1,
             max: 100,
@@ -101,17 +101,17 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           },
           showIf: (c) => c.show !== ScatterShow.Lines,
         })
-        .addSliderInput({
-          path: 'fillOpacity',
-          name: 'Fill opacity',
-          defaultValue: 0.4, // defaultFieldConfig.fillOpacity,
-          settings: {
-            min: 0, // hidden?  or just outlines?
-            max: 1,
-            step: 0.05,
-          },
-          showIf: (c) => c.show !== ScatterShow.Lines,
-        })
+        // .addSliderInput({
+        //   path: 'fillOpacity',
+        //   name: 'Fill opacity',
+        //   defaultValue: 0.4, // defaultFieldConfig.fillOpacity,
+        //   settings: {
+        //     min: 0, // hidden?  or just outlines?
+        //     max: 1,
+        //     step: 0.05,
+        //   },
+        //   showIf: (c) => c.show !== ScatterShow.Lines,
+        // })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',

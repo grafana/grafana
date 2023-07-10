@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { useGetAll } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
 
@@ -75,6 +76,7 @@ export function AddNewConnection() {
   };
 
   const showNoResults = useMemo(() => !isLoading && !error && plugins.length < 1, [isLoading, error, plugins]);
+  const categoryHeaderLabel = t('connections.connect-data.category-header-label', 'Data sources');
 
   return (
     <>
@@ -82,7 +84,7 @@ export function AddNewConnection() {
       <Search onChange={handleSearchChange} />
       {/* We need this extra spacing when there are no filters */}
       <div className={styles.spacer} />
-      <CategoryHeader iconName="database" label="Data sources" />
+      <CategoryHeader iconName="database" label={categoryHeaderLabel} />
       {isLoading ? (
         <LoadingPlaceholder text="Loading..." />
       ) : !!error ? (

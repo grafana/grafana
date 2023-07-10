@@ -22,7 +22,7 @@ You can create and manage recording rules for an external Grafana Mimir or Loki 
 
 Recording rules are run as instant rules, which means that they run every 10s. To overwrite this configuration, update the min_interval in your custom configuration file.
 
-[min_interval]({{< relref "../../setup-grafana/configure-grafana" >}}) sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time.
+[min_interval][configure-grafana] sets the minimum interval to enforce between rule evaluations. The default value is 10s which equals the scheduler interval. Rules will be adjusted if they are less than this value or if they are not multiple of the scheduler interval (10s). Higher values can help with resource management as fewer evaluations are scheduled over time.
 
 This setting has precedence over each individual rule frequency. If a rule frequency is lower than this value, then this value is enforced.
 
@@ -55,10 +55,21 @@ To create a Grafana Mimir or Loki managed recording rule
 1. In Step 3, add alert evaluation behavior.
    - Enter a valid **For** duration. The expression has to be true for this long for the alert to be fired.
 1. In Step 4, add additional metadata associated with the rule.
-   - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group" >}}).
+   - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces][edit-mimir-loki-namespace-group].
    - From the **Group** dropdown, select an existing group within the selected namespace or add a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting][annotation-label].
    - Add Runbook URL, panel, dashboard, and alert IDs.
 1. In Step 5, add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
+
+{{% docs/reference %}}
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+
+[configure-grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+[configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+
+[edit-mimir-loki-namespace-group]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/edit-mimir-loki-namespace-group"
+[edit-mimir-loki-namespace-group]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/edit-mimir-loki-namespace-group"
+{{% /docs/reference %}}

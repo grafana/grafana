@@ -36,7 +36,6 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `axisSoftMax`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisSoftMin`       | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisWidth`         | number                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `fillOpacity`       | number                                              | No       | `0.5`   | Constraint: `>=0 & <=1`.                                                                                                                |
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         |                                                                                                                                         |
 | `label`             | string                                              | No       |         | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
@@ -45,7 +44,6 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `lineWidth`         | integer                                             | No       |         | Constraint: `>=0 & <=2147483647`.                                                                                                       |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         |                                                                                                                                         |
-| `pointSymbol`       | [ResourceDimensionConfig](#resourcedimensionconfig) | No       |         | Links to a resource (image/svg path)                                                                                                    |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
 | `show`              | string                                              | No       |         | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
 
@@ -116,18 +114,6 @@ TODO docs
 |----------|----------|----------|---------|--------------------------------------------------------|
 | `dash`   | number[] | No       |         |                                                        |
 | `fill`   | string   | No       |         | Possible values are: `solid`, `dash`, `dot`, `square`. |
-
-### ResourceDimensionConfig
-
-Links to a resource (image/svg path)
-
-It extends [BaseDimensionConfig](#basedimensionconfig).
-
-| Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | Possible values are: `fixed`, `field`, `mapping`.                                                            |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
-| `fixed`  | string | No       |         |                                                                                                              |
 
 ### ScaleDimensionConfig
 
@@ -218,7 +204,6 @@ It extends [FieldConfig](#fieldconfig).
 | `axisSoftMax`       | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `axisSoftMin`       | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `axisWidth`         | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `fillOpacity`       | number                                              | No       | `0.5`   | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Constraint: `>=0 & <=1`.                                                               |
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `label`             | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
@@ -228,7 +213,6 @@ It extends [FieldConfig](#fieldconfig).
 | `name`              | string                                              | No       |         |                                                                                                                                           |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `pointSymbol`       | [ResourceDimensionConfig](#resourcedimensionconfig) | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Links to a resource (image/svg path)                                                   |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
 | `show`              | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
 | `x`                 | string                                              | No       |         |                                                                                                                                           |

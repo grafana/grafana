@@ -28,6 +28,7 @@ import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensi
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
+import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
 import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
 import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
@@ -133,7 +134,7 @@ function getScatterSeries(
   // Size configs
   //----------------
   let pointSizeHints = dims.pointSizeConfig;
-  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? 5;
+  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? DEFAULT_POINT_SIZE;
   let pointSize: DimensionValues<number> = () => pointSizeFixed;
   if (dims.pointSizeIndex) {
     pointSize = (frame) => {
