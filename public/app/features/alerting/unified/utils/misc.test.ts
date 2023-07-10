@@ -1,4 +1,4 @@
-import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
+import { sortAlerts, wrapWithQuotes } from 'app/features/alerting/unified/utils/misc';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
@@ -32,6 +32,14 @@ function permute(inputArray: any[]): any[] {
     );
   }, []);
 }
+
+describe('wrapWithQuotes', () => {
+  it('should not wrap already wrapper input', () => {
+    expect(wrapWithQuotes('"hello, world!"')).toBe('"hello, world!"');
+    expect(wrapWithQuotes('hello, world!')).toBe('"hello, world!"');
+    expect(wrapWithQuotes('hello, "world"!')).toBe('"hello, \\"world\\"!"');
+  });
+});
 
 describe('Unified Altering misc', () => {
   describe('sortAlerts', () => {
