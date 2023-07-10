@@ -55,6 +55,12 @@ const (
 	CategoryTsdb       Category = "tsdb"
 )
 
+// Defines values for DefaultMatchFormat.
+const (
+	DefaultMatchFormatPipe        DefaultMatchFormat = "pipe"
+	DefaultMatchFormatRegexValues DefaultMatchFormat = "regex values"
+)
+
 // Defines values for Type.
 const (
 	TypeApp            Type = "app"
@@ -293,8 +299,9 @@ type PluginDef struct {
 	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
-	Category     *Category    `json:"category,omitempty"`
-	Dependencies Dependencies `json:"dependencies"`
+	Category           *Category           `json:"category,omitempty"`
+	DefaultMatchFormat *DefaultMatchFormat `json:"defaultMatchFormat,omitempty"`
+	Dependencies       Dependencies        `json:"dependencies"`
 
 	// Grafana Enterprise specific features.
 	EnterpriseFeatures *struct {
@@ -335,6 +342,7 @@ type PluginDef struct {
 	// For data source plugins, if the plugin supports metric queries.
 	// Used to enable the plugin in the panel editor.
 	Metrics *bool `json:"metrics,omitempty"`
+	Mixed   *bool `json:"mixed,omitempty"`
 
 	// Human-readable name of the plugin that is shown to the user in
 	// the UI.
@@ -397,6 +405,9 @@ type PluginDef struct {
 
 // Plugin category used on the Add data source page.
 type Category string
+
+// DefaultMatchFormat defines model for PluginDef.DefaultMatchFormat.
+type DefaultMatchFormat string
 
 // Type type indicates which type of Grafana plugin this is, of the defined
 // set of Grafana plugin types.

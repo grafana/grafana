@@ -436,6 +436,9 @@ schemas: [{
 			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 		}
+
+		defaultMatchFormat?: "pipe" | "regex values"
+		mixed?: bool
 	}
 }]
 lenses: []

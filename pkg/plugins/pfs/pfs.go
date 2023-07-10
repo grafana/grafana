@@ -319,9 +319,15 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (*kindsys.Provider, er
 		return &kindsys.Provider{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
 	}
 	pluginDef := pinst.ValueP()
+	version := "10.0.0" // core plugins should fallback to grafana version.
+
+	if pluginDef.Info.Version != nil {
+		version = *pluginDef.Info.Version
+	}
+
 	provider := kindsys.Provider{
 		Name:    pluginDef.Id,
-		Version: *pluginDef.Info.Version,
+		Version: version,
 	}
 
 	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
