@@ -24,27 +24,20 @@ jobs:
             query($org: String!, $repo: String!) {
               repository(name: $repo, owner: $org) {
                 issue (number: ${{ github.event.issue.number }}) {
+                  id
                   projectItems(first:20) {
                     nodes {
-                      id,
                       project {
                         number,
-                        title
                       },
-                      fieldValueByName(name:"Status") {
-                        ... on ProjectV2ItemFieldSingleSelectValue {
-                          optionId
-                          name
-                        }
-                      }
                     }
                   }
                 }
               }
             }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
-            
+          
             echo 'IN_TARGET_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.TARGET_PROJECT }}) | .project != null' projects_data.json) >> $GITHUB_ENV
-            echo 'ITEM_ID='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.TARGET_PROJECT }}) | .id' projects_data.json) >> $GITHUB_ENV
+            echo 'ITEM_ID='$(jq '.data.repository.issue.id' projects_data.json) >> $GITHUB_ENV
       - name: Set up label array
         if: env.IN_TARGET_PROJ
         run: |

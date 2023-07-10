@@ -195,16 +195,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     canvas: defaultOld,
-    active: css`
-      color: ${theme.v1.palette.orangeDark};
-      border-color: ${theme.v1.palette.orangeDark};
-      background-color: transparent;
-
-      &:hover {
-        color: ${theme.colors.text.primary};
-        background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-      }
-    `,
+    active: cx(
+      defaultOld,
+      css(`
+    &::before {
+      display: block;
+      content: ' ';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      bottom: 0px;
+      border-radius: ${theme.shape.radius.default};
+      background-image: ${theme.colors.gradients.brandHorizontal};
+    }
+    `)
+    ),
     primary: css(primaryVariant),
     destructive: css(destructiveVariant),
     narrow: css`

@@ -119,12 +119,14 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 
 		// detect angular for external plugins
 		if plugin.IsExternalPlugin() {
-			cctx, canc := context.WithTimeout(ctx, time.Minute*1)
+			var err error
+
+			cctx, canc := context.WithTimeout(ctx, time.Second*10)
 			plugin.AngularDetected, err = l.angularInspector.Inspect(cctx, plugin)
 			canc()
 
 			if err != nil {
-				l.log.Warn("could not inspect plugin for angular", "pluginID", plugin.ID, "err", err)
+				l.log.Warn("Could not inspect plugin for angular", "pluginID", plugin.ID, "err", err)
 			}
 
 			// Do not initialize plugins if they're using Angular and Angular support is disabled

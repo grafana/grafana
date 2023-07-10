@@ -14,6 +14,8 @@ import {
   DimensionSupplier,
 } from 'app/features/dimensions';
 
+import { DEFAULT_POINT_SIZE } from './config';
+
 // export enum ScatterLineMode {
 //   None = 'none',
 //   Linear = 'linear',
@@ -61,7 +63,7 @@ export const defaultScatterConfig: ScatterFieldConfig = {
     fill: 'solid',
   },
   pointSize: {
-    fixed: 5,
+    fixed: DEFAULT_POINT_SIZE,
     min: 1,
     max: 20,
   },
