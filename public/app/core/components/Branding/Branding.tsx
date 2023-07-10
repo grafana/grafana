@@ -10,7 +10,7 @@ export interface BrandComponentProps {
 }
 
 const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className }) => {
-  return <img className={className} src="public/img/percona-logo.svg" alt="PMM" />;
+  return <img className={className} src="public/img/icons/mono/pmm-logo.svg" alt="PMM" />;
 };
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
@@ -43,15 +43,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
-  const theme = useTheme2();
-
-  return (
-    <img
-      className={className}
-      src={theme.isLight ? 'public/img/percona-logo-light.svg' : 'public/img/percona-logo.svg'}
-      alt="PMM"
-    />
-  );
+  return <img className={className} src="public/img/pmm-app-rounded-icon.svg" alt="PMM" />;
 };
 
 const LoginBoxBackground = () => {
