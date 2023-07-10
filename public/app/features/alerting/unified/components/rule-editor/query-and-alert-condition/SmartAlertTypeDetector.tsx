@@ -99,7 +99,7 @@ export function SmartAlertTypeDetector({
 
   // texts and labels for the alert box
   const typeTitle = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud alert rule' : 'Grafana-managed alert rule';
-  const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
+  const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'data source-managed' : 'Grafana-managed';
   const contentText =
     ruleFormType === RuleFormType.cloudAlerting
       ? 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.'
