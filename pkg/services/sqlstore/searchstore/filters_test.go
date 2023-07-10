@@ -44,7 +44,5 @@ func TestFolderUIDFilter(t *testing.T) {
 			assert.Equal(t, tc.expectedSql, sql)
 			assert.Equal(t, tc.expectedParams, params)
 		})
-
 	}
-
 }
