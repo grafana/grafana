@@ -23,17 +23,19 @@ interface Props {
   styles: LogRowStyles;
 }
 
-function renderLogMessage(
-  hasAnsi: boolean,
-  entry: string,
-  highlights: string[] | undefined,
-  highlightClassName: string
-) {
+interface LogMessageProps {
+  hasAnsi: boolean;
+  entry: string;
+  highlights: string[] | undefined;
+  styles: LogRowStyles;
+}
+
+const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => {
   const needsHighlighter =
     highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
   const searchWords = highlights ?? [];
   if (hasAnsi) {
-    const highlight = needsHighlighter ? { searchWords, highlightClassName } : undefined;
+    const highlight = needsHighlighter ? { searchWords, highlightClassName: styles.logsRowMatchHighLight } : undefined;
     return <LogMessageAnsi value={entry} highlight={highlight} />;
   } else if (needsHighlighter) {
     return (
@@ -41,13 +43,12 @@ function renderLogMessage(
         textToHighlight={entry}
         searchWords={searchWords}
         findChunks={findHighlightChunksInText}
-        highlightClassName={highlightClassName}
+        highlightClassName={styles.logsRowMatchHighLight}
       />
     );
-  } else {
-    return entry;
   }
-}
+  return <>{entry}</>;
+};
 
 const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
@@ -84,7 +85,7 @@ export const LogRowMessage = React.memo((props: Props) => {
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
           <button className={`${styles.logLine} ${styles.positionRelative}`}>
-            {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
+            <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
           </button>
         </div>
       </td>
