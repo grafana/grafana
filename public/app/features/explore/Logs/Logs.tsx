@@ -546,9 +546,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  getTableHeight = memoizeOne((length: number) => {
+  getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
+    const largestFrameLength = dataFrames?.reduce((length, frame) => {
+      return frame.length > length ? frame.length : length;
+    }, 0);
     // from TableContainer.tsx
-    return Math.min(600, Math.max(length * 36, 300) + 40 + 46);
+    return Math.min(600, Math.max(largestFrameLength ?? 0 * 36, 300) + 40 + 46);
   });
 
   render() {
@@ -750,7 +753,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 <Table
                   data={this.state.tableFrame}
                   width={width - 80}
-                  height={this.getTableHeight(this.props.logsFrames?.length ?? 0)}
+                  height={this.getTableHeight(this.props.logsFrames)}
                 />
               </div>
             )}
