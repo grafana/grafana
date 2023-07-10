@@ -320,7 +320,7 @@ To set up generic OAuth2 authentication with Auth0, follow these steps:
 
 1. Click **Save Changes**.
 
-1. Fill in the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the **Settings** tab:
+1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the **Settings** tab:
 
    ```bash
    [auth.generic_oauth]
@@ -351,7 +351,7 @@ To set up generic OAuth2 authentication with Bitbucket, follow these steps:
 
 1. Click **Save**.
 
-1. Fill in the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the `Key` and `Secret` from the consumer description:
+1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the `Key` and `Secret` from the consumer description:
 
    ```bash
    [auth.generic_oauth]
@@ -389,7 +389,7 @@ To set up generic OAuth2 authentication with OneLogin, follow these steps:
 
    - Display Name: Grafana
 
-1. Fill in the `[auth.generic_oauth]` section of the Grafana configuration file using the client ID and client secret from **SSO** tab of the app details page:
+1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the client ID and client secret from the **SSO** tab of the app details page:
 
    Your OneLogin Domain will match the URL you use to access OneLogin.
 
