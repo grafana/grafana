@@ -30,7 +30,7 @@ import (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	kindRegistry            kinds.Registry
+	kindsCatalog            kinds.Catalog
 	pluginFinder            finder.Finder
 	processManager          process.Service
 	pluginRegistry          registry.Service
@@ -51,18 +51,18 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry, kindsRegistry kinds.Registry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry, kindsCatalog kinds.Catalog) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry, kindsRegistry)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry, kindsCatalog)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry, kindsRegistry kinds.Registry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry, kindsCatalog kinds.Catalog) *Loader {
 	return &Loader{
-		kindRegistry:            kindsRegistry,
+		kindsCatalog:            kindsCatalog,
 		pluginFinder:            pluginFinder,
 		pluginRegistry:          pluginRegistry,
 		pluginInitializer:       initializer.New(cfg, backendProvider, license),
@@ -265,7 +265,7 @@ func (l *Loader) registerKinds(ctx context.Context, p *plugins.Plugin) error {
 	if err != nil {
 		return err
 	}
-	l.kindRegistry.Register(ctx, provider)
+	l.kindsCatalog.Register(ctx, provider)
 	return nil
 }
 
@@ -274,7 +274,7 @@ func (l *Loader) unregisterKinds(ctx context.Context, p *plugins.Plugin) error {
 	if err != nil {
 		return err
 	}
-	l.kindRegistry.Unregister(ctx, provider)
+	l.kindsCatalog.Unregister(ctx, provider)
 	return nil
 }
 
