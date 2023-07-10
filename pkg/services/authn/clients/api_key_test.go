@@ -56,6 +56,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 				},
+				AuthenticatedBy: login.APIKeyAuthModule,
 			},
 		},
 		{
