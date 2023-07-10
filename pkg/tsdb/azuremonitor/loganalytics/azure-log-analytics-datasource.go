@@ -455,7 +455,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 		"query": query.Query,
 	}
 
-	if query.IntersectTime == true {
+	if query.IntersectTime {
 		from := query.TimeRange.From.Format(time.RFC3339)
 		to := query.TimeRange.To.Format(time.RFC3339)
 		timespan := fmt.Sprintf("%s/%s", from, to)
