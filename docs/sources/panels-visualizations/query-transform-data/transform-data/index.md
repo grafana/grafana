@@ -195,8 +195,8 @@ This setting determines how the y-axis is split into buckets.
 Use this option to set the scale of the y-axes. Select from:
 
 - **Linear**
-- **Logarithmic** - Use a base 2 or base 10
-- **Symlog** - A symmetrical logarithmic scale - Use a base 2 or base 10; allows negative values
+- **Logarithmic** - Use a base 2 or base 10.
+- **Symlog** - A symmetrical logarithmic scale. Use a base 2 or base 10; allows negative values.
 
 ### Extract fields
 
