@@ -49,6 +49,8 @@ export enum StatementPosition {
   NewCommand,
   Comment,
 
+  DedupKeyword,
+  AfterDedupKeyword,
   DisplayKeyword,
   AfterDisplayKeyword,
   FieldsKeyword,
@@ -61,6 +63,7 @@ export enum StatementPosition {
   AfterParseKeyword,
   SortKeyword,
   AfterSortKeyword,
+  SortArg,
   StatsKeyword,
   AfterStatsKeyword,
 

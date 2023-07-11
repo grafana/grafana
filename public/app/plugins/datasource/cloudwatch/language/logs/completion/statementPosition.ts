@@ -8,6 +8,7 @@ import {
   SORT,
   LIMIT,
   PARSE,
+  DEDUP,
   LOGS_COMMANDS,
   LOGS_FUNCTION_OPERATORS,
   LOGS_LOGIC_OPERATORS,
@@ -109,6 +110,9 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
 
   if (currentToken?.isKeyword() && normalizedCurrentToken) {
     switch (normalizedCurrentToken) {
+      case DEDUP:
+        d('(StatementPosition.DedupKeyword)');
+        return StatementPosition.DedupKeyword;
       case DISPLAY:
         d('(StatementPosition.DisplayKeyword)');
         return StatementPosition.DisplayKeyword;
@@ -147,6 +151,9 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
 
   if (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.isKeyword && normalizedPreviousNonWhiteSpace) {
     switch (normalizedPreviousNonWhiteSpace) {
+      case DEDUP:
+        d('(StatementPosition.AfterDedupKeyword)');
+        return StatementPosition.AfterDedupKeyword;
       case DISPLAY:
         d('(StatementPosition.AfterDisplayKeyword)');
         return StatementPosition.AfterDisplayKeyword;
@@ -228,13 +235,21 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     currentToken?.is(LogsTokenTypes.Parenthesis, '()') ||
     currentToken?.is(LogsTokenTypes.Delimiter, ',') ||
     currentToken?.is(LogsTokenTypes.Parenthesis, ')') ||
-    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, ','))
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, ',')) ||
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.isIdentifier()) ||
+    (currentToken?.isWhiteSpace() &&
+      previousNonWhiteSpace?.isKeyword() &&
+      normalizedPreviousNonWhiteSpace &&
+      LOGS_COMMANDS.includes(normalizedPreviousNonWhiteSpace))
   ) {
     const nearestKeyword = currentToken?.getPreviousOfType(LogsTokenTypes.Keyword);
     const nearestFunction = currentToken?.getPreviousOfType(LogsTokenTypes.Function);
 
     if (nearestKeyword !== null && nearestFunction === null) {
       d('(StatementPosition.CommandArg)', '0');
+      if (nearestKeyword.value === SORT) {
+        return StatementPosition.SortArg;
+      }
       return StatementPosition.CommandArg;
     }
 
@@ -244,23 +259,22 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     }
 
     if (nearestKeyword !== null && nearestFunction !== null) {
-      if (nearestKeyword.range.startLineNumber > nearestFunction.range.startLineNumber) {
+      if (
+        nearestKeyword.range.startLineNumber > nearestFunction.range.startLineNumber ||
+        nearestKeyword.range.endColumn > nearestFunction.range.endColumn
+      ) {
         d('(StatementPosition.CommandArg)', '1');
+        if (nearestKeyword.value === SORT) {
+          return StatementPosition.SortArg;
+        }
         return StatementPosition.CommandArg;
       }
 
-      if (nearestFunction.range.startLineNumber > nearestKeyword.range.startLineNumber) {
-        d('(StatementPosition.FunctionArg)', '2');
-        return StatementPosition.FunctionArg;
-      }
-
-      if (nearestKeyword.range.endColumn > nearestFunction.range.endColumn) {
-        d('(StatementPosition.CommandArg)', '3');
-        return StatementPosition.CommandArg;
-      }
-
-      if (nearestFunction.range.endColumn > nearestKeyword.range.endColumn) {
-        d('(StatementPosition.FunctionArg)', '4');
+      if (
+        nearestFunction.range.startLineNumber > nearestKeyword.range.startLineNumber ||
+        nearestFunction.range.endColumn > nearestKeyword.range.endColumn
+      ) {
+        d('(StatementPosition.FunctionArg)', '1');
         return StatementPosition.FunctionArg;
       }
     }
