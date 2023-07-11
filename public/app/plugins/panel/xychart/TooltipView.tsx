@@ -6,7 +6,7 @@ import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafa
 import { findField } from 'app/features/dimensions';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
-import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
+import { ScatterSeriesConfig, SeriesMapping } from './panelcfg.gen';
 import { ScatterSeries } from './types';
 
 interface YValue {
