@@ -40,13 +40,13 @@ describe('ArrayVector', () => {
   });
 
   it('arrays can still be javascript arrays (js original sin)', () => {
-    const testArray: any[] = [];
+    const testArray: string[] = [];
     // @ts-ignore
     testArray['add'] = 'value';
     expect(testArray.add).toBe('value');
 
     // But the original meaning still holds
-    const another: any[] = [];
+    const another: string[] = [];
     another.add('value');
     expect(testArray[0]).toBe('value');
   });
