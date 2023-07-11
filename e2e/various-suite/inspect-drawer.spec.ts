@@ -115,6 +115,7 @@ const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {
 
   // simulate hover on Inspector menu item to display sub menus
   e2e.components.Panels.Panel.menuItems('Inspect').trigger('mouseover', { force: true });
+  e2e.components.Panels.Panel.menuItems(subMenu).should('be.visible');
   e2e.components.Panels.Panel.menuItems(subMenu).click({ force: true });
 
   // data should be the default tab
