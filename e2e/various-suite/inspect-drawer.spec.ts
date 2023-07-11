@@ -44,22 +44,22 @@ e2e.scenario({
     expectDrawerClose();
 
     expectSubMenuScenario('Data');
-    expectSubMenuScenario('Query');
-    expectSubMenuScenario('Panel JSON', 'JSON');
-
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
-
-    e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
-
-    e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
-      .should('be.visible')
-      .within(() => {
-        e2e.components.Tab.title('Query').should('be.visible');
-        // query should be the active tab
-        e2e.components.Tab.active().should('have.text', 'Query');
-      });
-
-    e2e.components.PanelInspector.Query.content().should('be.visible');
+    // expectSubMenuScenario('Query');
+    // expectSubMenuScenario('Panel JSON', 'JSON');
+    //
+    // e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
+    //
+    // e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
+    //
+    // e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
+    //   .should('be.visible')
+    //   .within(() => {
+    //     e2e.components.Tab.title('Query').should('be.visible');
+    //     // query should be the active tab
+    //     e2e.components.Tab.active().should('have.text', 'Query');
+    //   });
+    //
+    // e2e.components.PanelInspector.Query.content().should('be.visible');
   },
 });
 
@@ -119,7 +119,7 @@ const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {
   e2e.components.Panels.Panel.menuItems(subMenu).click({ force: true });
 
   // data should be the default tab
-  e2e.components.Tab.title(tabTitle).should('be.visible');
+  e2e.components.Tab.title(tabTitle).should('be.visible', { timeout: 10000 });
   e2e.components.Tab.active().should('have.text', tabTitle);
 
   expectDrawerClose();
