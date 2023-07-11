@@ -444,8 +444,8 @@ describe('Logs', () => {
       await userEvent.click(logsSection);
 
       const columns = screen.getAllByRole('columnheader');
-      // tableFrame has 3 columns. time, line + extraced 'foo'
-      expect(columns.length).toBe(3);
+      // tableFrame has 3 columns. time, line + extraced 'foo'; the "filter" options add one column header for each
+      expect(columns.length).toBe(6);
       expect(columns[2].textContent).toContain('foo');
     });
   });
