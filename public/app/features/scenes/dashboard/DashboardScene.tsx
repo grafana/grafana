@@ -1,3 +1,5 @@
+import * as H from 'history';
+
 import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
@@ -85,8 +87,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ inspect: null });
   };
 
-  getPageNav() {
-    const location = locationService.getLocation();
+  getPageNav(location: H.Location) {
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),

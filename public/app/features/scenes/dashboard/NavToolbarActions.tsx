@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, isDirty, uid } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelKey, isDirty, uid } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {
@@ -28,6 +28,22 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   }
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
+
+  if (viewPanelKey) {
+    toolbarActions.push(
+      <Button
+        onClick={() => locationService.partial({ viewPanel: null })}
+        tooltip=""
+        key="back"
+        variant="primary"
+        fill="text"
+      >
+        Back to dashboard
+      </Button>
+    );
+
+    return <AppChromeUpdate actions={toolbarActions} />;
+  }
 
   if (!isEditing) {
     // TODO check permissions
@@ -65,4 +81,4 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   return <AppChromeUpdate actions={toolbarActions} />;
 });
 
-NavToolbarActions.displayName = 'DashboardToolbar';
+NavToolbarActions.displayName = 'NavToolbarActions';

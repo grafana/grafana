@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -15,9 +16,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const styles = useStyles2(getStyles);
   const inspectPanel = model.findPanel(inspectPanelKey);
   const viewPanel = model.findPanel(viewPanelKey);
+  const location = useLocation();
+  const pageNav = model.getPageNav(location);
 
   return (
-    <Page navId="scenes" pageNav={model.getPageNav()} layout={PageLayoutType.Custom}>
+    <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
           <NavToolbarActions dashboard={model} />
@@ -28,14 +31,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               ))}
             </div>
           )}
-          <div className={styles.body}>
-            {!viewPanel && <body.Component model={body} />}
-            {viewPanel && (
-              <div className={styles.viewPanel}>
-                <viewPanel.Component model={viewPanel} />
-              </div>
-            )}
-          </div>
+          {viewPanel ? (
+            <div className={styles.viewPanel}>
+              <viewPanel.Component model={viewPanel} />
+            </div>
+          ) : (
+            <div className={styles.body}>
+              <body.Component model={body} />
+            </div>
+          )}
         </div>
       </CustomScrollbar>
       {inspectPanel && <ScenePanelInspector panel={inspectPanel} dashboard={model} />}
