@@ -121,7 +121,7 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         config={options}
         onChange={onOptionsChange}
         urlLabel="Prometheus server URL"
-        urlTooltip={docsTip()}
+        urlTooltip={urlTooltip}
       />
       {/* STYLE: ADD PADDING */}
       <hr />
