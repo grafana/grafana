@@ -8,8 +8,10 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -42,6 +44,7 @@ type Manager struct {
 
 	doNotSaveNormalState    bool
 	maxStateSaveConcurrency int
+	tracer                  tracing.Tracer
 }
 
 type ManagerCfg struct {
@@ -55,6 +58,8 @@ type ManagerCfg struct {
 	DoNotSaveNormalState bool
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+
+	Tracer tracing.Tracer
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
@@ -70,6 +75,7 @@ func NewManager(cfg ManagerCfg) *Manager {
 		externalURL:             cfg.ExternalURL,
 		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
 		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
+		tracer:                  cfg.Tracer,
 	}
 }
 
@@ -242,28 +248,58 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
-	logger := st.log.FromContext(ctx)
+	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation")
+	defer span.End()
+	span.SetAttributes("rule_uid", alertRule.UID, attribute.String("rule_uid", alertRule.UID))
+	span.SetAttributes("org_id", alertRule.OrgID, attribute.Int64("org_id", alertRule.OrgID))
+	span.SetAttributes("rule_version", alertRule.Version, attribute.Int64("rule_version", alertRule.Version))
+	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
+	span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
+	span.SetAttributes("results", len(results), attribute.Int("tick", len(results)))
+
+	logger := st.log.FromContext(tracingCtx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := make([]StateTransition, 0, len(results))
 
 	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
+		s := st.setNextState(tracingCtx, alertRule, result, extraLabels, logger)
 		states = append(states, s)
 	}
-	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.deleteAlertStates(ctx, logger, staleStates)
+	span.AddEvents([]string{"message", "state_transitions"},
+		[]tracing.EventValue{
+			{Str: "results processed"},
+			{Num: int64(len(states))},
+		})
 
-	st.saveAlertStates(ctx, logger, states...)
+	staleStates := st.deleteStaleStatesFromCache(tracingCtx, logger, evaluatedAt, alertRule)
+
+	if len(staleStates) > 0 {
+		span.AddEvents([]string{"message", "state_transitions"},
+			[]tracing.EventValue{
+				{Str: "deleted stale states"},
+				{Num: int64(len(staleStates))},
+			})
+	}
+
+	st.deleteAlertStates(tracingCtx, logger, staleStates)
+
+	st.saveAlertStates(tracingCtx, logger, states...)
+
+	span.AddEvents([]string{"message"},
+		[]tracing.EventValue{
+			{Str: "updated database"},
+		})
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		st.historian.Record(tracingCtx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }
 
 // Set the current state based on evaluation results
 func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
+	start := st.clock.Now()
 	currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
@@ -352,6 +388,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		PreviousState:       oldState,
 		PreviousStateReason: oldReason,
 	}
+
+	st.metrics.StateUpdateDuration.Observe(float64(st.clock.Now().Sub(start).Milliseconds()))
+	st.metrics.StateUpdateCount.Inc()
 
 	return nextState
 }
