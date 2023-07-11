@@ -200,7 +200,7 @@ type Identity struct {
 	Email string
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
-	// AuthenticatedBy is the name of authentication client that used to authenticate the current Identity.
+	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
 	// For example, "password", "apikey", "auth_ldap" or "auth_azuread".
 	AuthenticatedBy string
 	// AuthId is the unique identifier for the entity in the external system.
