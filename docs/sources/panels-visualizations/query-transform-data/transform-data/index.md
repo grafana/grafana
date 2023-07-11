@@ -73,7 +73,7 @@ You can disable or hide one or more transformations by clicking on the eye icon 
 
 If your panel uses more than one query, you can filter these and apply the selected transformation to only one of the queries. To do this, click the filter icon on the top right of the transformation row. This opens a drop-down with a list of queries used on the panel. From here, you can select the query you want to transform.
 
-Note that the filter icon is always displayed if your panel has more than one query, but it may not work if previous transformations for merging the queries' outputs are applied. This is because one transformation takes the output of the previous one. 
+Note that the filter icon is always displayed if your panel has more than one query, but it may not work if previous transformations for merging the queries' outputs are applied. This is because one transformation takes the output of the previous one.
 
 ## Delete a transformation
 
@@ -88,7 +88,6 @@ We recommend that you remove transformations that you don't need. When you delet
 1. Open a panel for editing.
 1. Click the **Transform** tab.
 1. Click the trash icon next to the transformation you want to delete.
-
 
 ## Transformation functions
 
@@ -178,13 +177,13 @@ The result:
 
 ### Create heatmap
 
-Use this transformation to prepare histogram data to be visualized over time. Similar to the [Heatmap panel] ({{< relref "../visualizations/heatmap" >}}), this transformation allows you to convert histogram metrics to buckets over time.
+Use this transformation to prepare histogram data to be visualized over time. Similar to the [Heatmap panel]({{< relref "../../visualizations/heatmap" >}}), this transformation allows you to convert histogram metrics to buckets over time.
 
 #### X Bucket
 
-This setting determines how the x-axis is split into buckets. 
+This setting determines how the x-axis is split into buckets.
 
-- **Size** - Specify a time interval in the input field. For example, a time range of `1h` makes the cells one hour wide on the x-axis. 
+- **Size** - Specify a time interval in the input field. For example, a time range of `1h` makes the cells one hour wide on the x-axis.
 - **Count** - For non-time related series, use this option to define the number of elements in a bucket.
 
 #### Y Bucket
@@ -208,7 +207,7 @@ Use this transformation to select one source of data and extract content from it
   - **JSON** To parse JSON content from the source
   - **Key+value parse** To parse content in the format a=b or c:d from the source
   - **Auto** To discover fields automatically
-- **Replace all fields** -  (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+- **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 ### Field lookup
 
@@ -218,7 +217,7 @@ Use this transformation on a field value to look up additional fields from an ex
 - **Lookup** - Select from **Countries**, **USA States**, and **Airports**)
 
 This transformation currently supports spatial data.
- 
+
 ### Filter by name
 
 Use this transformation to remove portions of the query results.
@@ -393,15 +392,15 @@ We can generate a matrix using the values of `Server Status` as column names, th
 
 **Output**
 
-| Server ID\Server Status | OK    | Shutdown |
-| ----------------------- | ----- | -------- |
-| server 1                | 82    |          |
-| server 2                | 88.6  |          |
-| server 3                |       | 59.6     |
+| Server ID\Server Status | OK   | Shutdown |
+| ----------------------- | ---- | -------- |
+| server 1                | 82   |          |
+| server 2                | 88.6 |          |
+| server 3                |      | 59.6     |
 
 ### Histogram
 
-Use this transformation to generate a histogram based on the input data. 
+Use this transformation to generate a histogram based on the input data.
 
 - **Bucket size** - The distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax).
 - **Bucket offset** - The offset for non-zero based buckets.
@@ -488,9 +487,8 @@ I applied a transformation to join the query results using the time field. Now I
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
 time series results into a single wide table with a shared Label field.
 
-
 - **Join** - Select the label to join by between the labels available or common across all time series.
-- **Value** - The name for the output result. 
+- **Value** - The name for the output result.
 
 ### Labels to fields
 
