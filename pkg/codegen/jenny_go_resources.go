@@ -59,14 +59,12 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 		return nil, err
 	}
 
-	f := codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), buf.Bytes(), ag)
-	content, err := format.Source(f.Data)
+	content, err := format.Source(buf.Bytes())
 	if err != nil {
 		return nil, err
 	}
 
-	f.Data = content
-	return f, nil
+	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), content, ag), nil
 }
 
 type SubresourceGoTypesJenny struct {
