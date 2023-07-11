@@ -29,16 +29,13 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     insertMode = INSERT_MODES.threshold;
   }
 
-  let refField: Field | undefined = undefined;
-  if (refFieldName != null) {
-    refField = frame.fields.find((field) => field.name === refFieldName);
-  } else {
-    refField =
-      frame.fields.find((field) => field.type === FieldType.time) ??
-      frame.fields.find((field) => field.type === FieldType.number);
-  }
+  const refField =
+    refFieldName != null
+      ? frame.fields.find((field) => field.name === refFieldName)
+      : frame.fields.find((field) => field.type === FieldType.time) ??
+        frame.fields.find((field) => field.type === FieldType.number);
 
-  if (refField === undefined) {
+  if (refField == null) {
     return frame;
   }
 
