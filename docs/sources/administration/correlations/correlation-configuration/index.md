@@ -47,6 +47,10 @@ Example: If source results contain a field called “employee”, the value of t
 - A field variable ${\_\_data.fields.employee}
 - A correlation variable that maps the field value above to ${employee}
 
+Some field may include dots like "service.name", the syntax above isn't applicable here. To still access this variable the below syntax can be used. This approach also works with fields without a dot, like the previous "employee" example
+- ${\_\_data.fields['service.name']}
+- ${\_\_data.fields['employee']}
+
 In addition to mapping field values to shorter variable names, more correlation variables can be created by applying transformations to existing fields
 
 For more details, please see the example in [Use variables and transformations in a correlation]({{< relref "./use-variables-and-transformations" >}}).
