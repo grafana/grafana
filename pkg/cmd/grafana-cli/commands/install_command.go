@@ -21,7 +21,7 @@ import (
 
 const installArgsSize = 2
 
-func validateInput(c utils.CommandLine, pluginFolder string) error {
+func validateInput(c utils.CommandLine) error {
 	if c.Args().Len() > installArgsSize {
 		return errors.New("install only supports 2 arguments: plugin and version")
 	}
@@ -56,8 +56,7 @@ func logRestartNotice() {
 }
 
 func installCommand(c utils.CommandLine) error {
-	pluginFolder := c.PluginDirectory()
-	if err := validateInput(c, pluginFolder); err != nil {
+	if err := validateInput(c); err != nil {
 		return err
 	}
 

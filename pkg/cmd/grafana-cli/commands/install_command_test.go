@@ -14,15 +14,13 @@ func TestValidateInput(t *testing.T) {
 
 		cmdArgs := []string{"foo", "bar", "--bar=foo"}
 
-		pluginsFolder := "/tmp"
-
 		mockArgs := &utils.MockArgs{}
 		defer mockArgs.AssertExpectations(t)
 
 		mockArgs.On("Len").Return(len(cmdArgs))
 		mockCmdLine.On("Args").Return(mockArgs).Times(1)
 
-		err := validateInput(mockCmdLine, pluginsFolder)
+		err := validateInput(mockCmdLine)
 		require.EqualError(t, err, "install only supports 2 arguments: plugin and version")
 	})
 }
