@@ -20,51 +20,59 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
       paddingBottom: isHorizontal && hasMarks ? theme.spacing(1) : 'inherit',
       height: isHorizontal ? 'auto' : '100%',
     }),
-    slider: css({
-      '.rc-slider': {
-        display: 'flex',
-        flexGrow: 1,
-        marginLeft: '7px', // half the size of the handle to align handle to the left on 0 value
-      },
-      '.rc-slider-mark': {
-        top: theme.spacing(1.75),
-      },
-      '.rc-slider-mark-text': {
-        color: theme.colors.text.disabled,
-        fontSize: theme.typography.bodySmall.fontSize,
-      },
-      '.rc-slider-mark-text-active': {
-        color: theme.colors.text.primary,
-      },
-      '.rc-slider-handle': {
-        border: 'none',
-        backgroundColor: handleColor,
-        boxShadow: theme.shadows.z1,
-        cursor: 'pointer',
-        opacity: 1,
-      },
+    // can't write this as an object since it needs to overwrite rc-slider styles
+    // object syntax doesn't support kebab case keys
+    // eslint-disable-next-line @emotion/syntax-preference
+    slider: css`
+      .rc-slider {
+        display: flex;
+        flex-grow: 1;
+        margin-left: 7px; // half the size of the handle to align handle to the left on 0 value
+      }
+      .rc-slider-mark {
+        top: ${theme.spacing(1.75)};
+      }
+      .rc-slider-mark-text {
+        color: ${theme.colors.text.disabled};
+        font-size: ${theme.typography.bodySmall.fontSize};
+      }
+      .rc-slider-mark-text-active {
+        color: ${theme.colors.text.primary};
+      }
+      .rc-slider-handle {
+        border: none;
+        background-color: ${handleColor};
+        box-shadow: ${theme.shadows.z1};
+        cursor: pointer;
+        opacity: 1;
+      }
 
-      '.rc-slider-handle:hover, .rc-slider-handle:active, .rc-slider-handle-click-focused:focus': hoverStyle,
+      .rc-slider-handle:hover,
+      .rc-slider-handle:active,
+      .rc-slider-handle-click-focused:focus {
+        ${hoverStyle};
+      }
 
       // The triple class names is needed because that's the specificity used in the source css :(
-      '.rc-slider-handle-dragging.rc-slider-handle-dragging.rc-slider-handle-dragging, .rc-slider-handle:focus-visible':
-        {
-          boxShadow: `0 0 0 5px ${theme.colors.text.primary}`,
-        },
+      .rc-slider-handle-dragging.rc-slider-handle-dragging.rc-slider-handle-dragging,
+      .rc-slider-handle:focus-visible {
+        box-shadow: 0 0 0 5px ${theme.colors.text.primary};
+      }
 
-      '.rc-slider-dot, .rc-slider-dot-active': {
-        backgroundColor: theme.colors.text.primary,
-        borderColor: theme.colors.text.primary,
-      },
+      .rc-slider-dot,
+      .rc-slider-dot-active {
+        background-color: ${theme.colors.text.primary};
+        border-color: ${theme.colors.text.primary};
+      }
 
-      '.rc-slider-track': {
-        backgroundColor: trackColor,
-      },
-      '.rc-slider-rail': {
-        backgroundColor: railColor,
-        cursor: 'pointer',
-      },
-    }),
+      .rc-slider-track {
+        background-color: ${trackColor};
+      }
+      .rc-slider-rail {
+        background-color: ${railColor};
+        cursor: pointer;
+      }
+    `,
     /** Global component from @emotion/core doesn't accept computed classname string returned from css from emotion.
      * It accepts object containing the computed name and flattened styles returned from css from @emotion/core
      * */

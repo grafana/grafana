@@ -114,13 +114,14 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
 
           // only show number buttons on hover
           "input[type='number']": {
-            '-moz-appearance': 'number-input',
-            '-webkit-appearance': 'number-input',
             appearance: 'textfield',
           },
 
           "input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button": {
-            '-webkit-appearance': 'inner-spin-button !important',
+            // Need type assertion here due to the use of !important
+            // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            WebkitAppearance: 'inner-spin-button !important' as 'inner-spin-button',
             opacity: 1,
           },
         },

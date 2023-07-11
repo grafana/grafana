@@ -138,7 +138,7 @@ const getStyles = (
       marginTop: theme.spacing(topSpacing ?? 0),
 
       '&:before': {
-        content: '',
+        content: '""',
         position: 'absolute',
         top: 0,
         left: 0,

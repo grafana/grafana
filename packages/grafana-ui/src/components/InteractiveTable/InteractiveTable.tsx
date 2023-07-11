@@ -56,7 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
       '& > button': {
         '&:after': {
-          content: '\\00a0',
+          content: '"\\00a0"',
         },
         width: '100%',
         height: '100%',

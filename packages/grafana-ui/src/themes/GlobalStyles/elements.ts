@@ -7,8 +7,8 @@ import { getFocusStyles } from '../mixins';
 export function getElementStyles(theme: GrafanaTheme2) {
   return css({
     html: {
-      '-ms-overflow-style': 'scrollbar',
-      '-webkit-tap-highlight-color': 'rgba(0, 0, 0, 0)',
+      MsOverflowStyle: 'scrollbar',
+      WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
       height: '100%',
       fontSize: `${theme.typography.htmlFontSize}px`,
       fontFamily: theme.typography.fontFamily,
