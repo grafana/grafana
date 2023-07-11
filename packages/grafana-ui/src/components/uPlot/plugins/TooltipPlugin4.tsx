@@ -22,6 +22,12 @@ interface TooltipContainerState {
   contents?: React.ReactNode;
 }
 
+interface TooltipContainerSize {
+  observer: ResizeObserver;
+  width: number;
+  height: number;
+}
+
 function mergeState(prevState: TooltipContainerState, nextState: Partial<TooltipContainerState>) {
   return {
     ...prevState,
@@ -49,9 +55,29 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
   const [{ plot, isHovering, isPinned, contents, style }, setState] = useReducer(mergeState, INITIAL_STATE);
 
+  const sizeRef = useRef<TooltipContainerSize>();
+
   const className = useStyles2(getStyles).tooltipWrapper;
 
   useLayoutEffect(() => {
+    sizeRef.current = {
+      width: 0,
+      height: 0,
+      observer: new ResizeObserver((entries) => {
+        let size = sizeRef.current!;
+
+        for (const entry of entries) {
+          if (entry.borderBoxSize?.length > 0) {
+            size.width = entry.borderBoxSize[0].inlineSize;
+            size.height = entry.borderBoxSize[0].blockSize;
+          } else {
+            size.width = entry.contentRect.width;
+            size.height = entry.contentRect.width;
+          }
+        }
+      }),
+    };
+
     let _plot = plot;
     let _isHovering = isHovering;
     let _isPinned = isPinned;
@@ -59,8 +85,6 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     let offsetX = 0;
     let offsetY = 0;
-    let width = 0;
-    let height = 0;
 
     let htmlEl = document.documentElement;
     let winWidth = htmlEl.clientWidth - 16;
@@ -80,7 +104,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         pendingRender = true;
         queueMicrotask(_render);
       }
-    }
+    };
 
     const _render = () => {
       pendingRender = false;
@@ -95,60 +119,43 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
       setState(state);
     };
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.borderBoxSize?.length > 0) {
-          width = entry.borderBoxSize[0].inlineSize;
-          height = entry.borderBoxSize[0].blockSize;
-        } else {
-          width = entry.contentRect.width;
-          height = entry.contentRect.width;
-        }
-      }
-    });
-
     config.addHook('init', (u) => {
       setState({ plot: (_plot = u) });
 
       // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
       u.over.addEventListener('click', (e) => {
-        if (e.target === u.over) {
-          _isPinned = !_isPinned;
-          _style = { pointerEvents: _isPinned ? 'all' : 'none' };
-          scheduleRender();
-        }
+        if (_isHovering) {
+          if (e.target === u.over) {
+            _isPinned = !_isPinned;
+            _style = { pointerEvents: _isPinned ? 'all' : 'none' };
+            scheduleRender();
+          }
 
-        // @ts-ignore
-        u.cursor._lock = _isPinned;
+          // @ts-ignore
+          u.cursor._lock = _isPinned;
 
-        // hack to trigger cursor to new position after unlock
-        // (should not be necessary after using the cursor.lock API)
-        if (!_isPinned) {
-          u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
+          // hack to trigger cursor to new position after unlock
+          // (should not be necessary after using the cursor.lock API)
+          if (!_isPinned) {
+            u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
+            _isHovering = false;
+          }
         }
       });
     });
 
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      let _isHoveringNow = _plot!.cursor.idxs!.some(v => v != null);
+      let _isHoveringNow = _plot!.cursor.idxs!.some((v) => v != null);
 
       if (_isHoveringNow) {
         // create
         if (!_isHovering) {
-          // boo setTimeout!
-          setTimeout(() => {
-            resizeObserver.observe(domRef.current!);
-          }, 200);
-
           _isHovering = true;
         }
       } else {
         // destroy...TODO: debounce this
         if (_isHovering) {
-          // prolly not needed since dom will be destroyed, so this should be GCd
-          resizeObserver.unobserve(domRef.current!);
-
           _isHovering = false;
         }
       }
@@ -175,6 +182,8 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
       let { left = -10, top = -10 } = u.cursor;
 
       if (left >= 0 || top >= 0) {
+        let { width, height } = sizeRef.current!;
+
         let clientX = u.rect.left + left;
         let clientY = u.rect.top + top;
 
@@ -211,7 +220,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
         if (_isHovering) {
-          if (domRef.current) {
+          if (domRef.current != null) {
             domRef.current.style.transform = transform;
           } else {
             _style.transform = transform;
@@ -221,6 +230,14 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
       }
     });
   }, [config]);
+
+  useLayoutEffect(() => {
+    const size = sizeRef.current!;
+
+    if (domRef.current != null) {
+      size.observer.observe(domRef.current);
+    }
+  }, [domRef.current]);
 
   if (plot && isHovering) {
     return createPortal(
