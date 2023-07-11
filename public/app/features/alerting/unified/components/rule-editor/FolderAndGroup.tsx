@@ -4,10 +4,8 @@ import React, { useCallback, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Field, InputControl, Label, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
-import { AccessControlAction, useDispatch } from 'app/types';
+import { AsyncSelect, Button, Field, InputControl, Label, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
@@ -17,7 +15,6 @@ import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
-import { InfoIcon } from '../InfoIcon';
 import { ProvisioningBadge } from '../Provisioning';
 
 import { Folder, RuleFolderPicker } from './RuleFolderPicker';
@@ -102,100 +99,107 @@ export function FolderAndGroup() {
 
   return (
     <div className={styles.container}>
-      <Field
-        label={
-          <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
-            <Stack gap={0.5}>
+      <div className={styles.evaluationGroupsContainer}>
+        <Field
+          label={
+            <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
               Folder
-              <InfoIcon
-                text={
-                  'Each folder has unique folder permission. When you store multiple rules in a folder, the folder access permissions are assigned to the rules.'
-                }
+            </Label>
+          }
+          className={styles.formInput}
+          error={errors.folder?.message}
+          invalid={!!errors.folder?.message}
+          data-testid="folder-picker"
+        >
+          <InputControl
+            render={({ field: { ref, ...field } }) => (
+              <RuleFolderPicker
+                inputId="folder"
+                {...field}
+                enableReset={true}
+                onChange={({ title, uid }) => {
+                  field.onChange({ title, uid });
+                  resetGroup();
+                }}
               />
-            </Stack>
-          </Label>
-        }
-        className={styles.formInput}
-        error={errors.folder?.message}
-        invalid={!!errors.folder?.message}
-        data-testid="folder-picker"
-      >
-        <InputControl
-          render={({ field: { ref, ...field } }) => (
-            <RuleFolderPicker
-              inputId="folder"
-              {...field}
-              enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-              enableReset={true}
-              onChange={({ title, uid }) => {
-                field.onChange({ title, uid });
-                resetGroup();
-              }}
-            />
-          )}
-          name="folder"
-          rules={{
-            required: { value: true, message: 'Select a folder' },
-            validate: {
-              pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-            },
-          }}
-        />
-      </Field>
+            )}
+            name="folder"
+            rules={{
+              required: { value: true, message: 'Select a folder' },
+              validate: {
+                pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+              },
+            }}
+          />
+        </Field>
 
-      <Field
-        label="Evaluation group"
-        data-testid="group-picker"
-        description="Rules within the same group are evaluated sequentially over the same time interval"
-        className={styles.formInput}
-        error={errors.group?.message}
-        invalid={!!errors.group?.message}
-      >
-        <InputControl
-          render={({ field: { ref, ...field }, fieldState }) => (
-            <AsyncSelect
-              disabled={!folder || loading}
-              inputId="group"
-              key={uniqueId()}
-              {...field}
-              onChange={(group) => {
-                field.onChange(group.label ?? '');
-              }}
-              isLoading={loading}
-              invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-              loadOptions={debouncedSearch}
-              cacheOptions
-              loadingMessage={'Loading groups...'}
-              defaultValue={defaultGroupValue}
-              defaultOptions={groupOptions}
-              getOptionLabel={(option: SelectableValue<string>) => (
-                <div>
-                  <span>{option.label}</span>
-                  {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
-                  {option.isDisabled && (
-                    <>
-                      {' '}
-                      <ProvisioningBadge />
-                    </>
-                  )}
-                </div>
-              )}
-              placeholder={'Evaluation group name'}
-              allowCustomValue
-              formatCreateLabel={(_) => '+ Add new '}
-              noOptionsMessage="Start typing to create evaluation group"
-            />
-          )}
-          name="group"
-          control={control}
-          rules={{
-            required: { value: true, message: 'Must enter a group name' },
-            validate: {
-              pathSeparator: (group_: string) => checkForPathSeparator(group_),
-            },
-          }}
-        />
-      </Field>
+        <div className={styles.addButton}>
+          <span>or</span>
+          <Button onClick={() => {}} type="button" icon="plus" fill="outline" variant="secondary">
+            New folder
+          </Button>
+        </div>
+      </div>
+
+      <div className={styles.evaluationGroupsContainer}>
+        <Field
+          label="Evaluation group"
+          data-testid="group-picker"
+          description="Rules within the same group are evaluated sequentially over the same time interval"
+          className={styles.formInput}
+          error={errors.group?.message}
+          invalid={!!errors.group?.message}
+        >
+          <InputControl
+            render={({ field: { ref, ...field }, fieldState }) => (
+              <AsyncSelect
+                disabled={!folder || loading}
+                inputId="group"
+                key={uniqueId()}
+                {...field}
+                onChange={(group) => {
+                  field.onChange(group.label ?? '');
+                }}
+                isLoading={loading}
+                invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                loadOptions={debouncedSearch}
+                cacheOptions
+                loadingMessage={'Loading groups...'}
+                defaultValue={defaultGroupValue}
+                defaultOptions={groupOptions}
+                getOptionLabel={(option: SelectableValue<string>) => (
+                  <div>
+                    <span>{option.label}</span>
+                    {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
+                    {option.isDisabled && (
+                      <>
+                        {' '}
+                        <ProvisioningBadge />
+                      </>
+                    )}
+                  </div>
+                )}
+                placeholder={'Select an evaluation group...'}
+              />
+            )}
+            name="group"
+            control={control}
+            rules={{
+              required: { value: true, message: 'Must enter a group name' },
+              validate: {
+                pathSeparator: (group_: string) => checkForPathSeparator(group_),
+              },
+            }}
+          />
+        </Field>
+
+        <div className={styles.addButton}>
+          <span>or</span>
+          <Button onClick={() => {}} type="button" icon="plus" fill="outline" variant="secondary">
+            New evaluation group
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -205,10 +209,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     align-items: baseline;
-    max-width: ${theme.breakpoints.values.sm}px;
+    max-width: ${theme.breakpoints.values.lg}px;
     justify-content: space-between;
   `,
-  formInput: css`
+  evaluationGroupsContainer: css`
     width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: ${theme.spacing(2)};
+  `,
+
+  addButton: css`
+    display: flex;
+    direction: row;
+    gap: ${theme.spacing(2)};
+    line-height: 2;
+    margin-top: 35px;
+  `,
+  formInput: css`
+    max-width: ${theme.breakpoints.values.sm}px;
+    flex-grow: 1;
+
+    label {
+      width: ${theme.breakpoints.values.sm}px;
+    }
   `,
 });
