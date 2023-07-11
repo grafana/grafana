@@ -29,6 +29,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageSearchBar: css`
       label: TracePageSearchBar;
+      float: right;
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 8px;
+      margin-right: 2px;
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;
