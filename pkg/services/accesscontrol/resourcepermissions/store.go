@@ -48,6 +48,33 @@ func (p *flatResourcePermission) IsInherited(scope string) bool {
 	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
 }
 
+type DeleteResourcePermissionsCmd struct {
+	Resource          string
+	ResourceAttribute string
+	ResourceID        string
+}
+
+func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
+	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
+
+	err := s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var permissionIDs []int64
+		err := sess.SQL(
+			"SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?",
+			scope, orgID).Find(&permissionIDs)
+		if err != nil {
+			return err
+		}
+
+		if err := deletePermissions(sess, permissionIDs); err != nil {
+			return err
+		}
+		return err
+	})
+
+	return err
+}
+
 func (s *store) SetUserResourcePermission(
 	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd SetResourcePermissionCommand,

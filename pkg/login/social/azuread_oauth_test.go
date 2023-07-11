@@ -36,6 +36,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		allowedGroups        []string
 		allowedOrganizations []string
 		forceUseGraphAPI     bool
+		usGovURL             bool
 	}
 	type args struct {
 		client *http.Client
@@ -88,6 +89,28 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			claims:  nil,
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "US Government domain",
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+				usGovURL:   true,
+			},
+			want: &BasicUserInfo{
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{},
+			},
 		},
 		{
 			name: "Email in preferred_username claim",
@@ -476,6 +499,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 	}
 
 	authURL := "https://login.microsoftonline.com/1234/oauth2/v2.0/authorize"
+	usGovAuthURL := "https://login.microsoftonline.us/1234/oauth2/v2.0/authorize"
+
 	cache := remotecache.NewFakeCacheStorage()
 	// put JWKS in cache
 	jwksDump, err := json.Marshal(jwks)
@@ -498,7 +523,11 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
 			}
 
-			s.SocialBase.Endpoint.AuthURL = authURL
+			if tt.fields.usGovURL {
+				s.SocialBase.Endpoint.AuthURL = usGovAuthURL
+			} else {
+				s.SocialBase.Endpoint.AuthURL = authURL
+			}
 
 			cl := jwt.Claims{
 				Subject:   "subject",
