@@ -389,7 +389,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       this.setState({ showPicker: false });
                     }}
                   >
-                    Go back to <i>Transformations in use</i>
+                    Go back to&nbsp;<i>Transformations in use</i>
                   </Button>
                 )}
                 <div
