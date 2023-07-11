@@ -108,6 +108,9 @@ describe('DashboardScenePage', () => {
 
     expect(screen.queryByText('Inspect: Panel B')).not.toBeInTheDocument();
 
+    // Wish I could use the menu here but unable t get it to open when I click the menu button
+    // Somethig with Dropdown that is not working inside react-testing
+    // screen.getByLabelText('Menu for panel with title Panel B').click();
     act(() => locationService.partial({ inspect: 'panel-2' }));
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
@@ -115,8 +118,6 @@ describe('DashboardScenePage', () => {
     act(() => locationService.partial({ inspect: null }));
 
     expect(screen.queryByText('Inspect')).not.toBeInTheDocument();
-    // Cannot get Menu to show (Looks to be an issue with Dropdown)
-    //screen.getByLabelText('Menu for panel with title Panel B').click();
   });
 
   it('Can view panel in fullscreen', async () => {
