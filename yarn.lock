@@ -7128,18 +7128,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:3.7.2, @react-types/overlays@npm:^3.7.2":
-  version: 3.7.2
-  resolution: "@react-types/overlays@npm:3.7.2"
-  dependencies:
-    "@react-types/shared": ^3.18.1
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 1edf6c1caca64cf6843aae181a321407fae83e5ee1682ab4761b1a8adff7e7913b1c541c180b30612492f3892a4da72f88d947165e9b02311928870185089807
-  languageName: node
-  linkType: hard
-
-"@react-types/overlays@npm:^3.8.0":
+"@react-types/overlays@npm:3.8.0, @react-types/overlays@npm:^3.8.0":
   version: 3.8.0
   resolution: "@react-types/overlays@npm:3.8.0"
   dependencies:
@@ -7147,6 +7136,17 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
   checksum: c409d05548a04f6d8267226d3aa560268d0abbe867d963f8494d599b753820c602dc555c4eb70471f317050e69837dd703723f529bc102a9e7ad394b457ee1b9
+  languageName: node
+  linkType: hard
+
+"@react-types/overlays@npm:^3.7.2":
+  version: 3.7.2
+  resolution: "@react-types/overlays@npm:3.7.2"
+  dependencies:
+    "@react-types/shared": ^3.18.1
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
+  checksum: 1edf6c1caca64cf6843aae181a321407fae83e5ee1682ab4761b1a8adff7e7913b1c541c180b30612492f3892a4da72f88d947165e9b02311928870185089807
   languageName: node
   linkType: hard
 
@@ -18902,7 +18902,7 @@ __metadata:
     "@react-stately/tree": 3.7.0
     "@react-types/button": 3.7.1
     "@react-types/menu": 3.9.1
-    "@react-types/overlays": 3.7.2
+    "@react-types/overlays": 3.8.0
     "@react-types/shared": 3.18.1
     "@reduxjs/toolkit": 1.9.3
     "@remix-run/router": ^1.5.0
