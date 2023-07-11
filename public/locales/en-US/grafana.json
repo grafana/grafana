@@ -398,13 +398,11 @@
     "new-folder": {
       "title": "New folder"
     },
-
-    "oncall": {
-      "title": "OnCall"
-
     "observability": {
       "title": "Observability"
-
+    },
+    "oncall": {
+      "title": "OnCall"
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",

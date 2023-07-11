@@ -398,9 +398,10 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
-
     "observability": {
-
+      "title": ""
+    },
+    "oncall": {
       "title": ""
     },
     "org-settings": {

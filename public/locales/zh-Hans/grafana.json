@@ -398,9 +398,10 @@
     "new-folder": {
       "title": "新建文件夹"
     },
-
     "observability": {
-
+      "title": ""
+    },
+    "oncall": {
       "title": ""
     },
     "org-settings": {

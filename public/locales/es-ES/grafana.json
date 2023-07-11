@@ -398,9 +398,10 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
-
     "observability": {
-
+      "title": ""
+    },
+    "oncall": {
       "title": ""
     },
     "org-settings": {
