@@ -102,8 +102,8 @@ Additional technical information on tabular time series formats and how dimensio
 [create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
 [create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
 
-[data-frames-as-time-series]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/developers/plugins//introduction-to-plugin-development/data-frames#data-frames-as-time-series"
-[data-frames-as-time-series]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/developers/plugins//introduction-to-plugin-development/data-frames#data-frames-as-time-series"
+[data-frames-as-time-series]: "/docs/grafana/ -> docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#data-frames-as-time-series"
+[data-frames-as-time-series]: "/docs/grafana-cloud/ -> docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#data-frames-as-time-series"
 
 [time-series-databases]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 [time-series-databases]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"

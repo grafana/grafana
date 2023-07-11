@@ -188,6 +188,106 @@ describe('LogRowContextModal', () => {
     await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
   });
 
+  it('should render 3 lines containing `foo123` with the same ms timestamp', async () => {
+    const dfBefore = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1689052469935, 1689052469935],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['foo123', 'foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1689052469935083353', '1689052469935083354'],
+        },
+      ],
+    });
+    const dfNow = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1689052469935],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1689052469935083354'],
+        },
+      ],
+    });
+    const dfAfter = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1689052469935, 1689052469935],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['foo123', 'foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1689052469935083354', '1689052469935083355'],
+        },
+      ],
+    });
+
+    let uniqueRefIdCounter = 1;
+    const logs = dataFrameToLogsModel([dfNow]);
+    const row = logs.rows[0];
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+      uniqueRefIdCounter += 1;
+      const refId = `refid_${uniqueRefIdCounter}`;
+      if (options.direction === LogRowContextQueryDirection.Forward) {
+        return {
+          data: [
+            {
+              refId,
+              ...dfBefore,
+            },
+          ],
+        };
+      } else {
+        return {
+          data: [
+            {
+              refId,
+              ...dfAfter,
+            },
+          ],
+        };
+      }
+    });
+
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+    // there need to be 2 lines with that message. 1 in before, 1 in now, 1 in after
+    await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
+  });
+
   it('should show a split view button', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
 
