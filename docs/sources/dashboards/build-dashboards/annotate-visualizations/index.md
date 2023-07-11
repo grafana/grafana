@@ -19,7 +19,13 @@ you can get event description and event tags. The text field can include links t
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" >}}
 
-You can annotate panels in three ways:
+You can annotate panels in three ways. 
+
+- Directly in the panel, using the [built-in annotations query](#built-in-query)
+- Using the HTTP API
+- Configure annotation queries in the dashboard settings
+
+In the first two cases, you are creating new annotations, while in the last you're querying existing annotations from data sources. The built-in query annotation query also supports this.
 
 - Directly in the panel, using the built-in annotations query (add link)
 - Adding annotation queries for any data source, using the dashboard settings (add link)
@@ -27,7 +33,7 @@ You can annotate panels in three ways:
 
 This page explains the first two options; for information about using the HTTP API, refer to [Annotations API]({{< relref "../../../developers/http_api/annotations/" >}}).
 
-## Add annotations in panels
+## Create annotations in panels
 
 Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel using the built-in annotation query(link here) that exists on all dashboards.
 
@@ -62,9 +68,9 @@ Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and
    <!--![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)-->
 1. Click on the trash icon in the annotation tooltip.
 
-## Add annotations through dashboard settings
+## Fetch annotations through dashboard settings
 
-In the dashboard settings you can create new queries to fetch annotations from the native annotation store using the built-in data annotation data source or add query other data sources.
+In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using the built-in data annotation data source or other data sources.
 
 ### Add new annotation queries
 
@@ -115,7 +121,7 @@ For example, create an annotation query name `outages` and specify a tag `outage
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-typeahead-support-10.0.png" max-width="600px" >}}
 
-In Grafana v5.3+ it's possible to use template variables in the tag query. So if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can now use the same template variable in your annotation query to only show annotations for those services.
+You can also use template variables in the tag query. This means if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can use the same template variable in your annotation query to only show annotations for those services.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-tag-filter-variable-10.0.png" max-width="600px" >}}
 
