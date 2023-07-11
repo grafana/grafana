@@ -122,10 +122,10 @@ Content-Type: application/json
 }
 ```
 
-If nested folders are enabled, and the folder is nested (lives under another folder) then the response additionally contains:
+If nested folders are enabled, and the folder is nested (lives under another folder), then the response additionally contains:
 
-- **parentUid** - the parent folder UID.
-- **parents** - an array with the whole tree hierarchy starting from the root going down up to the parent folder.
+- **parentUid** - The parent folder UID.
+- **parents** - An array with the whole tree hierarchy, starting from the root going down up to the parent folder.
 
 Status Codes:
 
@@ -348,7 +348,7 @@ Status Codes:
 
 Will return the folder identified by id.
 
-This is deprecated. Please use [get folder by UID]({{< ref "#get-folder-by-uid" >}}) instead.
+This is deprecated. Use [get folder by UID]({{< ref "#get-folder-by-uid" >}}) instead.
 
 **Required permissions**
 
@@ -401,7 +401,7 @@ Status Codes:
 
 `POST /api/folders/:uid/move`
 
-Will move the folder.
+Moves the folder.
 
 This is relevant only if nested folders are enabled.
 
@@ -420,9 +420,9 @@ If moving the folder under root:
 | -------------- | ------------- |
 | `folders:create` | `folders:*` |
 
-JSON Body schema:
+JSON body schema:
 
-- **parentUid** – Optional [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) of the new parent folder. If it's empty then the folder is moved under the root.
+- **parentUid** – Optional [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) of the new parent folder. If this is empty, then the folder is moved under the root.
 
 **Example Request**:
 
@@ -481,7 +481,7 @@ Content-Type: application/json
 Status Codes:
 
 - **200** – Moved
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (invalid JSON, missing or invalid fields, and so on)
 - **401** – Unauthorized
-- **403** – Access Denied
-- **404** – Not Found
+- **403** – Access denied
+- **404** – Not found
