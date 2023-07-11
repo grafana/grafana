@@ -822,7 +822,7 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-If a supported IETF language tag like `en-US` is available, this option will set the default UI language.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
 If set to `detect`, the default UI language will be determined by browser preference.
 The default is `en-US`.
 
