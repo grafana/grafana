@@ -19,4 +19,8 @@ if (window.nonce) {
 window.__grafana_app_bundle_loaded = true;
 
 import app from './app';
-app.init();
+import { IS_QIANKUN } from './qiankun/constants';
+export { mount, bootstrap, unmount } from './qiankun/micro-frontend';
+if (!IS_QIANKUN) {
+  app.init();
+}

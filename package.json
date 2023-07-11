@@ -6,6 +6,8 @@
   "version": "10.0.1",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "build:menu": "node ./menu/index.mjs",
+    "build:menu-watch": "cross-env WATCH=1 node ./menu/index.mjs",
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build --env noMinify=1",
     "dev": "yarn i18n:compile && NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",

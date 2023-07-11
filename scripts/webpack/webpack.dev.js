@@ -54,6 +54,9 @@ module.exports = (env = {}) =>
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
       pathinfo: false,
+      library: 'grafana-[name]',
+      libraryTarget: 'umd',
+      globalObject: 'window',
     },
 
     // https://webpack.js.org/guides/build-performance/#avoid-extra-optimization-steps

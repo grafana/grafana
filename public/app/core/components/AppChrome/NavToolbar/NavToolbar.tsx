@@ -13,6 +13,7 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
 import { NavToolbarSeparator } from './NavToolbarSeparator';
+import {IS_QIANKUN} from "../../../../qiankun/constants";
 
 export interface Props {
   onToggleSearchBar(): void;
@@ -39,15 +40,17 @@ export function NavToolbar({
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
-      <div className={styles.menuButton}>
-        <IconButton
-          name="bars"
-          tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
-          tooltipPlacement="bottom"
-          size="xl"
-          onClick={onToggleMegaMenu}
-        />
-      </div>
+      {
+        !IS_QIANKUN && <div className={styles.menuButton}>
+          <IconButton
+            name="bars"
+            tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
+            tooltipPlacement="bottom"
+            size="xl"
+            onClick={onToggleMegaMenu}
+          />
+        </div>
+      }
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
       <div className={styles.actions}>
         {actions}
