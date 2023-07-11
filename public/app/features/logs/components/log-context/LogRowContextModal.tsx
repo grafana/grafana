@@ -324,15 +324,16 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       const newAbove = logsSortOrder === LogsSortOrder.Ascending ? newer : older;
       const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;
       if (currentGen === generationRef.current) {
-        setSection('above', () => ({
-          rows: sortLogRows([...newAbove, ...above.rows], logsSortOrder),
-          loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
-        }));
-
-        setSection('below', () => ({
-          rows: sortLogRows([...below.rows, ...newBelow], logsSortOrder),
-          loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
-        }));
+        setContext({
+          above: {
+            rows: sortLogRows([...newAbove, ...above.rows], logsSortOrder),
+            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+          },
+          below: {
+            rows: sortLogRows([...below.rows, ...newBelow], logsSortOrder),
+            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+          },
+        });
       }
     } catch {
       setSection(place, (section) => ({
