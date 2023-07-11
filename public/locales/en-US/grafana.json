@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -38,6 +38,18 @@
       "move-modal-title": "Move",
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
+    },
+    "counts": {
+      "alertRule__one": "{{count}} alert rule",
+      "alertRule__other": "{{count}} alert rules",
+      "dashboard__one": "{{count}} dashboard",
+      "dashboard__other": "{{count}} dashboards",
+      "folder__one": "{{count}} folder",
+      "folder__other": "{{count}} folders",
+      "libraryPanel__one": "{{count}} library panel",
+      "libraryPanel__other": "{{count}} library panels",
+      "total__one": "{{count}} item",
+      "total__other": "{{count}} items"
     },
     "dashboards-tree": {
       "name-column": "Name",

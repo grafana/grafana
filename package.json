@@ -46,8 +46,9 @@
     "ci:test-frontend": "yarn run test:ci",
     "postinstall": "husky install",
     "i18n:clean": "rimraf public/locales/en-US/grafana.json",
-    "i18n:extract": "yarn i18n:clean && yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}' && node ./public/locales/psuedo.js",
+    "i18n:extract": "yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}'",
     "i18n:compile": "echo 'no i18n compile yet, all good'",
+    "i18n:pseudo": "node ./public/locales/pseudo.js",
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
@@ -76,6 +77,9 @@
     ],
     "*public/app/plugins/**/**/*.cue": [
       "make fix-cue"
+    ],
+    "./public/locales/en-US/grafana.json": [
+      "yarn i18n:pseudo"
     ]
   },
   "devDependencies": {
