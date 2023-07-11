@@ -51,8 +51,6 @@ To configure GitHub authentication with Grafana, follow these steps:
 
    You should now see a GitHub login button on the login page and be able to log in or sign up with your GitHub accounts.
 
-Continue reading this documentation to learn more about how to [configure GitHub OAuth application]({{< relref "#configure-github-oauth-application" >}}) and [enable GitHub in Grafana]({{< relref "#enable-github-in-grafana" >}}).
-
 ## Configuration options
 
 The table below describes all GitHub OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
