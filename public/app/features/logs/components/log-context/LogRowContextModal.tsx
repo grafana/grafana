@@ -326,12 +326,12 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       if (currentGen === generationRef.current) {
         setSection('above', () => ({
           rows: sortLogRows([...newAbove, ...above.rows], logsSortOrder),
-          loadingState: newAbove.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+          loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
         }));
 
         setSection('below', () => ({
           rows: sortLogRows([...below.rows, ...newBelow], logsSortOrder),
-          loadingState: newBelow.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+          loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
         }));
       }
     } catch {
