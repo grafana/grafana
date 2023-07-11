@@ -437,23 +437,25 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
-  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
+  if (folderUid && pageNav) {
     if (config.featureToggles.nestedFolders) {
-      const folderNavModel = folderUid ? getNavModel(navIndex, `folder-dashboards-${folderUid}`).main : undefined;
+      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
       pageNav = {
         ...pageNav,
         parentItem: folderNavModel,
       };
     } else {
-      pageNav = {
-        ...pageNav,
-        parentItem: {
-          text: folderTitle,
-          url: `/dashboards/f/${dashboard.meta.folderUid}`,
-        },
-      };
+      // Check if folder changed
+      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
+        pageNav = {
+          ...pageNav,
+          parentItem: {
+            text: folderTitle,
+            url: `/dashboards/f/${dashboard.meta.folderUid}`,
+          },
+        };
+      }
     }
   }
 

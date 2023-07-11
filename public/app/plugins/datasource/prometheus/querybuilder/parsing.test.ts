@@ -293,6 +293,22 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('Throws error when undefined', () => {
+    expect(() => buildVisualQueryFromString(undefined as unknown as string)).toThrow(
+      "Cannot read properties of undefined (reading 'replace')"
+    );
+  });
+
+  it('Works with empty string', () => {
+    expect(buildVisualQueryFromString('')).toEqual(
+      noErrors({
+        metric: '',
+        labels: [],
+        operations: [],
+      })
+    );
+  });
+
   it('fails to parse variable for function', () => {
     expect(buildVisualQueryFromString('${func_var}(metric{bar="foo"})')).toEqual({
       errors: [

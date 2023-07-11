@@ -24,6 +24,12 @@ describe('filterSpans', () => {
     spanID: spanID0,
     operationName: 'operationName0',
     duration: 3050,
+    kind: 'kind0',
+    statusCode: 0,
+    statusMessage: 'statusMessage0',
+    instrumentationLibraryName: 'libraryName',
+    instrumentationLibraryVersion: 'libraryVersion0',
+    traceState: 'traceState0',
     process: {
       serviceName: 'serviceName0',
       tags: [
@@ -69,6 +75,12 @@ describe('filterSpans', () => {
     spanID: spanID2,
     operationName: 'operationName2',
     duration: 5000,
+    kind: 'kind2',
+    statusCode: 2,
+    statusMessage: 'statusMessage2',
+    instrumentationLibraryName: 'libraryName',
+    instrumentationLibraryVersion: 'libraryVersion2',
+    traceState: 'traceState2',
     process: {
       serviceName: 'serviceName2',
       tags: [
@@ -176,6 +188,132 @@ describe('filterSpans', () => {
         spans
       )
     ).toEqual(new Set([spanID0]));
+  });
+
+  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion, traceState, or id match a filter', () => {
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind', value: 'kind0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind', operator: '!=', value: 'kind0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status', value: 'unset' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status', operator: '!=', value: 'unset' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message', value: 'statusMessage0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'status.message', operator: '!=', value: 'statusMessage0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.name' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.name', value: 'libraryName' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'library.name', operator: '!=', value: 'libraryName' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.version' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.version', value: 'libraryVersion0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'library.version', operator: '!=', value: 'libraryVersion0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'trace.state' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'trace.state', value: 'traceState0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'trace.state', operator: '!=', value: 'traceState0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id', value: 'span-id-0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id', operator: '!=', value: 'span-id-0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
   });
 
   it('should return spans whose process.tags kv.key match a filter', () => {
@@ -531,6 +669,15 @@ describe('filterSpans', () => {
   it("should exclude span whose tags' kv.value or kv.key match a filter if the key matches an excludeKey", () => {
     expect(filterSpans('tagValue1 -tagKey2', spans)).toEqual(new Set([spanID0]));
     expect(filterSpans('tagValue1 -tagKey1', spans)).toEqual(new Set([spanID2]));
+  });
+
+  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion or traceState value match a filter', () => {
+    expect(filterSpans('kind0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('error', spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans('statusMessage0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('libraryName', spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans('libraryVersion2', spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans('traceState0', spans)).toEqual(new Set([spanID0]));
   });
 
   it('should return spans whose logs have a field whose kv.key match a filter', () => {

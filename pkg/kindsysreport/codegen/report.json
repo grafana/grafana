@@ -34,7 +34,7 @@
     "alertgroupspanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/alerting-squad-frontend"
+        "grafana/alerting-frontend"
       ],
       "currentVersion": [
         0,
@@ -242,7 +242,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -261,6 +261,54 @@
       "name": "BarGaugePanelCfg",
       "pluralMachineName": "bargaugepanelcfgs",
       "pluralName": "BarGaugePanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "candlestickpanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/dataviz-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/candlestickpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/candlestick/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/candlestick/panelcfg.gen.ts"
+      },
+      "machineName": "candlestickpanelcfg",
+      "maturity": "experimental",
+      "name": "CandlestickPanelCfg",
+      "pluralMachineName": "candlestickpanelcfgs",
+      "pluralName": "CandlestickPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "canvaspanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/dataviz-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/canvaspanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/canvas/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/canvas/panelcfg.gen.ts"
+      },
+      "machineName": "canvaspanelcfg",
+      "maturity": "experimental",
+      "name": "CanvasPanelCfg",
+      "pluralMachineName": "canvaspanelcfgs",
+      "pluralName": "CanvasPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "cloudwatchdataquery": {
@@ -326,7 +374,7 @@
         0
       ],
       "description": "A Grafana dashboard.",
-      "grafanaMaturityCount": 260,
+      "grafanaMaturityCount": 103,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -584,7 +632,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1251,7 +1299,7 @@
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1622,7 +1670,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -2087,6 +2135,8 @@
           "azuremonitordatasourcecfg",
           "barchartpanelcfg",
           "bargaugepanelcfg",
+          "candlestickpanelcfg",
+          "canvaspanelcfg",
           "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
           "dashboarddataquery",
@@ -2148,7 +2198,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 69
+        "count": 71
       },
       "core": {
         "name": "core",
@@ -2181,6 +2231,8 @@
           "annotationslistpanelcfg",
           "barchartpanelcfg",
           "bargaugepanelcfg",
+          "candlestickpanelcfg",
+          "canvaspanelcfg",
           "cloudwatchdataquery",
           "dashboard",
           "dashboardlistpanelcfg",
@@ -2208,7 +2260,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 29
+        "count": 31
       },
       "mature": {
         "name": "mature",

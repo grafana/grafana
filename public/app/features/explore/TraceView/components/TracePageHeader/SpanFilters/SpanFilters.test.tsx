@@ -15,6 +15,12 @@ const trace: Trace = {
       spanID: '1ed38015486087ca',
       operationName: 'Span0',
       tags: [{ key: 'TagKey0', type: 'string', value: 'TagValue0' }],
+      kind: 'server',
+      statusCode: 2,
+      statusMessage: 'message',
+      instrumentationLibraryName: 'name',
+      instrumentationLibraryVersion: 'version',
+      traceState: 'state',
       process: {
         serviceName: 'Service0',
         tags: [{ key: 'ProcessKey0', type: 'string', value: 'ProcessValue0' }],
@@ -123,6 +129,7 @@ describe('SpanFilters', () => {
     await waitFor(() => {
       expect(screen.getByText('TagKey0')).toBeInTheDocument();
       expect(screen.getByText('TagKey1')).toBeInTheDocument();
+      expect(screen.getByText('kind')).toBeInTheDocument();
       expect(screen.getByText('ProcessKey0')).toBeInTheDocument();
       expect(screen.getByText('ProcessKey1')).toBeInTheDocument();
       expect(screen.getByText('LogKey0')).toBeInTheDocument();
@@ -164,8 +171,15 @@ describe('SpanFilters', () => {
       expect(container?.childNodes[1].textContent).toBe('ProcessKey1');
       expect(container?.childNodes[2].textContent).toBe('TagKey0');
       expect(container?.childNodes[3].textContent).toBe('TagKey1');
-      expect(container?.childNodes[4].textContent).toBe('LogKey0');
-      expect(container?.childNodes[5].textContent).toBe('LogKey1');
+      expect(container?.childNodes[4].textContent).toBe('id');
+      expect(container?.childNodes[5].textContent).toBe('kind');
+      expect(container?.childNodes[6].textContent).toBe('library.name');
+      expect(container?.childNodes[7].textContent).toBe('library.version');
+      expect(container?.childNodes[8].textContent).toBe('status');
+      expect(container?.childNodes[9].textContent).toBe('status.message');
+      expect(container?.childNodes[10].textContent).toBe('trace.state');
+      expect(container?.childNodes[11].textContent).toBe('LogKey0');
+      expect(container?.childNodes[12].textContent).toBe('LogKey1');
     });
   });
 

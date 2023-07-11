@@ -26,7 +26,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -60,6 +60,7 @@ import {
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
+import { getErrorMessage } from './utils';
 
 export const DEFAULT_LIMIT = 20;
 
@@ -191,8 +192,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 data: [createTableFrameFromSearch(response.data.traces, this.instanceSettings)],
               };
             }),
-            catchError((error) => {
-              return of({ error: { message: error.data.message }, data: [] });
+            catchError((err) => {
+              return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
             })
           )
         );
@@ -240,8 +241,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                     data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
                   };
                 }),
-                catchError((error) => {
-                  return of({ error: { message: error.data.message }, data: [] });
+                catchError((err) => {
+                  return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
                 })
               )
             );
@@ -277,8 +278,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                   data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
                 };
               }),
-              catchError((error) => {
-                return of({ error: { message: error.data.message }, data: [] });
+              catchError((err) => {
+                return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
               })
             )
           );
@@ -367,7 +368,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     return {
       ...expandedQuery,
-      query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),
       serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
       spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
@@ -466,11 +467,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       method: 'GET',
       url: `${this.instanceSettings.url}/api/echo`,
     };
-    const response = await lastValueFrom(getBackendSrv().fetch(options));
 
-    if (response?.ok) {
-      return { status: 'success', message: 'Data source is working' };
-    }
+    return await lastValueFrom(
+      getBackendSrv()
+        .fetch(options)
+        .pipe(
+          mergeMap(() => {
+            return of({ status: 'success', message: 'Data source successfully connected.' });
+          }),
+          catchError((err) => {
+            return of({ status: 'error', message: getErrorMessage(err.data.message, 'Unable to connect with Tempo') });
+          })
+        )
+    );
   }
 
   getQueryDisplayText(query: TempoQuery) {
@@ -562,7 +571,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
     map((responses: DataQueryResponse[]) => {
       const errorRes = responses.find((res) => !!res.error);
       if (errorRes) {
-        throw new Error(errorRes.error!.message);
+        throw new Error(getErrorMessage(errorRes.error?.message));
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
@@ -618,7 +627,7 @@ function rateQuery(
     map((responses: DataQueryResponse[]) => {
       const errorRes = responses.find((res) => !!res.error);
       if (errorRes) {
-        throw new Error(errorRes.error!.message);
+        throw new Error(getErrorMessage(errorRes.error?.message));
       }
       return {
         data: [responses[0]?.data ?? [], serviceMapResponse.data[0], serviceMapResponse.data[1]],
@@ -673,7 +682,7 @@ function errorAndDurationQuery(
     map((errorAndDurationResponse: DataQueryResponse[]) => {
       const errorRes = errorAndDurationResponse.find((res) => !!res.error);
       if (errorRes) {
-        throw new Error(errorRes.error!.message);
+        throw new Error(getErrorMessage(errorRes.error?.message));
       }
 
       const serviceGraphView = getServiceGraphView(

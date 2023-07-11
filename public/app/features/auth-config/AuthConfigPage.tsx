@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -11,6 +12,7 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
+import { AuthProviderInfo } from './types';
 import { getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
@@ -63,7 +65,16 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
       documentation.
     </a>
   );
+
   const subTitle = <span>Manage your auth settings and configure single sign-on. Find out more in our {docsLink}</span>;
+
+  const onCTAClick = () => {
+    reportInteraction('authentication_ui_created', { provider: firstAvailableProvider?.type });
+  };
+  const onProviderCardClick = (provider: AuthProviderInfo) => {
+    reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
+  };
+
   return (
     <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
@@ -79,6 +90,9 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 enabled={providerStatuses[provider.id]?.enabled}
                 configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
+                onClick={() => {
+                  onProviderCardClick(provider);
+                }}
               />
             ))}
           </div>
@@ -92,6 +106,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
             description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
               Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.
               No changes will be written into .ini file.`}
+            onClick={onCTAClick}
           />
         )}
         {!!configuresProviders?.length && (

@@ -67,11 +67,12 @@ To query a particular trace:
 
 Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
 The default traces search reviews the whole trace.
-TraceQL provides a method for formulating precise queries so you can zoom in to the data you need. Query results are returned faster because the queries limit what is searched
+TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
+Query results are returned faster because the queries limit what is searched.
 
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
-You can create TraceQL queries using the Query editor or using Search query tab (preview feature).
+You can create TraceQL queries using the Query editor or using **Search** query type.
 
 [//]: # 'Include content for preview of Search tab featuring TraceQL query builder'
 

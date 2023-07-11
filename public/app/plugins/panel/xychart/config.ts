@@ -10,11 +10,41 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { ScatterFieldConfig, ScatterShow } from './types';
+import { FieldConfig, ScatterShow } from './panelcfg.gen';
 
-export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
+export const DEFAULT_POINT_SIZE = 5;
+
+export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsArgs<FieldConfig> {
   return {
     standardOptions: {
+      [FieldConfigProperty.Min]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Max]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Unit]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Decimals]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.NoValue]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.DisplayName]: {
+        hideFromDefaults: true,
+      },
+
+      [FieldConfigProperty.Thresholds]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Mappings]: {
+        hideFromDefaults: true,
+      },
+
+      // TODO: this still leaves Color series by: [ Last | Min | Max ]
+      // because item.settings?.bySeriesSupport && colorMode.isByValue
       [FieldConfigProperty.Color]: {
         settings: {
           byValueSupport: true,
@@ -41,10 +71,29 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
             ],
           },
         })
+        // .addGenericEditor(
+        //   {
+        //     path: 'pointSymbol',
+        //     name: 'Point symbol',
+        //     defaultValue: defaultFieldConfig.pointSymbol ?? {
+        //       mode: 'fixed',
+        //       fixed: 'img/icons/marker/circle.svg',
+        //     },
+        //     settings: {
+        //       resourceType: MediaType.Icon,
+        //       folderName: ResourceFolderName.Marker,
+        //       placeholderText: 'Select a symbol',
+        //       placeholderValue: 'img/icons/marker/circle.svg',
+        //       showSourceRadio: false,
+        //     },
+        //     showIf: (c) => c.show !== ScatterShow.Lines,
+        //   },
+        //   SymbolEditor // ResourceDimensionEditor
+        // )
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Point size',
-          defaultValue: cfg.pointSize?.fixed,
+          defaultValue: cfg.pointSize?.fixed ?? DEFAULT_POINT_SIZE,
           settings: {
             min: 1,
             max: 100,
@@ -52,6 +101,17 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
           },
           showIf: (c) => c.show !== ScatterShow.Lines,
         })
+        // .addSliderInput({
+        //   path: 'fillOpacity',
+        //   name: 'Fill opacity',
+        //   defaultValue: 0.4, // defaultFieldConfig.fillOpacity,
+        //   settings: {
+        //     min: 0, // hidden?  or just outlines?
+        //     max: 1,
+        //     step: 0.05,
+        //   },
+        //   showIf: (c) => c.show !== ScatterShow.Lines,
+        // })
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',

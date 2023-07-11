@@ -37,6 +37,8 @@ export const PanelTypeCard = ({
   });
 
   return (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       className={cssClass}
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
@@ -116,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.action.selected};
     `,
     disabled: css`
-      opacity: ${theme.colors.action.disabledOpacity};
+      opacity: 0.6;
       filter: grayscale(1);
       cursor: default;
       pointer-events: none;
