@@ -40,6 +40,24 @@ This section explains the elements of the Trace View dashboard.
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
+### Span Filters
+
+{{% admonition type="note" %}}
+This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../setup-grafana/configure-grafana/feature-toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
+
 ### Timeline
 
 {{< figure src="/static/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view timeline" >}}
@@ -84,7 +102,7 @@ Click the document icon to open a split view in Explore with the configured data
 The Service Graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
 
-For more information, refer to the [Service Graph view table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph-view-table) of the Tempo data source page and the [service graph view page](https://grafana.com/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
+For more information, refer to the [Service Graph view section]({{< relref "../datasources/tempo/#open-the-service-graph-view" >}}) of the Tempo data source page and the [service graph view page](/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
 
 {{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the Service Graph view" >}}
 
