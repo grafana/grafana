@@ -6,6 +6,22 @@
   visibility: hidden;
 }
 
+.react-grid-item {
+  &:hover,
+  &:focus,
+  &:active {
+    z-index: 1;
+  }
+}
+
+.SplitPane {
+  &:hover,
+  &:focus,
+  &:active {
+    overflow: visible !important;
+  }
+}
+
 .react-grid-item,
 #grafana-portal-container {
   touch-action: initial !important;

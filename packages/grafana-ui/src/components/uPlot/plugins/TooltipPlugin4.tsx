@@ -17,7 +17,7 @@ interface TooltipPlugin4Props {
 interface TooltipContainerState {
   plot?: uPlot | null;
   style: Partial<CSSProperties>;
-  isVisible: boolean;
+  isHovering: boolean;
   isPinned: boolean;
   contents?: React.ReactNode;
 }
@@ -35,7 +35,7 @@ function mergeState(prevState: TooltipContainerState, nextState: Partial<Tooltip
 
 const INITIAL_STATE: TooltipContainerState = {
   style: { transform: '', pointerEvents: 'none' },
-  isVisible: false,
+  isHovering: false,
   isPinned: false,
   contents: null,
   plot: null,
@@ -47,13 +47,13 @@ const INITIAL_STATE: TooltipContainerState = {
 export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
-  const [{ plot, isVisible, isPinned, contents, style }, setState] = useReducer(mergeState, INITIAL_STATE);
+  const [{ plot, isHovering, isPinned, contents, style }, setState] = useReducer(mergeState, INITIAL_STATE);
 
   const className = useStyles2(getStyles).tooltipWrapper;
 
   useLayoutEffect(() => {
     let _plot = plot;
-    let _isVisible = isVisible;
+    let _isHovering = isHovering;
     let _isPinned = isPinned;
     let _style = style;
 
@@ -88,8 +88,8 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
       let state: TooltipContainerState = {
         style: _style,
         isPinned: _isPinned,
-        isVisible: _isVisible,
-        contents: render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned),
+        isHovering: _isHovering,
+        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned) : null,
       };
 
       setState(state);
@@ -131,6 +131,29 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
+      let _isHoveringNow = _plot!.cursor.idxs!.some(v => v != null);
+
+      if (_isHoveringNow) {
+        // create
+        if (!_isHovering) {
+          // boo setTimeout!
+          setTimeout(() => {
+            resizeObserver.observe(domRef.current!);
+          }, 200);
+
+          _isHovering = true;
+        }
+      } else {
+        // destroy...TODO: debounce this
+        if (_isHovering) {
+          // prolly not needed since dom will be destroyed, so this should be GCd
+          resizeObserver.unobserve(domRef.current!);
+
+          _isHovering = false;
+        }
+      }
+
+      // scheduleHide (debounce when hovering all-nulls), scheduleShow, scheduleUpdate
       scheduleRender();
     });
 
@@ -151,28 +174,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     config.addHook('setCursor', (u) => {
       let { left = -10, top = -10 } = u.cursor;
 
-      if (left < 0 && top < 0) {
-        if (_isVisible) {
-          _isVisible = false;
-          scheduleRender();
-
-          // TODO: this should be done by Dashboards onmouseleave
-          let ctnr = u.root.closest<HTMLElement>('.react-grid-item, .SplitPane');
-          if (ctnr != null) {
-            // panel edit
-            if (ctnr.matches('.SplitPane')) {
-              ctnr.style.overflow = 'hidden';
-            }
-            // dashboard grid
-            else {
-              ctnr.style.zIndex = 'auto';
-            }
-          }
-
-          // prolly not needed since dom will be destroyed, so this should be GCd
-          resizeObserver.unobserve(domRef.current!);
-        }
-      } else {
+      if (left >= 0 || top >= 0) {
         let clientX = u.rect.left + left;
         let clientY = u.rect.top + top;
 
@@ -208,36 +210,19 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
         const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
-        if (_isVisible && domRef.current) {
-          domRef.current.style.transform = transform;
-        } else {
-          _style = { transform: transform };
-          _isVisible = true;
-          scheduleRender();
-
-          // TODO: this should be done by Dashboards onmouseenter
-          let ctnr = u.root.closest<HTMLElement>('.react-grid-item, .SplitPane');
-          if (ctnr != null) {
-            // panel edit
-            if (ctnr.matches('.SplitPane')) {
-              ctnr.style.overflow = '';
-            }
-            // dashboard grid
-            else {
-              ctnr.style.zIndex = '1';
-            }
+        if (_isHovering) {
+          if (domRef.current) {
+            domRef.current.style.transform = transform;
+          } else {
+            _style.transform = transform;
+            scheduleRender();
           }
-
-          // boo setTimeout!
-          setTimeout(() => {
-            resizeObserver.observe(domRef.current!);
-          }, 100);
         }
       }
     });
   }, [config]);
 
-  if (plot && isVisible) {
+  if (plot && isHovering) {
     return createPortal(
       <div className={className} style={style} ref={domRef}>
         <div>{isPinned ? '!!PINNED!! [X]' : ''}</div>
