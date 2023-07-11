@@ -44,6 +44,16 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 		return nil, fmt.Errorf("%v: %w", "failed to convert to plugin DTO", err)
 	}
 
+	// rename folder to $pluginID-$version
+	if pluginJSON.Info.Version != "" {
+		pluginPath := filepath.Join(filepath.Dir(pluginDir), fmt.Sprintf("%s-%s", pluginJSON.ID, pluginJSON.Info.Version))
+		err = os.Rename(pluginDir, pluginPath)
+		if err != nil {
+			return nil, fmt.Errorf("%v: %w", "failed to rename plugin directory", err)
+		}
+		pluginDir = pluginPath
+	}
+
 	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", pluginJSON.ID, pluginJSON.Info.Version, pluginDir)
 
 	deps := make([]*Dependency, 0, len(pluginJSON.Dependencies.Plugins))
@@ -63,7 +73,9 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 }
 
 func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string) (string, error) {
-	installDir := filepath.Join(fs.pluginsDir, pluginID)
+	randSuffix := randomString(8)
+	pluginDirName := fmt.Sprintf("%s-%s", pluginID, randSuffix)
+	installDir := filepath.Join(fs.pluginsDir, pluginDirName)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
 		fs.log.Debugf("Removing existing installation of plugin %s", installDir)
 		err = os.RemoveAll(installDir)
@@ -92,7 +104,7 @@ func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, plu
 				zf.Name, fs.pluginsDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginID))) // lgtm[go/zipslip]
+		dstPath := filepath.Clean(filepath.Join(fs.pluginsDir, removeGitBuildFromName(zf.Name, pluginDirName))) // lgtm[go/zipslip]
 
 		if zf.FileInfo().IsDir() {
 			// We can ignore gosec G304 here since it makes sense to give all users read access
