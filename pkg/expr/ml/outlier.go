@@ -82,9 +82,6 @@ func (c OutlierCommand) Execute(from, to time.Time, sendRequest func(method stri
 }
 
 // unmarshalOutlierCommand lazily parses the outlier command configuration and produces OutlierCommand.
-// "intervalMs" (optional) must be number, converted to int - represents interval parameter that is used during execution
-// "config" (required) a JSON object that is used as a template during command execution, that adds\updates some fields (see Execute for more details).
-// The "config" object must contain a field "datasource_uid". Other fields are not validated
 func unmarshalOutlierCommand(expr CommandConfiguration, appURL string) (*OutlierCommand, error) {
 	var cfg OutlierCommandConfiguration
 	err := json.Unmarshal(expr.Config, &cfg)
