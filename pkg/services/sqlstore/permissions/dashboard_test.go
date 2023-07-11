@@ -521,6 +521,20 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			features:       featuremgmt.WithFeatures(),
 			expectedResult: []string{"parent", "dashboard under parent folder"},
 		},
+		{
+			desc:       "Should be able to edit inherited dashboards and folders if nested folders are enabled",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedResult: []string{"subfolder", "dashboard under parent folder", "dashboard under subfolder"},
+		},
 	}
 
 	origNewGuardian := guardian.New
