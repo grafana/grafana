@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -49,7 +50,6 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 		PackageName:      mname,
 		KindName:         kind.Props().Common().Name,
 		Version:          sch.Version().String(),
-		Spaces:           formatSpaces(subr),
 		SubresourceNames: subr,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core resource template: %w", err)
@@ -58,23 +58,15 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), buf.Bytes(), ag), nil
-}
 
-func formatSpaces(subr []string) []string {
-	spaces := make([]string, len(subr))
-	maxLength := 0
-	for _, s := range subr {
-		if len(s) > maxLength {
-			maxLength = len(s)
-		}
+	f := codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), buf.Bytes(), ag)
+	content, err := format.Source(f.Data)
+	if err != nil {
+		return nil, err
 	}
 
-	for i, s := range subr {
-		spaces[i] = strings.Repeat(" ", maxLength-len(s)+1)
-	}
-
-	return spaces
+	f.Data = content
+	return f, nil
 }
 
 type SubresourceGoTypesJenny struct {
