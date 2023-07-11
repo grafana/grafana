@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
