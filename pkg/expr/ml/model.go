@@ -27,6 +27,7 @@ type OutlierCommandConfiguration struct {
 	ResponseType string                 `json:"response_type"`
 }
 
+// outlierAttributes is outlier command configuration that is sent to Machine learning API
 type outlierAttributes struct {
 	OutlierCommandConfiguration
 	GrafanaURL         string               `json:"grafana_url"`
@@ -37,14 +38,15 @@ type outlierData struct {
 	Attributes outlierAttributes `json:"attributes"`
 }
 
-type OutlierRequestBody struct {
+// outlierRequestBody describes a request body that is sent to Outlier API
+type outlierRequestBody struct {
 	Data outlierData `json:"data"`
 }
 
 type timeRangeAndInterval struct {
 	Start    mlTime `json:"start"`
 	End      mlTime `json:"end"`
-	Interval int64  `json:"interval"`
+	Interval int64  `json:"interval"` // Interval is expected to be in milliseconds
 }
 
 func newTimeRangeAndInterval(from, to time.Time, interval time.Duration) timeRangeAndInterval {
@@ -55,9 +57,9 @@ func newTimeRangeAndInterval(from, to time.Time, interval time.Duration) timeRan
 	}
 }
 
+// mlTime is a time.Time that is marshalled as a string in a format is  supported by Machine Learning API
 type mlTime time.Time
 
-// UnmarshalJSON implements the Unmarshaler interface.
 func (t *mlTime) UnmarshalJSON(b []byte) error {
 	s := strings.Trim(string(b), "\"")
 	parsed, err := time.Parse(timeFormat, s)

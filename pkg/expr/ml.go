@@ -20,16 +20,18 @@ import (
 )
 
 var (
-	errMLPluginDoesNotExist = errors.New("expression type Machine Learning cannot be executed. Plugin 'grafana-ml-app' must be installed and initialized")
+	errMLPluginDoesNotExist = fmt.Errorf("expression type Machine Learning cannot be executed. Plugin '%s' must be installed and initialized", mlPluginID)
 )
 
 const (
+	// mlDatasourceID is similar to a fake ID for CMDNode. There is no specific reason for the selection of this value.
 	mlDatasourceID = -200
 
 	// DatasourceUID is the string constant used as the datasource name in requests
 	// to identify it as an expression command when use in Datasource.UID.
 	MLDatasourceUID = "__ml__"
 
+	// mlPluginID is a known constant and used in other places of the code
 	mlPluginID = "grafana-ml-app"
 )
 
@@ -63,7 +65,8 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		return result, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 
-	// Plugin must be initialized by the admin first. This will create service account and let other use it.
+	// Plugin must be initialized by the admin first. That will create service account, and update plugin settings so all requests can use it.
+	// Fail if it is not initialized.
 	if pCtx.AppInstanceSettings == nil || !jsoniter.Get(pCtx.AppInstanceSettings.JSONData, "initialized").ToBool() {
 		return mathexp.Results{}, errMLPluginDoesNotExist
 	}
@@ -81,6 +84,8 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane)).Inc()
 	}()
 
+	// Execute the command and provide callback function for sending a request via plugin API.
+	// This lets us make commands abstracted from peculiarities of the transfer protocol.
 	data, err := m.command.Execute(timeRange.From, timeRange.To, func(method string, path string, payload []byte) (response.Response, error) {
 		crReq := &backend.CallResourceRequest{
 			PluginContext: pCtx,
@@ -91,7 +96,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 			Body:          payload,
 		}
 
-		// copy headers from the original request. Usually this contains information from upstream, e.g. FromAlert
+		// copy headers from the request to evaluate the expression pipeline. Usually this contains information from upstream, e.g. FromAlert
 		for key, val := range m.request.Headers {
 			crReq.SetHTTPHeader(key, val)
 		}
@@ -117,6 +122,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		data = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{}}
 	}
 
+	// process the response the same way DSNode does. Use plugin ID as data source type. Semantically, they are the same.
 	responseType, result, err = queryDataResponseToResults(ctx, data, m.refID, mlPluginID, s)
 	return result, err
 }

@@ -31,7 +31,7 @@ func (c OutlierCommand) DatasourceUID() string {
 // Other statuses are considered unsuccessful and result in error. Tries to extract error from the structured payload.
 // Otherwise, mentions the full message in error
 func (c OutlierCommand) Execute(from, to time.Time, sendRequest func(method string, path string, payload []byte) (response.Response, error)) (*backend.QueryDataResponse, error) {
-	payload := OutlierRequestBody{
+	payload := outlierRequestBody{
 		Data: outlierData{
 			Attributes: outlierAttributes{
 				OutlierCommandConfiguration: c.config,
@@ -54,11 +54,7 @@ func (c OutlierCommand) Execute(from, to time.Time, sendRequest func(method stri
 	}
 
 	// Outlier proxy API usually returns all responses with this body.
-	var respData struct {
-		Status string                     `json:"status"`
-		Data   *backend.QueryDataResponse `json:"data,omitempty"`
-		Error  string                     `json:"error,omitempty"`
-	}
+	var respData outlierResponse
 
 	respBody := resp.Body()
 	err = json.Unmarshal(respBody, &respData)
@@ -81,7 +77,7 @@ func (c OutlierCommand) Execute(from, to time.Time, sendRequest func(method stri
 	return nil, fmt.Errorf("unexpected status %d returned by ML API, response: %s", resp.Status(), respBody)
 }
 
-// unmarshalOutlierCommand lazily parses the outlier command configuration and produces OutlierCommand.
+// unmarshalOutlierCommand parses the CommandConfiguration.Config, validates data and produces OutlierCommand.
 func unmarshalOutlierCommand(expr CommandConfiguration, appURL string) (*OutlierCommand, error) {
 	var cfg OutlierCommandConfiguration
 	err := json.Unmarshal(expr.Config, &cfg)

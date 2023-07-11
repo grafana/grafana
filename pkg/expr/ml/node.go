@@ -34,7 +34,7 @@ type Command interface {
 }
 
 // UnmarshalCommand parses a config parameters and creates a command. Requires key `type` to be specified.
-// It does not perform payload validation and only extracts required field. Returns Command that is ready to be executed.
+// Based on the value of `type` field it parses a Command
 func UnmarshalCommand(query []byte, appURL string) (Command, error) {
 	var expr CommandConfiguration
 	err := json.Unmarshal(query, &expr)
