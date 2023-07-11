@@ -649,29 +649,32 @@ class UnthemedLogs extends PureComponent<Props, State> {
         </Collapse>
         <Collapse
           label={
-            config.featureToggles.logsExploreTableVisualisation && (
-              <div className={styles.visualisationType}>
-                {this.state.visualisationType === 'logs' ? 'Logs' : 'Table'}
-                <RadioButtonGroup
-                  className={styles.visualisationTypeRadio}
-                  options={[
-                    {
-                      label: 'Table',
-                      value: 'table',
-                      description: 'Show results in table visualisation',
-                    },
-                    {
-                      label: 'Logs',
-                      value: 'logs',
-                      description: 'Show results in logs visualisation',
-                    },
-                  ]}
-                  size="sm"
-                  value={this.state.visualisationType}
-                  onChange={this.onChangeVisualisation}
-                />
-              </div>
-            )
+            <>
+              {config.featureToggles.logsExploreTableVisualisation && (
+                <div className={styles.visualisationType}>
+                  {this.state.visualisationType === 'logs' ? 'Logs' : 'Table'}
+                  <RadioButtonGroup
+                    className={styles.visualisationTypeRadio}
+                    options={[
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
+                      },
+                      {
+                        label: 'Logs',
+                        value: 'logs',
+                        description: 'Show results in logs visualisation',
+                      },
+                    ]}
+                    size="sm"
+                    value={this.state.visualisationType}
+                    onChange={this.onChangeVisualisation}
+                  />
+                </div>
+              )}
+              {!config.featureToggles.logsExploreTableVisualisation && 'Logs'}
+            </>
           }
           loading={loading}
           isOpen

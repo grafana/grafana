@@ -119,7 +119,7 @@ describe('ExplorePage', () => {
 
       // Make sure we render the logs panel
       await waitFor(() => {
-        const logsPanels = screen.getAllByText(/^Logs/i);
+        const logsPanels = screen.getAllByText(/^Logs$/);
         expect(logsPanels.length).toBe(2);
       });
 
