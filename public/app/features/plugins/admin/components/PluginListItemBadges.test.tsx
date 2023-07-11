@@ -10,7 +10,7 @@ import { PluginListItemBadges } from './PluginListItemBadges';
 
 describe('PluginListItemBadges', () => {
   const angularMeta: PluginAngularMeta = {
-    angularDetected: false,
+    detected: false,
     disableDeprecationUIFeatures: false,
   };
   const plugin: CatalogPlugin = {
@@ -82,12 +82,12 @@ describe('PluginListItemBadges', () => {
   });
 
   it('renders an angular badge (when plugin is angular)', () => {
-    render(<PluginListItemBadges plugin={{ ...plugin, angularMeta: { ...angularMeta, angularDetected: true } }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, angularMeta: { ...angularMeta, detected: true } }} />);
     expect(screen.getByText(/angular/i)).toBeVisible();
   });
 
   it('does not render an angular badge (when plugin is not angular)', () => {
-    render(<PluginListItemBadges plugin={{ ...plugin, angularMeta: { ...angularMeta, angularDetected: false } }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, angularMeta: { ...angularMeta, detected: false } }} />);
     expect(screen.queryByText(/angular/i)).toBeNull();
   });
 });

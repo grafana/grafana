@@ -244,7 +244,7 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angularMeta?.angularDetected,
+    isAngular: meta.angularMeta?.detected,
     pluginId: meta.id,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
@@ -272,7 +272,7 @@ export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaDa
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angularMeta?.angularDetected,
+    isAngular: meta.angularMeta?.detected,
     pluginId: meta.id,
   }).then((pluginExports) => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();

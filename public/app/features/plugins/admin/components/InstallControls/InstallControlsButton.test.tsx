@@ -10,7 +10,7 @@ import { CatalogPlugin, PluginStatus } from '../../types';
 import { InstallControlsButton } from './InstallControlsButton';
 
 const angularMeta: PluginAngularMeta = {
-  angularDetected: false,
+  detected: false,
   disableDeprecationUIFeatures: false,
 };
 const plugin: CatalogPlugin = {
@@ -41,7 +41,7 @@ function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean 
   render(
     <TestProvider>
       <InstallControlsButton
-        plugin={{ ...plugin, angularMeta: { ...angularMeta, ...{ angularDetected: opts.angularDetected } } }}
+        plugin={{ ...plugin, angularMeta: { ...angularMeta, ...{ detected: opts.angularDetected } } }}
         pluginStatus={PluginStatus.INSTALL}
       />
     </TestProvider>

@@ -19,7 +19,7 @@ function deprecationMessage(angularSupportEnabled?: boolean): string {
 }
 
 // An Alert showing information about Angular deprecation notice.
-// If the plugin does not use Angular (!plugin.angularMeta.angularDetected), it returns null.
+// If the plugin does not use Angular (!plugin.angularMeta.detected), it returns null.
 export function PluginDetailsAngularDeprecation({
   className,
   angularSupportEnabled,

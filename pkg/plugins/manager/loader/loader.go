@@ -192,7 +192,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			var err error
 
 			cctx, canc := context.WithTimeout(ctx, time.Second*10)
-			p.AngularMeta.AngularDetected, err = l.angularInspector.Inspect(cctx, p)
+			p.AngularMeta.Detected, err = l.angularInspector.Inspect(cctx, p)
 			canc()
 
 			if err != nil {
@@ -200,7 +200,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			}
 
 			// Do not initialize plugins if they're using Angular and Angular support is disabled
-			if p.AngularMeta.AngularDetected && !l.cfg.AngularSupportEnabled {
+			if p.AngularMeta.Detected && !l.cfg.AngularSupportEnabled {
 				l.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginID", p.ID)
 				continue
 			}

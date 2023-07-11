@@ -92,7 +92,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     type: typeCode,
     error: error?.errorCode,
     angularMeta: {
-      angularDetected: angularDetected ?? false,
+      detected: angularDetected ?? false,
       disableDeprecationUIFeatures: false,
     },
   };
@@ -194,8 +194,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
     angularMeta: {
-      angularDetected: (local?.angularMeta?.angularDetected || remote?.angularDetected) ?? false,
-      disableDeprecationUIFeatures: local?.angularMeta?.angularDetected || false,
+      detected: (local?.angularMeta?.detected || remote?.angularDetected) ?? false,
+      disableDeprecationUIFeatures: local?.angularMeta?.disableDeprecationUIFeatures || false,
     },
   };
 }

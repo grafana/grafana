@@ -529,8 +529,8 @@ func (pt Type) IsValid() bool {
 
 // AngularMeta contains metadata about angular deprecation for this plugin
 type AngularMeta struct {
-	// AngularDetected is true if the plugin has been detected as an angular plugin
-	AngularDetected bool `json:"angularDetected"`
+	// Detected is true if the plugin has been detected as an angular plugin
+	Detected bool `json:"detected"`
 
 	// DisableDeprecationUIFeatures is true if the UI features for angular deprecation should be disabled for this plugin
 	DisableDeprecationUIFeatures bool `json:"disableDeprecationUIFeatures"`

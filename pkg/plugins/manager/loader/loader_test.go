@@ -1115,16 +1115,16 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			l := newLoader(t, &config.Cfg{AngularSupportEnabled: true}, func(l *Loader) {
-				// So if angularDetected = true, it means that the detection has run
+				// So if AngularMeta.Detected = true, it means that the detection has run
 				l.angularInspector = angularinspector.AlwaysAngularFakeInspector
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].AngularMeta.AngularDetected, "angular detection should run")
+				require.True(t, p[0].AngularMeta.Detected, "angular detection should run")
 			} else {
-				require.False(t, p[0].AngularMeta.AngularDetected, "angular detection should not run")
+				require.False(t, p[0].AngularMeta.Detected, "angular detection should not run")
 			}
 		})
 	}

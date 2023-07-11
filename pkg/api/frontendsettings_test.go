@@ -294,7 +294,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							AngularMeta: plugins.AngularMeta{AngularDetected: true},
+							AngularMeta: plugins.AngularMeta{Detected: true},
 						},
 					},
 				}
@@ -311,7 +311,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Preload:     true,
 						Path:        "/test-app/module.js",
 						Version:     "0.5.0",
-						AngularMeta: plugins.AngularMeta{AngularDetected: true},
+						AngularMeta: plugins.AngularMeta{Detected: true},
 					},
 				},
 			},

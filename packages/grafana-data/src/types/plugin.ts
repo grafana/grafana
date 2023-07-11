@@ -85,7 +85,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
 }
 
 export interface PluginAngularMeta {
-  angularDetected: boolean;
+  detected: boolean;
   disableDeprecationUIFeatures: boolean;
 }
 
