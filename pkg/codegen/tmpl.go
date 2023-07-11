@@ -42,6 +42,7 @@ type (
 		PackageName      string
 		KindName         string
 		Version          string
+		Spaces           []string
 		SubresourceNames []string
 	}
 )
