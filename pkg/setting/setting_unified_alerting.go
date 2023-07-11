@@ -90,11 +90,22 @@ type UnifiedAlertingSettings struct {
 	BaseInterval time.Duration
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
+	ExternalAlertmanager          UnifiedAlertingExternalAMSettings
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+}
+
+// UnifiedAlertingExternalAMSettings contains the configuration needed
+// to disable the internal Alertmanager and use an external one instead.
+type UnifiedAlertingExternalAMSettings struct {
+	DisableInternalAlertmanager       bool
+	MainAlertmanagerURL               string
+	MainAlertmanagerTenantID          string
+	MainAlertmanagerBasicAuthUser     string
+	MainAlertmanagerBasicAuthPassword string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -312,6 +323,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	externalAlertmanager := iniFile.Section("unified_alerting.external_alertmanager")
+	uaCfgExternalAM := uaCfg.ExternalAlertmanager
+	uaCfgExternalAM.DisableInternalAlertmanager = externalAlertmanager.Key("disable_internal_alertmanager").MustBool(false)
+	uaCfgExternalAM.MainAlertmanagerURL = externalAlertmanager.Key("main_alertmanager_url").MustString("")
+	uaCfgExternalAM.MainAlertmanagerTenantID = externalAlertmanager.Key("main_alertmanager_tenant_id").MustString("")
+	uaCfgExternalAM.MainAlertmanagerBasicAuthUser = externalAlertmanager.Key("main_alertmanager_basic_auth_username").MustString("")
+	uaCfgExternalAM.MainAlertmanagerBasicAuthPassword = externalAlertmanager.Key("main_alertmanager_basic_auth_password").MustString("")
 
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
