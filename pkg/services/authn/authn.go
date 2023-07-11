@@ -262,22 +262,22 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	u := &user.SignedInUser{
-		UserID:         0,
-		OrgID:          i.OrgID,
-		OrgName:        i.OrgName,
-		OrgRole:        i.Role(),
-		Login:          i.Login,
-		Name:           i.Name,
-		Email:          i.Email,
-		AuthModule:     i.AuthenticatedBy,
-		OrgCount:       i.OrgCount,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		IsAnonymous:    i.IsAnonymous,
-		IsDisabled:     i.IsDisabled,
-		HelpFlags1:     i.HelpFlags1,
-		LastSeenAt:     i.LastSeenAt,
-		Teams:          i.Teams,
-		Permissions:    i.Permissions,
+		UserID:          0,
+		OrgID:           i.OrgID,
+		OrgName:         i.OrgName,
+		OrgRole:         i.Role(),
+		Login:           i.Login,
+		Name:            i.Name,
+		Email:           i.Email,
+		AuthenticatedBy: i.AuthenticatedBy,
+		OrgCount:        i.OrgCount,
+		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsAnonymous:     i.IsAnonymous,
+		IsDisabled:      i.IsDisabled,
+		HelpFlags1:      i.HelpFlags1,
+		LastSeenAt:      i.LastSeenAt,
+		Teams:           i.Teams,
+		Permissions:     i.Permissions,
 	}
 
 	namespace, id := i.NamespacedID()

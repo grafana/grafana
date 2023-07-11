@@ -328,7 +328,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 			recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 			require.NoError(t, err)
 
-			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, AuthModule: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.signedInUserPermissions)}}
+			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.signedInUserPermissions)}}
 			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures(), recursiveQueriesAreSupported)
 
 			var result int
@@ -547,7 +547,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			helperUser := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthModule: login.ExtendedJWTModule,
+			helperUser := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule,
 				Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 					{
 						Action: dashboards.ActionFoldersCreate,
@@ -559,7 +559,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 				}),
 				},
 			}
-			usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthModule: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.signedInUserPermissions)}}
+			usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.signedInUserPermissions)}}
 			db := setupNestedTest(t, helperUser, []accesscontrol.Permission{}, orgID, tc.features)
 			recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
 			require.NoError(t, err)
