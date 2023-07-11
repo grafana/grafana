@@ -19126,7 +19126,7 @@ __metadata:
     immer: 9.0.19
     immutable: 4.3.0
     jest: 29.3.1
-    jest-canvas-mock: 2.4.0
+    jest-canvas-mock: 2.5.2
     jest-date-mock: 1.0.8
     jest-environment-jsdom: 29.3.1
     jest-fail-on-console: 3.0.2
@@ -21263,13 +21263,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-canvas-mock@npm:2.4.0":
-  version: 2.4.0
-  resolution: "jest-canvas-mock@npm:2.4.0"
+"jest-canvas-mock@npm:2.5.2":
+  version: 2.5.2
+  resolution: "jest-canvas-mock@npm:2.5.2"
   dependencies:
     cssfontparser: ^1.2.1
     moo-color: ^1.0.2
-  checksum: feda3c9a3301dc8f1ce3eee3d6cd944d3e2f50d713f1a3f159bdd85b88b275871c400dc0a4a50d14b36eef347dde2d7223e50d1109501b80668d87253712675e
+  checksum: a3004d2e96473049045e49dcf98e5ea6011494048ab42b5422b3089d9ff406aaca8353e79587055d840fa145541668eb8f78613765f252ad5901a8217e91ea5d
   languageName: node
   linkType: hard
 

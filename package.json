@@ -205,7 +205,7 @@
     "husky": "8.0.3",
     "i18next-parser": "6.6.0",
     "jest": "29.3.1",
-    "jest-canvas-mock": "2.4.0",
+    "jest-canvas-mock": "2.5.2",
     "jest-date-mock": "1.0.8",
     "jest-environment-jsdom": "29.3.1",
     "jest-fail-on-console": "3.0.2",
