@@ -72,7 +72,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
             size.height = entry.borderBoxSize[0].blockSize;
           } else {
             size.width = entry.contentRect.width;
-            size.height = entry.contentRect.width;
+            size.height = entry.contentRect.height;
           }
         }
       }),
