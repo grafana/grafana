@@ -250,7 +250,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if !s.accessControl.IsDisabled() && s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
@@ -549,32 +549,19 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 
 	// Check that the user is allowed to move the folder to the destination folder
-	if !s.accessControl.IsDisabled() {
-		var evaluator accesscontrol.Evaluator
-		if cmd.NewParentUID != "" {
-			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
-		} else {
-			// Evaluate folder creation permission when moving folder to the root level
-			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
-		}
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, dashboards.ErrFolderAccessDenied
-		}
+	var evaluator accesscontrol.Evaluator
+	if cmd.NewParentUID != "" {
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
 	} else {
-		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return nil, err
-		}
-		if canSave, err := g.CanSave(); err != nil || !canSave {
-			if err != nil {
-				return nil, toFolderError(err)
-			}
-			return nil, dashboards.ErrFolderAccessDenied
-		}
+		// Evaluate folder creation permission when moving folder to the root level
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+	}
+	hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
+	if evalErr != nil {
+		return nil, evalErr
+	}
+	if !hasAccess {
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	// here we get the folder, we need to get the height of current folder

@@ -16,6 +16,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { createTheme } from '@grafana/data';
+
 import { defaultFilters } from '../../useSearch';
 
 import NewTracePageSearchBar, { getStyles } from './NewTracePageSearchBar';
@@ -101,7 +103,7 @@ describe('<NewTracePageSearchBar>', () => {
 
   it('renders correctly when there are no matches i.e. too many filters added', async () => {
     const { container } = render(<NewTracePageSearchBarWithProps matches={[]} />);
-    const styles = getStyles();
+    const styles = getStyles(createTheme());
     const tooltip = container.querySelector('.' + styles.matchesTooltip);
     expect(screen.getByText('0 matches')).toBeDefined();
     userEvent.hover(tooltip!);
