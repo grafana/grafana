@@ -33,7 +33,6 @@ e2e.scenario({
       return true;
     });
 
-    const viewPortWidth = e2e.config().viewportWidth;
     e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
@@ -44,22 +43,22 @@ e2e.scenario({
     expectDrawerClose();
 
     expectSubMenuScenario('Data');
-    // expectSubMenuScenario('Query');
-    // expectSubMenuScenario('Panel JSON', 'JSON');
-    //
-    // e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
-    //
-    // e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
-    //
-    // e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
-    //   .should('be.visible')
-    //   .within(() => {
-    //     e2e.components.Tab.title('Query').should('be.visible');
-    //     // query should be the active tab
-    //     e2e.components.Tab.active().should('have.text', 'Query');
-    //   });
-    //
-    // e2e.components.PanelInspector.Query.content().should('be.visible');
+    expectSubMenuScenario('Query');
+    expectSubMenuScenario('Panel JSON', 'JSON');
+
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
+
+    e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
+
+    e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`)
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Tab.title('Query').should('be.visible');
+        // query should be the active tab
+        e2e.components.Tab.active().should('have.text', 'Query');
+      });
+
+    e2e.components.PanelInspector.Query.content().should('be.visible');
   },
 });
 
@@ -108,18 +107,17 @@ const expectDrawerClose = () => {
 const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {
   tabTitle = tabTitle ?? subMenu;
   // testing opening inspect drawer from sub menus under Inspect in header menu
-  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible').click();
+  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible');
   e2e.components.Panels.Panel.menu(PANEL_UNDER_TEST).click({ force: true }); // force click because menu is hidden and show on hover
   // sub menus are in the DOM but not visible and because there is no hover support in Cypress force click
   // https://github.com/cypress-io/cypress-example-recipes/blob/master/examples/testing-dom__hover-hidden-elements/cypress/integration/hover-hidden-elements-spec.js
 
   // simulate hover on Inspector menu item to display sub menus
   e2e.components.Panels.Panel.menuItems('Inspect').trigger('mouseover', { force: true });
-  e2e.components.Panels.Panel.menuItems(subMenu).should('be.visible');
   e2e.components.Panels.Panel.menuItems(subMenu).click({ force: true });
 
   // data should be the default tab
-  e2e.components.Tab.title(tabTitle).should('be.visible', { timeout: 10000 });
+  e2e.components.Tab.title(tabTitle).should('be.visible');
   e2e.components.Tab.active().should('have.text', tabTitle);
 
   expectDrawerClose();
