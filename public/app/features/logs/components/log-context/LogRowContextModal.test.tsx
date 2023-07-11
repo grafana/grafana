@@ -189,7 +189,7 @@ describe('LogRowContextModal', () => {
   });
 
   it('should render 3 lines containing `foo123` with the same ms timestamp', async () => {
-    const dfBefore = createDataFrame({
+    const dfBeforeNs = createDataFrame({
       fields: [
         {
           name: 'time',
@@ -208,7 +208,7 @@ describe('LogRowContextModal', () => {
         },
       ],
     });
-    const dfNow = createDataFrame({
+    const dfNowNs = createDataFrame({
       fields: [
         {
           name: 'time',
@@ -227,7 +227,7 @@ describe('LogRowContextModal', () => {
         },
       ],
     });
-    const dfAfter = createDataFrame({
+    const dfAfterNs = createDataFrame({
       fields: [
         {
           name: 'time',
@@ -248,7 +248,7 @@ describe('LogRowContextModal', () => {
     });
 
     let uniqueRefIdCounter = 1;
-    const logs = dataFrameToLogsModel([dfNow]);
+    const logs = dataFrameToLogsModel([dfNowNs]);
     const row = logs.rows[0];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {
       uniqueRefIdCounter += 1;
@@ -258,7 +258,7 @@ describe('LogRowContextModal', () => {
           data: [
             {
               refId,
-              ...dfBefore,
+              ...dfBeforeNs,
             },
           ],
         };
@@ -267,7 +267,7 @@ describe('LogRowContextModal', () => {
           data: [
             {
               refId,
-              ...dfAfter,
+              ...dfAfterNs,
             },
           ],
         };
