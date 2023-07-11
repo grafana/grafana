@@ -42,18 +42,15 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   }, [loadSettings]);
 
   const authProviders = getRegisteredAuthProviders();
-  const checkProviderStatus = (provider: AuthProviderInfo): boolean => {
-    // if it is configured in the UI, that takes precidence it is enabled in the UI
+  const isProviderAvailable = (provider: AuthProviderInfo): boolean => {
+    // if it is configured in the UI, that takes precedence
     // might want to refactor to just have a enabled field from the backend that is specified
     if (providerStatuses[provider.id]?.configuredInUI) {
-      return providerStatuses[provider.id]?.configuredInUI || providerStatuses[provider.id]?.enabledInUI;
+      return true;
     }
     // check if it is enabled in the backend from the inifile
-    return providerStatuses[provider.id]?.enabled;
+    return providerStatuses[provider.id]?.enabled || providerStatuses[provider.id]?.enabledInUI;
   };
-  const alreadyConfiguredProviders = authProviders.filter((p) => {
-    return checkProviderStatus(p);
-  });
 
   {
     /* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */
@@ -83,7 +80,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
       <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
         {authProviders.map((provider) =>
-          alreadyConfiguredProviders.includes(provider) ? (
+          isProviderAvailable(provider) ? (
             <div className={styles.cardsContainer} key={provider.id}>
               <ProviderCard
                 providerId={provider.id}
