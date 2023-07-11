@@ -135,16 +135,17 @@ describe('RuleEditor cloud', () => {
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
-
     expect(removeExpressionsButtons).toHaveLength(2);
 
-    userEvent.click(removeExpressionsButtons[0]);
-    userEvent.click(removeExpressionsButtons[1]);
+    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    expect(switchToCloudButton).toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
-      expect(screen.getByText('Data source-managed alert rule')).toBeInTheDocument();
-    });
+    await userEvent.click(switchToCloudButton);
+
+    //expressions are removed after switching to data-source managed
+    expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
+
+    expect(screen.getByTestId('datasource-picker')).toBeInTheDocument();
 
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
