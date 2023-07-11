@@ -1,6 +1,6 @@
 <!-- 10.0.2 START -->
 
-# 10.0.2 (2023-06-30)
+# 10.0.2 (2023-07-11)
 
 ### Features and enhancements
 
@@ -407,6 +407,16 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.6 START -->
+
+# 9.5.6 (2023-07-11)
+
+### Bug fixes
+
+- **Dashboard:** Fix library panels in collapsed rows not getting updated. [#66640](https://github.com/grafana/grafana/issues/66640), [@VictorColomb](https://github.com/VictorColomb)
+- **Auth:** Add and document option for enabling email lookup. [@vtorosyan](https://github.com/vtorosyan)
+
+<!-- 9.5.6 END -->
 <!-- 9.5.5 START -->
 
 # 9.5.5 (2023-06-22)
