@@ -2,121 +2,151 @@ package accesscontrol_test
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestAuthorizeInOrgMiddleware(t *testing.T) {
+	cfg := setting.NewCfg()
+	ac := acimpl.ProvideAccessControl(cfg)
+
 	// Define test cases
 	testCases := []struct {
-		name           string
-		orgIDGetter    accesscontrol.OrgIDGetter
-		evaluator      accesscontrol.Evaluator
-		accessControl  accesscontrol.AccessControl
-		userCache      *mock.UserCache
-		getUserPermErr error
-		expectedStatus int
+		name            string
+		orgIDGetter     accesscontrol.OrgIDGetter
+		evaluator       accesscontrol.Evaluator
+		accessControl   accesscontrol.AccessControl
+		acService       accesscontrol.Service
+		userCache       user.Service
+		ctxSignedInUser *user.SignedInUser
+		expectedStatus  int
 	}{
 		{
-			name: "should authorize user with global org ID",
+			name: "should authorize user with global org ID - no fetch",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
 				return accesscontrol.GlobalOrgID, nil
 			},
-			evaluator: accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			),
-			userCache:      &mock.UserCache{},
-			getUserPermErr: nil,
-			expectedStatus: http.StatusOK,
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			acService:       &actest.FakeService{},
+			userCache:       &usertest.FakeUserService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectedStatus:  http.StatusOK,
 		},
 		{
-			name: "should authorize user with non-global org ID",
+			name: "should authorize user with non-global org ID - no fetch",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
 				return 1, nil
 			},
-			evaluator: accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			),
-			userCache: &mock.UserCache{
-				On("GetSignedInUserWithCacheCtx", mock.Anything, &user.GetSignedInUserQuery{UserID: 1, OrgID: 1}).Return(
-					&user.SignedInUser{OrgID: 1, OrgName: "org1", OrgRole: user.ROLE_ADMIN},
-					nil,
-				),
-			},
-			getUserPermErr: nil,
-			expectedStatus: http.StatusOK,
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			acService:       &actest.FakeService{},
+			userCache:       &usertest.FakeUserService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectedStatus:  http.StatusOK,
 		},
 		{
-			name: "should deny user with non-global org ID and missing permissions",
+			name: "should return 403 when user has no permissions for the org",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
 				return 1, nil
 			},
-			evaluator: accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:write", Scope: "users:*"}},
-			),
-			userCache:      &mock.UserCache{},
-			getUserPermErr: nil,
-			expectedStatus: http.StatusForbidden,
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			userCache:       &usertest.FakeUserService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}},
+			acService:       &actest.FakeService{},
+			expectedStatus:  http.StatusForbidden,
 		},
 		{
-			name: "should deny user with non-global org ID and error getting user permissions",
+			name: "should return 403 when user org ID doesn't match and user does not exist in org 2",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return 2, nil
+			},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			userCache:       &usertest.FakeUserService{ExpectedError: fmt.Errorf("user not found")},
+			acService:       &actest.FakeService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			name: "should fetch user permissions when they are empty",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
 				return 1, nil
 			},
-			evaluator: accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			),
-			userCache: &mock.UserCache{
-				On("GetSignedInUserWithCacheCtx", mock.Anything, &user.GetSignedInUserQuery{UserID: 1, OrgID: 1}).Return(
-					nil,
-					errors.New("failed to get user"),
-				),
+			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl: ac,
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
-			getUserPermErr: nil,
-			expectedStatus: http.StatusForbidden,
+			userCache: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					return &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: nil}, nil
+				},
+			},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: nil},
+			expectedStatus:  http.StatusOK,
 		},
 		{
-			name: "should deny user with non-global org ID and error getting user permissions",
+			name: "should fetch user permissions when org ID doesn't match",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
-				return 1, nil
+				return 2, nil
 			},
-			evaluator: accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			),
-			userCache: &mock.UserCache{
-				On("GetSignedInUserWithCacheCtx", mock.Anything, &user.GetSignedInUserQuery{UserID: 1, OrgID: 1}).Return(
-					nil,
-					errors.New("failed to get user"),
-				),
+			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl: ac,
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
 			},
-			getUserPermErr: nil,
-			expectedStatus: http.StatusForbidden,
+			userCache: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					return &user.SignedInUser{UserID: 1, OrgID: 2, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}}, nil
+				},
+			},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectedStatus:  http.StatusOK,
 		},
 		{
-			name: "should deny user with error getting target org ID",
+			name: "fails to fetch user permissions when org ID doesn't match",
 			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
-				return 0, errors.New("failed to get org ID")
+				return 2, nil
 			},
-			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
-			accessControl:  mock.New(),
-			userCache:      &mock.UserCache{},
-			getUserPermErr: nil,
-			expectedStatus: http.StatusForbidden,
+			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl: ac,
+			acService: &actest.FakeService{
+				ExpectedErr: fmt.Errorf("failed to get user permissions"),
+			},
+			userCache: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					return &user.SignedInUser{UserID: 1, OrgID: 2, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}}, nil
+				},
+			},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectedStatus:  http.StatusForbidden,
+		},
+		{
+			name: "unable to get target org",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return 0, fmt.Errorf("unable to get target org")
+			},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl:   ac,
+			acService:       &actest.FakeService{},
+			userCache:       &usertest.FakeUserService{},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectedStatus:  http.StatusForbidden,
 		},
 	}
 
@@ -124,21 +154,9 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create test context
-			ctx := context.Background()
-			req := httptest.NewRequest(http.MethodGet, "/", nil)
-			c := &contextmodel.ReqContext{
-				Req:          req,
-				IsSignedIn:   true,
-				SignedInUser: &user.SignedInUser{UserID: 1, Permissions: map[int64]accesscontrol.GroupScopes{}},
-			}
-			c.SetCtx(ctx)
+			req := httptest.NewRequest(http.MethodGet, "/api/endpoint", nil)
 
-			// Create mock service
-			service := &mock.Service{}
-			service.On("GetUserPermissions", mock.Anything, mock.Anything, mock.Anything).Return(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-				tc.getUserPermErr,
-			)
+			service := tc.acService
 
 			// Create middleware
 			middleware := accesscontrol.AuthorizeInOrgMiddleware(
@@ -149,10 +167,13 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 
 			// Create test server
 			server := web.New()
-			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
-			server.Use(contextProvider())
+			server.Use(contextProvider(func(c *contextmodel.ReqContext) {
+				c.SignedInUser = tc.ctxSignedInUser
+				c.IsSignedIn = true
+			}))
 			server.Use(middleware)
-			server.Get("/", func(c *contextmodel.ReqContext) {
+
+			server.Get("/api/endpoint", func(c *contextmodel.ReqContext) {
 				c.Resp.WriteHeader(http.StatusOK)
 			})
 
@@ -161,7 +182,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			server.ServeHTTP(recorder, req)
 
 			// Check response
-			require.Equal(t, tc.expectedStatus, recorder.Code)
+			assert.Equal(t, tc.expectedStatus, recorder.Code, fmt.Sprintf("expected body: %s", recorder.Body.String()))
 		})
 	}
 }

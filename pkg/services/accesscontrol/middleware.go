@@ -204,11 +204,20 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache UserCache
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 				}
+
+				// guard against nil map
+				if userCopy.Permissions == nil {
+					userCopy.Permissions = make(map[int64]map[string][]string)
+				}
 				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
 
+			// guard against nil map
+			if c.SignedInUser.Permissions == nil {
+				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+			}
 			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
 		}
 	}
