@@ -359,10 +359,6 @@ const (
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 
-	// FlagFlameGraphV2
-	// New version of flame graph with new features
-	FlagFlameGraphV2 = "flameGraphV2"
-
 	// FlagElasticToggleableFilters
 	// Enable support to toggle filters off from the query through the Logs Details component
 	FlagElasticToggleableFilters = "elasticToggleableFilters"
