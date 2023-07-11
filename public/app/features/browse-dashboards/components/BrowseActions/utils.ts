@@ -20,7 +20,7 @@ export function buildBreakdownString(
   if (alertRuleCount) {
     parts.push(t('browse-dashboards.counts.alertRule', '{{count}} alert rule', { count: alertRuleCount }));
   }
-  let breakdownString = t('browse-dashboards.counts.total', '{{count}} items', { count: total });
+  let breakdownString = t('browse-dashboards.counts.total', '{{count}} item', { count: total });
   if (parts.length > 0) {
     breakdownString += `: ${parts.join(', ')}`;
   }
