@@ -333,7 +333,7 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * Dashboard variable type
  * `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
  * `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
- * `constant`: 	Define a hidden constant.
+ * `constant`:  Define a hidden constant.
  * `datasource`: Quickly change the data source for an entire dashboard.
  * `interval`: Interval variables represent time spans.
  * `textbox`: Display a free text input field with an optional default value.

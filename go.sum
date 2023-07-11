@@ -1388,6 +1388,8 @@ github.com/grafana/kindsys v0.0.0-20230620102412-19255e2bfa3e h1:TwtQvFFXwFBHfX3
 github.com/grafana/kindsys v0.0.0-20230620102412-19255e2bfa3e/go.mod h1:tReyLqR9xponnYrhIpA/eShnEkAixy6b2U/TSz5PZN0=
 github.com/grafana/kindsys v0.0.0-20230707115743-4c230432379e h1:TTlXLRkLa5OVuonWmZFoi7HLlJMTuTwx1Bdy3aceqJQ=
 github.com/grafana/kindsys v0.0.0-20230707115743-4c230432379e/go.mod h1:tReyLqR9xponnYrhIpA/eShnEkAixy6b2U/TSz5PZN0=
+github.com/grafana/kindsys v0.0.0-20230711200744-fbdd17b29469 h1:S5tx9SnkHxf+aOX1GQv7VYHLM9NVJzSx0TcQifUSoJA=
+github.com/grafana/kindsys v0.0.0-20230711200744-fbdd17b29469/go.mod h1:tReyLqR9xponnYrhIpA/eShnEkAixy6b2U/TSz5PZN0=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 h1:bBzCezZNRyYlJpXTkyZdY4fpPxHZUdyeyRWzhtw/P6I=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413/go.mod h1:IvwuGG9xa/h96UH/exgvsfy3zE+ZpctkNT9o5aaGdrU=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230508090422-7d5630522a53 h1:X3Jl4PBIGCtlPSMa6Uiu2+3FDNWmddSjivp+1DDznQs=

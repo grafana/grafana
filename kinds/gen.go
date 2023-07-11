@@ -15,10 +15,10 @@ import (
 	"sort"
 	"strings"
 
-	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/kindsys"
+	"github.com/grafana/thema"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -58,28 +58,18 @@ func main() {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
+
 	groot := filepath.Dir(cwd)
+	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
 
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []kindsys.Kind
-
-	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
-	for _, kinddir := range kinddirs {
-		if !kinddir.IsDir() {
-			continue
-		}
-		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
-		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
-		if err != nil {
-			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
-		}
-		if def.Properties.MachineName != kinddir.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, def.Properties.Name, kinddir.Name()))
-		}
-
-		all = append(all, elsedie(kindsys.BindCore(rt, def))(rel))
+	p, err := compileProvider(f, rt)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "could load grafana provider: %s", err)
+		os.Exit(1)
 	}
+
+	all := p.AllKinds()
 
 	sort.Slice(all, func(i, j int) bool {
 		return nameFor(all[i].Props()) < nameFor(all[j].Props())
@@ -181,4 +171,24 @@ func elsedie[T any](t T, err error) func(msg string) T {
 func die(err error) {
 	fmt.Fprint(os.Stderr, err, "\n")
 	os.Exit(1)
+}
+
+func compileProvider(fsys fs.FS, rt *thema.Runtime) (*kindsys.Provider, error) {
+	if fsys == nil {
+		return &kindsys.Provider{}, nil
+	}
+	if rt == nil {
+		rt = cuectx.GrafanaThemaRuntime()
+	}
+
+	bi, err := cuectx.LoadInstanceWithGrafana(fsys, "")
+	if err != nil || bi.Err != nil {
+		if err == nil {
+			err = bi.Err
+		}
+		return &kindsys.Provider{}, err
+	}
+
+	val := rt.Context().BuildInstance(bi)
+	return kindsys.BindProvider(rt, val)
 }
