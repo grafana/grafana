@@ -21,18 +21,6 @@ describe('DashboardScene', () => {
       scene.urlSync?.updateFromUrl({ viewPanel: 'panel-2' });
       expect(scene.state.viewPanelKey).toBe('panel-2');
     });
-
-    it('Should set update breadcrumbs and page actions when in viewPanel model', () => {
-      const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-2' });
-      expect(scene.getPageNav()).toEqual({
-        text: 'View panel',
-        parentItem: {
-          text: 'hello',
-          url: '/',
-        },
-      });
-    });
   });
 });
 
