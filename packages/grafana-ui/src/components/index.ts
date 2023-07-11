@@ -253,6 +253,7 @@ export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
+export { Divider } from './Divider/Divider';
 
 const LegacyForms = {
   SecretFormField,

@@ -20,6 +20,7 @@ export const panelsToCheckFirst = [
   'status-history',
   'logs',
   'candlestick',
+  'flamegraph',
 ];
 
 export async function getAllSuggestions(data?: PanelData, panel?: PanelModel): Promise<VisualizationSuggestion[]> {

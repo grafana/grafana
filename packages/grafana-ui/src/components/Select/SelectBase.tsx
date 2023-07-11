@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -87,7 +88,7 @@ const CustomControl = (props: any) => {
   );
 };
 
-export function SelectBase<T>({
+export function SelectBase<T, Rest = {}>({
   allowCustomValue = false,
   allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
@@ -124,7 +125,7 @@ export function SelectBase<T>({
   menuPlacement = 'auto',
   menuPosition,
   menuShouldPortal = true,
-  noOptionsMessage = 'No options found',
+  noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
   onBlur,
   onChange,
   onCloseMenu,
@@ -137,7 +138,7 @@ export function SelectBase<T>({
   onFocus,
   openMenuOnFocus = false,
   options = [],
-  placeholder = 'Choose',
+  placeholder = t('grafana-ui.select.placeholder', 'Choose'),
   prefix,
   renderControl,
   showAllSelectedWhenOpen = true,
@@ -148,7 +149,8 @@ export function SelectBase<T>({
   isValidNewOption,
   formatOptionLabel,
   hideSelectedOptions,
-}: SelectBaseProps<T>) {
+  ...rest
+}: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -375,6 +377,7 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
+        {...rest}
       />
     </>
   );
