@@ -77,8 +77,32 @@ const throwUnhandledRejections = () => {
 
 throwUnhandledRejections();
 
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}));
+// Used by useMeasure
+global.ResizeObserver = class ResizeObserver {
+  //callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    setTimeout(() => {
+      callback(
+        [
+          {
+            contentRect: {
+              x: 1,
+              y: 2,
+              width: 500,
+              height: 500,
+              top: 100,
+              bottom: 0,
+              left: 100,
+              right: 0,
+            },
+          } as ResizeObserverEntry,
+        ],
+        this
+      );
+    });
+  }
+  observe() {}
+  disconnect() {}
+  unobserve() {}
+};
