@@ -239,10 +239,6 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 
 func LoadPermissionsMiddleware(service Service) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		if service.IsDisabled() {
-			return
-		}
-
 		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
 			Options{ReloadCache: false})
 		if err != nil {
