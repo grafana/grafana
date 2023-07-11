@@ -21,7 +21,7 @@ const FlameGraphTooltip = ({ data, tooltipRef, item, totalTicks }: Props) => {
     const tooltipData = getTooltipData(data, item, totalTicks);
     content = (
       <div className={styles.tooltipContent}>
-        <p>{data.getLabel(item.itemIndex)}</p>
+        <p>{data.getLabel(item.itemIndexes[0])}</p>
         <p className={styles.lastParagraph}>
           {tooltipData.unitTitle}
           <br />
@@ -55,8 +55,8 @@ type TooltipData = {
 };
 
 export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
-  const displayValue = data.getValueDisplay(item.itemIndex);
-  const displaySelf = data.getSelfDisplay(item.itemIndex);
+  const displayValue = data.valueDisplayProcessor(item.value);
+  const displaySelf = data.getSelfDisplay(item.itemIndexes);
 
   const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;
   const percentSelf = Math.round(10000 * (displaySelf.numeric / totalTicks)) / 100;
@@ -76,7 +76,7 @@ export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, t
   }
 
   return {
-    name: data.getLabel(item.itemIndex),
+    name: data.getLabel(item.itemIndexes[0]),
     percentValue,
     percentSelf,
     unitTitle,
