@@ -244,6 +244,31 @@ Use this transformation on a field value to look up additional fields from an ex
 
 This transformation currently supports spatial data.
 
+For example, if we have this data:
+
+| location  | values |
+| --------- | ------ |
+| AL        | 0      |
+| AK        | 10     |
+| Arizona   | 5      |
+| Arkansas  | 1      |
+| Somewhere | 5      |
+
+With this config:
+
+- Field: location
+- Lookup: USA States
+
+We will get this output:
+
+| location  | id  | name     | lng         | lat       | values |
+| --------- | --- | -------- | ----------- | --------- | ------ |
+| AL        | AL  | Alabama  | -80.891064  | 12.448457 | 0      |
+| AK        | AK  | Arkansas | -100.891064 | 24.448457 | 10     |
+| Arizona   |     |          |             |           | 5      |
+| Arkansas  |     |          |             |           | 1      |
+| Somewhere |     |          |             |           | 5      |
+
 ### Filter by name
 
 Use this transformation to remove portions of the query results.
