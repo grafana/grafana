@@ -638,102 +638,115 @@ class UnthemedLogs extends PureComponent<Props, State> {
             />
           )}
         </Collapse>
-        <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions}>
-            <InlineFieldRow>
-              <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={showTime}
-                  onChange={this.onChangeTime}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`show-time_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={showLabels}
-                  onChange={this.onChangeLabels}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`unique-labels_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={wrapLogMessage}
-                  onChange={this.onChangeWrapLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`wrap-lines_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={prettifyLogMessage}
-                  onChange={this.onChangePrettifyLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`prettify_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
+        <Collapse
+          label={
+            config.featureToggles.logsExploreTableVisualisation && (
+              <div className={styles.visualisationType}>
+                {this.state.visualisationType === 'logs' ? 'Logs' : 'Table'}
                 <RadioButtonGroup
-                  options={DEDUP_OPTIONS.map((dedupType) => ({
-                    label: capitalize(dedupType),
-                    value: dedupType,
-                    description: LogsDedupDescription[dedupType],
-                  }))}
-                  value={dedupStrategy}
-                  onChange={this.onChangeDedup}
-                  className={styles.radioButtons}
+                  className={styles.visualisationTypeRadio}
+                  options={[
+                    {
+                      label: 'Table',
+                      value: 'table',
+                      description: 'Show results in table visualisation',
+                    },
+                    {
+                      label: 'Logs',
+                      value: 'logs',
+                      description: 'Show results in logs visualisation',
+                    },
+                  ]}
+                  size="sm"
+                  value={this.state.visualisationType}
+                  onChange={this.onChangeVisualisation}
                 />
-              </InlineField>
-            </InlineFieldRow>
-            <div>
-              <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                <>
+              </div>
+            )
+          }
+          loading={loading}
+          isOpen
+          className={styleOverridesForStickyNavigation}
+        >
+          {this.state.visualisationType !== 'table' && (
+            <div className={styles.logOptions}>
+              <InlineFieldRow>
+                <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={showTime}
+                    onChange={this.onChangeTime}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`show-time_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={showLabels}
+                    onChange={this.onChangeLabels}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`unique-labels_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={wrapLogMessage}
+                    onChange={this.onChangeWrapLogMessage}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`wrap-lines_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={prettifyLogMessage}
+                    onChange={this.onChangePrettifyLogMessage}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`prettify_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
                   <RadioButtonGroup
-                    disabled={isFlipping}
-                    options={[
-                      {
-                        label: 'Newest first',
-                        value: LogsSortOrder.Descending,
-                        description: 'Show results newest to oldest',
-                      },
-                      {
-                        label: 'Oldest first',
-                        value: LogsSortOrder.Ascending,
-                        description: 'Show results oldest to newest',
-                      },
-                    ]}
-                    value={logsSortOrder}
-                    onChange={this.onChangeLogsSortOrder}
+                    options={DEDUP_OPTIONS.map((dedupType) => ({
+                      label: capitalize(dedupType),
+                      value: dedupType,
+                      description: LogsDedupDescription[dedupType],
+                    }))}
+                    value={dedupStrategy}
+                    onChange={this.onChangeDedup}
                     className={styles.radioButtons}
                   />
-                  {config.featureToggles.logsExploreTableVisualisation && (
+                </InlineField>
+              </InlineFieldRow>
+
+              <div>
+                <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
+                  <>
                     <RadioButtonGroup
-                      className={styles.visualisationType}
+                      disabled={isFlipping}
                       options={[
                         {
-                          label: 'Table',
-                          value: 'table',
-                          description: 'Show results in table visualisation',
+                          label: 'Newest first',
+                          value: LogsSortOrder.Descending,
+                          description: 'Show results newest to oldest',
                         },
                         {
-                          label: 'Logs',
-                          value: 'logs',
-                          description: 'Show results in logs visualisation',
+                          label: 'Oldest first',
+                          value: LogsSortOrder.Ascending,
+                          description: 'Show results oldest to newest',
                         },
                       ]}
-                      value={this.state.visualisationType}
-                      onChange={this.onChangeVisualisation}
+                      value={logsSortOrder}
+                      onChange={this.onChangeLogsSortOrder}
+                      className={styles.radioButtons}
                     />
-                  )}
-                </>
-              </InlineField>
+                  </>
+                </InlineField>
+              </div>
             </div>
-          </div>
+          )}
           <div ref={this.topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
@@ -872,6 +885,10 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       ${scrollableLogsContainer && 'max-height: calc(100vh - 170px);'}
     `,
     visualisationType: css`
+      display: flex;
+      justify-content: space-between;
+    `,
+    visualisationTypeRadio: css`
       margin: 0 0 0 ${theme.spacing(1)};
     `,
   };
