@@ -56,8 +56,8 @@ export const IntervalInput = (props: Props) => {
     <InlineField {...fieldProps}>
       <Input
         type="text"
-        placeholder={props.placeholder || '0'}
-        width={props.width || 40}
+        placeholder={props.placeholder}
+        width={props.width}
         onChange={(e) => {
           props.onChange(e.currentTarget.value);
         }}
