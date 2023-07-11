@@ -1,4 +1,4 @@
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 

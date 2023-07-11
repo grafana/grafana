@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DataFrame, FieldType, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, Field, FieldType, getFieldDisplayName, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
@@ -19,10 +19,6 @@ import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/u
 
 import { Options } from './panelcfg.gen';
 
-const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
-  return preparePlotFrame(frames, dimFields);
-};
-
 export const TrendPanel = ({
   data,
   timeRange,
@@ -35,6 +31,21 @@ export const TrendPanel = ({
   id,
 }: PanelProps<Options>) => {
   const { sync } = usePanelContext();
+
+  const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
+    dimFields = {
+      ...dimFields,
+      x: (field: Field, frame: DataFrame, frames: DataFrame[]) => {
+        const trendXField = options.xField
+          ? options.xField
+          : frames[0].fields.find((field) => field.type === FieldType.number)?.name;
+
+        return getFieldDisplayName(field, frame, frames) === trendXField;
+      },
+    };
+
+    return preparePlotFrame(frames, dimFields);
+  };
 
   const info = useMemo(() => {
     if (data.series.length > 1) {
