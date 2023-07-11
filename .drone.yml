@@ -6428,6 +6428,59 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: publish-ci-build-container-image
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - if [ -z "${BUILD_CONTAINER_VERSION}" ]; then echo Missing BUILD_CONTAINER_VERSION;
+    false; fi
+  image: alpine:3.17.1
+  name: validate-version
+- commands:
+  - printenv GCP_KEY > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz
+  environment:
+    GCP_KEY:
+      from_secret: gcp_download_build_container_assets_key
+  image: google/cloud-sdk:431.0.0
+  name: download-macos-sdk
+- commands:
+  - printenv DOCKER_PASSWORD | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t "grafana/build-container:${BUILD_CONTAINER_VERSION}" ./scripts/build/ci-build
+  - docker push "grafana/build-container:${BUILD_CONTAINER_VERSION}"
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  image: google/cloud-sdk:431.0.0
+  name: build-and-publish
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+  - promote
+  target:
+  - ci-build-container-image
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-image
 platform:
@@ -6676,6 +6729,12 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 get:
+  name: credentials.json
+  path: infra/data/ci/grafana/assets-downloader-build-container-service-account
+kind: secret
+name: gcp_download_build_container_assets_key
+---
+get:
   name: application_id
   path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
 kind: secret
@@ -6826,6 +6885,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 9404a9715caeb1a90ed12bc87b640aa13db1b89a408173ef041fec0634b50dc5
+hmac: 8efc7284f0a35e1b3879d0c4874f5a5d2fdabc4831164c22aec67c79d8755a43
 
 ...
