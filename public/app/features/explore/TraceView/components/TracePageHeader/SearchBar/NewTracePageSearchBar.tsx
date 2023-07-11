@@ -140,7 +140,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
       span {
         cursor: pointer;
-        margin: -3px 0 0 5px;
+        margin: 0 0 0 5px;
       }
     `,
     clearMatchesButton: css`
