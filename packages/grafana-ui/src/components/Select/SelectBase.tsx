@@ -87,7 +87,7 @@ const CustomControl = (props: any) => {
   );
 };
 
-export function SelectBase<T>({
+export function SelectBase<T, Rest = {}>({
   allowCustomValue = false,
   allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
@@ -146,7 +146,8 @@ export function SelectBase<T>({
   isValidNewOption,
   formatOptionLabel,
   hideSelectedOptions,
-}: SelectBaseProps<T>) {
+  ...rest
+}: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -365,6 +366,7 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
+        {...rest}
       />
     </>
   );
