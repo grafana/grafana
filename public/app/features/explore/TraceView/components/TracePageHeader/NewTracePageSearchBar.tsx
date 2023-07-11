@@ -15,6 +15,7 @@
 import { css } from '@emotion/css';
 import React, { memo, Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -147,9 +148,14 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
                 label="Show matches only switch"
               />
-              {/* TODO: fix keyboard a11y */}
-              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-              <span onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}>Show matches only</span>
+              <Button
+                onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}
+                className={styles.clearMatchesButton}
+                variant="secondary"
+                fill="text"
+              >
+                Show matches only
+              </Button>
             </div>
           </div>
           <div className={styles.nextPrevButtons}>
@@ -181,7 +187,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
   );
 });
 
-export const getStyles = () => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     searchBar: css`
       display: inline;
@@ -190,10 +196,10 @@ export const getStyles = () => {
       display: inline-flex;
       margin: 0 0 0 10px;
       vertical-align: middle;
+      align-items: center;
 
       span {
         cursor: pointer;
-        margin: -3px 0 0 5px;
       }
     `,
     buttons: css`
@@ -203,6 +209,13 @@ export const getStyles = () => {
     `,
     clearButton: css`
       order: 1;
+    `,
+    clearMatchesButton: css`
+      color: ${theme.colors.text.primary};
+      &:hover {
+        background: inherit;
+        color: inherit;
+      }
     `,
     nextPrevButtons: css`
       margin-left: auto;
