@@ -119,7 +119,6 @@ Experimental features might be changed or removed without prior notice.
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
-| `flameGraphV2`                              | New version of flame graph with new features                                                                 |
 | `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                       |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |

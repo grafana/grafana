@@ -4820,9 +4820,6 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/flamegraph/components/FlameGraphTopWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/panel/flamegraph/flamegraphV2/components/FlameGraphTopWrapper.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/panel/gauge/GaugeMigrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
