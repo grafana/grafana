@@ -42,13 +42,15 @@ To add annotations directly in the panel, the built-in query must be enabled. Le
 
 ### Add an annotation
 
+To add an annotation, complete the following steps:
+
 1. In the dashboard click the panel to which you're adding the annotation. A context menu will appear.
 1. In the context menu, click **Add annotation**.
    ![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)
 1. Add an annotation description and tags (optional).
 1. Click **Save**.
 
-Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the **Add annotation** popover will appear
+Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the **Add annotation** popover will appear.
 
 ### Add a region annotation
 
