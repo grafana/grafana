@@ -1,3 +1,13 @@
+<!-- 9.5.6 START -->
+
+# 9.5.6 (2023-07-11)
+
+### Bug fixes
+
+- **Dashboard:** Fix library panels in collapsed rows not getting updated. [#66640](https://github.com/grafana/grafana/issues/66640), [@VictorColomb](https://github.com/VictorColomb)
+- **Auth:** Add and document option for enabling email lookup. [@vtorosyan](https://github.com/vtorosyan)
+
+<!-- 9.5.6 END -->
 <!-- 9.5.5 START -->
 
 # 9.5.5 (2023-06-22)
