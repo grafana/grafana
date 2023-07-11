@@ -263,7 +263,11 @@ export class LokiDatasource
 
     const transformed = queries.map((query) => {
       const sorted = sortLabelSelectors(query);
-      return sorted;
+
+      const lines = sorted.expr.split('\n');
+      const trimmedLines = lines.map((line) => line.trim());
+      const trimmedExpr = trimmedLines.join('\n');
+      return { ...sorted, expr: trimmedExpr };
     });
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
