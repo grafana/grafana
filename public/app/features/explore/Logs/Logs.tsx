@@ -470,8 +470,20 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const { timeIndex } = getTimeField(frame);
     const sortedFrame = sortDataFrame(frame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
 
+    const [frameWithOverrides] = applyFieldOverrides({
+      data: [sortedFrame],
+      timeZone,
+      theme: config.theme2,
+      replaceVariables: (v: string) => v,
+      fieldConfig: {
+        defaults: {
+          custom: {},
+        },
+        overrides: [],
+      },
+    });
     // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
-    for (const field of sortedFrame.fields) {
+    for (const field of frameWithOverrides.fields) {
       field.getLinks = (config: ValueLinkConfig) => {
         return getFieldLinksForExplore({
           field,
@@ -481,18 +493,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
           dataFrame: sortedFrame!,
         });
       };
+      field.config = {
+        custom: {
+          filterable: true,
+          inspect: true,
+        },
+      };
     }
 
-    return applyFieldOverrides({
-      data: [frame],
-      timeZone,
-      theme: config.theme2,
-      replaceVariables: (v: string) => v,
-      fieldConfig: {
-        defaults: {},
-        overrides: [],
-      },
-    })[0];
+    return frameWithOverrides;
   });
 
   prepareTableData = async () => {
@@ -767,6 +776,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   data={this.state.tableFrame}
                   width={width - 80}
                   height={this.getTableHeight(this.props.logsFrames)}
+                  footerOptions={{ show: true, reducer: ['count'], countRows: true }}
                 />
               </div>
             )}
