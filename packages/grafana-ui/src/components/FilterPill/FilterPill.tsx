@@ -39,6 +39,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       height: '32px',
+      position: 'relative',
+      border: `1px solid ${theme.colors.background.secondary}`,
 
       '&:hover': {
         background: theme.colors.action.hover,
