@@ -20,7 +20,7 @@ export function dataSourceLabel(
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined
 ) {
   if (!dataSource) {
-    return 'Unknown';
+    return undefined;
   }
 
   if (typeof dataSource === 'string') {
@@ -35,7 +35,7 @@ export function dataSourceLabel(
     return `${dataSource.uid} - not found`;
   }
 
-  return 'Unknown';
+  return undefined;
 }
 
 export function getDataSourceCompareFn(

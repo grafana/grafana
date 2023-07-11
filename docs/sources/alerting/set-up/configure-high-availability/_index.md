@@ -36,12 +36,12 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
 
 If you are using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition.
 
-```bash
+```yaml
 env:
-- name: POD_IP
-  valueFrom:
-    fieldRef:
-      fieldPath: status.podIP
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
 ```
 
 1. Add the port 9094 to the Grafana deployment:

@@ -2,6 +2,8 @@ package social
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -29,9 +32,11 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase       *SocialBase
-		allowedGroups    []string
-		forceUseGraphAPI bool
+		SocialBase           *SocialBase
+		allowedGroups        []string
+		allowedOrganizations []string
+		forceUseGraphAPI     bool
+		usGovURL             bool
 	}
 	type args struct {
 		client *http.Client
@@ -84,6 +89,28 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			claims:  nil,
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "US Government domain",
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+				usGovURL:   true,
+			},
+			want: &BasicUserInfo{
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{},
+			},
 		},
 		{
 			name: "Email in preferred_username claim",
@@ -244,7 +271,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures())},
+					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -300,7 +328,47 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Error if user is a member of allowed_groups",
+			name: "Error if user is not a member of allowed_organizations",
+			fields: fields{
+				allowedOrganizations: []string{"uuid-1234"},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				TenantID:          "uuid-5678",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"foo", "bar"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		}, {
+			name: "No error if user is a member of allowed_organizations",
+			fields: fields{
+				allowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				TenantID:          "uuid-5678",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"foo", "bar"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "",
+				Groups: []string{"foo", "bar"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "No Error if user is a member of allowed_groups",
 			fields: fields{
 				allowedGroups: []string{"foo", "bar"},
 				SocialBase: newSocialBase("azuread",
@@ -409,22 +477,56 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 	}
 
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	// Instantiate a signer using RSASSA-PSS (SHA256) with the given private key.
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS256, Key: privateKey}, (&jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{"kid": "1"},
+	}).WithType("JWT"))
+	require.NoError(t, err)
+
+	// generate JWKS
+	jwks := &jose.JSONWebKeySet{
+		Keys: []jose.JSONWebKey{
+			{
+				Key:       privateKey.Public(),
+				KeyID:     "1",
+				Algorithm: "PS256",
+				Use:       "sig",
+			},
+		},
+	}
+
+	authURL := "https://login.microsoftonline.com/1234/oauth2/v2.0/authorize"
+	usGovAuthURL := "https://login.microsoftonline.us/1234/oauth2/v2.0/authorize"
+
+	cache := remotecache.NewFakeCacheStorage()
+	// put JWKS in cache
+	jwksDump, err := json.Marshal(jwks)
+	require.NoError(t, err)
+
+	err = cache.Set(context.Background(), azureCacheKeyPrefix+"1234", jwksDump, 0)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:       tt.fields.SocialBase,
-				allowedGroups:    tt.fields.allowedGroups,
-				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
+				SocialBase:           tt.fields.SocialBase,
+				allowedGroups:        tt.fields.allowedGroups,
+				allowedOrganizations: tt.fields.allowedOrganizations,
+				forceUseGraphAPI:     tt.fields.forceUseGraphAPI,
+				cache:                cache,
 			}
 
 			if tt.fields.SocialBase == nil {
 				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
 			}
 
-			key := []byte("secret")
-			sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
-			if err != nil {
-				panic(err)
+			if tt.fields.usGovURL {
+				s.SocialBase.Endpoint.AuthURL = usGovAuthURL
+			} else {
+				s.SocialBase.Endpoint.AuthURL = authURL
 			}
 
 			cl := jwt.Claims{
@@ -552,6 +654,36 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		},
 	}
 
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	// Instantiate a signer using RSASSA-PSS (SHA256) with the given private key.
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS256, Key: privateKey}, (&jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{"kid": "1"},
+	}).WithType("JWT"))
+	require.NoError(t, err)
+
+	// generate JWKS
+	jwks := &jose.JSONWebKeySet{
+		Keys: []jose.JSONWebKey{
+			{
+				Key:       privateKey.Public(),
+				KeyID:     "1",
+				Algorithm: string(jose.PS256),
+				Use:       "sig",
+			},
+		},
+	}
+
+	authURL := "https://login.microsoftonline.com/1234/oauth2/v2.0/authorize"
+	cache := remotecache.NewFakeCacheStorage()
+	// put JWKS in cache
+	jwksDump, err := json.Marshal(jwks)
+	require.NoError(t, err)
+
+	err = cache.Set(context.Background(), azureCacheKeyPrefix+"1234", jwksDump, 0)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
@@ -559,17 +691,14 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				allowedGroups:    tt.fields.allowedGroups,
 				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
 				skipOrgRoleSync:  tt.fields.skipOrgRoleSync,
+				cache:            cache,
 			}
 
 			if tt.fields.SocialBase == nil {
 				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
 			}
 
-			key := []byte("secret")
-			sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
-			if err != nil {
-				panic(err)
-			}
+			s.SocialBase.Endpoint.AuthURL = authURL
 
 			cl := jwt.Claims{
 				Subject:   "subject",

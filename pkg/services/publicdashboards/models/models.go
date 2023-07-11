@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // PublicDashboardErr represents a dashboard error.
@@ -46,7 +47,7 @@ type PublicDashboard struct {
 	CreatedAt    time.Time `json:"createdAt" xorm:"created_at"`
 	UpdatedAt    time.Time `json:"updatedAt" xorm:"updated_at"`
 	//config fields
-	TimeSettings         *TimeSettings `json:"timeSettings" xorm:"time_settings"`
+	TimeSettings         *TimeSettings `json:"-" xorm:"time_settings"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
 	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
 	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
@@ -55,21 +56,10 @@ type PublicDashboard struct {
 }
 
 type PublicDashboardDTO struct {
-	Uid          string    `json:"uid"`
-	DashboardUid string    `json:"dashboardUid"`
-	OrgId        int64     `json:"-"` // Don't ever marshal orgId to Json
-	AccessToken  string    `json:"accessToken"`
-	CreatedBy    int64     `json:"createdBy"`
-	UpdatedBy    int64     `json:"updatedBy"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	//config fields
-	TimeSettings         *TimeSettings `json:"timeSettings"`
-	TimeSelectionEnabled *bool         `json:"timeSelectionEnabled"`
-	IsEnabled            *bool         `json:"isEnabled"`
-	AnnotationsEnabled   *bool         `json:"annotationsEnabled"`
-	Share                ShareType     `json:"share"`
-	Recipients           []EmailDTO    `json:"recipients,omitempty"`
+	TimeSelectionEnabled *bool     `json:"timeSelectionEnabled"`
+	IsEnabled            *bool     `json:"isEnabled"`
+	AnnotationsEnabled   *bool     `json:"annotationsEnabled"`
+	Share                ShareType `json:"share"`
 }
 
 type EmailDTO struct {
@@ -103,6 +93,22 @@ func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }
 
+type PublicDashboardListQuery struct {
+	OrgID  int64
+	Query  string
+	Page   int
+	Limit  int
+	Offset int
+	User   *user.SignedInUser
+}
+
+type PublicDashboardListResponseWithPagination struct {
+	PublicDashboards []*PublicDashboardListResponse `json:"publicDashboards"`
+	TotalCount       int64                          `json:"totalCount"`
+	Page             int                            `json:"page"`
+	PerPage          int                            `json:"perPage"`
+}
+
 type PublicDashboardListResponse struct {
 	Uid          string `json:"uid" xorm:"uid"`
 	AccessToken  string `json:"accessToken" xorm:"access_token"`
@@ -126,7 +132,9 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
+	Uid             string
 	DashboardUid    string
+	OrgID           int64
 	UserId          int64
 	PublicDashboard *PublicDashboardDTO
 }

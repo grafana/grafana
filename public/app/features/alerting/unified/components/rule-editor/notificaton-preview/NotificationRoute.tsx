@@ -53,6 +53,8 @@ function NotificationRouteHeader({
       />
 
       <Stack flexGrow={1} gap={1}>
+        {/* TODO: fix keyboard a11y */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
           <Stack gap={1} direction="row" alignItems="center">
             Notification policy

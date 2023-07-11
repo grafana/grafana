@@ -50,12 +50,16 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
-// Mock IntersectionObserver
-const mockIntersectionObserver = jest.fn().mockReturnValue({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-});
+// mock the intersection observer and just say everything is in view
+const mockIntersectionObserver = jest
+  .fn()
+  .mockImplementation((callback: (arg: IntersectionObserverEntry[]) => void) => ({
+    observe: jest.fn().mockImplementation((elem: HTMLElement) => {
+      callback([{ target: elem, isIntersecting: true }] as unknown as IntersectionObserverEntry[]);
+    }),
+    unobserve: jest.fn(),
+    disconnect: jest.fn(),
+  }));
 global.IntersectionObserver = mockIntersectionObserver;
 
 jest.mock('../app/core/core', () => ({

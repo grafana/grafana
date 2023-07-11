@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { get } from 'lodash';
+import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -34,10 +34,10 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
-import { ExploreId } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
+import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
@@ -61,6 +61,7 @@ import {
   modifyQueries,
   scanStart,
   scanStopAction,
+  selectIsWaitingForData,
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
@@ -97,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export interface ExploreProps extends Themeable2 {
-  exploreId: ExploreId;
+  exploreId: string;
   theme: GrafanaTheme2;
   eventBus: EventBus;
 }
@@ -283,12 +284,32 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <NoData />;
   }
 
+  renderCustom(width: number) {
+    const { timeZone, queryResponse, absoluteRange } = this.props;
+
+    const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
+
+    return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
+      return (
+        <CustomContainer
+          key={index}
+          timeZone={timeZone}
+          pluginId={pluginId}
+          frames={frames}
+          state={queryResponse.state}
+          absoluteRange={absoluteRange}
+          height={400}
+          width={width}
+        />
+      );
+    });
+  }
+
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, loading, showFlameGraph } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <GraphContainer
-        loading={loading}
         data={graphResult!}
         height={showFlameGraph ? 180 : 400}
         width={width}
@@ -424,6 +445,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showRawPrometheus,
       showLogs,
       showTrace,
+      showCustom,
       showNodeGraph,
       showFlameGraph,
       timeZone,
@@ -445,6 +467,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.tableFrames,
         queryResponse.rawPrometheusFrames,
         queryResponse.traceFrames,
+        queryResponse.customFrames,
       ].every((e) => e.length === 0);
 
     return (
@@ -497,6 +520,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {config.featureToggles.logsSampleInExplore && showLogsSample && (
                             <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
                           )}
+                          {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>
                       )}
@@ -547,15 +571,16 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showMetrics,
     showTable,
     showTrace,
+    showCustom,
     absoluteRange,
     queryResponse,
     showNodeGraph,
     showFlameGraph,
-    loading,
     showRawPrometheus,
     supplementaryQueries,
   } = item;
 
+  const loading = selectIsWaitingForData(exploreId)(state);
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
@@ -575,6 +600,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showMetrics,
     showTable,
     showTrace,
+    showCustom,
     showNodeGraph,
     showRawPrometheus,
     showFlameGraph,

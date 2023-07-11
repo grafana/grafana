@@ -22,6 +22,7 @@ import {
   setLocationService,
   HistoryWrapper,
   LocationService,
+  setPluginExtensionGetter,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
@@ -33,7 +34,7 @@ import { configureStore } from 'app/store/configureStore';
 
 import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
-import { ExploreId, ExploreQueryParams } from '../../../../types';
+import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 
@@ -42,7 +43,7 @@ type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceAp
 type SetupOptions = {
   clearLocalStorage?: boolean;
   datasources?: DatasourceSetup[];
-  urlParams?: ExploreQueryParams & { [key: string]: string };
+  urlParams?: ExploreQueryParams;
   prevUsedDatasource?: { orgId: number; datasource: string };
   mixedEnabled?: boolean;
 };
@@ -54,6 +55,8 @@ export function setupExplore(options?: SetupOptions): {
   container: HTMLElement;
   location: LocationService;
 } {
+  setPluginExtensionGetter(() => ({ extensions: [] }));
+
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
   if (options?.clearLocalStorage !== false) {
@@ -166,7 +169,7 @@ export function setupExplore(options?: SetupOptions): {
   };
 }
 
-function makeDatasourceSetup({
+export function makeDatasourceSetup({
   name = 'loki',
   id = 1,
   uid: uidOverride,
@@ -232,10 +235,10 @@ function makeDatasourceSetup({
   };
 }
 
-export const waitForExplore = (exploreId: ExploreId = ExploreId.left) => {
+export const waitForExplore = (exploreId = 'left') => {
   return waitFor(async () => {
     const container = screen.getAllByTestId('data-testid Explore');
-    return within(container[exploreId === ExploreId.left ? 0 : 1]);
+    return within(container[exploreId === 'left' ? 0 : 1]);
   });
 };
 
@@ -243,7 +246,7 @@ export const tearDown = () => {
   window.localStorage.clear();
 };
 
-export const withinExplore = (exploreId: ExploreId) => {
+export const withinExplore = (exploreId: string) => {
   const container = screen.getAllByTestId('data-testid Explore');
-  return within(container[exploreId === ExploreId.left ? 0 : 1]);
+  return within(container[exploreId === 'left' ? 0 : 1]);
 };

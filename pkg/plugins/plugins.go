@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -52,6 +54,8 @@ type Plugin struct {
 	BaseURL string
 
 	AngularDetected bool
+
+	ExternalService *oauth.ExternalService
 
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
@@ -150,6 +154,9 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+
+	// Oauth App Service Registration
+	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -479,7 +486,7 @@ func (p *Plugin) IsBundledPlugin() bool {
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return p.Class == ClassExternal
+	return !p.IsCorePlugin() && !p.IsBundledPlugin()
 }
 
 type Class string

@@ -31,8 +31,16 @@ export const applyMaxSize: Modifier<'applyMaxSize', {}> = {
   requires: ['maxSize'],
   fn({ state }: ModifierArguments<{}>) {
     const { height, width } = state.modifiersData.maxSize;
-    state.styles.popper.maxHeight = `${height - MODAL_MARGIN}px`;
-    state.styles.popper.minHeight = `${FLIP_THRESHOLD}px`;
-    state.styles.popper.maxWidth = width;
+
+    if (!state.styles.popper.maxHeight) {
+      state.styles.popper.maxHeight = `${height - MODAL_MARGIN}px`;
+    }
+    if (!state.styles.popper.minHeight) {
+      state.styles.popper.minHeight = `${FLIP_THRESHOLD}px`;
+    }
+
+    if (!state.styles.popper.maxWidth) {
+      state.styles.popper.maxWidth = width;
+    }
   },
 };

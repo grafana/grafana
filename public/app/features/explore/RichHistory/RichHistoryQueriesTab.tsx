@@ -12,7 +12,7 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { ExploreId, RichHistoryQuery } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
@@ -27,7 +27,7 @@ export interface RichHistoryQueriesTabProps {
   loadMoreRichHistory: () => void;
   richHistorySettings: RichHistorySettings;
   richHistorySearchFilters?: RichHistorySearchFilters;
-  exploreId: ExploreId;
+  exploreId: string;
   height: number;
 }
 
@@ -193,7 +193,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
         </div>
       </div>
 
-      <div className={styles.containerContent}>
+      <div className={styles.containerContent} data-testid="query-history-queries-tab">
         <div className={styles.selectors}>
           {!richHistorySettings.activeDatasourceOnly && (
             <MultiSelect
