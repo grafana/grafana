@@ -2,6 +2,7 @@ import { rest } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
 import 'whatwg-fetch';
 
+import { PluginMeta } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 
 import { backendSrv } from '../../../core/services/backend_srv';
@@ -13,6 +14,7 @@ import {
   Receiver,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
+import { NotifierDTO } from '../../../types';
 
 class AlertmanagerConfigBuilder {
   private alertmanagerConfig: AlertmanagerConfig = { receivers: [] };
@@ -120,6 +122,21 @@ export function mockApi(server: SetupServer) {
           )
         )
       );
+    },
+    grafanaNotifiers: (response: NotifierDTO[]) => {
+      server.use(
+        rest.get(`api/alert-notifiers`, (req, res, ctx) => res(ctx.status(200), ctx.json<NotifierDTO[]>(response)))
+      );
+    },
+
+    plugins: {
+      getPluginSettings: (response: PluginMeta) => {
+        server.use(
+          rest.get(`api/plugins/${response.id}/settings`, (req, res, ctx) =>
+            res(ctx.status(200), ctx.json<PluginMeta>(response))
+          )
+        );
+      },
     },
   };
 }
