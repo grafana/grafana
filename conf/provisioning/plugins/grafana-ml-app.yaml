@@ -1,0 +1,12 @@
+apiVersion: 1
+
+apps:
+  - type: grafana-ml-app
+    jsonData:
+      apiKeyName: grafana-ml
+      backendUrl: http://localhost:4030
+      siftUrl: http://localhost:4032
+      base64EncodedAccessTokenSet: True
+      initialized: True
+    secureJsonData:
+      base64EncodedAccessToken: dGhlc3RhY2s6dGhldG9rZW4=

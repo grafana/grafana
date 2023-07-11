@@ -16,7 +16,7 @@ weight: 400
 
 # Create Grafana Mimir or Loki managed alert rules
 
-Grafana allows you to create alerting rules for an external Grafana Mimir or Loki instance that has ruler API enabled. For information on Grafana Alerting, see [About Grafana Alerting]({{< relref "../../alerting" >}}) which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts]({{< relref "../fundamentals" >}}) of Grafana Alerting.
+Grafana allows you to create alerting rules for an external Grafana Mimir or Loki instance that has ruler API enabled. For information on Grafana Alerting, see [About Grafana Alerting][alerting] which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts][fundamentals] of Grafana Alerting.
 
 ## Before you begin
 
@@ -50,11 +50,25 @@ If you do not want to manage alerting rules for a particular Loki or Prometheus 
    - In the **For** text box, specify the duration for which the condition must be true before an alert fires. If you specify `5m`, the condition must be true for 5 minutes before the alert fires.
      > **Note:** Once a condition is met, the alert goes into the `Pending` state. If the condition remains active for the duration specified, the alert transitions to the `Firing` state, else it reverts to the `Normal` state.
 1. In Step 4, add the namespace, rule group, as well as additional metadata associated with the rule.
-   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group" >}}).
+   - From the **Namespace** dropdown, select an existing rule namespace. Otherwise, click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces][edit-mimir-loki-namespace-group].
    - From the **Group** dropdown, select an existing group within the selected namespace. Otherwise, click **Add new** and enter a name to create a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting][annotation-label].
    - Add Runbook URL, panel, dashboard, and alert IDs.
 1. In Step 5, add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
 1. Next, create a notification for the rule.
+
+{{% docs/reference %}}
+[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
+
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+
+[edit-mimir-loki-namespace-group]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/edit-mimir-loki-namespace-group"
+[edit-mimir-loki-namespace-group]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/edit-mimir-loki-namespace-group"
+
+[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
+{{% /docs/reference %}}
