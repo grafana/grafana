@@ -45,10 +45,10 @@ composableKinds: PanelCfg: {
 
 					show?: ScatterShow & (*"points" | _)
 
-					pointSize?:  common.ScaleDimensionConfig
-					pointColor?: common.ColorDimensionConfig
-					// pointSymbol?: common.ResourceDimensionConfig
-					// fillOpacity?: number & >=0 & <=1 | *0.5
+					pointSize?:   common.ScaleDimensionConfig
+					pointColor?:  common.ColorDimensionConfig
+					pointSymbol?: common.ResourceDimensionConfig
+					fillOpacity?: number & >=0 & <=1 | *0.5
 
 					lineColor?: common.ColorDimensionConfig
 					lineWidth?: int32 & >=0

@@ -35,6 +35,7 @@ export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
 };
 
 export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+  fillOpacity?: number;
   label?: common.VisibilityMode;
   labelValue?: common.TextDimensionConfig;
   lineColor?: common.ColorDimensionConfig;
@@ -42,10 +43,12 @@ export interface FieldConfig extends common.HideableFieldConfig, common.AxisConf
   lineWidth?: number;
   pointColor?: common.ColorDimensionConfig;
   pointSize?: common.ScaleDimensionConfig;
+  pointSymbol?: common.ResourceDimensionConfig;
   show?: ScatterShow;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  fillOpacity: 0.5,
   label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
