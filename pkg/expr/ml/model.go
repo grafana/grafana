@@ -20,7 +20,7 @@ type OutlierCommandConfiguration struct {
 
 	// If Query is empty it should be contained in a datasource specific format
 	// inside of QueryParms.
-	Query       string                 `json:"config"`
+	Query       string                 `json:"query,omitempty"`
 	QueryParams map[string]interface{} `json:"query_params,omitempty"`
 
 	Algorithm    map[string]interface{} `json:"algorithm"`

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 
@@ -47,14 +47,33 @@ func TestOutlierExec(t *testing.T) {
 			require.Equal(t, "POST", method)
 			require.Equal(t, "/proxy/api/v1/outlier", path)
 
-			var body OutlierRequestBody
-			require.NoError(t, jsoniter.Unmarshal(payload, &body))
-
-			require.Equal(t, outlier.config, body.Data.Attributes.OutlierCommandConfiguration)
-			require.Equal(t, outlier.appURL, body.Data.Attributes.GrafanaURL)
-			require.Equal(t, mlTime(from), body.Data.Attributes.StartEndAttributes.Start)
-			require.Equal(t, mlTime(to), body.Data.Attributes.StartEndAttributes.End)
-			require.Equal(t, outlier.interval.Milliseconds(), body.Data.Attributes.StartEndAttributes.Interval)
+			assert.JSONEq(t, fmt.Sprintf(`{
+			  "data": {
+			    "attributes": {
+			      "datasource_type": "prometheus",
+			      "datasource_uid": "a4ce599c-4c93-44b9-be5b-76385b8c01be",
+			      "query_params": {
+			        "expr": "go_goroutines{}",
+			        "range": true,
+			        "refId": "A"
+			      },
+			      "algorithm": {
+			        "config": {
+			          "epsilon": 7.667
+			        },
+			        "name": "dbscan",
+			        "sensitivity": 0.83
+			      },
+			      "response_type": "binary",
+			      "grafana_url": "https://grafana.com",
+			      "start_end_attributes": {
+			        "start": "%s",
+			        "end": "%s",
+			        "interval": 1000000
+			      }
+			    }
+			  }
+			}`, from.Format(timeFormat), to.Format(timeFormat)), string(payload))
 
 			called = true
 			return nil, nil
