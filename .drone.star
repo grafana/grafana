@@ -30,6 +30,7 @@ load(
 )
 load(
     "scripts/drone/pipelines/ci_images.star",
+    "publish_ci_build_container_image_pipeline",
     "publish_ci_windows_test_image_pipeline",
 )
 load("scripts/drone/pipelines/github.star", "publish_github_pipeline")
@@ -66,6 +67,7 @@ def main(_ctx):
         version_branch_pipelines() +
         integration_test_pipelines() +
         publish_ci_windows_test_image_pipeline() +
+        publish_ci_build_container_image_pipeline() +
         cronjobs() +
         secrets()
     )
