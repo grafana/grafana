@@ -35,8 +35,8 @@ that you cannot use this API for retrieving information about the General folder
 
 Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000. You can also pass the `page` query parameter for fetching folders from a page other than the first one.
 
-If nested folders are enabled, it expects an additional query parameter `parentUid` with the parent folder UID and returns the immediate subfolders that the authenticated user has permission to view.
-If the parameter is not supplied then it returns immediate subfolders under the root
+If nested folders are enabled, the operation expects an additional optional query parameter `parentUid` with the parent folder UID and returns the immediate subfolders that the authenticated user has permission to view.
+If the parameter is not supplied then the operation returns immediate subfolders under the root
 that the authenticated user has permission to view.
 
 **Required permissions**
