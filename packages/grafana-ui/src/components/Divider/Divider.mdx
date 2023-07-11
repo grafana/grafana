@@ -5,14 +5,14 @@ import { Divider } from './Divider';
 
 # Divider
 
-Used to create separation between large sections of page content. Or used to separate smaller sections
-of components. i.e in the info section of the header.
+- Used to create separation between large sections of page content.
+- Used to separate smaller sections of components. i.e in the info section of the header.
 
 ### Usage
 
 #### When to use
 
-When creating separation between large sections of page content. Or smaller parts of components like in the page info section of the header.
+When creating separation between large sections of page content or smaller parts of components like in the page info section of the header.
 
 #### When not to use
 
@@ -20,7 +20,7 @@ Dividers should be used sparingly.
 
 Don’t use dividers when white space (padding / margins) is sufficient to separate out sections. When sections are related to each other, they may not need dividers (ex: filtering / search related to a table).
 
-#### Anatomy
+### Variants
 
 - Horizontal
 
@@ -54,6 +54,14 @@ import { Divider } from '@grafana/ui';
     </main>
 
 ```
+
+### Dos
+
+    - Import and add the Divider component inside the code where you would normally add an hr or a div.
+
+### Don'ts
+
+    - Do not modify the color of the divider
 
 ### Props
 
