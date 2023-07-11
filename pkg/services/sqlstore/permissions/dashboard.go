@@ -430,13 +430,22 @@ func parseStringSliceFromInterfaceSlice(slice []interface{}) []string {
 }
 
 func parseArguments(actions []string, user *user.SignedInUser, scopePrefix string) []interface{} {
-	args := make([]interface{}, 0, len(actions))
+	uidActionCount := make(map[string]int)
 	for _, action := range actions {
 		for _, uidScope := range user.Permissions[user.OrgID][action] {
 			if !strings.HasPrefix(uidScope, scopePrefix) {
 				continue
 			}
-			args = append(args, strings.TrimPrefix(uidScope, scopePrefix))
+			uid := strings.TrimPrefix(uidScope, scopePrefix)
+			uidActionCount[uid]++
+		}
+	}
+
+	// args max capacity is the length of the different uids
+	args := make([]interface{}, 0, len(uidActionCount))
+	for uid, numOfActions := range uidActionCount {
+		if numOfActions == len(actions) {
+			args = append(args, uid)
 		}
 	}
 	return args

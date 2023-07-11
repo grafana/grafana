@@ -113,6 +113,30 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			expectedResult: 2,
 		},
 		{
+			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+		},
+		{
+			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+		},
+		{
 			desc:       "Should return folders that users can read alerts from",
 			permission: dashboards.PERMISSION_VIEW,
 			queryType:  searchstore.TypeAlertFolder,
@@ -248,6 +272,30 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
 			},
 			expectedResult: 2,
+		},
+		{
+			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+		},
+		{
+			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
 		},
 		{
 			desc:       "Should return folders that users can read alerts from",
