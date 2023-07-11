@@ -1,4 +1,5 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -110,14 +111,20 @@ describe('DashboardScenePage', () => {
 
     // Wish I could use the menu here but unable t get it to open when I click the menu button
     // Somethig with Dropdown that is not working inside react-testing
-    // screen.getByLabelText('Menu for panel with title Panel B').click();
-    act(() => locationService.partial({ inspect: 'panel-2' }));
+    await userEvent.click(screen.getByLabelText('Menu for panel with title Panel B'));
+
+    const inspectLink = (await screen.findByRole('link', { name: /Inspect/ })).getAttribute('href')!;
+    act(() => locationService.push(inspectLink));
+
+    // I get not implemented exception here (from navigation / js-dom).
+    // Mocking window.location.assign did not help
+    //await userEvent.click(await screen.findByRole('link', { name: /Inspect/ }));
 
     expect(await screen.findByText('Inspect: Panel B')).toBeInTheDocument();
 
     act(() => locationService.partial({ inspect: null }));
 
-    expect(screen.queryByText('Inspect')).not.toBeInTheDocument();
+    expect(screen.queryByText('Inspect: Panel B')).not.toBeInTheDocument();
   });
 
   it('Can view panel in fullscreen', async () => {
@@ -145,4 +152,5 @@ function CustomVizPanel(props: VizProps) {
 
 async function waitForDashbordToRender() {
   expect(await screen.findByText('Last 6 hours')).toBeInTheDocument();
+  expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 }
