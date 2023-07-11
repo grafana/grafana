@@ -30,7 +30,7 @@ This page explains the first and third options; for information about using the 
 
 ## Create annotations in panels
 
-Grafana comes with the ability to add annotation events directly from the graph panel using the [built-in annotation query]({{< relref "#built-in-query"}}) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
+Grafana comes with the ability to add annotation events directly from the graph panel using the [built-in annotation query]({{< relref "#built-in-query" >}) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
 
 ### Add an annotation
 
