@@ -59,6 +59,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
 
+  const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
+
   const clear = useCallback(() => {
     setServiceNames(undefined);
     setSpanNames(undefined);
@@ -310,7 +312,11 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Duration" labelWidth={16}>
+          <InlineField
+            label="Duration"
+            labelWidth={16}
+            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+          >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select
                 aria-label="Select from operator"
@@ -325,6 +331,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 placeholder="e.g. 100ms, 1.2s"
                 width={18}
                 value={search.from || ''}
+                validationRegex={durationRegex}
               />
               <Select
                 aria-label="Select to operator"
@@ -339,6 +346,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 placeholder="e.g. 100ms, 1.2s"
                 width={18}
                 value={search.to || ''}
+                validationRegex={durationRegex}
               />
             </HorizontalGroup>
           </InlineField>
