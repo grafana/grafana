@@ -19,17 +19,8 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import {
-  Collapse,
-  HorizontalGroup,
-  Icon,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Select,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
@@ -320,19 +311,20 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Duration" labelWidth={16}>
-            <HorizontalGroup spacing={'xs'}>
+            <HorizontalGroup spacing="xs" align="flex-start">
               <Select
                 aria-label="Select from operator"
                 onChange={(v) => setSearch({ ...search, fromOperator: v.value! })}
                 options={[toOption('>'), toOption('>=')]}
                 value={search.fromOperator}
               />
-              <Input
-                aria-label="Select from value"
-                onChange={(v) => setSearch({ ...search, from: v.currentTarget.value })}
+              <IntervalInput
+                ariaLabel="Select from value"
+                onChange={(val) => setSearch({ ...search, from: val })}
+                isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.from || ''}
                 width={18}
+                value={search.from || ''}
               />
               <Select
                 aria-label="Select to operator"
@@ -340,12 +332,13 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 options={[toOption('<'), toOption('<=')]}
                 value={search.toOperator}
               />
-              <Input
-                aria-label="Select to value"
-                onChange={(v) => setSearch({ ...search, to: v.currentTarget.value })}
+              <IntervalInput
+                ariaLabel="Select to value"
+                onChange={(val) => setSearch({ ...search, to: val })}
+                isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.to || ''}
                 width={18}
+                value={search.to || ''}
               />
             </HorizontalGroup>
           </InlineField>
