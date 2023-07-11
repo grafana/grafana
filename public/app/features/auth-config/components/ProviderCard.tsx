@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Card, useStyles2 } from '@grafana/ui';
+import { Badge, Card, useStyles2, Icon } from '@grafana/ui';
 
 import { BASE_PATH } from '../constants';
 
@@ -26,8 +26,14 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
     <Card href={configPath} className={styles.container} onClick={() => onClick && onClick()}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
       <div className={styles.footer}>
-        {authType && <Badge text={authType} color="blue" icon="info-circle" />}
-        {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="red" />}
+        <div className={styles.badgeContainer}>
+          {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="blue" />}
+          {authType && <Badge text={authType} color="green" />}
+        </div>
+        <span className={styles.edit}>
+          Edit
+          <Icon color="blue" name={'arrow-right'} size="sm" />
+        </span>
       </div>
     </Card>
   );
@@ -51,6 +57,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     footer: css`
       display: flex;
       justify-content: space-between;
+      align-items: center; // vertically align the items
     `,
     name: css`
       align-self: flex-start;
@@ -58,11 +65,21 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.primary};
       margin: 0;
     `,
+    badgeContainer: css`
+      display: flex;
+      gap: ${theme.spacing(1)}; // add some space between the badges
+    `,
     initext: css`
       font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1)} 0; // Add some padding
       max-width: 90%; // Add a max-width to prevent text from stretching too wide
+    `,
+    edit: css`
+      display: flex;
+      align-items: center; // vertically align the text and the icon
+      color: ${theme.colors.text.link};
+      gap: ${theme.spacing(0.5)}; // add some space between the text and the icon
     `,
   };
 };

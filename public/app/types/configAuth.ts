@@ -10,7 +10,6 @@ export interface AuthConfigState {
 
 export interface AuthProviderStatus {
   enabled: boolean;
-  configuredInIni: boolean;
   enabledInUI: boolean;
   configuredInUI: boolean;
 }
