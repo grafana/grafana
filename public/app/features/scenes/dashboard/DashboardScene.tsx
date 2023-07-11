@@ -1,4 +1,4 @@
-import { AppEvents, NavModelItem } from '@grafana/data';
+import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -8,7 +8,7 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneObjectStateChangedEvent,
-  SceneObjectUrlSyncConfig,
+  SceneObjectUrlSyncHandler,
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
@@ -32,9 +32,8 @@ export interface DashboardSceneState extends SceneObjectState {
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
-  private _pageNavCache?: NavModelItem;
 
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['inspect', 'viewPanel'] });
+  protected _urlSync = new DashboardSceneUrlSync(this);
 
   constructor(state: DashboardSceneState) {
     super(state);
@@ -46,46 +45,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
 
     this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
-  }
-
-  getUrlState() {
-    return { inspect: this.state.inspectPanelKey, viewPanel: this.state.viewPanelKey };
-  }
-
-  updateFromUrl(values: SceneObjectUrlValues) {
-    const update: Partial<DashboardSceneState> = {};
-
-    // Handle inspect object state
-    if (typeof values.inspect === 'string') {
-      const panel = this.findPanel(values.inspect);
-      if (!panel) {
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ inspect: null });
-        return;
-      }
-
-      update.inspectPanelKey = values.inspect;
-    } else if (this.state.inspectPanelKey) {
-      update.inspectPanelKey = undefined;
-    }
-
-    // Handle view panel state
-    if (typeof values.viewPanel === 'string') {
-      const panel = this.findPanel(values.viewPanel);
-      if (!panel) {
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ viewPanel: null });
-        return;
-      }
-
-      update.viewPanelKey = values.viewPanel;
-    } else if (this.state.viewPanelKey) {
-      update.viewPanelKey = undefined;
-    }
-
-    if (Object.keys(update).length > 0) {
-      this.setState(update);
-    }
   }
 
   findPanel(key: string | undefined): VizPanel | null {
@@ -127,10 +86,69 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   getPageNav() {
-    if (!this._pageNavCache) {
-      this._pageNavCache = { text: this.state.title };
+    const location = locationService.getLocation();
+    let pageNav: NavModelItem = {
+      text: this.state.title,
+      url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
+    };
+
+    if (this.state.viewPanelKey) {
+      pageNav = {
+        text: 'View panel',
+        parentItem: pageNav,
+      };
     }
 
-    return this._pageNavCache;
+    return pageNav;
+  }
+}
+
+class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
+  constructor(private _scene: DashboardScene) {}
+
+  getKeys(): string[] {
+    return ['inspect', 'viewPanel'];
+  }
+
+  getUrlState(): SceneObjectUrlValues {
+    const state = this._scene.state;
+    return { inspect: state.inspectPanelKey, viewPanel: state.viewPanelKey };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues): void {
+    const { inspectPanelKey, viewPanelKey } = this._scene.state;
+    const update: Partial<DashboardSceneState> = {};
+
+    // Handle inspect object state
+    if (typeof values.inspect === 'string') {
+      const panel = this._scene.findPanel(values.inspect);
+      if (!panel) {
+        appEvents.emit(AppEvents.alertError, ['Panel not found']);
+        locationService.partial({ inspect: null });
+        return;
+      }
+
+      update.inspectPanelKey = values.inspect;
+    } else if (inspectPanelKey) {
+      update.inspectPanelKey = undefined;
+    }
+
+    // Handle view panel state
+    if (typeof values.viewPanel === 'string') {
+      const panel = this._scene.findPanel(values.viewPanel);
+      if (!panel) {
+        appEvents.emit(AppEvents.alertError, ['Panel not found']);
+        locationService.partial({ viewPanel: null });
+        return;
+      }
+
+      update.viewPanelKey = values.viewPanel;
+    } else if (viewPanelKey) {
+      update.viewPanelKey = undefined;
+    }
+
+    if (Object.keys(update).length > 0) {
+      this._scene.setState(update);
+    }
   }
 }

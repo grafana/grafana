@@ -30,7 +30,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           )}
           <div className={styles.body}>
             {!viewPanel && <body.Component model={body} />}
-            {viewPanel && <viewPanel.Component model={viewPanel} />}
+            {viewPanel && (
+              <div className={styles.viewPanel}>
+                <viewPanel.Component model={viewPanel} />
+              </div>
+            )}
           </div>
         </div>
       </CustomScrollbar>
@@ -54,6 +58,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
+    }),
+    viewPanel: css({
+      display: 'flex',
+      position: 'relative',
+      flexGrow: 1,
+      marginBottom: theme.spacing(2),
     }),
     controls: css({
       display: 'flex',

@@ -10,36 +10,19 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
   return loadDashboardMock;
 }
 
-export class ResizeObserverMockHandler {
-  private listeners: Set<ResizeObserverCallback> = new Set<ResizeObserverCallback>();
+export function mockResizeObserver() {
+  (window as any).ResizeObserver = class ResizeObserver {
+    //callback: ResizeObserverCallback;
 
-  constructor() {
-    let outerSelf = this;
-
-    (window as any).ResizeObserver = class ResizeObserver {
-      callback: ResizeObserverCallback;
-
-      constructor(callback: ResizeObserverCallback) {
-        this.callback = callback;
-        outerSelf.listeners.add(callback);
-      }
-      observe() {}
-      disconnect() {
-        outerSelf.listeners.delete(this.callback);
-      }
-    };
-  }
-
-  callResizeObserverListeners(width: number, height: number) {
-    for (const listener of this.listeners.values()) {
-      listener(
+    constructor(callback: ResizeObserverCallback) {
+      callback(
         [
           {
             contentRect: {
               x: 1,
               y: 2,
-              width,
-              height,
+              width: 500,
+              height: 500,
               top: 100,
               bottom: 0,
               left: 100,
@@ -47,8 +30,11 @@ export class ResizeObserverMockHandler {
             },
           } as ResizeObserverEntry,
         ],
-        undefined
+        this
       );
     }
-  }
+    observe() {}
+    disconnect() {}
+    unobserve() {}
+  };
 }
