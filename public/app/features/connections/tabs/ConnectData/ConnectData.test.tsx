@@ -39,7 +39,10 @@ describe('Angular badge', () => {
         id: 'react-plugin',
         name: 'React Plugin',
         type: PluginType.datasource,
-        angularDetected: false,
+        angularMeta: {
+          detected: false,
+          disableDeprecationUIFeatures: false,
+        },
       }),
     ]);
     await waitFor(() => {
@@ -54,7 +57,10 @@ describe('Angular badge', () => {
         id: 'legacy-plugin',
         name: 'Legacy Plugin',
         type: PluginType.datasource,
-        angularDetected: true,
+        angularMeta: {
+          detected: true,
+          disableDeprecationUIFeatures: false,
+        },
       }),
     ]);
     await waitFor(() => {
