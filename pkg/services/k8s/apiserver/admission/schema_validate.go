@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/kindsys/encoding"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 )
 
 const PluginNameSchemaValidate = "SchemaValidate"
@@ -36,7 +36,7 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 	sv.log.Info(fmt.Sprintf("validating resource of kind %s", a.GetKind().Kind))
 	ck := sv.reg.ByName(obj.GetObjectKind().GroupVersionKind().Kind)
 	if ck == nil {
-		sv.log.Info(fmt.Sprintf("did not match %s", obj.GetObjectKind().GroupVersionKind().Kind))
+		sv.log.Warn(fmt.Sprintf("no kind registered for %s", obj.GetObjectKind().GroupVersionKind().Kind))
 		return nil
 	}
 
@@ -65,11 +65,10 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 // where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
 func (schemaValidate) Handles(operation admission.Operation) bool {
 	switch operation {
-	case admission.Connect, admission.Delete:
-		return false
-	default:
+	case admission.Create, admission.Update:
 		return true
 	}
+	return false
 }
 
 // NewSchemaValidate creates a NewSchemaValidate admission handler
