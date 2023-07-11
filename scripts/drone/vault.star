@@ -5,6 +5,7 @@ pull_secret = "dockerconfigjson"
 drone_token = "drone_token"
 prerelease_bucket = "prerelease_bucket"
 gcp_upload_artifacts_key = "gcp_upload_artifacts_key"
+gcp_download_build_container_assets_key = "gcp_download_build_container_assets_key"
 azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
@@ -36,6 +37,11 @@ def secrets():
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
+            "credentials.json",
+        ),
+        vault_secret(
+            gcp_download_build_container_assets_key,
+            "infra/data/ci/grafana/assets-downloader-build-container-service-account",
             "credentials.json",
         ),
         vault_secret(
