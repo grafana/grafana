@@ -155,6 +155,10 @@ const getLoadMoreDirection = (place: Place, sortOrder: LogsSortOrder): LogRowCon
   return LogRowContextQueryDirection.Backward;
 };
 
+const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
+  return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
+};
+
 const PAGE_SIZE = 50;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
@@ -269,7 +273,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
 
     const out = newRows.filter((r) => {
-      return r.timeEpochNs !== refRow.timeEpochNs || r.entry !== refRow.entry;
+      return !containsRow(allRows, r);
     });
 
     return out;
