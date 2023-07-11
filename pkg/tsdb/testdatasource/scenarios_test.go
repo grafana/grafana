@@ -183,32 +183,32 @@ func TestParseLabels(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		model    map[string]string
+		model    jsonModel
 		expected data.Labels
 	}{
 		{
 			name:     "wrapped in {} and quoted value ",
-			model:    map[string]string{"labels": `{job="foo", instance="bar"}`},
+			model:    jsonModel{Labels: `{job="foo", instance="bar"}`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated non-quoted",
-			model:    map[string]string{"labels": `job=foo, instance=bar`},
+			model:    jsonModel{Labels: `job=foo, instance=bar`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated quoted",
-			model:    map[string]string{"labels": `job="foo"", instance="bar"`},
+			model:    jsonModel{Labels: `job="foo"", instance="bar"`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated with spaces, non quoted",
-			model:    map[string]string{"labels": `job = foo,instance = bar`},
+			model:    jsonModel{Labels: `job = foo,instance = bar`},
 			expected: expectedTags,
 		},
 		{
 			name:  "expands $seriesIndex",
-			model: map[string]string{"labels": `job=series-$seriesIndex,instance=bar`},
+			model: jsonModel{Labels: `job=series-$seriesIndex,instance=bar`},
 			expected: data.Labels{
 				"job":      fmt.Sprintf("series-%d", seriesIndex),
 				"instance": "bar",

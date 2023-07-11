@@ -743,15 +743,12 @@ func RandomWalk(query backend.DataQuery, model jsonModel, index int) *data.Frame
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
-	labels := map[string]string{
-		"labels": model.Labels,
-	}
 	return data.NewFrame("",
 		data.NewField("time", nil, timeVec).
 			SetConfig(&data.FieldConfig{
 				Interval: float64(query.Interval.Milliseconds()),
 			}),
-		data.NewField(frameNameForQuery(query, model, index), parseLabels(labels, index), floatVec),
+		data.NewField(frameNameForQuery(query, model, index), parseLabels(model, index), floatVec),
 	)
 }
 
@@ -965,10 +962,7 @@ func predictablePulse(query backend.DataQuery, model jsonModel) (*data.Frame, er
 
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
-	labels := map[string]string{
-		"labels": model.Labels,
-	}
-	frame.Fields[1].Labels = parseLabels(labels, 0)
+	frame.Fields[1].Labels = parseLabels(model, 0)
 
 	return frame, nil
 }
@@ -1037,8 +1031,8 @@ func newSeriesForQuery(query backend.DataQuery, model jsonModel, index int) *dat
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model map[string]string, seriesIndex int) data.Labels {
-	return parseLabelsString(model["labels"], seriesIndex)
+func parseLabels(model jsonModel, seriesIndex int) data.Labels {
+	return parseLabelsString(model.Labels, seriesIndex)
 }
 
 func parseLabelsString(labelText string, seriesIndex int) data.Labels {
