@@ -23,7 +23,7 @@ export interface Props {
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
   const [hover, setHover] = useState(false);
-  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, ...rest } = props;
+  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, pinned, ...rest } = props;
   const fields = getAllFields(row, getFieldLinks);
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   // only single key/value rows are filterable, so we only need the first field key for filtering
@@ -58,10 +58,14 @@ export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
     setHover(false);
   }, []);
 
+  const shouldShowMenu = useMemo(() => hover || pinned, [hover, pinned]);
+
   return (
     <td className={styles.logsRowMessage} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
       <div className={wrapClassName}>{line}</div>
-      {hover && <LogRowMenuCell logText={line} row={row} styles={styles} {...rest} />}
+      {shouldShowMenu && (
+        <LogRowMenuCell logText={line} row={row} styles={styles} pinned={pinned} mouseIsOver={hover} {...rest} />
+      )}
     </td>
   );
 });
