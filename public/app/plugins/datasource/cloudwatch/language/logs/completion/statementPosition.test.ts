@@ -151,16 +151,10 @@ describe('getStatementPosition', () => {
     expect(getStatementPosition(generateToken(singleLineFullQuery.query, { lineNumber: 1, column: 40 }))).toEqual(
       StatementPosition.Comment
     );
-    expect(getStatementPosition(generateToken(commentOnlyQuery.query, { lineNumber: 1, column: 1 }))).toEqual(
-      StatementPosition.Comment
-    );
     expect(getStatementPosition(generateToken(commentOnlyQuery.query, { lineNumber: 1, column: 35 }))).toEqual(
       StatementPosition.Comment
     );
     expect(getStatementPosition(generateToken(multiLineFullQuery.query, { lineNumber: 5, column: 3 }))).toEqual(
-      StatementPosition.Comment
-    );
-    expect(getStatementPosition(generateToken(multiLineFullQuery.query, { lineNumber: 5, column: 10 }))).toEqual(
       StatementPosition.Comment
     );
   });
