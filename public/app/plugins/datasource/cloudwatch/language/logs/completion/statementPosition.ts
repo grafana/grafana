@@ -59,7 +59,6 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
   const nextNonWhiteSpace = currentToken?.getNextNonWhiteSpaceToken();
 
   const normalizedCurrentToken = currentToken?.value?.toLowerCase();
-  const normalizedPreviousKeyword = previousKeyword?.value?.toLowerCase();
   const normalizedPreviousNonWhiteSpace = previousNonWhiteSpace?.value?.toLowerCase();
 
   d('currentToken', currentToken);
@@ -222,11 +221,6 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       d('(StatementPosition.BooleanOperatorArg)');
       return StatementPosition.BooleanOperatorArg;
     }
-  }
-
-  if (currentToken?.is(LogsTokenTypes.Regexp) && normalizedPreviousKeyword === PARSE) {
-    d('(StatementPosition.ParseRegularExpression)');
-    return StatementPosition.ParseRegularExpression;
   }
 
   if (

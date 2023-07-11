@@ -126,12 +126,6 @@ describe('getStatementPosition', () => {
     );
   });
 
-  it('should return StatementPosition.ParseRegularExpression for a regular expression in a parse statement', () => {
-    expect(getStatementPosition(generateToken(multiLineFullQuery.query, { lineNumber: 3, column: 20 }))).toEqual(
-      StatementPosition.ParseRegularExpression
-    );
-  });
-
   it('should return StatementPosition.ArithmeticOperator after an arithmetic operator', () => {
     expect(getStatementPosition(generateToken(multiLineFullQuery.query, { lineNumber: 4, column: 50 }))).toEqual(
       StatementPosition.ArithmeticOperator

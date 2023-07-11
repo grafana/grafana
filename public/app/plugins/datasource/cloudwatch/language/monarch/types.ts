@@ -80,7 +80,6 @@ export enum StatementPosition {
   FunctionArg,
   CommandArg,
   AfterCommand,
-  ParseRegularExpression,
 
   ArithmeticOperator,
   ArithmeticOperatorArg,
