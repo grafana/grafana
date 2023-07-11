@@ -292,6 +292,9 @@
       "subtitle": "Åpp pľūģįŉş ŧĥäŧ ęχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę",
       "title": "Åppş"
     },
+    "authentication": {
+      "title": "Åūŧĥęŉŧįčäŧįőŉ"
+    },
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
     },
@@ -398,6 +401,9 @@
     "observability": {
       "title": "Øþşęřväþįľįŧy"
     },
+    "oncall": {
+      "title": "ØŉCäľľ"
+    },
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
       "title": "Đęƒäūľŧ přęƒęřęŉčęş"
@@ -427,6 +433,12 @@
     },
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
+    },
+    "recorded-queries": {
+      "title": "Ŗęčőřđęđ qūęřįęş"
+    },
+    "reporting": {
+      "title": "Ŗępőřŧįŉģ"
     },
     "scenes": {
       "title": "Ŝčęŉęş"
@@ -460,6 +472,9 @@
     },
     "starred-empty": {
       "title": "Ÿőūř şŧäřřęđ đäşĥþőäřđş ŵįľľ äppęäř ĥęřę"
+    },
+    "statistics-and-licensing": {
+      "title": "Ŝŧäŧįşŧįčş äŉđ ľįčęŉşįŉģ"
     },
     "storage": {
       "subtitle": "Mäŉäģę ƒįľę şŧőřäģę",

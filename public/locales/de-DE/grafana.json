@@ -292,6 +292,9 @@
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
       "title": "Apps"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Verwaltung"
     },
@@ -398,6 +401,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
       "title": "Standardeinstellungen"
@@ -427,6 +433,12 @@
     },
     "public": {
       "title": "Öffentliche Dashboards"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Szenen"
@@ -460,6 +472,9 @@
     },
     "starred-empty": {
       "title": "Deine hervorgehobenen Dashboards werden hier angezeigt"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "Dateispeicher verwalten",

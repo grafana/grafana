@@ -292,6 +292,9 @@
       "subtitle": "扩展 Grafana 体验的应用插件",
       "title": "应用"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "管理"
     },
@@ -398,6 +401,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
       "title": "默认首选项"
@@ -427,6 +433,12 @@
     },
     "public": {
       "title": "公共仪表板"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "场景"
@@ -460,6 +472,9 @@
     },
     "starred-empty": {
       "title": "您已加星标的仪表板将显示在这里"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "管理文件存储",
