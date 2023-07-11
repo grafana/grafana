@@ -6,25 +6,25 @@ import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, Fie
 import { config, reportInteraction } from '@grafana/runtime';
 import { Table, TableSortByFieldState, useStyles2 } from '@grafana/ui';
 
-import { PIXELS_PER_LEVEL, TOP_TABLE_COLUMN_WIDTH } from '../../constants';
+import { TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
   app: CoreApp;
-  totalLevels: number;
   onSymbolClick: (symbol: string) => void;
+  height?: number;
 };
 
-const FlameGraphTopTableContainer = ({ data, app, totalLevels, onSymbolClick }: Props) => {
+const FlameGraphTopTableContainer = ({ data, app, onSymbolClick, height }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
   return (
     <div className={styles.topTableContainer} data-testid="topTable">
-      <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
+      <AutoSizer style={{ width: '100%', height }}>
         {({ width, height }) => {
           if (width < 3 || height < 3) {
             return null;
