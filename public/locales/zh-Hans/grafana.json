@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -38,6 +38,13 @@
       "move-modal-title": "",
       "moving": "",
       "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__other": "",
+      "dashboard__other": "",
+      "folder__other": "",
+      "libraryPanel__other": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
