@@ -4632,7 +4632,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -4674,14 +4675,8 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_main.sh
+  - cd /src && ./scripts/drone_publish_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4691,8 +4686,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -4728,14 +4729,8 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_tag.sh
+  - cd /src && ./scripts/drone_publish_tag.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4745,8 +4740,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -4785,7 +4786,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -6978,6 +6980,59 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: publish-ci-build-container-image
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - if [ -z "${BUILD_CONTAINER_VERSION}" ]; then echo Missing BUILD_CONTAINER_VERSION;
+    false; fi
+  image: alpine:3.17.1
+  name: validate-version
+- commands:
+  - printenv GCP_KEY > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz
+  environment:
+    GCP_KEY:
+      from_secret: gcp_download_build_container_assets_key
+  image: google/cloud-sdk:431.0.0
+  name: download-macos-sdk
+- commands:
+  - printenv DOCKER_PASSWORD | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker build -t "grafana/build-container:${BUILD_CONTAINER_VERSION}" ./scripts/build/ci-build
+  - docker push "grafana/build-container:${BUILD_CONTAINER_VERSION}"
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  image: google/cloud-sdk:431.0.0
+  name: build-and-publish
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  event:
+  - promote
+  target:
+  - ci-build-container-image
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 kind: pipeline
 name: scan-grafana/grafana:latest-image
 platform:
@@ -7226,6 +7281,12 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 get:
+  name: credentials.json
+  path: infra/data/ci/grafana/assets-downloader-build-container-service-account
+kind: secret
+name: gcp_download_build_container_assets_key
+---
+get:
   name: application_id
   path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
 kind: secret
@@ -7352,6 +7413,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 80038c08bedd62d8a0e4250e12e3dbb27712dd640694ff9f57ef14a82282ab76
+hmac: 992db6d1af741f53ab58777764b03bf713ae2fc3ad7a3bdf8805d23b9bf2f9eb
 
 ...
