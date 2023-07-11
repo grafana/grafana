@@ -15,7 +15,7 @@
 import { SpanStatusCode } from '@opentelemetry/api';
 
 import { SearchProps, Tag } from '../../useSearch';
-import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../constants/span';
+import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
@@ -74,7 +74,8 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
             (span.instrumentationLibraryVersion &&
               tag.key === LIBRARY_VERSION &&
               tag.value === span.instrumentationLibraryVersion) ||
-            (span.traceState && tag.key === TRACE_STATE && tag.value === span.traceState)
+            (span.traceState && tag.key === TRACE_STATE && tag.value === span.traceState) ||
+            (tag.key === ID && tag.value === span.spanID)
           ) {
             return getReturnValue(tag.operator, true);
           }
@@ -88,7 +89,8 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
             (span.statusMessage && tag.key === STATUS_MESSAGE) ||
             (span.instrumentationLibraryName && tag.key === LIBRARY_NAME) ||
             (span.instrumentationLibraryVersion && tag.key === LIBRARY_VERSION) ||
-            (span.traceState && tag.key === TRACE_STATE)
+            (span.traceState && tag.key === TRACE_STATE) ||
+            tag.key === ID
           ) {
             return getReturnValue(tag.operator, true);
           }
