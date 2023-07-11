@@ -299,7 +299,10 @@ type PluginDef struct {
 	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
-	Category           *Category           `json:"category,omitempty"`
+	Category *Category `json:"category,omitempty"`
+
+	// Should not be here but lets remove them from the plugins and then
+	// remove them from here.
 	DefaultMatchFormat *DefaultMatchFormat `json:"defaultMatchFormat,omitempty"`
 	Dependencies       Dependencies        `json:"dependencies"`
 
@@ -406,7 +409,8 @@ type PluginDef struct {
 // Plugin category used on the Add data source page.
 type Category string
 
-// DefaultMatchFormat defines model for PluginDef.DefaultMatchFormat.
+// Should not be here but lets remove them from the plugins and then
+// remove them from here.
 type DefaultMatchFormat string
 
 // Type type indicates which type of Grafana plugin this is, of the defined
