@@ -40,8 +40,16 @@
       "new-folder-name-required-phrase": "Folder name is required."
     },
     "counts": {
+      "alertRule__one": "{{count}} alert rule",
+      "alertRule__other": "{{count}} alert rules",
+      "dashboard__one": "{{count}} dashboard",
+      "dashboard__other": "{{count}} dashboards",
       "folder__one": "{{count}} folder",
-      "folder__other": "{{count}} folder"
+      "folder__other": "{{count}} folders",
+      "libraryPanel__one": "{{count}} library panel",
+      "libraryPanel__other": "{{count}} library panels",
+      "total__one": "{{count}} item",
+      "total__other": "{{count}} items"
     },
     "dashboards-tree": {
       "name-column": "Name",

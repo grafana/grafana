@@ -10,18 +10,17 @@ export function buildBreakdownString(
   const parts = [];
   if (folderCount) {
     parts.push(t('browse-dashboards.counts.folder', '{{count}} folder', { count: folderCount }));
-    //`${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`);
   }
   if (dashboardCount) {
-    parts.push(`${dashboardCount} ${dashboardCount === 1 ? 'dashboard' : 'dashboards'}`);
+    parts.push(t('browse-dashboards.counts.dashboard', '{{count}} dashboard', { count: dashboardCount }));
   }
   if (libraryPanelCount) {
-    parts.push(`${libraryPanelCount} ${libraryPanelCount === 1 ? 'library panel' : 'library panels'}`);
+    parts.push(t('browse-dashboards.counts.libraryPanel', '{{count}} library panel', { count: libraryPanelCount }));
   }
   if (alertRuleCount) {
-    parts.push(`${alertRuleCount} ${alertRuleCount === 1 ? 'alert rule' : 'alert rules'}`);
+    parts.push(t('browse-dashboards.counts.alertRule', '{{count}} alert rule', { count: alertRuleCount }));
   }
-  let breakdownString = `${total} ${total === 1 ? 'item' : 'items'}`;
+  let breakdownString = t('browse-dashboards.counts.total', '{{count}} items', { count: total });
   if (parts.length > 0) {
     breakdownString += `: ${parts.join(', ')}`;
   }

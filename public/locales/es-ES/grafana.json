@@ -40,9 +40,21 @@
       "new-folder-name-required-phrase": ""
     },
     "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
       "folder__one": "",
       "folder__many": "",
-      "folder__other": ""
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",

@@ -40,8 +40,16 @@
       "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
     "counts": {
+      "alertRule__one": "{{count}} äľęřŧ řūľę",
+      "alertRule__other": "{{count}} äľęřŧ řūľęş",
+      "dashboard__one": "{{count}} đäşĥþőäřđ",
+      "dashboard__other": "{{count}} đäşĥþőäřđş",
       "folder__one": "{{count}} ƒőľđęř",
-      "folder__other": "{{count}} ƒőľđęř"
+      "folder__other": "{{count}} ƒőľđęřş",
+      "libraryPanel__one": "{{count}} ľįþřäřy päŉęľ",
+      "libraryPanel__other": "{{count}} ľįþřäřy päŉęľş",
+      "total__one": "{{count}} įŧęm",
+      "total__other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
       "name-column": "Ńämę",
