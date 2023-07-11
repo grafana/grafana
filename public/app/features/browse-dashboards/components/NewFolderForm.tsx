@@ -17,6 +17,10 @@ interface FormModel {
 const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm }: Props) {
+  const translatedFolderNameRequiredPhrase = t(
+    'browse-dashboards.action.new-folder-name-required-phrase',
+    'Folder name is required.'
+  );
   const validateFolderName = async (folderName: string) => {
     try {
       await validationSrv.validateNewFolderName(folderName);
@@ -44,7 +48,7 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
             <Input
               id="folder-name-input"
               {...register('folderName', {
-                required: 'Folder name is required.',
+                required: translatedFolderNameRequiredPhrase,
                 validate: async (v) => await validateFolderName(v),
               })}
             />

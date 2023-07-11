@@ -162,6 +162,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   tokenExpirationDayLimit: undefined;
+  disableFrontendSandboxForPlugins: string[] = [];
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;

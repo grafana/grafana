@@ -53,7 +53,7 @@ const columns: AlertTableColumnProps[] = [
     id: 'labels',
     label: 'Labels',
     // eslint-disable-next-line react/display-name
-    renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} />,
+    renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} size="sm" />,
   },
   {
     id: 'created',

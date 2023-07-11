@@ -17,12 +17,12 @@ import {
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
 import { Icon, Button, Modal, useTheme2 } from '@grafana/ui';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
 import { useDispatch } from 'app/types';
 
+import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
@@ -155,6 +155,10 @@ const getLoadMoreDirection = (place: Place, sortOrder: LogsSortOrder): LogRowCon
   return LogRowContextQueryDirection.Backward;
 };
 
+const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
+  return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
+};
+
 const PAGE_SIZE = 50;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
@@ -269,7 +273,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
 
     const out = newRows.filter((r) => {
-      return r.timeEpochNs !== refRow.timeEpochNs || r.entry !== refRow.entry;
+      return !containsRow(allRows, r);
     });
 
     return out;
