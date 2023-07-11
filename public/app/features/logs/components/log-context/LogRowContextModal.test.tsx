@@ -194,7 +194,7 @@ describe('LogRowContextModal', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: [1689052469935, 1689052469935],
+          values: [1, 1],
         },
         {
           name: 'message',
@@ -204,7 +204,7 @@ describe('LogRowContextModal', () => {
         {
           name: 'tsNs',
           type: FieldType.string,
-          values: ['1689052469935083353', '1689052469935083354'],
+          values: ['1', '2'],
         },
       ],
     });
@@ -213,7 +213,7 @@ describe('LogRowContextModal', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: [1689052469935],
+          values: [1],
         },
         {
           name: 'message',
@@ -223,7 +223,7 @@ describe('LogRowContextModal', () => {
         {
           name: 'tsNs',
           type: FieldType.string,
-          values: ['1689052469935083354'],
+          values: ['2'],
         },
       ],
     });
@@ -232,7 +232,7 @@ describe('LogRowContextModal', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: [1689052469935, 1689052469935],
+          values: [1, 1],
         },
         {
           name: 'message',
@@ -242,7 +242,7 @@ describe('LogRowContextModal', () => {
         {
           name: 'tsNs',
           type: FieldType.string,
-          values: ['1689052469935083354', '1689052469935083355'],
+          values: ['2', '3'],
         },
       ],
     });
@@ -253,7 +253,7 @@ describe('LogRowContextModal', () => {
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {
       uniqueRefIdCounter += 1;
       const refId = `refid_${uniqueRefIdCounter}`;
-      if (options.direction === LogRowContextQueryDirection.Forward) {
+      if (uniqueRefIdCounter === 2) {
         return {
           data: [
             {
@@ -262,7 +262,7 @@ describe('LogRowContextModal', () => {
             },
           ],
         };
-      } else {
+      } else if (uniqueRefIdCounter === 3) {
         return {
           data: [
             {
@@ -272,6 +272,7 @@ describe('LogRowContextModal', () => {
           ],
         };
       }
+      return { data: [] };
     });
 
     render(
@@ -284,8 +285,11 @@ describe('LogRowContextModal', () => {
         logsSortOrder={LogsSortOrder.Descending}
       />
     );
-    // there need to be 2 lines with that message. 1 in before, 1 in now, 1 in after
-    await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
+
+    // there need to be 3 lines with that message. 1 in before, 1 in now, 1 in after
+    await waitFor(() => {
+      expect(screen.getAllByText('foo123').length).toBe(3);
+    });
   });
 
   it('should show a split view button', async () => {
