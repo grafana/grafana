@@ -82,20 +82,34 @@ def publish_ci_build_container_image_pipeline():
         edition = "",
         steps = [
             {
-                "name": "build",
+                "name": "validate-version",
+                "image": images["alpine_image"],
+                "commands": [
+                    "if [ -z \"${BUILD_CONTAINER_VERSION}\" ]; then echo Missing BUILD_CONTAINER_VERSION; false; fi",
+                ],
+            },
+            {
+                "name": "download-macos-sdk",
+                "image": images["cloudsdk_image"],
+                "environment": {
+                    "GCP_KEY": from_secret(gcp_download_build_container_assets_key),
+                },
+                "commands": [
+                    "printenv GCP_KEY > /tmp/key.json",
+                    "gcloud auth activate-service-account --key-file=/tmp/key.json",
+                    "gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz",
+                ],
+            },
+            {
+                "name": "build-and-publish",  # Consider splitting the build and the upload task.
                 "image": images["cloudsdk_image"],
                 "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
                 "environment": {
-                    "GCP_KEY": from_secret(gcp_download_build_container_assets_key),
                     "DOCKER_USERNAME": from_secret("docker_username"),
                     "DOCKER_PASSWORD": from_secret("docker_password"),
                 },
                 "commands": [
-                    "if [ -z \"${BUILD_CONTAINER_VERSION}\" ]; then echo Missing BUILD_CONTAINER_VERSION; false; fi",
-                    "printenv GCP_KEY > /tmp/key.json",
                     "printenv DOCKER_PASSWORD | docker login -u \"$DOCKER_USERNAME\" --password-stdin",
-                    "gcloud auth activate-service-account --key-file=/tmp/key.json",
-                    "gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz",
                     "docker build -t \"grafana/build-container:${BUILD_CONTAINER_VERSION}\" ./scripts/build/ci-build",
                     "docker push \"grafana/build-container:${BUILD_CONTAINER_VERSION}\"",
                 ],
