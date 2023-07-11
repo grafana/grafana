@@ -214,7 +214,7 @@ Use this transformation to select one source of data and extract content from it
 Use this transformation on a field value to look up additional fields from an external source.
 
 - **Field** - Select a text field.
-- **Lookup** - Select from **Countries**, **USA States**, and **Airports**)
+- **Lookup** - Select from **Countries**, **USA States**, and **Airports**.
 
 This transformation currently supports spatial data.
 
@@ -485,7 +485,7 @@ I applied a transformation to join the query results using the time field. Now I
 ### Join by labels
 
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
-time series results into a single wide table with a shared Label field.
+time series results into a single wide table with a shared **Label** field.
 
 - **Join** - Select the label to join by between the labels available or common across all time series.
 - **Value** - The name for the output result.
