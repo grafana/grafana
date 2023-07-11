@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 )
 
 type Registry interface{}
@@ -16,10 +17,12 @@ type registry struct {
 
 func ProvideRegistry(
 	moduleManager modules.Manager,
+	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 ) *registry {
 	return newRegistry(
 		log.New("modules.registry"),
 		moduleManager,
+		backgroundServiceRunner,
 	)
 }
 

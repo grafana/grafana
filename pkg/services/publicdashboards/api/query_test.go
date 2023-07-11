@@ -189,7 +189,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
 
 		testServer := setupTestServer(
 			t,

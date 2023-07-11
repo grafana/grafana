@@ -59,6 +59,13 @@ export interface QueryResultMeta {
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
 
+  /** Set the panel plugin id to use to render the data when using Explore. If the plugin cannot be found
+   * will fall back to {@link preferredVisualisationType}.
+   *
+   * @alpha
+   */
+  preferredVisualisationPluginId?: string;
+
   /** The path for live stream updates for this frame */
   channel?: string;
 

@@ -21,7 +21,7 @@ Grafana Alerting is available for Grafana OSS, Grafana Enterprise, or Grafana Cl
 
 Watch this video to learn more about Grafana Alerting: {{< vimeo 720001629 >}}
 
-_Refer to [Manage your alert rules]({{< relref "../alerting/alerting-rules" >}}) for current instructions._
+_Refer to [Manage your alert rules][alerting-rules] for current instructions._
 
 ## Key features and benefits
 
@@ -82,4 +82,12 @@ Here are some tips on how to create an effective alert management set up for you
 
 ## Useful links
 
-- [Introduction to Alerting]({{< relref "./fundamentals" >}})
+- [Introduction to Alerting][fundamentals]
+
+{{% docs/reference %}}
+[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
+
+[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
+{{% /docs/reference %}}
