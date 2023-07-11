@@ -20,6 +20,11 @@ import (
 )
 
 func validateInput(c utils.CommandLine, pluginFolder string) error {
+	if c.Args().Len() > 1 {
+		logger.Info("Install only supports one local argument\n")
+		showIgnoredArguments(c.Args().Slice()[1:])
+	}
+
 	arg := c.Args().First()
 	if arg == "" {
 		return errors.New("please specify plugin to install")
@@ -43,6 +48,12 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 	}
 
 	return nil
+}
+
+func showIgnoredArguments(ignoredArgs []string) {
+	for _, arg := range ignoredArgs {
+		logger.Info("Arg ignored: ", arg, "\n")
+	}
 }
 
 func logRestartNotice() {
