@@ -170,33 +170,45 @@ async function sendOldLogs() {
   const delays = calculateDelays(DAYS * POINTS_PER_DAY);
   const timeRange = DAYS * 24 * 60 * 60 * 1000;
   let timestampMs = new Date().getTime() - timeRange;
-  for(let i =0; i < delays.length; i++ ) { // i cannot do a forEach because of the `await` inside
+  for (let i = 0; i < delays.length; i++) { // i cannot do a forEach because of the `await` inside
     const delay = delays[i];
     timestampMs += Math.trunc(delay * timeRange);
     const timestampNs = `${timestampMs}${getRandomNanosecPart()}`;
     globalCounter += 1;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'old', place:'moon', ...sharedLabels});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'old', place:'luna', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), { age: 'old', place: 'moon', ...sharedLabels });
+    await lokiSendLogLine(timestampNs, logFmtLine(item), { age: 'old', place: 'luna', ...sharedLabels });
   };
 }
 
 async function sendNewLogs() {
-  while(true) {
+  while (true) {
     globalCounter += 1;
     const nowMs = new Date().getTime();
-    const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
+    const rnd = Math.random()
+    const ns = Math.trunc(rnd * 1000000).toString().padStart(6, '0');
+    const ns1 = Math.trunc((rnd * 1000000)+1).toString().padStart(6, '0');
+    const ns2 = Math.trunc((rnd * 1000000)+2).toString().padStart(6, '0');
+
+    const timestampNs = `${nowMs}${ns}`;
+    const timestampNs1 = `${nowMs}${ns1}`;
+    const timestampNs2 = `${nowMs}${ns2}`;
+
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels});
-    const sleepDuration  = 200 + Math.random() * 800; // between 0.2 and 1 seconds
+
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), { time: 'ns', age: 'new', place: 'moon', ...sharedLabels });
+    await lokiSendLogLine(timestampNs1, JSON.stringify(item), { time: 'ns', age: 'new', place: 'moon', ...sharedLabels });
+    await lokiSendLogLine(timestampNs2, JSON.stringify(item), { time: 'ns', age: 'new', place: 'moon', ...sharedLabels });
+    
+    const sleepDuration = 200 + Math.random() * 800; // between 0.2 and 1 seconds
     await sleep(sleepDuration);
+    process.exit(0);
   }
 }
 
 async function main() {
   // we generate both old-logs and new-logs at the same time
-  await Promise.all([sendOldLogs(), sendNewLogs()])
+  await Promise.all([sendNewLogs()])
 }
 
 // when running in docker, we catch the needed stop-signal, to shutdown fast

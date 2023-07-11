@@ -90,7 +90,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
       id: 'labels',
       label: 'Labels',
       renderCell: function renderName({ data }) {
-        return <AlertLabels labels={data.labels} className={styles.alertLabels} />;
+        return <AlertLabels labels={data.labels} size="sm" />;
       },
       size: 'auto',
     },
@@ -122,8 +122,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   stateColumn: css`
     display: flex;
     align-items: center;
-  `,
-  alertLabels: css`
-    justify-content: flex-start;
   `,
 });

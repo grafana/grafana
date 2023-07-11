@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataSourceHttpSettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
@@ -43,6 +43,12 @@ export const ConfigEditor = (props: Props) => {
 
   return (
     <>
+      <DataSourceDescription
+        dataSourceName="Loki"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/loki"
+        hasRequiredFields={false}
+      />
+
       <Divider />
 
       <DataSourceHttpSettings

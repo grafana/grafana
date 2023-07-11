@@ -4632,7 +4632,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -4674,14 +4675,8 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_main.sh
+  - cd /src && ./scripts/drone_publish_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4691,8 +4686,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -4728,14 +4729,8 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_tag.sh
+  - cd /src && ./scripts/drone_publish_tag.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4745,8 +4740,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -4785,7 +4786,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
+    "No URLs matched"
   depends_on:
   - clone
   environment:
@@ -7352,6 +7354,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 80038c08bedd62d8a0e4250e12e3dbb27712dd640694ff9f57ef14a82282ab76
+hmac: 804a6690ecc4900ed6d0ed55902de1858562f2a07e359204d5c0e2313e5f61ca
 
 ...
