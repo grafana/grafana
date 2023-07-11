@@ -172,11 +172,11 @@ func newID() string {
 
 type OrgIDGetter func(c *contextmodel.ReqContext) (int64, error)
 
-type UserCache interface {
+type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache UserCache) func(OrgIDGetter, Evaluator) web.Handler {
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
 			// We need to copy the user here because we're going to mutate it
