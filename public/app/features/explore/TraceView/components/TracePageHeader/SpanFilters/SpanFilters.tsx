@@ -32,7 +32,7 @@ import {
 } from '@grafana/ui';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
-import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
+import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
 import { Trace } from '../../types';
 import NewTracePageSearchBar from '../NewTracePageSearchBar';
 
@@ -140,6 +140,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         if (span.traceState) {
           keys.push(TRACE_STATE);
         }
+        keys.push(ID);
       });
       keys = uniq(keys).sort();
       logKeys = uniq(logKeys).sort();
@@ -199,6 +200,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           if (span.traceState) {
             values.push(span.traceState);
           }
+          break;
+        case ID:
+          values.push(span.spanID);
           break;
         default:
           break;
