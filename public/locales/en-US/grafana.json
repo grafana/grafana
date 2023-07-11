@@ -39,6 +39,10 @@
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
     },
+    "counts": {
+      "folder__one": "{{count}} folder",
+      "folder__other": "{{count}} folder"
+    },
     "dashboards-tree": {
       "name-column": "Name",
       "tags-column": "Tags"

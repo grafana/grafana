@@ -39,6 +39,11 @@
       "moving": "",
       "new-folder-name-required-phrase": ""
     },
+    "counts": {
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": ""
+    },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""

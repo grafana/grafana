@@ -39,6 +39,10 @@
       "moving": "Mővįŉģ...",
       "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
+    "counts": {
+      "folder__one": "{{count}} ƒőľđęř",
+      "folder__other": "{{count}} ƒőľđęř"
+    },
     "dashboards-tree": {
       "name-column": "Ńämę",
       "tags-column": "Ŧäģş"

@@ -1,3 +1,5 @@
+import { t } from 'app/core/internationalization';
+
 export function buildBreakdownString(
   folderCount: number,
   dashboardCount: number,
@@ -7,7 +9,8 @@ export function buildBreakdownString(
   const total = folderCount + dashboardCount + libraryPanelCount + alertRuleCount;
   const parts = [];
   if (folderCount) {
-    parts.push(`${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`);
+    parts.push(t('browse-dashboards.counts.folder', '{{count}} folder', { count: folderCount }));
+    //`${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`);
   }
   if (dashboardCount) {
     parts.push(`${dashboardCount} ${dashboardCount === 1 ? 'dashboard' : 'dashboards'}`);
