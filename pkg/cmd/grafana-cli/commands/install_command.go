@@ -19,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
+const installArgsSize = 2
+
 func validateInput(c utils.CommandLine, pluginFolder string) error {
-	if c.Args().Len() > 1 {
+	if c.Args().Len() > installArgsSize {
 		logger.Info("Install only supports one local argument\n")
-		showIgnoredArguments(c.Args().Slice()[1:])
+		showIgnoredArguments(c.Args().Slice()[installArgsSize:])
 	}
 
 	arg := c.Args().First()

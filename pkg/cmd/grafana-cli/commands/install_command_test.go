@@ -16,9 +16,8 @@ func TestValidateInput(t *testing.T) {
 		mockCmdLine := &utils.MockCommandLine{}
 		defer mockCmdLine.AssertExpectations(t)
 
-		cmdArgs := []string{"foo", "--bar=foo"}
-
-		expectedMsg := fmt.Sprintf("Install only supports one local argument\nArg ignored: %s\n", cmdArgs[1])
+		cmdArgs := []string{"foo", "bar", "--bar=foo"}
+		expectedMsg := fmt.Sprintf("Install only supports one local argument\nArg ignored: %s\n", cmdArgs[2])
 
 		pluginsFolder := "/tmp"
 
@@ -26,7 +25,7 @@ func TestValidateInput(t *testing.T) {
 		defer mockArgs.AssertExpectations(t)
 
 		mockArgs.On("First").Return(cmdArgs[0])
-		mockArgs.On("Len").Return(2)
+		mockArgs.On("Len").Return(len(cmdArgs))
 		mockArgs.On("Slice").Return(cmdArgs)
 
 		mockCmdLine.On("Args").Return(mockArgs).Times(3)
@@ -47,5 +46,6 @@ func TestValidateInput(t *testing.T) {
 		os.Stdout = rescueStdout
 
 		assert.Equal(t, expectedMsg, string(out))
+
 	})
 }
