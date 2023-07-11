@@ -46,7 +46,7 @@ export const LogRowMenuCell = React.memo(
         {pinned && (
           // TODO: fix keyboard a11y
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <span className={`log-row-menu log-row-menu-visible ${styles.rowMenu}`} onClick={onLogRowClick}>
+          <span className={styles.rowMenu} onClick={onLogRowClick}>
             <IconButton
               className={styles.unPinButton}
               size="md"
@@ -60,7 +60,7 @@ export const LogRowMenuCell = React.memo(
         )}
         {/* TODO: fix keyboard a11y */}
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <span className={`log-row-menu ${styles.rowMenu} ${styles.hidden}`} onClick={onLogRowClick}>
+        <span className={styles.rowMenu} onClick={onLogRowClick}>
           {shouldShowContextToggle && (
             <IconButton
               size="md"

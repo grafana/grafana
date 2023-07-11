@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
@@ -76,31 +76,39 @@ export const LogRowMessage = React.memo((props: Props) => {
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  const [hover, setHover] = useState(false);
+  const showMenu = useCallback(() => {
+    setHover(true);
+  }, []);
+  const hideMenu = useCallback(() => {
+    setHover(false);
+  }, []);
+
   return (
     <>
       {
         // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
         // overwrite the more sepecific style definition from `styles.logsRowMessage`.
       }
-      <td className={styles.logsRowMessage}>
+      <td className={styles.logsRowMessage} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
           <button className={`${styles.logLine} ${styles.positionRelative}`}>
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
           </button>
         </div>
-      </td>
-      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
-        <LogRowMenuCell
-          logText={restructuredEntry}
-          row={row}
-          showContextToggle={showContextToggle}
-          onOpenContext={onOpenContext}
-          onPermalinkClick={onPermalinkClick}
-          onPinLine={onPinLine}
-          onUnpinLine={onUnpinLine}
-          pinned={pinned}
-          styles={styles}
-        />
+        {hover && (
+          <LogRowMenuCell
+            logText={restructuredEntry}
+            row={row}
+            showContextToggle={showContextToggle}
+            onOpenContext={onOpenContext}
+            onPermalinkClick={onPermalinkClick}
+            onPinLine={onPinLine}
+            onUnpinLine={onUnpinLine}
+            pinned={pinned}
+            styles={styles}
+          />
+        )}
       </td>
     </>
   );
