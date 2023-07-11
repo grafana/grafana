@@ -292,6 +292,9 @@
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administración"
     },
@@ -398,6 +401,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
@@ -427,6 +433,12 @@
     },
     "public": {
       "title": "Paneles de control públicos"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Escenas"
@@ -460,6 +472,9 @@
     },
     "starred-empty": {
       "title": "Tus paneles de control destacados aparecerán aquí"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
