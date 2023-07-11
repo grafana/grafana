@@ -1,4 +1,4 @@
-import { mapValues, sortBy } from 'lodash';
+import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
@@ -112,8 +112,8 @@ export function wrapWithQuotes(input: string) {
 export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
   // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
   const labels: Labels = {
-    alertname: wrapWithQuotes(rule.name),
-    ...mapValues(rule.labels, wrapWithQuotes),
+    alertname: rule.name,
+    ...rule.labels,
   };
 
   return makeLabelBasedSilenceLink(alertManagerSourceName, labels);
