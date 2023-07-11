@@ -8,6 +8,7 @@ import { LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
+import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
@@ -94,6 +95,10 @@ export function DataSourcesListView({
       <ul className={styles.list}>
         {dataSources.map((dataSource) => {
           const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
+          const isAngularDatasource = Object.entries(config.datasources).some(([_, ds]) => {
+            return ds.uid === dataSource.uid && ds.angularDetected;
+          });
+
           return (
             <li key={dataSource.uid}>
               <Card href={hasWriteRights ? dsLink : undefined}>
@@ -106,6 +111,7 @@ export function DataSourcesListView({
                     dataSource.typeName,
                     dataSource.url,
                     dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+                    isAngularDatasource && <PluginAngularBadge key="angular-badge" />,
                   ]}
                 </Card.Meta>
                 <Card.Tags>
