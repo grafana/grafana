@@ -14,28 +14,23 @@ weight: 600
 
 # Annotate visualizations
 
-Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
-you can get event description and event tags. The text field can include links to other systems with more detail.
+Annotations provide a way to mark points on the graph with rich events. They are visualized as vertical lines and icons on all graph panels. When you hover over an annotation, you can get event description and event tags. The text field can include links to other systems with more detail.
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" >}}
 
-You can annotate panels in three ways. 
+You can annotate panels in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
 - Using the HTTP API
-- Configure annotation queries in the dashboard settings
+- Configuring annotation queries in the dashboard settings
 
 In the first two cases, you are creating new annotations, while in the last you're querying existing annotations from data sources. The built-in query annotation query also supports this.
 
-- Directly in the panel, using the built-in annotations query (add link)
-- Adding annotation queries for any data source, using the dashboard settings (add link)
-- Using the HTTP API
-
-This page explains the first two options; for information about using the HTTP API, refer to [Annotations API]({{< relref "../../../developers/http_api/annotations/" >}}).
+This page explains the first and third options; for information about using the HTTP API, refer to [Annotations API]({{< relref "../../../developers/http_api/annotations/" >}}).
 
 ## Create annotations in panels
 
-Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel using the built-in annotation query(link here) that exists on all dashboards.
+Grafana comes with the ability to add annotation events directly from the graph panel using the [built-in annotation query]({{< relref "#built-in-query"}}) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
 
 ### Add an annotation
 
@@ -70,13 +65,13 @@ Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and
 
 ## Fetch annotations through dashboard settings
 
-In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using the built-in data annotation data source or other data sources.
+In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using any data source including the the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
 
 ### Add new annotation queries
 
 To add a new annotation query to a dashboard, take the following steps:
 
-1. Open the dashboard settings menu.
+1. Click the dashboard settings (gear) icon in the dashboard header to open the dashboard settings menu.
 1. Select **Annotations**.
 1. Click **Add annotation query**.
 
@@ -100,12 +95,13 @@ To add a new annotation query to a dashboard, take the following steps:
 
 1. Configure the query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../../../datasources/" >}}) topic.
 
+Now, the annotations configured for the data source will be visible on all panels using that data source.
+
 ## Built-in query
 
-After you add an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will fetch all annotation events that originate from the current dashboard and show them on the panel where they were created. This includes alert state history annotations. You can stop annotations from being fetched and drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
+After you add an annotation, they will still be visible. This is due to the built-in annotation query that exists on all dashboards. This annotation query will fetch all annotation events that originate from the current dashboard, which are stored in Grafana, and show them on the panel where they were created. This includes alert state history annotations. You can stop annotations from being fetched and drawn by opening the **Annotations** settings (through the Dashboard settings menu) and modifying the query named **Annotations & Alerts (Built-in)**.
 
-When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You
-can still show them if you add a new **Annotation Query** and filter by tags. But this only works if the annotations on the source dashboard had tags to filter by.
+When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You can still show them if you add a new **Annotation Query** and filter by tags. But this only works if the annotations on the source dashboard had tags to filter by.
 
 If this query isn't enabled, you can't add annotations directly in dashboard panels.
 
@@ -113,7 +109,7 @@ Following are some query options specific to the built-in annotation query.
 
 ### Filter queries by tag
 
-You can create new queries to fetch annotations from the native annotation store via the `-- Grafana --` data source by setting _Filter by_ to `Tags`.
+You can create new queries to fetch annotations from the built-in annotation query using the `-- Grafana --` data source by setting _Filter by_ to `Tags`.
 
 Grafana v8.1 and later versions also support typeahead of existing tags, provide at least one tag.
 
