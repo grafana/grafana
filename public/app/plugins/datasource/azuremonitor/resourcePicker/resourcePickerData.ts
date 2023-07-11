@@ -39,8 +39,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   resultLimit = 200;
   azureMonitorDatasource;
   supportedMetricNamespaces = '';
-  locationsMap: Map<string, AzureMonitorLocations> = new Map();
-  locations: string[] = [];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
@@ -56,11 +54,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     currentSelection?: AzureMonitorResource[]
   ): Promise<ResourceRowGroup> {
     const subscriptions = await this.getSubscriptions();
-
-    if (this.locationsMap.size === 0) {
-      this.locationsMap = await this.getLocations(subscriptions);
-      this.locations = Array.from(this.locationsMap.values()).map((location) => `"${location.name}"`);
-    }
 
     if (!currentSelection) {
       return subscriptions;
@@ -140,7 +133,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         resourceGroupName: item.resourceGroup,
         type,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        location: this.locationsMap.get(item.location)?.displayName || item.location,
+        location: item.location,
       };
     });
   };
@@ -243,14 +236,10 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     resourceGroupId: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
-    if (!this.locations) {
-      return [];
-    }
-
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroupId}"
-      ${await this.filterByType(type)} and location in (${this.locations})
+      ${await this.filterByType(type)}
     `);
 
     return response.map((item) => {
@@ -265,7 +254,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         resourceGroupName: item.resourceGroup,
         type: ResourceRowType.Resource,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        locationDisplayName: this.locationsMap.get(item.location)?.displayName || item.location,
+        locationDisplayName: item.location,
         location: item.location,
       };
     });
@@ -422,7 +411,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         uri: resourceToString(resource),
         typeLabel:
           resourceTypeDisplayNames[resource.metricNamespace?.toLowerCase() ?? ''] ?? resource.metricNamespace ?? '',
-        locationDisplayName: this.locationsMap.get(resource.region ?? '')?.displayName || resource.region,
         location: resource.region,
       });
     });

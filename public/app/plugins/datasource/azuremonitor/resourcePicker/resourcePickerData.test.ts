@@ -34,8 +34,6 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
   resourcePickerData.postResource = postResource;
   const locationsMap = mockGetValidLocations();
   const getLocations = jest.spyOn(resourcePickerData, 'getLocations').mockResolvedValue(locationsMap);
-  resourcePickerData.locationsMap = locationsMap;
-  resourcePickerData.locations = Array.from(locationsMap.values()).map((location) => `"${location.name}"`);
   return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLocations };
 };
 
@@ -252,7 +250,7 @@ describe('AzureMonitor resourcePickerData', () => {
         name: 'web-server',
         type: 'Resource',
         location: 'northeurope',
-        locationDisplayName: 'North Europe',
+        locationDisplayName: 'northeurope',
         resourceGroupName: 'dev',
         typeLabel: 'Microsoft.Compute/virtualMachines',
         uri: '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
@@ -329,7 +327,7 @@ describe('AzureMonitor resourcePickerData', () => {
         id: 'vmname',
         name: 'vmName',
         type: 'Resource',
-        location: 'North Europe',
+        location: 'northeurope',
         resourceGroupName: 'rgName',
         typeLabel: 'Virtual machines',
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
@@ -359,7 +357,7 @@ describe('AzureMonitor resourcePickerData', () => {
         id: 'rgName',
         name: 'rgName',
         type: 'ResourceGroup',
-        location: 'North Europe',
+        location: 'northeurope',
         resourceGroupName: 'rgName',
         typeLabel: 'Resource groups',
         uri: '/subscriptions/subId/resourceGroups/rgName',
