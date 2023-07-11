@@ -231,7 +231,7 @@ func (s *Service) registerScenario(scenario *Scenario) {
 	s.queryMux.HandleFunc(scenario.ID, scenario.handler)
 }
 
-type jsonModel struct {
+type JSONModel struct {
 	ScenarioID         string        `json:"scenarioId"`
 	SeriesCount        int           `json:"seriesCount"`
 	StringInput        string        `json:"stringInput"`
@@ -258,8 +258,8 @@ type pulseWave struct {
 	OffValue interface{} `json:"offValue"`
 }
 
-func getModel(j json.RawMessage) (jsonModel, error) {
-	model := jsonModel{
+func getModel(j json.RawMessage) (JSONModel, error) {
+	model := JSONModel{
 		// Default values
 		ScenarioID:  string(randomWalkQuery),
 		SeriesCount: 1,
@@ -269,7 +269,7 @@ func getModel(j json.RawMessage) (jsonModel, error) {
 	}
 	err := json.Unmarshal(j, &model)
 	if err != nil {
-		return jsonModel{}, err
+		return JSONModel{}, err
 	}
 	return model, nil
 }
@@ -691,7 +691,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 	return resp, nil
 }
 
-func RandomWalk(query backend.DataQuery, model jsonModel, index int) *data.Frame {
+func RandomWalk(query backend.DataQuery, model JSONModel, index int) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -752,7 +752,7 @@ func RandomWalk(query backend.DataQuery, model jsonModel, index int) *data.Frame
 	)
 }
 
-func randomWalkTable(query backend.DataQuery, model jsonModel) *data.Frame {
+func randomWalkTable(query backend.DataQuery, model JSONModel) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
@@ -832,7 +832,7 @@ type pCSVOptions struct {
 	Name      string `json:"name"`
 }
 
-func predictableCSVWave(query backend.DataQuery, model jsonModel) ([]*data.Frame, error) {
+func predictableCSVWave(query backend.DataQuery, model JSONModel) ([]*data.Frame, error) {
 	queries := model.CSVWave
 
 	frames := make([]*data.Frame, 0, len(queries))
@@ -921,7 +921,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	}, nil
 }
 
-func predictablePulse(query backend.DataQuery, model jsonModel) (*data.Frame, error) {
+func predictablePulse(query backend.DataQuery, model JSONModel) (*data.Frame, error) {
 	// Process Input
 	var timeStep int64
 	var onCount int64
@@ -991,7 +991,7 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	return frame
 }
 
-func doArrowQuery(query backend.DataQuery, model jsonModel) (*data.Frame, error) {
+func doArrowQuery(query backend.DataQuery, model JSONModel) (*data.Frame, error) {
 	encoded := model.StringInput
 	if encoded == "" {
 		return nil, nil
@@ -1003,7 +1003,7 @@ func doArrowQuery(query backend.DataQuery, model jsonModel) (*data.Frame, error)
 	return data.UnmarshalArrowFrame(arrow)
 }
 
-func newSeriesForQuery(query backend.DataQuery, model jsonModel, index int) *data.Frame {
+func newSeriesForQuery(query backend.DataQuery, model JSONModel, index int) *data.Frame {
 	alias := model.Alias
 	suffix := ""
 
@@ -1031,7 +1031,7 @@ func newSeriesForQuery(query backend.DataQuery, model jsonModel, index int) *dat
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model jsonModel, seriesIndex int) data.Labels {
+func parseLabels(model JSONModel, seriesIndex int) data.Labels {
 	return parseLabelsString(model.Labels, seriesIndex)
 }
 
@@ -1059,7 +1059,7 @@ func parseLabelsString(labelText string, seriesIndex int) data.Labels {
 	return tags
 }
 
-func frameNameForQuery(query backend.DataQuery, model jsonModel, index int) string {
+func frameNameForQuery(query backend.DataQuery, model JSONModel, index int) string {
 	name := model.Alias
 	suffix := ""
 
