@@ -204,10 +204,10 @@ Use this transformation to select one source of data and extract content from it
 
 - **Source** - Select the field for the source of data.
 - **Format** - Select one of the following:
-  - **JSON** To parse JSON content from the source
-  - **Key+value parse** To parse content in the format a=b or c:d from the source
-  - **Auto** To discover fields automatically
-- **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+  - **JSON** - To parse JSON content from the source.
+  - **Key+value parse** - To parse content in the format `a=b` or `c:d` from the source.
+  - **Auto** - To discover fields automatically.
+- **Replace all fields** - Optional: Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
 ### Field lookup
 
@@ -378,7 +378,7 @@ This transformation enables you to extract key information from your time series
 
 ### Grouping to matrix
 
-Use this transformation to combine three fields, that will be used as input for the **Column**, **Row**, and **Cell value** fields, from the query output and generate a matrix. This matrix will be calculated as follows:
+Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
 
 **Original data**
 
