@@ -19129,7 +19129,7 @@ __metadata:
     jest-canvas-mock: 2.5.2
     jest-date-mock: 1.0.8
     jest-environment-jsdom: 29.3.1
-    jest-fail-on-console: 3.0.2
+    jest-fail-on-console: 3.1.1
     jest-junit: 15.0.0
     jest-matcher-utils: 29.3.1
     jquery: 3.6.3
@@ -21487,12 +21487,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-fail-on-console@npm:3.0.2":
-  version: 3.0.2
-  resolution: "jest-fail-on-console@npm:3.0.2"
+"jest-fail-on-console@npm:3.1.1":
+  version: 3.1.1
+  resolution: "jest-fail-on-console@npm:3.1.1"
   dependencies:
     chalk: ^4.1.0
-  checksum: 3d14a72f38028317a3dd1d1d7118bf045b71ce7c7d815fa0be2e4303ebaee314e83f640a155c34a42a2e8819259f994ac4341d0e6743d049880b81aee27e10a0
+  checksum: dbc244766fb78525b2d4a7e879678b91032acefa04694e17edb5917e325abf8ee356bdf728bc1c89058d67b9c8b3da4cd45515232eb9ab1b973a6b4f57bfb7af
   languageName: node
   linkType: hard
 
