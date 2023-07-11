@@ -80,8 +80,8 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 
 	// Get plugin dashboards
 	req := &plugindashboards.ListPluginDashboardsRequest{
-		OrgID:    orgID,
-		PluginID: plugin.ID,
+		OrgID:     orgID,
+		PluginUID: plugin.ID,
 	}
 	resp, err := du.pluginDashboardService.ListPluginDashboards(ctx, req)
 	if err != nil {

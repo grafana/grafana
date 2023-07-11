@@ -37,13 +37,13 @@ func (m *FileStoreManager) ListPluginDashboardFiles(ctx context.Context, args *L
 		return nil, errors.New("args cannot be nil")
 	}
 
-	if len(strings.TrimSpace(args.PluginID)) == 0 {
+	if len(strings.TrimSpace(args.PluginUID)) == 0 {
 		return nil, errors.New("args.PluginID cannot be empty")
 	}
 
-	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginID)
+	plugin, exists := m.pluginStore.Plugin(ctx, args.PluginUID)
 	if !exists {
-		return nil, plugins.NotFoundError{PluginUID: args.PluginID}
+		return nil, plugins.NotFoundError{PluginUID: args.PluginUID}
 	}
 
 	references := []string{}

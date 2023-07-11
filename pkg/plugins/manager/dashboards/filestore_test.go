@@ -29,7 +29,7 @@ func TestDashboardFileStore(t *testing.T) {
 				},
 				{
 					name: "args.PluginID with only space should return error",
-					args: &ListPluginDashboardFilesArgs{PluginID: " \t "},
+					args: &ListPluginDashboardFilesArgs{PluginUID: " \t "},
 				},
 			}
 
@@ -86,7 +86,7 @@ func TestDashboardFileStore(t *testing.T) {
 	t.Run("Plugin without dashboards", func(t *testing.T) {
 		t.Run("Should return zero file references", func(t *testing.T) {
 			res, err := m.ListPluginDashboardFiles(context.Background(), &ListPluginDashboardFilesArgs{
-				PluginID: "pluginWithoutDashboards",
+				PluginUID: "pluginWithoutDashboards",
 			})
 			require.NoError(t, err)
 			require.NotNil(t, res)
@@ -107,7 +107,7 @@ func TestDashboardFileStore(t *testing.T) {
 	t.Run("Plugin with dashboards", func(t *testing.T) {
 		t.Run("Should return two file references", func(t *testing.T) {
 			res, err := m.ListPluginDashboardFiles(context.Background(), &ListPluginDashboardFilesArgs{
-				PluginID: "pluginWithDashboards",
+				PluginUID: "pluginWithDashboards",
 			})
 			require.NoError(t, err)
 			require.NotNil(t, res)

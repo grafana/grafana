@@ -32,7 +32,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	}
 
 	listArgs := &pluginDashboardsManager.ListPluginDashboardFilesArgs{
-		PluginID: req.PluginID,
+		PluginUID: req.PluginUID,
 	}
 	listResp, err := s.pluginDashboardStore.ListPluginDashboardFiles(ctx, listArgs)
 	if err != nil {
@@ -42,7 +42,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	result := make([]*plugindashboards.PluginDashboard, 0)
 
 	// load current dashboards
-	query := dashboards.GetDashboardsByPluginIDQuery{OrgID: req.OrgID, PluginID: req.PluginID}
+	query := dashboards.GetDashboardsByPluginIDQuery{OrgID: req.OrgID, PluginID: req.PluginUID}
 	queryResult, err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	existingMatches := make(map[int64]bool)
 	for _, reference := range listResp.FileReferences {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
-			PluginID:  req.PluginID,
+			PluginID:  req.PluginUID,
 			Reference: reference,
 		}
 		loadResp, err := s.LoadPluginDashboard(ctx, loadReq)
@@ -64,7 +64,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 		res := &plugindashboards.PluginDashboard{}
 		res.UID = dashboard.UID
 		res.Reference = reference
-		res.PluginId = req.PluginID
+		res.PluginId = req.PluginUID
 		res.Title = dashboard.Title
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
 

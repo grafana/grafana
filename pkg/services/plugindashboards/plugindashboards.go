@@ -26,8 +26,8 @@ type PluginDashboard struct {
 
 // ListPluginDashboardsRequest request object for listing plugin dashboards.
 type ListPluginDashboardsRequest struct {
-	OrgID    int64
-	PluginID string
+	OrgID     int64
+	PluginUID string
 }
 
 // ListPluginDashboardsResponse response object for listing plugin dashboards.

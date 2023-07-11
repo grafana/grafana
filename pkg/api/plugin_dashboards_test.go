@@ -119,15 +119,15 @@ type pluginDashboardServiceMock struct {
 }
 
 func (m *pluginDashboardServiceMock) ListPluginDashboards(ctx context.Context, req *plugindashboards.ListPluginDashboardsRequest) (*plugindashboards.ListPluginDashboardsResponse, error) {
-	if pluginDashboards, exists := m.pluginDashboards[req.PluginID]; exists {
+	if pluginDashboards, exists := m.pluginDashboards[req.PluginUID]; exists {
 		return &plugindashboards.ListPluginDashboardsResponse{
 			Items: pluginDashboards,
 		}, nil
 	}
 
-	if err, exists := m.unexpectedErrors[req.PluginID]; exists {
+	if err, exists := m.unexpectedErrors[req.PluginUID]; exists {
 		return nil, err
 	}
 
-	return nil, plugins.NotFoundError{PluginUID: req.PluginID}
+	return nil, plugins.NotFoundError{PluginUID: req.PluginUID}
 }

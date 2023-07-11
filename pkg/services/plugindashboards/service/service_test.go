@@ -126,7 +126,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			{
 				desc: "Should return error for non-existing plugin",
 				req: &plugindashboards.ListPluginDashboardsRequest{
-					PluginID: "non-existing",
+					PluginUID: "non-existing",
 				},
 				errorFn:     require.Error,
 				respValueFn: require.Nil,
@@ -134,7 +134,7 @@ func TestGetPluginDashboards(t *testing.T) {
 			{
 				desc: "Should return updated nginx dashboard revision and removed title dashboard",
 				req: &plugindashboards.ListPluginDashboardsRequest{
-					PluginID: "test-app",
+					PluginUID: "test-app",
 				},
 				errorFn:     require.NoError,
 				respValueFn: require.NotNil,
@@ -170,7 +170,7 @@ type pluginDashboardStoreMock struct {
 }
 
 func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, args *dashboards.ListPluginDashboardFilesArgs) (*dashboards.ListPluginDashboardFilesResult, error) {
-	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginID]; exists {
+	if dashboardFiles, exists := m.pluginDashboardFiles[args.PluginUID]; exists {
 		references := []string{}
 
 		for ref := range dashboardFiles {
@@ -184,7 +184,7 @@ func (m pluginDashboardStoreMock) ListPluginDashboardFiles(ctx context.Context, 
 		}, nil
 	}
 
-	return nil, plugins.NotFoundError{PluginUID: args.PluginID}
+	return nil, plugins.NotFoundError{PluginUID: args.PluginUID}
 }
 
 func (m pluginDashboardStoreMock) GetPluginDashboardFileContents(ctx context.Context, args *dashboards.GetPluginDashboardFileContentsArgs) (*dashboards.GetPluginDashboardFileContentsResult, error) {

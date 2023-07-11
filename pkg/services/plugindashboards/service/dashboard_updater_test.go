@@ -540,7 +540,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		dashboards := []*plugindashboards.PluginDashboard{}
 
 		for _, d := range input.pluginDashboards {
-			if d.PluginId == req.PluginID {
+			if d.PluginId == req.PluginUID {
 				dashboards = append(dashboards, d)
 			}
 		}
