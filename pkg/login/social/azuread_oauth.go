@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -27,7 +26,6 @@ type SocialAzureAD struct {
 	allowedGroups        []string
 	forceUseGraphAPI     bool
 	skipOrgRoleSync      bool
-	compiledTenantRegex  *regexp.Regexp
 }
 
 type azureClaims struct {
