@@ -133,7 +133,9 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           onChange={(val) => {
             updateTracesToLogs({ spanStartTimeShift: val });
           }}
+          placeholder="0"
           isInvalidError={invalidTimeShiftError}
+          width={40}
         />
       </InlineFieldRow>
 
@@ -145,7 +147,9 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           onChange={(val) => {
             updateTracesToLogs({ spanEndTimeShift: val });
           }}
+          placeholder="0"
           isInvalidError={invalidTimeShiftError}
+          width={40}
         />
       </InlineFieldRow>
 
