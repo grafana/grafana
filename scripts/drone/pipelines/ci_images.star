@@ -93,7 +93,6 @@ def publish_ci_build_container_image_pipeline():
                 "commands": [
                     "if [ -z \"${BUILD_CONTAINER_VERSION}\" ]; then echo Missing BUILD_CONTAINER_VERSION; false; fi",
                     "printenv GCP_KEY > /tmp/key.json",
-                    "printenv DOCKER_USERNAME", # FIXME: Remove this line before merging.
                     "printenv DOCKER_PASSWORD | docker login -u \"$DOCKER_USERNAME\" --password-stdin",
                     "gcloud auth activate-service-account --key-file=/tmp/key.json",
                     "gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz",
