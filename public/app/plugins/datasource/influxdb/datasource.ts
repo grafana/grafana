@@ -149,6 +149,26 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       targets: request.targets.filter((t) => t.hide !== true),
     };
 
+    // migrate annotations
+    if (filteredRequest.targets.some((target: InfluxQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const target of filteredRequest.targets) {
+        if (target.query) {
+          streams.push(
+            new Observable((subscriber) => {
+              this.annotationEvents(filteredRequest, target)
+                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+                .catch((ex) => subscriber.error(new Error(ex)))
+                .finally(() => subscriber.complete());
+            })
+          );
+        }
+      }
+
+      return merge(...streams);
+    }
+
     if (this.isFlux) {
       return super.query(filteredRequest);
     }
@@ -560,26 +580,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
    * The unchanged pre 7.1 query implementation
    */
   classicQuery(options: any): Observable<DataQueryResponse> {
-    // migrate annotations
-    if (options.targets.some((target: InfluxQuery) => target.fromAnnotations)) {
-      const streams: Array<Observable<DataQueryResponse>> = [];
-
-      for (const target of options.targets) {
-        if (target.query) {
-          streams.push(
-            new Observable((subscriber) => {
-              this.annotationEvents(options, target)
-                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-                .catch((ex) => subscriber.error(new Error(ex)))
-                .finally(() => subscriber.complete());
-            })
-          );
-        }
-      }
-
-      return merge(...streams);
-    }
-
     let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = cloneDeep(options.targets);

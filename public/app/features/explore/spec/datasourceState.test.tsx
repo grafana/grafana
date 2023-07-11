@@ -4,6 +4,12 @@ import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
+jest.mock('../../correlations/utils', () => {
+  return {
+    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
+  };
+});
+
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();

@@ -43,6 +43,7 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       throw new NeverCaseError(type);
   }
 }
+
 export function getCompletionProvider(
   monaco: Monaco,
   dataProvider: DataProvider
@@ -63,10 +64,21 @@ export function getCompletionProvider(
         : monaco.Range.fromPositions(position);
     // documentation says `position` will be "adjusted" in `getOffsetAt`
     // i don't know what that means, to be sure i clone it
+
     const positionClone = {
       column: position.column,
       lineNumber: position.lineNumber,
     };
+
+    // Check to see if the browser supports window.getSelection()
+    if (window.getSelection) {
+      const selectedText = window.getSelection()?.toString();
+      // If the user has selected text, adjust the cursor position to be at the start of the selection, instead of the end
+      if (selectedText && selectedText.length > 0) {
+        positionClone.column = positionClone.column - selectedText.length;
+      }
+    }
+
     const offset = model.getOffsetAt(positionClone);
     const situation = getSituation(model.getValue(), offset);
     const completionsPromise = situation != null ? getCompletions(situation, dataProvider) : Promise.resolve([]);
