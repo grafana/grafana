@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -38,6 +38,23 @@
       "move-modal-title": "",
       "moving": "",
       "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -285,12 +302,21 @@
       "subtitle": "Gérer et créer des clés API utilisées pour interagir avec les API HTTP de Grafana",
       "title": "Clés API"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "Plugins d'application qui prolongent l'expérience Grafana",
       "title": "Applications"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administration"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -327,8 +353,14 @@
       "subtitle": "Ajouter et configurer des sources de données",
       "title": "Sources de données"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorer"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instances isolées de Grafana exécutées sur le même serveur",
@@ -337,6 +369,9 @@
     "global-users": {
       "subtitle": "Gérer les utilisateurs dans Grafana",
       "title": "Utilisateurs"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Aide"
@@ -348,9 +383,21 @@
     "home": {
       "title": "Accueil"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
@@ -368,9 +415,18 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
       "title": "Préférences par défaut"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -389,8 +445,17 @@
     "profile/settings": {
       "title": "Profil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Tableaux de bord publics"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Scènes"
@@ -412,6 +477,9 @@
     "sign-out": {
       "title": "Se déconnecter"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Représentations interactives, accessibles au public et ponctuelles des tableaux de bord",
       "title": "Instantanés"
@@ -422,6 +490,9 @@
     "starred-empty": {
       "title": "Vos tableaux de bord favoris apparaîtront ici"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Gérer le stockage de fichiers",
       "title": "Stockage"
@@ -429,6 +500,9 @@
     "support-bundles": {
       "subtitle": "Télécharger les packs d’assistance",
       "title": "Packs d’assistance"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
