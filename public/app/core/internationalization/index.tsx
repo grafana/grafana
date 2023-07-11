@@ -1,7 +1,7 @@
-import i18n, { BackendModule } from 'i18next';
+import i18n, { BackendModule, InitOptions } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import React from 'react';
-import { InitOptions, Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
+import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 import { LANGUAGES, VALID_LANGUAGES } from './constants';
 
