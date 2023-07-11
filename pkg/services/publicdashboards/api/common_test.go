@@ -84,7 +84,7 @@ type testContext struct {
 
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
-		signedIn := tc.user != nil
+		signedIn := tc.user != nil && !tc.user.IsAnonymous
 		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,

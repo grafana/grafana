@@ -171,7 +171,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (
               <DetailsField label="Labels" horizontal={true}>
-                <AlertLabels labels={rule.labels} className={styles.labels} />
+                <AlertLabels labels={rule.labels} />
               </DetailsField>
             )}
             <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
@@ -297,6 +297,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     leftSide: css`
       flex: 1;
+      overflow: hidden;
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};

@@ -88,6 +88,7 @@ export const HeatmapPanel = ({
 
   const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
+  /*
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   const isToolTipOpen = useRef<boolean>(false);
@@ -112,6 +113,7 @@ export const HeatmapPanel = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [options, data.structureRev]
   );
+  */
 
   // ugh
   const dataRef = useRef(info);
@@ -124,15 +126,15 @@ export const HeatmapPanel = ({
       dataRef,
       theme,
       eventBus,
-      onhover: onhover,
-      onclick: options.tooltip.show ? onclick : null,
+      // onhover: onhover,
+      // onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
         const delta = evt.xMax - evt.xMin;
         if (delta > 1) {
           onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
         }
       },
-      isToolTipOpen,
+      // isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
@@ -157,17 +159,17 @@ export const HeatmapPanel = ({
     let countFieldIdx = !isSparseHeatmap ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
 
-    let hoverValue: number | undefined = undefined;
-    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
-    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-      hoverValue = countField.values[hover.dataIdx];
-    }
+    // let hoverValue: number | undefined = undefined;
+    // // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
+    // if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
+    //   hoverValue = countField.values[hover.dataIdx];
+    // }
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
-            hoverValue={hoverValue}
+            // hoverValue={hoverValue}
             colorPalette={palette}
             min={dataRef.current.minValue!}
             max={dataRef.current.maxValue!}

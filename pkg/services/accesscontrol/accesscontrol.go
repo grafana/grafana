@@ -96,6 +96,8 @@ type PermissionsService interface {
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
 	MapActions(permission ResourcePermission) string
+	// DeleteResourcePermissions removes all permissions for a resource
+	DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error
 }
 
 type User struct {

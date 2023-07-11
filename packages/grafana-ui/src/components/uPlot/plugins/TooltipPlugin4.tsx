@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState, useReducer, CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
@@ -14,25 +14,48 @@ interface TooltipPlugin4Props {
   render: (u: uPlot, dataIdxs: Array<number | null>, seriesIdx?: number | null, isPinned?: boolean) => React.ReactNode;
 }
 
+interface TooltipContainerState {
+  plot?: uPlot | null;
+  style: Partial<CSSProperties>;
+  isVisible: boolean;
+  isPinned: boolean;
+  contents?: React.ReactNode;
+}
+
+function mergeState(prevState: TooltipContainerState, nextState: Partial<TooltipContainerState>) {
+  return {
+    ...prevState,
+    ...nextState,
+    style: {
+      ...prevState.style,
+      ...nextState.style,
+    },
+  };
+}
+
+const INITIAL_STATE: TooltipContainerState = {
+  style: { transform: '', pointerEvents: 'none' },
+  isVisible: false,
+  isPinned: false,
+  contents: null,
+  plot: null,
+};
+
 /**
  * @alpha
  */
 export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   const domRef = useRef<HTMLDivElement>(null);
-  const [plot, setPlot] = useState<uPlot>();
 
-  const styleRef = useRef({ transform: '', pointerEvents: 'none' }); // boo! // <CSSStyleDeclaration> ?
-  const [isVisible, setVisible] = useState(false);
-  const [isPinned, setPinned] = useState(false);
+  const [{ plot, isVisible, isPinned, contents, style }, setState] = useReducer(mergeState, INITIAL_STATE);
 
-  const [contents, setContents] = useState<React.ReactNode>();
-
-  const style = useStyles2(getStyles);
+  const className = useStyles2(getStyles).tooltipWrapper;
 
   useLayoutEffect(() => {
     let _plot = plot;
     let _isVisible = isVisible;
     let _isPinned = isPinned;
+    let _style = style;
 
     let offsetX = 0;
     let offsetY = 0;
@@ -52,9 +75,24 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     let pendingRender = false;
 
+    const scheduleRender = () => {
+      if (!pendingRender) {
+        pendingRender = true;
+        queueMicrotask(_render);
+      }
+    }
+
     const _render = () => {
       pendingRender = false;
-      setContents(render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned));
+
+      let state: TooltipContainerState = {
+        style: _style,
+        isPinned: _isPinned,
+        isVisible: _isVisible,
+        contents: render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned),
+      };
+
+      setState(state);
     };
 
     const resizeObserver = new ResizeObserver((entries) => {
@@ -70,13 +108,14 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     });
 
     config.addHook('init', (u) => {
-      setPlot(_plot = u);
+      setState({ plot: (_plot = u) });
 
       // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
-          setPinned((_isPinned = !_isPinned));
-          styleRef.current = { ...styleRef.current, pointerEvents: _isPinned ? 'all' : 'none' };
+          _isPinned = !_isPinned;
+          _style = { pointerEvents: _isPinned ? 'all' : 'none' };
+          scheduleRender();
         }
 
         // @ts-ignore
@@ -92,10 +131,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      if (!pendingRender) {
-        pendingRender = true;
-        queueMicrotask(_render);
-      }
+      scheduleRender();
     });
 
     // fires on series focus/proximity changes
@@ -107,11 +143,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
       if (isMultiSeries && closestSeriesIdx !== seriesIdx) {
         closestSeriesIdx = seriesIdx;
-
-        if (!pendingRender) {
-          pendingRender = true;
-          queueMicrotask(_render);
-        }
+        scheduleRender();
       }
     });
 
@@ -121,7 +153,8 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
       if (left < 0 && top < 0) {
         if (_isVisible) {
-          setVisible((_isVisible = false));
+          _isVisible = false;
+          scheduleRender();
 
           // TODO: this should be done by Dashboards onmouseleave
           let ctnr = u.root.closest<HTMLElement>('.react-grid-item, .SplitPane');
@@ -178,8 +211,9 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         if (_isVisible && domRef.current) {
           domRef.current.style.transform = transform;
         } else {
-          styleRef.current = { ...styleRef.current, transform: transform };
-          setVisible((_isVisible = true));
+          _style = { transform: transform };
+          _isVisible = true;
+          scheduleRender();
 
           // TODO: this should be done by Dashboards onmouseenter
           let ctnr = u.root.closest<HTMLElement>('.react-grid-item, .SplitPane');
@@ -197,7 +231,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           // boo setTimeout!
           setTimeout(() => {
             resizeObserver.observe(domRef.current!);
-          }, 0);
+          }, 100);
         }
       }
     });
@@ -205,7 +239,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
   if (plot && isVisible) {
     return createPortal(
-      <div className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
+      <div className={className} style={style} ref={domRef}>
         <div>{isPinned ? '!!PINNED!! [X]' : ''}</div>
         {contents}
       </div>,
