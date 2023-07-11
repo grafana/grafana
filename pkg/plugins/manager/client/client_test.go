@@ -47,9 +47,7 @@ func TestQueryData(t *testing.T) {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
 				registry := fakes.NewFakePluginRegistry()
 				p := &plugins.Plugin{
-					JSONData: plugins.JSONData{
-						ID: "grafana",
-					},
+					UID: "grafana",
 				}
 				p.RegisterClient(&fakePluginBackend{
 					qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -105,9 +103,7 @@ func TestCheckHealth(t *testing.T) {
 			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
 				registry := fakes.NewFakePluginRegistry()
 				p := &plugins.Plugin{
-					JSONData: plugins.JSONData{
-						ID: "grafana",
-					},
+					UID: "grafana",
 				}
 				p.RegisterClient(&fakePluginBackend{
 					chr: func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -133,9 +129,7 @@ func TestCheckHealth(t *testing.T) {
 func TestCallResource(t *testing.T) {
 	registry := fakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "pid",
-		},
+		UID: "pid",
 	}
 
 	const backendResponse = "I am the backend"

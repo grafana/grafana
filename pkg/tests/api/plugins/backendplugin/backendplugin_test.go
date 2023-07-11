@@ -669,6 +669,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 
 func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 	p := &plugins.Plugin{
+		UID: id,
 		JSONData: plugins.JSONData{
 			ID: id,
 		},

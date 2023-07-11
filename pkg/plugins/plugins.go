@@ -436,6 +436,7 @@ type PluginClient interface {
 
 func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
+		UID:               p.UID,
 		logger:            p.Logger(),
 		fs:                p.FS,
 		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,

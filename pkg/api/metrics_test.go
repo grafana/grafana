@@ -69,6 +69,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 		plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{
 				{
+					UID: "grafana",
 					JSONData: plugins.JSONData{
 						ID: "grafana",
 					},
@@ -115,6 +116,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		&plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{
 				{
+					UID: "grafana",
 					JSONData: plugins.JSONData{
 						ID: "grafana",
 					},
@@ -273,6 +275,7 @@ func TestDataSourceQueryError(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
 			p := &plugins.Plugin{
+				UID: "grafana",
 				JSONData: plugins.JSONData{
 					ID: "grafana",
 				},

@@ -25,7 +25,7 @@ func TestInMemory(t *testing.T) {
 		err := i.Remove(ctx, pluginUID)
 		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", pluginUID).Error())
 
-		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginUID}}
+		p = &plugins.Plugin{UID: pluginUID}
 		err = i.Add(ctx, p)
 		require.NoError(t, err)
 
@@ -256,38 +256,34 @@ func TestAliasSupport(t *testing.T) {
 		i := NewInMemory()
 		ctx := context.Background()
 
-		pluginIdNew := "plugin-new"
-		pluginIdOld := "plugin-old"
+		pluginUidNew := "plugin-new"
+		pluginUidOld := "plugin-old"
 
-		p, exists := i.Plugin(ctx, pluginIdNew)
+		p, exists := i.Plugin(ctx, pluginUidNew)
 		require.False(t, exists)
 		require.Nil(t, p)
 
 		pluginNew := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID: pluginIdNew,
-			},
-			Alias: pluginIdOld, // TODO: move to JSONData
+			UID:   pluginUidNew,
+			Alias: pluginUidOld, // TODO: move to JSONData
 		}
 		err := i.Add(ctx, pluginNew)
 		require.NoError(t, err)
 
 		// Can lookup by the new ID
-		found, exists := i.Plugin(ctx, pluginIdNew)
+		found, exists := i.Plugin(ctx, pluginUidNew)
 		require.True(t, exists)
 		require.Equal(t, pluginNew, found)
 
 		// Can lookup by the old ID
-		found, exists = i.Plugin(ctx, pluginIdOld)
+		found, exists = i.Plugin(ctx, pluginUidNew)
 		require.True(t, exists)
 		require.Equal(t, pluginNew, found)
 
 		// Register the old plugin and look it up
-		pluginOld := &plugins.Plugin{JSONData: plugins.JSONData{
-			ID: pluginIdOld,
-		}}
+		pluginOld := &plugins.Plugin{UID: pluginUidOld}
 		require.NoError(t, i.Add(ctx, pluginOld))
-		found, exists = i.Plugin(ctx, pluginIdOld)
+		found, exists = i.Plugin(ctx, pluginUidOld)
 		require.True(t, exists)
 		require.Equal(t, pluginOld, found)
 	})

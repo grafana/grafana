@@ -98,9 +98,11 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 	const nonCDNPluginID = "non-cdn-plugin"
 	t.Run("Plugin CDN asset redirect", func(t *testing.T) {
 		cdnPlugin := &plugins.Plugin{
+			UID:      cdnPluginID,
 			JSONData: plugins.JSONData{ID: cdnPluginID, Info: plugins.Info{Version: "1.0.0"}},
 		}
 		nonCdnPlugin := &plugins.Plugin{
+			UID:      nonCDNPluginID,
 			JSONData: plugins.JSONData{ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"}},
 		}
 		registry := &fakes.FakePluginRegistry{
@@ -390,16 +392,16 @@ func TestPluginMarkdown(t *testing.T) {
 		}
 		hs := HTTPServer{pluginFileStore: pluginFileStore}
 
-		pluginID := "test-datasource"
-		md, err := hs.pluginMarkdown(context.Background(), pluginID, "test")
-		require.ErrorAs(t, err, &plugins.NotFoundError{PluginUID: pluginID})
+		pluginUID := "test-datasource"
+		md, err := hs.pluginMarkdown(context.Background(), pluginUID, "test")
+		require.ErrorAs(t, err, &plugins.NotFoundError{PluginUID: pluginUID})
 		require.Equal(t, []byte{}, md)
 	})
 
 	t.Run("File fetch will be retried using different casing if error occurs", func(t *testing.T) {
 		var requestedFiles []string
 		pluginFileStore := &fakes.FakePluginFileStore{
-			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+			FileFunc: func(ctx context.Context, _, filename string) (*plugins.File, error) {
 				requestedFiles = append(requestedFiles, filename)
 				return nil, errors.New("some error")
 			},
@@ -621,6 +623,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
+		UID:      jd.ID,
 		JSONData: jd,
 		Class:    class,
 		FS:       files,
