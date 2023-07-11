@@ -285,6 +285,9 @@
       "subtitle": "Mäŉäģę äŉđ čřęäŧę ÅPĨ ĸęyş ŧĥäŧ äřę ūşęđ ŧő įŉŧęřäčŧ ŵįŧĥ Ğřäƒäŉä ĦŦŦP ÅPĨş",
       "title": "ÅPĨ ĸęyş"
     },
+    "application": {
+      "title": "Åppľįčäŧįőŉ (přęvįęŵ)"
+    },
     "apps": {
       "subtitle": "Åpp pľūģįŉş ŧĥäŧ ęχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę",
       "title": "Åppş"
@@ -294,6 +297,9 @@
     },
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
+    },
+    "connect-data": {
+      "title": "Cőŉŉęčŧ đäŧä"
     },
     "connections": {
       "subtitle": "ßřőŵşę äŉđ čřęäŧę ŉęŵ čőŉŉęčŧįőŉş",
@@ -330,8 +336,14 @@
       "subtitle": "Åđđ äŉđ čőŉƒįģūřę đäŧä şőūřčęş",
       "title": "Đäŧä şőūřčęş"
     },
+    "detect": {
+      "title": "Đęŧęčŧ"
+    },
     "explore": {
       "title": "Ēχpľőřę"
+    },
+    "frontend": {
+      "title": "Fřőŉŧęŉđ"
     },
     "global-orgs": {
       "subtitle": "Ĩşőľäŧęđ įŉşŧäŉčęş őƒ Ğřäƒäŉä řūŉŉįŉģ őŉ ŧĥę şämę şęřvęř",
@@ -340,6 +352,9 @@
     "global-users": {
       "subtitle": "Mäŉäģę ūşęřş įŉ Ğřäƒäŉä",
       "title": "Ůşęřş"
+    },
+    "grafana-quaderno": {
+      "title": "Ğřäƒäŉä Qūäđęřŉő"
     },
     "help": {
       "title": "Ħęľp"
@@ -351,9 +366,21 @@
     "home": {
       "title": "Ħőmę"
     },
+    "incidents": {
+      "title": "Ĩŉčįđęŉŧş"
+    },
+    "infrastructure": {
+      "title": "Ĩŉƒřäşŧřūčŧūřę"
+    },
+    "kubernetes": {
+      "title": "Ķūþęřŉęŧęş"
+    },
     "library-panels": {
       "subtitle": "Ŗęūşäþľę päŉęľş ŧĥäŧ čäŉ þę äđđęđ ŧő mūľŧįpľę đäşĥþőäřđş",
       "title": "Ŀįþřäřy päŉęľş"
+    },
+    "machine-learning": {
+      "title": "Mäčĥįŉę ľęäřŉįŉģ"
     },
     "manage-folder": {
       "subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
@@ -371,12 +398,17 @@
     "new-folder": {
       "title": "Ńęŵ ƒőľđęř"
     },
-    "oncall": {
-      "title": "ØŉCäľľ"
+
+    "observability": {
+      "title": "Øþşęřväþįľįŧy"
+
     },
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
       "title": "Đęƒäūľŧ přęƒęřęŉčęş"
+    },
+    "performance-testing": {
+      "title": "Pęřƒőřmäŉčę ŧęşŧįŉģ"
     },
     "playlists": {
       "subtitle": "Ğřőūpş őƒ đäşĥþőäřđş ŧĥäŧ äřę đįşpľäyęđ įŉ ä şęqūęŉčę",
@@ -394,6 +426,9 @@
     },
     "profile/settings": {
       "title": "Přőƒįľę"
+    },
+    "profiles": {
+      "title": "Přőƒįľęş (přęvįęŵ)"
     },
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
@@ -424,6 +459,9 @@
     "sign-out": {
       "title": "Ŝįģŉ őūŧ"
     },
+    "slo": {
+      "title": "ŜĿØ"
+    },
     "snapshots": {
       "subtitle": "Ĩŉŧęřäčŧįvę, pūþľįčäľľy äväįľäþľę, pőįŉŧ-įŉ-ŧįmę řępřęşęŉŧäŧįőŉş őƒ đäşĥþőäřđş",
       "title": "Ŝŉäpşĥőŧş"
@@ -444,6 +482,9 @@
     "support-bundles": {
       "subtitle": "Đőŵŉľőäđ şūppőřŧ þūŉđľęş",
       "title": "Ŝūppőřŧ þūŉđľęş"
+    },
+    "synthetics": {
+      "title": "Ŝyŉŧĥęŧįčş"
     },
     "teams": {
       "subtitle": "Ğřőūpş őƒ ūşęřş ŧĥäŧ ĥävę čőmmőŉ đäşĥþőäřđ äŉđ pęřmįşşįőŉ ŉęęđş",

@@ -116,6 +116,26 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.apps.title', 'Apps');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.title', 'Alerts & IRM');
+    case 'plugin-page-grafana-incident-app':
+      return t('nav.incidents.title', 'Incidents');
+    case 'plugin-page-grafana-ml-app':
+      return t('nav.machine-learning.title', 'Machine learning');
+    case 'plugin-page-grafana-slo-app':
+      return t('nav.slo.title', 'SLO');
+    case 'plugin-page-k6-app':
+      return t('nav.performance-testing.title', 'Performance testing');
+    case 'monitoring':
+      return t('nav.observability.title', 'Observability');
+    case 'plugin-page-grafana-k8s-app':
+      return t('nav.kubernetes.title', 'Kubernetes');
+    case 'plugin-page-grafana-app-observability-app':
+      return t('nav.application.title', 'Application (preview)');
+    case 'plugin-page-grafana-pyroscope-app':
+      return t('nav.profiles.title', 'Profiles (preview)');
+    case 'plugin-page-grafana-kowalski-app':
+      return t('nav.frontend.title', 'Frontend');
+    case 'plugin-page-grafana-synthetic-monitoring-app':
+      return t('nav.synthetics.title', 'Synthetics');
     case 'help':
       return t('nav.help.title', 'Help');
     case 'profile/settings':
@@ -134,6 +154,14 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.add-new-connections.title', 'Add new connection');
     case 'connections-datasources':
       return t('nav.data-sources.title', 'Data sources');
+    case 'standalone-plugin-page-/connections/infrastructure':
+      return t('nav.infrastructure.title', 'Infrastructure');
+    case 'standalone-plugin-page-/connections/connect-data':
+      return t('nav.connect-data.title', 'Connect data');
+    case 'plugin-page-grafana-detect-app':
+      return t('nav.detect.title', 'Detect');
+    case 'plugin-page-grafana-quaderno-app':
+      return t('nav.grafana-quaderno.title', 'Grafana Quaderno');
     default:
       return undefined;
   }

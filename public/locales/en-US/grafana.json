@@ -285,6 +285,9 @@
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
       "title": "API keys"
     },
+    "application": {
+      "title": "Application (preview)"
+    },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
       "title": "Apps"
@@ -294,6 +297,9 @@
     },
     "config": {
       "title": "Administration"
+    },
+    "connect-data": {
+      "title": "Connect data"
     },
     "connections": {
       "subtitle": "Browse and create new connections",
@@ -330,8 +336,14 @@
       "subtitle": "Add and configure data sources",
       "title": "Data sources"
     },
+    "detect": {
+      "title": "Detect"
+    },
     "explore": {
       "title": "Explore"
+    },
+    "frontend": {
+      "title": "Frontend"
     },
     "global-orgs": {
       "subtitle": "Isolated instances of Grafana running on the same server",
@@ -340,6 +352,9 @@
     "global-users": {
       "subtitle": "Manage users in Grafana",
       "title": "Users"
+    },
+    "grafana-quaderno": {
+      "title": "Grafana Quaderno"
     },
     "help": {
       "title": "Help"
@@ -351,9 +366,21 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": "Incidents"
+    },
+    "infrastructure": {
+      "title": "Infrastructure"
+    },
+    "kubernetes": {
+      "title": "Kubernetes"
+    },
     "library-panels": {
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
+    },
+    "machine-learning": {
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -371,12 +398,20 @@
     "new-folder": {
       "title": "New folder"
     },
+
     "oncall": {
       "title": "OnCall"
+
+    "observability": {
+      "title": "Observability"
+
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
+    },
+    "performance-testing": {
+      "title": "Performance testing"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -394,6 +429,9 @@
     },
     "profile/settings": {
       "title": "Profile"
+    },
+    "profiles": {
+      "title": "Profiles (preview)"
     },
     "public": {
       "title": "Public dashboards"
@@ -424,6 +462,9 @@
     "sign-out": {
       "title": "Sign out"
     },
+    "slo": {
+      "title": "SLO"
+    },
     "snapshots": {
       "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
       "title": "Snapshots"
@@ -444,6 +485,9 @@
     "support-bundles": {
       "subtitle": "Download support bundles",
       "title": "Support bundles"
+    },
+    "synthetics": {
+      "title": "Synthetics"
     },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
