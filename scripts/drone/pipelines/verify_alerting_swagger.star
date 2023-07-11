@@ -16,28 +16,28 @@ load(
     "images",
 )
 
-def verify_swagger_step():
+def verify_alerting_swagger_step():
     return {
-        "name": "verify-swagger",
+        "name": "verify-alerting-swagger",
         "image": images["build_image"],
         "depends_on": [
             "compile-build-cmd",
         ],
         "commands": [
-            "make swagger-api-spec",
-            "git diff --exit-code || (printf \"\\nSwagger API spec is out of date, please run 'make swagger-api-spec' and commit the changes\\n\" && exit 1)",
+            "make -C pkg/services/ngalert/api/tooling post.json",
+            "git diff --exit-code || (printf \"\\nAlerting Swagger API spec is out of date, please run 'make -C pkg/services/ngalert/api/tooling post.json' and commit the changes\\n\" && exit 1)",
         ],
     }
 
-def verify_swagger(trigger, ver_mode):
+def verify_alerting_swagger(trigger, ver_mode):
     environment = {"EDITION": "oss"}
     steps = [
         identify_runner_step(),
         compile_build_cmd(),
-        verify_swagger_step(),
+        verify_alerting_swagger_step(),
     ]
     return pipeline(
-        name = "{}-verify-swagger".format(ver_mode),
+        name = "{}-verify-alerting-swagger".format(ver_mode),
         edition = "oss",
         trigger = trigger,
         services = [],

@@ -49,8 +49,8 @@ load(
     "integration_benchmarks",
 )
 load(
-    "scripts/drone/pipelines/verify_swagger.star",
-    "verify_swagger",
+    "scripts/drone/pipelines/verify_alerting_swagger.star",
+    "verify_alerting_swagger",
 )
 
 ver_mode = "pr"
@@ -144,7 +144,7 @@ def pr_pipelines():
         integration_benchmarks(
             prefix = ver_mode,
         ),
-        verify_swagger(
+        verify_alerting_swagger(
             get_pr_trigger(
                 include_paths = [
                     "pkg/services/ngalert/api/tooling/definitions/*.go",
