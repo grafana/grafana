@@ -79,6 +79,7 @@ import {
   isLogsQuery,
   isQueryWithError,
   requestSupportsSplitting,
+  sortLabelSelectors,
 } from './queryUtils';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
@@ -260,9 +261,14 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
+    const transformed = queries.map((query) => {
+      const sorted = sortLabelSelectors(query);
+      return sorted;
+    });
+
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
-      targets: queries,
+      targets: transformed,
     };
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);

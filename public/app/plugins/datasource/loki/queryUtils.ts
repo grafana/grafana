@@ -1,5 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
-import { escapeRegExp } from 'lodash';
+import { escapeRegExp, trimEnd } from 'lodash';
 
 import {
   parser,
@@ -290,6 +290,59 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   if (!query || !isLokiQuery(query)) {
     return undefined;
   }
+
+  return query;
+};
+
+export const sortLabelSelectors = (query: LokiQuery): LokiQuery => {
+  const selectorPositions = getStreamSelectorPositions(query.expr);
+
+  const selectors = selectorPositions.map((selectorPos) => {
+    return query.expr.substring(selectorPos.from, selectorPos.to);
+  });
+
+  const selectorMap = selectors.map((selector) => {
+    const matcherNodes = getNodesFromQuery(selector, [Matcher]);
+
+    matcherNodes.sort((a, b) => {
+      const labelNodeA = a.getChild(Identifier);
+      const labelNodeB = b.getChild(Identifier);
+      const labelNameA = labelNodeA && selector.substring(labelNodeA.from, labelNodeA.to);
+      const labelNameB = labelNodeB && selector.substring(labelNodeB.from, labelNodeB.to);
+
+      if (!labelNameA || !labelNameB) {
+        return 0;
+      }
+
+      if (labelNameA < labelNameB) {
+        return -1;
+      }
+
+      if (labelNameA > labelNameB) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+    let response = '';
+
+    matcherNodes.forEach((node) => {
+      const labelNode = node.getChild(Identifier);
+      const operatorNode = labelNode ? labelNode.nextSibling : null;
+      const valueNode = node.getChild(String);
+      const label = labelNode ? selector.substring(labelNode.from, labelNode.to) : null;
+      const operator = operatorNode ? selector.substring(operatorNode.from, operatorNode.to) : null;
+      const value = valueNode ? selector.substring(valueNode.from, valueNode.to) : null;
+      response += `${label}${operator}${value}, `;
+    });
+
+    return { old: selector, new: '{' + trimEnd(response, ', ') + '}' };
+  });
+
+  selectorMap.forEach((selector) => {
+    query.expr = query.expr.replace(selector.old, selector.new);
+  });
 
   return query;
 };
