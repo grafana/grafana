@@ -21,6 +21,13 @@ export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId
   });
 };
 
+export const assertQueryHistoryIsEmpty = async (exploreId = 'left') => {
+  const selector = withinExplore(exploreId);
+  const queryTexts = selector.queryAllByLabelText('Query text');
+
+  expect(await queryTexts).toHaveLength(0);
+};
+
 export const assertQueryHistoryComment = async (expectedQueryComments: string[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
   await waitFor(() => {

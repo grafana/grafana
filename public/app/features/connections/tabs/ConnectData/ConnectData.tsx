@@ -52,6 +52,7 @@ export function AddNewConnection() {
         description: plugin.description,
         logo: plugin.info.logos.small,
         url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
+        angularDetected: plugin.angularDetected,
       })),
     [plugins]
   );
