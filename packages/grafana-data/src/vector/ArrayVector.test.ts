@@ -38,4 +38,16 @@ describe('ArrayVector', () => {
     field.values = new ArrayVector(['a', 'b', 'c']);
     expect(field.values.length).toBe(3);
   });
+
+  it('arrays can still be javascript arrays (js original sin)', () => {
+    const testArray: any[] = [];
+    // @ts-ignore
+    testArray['add'] = 'value';
+    expect(testArray.add).toBe('value');
+
+    // But the original meaning still holds
+    const another: any[] = [];
+    another.add('value');
+    expect(testArray[0]).toBe('value');
+  });
 });
