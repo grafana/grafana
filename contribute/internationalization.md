@@ -162,17 +162,32 @@ import { Trans } from "app/core/internationalization"
 
 ### Plurals
 
-Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use the `<Trans />` component, with the `count` prop.
+Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use the `<Trans />` component, with the `count` prop to provide a singular form.
 
 ```js
 import { Trans } from 'app/core/internationalization';
 
-<Trans i18nKey="newMessages" count={messages.length}>
-  You got {{ count: messages.length }} messages.
+<Trans i18nKey="inbox.heading" count={messages.length}>
+  You got {{ count: messages.length }} message
 </Trans>;
 ```
 
-Once extracted with `yarn i18n:extract` you will need to manually fill in the grafana.json message catalogues with the additional plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+```js
+import { t } from 'app/core/internationalization';
+
+const translatedString = t('inbox.heading', 'You got {{count}} message', { count: messages.length });
+```
+
+Once extracted with `yarn i18n:extract` you will need to manually edit the [English grafana.json message catalogue](../public/locales/en-US/grafana.json) to correct the plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+
+```json
+{
+  "inbox": {
+    "heading__one": "You got {{count}} message",
+    "heading__other": "You got {{count}} messages"
+  }
+}
+```
 
 ## Documentation
 
