@@ -144,5 +144,4 @@ function CustomVizPanel(props: VizProps) {
 
 async function waitForDashbordToRender() {
   expect(await screen.findByText('Last 6 hours')).toBeInTheDocument();
-  //act(() => resizeObserverMock.callResizeObserverListeners(500, 500));
 }
