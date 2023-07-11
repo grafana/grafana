@@ -285,12 +285,18 @@
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
       "title": "API-Schlüssel"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
       "title": "Apps"
     },
     "config": {
       "title": "Verwaltung"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -327,8 +333,14 @@
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
       "title": "Datenquellen"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Entdecken"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Isolierte Instanzen von Grafana auf dem gleichen Server",
@@ -337,6 +349,9 @@
     "global-users": {
       "subtitle": "Benutzer in Grafana verwalten",
       "title": "Benutzer"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Hilfe"
@@ -348,9 +363,21 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
@@ -368,9 +395,15 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "observability": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
       "title": "Standardeinstellungen"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -388,6 +421,9 @@
     },
     "profile/settings": {
       "title": "Profil"
+    },
+    "profiles": {
+      "title": ""
     },
     "public": {
       "title": "Öffentliche Dashboards"
@@ -412,6 +448,9 @@
     "sign-out": {
       "title": "Abmelden"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Interaktive, öffentlich verfügbare Point-in-Time-Darstellungen von Dashboards",
       "title": "Schnappschüsse"
@@ -429,6 +468,9 @@
     "support-bundles": {
       "subtitle": "Support-Bundles herunterladen",
       "title": "Support-Bundles"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",

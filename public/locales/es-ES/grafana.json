@@ -285,12 +285,18 @@
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
       "title": "Claves API"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
     "config": {
       "title": "Administración"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -327,8 +333,14 @@
       "subtitle": "Añadir y configurar orígenes de datos",
       "title": "Orígenes de datos"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -337,6 +349,9 @@
     "global-users": {
       "subtitle": "Gestionar usuarios de Grafana",
       "title": "Usuarios"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Ayuda"
@@ -348,9 +363,21 @@
     "home": {
       "title": "Inicio"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -368,9 +395,15 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
+    "observability": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -388,6 +421,9 @@
     },
     "profile/settings": {
       "title": "Perfil"
+    },
+    "profiles": {
+      "title": ""
     },
     "public": {
       "title": "Paneles de control públicos"
@@ -412,6 +448,9 @@
     "sign-out": {
       "title": "Cerrar sesión"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
       "title": "Instantáneas"
@@ -429,6 +468,9 @@
     "support-bundles": {
       "subtitle": "Descargar paquetes de apoyo",
       "title": "Paquetes de apoyo"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
