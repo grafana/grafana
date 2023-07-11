@@ -1,4 +1,4 @@
-import { DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -29,12 +29,16 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     insertMode = INSERT_MODES.threshold;
   }
 
-  const refField =
-    frame.fields.find((field) => field.name === refFieldName) ??
-    frame.fields.find((field) => field.type === FieldType.time) ??
-    frame.fields.find((field) => field.type === FieldType.number);
+  let refField: Field | undefined = undefined;
+  if (refFieldName != null) {
+    refField = frame.fields.find((field) => field.name === refFieldName);
+  } else {
+    refField =
+      frame.fields.find((field) => field.type === FieldType.time) ??
+      frame.fields.find((field) => field.type === FieldType.number);
+  }
 
-  if (refField == null) {
+  if (refField === undefined) {
     return frame;
   }
 
@@ -43,7 +47,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     nullThresholdApplied: true,
   };
 
-  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls || refField.config.interval || null);
+  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls || refField!.config.interval || null);
 
   const uniqueThresholds = new Set<number>(thresholds);
 
