@@ -232,22 +232,24 @@ func (s *Service) registerScenario(scenario *Scenario) {
 }
 
 type JSONModel struct {
-	ScenarioID         string        `json:"scenarioId"`
-	SeriesCount        int           `json:"seriesCount"`
-	StringInput        string        `json:"stringInput"`
-	Lines              int64         `json:"lines"`
-	IncludeLevelColumn bool          `json:"includeLevelColumn"`
-	StartValue         float64       `json:"startValue"`
-	Spread             float64       `json:"spread"`
-	Noise              float64       `json:"noise"`
-	Drop               float64       `json:"drop"`
-	Min                *float64      `json:"min,omitempty"`
-	Max                *float64      `json:"max,omitempty"`
-	Labels             string        `json:"labels"`
-	WithNil            bool          `json:"withNil"`
-	CSVWave            []pCSVOptions `json:"csvWave"`
-	PulseWave          pulseWave     `json:"pulseWave"`
-	Alias              string        `json:"alias"`
+	ScenarioID         string    `json:"scenarioId"`
+	SeriesCount        int       `json:"seriesCount"`
+	StringInput        string    `json:"stringInput"`
+	Lines              int64     `json:"lines"`
+	IncludeLevelColumn bool      `json:"includeLevelColumn"`
+	StartValue         float64   `json:"startValue"`
+	Spread             float64   `json:"spread"`
+	Noise              float64   `json:"noise"`
+	Drop               float64   `json:"drop"`
+	Min                *float64  `json:"min,omitempty"`
+	Max                *float64  `json:"max,omitempty"`
+	Labels             string    `json:"labels"`
+	WithNil            bool      `json:"withNil"`
+	PulseWave          pulseWave `json:"pulseWave"`
+	Alias              string    `json:"alias"`
+	// Cannot specify a type for csvWave since legacy queries
+	// does not follow the same format as the new ones (and there is no migration).
+	CSVWave interface{} `json:"csvWave"`
 }
 
 type pulseWave struct {
@@ -833,7 +835,15 @@ type pCSVOptions struct {
 }
 
 func predictableCSVWave(query backend.DataQuery, model JSONModel) ([]*data.Frame, error) {
-	queries := model.CSVWave
+	queries := []pCSVOptions{}
+	input, err := json.Marshal(model.CSVWave)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(input, &queries)
+	if err != nil {
+		return nil, err
+	}
 
 	frames := make([]*data.Frame, 0, len(queries))
 
