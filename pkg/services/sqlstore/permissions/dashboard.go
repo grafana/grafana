@@ -24,51 +24,44 @@ var (
 func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string) *DashboardFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
-	var folderActions []string
-	var dashboardActions []string
+	var folderAction string
+	var dashboardAction string
+
 	if queryType == searchstore.TypeFolder {
-		folderActions = append(folderActions, dashboards.ActionFoldersRead)
+		folderAction = dashboards.ActionFoldersRead
 		if needEdit {
-			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
+			folderAction = dashboards.ActionDashboardsCreate
 		}
 	} else if queryType == searchstore.TypeDashboard {
-		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
+		dashboardAction = dashboards.ActionDashboardsRead
 		if needEdit {
-			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
+			dashboardAction = dashboards.ActionDashboardsWrite
 		}
 	} else if queryType == searchstore.TypeAlertFolder {
-		folderActions = append(
-			folderActions,
-			dashboards.ActionFoldersRead,
-			accesscontrol.ActionAlertingRuleRead,
-		)
+		folderAction = accesscontrol.ActionAlertingRuleRead
 		if needEdit {
-			folderActions = append(
-				folderActions,
-				accesscontrol.ActionAlertingRuleCreate,
-			)
+			folderAction = accesscontrol.ActionAlertingRuleCreate
 		}
 	} else {
-		folderActions = append(folderActions, dashboards.ActionFoldersRead)
-		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
+		folderAction = dashboards.ActionFoldersRead
+		dashboardAction = dashboards.ActionDashboardsRead
 		if needEdit {
-			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
-			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
+			dashboardAction = dashboards.ActionDashboardsWrite
 		}
 	}
 
-	folderActionsToCheck := actionsToCheck(folderActions, usr.Permissions[usr.OrgID], folderWildcards)
-	dashboardActionsToCheck := actionsToCheck(dashboardActions, usr.Permissions[usr.OrgID], dashWildcards, folderWildcards)
+	needToCheckFolderAction := needToCheckAction(folderAction, usr.Permissions[usr.OrgID], folderWildcards)
+	needToCheckDashboardAction := needToCheckAction(dashboardAction, usr.Permissions[usr.OrgID], dashWildcards, folderWildcards)
 
-	return &DashboardFilter{usr, folderActions, folderActionsToCheck, dashboardActions, dashboardActionsToCheck}
+	return &DashboardFilter{usr, folderAction, needToCheckFolderAction, dashboardAction, needToCheckDashboardAction}
 }
 
 type DashboardFilter struct {
-	usr                     *user.SignedInUser
-	folderActions           []string
-	folderActionsToCheck    []interface{}
-	dashboardActions        []string
-	dashboardActionsToCheck []interface{}
+	usr                        *user.SignedInUser
+	folderAction               string
+	needToCheckFolderAction    bool
+	dashboardAction            string
+	needToCheckDashboardAction bool
 }
 
 func (f *DashboardFilter) Join() (string, []interface{}) {
@@ -93,6 +86,7 @@ func (f *DashboardFilter) Where() (string, []interface{}) {
 		return "(1 = 0)", nil
 	}
 
+	// user has wildcard for both folders and dashboard so we can skip performing access check
 	if f.hasNoActionsToCheck() {
 		return "(1 = 1)", nil
 	}
@@ -101,44 +95,43 @@ func (f *DashboardFilter) Where() (string, []interface{}) {
 
 	query.WriteByte('(')
 
-	if len(f.dashboardActions) > 0 {
-		if len(f.dashboardActionsToCheck) > 0 {
-			query.WriteString(`
+	if f.dashboardAction != "" {
+		if f.needToCheckDashboardAction {
+			query.WriteString(fmt.Sprintf(`
 			((
-				p.action = 'dashboards:read' AND
+				p.action = '%s' AND
 				p.kind = 'dashboards' AND
 				p.attribute = 'uid' AND
 				NOT dashboard.is_folder
 			) OR (
-				p.action = 'dashboards:read' AND
+				p.action = '%s' AND
 				p.kind = 'folders' AND
 				p.attribute = 'uid' AND
 				NOT dashboard.is_folder
 			))
-			`)
+			`, f.dashboardAction, f.dashboardAction))
 		} else {
 			query.WriteString("NOT dashboard.is_folder")
 		}
 	}
 
-	if len(f.folderActions) > 0 {
-		if len(f.dashboardActions) > 0 {
+	if f.folderAction != "" {
+		if f.dashboardAction != "" {
 			query.WriteString(" OR ")
 		}
 
-		if len(f.folderActionsToCheck) > 0 {
-			query.WriteString(`
+		if f.needToCheckFolderAction {
+			query.WriteString(fmt.Sprintf(`
 			(
-				p.action = 'folders:read' AND
+				p.action = '%s' AND
 				p.kind = 'folders' AND
 				p.attribute = 'uid' AND
 				dashboard.is_folder
 			)
-			`)
+			`, f.folderAction))
 		} else {
 			query.WriteString("dashboard.is_folder")
 		}
-
 	}
 
 	query.WriteByte(')')
@@ -151,7 +144,7 @@ func (f *DashboardFilter) hasNoPermissions() bool {
 }
 
 func (f *DashboardFilter) hasNoActionsToCheck() bool {
-	return len(f.dashboardActionsToCheck) == 0 && len(f.folderActionsToCheck) == 0
+	return !f.needToCheckDashboardAction && !f.needToCheckFolderAction
 }
 
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
@@ -530,6 +523,22 @@ func actionsToCheck(actions []string, permissions map[string][]string, wildcards
 		}
 	}
 	return toCheck
+}
+
+func needToCheckAction(action string, permissions map[string][]string, wildcards ...accesscontrol.Wildcards) bool {
+	var hasWildcard bool
+
+outer:
+	for _, scope := range permissions[action] {
+		for _, w := range wildcards {
+			if w.Contains(scope) {
+				hasWildcard = true
+				break outer
+			}
+		}
+	}
+
+	return !hasWildcard
 }
 
 func nestedFoldersSelectors(permSelector string, permSelectorArgs []interface{}, leftTableCol string, rightTableCol string) (string, []interface{}) {
