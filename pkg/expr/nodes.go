@@ -266,14 +266,17 @@ func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResp
 	vals := make([]mathexp.Value, 0)
 	response, ok := resp.Responses[refID]
 	if !ok {
-		if len(resp.Responses) > 0 {
-			keys := make([]string, 0, len(resp.Responses))
-			for refID := range resp.Responses {
-				keys = append(keys, refID)
-			}
-			logger.Warn("Can't find response by refID. Return nodata", "responseRefIds", keys)
+		// This indicates that the RefID of the request was not included to the response, i.e. some problem in the data source plugin
+		keys := make([]string, 0, len(resp.Responses))
+		for refID := range resp.Responses {
+			keys = append(keys, refID)
 		}
-		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{}.New()}}, nil
+		var availableRefIds string
+		if len(keys) > 0 {
+			sort.Strings(keys)
+			availableRefIds = fmt.Sprintf(", available refIDs [%s]", strings.Join(keys, ","))
+		}
+		return "", mathexp.Results{}, fmt.Errorf("cannot find reference ID %s in response%s", refID, availableRefIds)
 	}
 
 	if response.Error != nil {
