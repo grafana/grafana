@@ -211,17 +211,20 @@ export const Table = memo((props: Props) => {
   const renderSubTables = useCallback(
     (rowIndex: number) => {
       return (
-        nestedFields?.map((nf) => {
+        nestedFields?.map((nf, tableIndex) => {
           if (state.expanded[rowIndex]) {
             const rowSubData = nf.values[rowIndex];
             if (rowSubData) {
               const noHeader = !!rowSubData.meta?.custom?.noHeader;
+              const height = tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)); // account for the header with + 1
+              const top = tableStyles.rowHeight + (height * tableIndex + 1);
+
               const subTableStyle: CSSProperties = {
-                height: tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)), // account for the header with + 1
+                height: height,
                 background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
                 paddingLeft: EXPANDER_WIDTH,
                 position: 'absolute',
-                bottom: 0,
+                top,
               };
 
               return (
@@ -251,14 +254,14 @@ export const Table = memo((props: Props) => {
       }
 
       prepareRow(row);
-      console.log(ariaLabel, row);
+      // console.log(ariaLabel, row);
 
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {renderSubTables(rowIndex)}
           {row.cells.map((cell: Cell, index: number) => {
-            console.log(ariaLabel, 'render cell', cell);
+            // console.log(ariaLabel, 'render cell', cell);
             return (
               <TableCell
                 key={index}
@@ -274,7 +277,7 @@ export const Table = memo((props: Props) => {
         </div>
       );
     },
-    [ariaLabel, onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTables, timeRange]
+    [rows, enablePagination, prepareRow, tableStyles, renderSubTables, page, onCellFilterAdded, timeRange]
   );
 
   const onNavigate = useCallback(

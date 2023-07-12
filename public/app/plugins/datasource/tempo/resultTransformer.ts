@@ -15,6 +15,8 @@ import {
   dateTimeFormat,
   FieldDTO,
   createDataFrame,
+  getDisplayProcessor,
+  createTheme,
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
@@ -631,6 +633,13 @@ export function createTableFrameFromTraceQlQuery(
           nested: true,
         },
       },
+      {
+        name: 'spansets2',
+        type: FieldType.trace,
+        config: {
+          nested: true,
+        },
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -652,6 +661,7 @@ export function createTableFrameFromTraceQlQuery(
       frame.fields[2].values.push(traceData.traceName);
       frame.fields[3].values.push(traceData.traceDuration);
       frame.fields[4].values.push(traceSubFrame(trace, instanceSettings, currentIndex));
+      frame.fields[5].values.push(traceSubFrame(trace, instanceSettings, currentIndex + 1));
     });
 
   return [frame];
@@ -746,6 +756,11 @@ const traceSubFrame = (
       preferredVisualisationType: 'table',
     },
   });
+
+  const theme = createTheme();
+  for (const field of subFrame.fields) {
+    field.display = getDisplayProcessor({ field, theme });
+  }
 
   trace.spanSet?.spans.forEach((span) => {
     subFrame.add(transformSpanToTraceData(span, trace.traceID));
