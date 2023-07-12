@@ -92,7 +92,7 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 	return resp, nil
 }
 
-//go:embed plugindata/*.csv
+//go:embed data/*.csv
 var embeddedCsvFiles embed.FS
 
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
@@ -103,7 +103,7 @@ func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	csvFilepath := filepath.Clean(filepath.Join("/", fileName))
-	filePath := filepath.Join("plugindata", csvFilepath)
+	filePath := filepath.Join("data", csvFilepath)
 
 	fileReader, err := embeddedCsvFiles.Open(filePath)
 	if err != nil {
