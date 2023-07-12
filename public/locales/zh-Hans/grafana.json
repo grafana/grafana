@@ -63,6 +63,13 @@
       "permissions": "",
       "settings": ""
     },
+    "nested-folder-picker": {
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
     "new-folder-form": {
       "cancel-label": "",
       "create-label": "",
