@@ -90,4 +90,5 @@ alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,fals
 elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,false,true
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,false,true
+logsExploreTableVisualisation,experimental,@grafana/observability-logs,false,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false,false
