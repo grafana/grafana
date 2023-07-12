@@ -960,6 +960,7 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 	return dashboards, nil
 }
 
+// TODO: Fix tags (duplicated entries)
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	br := strings.Builder{}
 
@@ -1078,16 +1079,38 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		params = append(params, whereParams...)
 	}
 
+	if len(orders) < 1 {
+		orders = append(orders, searchstore.TitleSorter{}.OrderBy())
+	}
+
 	if len(groups) > 0 {
-		br.WriteString(" GROUP BY " + strings.Join(groups, ", "))
+		cols := make([]string, 0, len(orders)+len(groups))
+		for _, o := range orders {
+			o := strings.TrimSuffix(o, " DESC")
+			o = strings.TrimSuffix(o, " ASC")
+			exists := false
+			for _, g := range groups {
+				if g == o {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				cols = append(cols, o)
+			}
+		}
+		cols = append(cols, groups...)
+		br.WriteString(fmt.Sprintf(" GROUP BY %s", strings.Join(cols, ", ")))
 		params = append(params, groupParams...)
 	}
 
-	if len(orders) > 0 {
-		br.WriteString(" ORDER BY " + strings.Join(orders, ", "))
-	} else {
-		br.WriteString(" ORDER BY dashboard.title ASC")
+	orderByCols := []string{}
+	for _, o := range orders {
+		orderByCols = append(orderByCols, d.store.GetDialect().OrderBy(o))
 	}
+
+	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orderByCols, ", "))
+	br.WriteString(orderBy)
 
 	limit := query.Limit
 	if limit < 1 {
@@ -1101,6 +1124,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	br.WriteString(d.store.GetDialect().LimitOffset(limit, (page-1)*limit))
 	sql := br.String()
+
 	fmt.Println(sql)
 
 	var result []dashboards.DashboardSearchProjection
@@ -1186,6 +1210,7 @@ func (d *dashboardStore) FindDashboards2(ctx context.Context, query *dashboards.
 	}
 
 	sql, params := sb.ToSQL(limit, page)
+	fmt.Println(sql)
 
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
