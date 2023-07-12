@@ -1,4 +1,4 @@
-package certgeneratorservice
+package certgenerator
 
 import (
 	"github.com/google/wire"
