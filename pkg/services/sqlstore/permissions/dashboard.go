@@ -155,6 +155,10 @@ func (f *accessControlDashboardPermissionFilter) Where() (string, []interface{})
 	return f.where.string, f.where.params
 }
 
+func (f *accessControlDashboardPermissionFilter) LeftJoin() string {
+	return " dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id"
+}
+
 func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	if f.user == nil || f.user.Permissions == nil || f.user.Permissions[f.user.OrgID] == nil {
 		f.where = clause{string: "(1 = 0)"}

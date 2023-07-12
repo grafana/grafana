@@ -57,7 +57,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	pubdashBuilder.Write("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title")
 	pubdashBuilder.Write(" FROM dashboard_public")
 	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
-	pubdashBuilder.Write(" LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id")
+	pubdashBuilder.Write(" LEFT OUTER JOIN dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id")
 	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
 	if query.User.OrgRole != org.RoleAdmin {
 		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
@@ -69,7 +69,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	counterBuilder.Write("SELECT COUNT(*)")
 	counterBuilder.Write(" FROM dashboard_public")
 	counterBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
-	counterBuilder.Write(" LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id")
+	counterBuilder.Write(" LEFT OUTER JOIN dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id")
 	counterBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
 	if query.User.OrgRole != org.RoleAdmin {
 		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
