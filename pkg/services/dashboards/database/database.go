@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"xorm.io/xorm"
@@ -960,6 +961,161 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	br := strings.Builder{}
+
+	br.WriteString(`
+	SELECT
+		dashboard.id,
+		dashboard.uid,
+		dashboard.title,
+		dashboard.slug,
+		dashboard_tag.term,
+		dashboard.is_folder,
+		dashboard.folder_id,
+		folder.uid AS folder_uid,
+		folder.slug AS folder_slug,
+		folder.title AS folder_title
+	`)
+
+	joins := []string{
+		"LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id",
+		"LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id",
+	}
+
+	var wheres []string
+	var whereParams []interface{}
+
+	var groups []string
+	var groupParams []interface{}
+
+	var orders []string
+
+	var params []interface{}
+
+	filters := make([]interface{}, 0, len(query.Filters)+len(query.Sort.Filter))
+	for _, f := range query.Sort.Filter {
+		filters = append(filters, f)
+	}
+
+	filters = append(filters, query.Filters...)
+
+	if query.OrgId != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+	} else if query.SignedInUser.OrgID != 0 {
+		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgID})
+	}
+
+	if len(query.Tags) > 0 {
+		filters = append(filters, searchstore.TagsFilter{Tags: query.Tags})
+	}
+
+	if len(query.DashboardUIDs) > 0 {
+		filters = append(filters, searchstore.DashboardFilter{UIDs: query.DashboardUIDs})
+	} else if len(query.DashboardIds) > 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{IDs: query.DashboardIds})
+	}
+
+	if len(query.Title) > 0 {
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
+	}
+
+	if len(query.Type) > 0 {
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
+	}
+
+	if len(query.FolderIds) > 0 {
+		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
+	}
+
+	for _, f := range filters {
+		if s, ok := f.(searchstore.FilterSelect); ok {
+			br.WriteString(fmt.Sprintf(", %s", s.Select()))
+		}
+
+		if j, ok := f.(searchstore.FilterLeftJoin); ok {
+			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", j.LeftJoin()))
+		}
+
+		if w, ok := f.(searchstore.FilterWhere); ok {
+			sql, params := w.Where()
+			wheres = append(wheres, sql)
+			whereParams = append(whereParams, params...)
+		}
+
+		if f, ok := f.(searchstore.FilterGroupBy); ok {
+			sql, params := f.GroupBy()
+			if sql != "" {
+				groups = append(groups, sql)
+				groupParams = append(groupParams, params...)
+			}
+		}
+
+		if f, ok := f.(searchstore.FilterOrderBy); ok {
+			orders = append(orders, f.OrderBy())
+		}
+	}
+
+	br.WriteString(`
+	FROM dashboard
+	`)
+
+	permissionFilter := permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type)
+
+	permissionJoin, permissionJoinParams := permissionFilter.Join()
+	joins = append(joins, permissionJoin)
+	if len(joins) > 0 {
+		br.WriteString(strings.Join(joins, "\n"))
+	}
+	params = append(params, permissionJoinParams...)
+
+	permissionWhere, permissionWhereParams := permissionFilter.Where()
+
+	wheres = append(wheres, permissionWhere)
+	whereParams = append(whereParams, permissionWhereParams...)
+
+	if len(wheres) > 0 {
+		br.WriteString(" WHERE " + strings.Join(wheres, " AND "))
+		params = append(params, whereParams...)
+	}
+
+	if len(groups) > 0 {
+		br.WriteString(" GROUP BY " + strings.Join(groups, ", "))
+		params = append(params, groupParams...)
+	}
+
+	if len(orders) > 0 {
+		br.WriteString(" ORDER BY " + strings.Join(orders, ", "))
+	} else {
+		br.WriteString(" ORDER BY dashboard.title ASC")
+	}
+
+	limit := query.Limit
+	if limit < 1 {
+		limit = 1000
+	}
+
+	page := query.Page
+	if page < 1 {
+		page = 1
+	}
+
+	br.WriteString(d.store.GetDialect().LimitOffset(limit, (page-1)*limit))
+	sql := br.String()
+	fmt.Println(sql)
+
+	var result []dashboards.DashboardSearchProjection
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&result)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (d *dashboardStore) FindDashboards2(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	filters := []interface{}{
 		permissions.DashboardPermissionFilter{
 			OrgRole:         query.SignedInUser.OrgRole,
