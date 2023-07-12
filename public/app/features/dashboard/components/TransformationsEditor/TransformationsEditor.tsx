@@ -42,6 +42,7 @@ import { categoriesLabels } from 'app/features/transformers/utils';
 
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
+import { styles } from '../DashboardLoading/DashboardFailed';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
@@ -294,7 +295,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformsPicker() {
-    const styles = getTransformationsGridStyles(config.theme2);
+    const styles = getStyles(config.theme2);
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
@@ -362,20 +363,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 Go back to&nbsp;<i>Transformations in use</i>
               </Button>
             )}
-            <div
-              className={css`
-                font-size: 16px;
-                margin-bottom: ${config.theme2.spacing(2)};
-              `}
-            >
+            <div className={styles.pickerInformationLine}>
               <a href={getDocsLink(DocsId.Transformations)} className="external-link" target="_blank" rel="noreferrer">
-                <span
-                  className={css`
-                    vertical-align: middle;
-                  `}
-                >
-                  Transformations
-                </span>{' '}
+                <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
                 <Icon name="external-link-alt" />
               </a>
               &nbsp;allow you to manipulate your data before a visualization is applied.
@@ -412,10 +402,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             <div className={styles.searchWrapper}>
               <Input
                 data-testid={selectors.components.Transforms.searchInput}
-                className={css`
-                  flex-grow: 1;
-                  width: initial;
-                `}
+                className={styles.searchInput}
                 value={search ?? ''}
                 autoFocus={!noTransforms}
                 placeholder="Search for transformation"
@@ -424,13 +411,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 suffix={suffix}
               />
               <div className={styles.showImages}>
-                <span
-                  className={css`
-                    white-space: nowrap;
-                  `}
-                >
-                  Show images
-                </span>{' '}
+                <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
                 <Switch
                   value={this.state.showIllustrations}
                   onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
@@ -440,15 +421,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           )}
 
           {config.featureToggles.transformationsRedesign && (
-            <div
-              className={css`
-                padding: ${config.theme2.spacing(1)} 0;
-                display: flex;
-                flex-wrap: wrap;
-                row-gap: ${config.theme2.spacing(1)};
-                column-gap: ${config.theme2.spacing(0.5)};
-              `}
-            >
+            <div className={styles.filterWrapper}>
               {filterCategoriesLabels.map(([slug, label]) => {
                 return (
                   <FilterPill
@@ -532,6 +505,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   }
 
   render() {
+    const styles = getStyles(config.theme2);
     const {
       panel: { alert },
     } = this.props;
@@ -554,20 +528,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               />
             ) : null}
             {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
-              <div
-                className={css`
-                  display: flex;
-                  justify-content: space-between;
-                  margin-bottom: 24px;
-                `}
-              >
-                <span
-                  className={css`
-                    font-size: 16px;
-                  `}
-                >
-                  Transformations in use
-                </span>{' '}
+              <div className={styles.listInformationLineWrapper}>
+                <span className={styles.listInformationLineText}>Transformations in use</span>{' '}
                 <Button
                   size="sm"
                   variant="secondary"
@@ -628,57 +590,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0;
       padding: ${theme.spacing(1)};
     `,
-  };
-};
-
-interface TransformationsGridProps {
-  transformations: Array<TransformerRegistryItem<any>>;
-  showIllustrations?: boolean;
-  onClick: (id: string) => void;
-}
-
-function TransformationsGrid({ showIllustrations, transformations, onClick }: TransformationsGridProps) {
-  const styles = useStyles2(getTransformationsGridStyles);
-
-  return (
-    <div className={styles.grid}>
-      {transformations.map((transform) => (
-        <Card
-          key={transform.id}
-          className={styles.card}
-          data-testid={selectors.components.TransformTab.newTransform(transform.name)}
-          onClick={() => onClick(transform.id)}
-        >
-          <Card.Heading className={styles.heading}>
-            <>
-              <span>{transform.name}</span>
-              <span
-                className={css`
-                  margin-left: 5px;
-                `}
-              >
-                <PluginStateInfo className={styles.badge} state={transform.state} />
-              </span>
-            </>
-          </Card.Heading>
-          <Card.Description className={styles.description}>
-            <>
-              <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
-              {showIllustrations && (
-                <span>
-                  <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
-                </span>
-              )}
-            </>
-          </Card.Description>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
-  return {
     grid: css`
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -686,7 +597,7 @@ const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(2)} ${theme.spacing(1)};
       width: 100%;
     `,
-    card: css`
+    newCard: css`
       grid-template-rows: min-content 0 1fr 0;
     `,
     badge: css`
@@ -721,14 +632,88 @@ const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
       row-gap: 16px;
       width: 100%;
     `,
+    searchInput: css`
+      flex-grow: 1;
+      width: initial;
+    `,
     showImages: css`
       flex-basis: 0;
       display: flex;
       gap: 8px;
       align-items: center;
     `,
+    pickerInformationLine: css`
+      font-size: 16px;
+      margin-bottom: ${theme.spacing(2)};
+    `,
+    pickerInformationLineHighlight: css`
+      vertical-align: middle;
+    `,
+    illustationSwitchLabel: css`
+      white-space: nowrap;
+    `,
+    filterWrapper: css`
+      padding: ${theme.spacing(1)} 0;
+      display: flex;
+      flex-wrap: wrap;
+      row-gap: ${theme.spacing(1)};
+      column-gap: ${theme.spacing(0.5)};
+    `,
+    listInformationLineWrapper: css`
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    `,
+    listInformationLineText: css`
+      font-size: 16px;
+    `,
+    pluginStateInfoWrapper: css`
+      margin-left: 5px;
+    `,
   };
 };
+
+interface TransformationsGridProps {
+  transformations: Array<TransformerRegistryItem<any>>;
+  showIllustrations?: boolean;
+  onClick: (id: string) => void;
+}
+
+function TransformationsGrid({ showIllustrations, transformations, onClick }: TransformationsGridProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.grid}>
+      {transformations.map((transform) => (
+        <Card
+          key={transform.id}
+          className={styles.newCard}
+          data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+          onClick={() => onClick(transform.id)}
+        >
+          <Card.Heading className={styles.heading}>
+            <>
+              <span>{transform.name}</span>
+              <span className={styles.pluginStateInfoWrapper}>
+                <PluginStateInfo className={styles.badge} state={transform.state} />
+              </span>
+            </>
+          </Card.Heading>
+          <Card.Description className={styles.description}>
+            <>
+              <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
+              {showIllustrations && (
+                <span>
+                  <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
+                </span>
+              )}
+            </>
+          </Card.Description>
+        </Card>
+      ))}
+    </div>
+  );
+}
 
 const getImagePath = (id: string) => {
   const folder = config.theme2.isDark ? 'dark' : 'light';
