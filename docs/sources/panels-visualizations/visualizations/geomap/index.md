@@ -389,7 +389,7 @@ The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
 
-To enable the Route layer, add the `alphaPanels` feature toggle to your `custom.ini` file.
+To enable the Photos layer, add the `alphaPanels` feature toggle to your `custom.ini` file.
 
 ```
 [feature_toggles]
