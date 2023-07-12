@@ -361,11 +361,11 @@ The Route layer renders data points as a route.
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
 
-To enable the Route layer, add the `alphaPanels` feature toggle to your `custom.ini` file.
+To enable the Route layer, set `enable_alpha` to `true` in your configuration file:
 
 ```
-[feature_toggles]
-alphaPanels = true
+[panels]
+enable_alpha = true
 ```
 
 ### Options
@@ -389,11 +389,11 @@ The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
 
-To enable the Photos layer, add the `alphaPanels` feature toggle to your `custom.ini` file.
+To enable the Photos layer, set `enable_alpha` to `true` in your configuration file:
 
 ```
-[feature_toggles]
-alphaPanels = true
+[panels]
+enable_alpha = true
 ```
 
 ### Options
