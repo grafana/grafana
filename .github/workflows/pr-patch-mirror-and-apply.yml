@@ -16,7 +16,7 @@ jobs:
   trigger_downstream_patch_mirror:
     concurrency: patch-mirror-${{ github.ref }}
     if: github.event.pull_request.merged == true
-    uses: grafana/patch-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
+    uses: grafana/security-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
     with:
       ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
       src_repo: "${{ github.repository }}"
