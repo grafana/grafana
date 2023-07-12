@@ -25,11 +25,8 @@ const loadTranslations: BackendModule = {
 
 export function initializeI18n(language: string) {
   // This is a placeholder so we can put a 'comment' in the message json files.
-  // Starts with an underscore so it's sorted to the top of the file
-  t(
-    '_comment',
-    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
-  );
+  // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
+  // t('_comment', 'This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.');
 
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
