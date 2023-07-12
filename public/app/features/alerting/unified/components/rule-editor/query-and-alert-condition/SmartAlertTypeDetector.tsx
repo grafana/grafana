@@ -61,13 +61,17 @@ const getCanSwitch = ({
     !isRecordingRuleType &&
     onlyOneDS &&
     rulesSourcesWithRuler.some((dsJsonData) => dsJsonData.uid === dataSourceIdFromQueries);
+
+  const canSwitchToGrafanaRule = !editingExistingRule && !isRecordingRuleType;
   // check for enabled types
   const grafanaTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.grafana);
   const cloudTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.cloudAlerting);
 
   // can we switch to the other type? (cloud or grafana)
-  const canSwitchFromCloudToGrafana = ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled;
-  const canSwitchFromGrafanaToCloud = ruleFormType === RuleFormType.grafana && canSwitchToCloudRule && cloudTypeEnabled;
+  const canSwitchFromCloudToGrafana =
+    ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled && canSwitchToGrafanaRule;
+  const canSwitchFromGrafanaToCloud =
+    ruleFormType === RuleFormType.grafana && canSwitchToCloudRule && cloudTypeEnabled && canSwitchToCloudRule;
 
   return canSwitchFromCloudToGrafana || canSwitchFromGrafanaToCloud;
 };
