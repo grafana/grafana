@@ -87,3 +87,15 @@ func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
 
 	return res
 }
+
+func PluginVersionInstalled(pluginID, version, pluginDir string) bool {
+	for _, bundle := range GetLocalPlugins(pluginDir) {
+		pJSON := bundle.Primary.JSONData
+		if pJSON.ID == pluginID {
+			if pJSON.Info.Version == version {
+				return true
+			}
+		}
+	}
+	return false
+}

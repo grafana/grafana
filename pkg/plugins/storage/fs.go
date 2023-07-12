@@ -47,11 +47,16 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 	// rename folder to $pluginID-$version
 	if pluginJSON.Info.Version != "" {
 		pluginPath := filepath.Join(filepath.Dir(pluginDir), fmt.Sprintf("%s-%s", pluginJSON.ID, pluginJSON.Info.Version))
-		err = os.Rename(pluginDir, pluginPath)
-		if err != nil {
-			return nil, fmt.Errorf("%v: %w", "failed to rename plugin directory", err)
+		if _, err = os.Stat(pluginPath); errors.Is(err, os.ErrNotExist) {
+			err = os.Rename(pluginDir, pluginPath)
+			if err != nil {
+				fs.log.Warnf("Failed to rename plugin directory %s: %w. Will use generated path %s.", pluginPath, err, pluginDir)
+			} else {
+				pluginDir = pluginPath
+			}
+		} else {
+			fs.log.Warnf("Plugin directory %s already exists. %s v%s might already be installed.", pluginPath, pluginID, pluginJSON.Info.Version)
 		}
-		pluginDir = pluginPath
 	}
 
 	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", pluginJSON.ID, pluginJSON.Info.Version, pluginDir)
@@ -73,7 +78,7 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 }
 
 func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string) (string, error) {
-	pluginDirName := fmt.Sprintf("%s", pluginID)
+	pluginDirName := fmt.Sprintf("%s-%s", pluginID, randomString(5))
 	installDir := filepath.Join(fs.pluginsDir, pluginDirName)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
 		fs.log.Debugf("Removing existing installation of plugin %s", installDir)

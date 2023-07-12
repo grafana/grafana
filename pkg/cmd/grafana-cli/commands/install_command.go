@@ -15,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -75,6 +73,14 @@ func installCommand(c utils.CommandLine) error {
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
+	// If a version is specified, check if it is already installed
+	if version != "" {
+		if services.PluginVersionInstalled(pluginID, version, c.PluginDirectory()) {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			return nil
+		}
+	}
+
 	repository := repo.NewManager(repo.ManagerCfg{
 		SkipTLSVerify: c.Bool("insecure"),
 		BaseURL:       c.PluginRepoURL(),
@@ -117,28 +123,30 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	return nil
 }
 
-// uninstallPlugin removes the plugin directory
-func uninstallPlugin(ctx context.Context, pluginID string, c utils.CommandLine) error {
-	f := finder.NewLocalFinder(true)
-	found, err := f.Find(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{c.PluginDirectory()}))
-	if err != nil {
-		return err
-	}
+// uninstallPlugin removes all plugin directory for the given plugin ID.
+func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
+	uninstalled := false
 
-	for _, bundle := range found {
+	for _, bundle := range services.GetLocalPlugins(c.PluginDirectory()) {
 		if bundle.Primary.JSONData.ID == pluginID {
 			logger.Infof("Removing plugin: %v\n", pluginID)
 			if remover, ok := bundle.Primary.FS.(plugins.FSRemover); ok {
-				logger.Debugf("Removing directory %v\n", bundle.Primary.FS.Base())
-				if err = remover.Remove(); err != nil {
+				logger.Debugf("Removing directory %v\n\n", bundle.Primary.FS.Base())
+				if err := remover.Remove(); err != nil {
 					return err
 				}
-				return nil
+				// don't exit early, we want to remove all versions of the plugin
+				uninstalled = true
+			} else {
+				return fmt.Errorf("plugin %v is immutable and therefore cannot be uninstalled", pluginID)
 			}
 		}
 	}
 
-	logger.Infof(color.RedString("%v is not installed\n", pluginID))
+	if !uninstalled {
+		services.Logger.Failuref("%v is not installed.", pluginID)
+	}
+
 	return nil
 }
 

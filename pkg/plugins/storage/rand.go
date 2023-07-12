@@ -7,7 +7,7 @@ import (
 
 var seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-const charset = "abcdefghijklmnopqrstuvwxyz"
+const charset = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ"
 
 func randomString(length int) string {
 	b := make([]byte, length)
