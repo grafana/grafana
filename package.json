@@ -230,7 +230,7 @@
     "redux-mock-store": "1.5.4",
     "rimraf": "4.4.0",
     "rudder-sdk-js": "2.25.0",
-    "sass": "1.58.3",
+    "sass": "1.63.6",
     "sass-loader": "13.2.0",
     "sinon": "15.2.0",
     "style-loader": "3.3.1",
