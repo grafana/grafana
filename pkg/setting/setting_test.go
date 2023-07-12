@@ -878,5 +878,4 @@ func TestHandleAWSSettings(t *testing.T) {
 			assert.Equal(t, 500, cfg.AWSListMetricsPageLimit)
 			ConfigCleanup(t)
 		})
-
 }
