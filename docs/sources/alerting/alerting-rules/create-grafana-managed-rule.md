@@ -18,7 +18,7 @@ Grafana-managed rules are the most flexible alert rule type. They allow you to c
 
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
-For information on Grafana Alerting, see [Introduction to Grafana Alerting]({{< relref "../fundamentals" >}}), which explains the key concepts and features of Grafana Alerting.
+For information on Grafana Alerting, see [Introduction to Grafana Alerting][fundamentals], which explains the key concepts and features of Grafana Alerting.
 
 Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 
@@ -32,14 +32,14 @@ To create a Grafana-managed alert rule, complete the following steps.
 5. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
 
    - For queries, select a data source from the dropdown.
-   - Specify a [time range]({{< relref "../../dashboards/use-dashboards#time-units-and-relative-ranges" >}}).
+   - Specify a [time range][time-units-and-relative-ranges].
 
      **Note:**
      Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
 
      It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
 
-   - Add one or more [queries]({{< relref "../../panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
+   - Add one or more [queries][add-a-query] or [expressions][expression-queries].
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
@@ -60,7 +60,7 @@ To create a Grafana-managed alert rule, complete the following steps.
 7. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
    - From the **Folder** dropdown, select the folder where you want to store the rule.
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label" >}}).
+   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting][annotation-label].
    - Add Runbook URL, panel, dashboard, and alert IDs.
 8. In Step 5, add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
@@ -75,13 +75,13 @@ For Grafana managed alerts, you can create a rule with a classic condition or yo
 
 Use the classic condition expression to create a rule that triggers a single alert when its condition is met. For a query that returns multiple series, Grafana does not track the alert state of each series. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
 
-For more information, see [expressions documentation]({{< relref "../../panels-visualizations/query-transform-data/expression-queries" >}}).
+For more information, see [expressions documentation][expression-queries].
 
 **Multi-dimensional rule**
 
 To generate a separate alert for each series, create a multi-dimensional rule. Use `Math`, `Reduce`, or `Resample` expressions to create a multi-dimensional rule. For example:
 
-- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data]({{< relref "../fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1" >}})).
+- Add a `Reduce` expression for each query to aggregate values in the selected time range into a single value. (Not needed for [rules using numeric data][alerting-on-numeric-data].
 - Add a `Math` expression with the condition for the rule. Not needed in case a query or a reduce expression already returns 0 if rule should not fire, or a positive number if it should fire. Some examples: `$B > 70` if it should fire in case value of B query/expression is more than 70. `$B < $C * 100` in case it should fire if value of B is less than value of C multiplied by 100. If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 ![Query section multi dimensional](/static/img/docs/alerting/unified/rule-edit-multi-8-0.png 'Query section multi dimensional screenshot')
@@ -115,3 +115,23 @@ If your evaluation returns an error, you can set the state on your alert rule to
 An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
 
 Stale alert instances that are in the **Alerting**/**NoData**/**Error** states are automatically marked as **Resolved** and the grafana_state_reason annotation is added to the alert instance with the reason **MissingSeries**.
+
+{{% docs/reference %}}
+[add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
+[add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
+
+[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
+[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
+
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+
+[expression-queries]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/expression-queries"
+[expression-queries]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/expression-queries"
+
+[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
+
+[time-units-and-relative-ranges]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
+[time-units-and-relative-ranges]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
+{{% /docs/reference %}}

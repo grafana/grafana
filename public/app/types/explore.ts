@@ -33,8 +33,6 @@ export interface ExploreState {
 
   panes: Record<string, ExploreItemState | undefined>;
 
-  correlations?: CorrelationData[];
-
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
    */
@@ -68,7 +66,7 @@ export interface ExploreState {
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -171,6 +169,7 @@ export interface ExploreItemState {
   showTrace?: boolean;
   showNodeGraph?: boolean;
   showFlameGraph?: boolean;
+  showCustom?: boolean;
 
   /**
    * History of all queries
@@ -192,6 +191,8 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
+
+  correlations?: CorrelationData[];
 }
 
 export interface ExploreUpdateState {
@@ -230,6 +231,7 @@ export interface ExplorePanelData extends PanelData {
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
+  customFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
   rawPrometheusFrames: DataFrame[];
   flameGraphFrames: DataFrame[];
@@ -244,7 +246,7 @@ export enum TABLE_RESULTS_STYLE {
   raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
-export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
+export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
 
 export interface SupplementaryQuery {
   enabled: boolean;

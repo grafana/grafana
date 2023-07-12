@@ -81,6 +81,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
     const spacing = css({
       display: 'flex',
       justifyContent: 'space-between',
+      flex: '1',
     });
     const ALL_GRAPH_STYLE_OPTIONS: Array<SelectableValue<TableResultsStyle>> = TABLE_RESULTS_STYLES.map((style) => ({
       value: style,
