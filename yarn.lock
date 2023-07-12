@@ -19228,7 +19228,7 @@ __metadata:
     rimraf: 4.4.0
     rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
-    sass: 1.58.3
+    sass: 1.63.6
     sass-loader: 13.2.0
     selecto: 1.22.0
     semver: 7.3.8
@@ -29027,16 +29027,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:1.58.3":
-  version: 1.58.3
-  resolution: "sass@npm:1.58.3"
+"sass@npm:1.63.6":
+  version: 1.63.6
+  resolution: "sass@npm:1.63.6"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: 35a2b98c037ef80fdc93c9b0be846e6ccc7d75596351a37ee79c397e66666d0a754c52c4696e746c0aff32327471e185343ca349e998a58340411adc9d0489a5
+  checksum: 3372319904658eeafaf78a09a6fcb3368a68e6d76fe3c43c2d009f4f72e475ab22b82ef483ef5c00fcda3ab00066846c0bd88c36b42771b855f6ab80c7eda541
   languageName: node
   linkType: hard
 
