@@ -3784,7 +3784,7 @@ __metadata:
     sinon: 15.2.0
     string-hash: ^1.1.3
     tinycolor2: 1.6.0
-    tslib: 2.5.0
+    tslib: 2.6.0
     typescript: 4.8.4
     uplot: 1.6.24
     xss: ^1.0.14
@@ -3808,7 +3808,7 @@ __metadata:
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
-    tslib: 2.5.0
+    tslib: 2.6.0
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
@@ -3858,7 +3858,7 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     tracelib: 1.0.1
     ts-loader: 8.4.0
-    tslib: 2.5.0
+    tslib: 2.6.0
     typescript: 4.8.4
     uuid: 9.0.0
     webpack: 5.76.0
@@ -4041,7 +4041,7 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.0
     systemjs: 0.20.19
-    tslib: 2.5.0
+    tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -4078,7 +4078,7 @@ __metadata:
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
-    tslib: 2.5.0
+    tslib: 2.6.0
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
@@ -4250,7 +4250,7 @@ __metadata:
     storybook-dark-mode: 3.0.0
     style-loader: 3.3.1
     tinycolor2: 1.6.0
-    tslib: 2.5.0
+    tslib: 2.6.0
     typescript: 4.8.4
     uplot: 1.6.24
     uuid: 9.0.0
@@ -19289,7 +19289,7 @@ __metadata:
     ts-jest: 29.1.1
     ts-loader: 9.3.1
     ts-node: 10.9.1
-    tslib: 2.5.0
+    tslib: 2.6.0
     tween-functions: ^1.2.0
     typescript: 4.8.4
     uplot: 1.6.24
@@ -31637,6 +31637,13 @@ __metadata:
   version: 2.5.0
   resolution: "tslib@npm:2.5.0"
   checksum: ae3ed5f9ce29932d049908ebfdf21b3a003a85653a9a140d614da6b767a93ef94f460e52c3d787f0e4f383546981713f165037dc2274df212ea9f8a4541004e1
+  languageName: node
+  linkType: hard
+
+"tslib@npm:2.6.0":
+  version: 2.6.0
+  resolution: "tslib@npm:2.6.0"
+  checksum: c01066038f950016a18106ddeca4649b4d76caa76ec5a31e2a26e10586a59fceb4ee45e96719bf6c715648e7c14085a81fee5c62f7e9ebee68e77a5396e5538f
   languageName: node
   linkType: hard
 
