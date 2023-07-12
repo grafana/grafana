@@ -39,6 +39,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       height: 32px;
+      position: relative;
+      border: 1px solid ${theme.colors.background.secondary};
 
       &:hover {
         background: ${theme.colors.action.hover};
@@ -47,7 +49,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     selected: css`
       color: ${theme.colors.text.primary};
-      background: ${theme.colors.action.selected};
+      border: 1px solid #ff780a;
 
       &:hover {
         background: ${theme.colors.action.focus};
