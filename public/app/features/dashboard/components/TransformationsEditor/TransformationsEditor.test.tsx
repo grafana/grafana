@@ -23,7 +23,7 @@ describe('TransformationsEditor', () => {
     it('renders transformations selection list', () => {
       setup();
 
-      const cards = screen.getAllByLabelText(/^New transform/i);
+      const cards = screen.getAllByTestId(/^New transform/i);
       expect(cards.length).toEqual(standardTransformersRegistry.list().length);
     });
   });
@@ -36,7 +36,7 @@ describe('TransformationsEditor', () => {
           options: {},
         },
       ]);
-      const editors = screen.getAllByLabelText(/^Transformation editor/);
+      const editors = screen.getAllByTestId(/^Transformation editor/);
       expect(editors).toHaveLength(1);
     });
   });
@@ -54,7 +54,7 @@ describe('TransformationsEditor', () => {
       const addTransformationButton = screen.getByText(buttonLabel);
       await userEvent.click(addTransformationButton);
 
-      const search = screen.getByLabelText(selectors.components.Transforms.searchInput);
+      const search = screen.getByTestId(selectors.components.Transforms.searchInput);
       expect(search).toBeDefined();
     });
   });
@@ -70,12 +70,12 @@ describe('TransformationsEditor', () => {
         ]);
         const debuggerSelector = selectors.components.TransformTab.transformationEditorDebugger('Reduce');
 
-        expect(screen.queryByLabelText(debuggerSelector)).toBeNull();
+        expect(screen.queryByTestId(debuggerSelector)).toBeNull();
 
         const debugButton = screen.getByLabelText(selectors.components.QueryEditorRow.actionButton('Debug'));
         await userEvent.click(debugButton);
 
-        expect(screen.getByLabelText(debuggerSelector)).toBeInTheDocument();
+        expect(screen.getByTestId(debuggerSelector)).toBeInTheDocument();
       });
     });
   });

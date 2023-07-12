@@ -420,7 +420,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             <VerticalGroup>
               {!config.featureToggles.transformationsRedesign && (
                 <Input
-                  aria-label={selectors.components.Transforms.searchInput}
+                  data-testid={selectors.components.Transforms.searchInput}
                   value={search ?? ''}
                   autoFocus={!noTransforms}
                   placeholder="Search for transformation"
@@ -446,7 +446,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               {config.featureToggles.transformationsRedesign && (
                 <div className={styles.searchWrapper}>
                   <Input
-                    aria-label={selectors.components.Transforms.searchInput}
+                    data-testid={selectors.components.Transforms.searchInput}
                     className={css`
                       flex-grow: 1;
                       width: initial;
@@ -538,7 +538,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     return (
       <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
         <Container padding="lg">
-          <div aria-label={selectors.components.TransformTab.content}>
+          <div data-testid={selectors.components.TransformTab.content}>
             {hasTransforms && alert ? (
               <Alert
                 severity={AppNotificationSeverity.Error}
@@ -600,7 +600,7 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   return (
     <Card
       className={styles.card}
-      aria-label={selectors.components.TransformTab.newTransform(transform.name)}
+      data-testid={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}
     >
       <Card.Heading>{transform.name}</Card.Heading>
@@ -638,7 +638,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick }: Tr
         <Card
           key={transform.id}
           className={styles.card}
-          aria-label={selectors.components.TransformTab.newTransform(transform.name)}
+          data-testid={selectors.components.TransformTab.newTransform(transform.name)}
           onClick={() => onClick(transform.id)}
         >
           <Card.Heading className={styles.heading}>

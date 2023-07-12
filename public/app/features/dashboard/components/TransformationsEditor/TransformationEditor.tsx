@@ -74,12 +74,12 @@ export const TransformationEditor = ({
   );
 
   return (
-    <div className={styles.editor} aria-label={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
+    <div className={styles.editor} data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
         <div
           className={styles.debugWrapper}
-          aria-label={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
+          data-testid={selectors.components.TransformTab.transformationEditorDebugger(uiConfig.name)}
         >
           <div className={styles.debug}>
             <div className={styles.debugTitle}>Transformation input data</div>
