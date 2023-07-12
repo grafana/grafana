@@ -145,11 +145,12 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		if (userInfo.Role == "" || userInfo.Role == s.defaultRole()) && !s.skipOrgRoleSync {
 			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
 			if err != nil {
-				return nil, err
-			}
-			userInfo.Role = role
-			if s.allowAssignGrafanaAdmin {
-				userInfo.IsGrafanaAdmin = &grafanaAdmin
+				s.log.Warn("Failed to extract role", "err", err)
+			} else {
+				userInfo.Role = role
+				if s.allowAssignGrafanaAdmin {
+					userInfo.IsGrafanaAdmin = &grafanaAdmin
+				}
 			}
 		}
 
@@ -165,6 +166,9 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if userInfo.Role == "" && !s.skipOrgRoleSync {
+		if s.roleAttributeStrict {
+			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
+		}
 		userInfo.Role = s.defaultRole()
 	}
 
