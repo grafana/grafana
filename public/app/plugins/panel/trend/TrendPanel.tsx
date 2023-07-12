@@ -37,11 +37,11 @@ export const TrendPanel = ({
       ...dimFields,
       x: (field, frame, frames) => {
         // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
-        const trendXField = options.xField
+        const trendXFieldName = options.xField
           ? options.xField
           : frames[0].fields.find((field) => field.type === FieldType.number)?.name;
 
-        return getFieldDisplayName(field, frame, frames) === trendXField;
+        return getFieldDisplayName(field, frame, frames) === trendXFieldName;
       },
     };
 

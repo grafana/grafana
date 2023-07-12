@@ -18,12 +18,16 @@ function isVisibleBarField(f: Field) {
   );
 }
 
+export function getRefField(frame: DataFrame, refFieldName?: string | null) {
+  return frame.fields.find((field) => {
+    // note: getFieldDisplayName() would require full DF[]
+    return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
+  });
+}
+
 // will mutate the DataFrame's fields' values
 function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null) {
-  let refField =
-    refFieldName != null
-      ? frame.fields.find((field) => field.name === refFieldName)
-      : frame.fields.find((field) => field.type === FieldType.time);
+  const refField = getRefField(frame, refFieldName);
 
   let refValues = refField?.values as any[];
 
@@ -47,7 +51,6 @@ function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null
 }
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
-  // Get x field name
   let xField: Field;
   loop: for (let frame of frames) {
     for (let field of frame.fields) {
