@@ -7,7 +7,6 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Checkbox, CollapsableSection, Input, Modal, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
-import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
@@ -56,6 +55,7 @@ const {
   setLabelSearchQuery,
   setLabelValues,
   setSelectedLabelValue,
+  clear,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -65,7 +65,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
-  const selectedValuesString = JSON.stringify(state.selectedLabelValues);
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -108,29 +107,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
   useEffect(() => {
     updateLabels();
   }, [updateLabels]);
-  /**
-   *
-   * export interface QueryBuilderLabelFilter {
-   *   label: string;
-   *   op: string;
-   *   value: string;
-   * }
-   */
-  useEffect(() => {
-    let labels: QueryBuilderLabelFilter[] = [];
-    Object.keys(state.selectedLabelValues).forEach((labelName: string) => {
-      state.selectedLabelValues[labelName].forEach((labelValue: string) => {
-        labels.push({
-          label: labelName,
-          op: '=',
-          value: labelValue,
-        });
-      });
-    });
-
-    onChange({ ...query, labels: labels });
-    //eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedValuesString, query]);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
@@ -227,6 +203,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
     />
   );
 
+  console.log('state.selectedLabelValues', state.selectedLabelValues);
+  console.log('state.labelValues', state.labelValues);
+
   return (
     <Modal
       data-testid={testIds.metricModal}
@@ -268,6 +247,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
               dispatch(setResultsPerPage(value));
             }}
+            clearQuery={() => dispatch(clear())}
           />
         </div>
         <div className={styles.modalLabelsWrapper}>
@@ -290,7 +270,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             <div className={styles.labelsTitle}>Label name</div>
             {state.labelNames.map((labelName, index) => (
               <CollapsableSection
-                key={labelName}
+                key={'label_names_' + labelName}
                 label={<LabelNameLabel labelName={labelName} />}
                 onToggle={(isOpen: boolean) => {
                   if (isOpen) {
@@ -310,7 +290,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
               >
                 {state.labelValues[labelName]?.map((labelValue) => (
                   <LabelNameValue
-                    key={labelValue}
+                    key={'label_values_' + labelValue}
                     onChange={(e) => {
                       const checked = e.currentTarget.checked;
                       dispatch(
@@ -323,7 +303,12 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     }}
                     labelName={labelName}
                     labelValue={labelValue}
-                    selected={state.selectedLabelValues[labelName]?.includes(labelValue) ?? false}
+                    checked={
+                      state.selectedLabelValues.some(
+                        (label) =>
+                          label.label === labelName && (label.value.includes(labelValue) || label.value === labelValue)
+                      ) ?? false
+                    }
                   />
                 ))}
               </CollapsableSection>
@@ -352,14 +337,14 @@ export const LabelNameValue = (props: {
   labelName: string;
   labelValue: string;
   onChange: React.FormEventHandler<HTMLInputElement>;
-  selected: boolean;
+  checked: boolean;
 }) => {
-  const { labelValue, onChange, selected } = props;
+  const { labelValue, onChange, checked } = props;
   const theme = useTheme2();
   const styles = getLabelValueLabelStyles(theme);
   return (
     <div className={styles.labelName}>
-      <Checkbox onChange={onChange} label={labelValue} selected={selected} />
+      <Checkbox onChange={onChange} label={labelValue} checked={checked} />
     </div>
   );
 };

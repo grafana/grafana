@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { SelectableValue } from '@grafana/data';
 
+import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricsData } from '../types';
 
@@ -37,6 +38,11 @@ export const stateSlice = createSlice({
       state.totalMetricCount = action.payload.totalMetricCount;
       state.filteredMetricCount = action.payload.filteredMetricCount;
     },
+    clear: (state) => {
+      state.metrics = [];
+      state.pageNum = 1;
+      state.selectedLabelValues = [];
+    },
     setLabelValues: (state, action: PayloadAction<MetricsLabelValuesData>) => {
       state.isLoading = action.payload.isLoading;
       state.labelValues[action.payload.labelName] = action.payload.labelValues;
@@ -49,20 +55,42 @@ export const stateSlice = createSlice({
         checked: boolean;
       }>
     ) => {
-      let currentlySelectedValues = state.selectedLabelValues[action.payload.labelName];
-      if (!Array.isArray(currentlySelectedValues)) {
-        currentlySelectedValues = [];
-      }
-      if (action.payload.checked) {
-        currentlySelectedValues.push(action.payload.labelValue);
-      } else {
-        state.selectedLabelValues[action.payload.labelName].splice(
-          currentlySelectedValues.indexOf(action.payload.labelValue),
-          1
-        );
-      }
+      const existingLabel = state.selectedLabelValues.find((label) => label.label === action.payload.labelName);
+      const numberOfExistingValues = existingLabel ? existingLabel.value?.split('|')?.length : 0;
 
-      state.selectedLabelValues[action.payload.labelName] = currentlySelectedValues;
+      if (action.payload.checked) {
+        // If the label already exists, add the new value to the existing label, and change the operator to regex
+        if (existingLabel) {
+          existingLabel.op = '=~';
+          existingLabel.value = existingLabel.value + '|' + action.payload.labelValue;
+        } else {
+          // No values for this label yet, so add it
+          state.selectedLabelValues.push({
+            label: action.payload.labelName,
+            value: action.payload.labelValue,
+            op: '=',
+          });
+        }
+        // unselected, so remove it from the state
+      } else {
+        // If there is already a label, remove it from the value string
+        if (existingLabel && numberOfExistingValues > 1) {
+          existingLabel.value = existingLabel.value
+            .split('|')
+            .filter((value) => value !== action.payload.labelValue)
+            .join('|');
+          if (numberOfExistingValues === 2) {
+            existingLabel.op = '=';
+          }
+        } else {
+          state.selectedLabelValues.splice(
+            state.selectedLabelValues.findIndex(
+              (label) => label.label === action.payload.labelName && label.value.includes(action.payload.labelValue)
+            ),
+            1
+          );
+        }
+      }
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -147,7 +175,8 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     labelSearchQuery: '',
     labelNames: [],
     labelValues: {},
-    selectedLabelValues: {},
+    // @todo refactor to use QueryBuilderLabelFilter
+    selectedLabelValues: query?.labels ?? [],
   };
 }
 
@@ -171,7 +200,7 @@ export interface MetricsModalState {
   /** Record of label values, index is the label name */
   labelValues: Record<LabelName, LabelValue[]>;
   /** Map of selected label names to values */
-  selectedLabelValues: Record<LabelName, LabelValue[]>;
+  selectedLabelValues: QueryBuilderLabelFilter[];
   /** Field for disabling type select and switches that rely on metadata */
   hasMetadata: boolean;
   /** Used to display metrics and help with fuzzy order */

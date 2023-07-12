@@ -37,6 +37,7 @@ export const MetricsWrapper = (props: {
   displayedMetrics: MetricData[];
   onNavigate: (val: number) => void;
   onChangePageNumber: (e: FormEvent<HTMLInputElement>) => void;
+  clearQuery: () => void;
 }) => {
   const theme = useTheme2();
 
@@ -139,6 +140,9 @@ export const MetricsWrapper = (props: {
             type="number"
             onInput={props.onChangePageNumber}
           />
+        </div>
+        <div>
+          <Button onClick={props.clearQuery}>Clear</Button>
         </div>
       </div>
     </>
