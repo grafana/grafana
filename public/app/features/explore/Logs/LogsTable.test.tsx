@@ -1,7 +1,15 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
-import { FieldType, LogRowModel, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
+import {
+  FieldType,
+  LogLevel,
+  LogRowModel,
+  LogsSortOrder,
+  MutableDataFrame,
+  standardTransformersRegistry,
+  toUtc,
+} from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
@@ -42,6 +50,12 @@ describe('LogsTable', () => {
         },
         {
           config: {},
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['ts1', 'ts2', 'ts3'],
+        },
+        {
+          config: {},
           name: 'labels',
           type: FieldType.other,
           typeInfo: {
@@ -54,6 +68,7 @@ describe('LogsTable', () => {
     };
     return (
       <LogsTable
+        rows={[makeLog({})]}
         logsSortOrder={LogsSortOrder.Descending}
         splitOpen={() => undefined}
         timeZone={'utc'}
@@ -114,4 +129,37 @@ describe('LogsTable', () => {
       expect(columns[2].textContent).toContain('foo');
     });
   });
+
+  it('should not render `tsNs`', async () => {
+    setup();
+
+    await waitFor(() => {
+      const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
+
+      expect(columns.length).toBe(0);
+    });
+  });
 });
+
+const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
+  const uid = overrides.uid || '1';
+  const entry = `log message ${uid}`;
+  return {
+    uid,
+    entryFieldIndex: 0,
+    rowIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    logLevel: LogLevel.debug,
+    entry,
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {},
+    raw: entry,
+    timeFromNow: '',
+    timeEpochMs: 1,
+    timeEpochNs: '1000000',
+    timeLocal: '',
+    timeUtc: '',
+    ...overrides,
+  };
+};
