@@ -268,7 +268,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	var result mathexp.Results
-	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s)
+	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
 	return result, err
 }
 
@@ -294,7 +294,7 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 	return response.Frames, nil
 }
 
-func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service) (string, mathexp.Results, error) {
+func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service, logger log.Logger) (string, mathexp.Results, error) {
 	vals := make([]mathexp.Value, 0)
 	var dt data.FrameType
 	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
