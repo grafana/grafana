@@ -72,11 +72,8 @@ export const getLinkStyles = (
   weight?: TextLinkProps['weight'],
   color?: TextLinkProps['color']
 ) => {
-  const getLinkColor = (color: TextLinkProps['color'], inline: boolean) => {
-    if (color) {
-      return theme.colors.text[color];
-    }
-    return inline ? theme.colors.text.link : theme.colors.text.primary;
+  const getLinkColor = (color: TextLinkProps['color']) => {
+    return color ? theme.colors.text[color] : theme.colors.text.link;
   };
 
   return css([
@@ -89,7 +86,7 @@ export const getLinkStyles = (
     {
       alignItems: 'center',
       gap: '0.25em',
-      color: getLinkColor(color, inline),
+      color: getLinkColor(color),
       display: 'inline-flex',
       textDecoration: 'none',
       '&:hover': {
