@@ -27730,21 +27730,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select-event@npm:5.5.1":
+"react-select-event@npm:5.5.1, react-select-event@npm:^5.1.0":
   version: 5.5.1
   resolution: "react-select-event@npm:5.5.1"
   dependencies:
     "@testing-library/dom": ">=7"
   checksum: af0e43927eab54545b699c817480cb38cebb0432ea743c869d06e426bc5ccc8788d4e2da4741b63022c20282b87a1620cd1dcc79051c442ff291e41b604e02ca
-  languageName: node
-  linkType: hard
-
-"react-select-event@npm:^5.1.0":
-  version: 5.3.0
-  resolution: "react-select-event@npm:5.3.0"
-  dependencies:
-    "@testing-library/dom": ">=7"
-  checksum: 82cd6a35d9cc3b4acb30a75a4b3a4fbf42122d319b64b2f98d9f0e12eebdd9525af91b2e55abaf32d0b232cc2a9455276018cb1e58e7a2ed2921c24db2b818a0
   languageName: node
   linkType: hard
 
