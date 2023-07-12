@@ -811,71 +811,75 @@ func TestRedactedValue(t *testing.T) {
 }
 
 func TestHandleAWSSettings(t *testing.T) {
-	cfg := NewCfg()
-	awsSection, err := cfg.Raw.NewSection("aws")
-	require.NoError(t, err)
-	ConfigCleanup := func(t *testing.T) {
-		t.Cleanup(func() {
-		cfg = NewCfg()
-		awsSection, err = cfg.Raw.NewSection("aws")
+	t.Run("Should set deafult auth providers if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
 		require.NoError(t, err)
+		_, err = awsSection.NewKey("allowed_auth_providers", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, []string{"default", "keys", "credentials"}, cfg.AWSAllowedAuthProviders)
 	})
-}
-		t.Run("Should set deafult auth providers if not defined", func(t *testing.T) {
-			_, err = awsSection.NewKey("allowed_auth_providers", "")
-			require.NoError(t, err)
+	t.Run("Should pass on auth providers defined in config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("allowed_auth_providers", "keys, credentials")
+		require.NoError(t, err)
 
-			cfg.handleAWSConfig()
-			assert.Equal(t, []string{"default", "keys", "credentials"}, cfg.AWSAllowedAuthProviders)
-			ConfigCleanup(t)
-		})
-		t.Run("Should pass on auth providers defined in config", func(t *testing.T) {
-			_, err = awsSection.NewKey("allowed_auth_providers", "keys, credentials")
-			require.NoError(t, err)
+		cfg.handleAWSConfig()
+		assert.Equal(t, []string{"keys", "credentials"}, cfg.AWSAllowedAuthProviders)
+	})
+	t.Run("Should set assume role to true if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "")
+		require.NoError(t, err)
 
-			cfg.handleAWSConfig()
-			assert.Equal(t, []string{"keys", "credentials"}, cfg.AWSAllowedAuthProviders)
-			ConfigCleanup(t)
-		})
-		t.Run("Should set assume role to true if not defined", func(t *testing.T) {
-			_, err = awsSection.NewKey("assume_role_enabled", "")
-			require.NoError(t, err)
+		cfg.handleAWSConfig()
+		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "false")
+		require.NoError(t, err)
 
-			cfg.handleAWSConfig()
-			assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
-			ConfigCleanup(t)
-		})
-		t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
-			_, err = awsSection.NewKey("assume_role_enabled", "false")
-			require.NoError(t, err)
+		cfg.handleAWSConfig()
+		assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to true if defined as true in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "true")
+		require.NoError(t, err)
 
-			cfg.handleAWSConfig()
-			assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
-			ConfigCleanup(t)
-		})
-		t.Run("Should set assume role to true if defined as true in the config", func(t *testing.T) {
-			_, err = awsSection.NewKey("assume_role_enabled", "true")
-			require.NoError(t, err)
+		cfg.handleAWSConfig()
+		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "false")
+		require.NoError(t, err)
 
-			cfg.handleAWSConfig()
-			assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
-			ConfigCleanup(t)
-		})
-		t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
-			_, err = awsSection.NewKey("assume_role_enabled", "false")
-			require.NoError(t, err)
+		cfg.handleAWSConfig()
+		assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set deafult page limit if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("list_metrics_page_limit", "")
+		require.NoError(t, err)
 
-			cfg.handleAWSConfig()
-			assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
-			ConfigCleanup(t)
-		})
-		t.Run("Should set deafult page limit if not defined", func(t *testing.T) {
-			_, err = awsSection.NewKey("list_metrics_page_limit", "")
-			require.NoError(t, err)
+		cfg.handleAWSConfig()
 
-			cfg.handleAWSConfig()
-
-			assert.Equal(t, 500, cfg.AWSListMetricsPageLimit)
-			ConfigCleanup(t)
-		})
+		assert.Equal(t, 500, cfg.AWSListMetricsPageLimit)
+	})
 }
