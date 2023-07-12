@@ -28,16 +28,10 @@ import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensi
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
+import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
-import {
-  DimensionValues,
-  ScatterFieldConfig,
-  defaultScatterFieldConfig,
-  ScatterHoverCallback,
-  ScatterSeries,
-  Options,
-  ScatterShow,
-} from './types';
+import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
+import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
@@ -110,7 +104,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: ScatterFieldConfig = { ...defaultScatterFieldConfig, ...y.config.custom };
+  const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
@@ -140,7 +134,7 @@ function getScatterSeries(
   // Size configs
   //----------------
   let pointSizeHints = dims.pointSizeConfig;
-  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? 5;
+  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? DEFAULT_POINT_SIZE;
   let pointSize: DimensionValues<number> = () => pointSizeFixed;
   if (dims.pointSizeIndex) {
     pointSize = (frame) => {
@@ -300,7 +294,7 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
+//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
 const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],

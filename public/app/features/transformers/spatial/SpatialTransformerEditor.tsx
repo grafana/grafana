@@ -9,6 +9,7 @@ import {
   StandardEditorContext,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
@@ -165,4 +166,5 @@ export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransf
   name: spatialTransformer.name,
   description: spatialTransformer.description,
   state: PluginState.alpha,
+  categories: new Set([TransformerCategory.PerformSpatialOperations]),
 };

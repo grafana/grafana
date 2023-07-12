@@ -50,7 +50,7 @@ When upgrading to Grafana > 9.0, existing installations that use legacy alerting
 1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
 2. Enter the following in your configuration:
 
-```
+```toml
 [alerting]
 enabled = true
 
@@ -73,7 +73,7 @@ You can deactivate both Grafana Alerting and legacy alerting in Grafana.
 1. Go to your custom configuration file ($WORKING_DIR/conf/custom.ini).
 1. Enter the following in your configuration:
 
-```
+```toml
 [alerting]
 enabled = false
 
@@ -93,7 +93,7 @@ All new alerts and changes made exclusively in Grafana Alerting will be deleted.
 
 To roll back to legacy alerting, enter the following in your configuration:
 
-```
+```toml
 force_migration = true
 
 [alerting]
@@ -113,7 +113,7 @@ If you have been using legacy alerting up until now your existing alerts will be
 
 To opt in to Grafana Alerting, enter the following in your configuration:
 
-```
+```toml
 [alerting]
 enabled = false
 
@@ -148,6 +148,8 @@ longer supported.
 1. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points.
 
 1. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
+
+1. Alerting on Prometheus `Both` type queries is not supported in Grafana Alerting. Existing legacy alerts with `Both` type queries are migrated to Grafana Alerting as alerts with `Range` type queries.
 
 **Limitations**
 

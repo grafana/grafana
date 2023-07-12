@@ -30,7 +30,11 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
             onToggle={() => setIsCollapsed(!isCollapsed)}
             data-testid="alert-group-collapse-toggle"
           />
-          {Object.keys(group.labels).length ? <AlertLabels labels={group.labels} /> : <span>No grouping</span>}
+          {Object.keys(group.labels).length ? (
+            <AlertLabels labels={group.labels} size="sm" />
+          ) : (
+            <span>No grouping</span>
+          )}
         </div>
         <AlertGroupHeader group={group} />
       </div>

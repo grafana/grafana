@@ -8,6 +8,7 @@ import {
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
+import { InsertNullsEditor } from '../timeseries/InsertNullsEditor';
 import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
@@ -57,7 +58,17 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           defaultValue: false,
           editor: SpanNullsEditor,
           override: SpanNullsEditor,
-          shouldApply: (f) => f.type !== FieldType.time,
+          shouldApply: (field) => field.type !== FieldType.time,
+          process: identityOverrideProcessor,
+        })
+        .addCustomEditor<void, boolean>({
+          id: 'insertNulls',
+          path: 'insertNulls',
+          name: 'Disconnect values',
+          defaultValue: false,
+          editor: InsertNullsEditor,
+          override: InsertNullsEditor,
+          shouldApply: (field) => field.type !== FieldType.time,
           process: identityOverrideProcessor,
         });
 
