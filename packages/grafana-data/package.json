@@ -91,7 +91,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "sinon": "15.0.1",
+    "sinon": "15.2.0",
     "typescript": "4.8.4"
   },
   "peerDependencies": {
