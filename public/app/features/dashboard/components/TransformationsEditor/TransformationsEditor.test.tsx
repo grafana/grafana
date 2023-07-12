@@ -24,7 +24,7 @@ describe('TransformationsEditor', () => {
     function renderList() {
       setup();
 
-      const cards = screen.getAllByTestId(/^New transform/i);
+      const cards = screen.getAllByTestId(/New transform/i);
       expect(cards.length).toEqual(standardTransformersRegistry.list().length);
     }
 
@@ -44,7 +44,7 @@ describe('TransformationsEditor', () => {
           options: {},
         },
       ]);
-      const editors = screen.getAllByTestId(/^Transformation editor/);
+      const editors = screen.getAllByTestId(/Transformation editor/);
       expect(editors).toHaveLength(1);
     }
 
