@@ -214,7 +214,7 @@
     "lerna": "5.5.4",
     "lint-staged": "13.2.3",
     "mini-css-extract-plugin": "2.7.2",
-    "msw": "1.1.0",
+    "msw": "1.2.2",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
