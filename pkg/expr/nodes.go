@@ -291,7 +291,7 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 
 func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service, logger log.Logger) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
-		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{}}}, nil
+		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
 
 	vals := make([]mathexp.Value, 0)
