@@ -32,5 +32,5 @@ For panels, the rendering logic could in some cases be easily preserved but all 
 ### Links
 
 - [Migrate Angular to React](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/#migrate-a-plugin-from-angular-to-react)
-- [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
-- [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
+- [Build a panel plugin](/tutorials/build-a-panel-plugin/)
+- [Build a data source plugin](/tutorials/build-a-data-source-plugin/)
