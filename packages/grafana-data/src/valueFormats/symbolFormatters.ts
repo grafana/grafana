@@ -26,7 +26,7 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   };
 }
 
-const SI_PREFIXES = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+const SI_PREFIXES = ['f', 'p', 'n', 'µ', 'm', 'c', 'd', '', 'da', 'h', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
 const SI_BASE_INDEX = SI_PREFIXES.indexOf('');
 
 export function getOffsetFromSIPrefix(c: string): number {
@@ -43,5 +43,7 @@ export function binaryPrefix(unit: string, offset = 0): ValueFormatter {
 
 export function SIPrefix(unit: string, offset = 0): ValueFormatter {
   const units = SI_PREFIXES.map((p) => ' ' + p + unit);
-  return scaledUnits(1000, units, SI_BASE_INDEX + offset);
+  const absOffset = Math.abs(offset);
+  const factor = absOffset === 1 ? 10 : absOffset === 2 ? 100 : 1000;
+  return scaledUnits(factor, units, SI_BASE_INDEX + offset);
 }
