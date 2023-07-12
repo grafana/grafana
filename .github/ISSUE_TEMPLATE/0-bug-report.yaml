@@ -24,29 +24,20 @@ body:
   - type: textarea
     attributes:
       label: What happened?
-      description: |
-        Describe your bug. What happened? What did you expect to happen?
-        **Hot Tip:** Record your screen and add it here as a gif. 
-      placeholder: Tell us what you see!
-      value:
+      description: "**Hot Tip:** Record your screen and add it here as a gif."
     validations:
       required: true
 
   - type: textarea
     attributes:
       label: What did you expect to happen?
-      description: What did you expect to happen?
-      placeholder: Tell us what you expect!
-      value:
     validations:
       required: true
 
   - type: textarea
     attributes:
       label: Did this work before?
-      description: "Tell us how it works before?"
-      placeholder: "No"
-      value: "No"
+      placeholder: "If this worked before, what version worked correctly?"
     validations:
       required: true
 
@@ -94,18 +85,6 @@ body:
     validations:
       required: false
 
-  - type: dropdown
-    id: regression
-    attributes:
-      label: Is this a Regression?
-      description: |
-        A regression means that the feature was working, then you upgraded, and now it's broken.
-      options:
-        - 'No'
-        - 'Yes'
-    validations:
-      required: false
-
   - type: input
     attributes:
       label: Datasource(s)?
@@ -120,4 +99,3 @@ body:
         No need for backticks--this text will get formatted as a code-block.
         What's a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations)?
       placeholder: Copy "get-help" data here
-      value: Copy the panel's ["get-help" data](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) here
