@@ -79,11 +79,12 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			continue
 		}
 
-		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
+		k := filepath.Dir(pluginJSONAbsPath)
+		if _, dupe := foundPlugins[k]; dupe {
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
 			continue
 		}
-		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
+		foundPlugins[k] = plugin
 	}
 
 	res := make(map[string]*plugins.FoundBundle)

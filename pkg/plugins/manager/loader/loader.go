@@ -3,13 +3,9 @@ package loader
 import (
 	"context"
 	"errors"
-	"fmt"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -17,19 +13,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
 	discovery discovery.Discoverer
+	bootstrap bootstrap.Bootstrapper
 
 	processManager          process.Service
 	pluginRegistry          registry.Service
@@ -52,14 +49,15 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		roleRegistry, assetPath, angularInspector, externalServiceRegistry,
-		discovery.NewDiscoveryStage(pluginFinder, pluginRegistry, signatureCalculator, assetPath))
+		discovery.NewDiscoveryStage(pluginFinder, pluginRegistry),
+		bootstrap.NewBootstrapStage(signatureCalculator, assetPath))
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
-	discovery discovery.Discoverer) *Loader {
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper) *Loader {
 	return &Loader{
 		pluginRegistry:          pluginRegistry,
 		pluginInitializer:       initializer.New(cfg, backendProvider, license),
@@ -73,6 +71,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		angularInspector:        angularInspector,
 		externalServiceRegistry: externalServiceRegistry,
 		discovery:               discovery,
+		bootstrap:               bootstrap,
 	}
 }
 
@@ -85,9 +84,16 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	}
 	// </DISCOVERY STAGE>
 
+	// <BOOTSTRAP STAGE>
+	bootstrappedPlugins, err := l.bootstrap.Bootstrap(ctx, src, discoveredPlugins)
+	if err != nil {
+		return nil, err
+	}
+	// </BOOTSTRAP STAGE>
+
 	// <VERIFICATION STAGE>
-	verifiedPlugins := make([]*plugins.Plugin, 0, len(discoveredPlugins))
-	for _, plugin := range discoveredPlugins {
+	verifiedPlugins := make([]*plugins.Plugin, 0, len(bootstrappedPlugins))
+	for _, plugin := range bootstrappedPlugins {
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
@@ -139,30 +145,6 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		verifiedPlugins = append(verifiedPlugins, plugin)
 	}
 	// </VERIFICATION STAGE>
-
-	// <ENRICHMENT STAGE>
-	for _, plugin := range verifiedPlugins {
-		if err = l.setImages(plugin); err != nil {
-			return nil, err
-		}
-
-		// Hardcoded alias changes
-		switch plugin.ID {
-		case "grafana-pyroscope-datasource": // rebranding
-			plugin.Alias = "phlare"
-		case "debug": // panel plugin used for testing
-			plugin.Alias = "debugX"
-		}
-
-		if plugin.IsApp() {
-			setDefaultNavURL(plugin)
-		}
-
-		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildPlugin(plugin.Parent, plugin)
-		}
-	}
-	// </ENRICHMENT STAGE>
 
 	// <INITIALIZATION STAGE>
 	initializedPlugins := make([]*plugins.Plugin, 0, len(verifiedPlugins))
@@ -261,69 +243,6 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	}
 
 	return nil
-}
-
-func (l *Loader) setImages(p *plugins.Plugin) error {
-	var err error
-	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
-		*dst, err = l.assetPath.RelativeURL(p, *dst, defaultLogoPath(p.Type))
-		if err != nil {
-			return fmt.Errorf("logo: %w", err)
-		}
-	}
-	for i := 0; i < len(p.Info.Screenshots); i++ {
-		screenshot := &p.Info.Screenshots[i]
-		screenshot.Path, err = l.assetPath.RelativeURL(p, screenshot.Path, "")
-		if err != nil {
-			return fmt.Errorf("screenshot %d relative url: %w", i, err)
-		}
-	}
-	return nil
-}
-
-func setDefaultNavURL(p *plugins.Plugin) {
-	// slugify pages
-	for _, include := range p.Includes {
-		if include.Slug == "" {
-			include.Slug = slugify.Slugify(include.Name)
-		}
-
-		if !include.DefaultNav {
-			continue
-		}
-
-		if include.Type == "page" {
-			p.DefaultNavURL = path.Join("/plugins/", p.ID, "/page/", include.Slug)
-		}
-		if include.Type == "dashboard" {
-			dboardURL := include.DashboardURLPath()
-			if dboardURL == "" {
-				p.Logger().Warn("Included dashboard is missing a UID field")
-				continue
-			}
-
-			p.DefaultNavURL = dboardURL
-		}
-	}
-}
-
-func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
-	if !parent.IsApp() {
-		return
-	}
-	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
-	child.IncludedInAppID = parent.ID
-	child.BaseURL = parent.BaseURL
-
-	if parent.IsCorePlugin() {
-		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
-	} else {
-		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
-	}
-}
-
-func defaultLogoPath(pluginType plugins.Type) string {
-	return "public/img/icn-" + string(pluginType) + ".svg"
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {

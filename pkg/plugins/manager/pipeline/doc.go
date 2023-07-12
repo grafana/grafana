@@ -3,8 +3,8 @@
 // A pipeline is a sequence of stages that are executed in order. Each stage is made up of a series of steps.
 // A plugin loader pipeline is defined by the following stages:
 // 	 Discovery: Find plugins (e.g. from disk, remote, etc.), filter the results based on some criteria and construct the plugin base.
-// 	 Verification: Verify the plugins (e.g. signature validation, angular detection, etc.)
-// 	 Enrichment: Decorate the plugin with additional metadata (set image paths, aliasing, etc.)
+// 	 Bootstrap: Create the plugins found in the discovery stage and enrich them with metadata.
+// 	 Verification: Verify the plugins based on some criteria (e.g. signature validation, angular detection, etc.)
 // 	 Initialization: Initialize the plugin for use (e.g. register with Grafana, etc.)
 // 	 Post-Initialization: Perform any post-initialization tasks (e.g. start the backend process, declare RBAC roles etc.)
 

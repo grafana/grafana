@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -542,61 +543,6 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 		if !cmp.Equal(got, expected, compareOpts...) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
-	})
-}
-
-func TestLoader_setDefaultNavURL(t *testing.T) {
-	t.Run("When including a dashboard with DefaultNav: true", func(t *testing.T) {
-		pluginWithDashboard := &plugins.Plugin{
-			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
-				{
-					Type:       "dashboard",
-					DefaultNav: true,
-					UID:        "",
-				},
-			}},
-		}
-		logger := log.NewTestLogger()
-		pluginWithDashboard.SetLogger(logger)
-
-		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
-			setDefaultNavURL(pluginWithDashboard)
-			require.Equal(t, "", pluginWithDashboard.DefaultNavURL)
-			require.NotZero(t, logger.WarnLogs.Calls)
-			require.Equal(t, "Included dashboard is missing a UID field", logger.WarnLogs.Message)
-		})
-
-		t.Run("Default nav URL is set if dashboard UID field is set", func(t *testing.T) {
-			pluginWithDashboard.Includes[0].UID = "a1b2c3"
-
-			setDefaultNavURL(pluginWithDashboard)
-			require.Equal(t, "/d/a1b2c3", pluginWithDashboard.DefaultNavURL)
-		})
-	})
-
-	t.Run("When including a page with DefaultNav: true", func(t *testing.T) {
-		pluginWithPage := &plugins.Plugin{
-			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
-				{
-					Type:       "page",
-					DefaultNav: true,
-					Slug:       "testPage",
-				},
-			}},
-		}
-
-		t.Run("Default nav URL is set using slug", func(t *testing.T) {
-			setDefaultNavURL(pluginWithPage)
-			require.Equal(t, "/plugins/page/testPage", pluginWithPage.DefaultNavURL)
-		})
-
-		t.Run("Default nav URL is set using slugified Name field if Slug field is empty", func(t *testing.T) {
-			pluginWithPage.Includes[0].Slug = ""
-			pluginWithPage.Includes[0].Name = "My Test Page"
-
-			setDefaultNavURL(pluginWithPage)
-			require.Equal(t, "/plugins/page/my-test-page", pluginWithPage.DefaultNavURL)
-		})
 	})
 }
 
@@ -1466,29 +1412,6 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	})
 }
 
-func Test_setPathsBasedOnApp(t *testing.T) {
-	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
-		child := &plugins.Plugin{
-			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
-		}
-		parent := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				Type: plugins.TypeApp,
-				ID:   "testdata-app",
-			},
-			Class:   plugins.ClassCore,
-			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
-			BaseURL: "public/app/plugins/app/testdata-app",
-		}
-
-		configureAppChildPlugin(parent, child)
-
-		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
-		require.Equal(t, "testdata-app", child.IncludedInAppID)
-		require.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
-	})
-}
-
 func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	angularInspector, err := angularinspector.NewStaticInspector()
 	reg := fakes.NewFakePluginRegistry()
@@ -1497,7 +1420,8 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assets, angularInspector, &fakes.FakeOauthService{},
-		discovery.NewDiscoveryStage(finder.NewLocalFinder(cfg), reg, signature.ProvideService(statickey.New()), assets))
+		discovery.NewDiscoveryStage(finder.NewLocalFinder(cfg), reg),
+		bootstrap.NewBootstrapStage(signature.ProvideService(statickey.New()), assets))
 
 	for _, cb := range cbs {
 		cb(l)

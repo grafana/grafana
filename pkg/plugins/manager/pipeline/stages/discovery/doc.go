@@ -14,7 +14,7 @@
 // The Filter stage is implemented by the FindFilterFunc type.
 // - func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
 //
-// The Bootstrap stage is implemented by the BootstrapFunc type.
+// The Bootstrap stage is implemented by the ConstructFunc type.
 // - func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
 
 package discovery
