@@ -116,9 +116,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         onKeyDown={handleKeyDown}
       />
 
+      <Indent level={level} />
       <div className={styles.rowBody}>
-        <Indent level={level} />
-
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}
@@ -150,6 +149,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     position: 'relative',
     alignItems: 'center',
     flexGrow: 1,
+    gap: theme.spacing(0.5),
     paddingLeft: theme.spacing(1),
   });
 
@@ -176,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       alignItems: 'center',
       [':not(:first-child)']: {
-        borderTop: `solid 1px ${theme.components.input.borderColor}`,
+        borderTop: `solid 1px ${theme.colors.border.weak}`,
       },
     }),
 

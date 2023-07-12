@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
@@ -138,15 +138,13 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     offset: [0, 0],
     trigger: 'click',
     onVisibleChange: (value: boolean) => {
+      // Clear search state when closing the overlay
+      if (!value) {
+        setSearch('');
+      }
       setOverlayOpen(value);
     },
   });
-
-  useEffect(() => {
-    if (!overlayOpen) {
-      setSearch('');
-    }
-  }, [overlayOpen]);
 
   const isLoading = rootFoldersState.loading || searchState.loading;
   const error = rootFoldersState.error || searchState.error;
@@ -158,16 +156,20 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     label = 'Dashboards';
   }
 
-  return !visible ? (
-    <Button
-      className={styles.button}
-      variant="secondary"
-      icon={value.uid !== undefined ? 'folder' : undefined}
-      ref={setTriggerRef}
-    >
-      {label ?? 'Select folder'}
-    </Button>
-  ) : (
+  if (!visible) {
+    return (
+      <Button
+        className={styles.button}
+        variant="secondary"
+        icon={value.uid !== undefined ? 'folder' : undefined}
+        ref={setTriggerRef}
+      >
+        {label ?? 'Select folder'}
+      </Button>
+    );
+  }
+
+  return (
     <>
       <FilterInput
         ref={setTriggerRef}
