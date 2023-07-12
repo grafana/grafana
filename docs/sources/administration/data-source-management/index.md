@@ -144,7 +144,7 @@ You can optionally override a data source's configured TTL for individual dashbo
 If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 {{% /admonition %}}
 
-To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}).
+To configure global settings for query caching, refer to the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}).
 
 ### Disable query caching
 
@@ -155,7 +155,7 @@ To disable query caching for a single data source:
 1. In the data source list, click the data source that you want to turn off caching for.
 1. On the Cache tab, click **Disable**.
 
-To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
+To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
 ### Clear cache
 
