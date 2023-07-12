@@ -155,7 +155,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       const currentShowPicker = !currentHasTransforms || this.state.showPicker;
 
       if (prevShowPicker !== currentShowPicker) {
-        this.setState({ scrollTop: currentShowPicker ? Math.random() / 2 : 1000000 });
+        // kindOfZero will be a random number between 0 and 0.5. It will be rounded to 0 by the scrollable component.
+        // We cannot always use 0 as it will not trigger a rerender of the scrollable component consistently
+        // due to React changes detection algo.
+        const kindOfZero = Math.random() / 2;
+
+        this.setState({ scrollTop: currentShowPicker ? kindOfZero : Number.MAX_SAFE_INTEGER });
       }
     }
   }

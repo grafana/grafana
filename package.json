@@ -6,8 +6,6 @@
   "version": "10.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "ludo-lint": "eslint --rule '@typescript-eslint/no-explicit-any: error' --rule '@grafana/no-aria-label-selectors: error' public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx",
-    "ludo-jest": "jest public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.test.tsx",
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build --env noMinify=1",
     "dev": "yarn i18n:compile && NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
