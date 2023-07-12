@@ -85,7 +85,13 @@ export const getDataframeFields = memoizeOne(
   }
 );
 
-function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
+export function shouldRemoveField(
+  field: Field,
+  index: number,
+  row: LogRowModel,
+  shouldRemoveLine = true,
+  shouldRemoveTime = true
+) {
   // hidden field, remove
   if (field.config.custom?.hidden) {
     return true;
@@ -112,19 +118,23 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (field.name === 'id' || field.name === 'tsNs') {
     return true;
   }
-  const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);
-  if (
-    field.name === firstTimeField?.name &&
-    field.type === FieldType.time &&
-    field.values[0] === firstTimeField.values[0]
-  ) {
-    return true;
+  if (shouldRemoveTime) {
+    const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);
+    if (
+      field.name === firstTimeField?.name &&
+      field.type === FieldType.time &&
+      field.values[0] === firstTimeField.values[0]
+    ) {
+      return true;
+    }
   }
 
-  // first string-field is the log-line
-  const firstStringFieldIndex = row.dataFrame.fields.findIndex((f) => f.type === FieldType.string);
-  if (firstStringFieldIndex === index) {
-    return true;
+  if (shouldRemoveLine) {
+    // first string-field is the log-line
+    const firstStringFieldIndex = row.dataFrame.fields.findIndex((f) => f.type === FieldType.string);
+    if (firstStringFieldIndex === index) {
+      return true;
+    }
   }
 
   return false;

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { partition } from 'lodash';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -155,6 +156,10 @@ const getLoadMoreDirection = (place: Place, sortOrder: LogsSortOrder): LogRowCon
   return LogRowContextQueryDirection.Backward;
 };
 
+const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
+  return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
+};
+
 const PAGE_SIZE = 50;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
@@ -249,11 +254,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     generationRef.current += 1; // results from currently running loadMore calls will be ignored
   };
 
-  const loadMore = async (place: Place): Promise<LogRowModel[]> => {
-    const { below, above } = context;
-    // we consider all the currently existing rows, even the original row,
-    // this way this array of rows will never be empty
-    const allRows = [...above.rows, row, ...below.rows];
+  const loadMore = async (place: Place, allRows: LogRowModel[]): Promise<LogRowModel[]> => {
     const refRow = allRows.at(place === 'above' ? 0 : -1);
     if (refRow == null) {
       throw new Error('should never happen. the array always contains at least 1 item (the middle row)');
@@ -269,7 +270,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
 
     const out = newRows.filter((r) => {
-      return r.timeEpochNs !== refRow.timeEpochNs || r.entry !== refRow.entry;
+      return !containsRow(allRows, r);
     });
 
     return out;
@@ -301,6 +302,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   };
 
   const maybeLoadMore = async (place: Place) => {
+    const { below, above } = context;
     const section = context[place];
     if (section.loadingState === LoadingState.Loading) {
       return;
@@ -313,11 +315,25 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
     const currentGen = generationRef.current;
     try {
-      const newRows = await loadMore(place);
+      // we consider all the currently existing rows, even the original row,
+      // this way this array of rows will never be empty
+      const allRows = [...above.rows, row, ...below.rows];
+
+      const newRows = await loadMore(place, allRows);
+      const [older, newer] = partition(newRows, (newRow) => newRow.timeEpochNs > row.timeEpochNs);
+      const newAbove = logsSortOrder === LogsSortOrder.Ascending ? newer : older;
+      const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;
+
       if (currentGen === generationRef.current) {
-        setSection(place, (section) => ({
-          rows: place === 'above' ? [...newRows, ...section.rows] : [...section.rows, ...newRows],
-          loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+        setContext((c) => ({
+          above: {
+            rows: sortLogRows([...newAbove, ...c.above.rows], logsSortOrder),
+            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+          },
+          below: {
+            rows: sortLogRows([...c.below.rows, ...newBelow], logsSortOrder),
+            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
+          },
         }));
       }
     } catch {

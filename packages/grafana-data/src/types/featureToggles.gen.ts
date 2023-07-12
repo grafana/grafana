@@ -106,9 +106,9 @@ export interface FeatureToggles {
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
-  flameGraphV2?: boolean;
   elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
+  logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
 }
