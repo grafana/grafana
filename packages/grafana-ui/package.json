@@ -73,7 +73,7 @@
     "i18next": "^22.0.0",
     "immutable": "4.3.0",
     "is-hotkey": "0.2.0",
-    "jquery": "3.6.3",
+    "jquery": "3.7.0",
     "lodash": "4.17.21",
     "memoize-one": "6.0.0",
     "moment": "2.29.4",

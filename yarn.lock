@@ -4198,7 +4198,7 @@ __metadata:
     i18next: ^22.0.0
     immutable: 4.3.0
     is-hotkey: 0.2.0
-    jquery: 3.6.3
+    jquery: 3.7.0
     lodash: 4.17.21
     memoize-one: 6.0.0
     mock-raf: 1.0.1
@@ -19132,7 +19132,7 @@ __metadata:
     jest-fail-on-console: 3.1.1
     jest-junit: 15.0.0
     jest-matcher-utils: 29.3.1
-    jquery: 3.6.3
+    jquery: 3.7.0
     js-yaml: ^4.1.0
     json-markup: ^1.1.0
     json-source-map: 0.6.1
@@ -21926,10 +21926,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jquery@npm:3.6.3":
-  version: 3.6.3
-  resolution: "jquery@npm:3.6.3"
-  checksum: 0fd366bdcaa0c84a7a8751ce20f8192290141913978b5059574426d9b01f4365daa675f95aab3eec94fd794d27b08d32078a2236bef404b8ba78073009988ce6
+"jquery@npm:3.7.0":
+  version: 3.7.0
+  resolution: "jquery@npm:3.7.0"
+  checksum: 907785e133afc427650a131af5fccef66a404885037513b3d4d7d63aee6409bcc32a39836868c60e59b05aa0fb8ace8961c18b2ee3ffdf6ffdb571d6d7cd88ff
   languageName: node
   linkType: hard
 
