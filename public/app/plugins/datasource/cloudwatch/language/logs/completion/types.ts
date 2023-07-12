@@ -12,4 +12,6 @@ export const LogsTokenTypes: TokenTypes = {
   Number: 'number.cloudwatch-logs',
   String: 'string.cloudwatch-logs',
   Variable: 'variable.cloudwatch-logs',
+  Comment: 'comment.cloudwatch-logs',
+  Regexp: 'regexp.cloudwatch-logs',
 };
