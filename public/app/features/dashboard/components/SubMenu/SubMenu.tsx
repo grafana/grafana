@@ -42,6 +42,10 @@ class SubMenuUnConnected extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  disableSubmitOnEnter = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  };
+
   render() {
     const { dashboard, variables, links, annotations } = this.props;
 
@@ -53,7 +57,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
 
     return (
       <div className="submenu-controls">
-        <form aria-label="Template variables" className={styles}>
+        <form aria-label="Template variables" className={styles} onSubmit={this.disableSubmitOnEnter}>
           <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
         </form>
         <Annotations
