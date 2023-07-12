@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
@@ -554,17 +554,17 @@ const routePropertyToValue = (
 
   if (isNotGrouping) {
     return (
-      <Span variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary">
         Not grouping
-      </Span>
+      </Text>
     );
   }
 
   if (isSingleGroup) {
     return (
-      <Span variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary">
         Single group
-      </Span>
+      </Text>
     );
   }
 

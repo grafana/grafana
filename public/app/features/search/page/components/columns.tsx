@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -179,9 +179,9 @@ export const generateColumns = (
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
                       <Icon name={getIconForKind(info.kind)} />
-                      <Span variant="body" truncate>
+                      <Text variant="body" truncate>
                         {info.name}
-                      </Span>
+                      </Text>
                     </a>
                   ) : (
                     <span key={p}>{p}</span>

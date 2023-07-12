@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { useChildrenByParentUIDState } from '../state';
@@ -36,9 +36,9 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
         <span className={styles.folderButtonSpacer} />
         {item.uiKind === 'empty-folder' ? (
           <em className={styles.emptyText}>
-            <Span variant="body" color="secondary" truncate>
+            <Text variant="body" color="secondary" truncate>
               No items
-            </Span>
+            </Text>
           </em>
         ) : (
           <Skeleton width={200} />
@@ -66,7 +66,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
       )}
       <div className={styles.iconNameContainer}>
         {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
-        <Span variant="body" truncate>
+        <Text variant="body" truncate>
           {item.url ? (
             <Link
               onClick={() => {
@@ -80,7 +80,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
           ) : (
             item.title
           )}
-        </Span>
+        </Text>
       </div>
     </>
   );

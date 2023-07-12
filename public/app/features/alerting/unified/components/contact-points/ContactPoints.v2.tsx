@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { GrafanaNotifierType } from 'app/types/alerting';
 
@@ -104,7 +104,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Span variant="body">{name}</Span>
+          <Text variant="body">{name}</Text>
         </Stack>
         {policies.length > 0 ? (
           <MetaText>
@@ -179,14 +179,14 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
           <Stack direction="row" alignItems="center" gap={1}>
             <Stack direction="row" alignItems="center" gap={0.5}>
               {iconName && <Icon name={iconName} />}
-              <Span variant="body" color="primary">
+              <Text variant="body" color="primary">
                 {type}
-              </Span>
+              </Text>
             </Stack>
             {description && (
-              <Span variant="bodySmall" color="secondary">
+              <Text variant="bodySmall" color="secondary">
                 {description}
-              </Span>
+              </Text>
             )}
           </Stack>
         </div>
@@ -196,7 +196,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
               <>
                 {/* TODO we might need an error variant for MetaText, dito for success */}
                 {/* TODO show error details on hover or elsewhere */}
-                <Span color="error" variant="bodySmall" weight="bold">
+                <Text color="error" variant="bodySmall" weight="bold">
                   <Stack direction="row" alignItems={'center'} gap={0.5}>
                     <Tooltip
                       content={
@@ -208,7 +208,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
                       </span>
                     </Tooltip>
                   </Stack>
-                </Span>
+                </Text>
               </>
             ) : (
               <>
