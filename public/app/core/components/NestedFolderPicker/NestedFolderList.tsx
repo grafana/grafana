@@ -116,8 +116,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         onKeyDown={handleKeyDown}
       />
 
-      <Indent level={level} />
       <div className={styles.rowBody}>
+        <Indent level={level} />
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}
@@ -150,7 +150,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     alignItems: 'center',
     flexGrow: 1,
     gap: theme.spacing(0.5),
-    paddingLeft: theme.spacing(1),
+    overflow: 'hidden',
+    padding: theme.spacing(0, 1),
   });
 
   return {
@@ -161,14 +162,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     // Should be the same size as the <IconButton /> for proper alignment
     folderButtonSpacer: css({
       paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(0.5)})`,
-    }),
-
-    headerRow: css({
-      backgroundColor: theme.colors.background.secondary,
-      height: ROW_HEIGHT,
-      lineHeight: ROW_HEIGHT + 'px',
-      margin: 0,
-      paddingLeft: theme.spacing(3.5),
     }),
 
     row: css({
@@ -210,6 +203,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     label: css({
       lineHeight: ROW_HEIGHT + 'px',
       flexGrow: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
       '&:hover': {
         textDecoration: 'underline',
         cursor: 'pointer',
