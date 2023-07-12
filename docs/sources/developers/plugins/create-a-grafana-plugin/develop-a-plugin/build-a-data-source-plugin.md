@@ -25,7 +25,7 @@ In this tutorial, you'll:
 ### Prerequisites
 
 - Grafana >=7.0
-- NodeJS >=14
+- Node.js version 16 or above
 - yarn
   {{% /class %}}
 
