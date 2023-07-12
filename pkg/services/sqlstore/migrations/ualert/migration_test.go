@@ -447,6 +447,16 @@ func TestAMConfigMigration(t *testing.T) {
 			expErr: errors.New(`migration failed (id = move dashboard alerts to unified alerting): failed to validate AlertmanagerConfig in orgId 1: failed to validate integration "notifier1" (UID notifier1) of type "email": could not find addresses in settings`),
 		},
 		{
+			name: "when one invalid default integration of many valid is linked to an alert, fail migration",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),
+				createAlertNotification(t, int64(1), "notifier2", "email", brokenEmailSettings, true),
+				createAlertNotification(t, int64(1), "notifier3", "slack", slackSettings, true),
+			},
+			alerts: []*models.Alert{createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2", "notifier3"})},
+			expErr: errors.New(`migration failed (id = move dashboard alerts to unified alerting): failed to validate AlertmanagerConfig in orgId 1: failed to validate integration "notifier2" (UID notifier2) of type "email": could not find addresses in settings`),
+		},
+		{
 			name: "when unsupported channels, do not migrate them",
 			legacyChannels: []*models.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),

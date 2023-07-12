@@ -528,7 +528,9 @@ func validateReceivers(l log.Logger, r *PostableApiReceiver) error {
 		_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
 			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
 		}, decryptFunc)
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
