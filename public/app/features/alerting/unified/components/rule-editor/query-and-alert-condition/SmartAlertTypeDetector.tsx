@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -76,49 +76,19 @@ export function SmartAlertTypeDetector({
   editingExistingRule,
   rulesSourcesWithRuler,
   queries,
-  removeExpressionsInQueriesReducer,
-  addExpressionsInQueries,
-  prevExpressions,
-  setPrevExpressions,
+  onClickSwitch,
 }: {
   editingExistingRule: boolean;
   rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
-  removeExpressionsInQueriesReducer: () => void;
-  addExpressionsInQueries: (expressions: AlertQuery[]) => void;
-  prevExpressions: AlertQuery[];
-  setPrevExpressions: (expressions: AlertQuery[]) => void;
+  onClickSwitch: () => void;
 }) {
-  const { getValues, setValue } = useFormContext<RuleFormValues>();
+  const { getValues } = useFormContext<RuleFormValues>();
 
   const [ruleFormType, dataSourceName] = getValues(['type', 'dataSourceName']);
   const styles = useStyles2(getStyles);
 
   const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
-
-  const restoreExpressionsInQueries = useCallback(() => {
-    addExpressionsInQueries(prevExpressions);
-  }, [prevExpressions, addExpressionsInQueries]);
-
-  const onClickSwitch = useCallback(() => {
-    const typeInForm = getValues('type');
-    if (typeInForm === RuleFormType.cloudAlerting) {
-      setValue('type', RuleFormType.grafana);
-      setPrevExpressions.length > 0 && restoreExpressionsInQueries();
-    } else {
-      setValue('type', RuleFormType.cloudAlerting);
-      const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
-      setPrevExpressions(expressions);
-      removeExpressionsInQueriesReducer();
-    }
-  }, [
-    getValues,
-    setValue,
-    queries,
-    removeExpressionsInQueriesReducer,
-    restoreExpressionsInQueries,
-    setPrevExpressions,
-  ]);
 
   const typeTitle =
     ruleFormType === RuleFormType.cloudAlerting ? 'Data source-managed alert rule' : 'Grafana-managed alert rule';

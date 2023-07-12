@@ -10,7 +10,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import { H5 } from '@grafana/ui/src/unstable';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 import { useDispatch } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -306,6 +306,23 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   // we need to keep track of the previous expressions to be able to restore them when switching back to grafana managed
   const [prevExpressions, setPrevExpressions] = useState<AlertQuery[]>([]);
 
+  const restoreExpressionsInQueries = useCallback(() => {
+    addExpressionsInQueries(prevExpressions);
+  }, [prevExpressions, addExpressionsInQueries]);
+
+  const onClickSwitch = useCallback(() => {
+    const typeInForm = getValues('type');
+    if (typeInForm === RuleFormType.cloudAlerting) {
+      setValue('type', RuleFormType.grafana);
+      setPrevExpressions.length > 0 && restoreExpressionsInQueries();
+    } else {
+      setValue('type', RuleFormType.cloudAlerting);
+      const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
+      setPrevExpressions(expressions);
+      removeExpressionsInQueries();
+    }
+  }, [getValues, setValue, queries, removeExpressionsInQueries, restoreExpressionsInQueries, setPrevExpressions]);
+
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
       {/* This is the cloud data source selector */}
@@ -350,12 +367,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           </Field>
           <SmartAlertTypeDetector
             editingExistingRule={editingExistingRule}
-            rulesSourcesWithRuler={rulesSourcesWithRuler}
-            addExpressionsInQueries={addExpressionsInQueries}
-            removeExpressionsInQueriesReducer={removeExpressionsInQueries}
             queries={queries}
-            setPrevExpressions={setPrevExpressions}
-            prevExpressions={prevExpressions}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            onClickSwitch={onClickSwitch}
           />
         </Stack>
       )}
@@ -407,11 +421,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <SmartAlertTypeDetector
             editingExistingRule={editingExistingRule}
             rulesSourcesWithRuler={rulesSourcesWithRuler}
-            addExpressionsInQueries={addExpressionsInQueries}
-            removeExpressionsInQueriesReducer={removeExpressionsInQueries}
             queries={queries}
-            setPrevExpressions={setPrevExpressions}
-            prevExpressions={prevExpressions}
+            onClickSwitch={onClickSwitch}
           />
           {/* Expression Queries */}
           <H5>Expressions</H5>
