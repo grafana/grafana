@@ -1,6 +1,6 @@
 name: New Bug Report
 description: File a bug report
-title: "Product-Area-Here: short description of bug here"
+title: "Product Area: Short description of bug"
 body:
   - type: markdown
     attributes:
