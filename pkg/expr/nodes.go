@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -257,13 +258,21 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		}
 	}
 
+	dataFrames, err := getResponseFrame(resp, dn.refID)
+	if err != nil {
+		return mathexp.Results{}, QueryError{
+			RefID:         dn.refID,
+			DatasourceUID: dn.datasource.UID,
+			Err:           err,
+		}
+	}
+
 	var result mathexp.Results
-	responseType, result, err = queryDataResponseToResults(ctx, resp, dn.refID, dn.datasource.Type, dn.datasource.UID, s)
+	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s)
 	return result, err
 }
 
-func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResponse, refID string, datasourceType string, datasourceUid string, s *Service) (string, mathexp.Results, error) {
-	vals := make([]mathexp.Value, 0)
+func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
 	response, ok := resp.Responses[refID]
 	if !ok {
 		// This indicates that the RefID of the request was not included to the response, i.e. some problem in the data source plugin
@@ -276,31 +285,35 @@ func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResp
 			sort.Strings(keys)
 			availableRefIds = fmt.Sprintf(", available refIDs [%s]", strings.Join(keys, ","))
 		}
-		return "", mathexp.Results{}, fmt.Errorf("cannot find reference ID %s in response%s", refID, availableRefIds)
+		return nil, fmt.Errorf("cannot find reference ID %s in response%s", refID, availableRefIds)
 	}
 
 	if response.Error != nil {
-		return "", mathexp.Results{}, QueryError{RefID: refID, Err: response.Error, DatasourceUID: datasourceUid}
+		return nil, response.Error
 	}
+	return response.Frames, nil
+}
 
+func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service) (string, mathexp.Results, error) {
+	vals := make([]mathexp.Value, 0)
 	var dt data.FrameType
-	dt, useDataplane, _ := shouldUseDataplane(response.Frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
+	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
 		logger.Debug("Handling SSE data source query through dataplane", "datatype", dt)
-		result, err := handleDataplaneFrames(ctx, s.tracer, dt, response.Frames)
+		result, err := handleDataplaneFrames(ctx, s.tracer, dt, frames)
 		return fmt.Sprintf("dataplane-%s", dt), result, err
 	}
 
-	if isAllFrameVectors(datasourceType, response.Frames) { // Prometheus Specific Handling
-		vals, err := framesToNumbers(response.Frames)
+	if isAllFrameVectors(datasourceType, frames) { // Prometheus Specific Handling
+		vals, err := framesToNumbers(frames)
 		if err != nil {
 			return "", mathexp.Results{}, fmt.Errorf("failed to read frames as numbers: %w", err)
 		}
 		return "vector", mathexp.Results{Values: vals}, nil
 	}
 
-	if len(response.Frames) == 1 {
-		frame := response.Frames[0]
+	if len(frames) == 1 {
+		frame := frames[0]
 		// Handle Untyped NoData
 		if len(frame.Fields) == 0 {
 			return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
@@ -321,7 +334,7 @@ func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResp
 		}
 	}
 
-	for _, frame := range response.Frames {
+	for _, frame := range frames {
 		// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
 		// the WideToMany() function to error out, which results in unhealthy alerts.
 		// This check should be removed once inconsistencies in data source responses are solved.
