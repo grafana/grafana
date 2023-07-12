@@ -17,6 +17,8 @@ import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
+  sortLabelSelectors,
+  trimAllLines,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -438,5 +440,24 @@ describe('getNodePositionsFromQuery', () => {
     // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
     const nodePositions = getNodePositionsFromQuery('not loql', [String]);
     expect(nodePositions.length).toBe(0);
+  });
+});
+
+describe('sortLabelSelectors', () => {
+  it('sorts labels in a log query', () => {
+    const query: LokiQuery = { refId: 'A', expr: '{job="grafana", instance="localhost"}' };
+    expect(sortLabelSelectors(query)).toEqual({ refId: 'A', expr: '{instance="localhost", job="grafana"}' });
+  });
+
+  it('sorts labels in a metric query', () => {
+    const query: LokiQuery = { refId: 'A', expr: 'rate({label_b="B", label_a="A"}[1s])' };
+    expect(sortLabelSelectors(query)).toEqual({ refId: 'A', expr: 'rate({label_a="A", label_b="B"}[1s])' });
+  });
+});
+
+describe('trimAllLines', () => {
+  it('trims all lines of a query', () => {
+    const query: LokiQuery = { refId: 'A', expr: 'rate(    \n    {label_a="A", label_b="B"}\n   [1s]  \n ) ' };
+    expect(trimAllLines(query)).toEqual({ refId: 'A', expr: 'rate(\n{label_a="A", label_b="B"}\n[1s]\n)' });
   });
 });
