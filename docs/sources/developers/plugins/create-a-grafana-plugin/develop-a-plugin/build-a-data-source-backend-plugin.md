@@ -31,7 +31,7 @@ In this tutorial, you'll:
 - Grafana 7.0
 - Go ([Version](https://github.com/grafana/plugin-tools/blob/main/packages/create-plugin/templates/backend/go.mod#L3))
 - [Mage](https://magefile.org/)
-- Node.js version 16 or above
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 
