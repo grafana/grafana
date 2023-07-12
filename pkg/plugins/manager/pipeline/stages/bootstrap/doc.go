@@ -12,5 +12,5 @@
 //
 // The Decorate stage is implemented by the DecorateFunc type.
 // - func(ctx context.Context, src plugins.PluginSource, plugins []*plugins.Plugin) ([]*plugins.Plugin, error)
-//
+
 package bootstrap
