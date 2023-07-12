@@ -46,7 +46,7 @@ export const LogRowMenuCell = React.memo(
     return (
       // TODO: fix keyboard a11y
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-      <span className={styles.rowMenu} onClick={onLogRowClick}>
+      <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick}>
         {pinned && !mouseIsOver && (
           <IconButton
             className={styles.unPinButton}

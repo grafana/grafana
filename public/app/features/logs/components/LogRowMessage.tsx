@@ -84,7 +84,6 @@ export const LogRowMessage = React.memo((props: Props) => {
     setHover(false);
   }, []);
   const shouldShowMenu = useMemo(() => hover || pinned, [hover, pinned]);
-
   return (
     <>
       {
@@ -97,6 +96,8 @@ export const LogRowMessage = React.memo((props: Props) => {
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
           </button>
         </div>
+      </td>
+      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
         {shouldShowMenu && (
           <LogRowMenuCell
             logText={restructuredEntry}

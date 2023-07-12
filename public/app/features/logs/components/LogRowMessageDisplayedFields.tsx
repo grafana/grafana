@@ -57,16 +57,19 @@ export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
   const hideMenu = useCallback(() => {
     setHover(false);
   }, []);
-
   const shouldShowMenu = useMemo(() => hover || pinned, [hover, pinned]);
 
   return (
-    <td className={styles.logsRowMessage} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
-      <div className={wrapClassName}>{line}</div>
-      {shouldShowMenu && (
-        <LogRowMenuCell logText={line} row={row} styles={styles} pinned={pinned} mouseIsOver={hover} {...rest} />
-      )}
-    </td>
+    <>
+      <td className={styles.logsRowMessage} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
+        <div className={wrapClassName}>{line}</div>
+      </td>
+      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
+        {shouldShowMenu && (
+          <LogRowMenuCell logText={line} row={row} styles={styles} pinned={pinned} {...rest} mouseIsOver={false} />
+        )}
+      </td>
+    </>
   );
 });
 

@@ -84,10 +84,18 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       vertical-align: top;
 
       &:hover {
+        .log-row-menu {
+          z-index: 1;
+        }
+
         background: ${hoverBgColor};
       }
 
-      > td {
+      td:not(.log-row-menu-cell):last-child {
+        width: 100%;
+      }
+
+      > td:not(.log-row-menu-cell) {
         position: relative;
         padding-right: ${theme.spacing(1)};
         border-top: 1px solid transparent;
@@ -234,7 +242,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       align-items: center;
       position: absolute;
       top: 0;
-      right: 0;
       bottom: auto;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
