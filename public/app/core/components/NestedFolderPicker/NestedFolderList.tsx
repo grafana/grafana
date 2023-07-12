@@ -13,7 +13,6 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
-const LIST_HEIGHT = ROW_HEIGHT * 6.5; // show 6 and a bit rows
 const CHEVRON_SIZE = 'md';
 
 interface NestedFolderListProps {
@@ -40,8 +39,13 @@ export function NestedFolderList({
 
   return (
     <div className={styles.table}>
-      <div className={styles.headerRow}>Name</div>
-      <List height={LIST_HEIGHT} width="100%" itemData={virtualData} itemSize={ROW_HEIGHT} itemCount={items.length}>
+      <List
+        height={ROW_HEIGHT * Math.min(6.5, items.length)}
+        width="100%"
+        itemData={virtualData}
+        itemSize={ROW_HEIGHT}
+        itemCount={items.length}
+      >
         {Row}
       </List>
     </div>
@@ -112,16 +116,15 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         onKeyDown={handleKeyDown}
       />
 
+      <Indent level={level} />
       <div className={styles.rowBody}>
-        <Indent level={level} />
-
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}
             onClick={handleClick}
             // tabIndex not needed here because we handle keyboard navigation at the radio button level
             tabIndex={-1}
-            aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+            aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
             name={isOpen ? 'angle-down' : 'angle-right'}
           />
         ) : (
@@ -146,12 +149,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     position: 'relative',
     alignItems: 'center',
     flexGrow: 1,
+    gap: theme.spacing(0.5),
     paddingLeft: theme.spacing(1),
   });
 
   return {
     table: css({
-      border: `solid 1px ${theme.components.input.borderColor}`,
       background: theme.components.input.background,
     }),
 
@@ -172,7 +175,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       position: 'relative',
       alignItems: 'center',
-      borderTop: `solid 1px ${theme.components.input.borderColor}`,
+      [':not(:first-child)']: {
+        borderTop: `solid 1px ${theme.colors.border.weak}`,
+      },
     }),
 
     radio: css({

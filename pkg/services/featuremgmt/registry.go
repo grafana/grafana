@@ -601,13 +601,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "flameGraphV2",
-			Description:  "New version of flame graph with new features",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:         "elasticToggleableFilters",
 			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
 			Stage:        FeatureStageExperimental,

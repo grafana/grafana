@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Alert, FilterInput, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Alert, Button, FilterInput, LoadingBar, useStyles2 } from '@grafana/ui';
+import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
 import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
@@ -20,19 +22,21 @@ async function fetchRootFolders() {
 }
 
 interface NestedFolderPickerProps {
-  value?: FolderUID | undefined;
+  value?: FolderUID;
   // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
   // vs removing selection (if possible?)
-  onChange?: (folderUID: FolderChange) => void;
+  onChange?: (folder: FolderChange) => void;
 }
 
 export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
 
   const [search, setSearch] = useState('');
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
   const rootFoldersState = useAsync(fetchRootFolders);
+  const selectedFolder = useGetFolderQuery(value || skipToken);
 
   const searchState = useAsync(async () => {
     if (!search) {
@@ -120,68 +124,125 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const handleSelectionChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
       if (onChange) {
-        onChange({ title: item.title, uid: item.uid });
+        onChange({
+          uid: item.uid,
+          title: item.title,
+        });
       }
+      setOverlayOpen(false);
     },
     [onChange]
   );
+
+  const { getTooltipProps, setTooltipRef, setTriggerRef, visible, triggerRef } = usePopperTooltip({
+    visible: overlayOpen,
+    placement: 'bottom',
+    interactive: true,
+    offset: [0, 0],
+    trigger: 'click',
+    onVisibleChange: (value: boolean) => {
+      // Clear search state when closing the overlay
+      if (!value) {
+        setSearch('');
+      }
+      setOverlayOpen(value);
+    },
+  });
 
   const isLoading = rootFoldersState.loading || searchState.loading;
   const error = rootFoldersState.error || searchState.error;
 
   const tree = flatTree;
 
-  return (
-    <fieldset>
-      <Stack direction="column" gap={1}>
-        <FilterInput
-          placeholder="Search folder"
-          value={search}
-          escapeRegex={false}
-          onChange={(val) => setSearch(val)}
-        />
+  let label = selectedFolder.data?.title;
+  if (value === '') {
+    label = 'Dashboards';
+  }
 
-        {error && (
-          <Alert severity="warning" title="Error loading folders">
+  if (!visible) {
+    return (
+      <Button
+        className={styles.button}
+        variant="secondary"
+        icon={value !== undefined ? 'folder' : undefined}
+        ref={setTriggerRef}
+      >
+        {selectedFolder.isLoading ? <Skeleton width={100} /> : label ?? 'Select folder'}
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <FilterInput
+        ref={setTriggerRef}
+        autoFocus
+        placeholder={label ?? 'Search folder'}
+        value={search}
+        escapeRegex={false}
+        className={styles.search}
+        onChange={(val) => setSearch(val)}
+      />
+      <fieldset
+        ref={setTooltipRef}
+        {...getTooltipProps({
+          className: styles.tableWrapper,
+          style: {
+            width: triggerRef?.clientWidth,
+          },
+        })}
+      >
+        {error ? (
+          <Alert className={styles.error} severity="warning" title="Error loading folders">
             {error.message || error.toString?.() || 'Unknown error'}
           </Alert>
+        ) : (
+          <div>
+            {isLoading && (
+              <div className={styles.loader}>
+                <LoadingBar width={600} />
+              </div>
+            )}
+
+            <NestedFolderList
+              items={tree}
+              selectedFolder={value}
+              onFolderClick={handleFolderClick}
+              onSelectionChange={handleSelectionChange}
+              foldersAreOpenable={!(search && searchState.value)}
+            />
+          </div>
         )}
-
-        <div className={styles.tableWrapper}>
-          {isLoading && (
-            <div className={styles.loader}>
-              <LoadingBar width={600} />
-            </div>
-          )}
-
-          <NestedFolderList
-            items={tree}
-            selectedFolder={value}
-            onFolderClick={handleFolderClick}
-            onSelectionChange={handleSelectionChange}
-            foldersAreOpenable={!(search && searchState.value)}
-          />
-        </div>
-      </Stack>
-    </fieldset>
+      </fieldset>
+    </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    tableWrapper: css({
-      position: 'relative',
-      zIndex: 1,
-      background: 'palegoldenrod',
+    button: css({
+      maxWidth: '100%',
     }),
-
+    error: css({
+      marginBottom: 0,
+    }),
+    tableWrapper: css({
+      boxShadow: theme.shadows.z3,
+      position: 'relative',
+      zIndex: theme.zIndex.portal,
+    }),
     loader: css({
       position: 'absolute',
       top: 0,
       left: 0,
       right: 0,
-      zIndex: 2,
+      zIndex: theme.zIndex.portal + 1,
       overflow: 'hidden', // loading bar overflows its container, so we need to clip it
+    }),
+    search: css({
+      input: {
+        cursor: 'default',
+      },
     }),
   };
 };
