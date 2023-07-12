@@ -269,7 +269,7 @@ require (
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/grafana-apiserver v0.0.0-20230708003113-8a0ae77345b1
 	github.com/grafana/kindsys v0.0.0-20230710031138-57f73e1488a7
-	github.com/grafana/thema v0.0.0-20230712150238-80c1181109a8
+	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903
