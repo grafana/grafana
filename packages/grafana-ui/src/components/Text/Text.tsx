@@ -6,7 +6,7 @@ import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 
 export interface TextProps {
-  /** Defines what HTML element is defined underneath. "p" by default */
+  /** Defines what HTML element is defined underneath. "span" by default */
   element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
@@ -24,7 +24,7 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'p', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
+  ({ element = 'span', variant, weight, color, truncate, italic = false, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
         (theme) => getTextStyles(theme, variant, color, weight, truncate, italic, textAlignment),
@@ -51,7 +51,7 @@ const getTextStyles = (
   color?: TextProps['color'],
   weight?: TextProps['weight'],
   truncate?: TextProps['truncate'],
-  italic = false,
+  italic?: TextProps['italic'],
   textAlignment?: TextProps['textAlignment']
 ) => {
   return css([
