@@ -283,7 +283,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     let cursor: Partial<uPlot.Cursor> = {};
 
     cursor.sync = {
-      key: '__global_',
+      key: eventBus.id,
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (sync && sync() === DashboardCursorSync.Off) {

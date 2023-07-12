@@ -19,8 +19,10 @@ import {
 export class EventBusSrv implements EventBus, LegacyEmitter {
   private emitter: EventEmitter;
   private subscribers = new Map<Function, Subscriber<BusEvent>>();
-  constructor() {
+  private _id: string;
+  constructor(id?: string) {
     this.emitter = new EventEmitter();
+    this._id = id || '__global__';
   }
 
   publish<T extends BusEvent>(event: T): void {
@@ -103,8 +105,8 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     }
   }
 
-  getPath() {
-    return undefined;
+  get id(): string {
+    return this._id;
   }
 }
 
@@ -156,5 +158,9 @@ class ScopedEventBus implements EventBus {
 
   getPath(): string {
     return this.path.join('.');
+  }
+
+  get id(): string {
+    return this.eventBus.id;
   }
 }

@@ -100,12 +100,12 @@ const defaultProps: PanelProps<UnifiedAlertListOptions> = {
   timeZone: 'utc',
   options: defaultOptions,
   eventBus: {
+    id: 'test',
     subscribe: jest.fn(),
     getStream: jest.fn(),
     publish: jest.fn(),
     removeAllListeners: jest.fn(),
     newScopedBus: jest.fn(),
-    getPath: jest.fn(),
   },
   fieldConfig: {} as unknown as FieldConfigSource,
   height: 400,

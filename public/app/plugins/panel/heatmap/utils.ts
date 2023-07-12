@@ -613,7 +613,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
-      key: '__global_',
+      key: eventBus.id,
       scales: [xScaleKey, yScaleKey],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {

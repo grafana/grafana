@@ -12,12 +12,12 @@ describe('when fill below to option is used', () => {
 
   beforeEach(() => {
     eventBus = {
+      id: 'test',
       publish: jest.fn(),
       getStream: jest.fn(),
       subscribe: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
-      getPath: jest.fn(),
     };
     renderers = [];
 
