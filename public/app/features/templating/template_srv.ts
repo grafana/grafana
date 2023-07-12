@@ -239,7 +239,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     this.regex.lastIndex = 0;
 
-    return this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
+    const parsed = this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
       const value = this._evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
 
       // If we get passed this interpolations map we will also record all the expressions that were replaced
@@ -249,6 +249,8 @@ export class TemplateSrv implements BaseTemplateSrv {
 
       return value;
     });
+
+    return parsed.replace(/\\\$/g, '$');
   }
 
   private _evaluateVariableExpression(

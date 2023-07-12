@@ -369,6 +369,11 @@ describe('templateSrv', () => {
       expect(target).toBe('this.*');
     });
 
+    it('should allow escaping variables', () => {
+      const target = _templateSrv.replace('this.$test.\\$test', {}, 'regex');
+      expect(target).toBe('this.*.$test');
+    });
+
     it('should replace ${test:queryparam} with correct query parameter', () => {
       const target = _templateSrv.replace('${test:queryparam}', {});
       expect(target).toBe('var-test=All');
