@@ -27,7 +27,7 @@ class MyCustomApp extends AppPlugin {
 
 describe('Load App', () => {
   const app = new MyCustomApp();
-  const modulePath = 'http://localhost:300/public/plugins/my-app-plugin/module.js';
+  const modulePath = 'http://localhost:3000/public/plugins/my-app-plugin/module.js';
   // Hook resolver for tests
   const originalResolve = SystemJS.constructor.prototype.resolve;
   SystemJS.constructor.prototype.resolve = (x: unknown) => x;
