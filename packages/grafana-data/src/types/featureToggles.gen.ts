@@ -98,6 +98,7 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
+  dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   lokiFormatQuery?: boolean;
@@ -106,8 +107,9 @@ export interface FeatureToggles {
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
-  flameGraphV2?: boolean;
   elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
+  logsExploreTableVisualisation?: boolean;
+  awsDatasourcesTempCredentials?: boolean;
 }

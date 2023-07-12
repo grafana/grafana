@@ -140,6 +140,10 @@ func (f *FakePermissionsService) SetPermissions(ctx context.Context, orgID int64
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
+func (f *FakePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
+	return f.ExpectedErr
+}
+
 func (f *FakePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {
 	return f.ExpectedMappedAction
 }
