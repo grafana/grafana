@@ -14,7 +14,6 @@ import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
-import { Portal } from '../../Portal/Portal';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
@@ -123,7 +122,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
         </span>
       </button>
       {isOpen && (
-        <Portal>
+        <div>
           <div role="presentation" className={styles.backdrop} {...underlayProps} />
           <FocusScope contain autoFocus restoreFocus>
             <div ref={ref} {...overlayProps} {...dialogProps}>
@@ -178,7 +177,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
               </div>
             </div>
           </FocusScope>
-        </Portal>
+        </div>
       )}
     </div>
   );

@@ -32,7 +32,7 @@ package slugify
 
 import (
 	"bytes"
-	"encoding/base64"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -42,20 +42,18 @@ import (
 var (
 	simpleSlugger = &slugger{
 		isValidCharacter: validCharacter,
-		replaceCharacter: '-',
 		replacementMap:   getDefaultReplacements(),
+		omitMap:          getDefaultOmitments(),
 	}
 )
 
-// Slugify creates a URL safe latin slug for a given value
+// Slugify creates a URL safe version from a given string that is at most 50 bytes long.
 func Slugify(value string) string {
-	s := simpleSlugger.Slugify(value)
-	if s == "" {
-		s = base64.RawURLEncoding.EncodeToString([]byte(value))
-		if len(s) > 50 || s == "" {
-			s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
-		}
+	s := simpleSlugger.Slugify(strings.TrimSpace(value))
+	if len(s) > 50 || s == "" {
+		s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
 	}
+
 	return s
 }
 
@@ -66,21 +64,23 @@ func validCharacter(c rune) bool {
 	if c >= '0' && c <= '9' {
 		return true
 	}
+	if c == '_' || c == '-' {
+		return true
+	}
 	return false
 }
 
 // Slugifier based on settings
 type slugger struct {
 	isValidCharacter func(c rune) bool
-	replaceCharacter rune
 	replacementMap   map[rune]string
+	omitMap          map[rune]struct{}
 }
 
 // Slugify creates a slug for a string
 func (s slugger) Slugify(value string) string {
 	value = strings.ToLower(value)
 	var buffer bytes.Buffer
-	lastCharacterWasInvalid := false
 
 	for len(value) > 0 {
 		c, size := utf8.DecodeRuneInString(value)
@@ -88,24 +88,47 @@ func (s slugger) Slugify(value string) string {
 
 		if newCharacter, ok := s.replacementMap[c]; ok {
 			buffer.WriteString(newCharacter)
-			lastCharacterWasInvalid = false
 			continue
 		}
 
 		if s.isValidCharacter(c) {
 			buffer.WriteRune(c)
-			lastCharacterWasInvalid = false
-		} else if !lastCharacterWasInvalid {
-			buffer.WriteRune(s.replaceCharacter)
-			lastCharacterWasInvalid = true
+			continue
+		}
+
+		if _, ok := s.omitMap[c]; ok {
+			continue
+		}
+
+		p := make([]byte, 4)
+		size = utf8.EncodeRune(p, c)
+		for i := 0; i < size; i++ {
+			buffer.WriteString(fmt.Sprintf("%%%x", p[i]))
 		}
 	}
 
-	return strings.Trim(buffer.String(), string(s.replaceCharacter))
+	return buffer.String()
+}
+
+func getDefaultOmitments() map[rune]struct{} {
+	return map[rune]struct{}{
+		',':    {},
+		'"':    {},
+		'\'':   {},
+		'\n':   {},
+		'\r':   {},
+		'\x00': {},
+		'?':    {},
+		'.':    {},
+		'(':    {},
+		')':    {},
+	}
 }
 
 func getDefaultReplacements() map[rune]string {
 	return map[rune]string{
+		' ': "-",
+
 		'&': "and",
 		'@': "at",
 		'©': "c",

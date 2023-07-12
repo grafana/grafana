@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -25,8 +25,26 @@
   },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__other": "",
+      "dashboard__other": "",
+      "folder__other": "",
+      "libraryPanel__other": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -37,6 +55,13 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
     },
     "new-folder-form": {
       "cancel-label": "",
@@ -267,12 +292,21 @@
       "subtitle": "管理和创建用于与 Grafana HTTP API 交互的 API 密钥",
       "title": "API 密钥"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "扩展 Grafana 体验的应用插件",
       "title": "应用"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "管理"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -309,8 +343,14 @@
       "subtitle": "添加并配置数据源",
       "title": "数据源"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "探索"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "在同一服务器上运行的 Grafana 的孤立实例",
@@ -319,6 +359,9 @@
     "global-users": {
       "subtitle": "在 Grafana 中管理用户",
       "title": "用户"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "帮助"
@@ -330,9 +373,21 @@
     "home": {
       "title": "首页"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "可重复使用的面板，可以添加到多个仪表板",
       "title": "库面板"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"
@@ -350,9 +405,18 @@
     "new-folder": {
       "title": "新建文件夹"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
       "title": "默认首选项"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
@@ -371,8 +435,17 @@
     "profile/settings": {
       "title": "个人资料"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "公共仪表板"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "场景"
@@ -394,6 +467,9 @@
     "sign-out": {
       "title": "退出登录"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "交互式、可公开获取的仪表板时间点表示",
       "title": "快照"
@@ -404,6 +480,9 @@
     "starred-empty": {
       "title": "您已加星标的仪表板将显示在这里"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "管理文件存储",
       "title": "存储"
@@ -411,6 +490,9 @@
     "support-bundles": {
       "subtitle": "下载支持包",
       "title": "支持包"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
@@ -629,16 +711,6 @@
       "default-label": "默认"
     },
     "title": "首选项"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "",
-      "panels": ""
-    },
-    "nav-models": {
-      "alert-rules": "",
-      "manage-folder-subtitle": ""
-    }
   },
   "tag-filter": {
     "loading": "加载中...",
