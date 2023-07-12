@@ -21,6 +21,7 @@ import {
   Range,
   formatLokiQuery,
 } from '@grafana/lezer-logql';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
@@ -297,8 +298,10 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   return query;
 };
 
-export function formatLogqlQuery(query: string, datasource?: LokiDatasource) {
-  if (datasource && isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars))) {
+export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
+  reportInteraction('grafana_loki_format_query_clicked', {});
+
+  if (isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars))) {
     return query;
   }
 
