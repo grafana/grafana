@@ -496,6 +496,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ showPicker: true });
             }}
+            data-testid={selectors.components.Transforms.addTransformationButton}
           >
             Add{config.featureToggles.transformationsRedesign ? ' another ' : ' '}transformation
           </Button>

@@ -4,6 +4,7 @@ import React from 'react';
 
 import { DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import config from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { PanelModel } from '../../state';
@@ -20,16 +21,23 @@ describe('TransformationsEditor', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
 
   describe('when no transformations configured', () => {
-    it('renders transformations selection list', () => {
+    function renderList() {
       setup();
 
       const cards = screen.getAllByTestId(/^New transform/i);
       expect(cards.length).toEqual(standardTransformersRegistry.list().length);
+    }
+
+    it('renders transformations selection list', renderList);
+    it('renders transformations selection list with transformationsRedesign feature toggled on', () => {
+      config.featureToggles.transformationsRedesign = true;
+      renderList();
+      config.featureToggles.transformationsRedesign = false;
     });
   });
 
   describe('when transformations configured', () => {
-    it('renders transformation editors', () => {
+    function renderEditors() {
       setup([
         {
           id: 'reduce',
@@ -38,12 +46,18 @@ describe('TransformationsEditor', () => {
       ]);
       const editors = screen.getAllByTestId(/^Transformation editor/);
       expect(editors).toHaveLength(1);
+    }
+
+    it('renders transformation editors', renderEditors);
+    it('renders transformation editors with transformationsRedesign feature toggled on', () => {
+      config.featureToggles.transformationsRedesign = true;
+      renderEditors();
+      config.featureToggles.transformationsRedesign = false;
     });
   });
 
   describe('when Add transformation clicked', () => {
-    it('renders transformations picker', async () => {
-      const buttonLabel = 'Add transformation';
+    async function renderPicker() {
       setup([
         {
           id: 'reduce',
@@ -51,17 +65,24 @@ describe('TransformationsEditor', () => {
         },
       ]);
 
-      const addTransformationButton = screen.getByText(buttonLabel);
+      const addTransformationButton = screen.getByTestId(selectors.components.Transforms.addTransformationButton);
       await userEvent.click(addTransformationButton);
 
       const search = screen.getByTestId(selectors.components.Transforms.searchInput);
       expect(search).toBeDefined();
+    }
+
+    it('renders transformations picker', renderPicker);
+    it('renders transformation picker with transformationsRedesign feature toggled on', async () => {
+      config.featureToggles.transformationsRedesign = true;
+      await renderPicker();
+      config.featureToggles.transformationsRedesign = false;
     });
   });
 
   describe('actions', () => {
     describe('debug', () => {
-      it('should show/hide debugger', async () => {
+      async function showHideDebugger() {
         setup([
           {
             id: 'reduce',
@@ -76,6 +97,13 @@ describe('TransformationsEditor', () => {
         await userEvent.click(debugButton);
 
         expect(screen.getByTestId(debuggerSelector)).toBeInTheDocument();
+      }
+
+      it('should show/hide debugger', showHideDebugger);
+      it('renders transformation editors with transformationsRedesign feature toggled on', async () => {
+        config.featureToggles.transformationsRedesign = true;
+        await showHideDebugger();
+        config.featureToggles.transformationsRedesign = false;
       });
     });
   });
