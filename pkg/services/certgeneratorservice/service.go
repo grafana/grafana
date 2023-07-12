@@ -1,4 +1,4 @@
-package certgenerator
+package certgeneratorservice
 
 import (
 	"path/filepath"
