@@ -338,6 +338,13 @@ The Night / Day layer displays night and day regions based on the current time r
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
 
+To enable the Night / Day layer, set `enable_alpha` to `true` in your configuration file:
+
+```
+[panels]
+enable_alpha = true
+```
+
 ### Options
 
 - **Show** toggles time source from panel time range
@@ -356,6 +363,13 @@ The Night / Day layer displays night and day regions based on the current time r
 The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
+
+To enable the Photos layer, set `enable_alpha` to `true` in your configuration file:
+
+```
+[panels]
+enable_alpha = true
+```
 
 ### Options
 
