@@ -7,10 +7,8 @@ import {
   KeyboardPlugin,
   TimeSeries,
   TooltipPlugin,
-  TooltipPlugin2,
-  TooltipPlugin3,
-  TimeSeriesTooltip,
   TooltipPlugin4,
+  TimeSeriesTooltip,
   usePanelContext,
   ZoomPlugin,
 } from '@grafana/ui';
@@ -109,12 +107,24 @@ export const TimeSeriesPanel = ({
                 timeZone={timeZone}
               />
             )} */}
-            {options.tooltip.mode === TooltipDisplayMode.None || <TooltipPlugin4 config={config} render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-              // console.log('render', dataIdxs, seriesIdx);
-              // return getRandomContent();
-              // return <pre>{JSON.stringify({dataIdxs, seriesIdx}, null, 2)}</pre>;
-              return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
-            }} />}
+            {options.tooltip.mode === TooltipDisplayMode.None || (
+              <TooltipPlugin4
+                config={config}
+                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                  // console.log('render', dataIdxs, seriesIdx);
+                  // return getRandomContent();
+                  // return <pre>{JSON.stringify({dataIdxs, seriesIdx}, null, 2)}</pre>;
+                  return (
+                    <TimeSeriesTooltip
+                      seriesFrame={alignedDataFrame}
+                      valueIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      isPinned={isPinned}
+                    />
+                  );
+                }}
+              />
+            )}
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
