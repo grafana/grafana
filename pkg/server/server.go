@@ -114,7 +114,7 @@ func (s *Server) init(ctx context.Context) error {
 		return err
 	}
 
-	return s.roleRegistry.RegisterFixedRoles(s.context)
+	return s.roleRegistry.RegisterFixedRoles(ctx)
 }
 
 // Run initializes and starts services. This will block until all services have

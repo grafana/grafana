@@ -30,7 +30,8 @@ func ProvideRegistry(
 	provisioning *provisioning.ProvisioningServiceImpl,
 	coreGRDRegistry *coregrd.Registry,
 ) *registry {
-	return NewRegistry(
+	return newRegistry(
+		log.New("modules.registry"),
 		moduleManager,
 		apiServer,
 		backgroundServiceRunner,
@@ -60,6 +61,9 @@ func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...servi
 	// Register module targets
 	logger.Debug("Registering module", "name", modules.All)
 	r.moduleManager.RegisterModule(modules.All, nil)
+
+	logger.Debug("Registering module", "name", modules.Kubernetes)
+	r.moduleManager.RegisterModule(modules.Kubernetes, nil)
 
 	return r
 }
