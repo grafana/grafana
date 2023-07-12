@@ -360,7 +360,7 @@
     "moveable": "0.43.1",
     "ol": "7.2.2",
     "ol-ext": "4.0.6",
-    "papaparse": "5.3.2",
+    "papaparse": "5.4.1",
     "pluralize": "^8.0.0",
     "prismjs": "1.29.0",
     "prop-types": "15.8.1",
