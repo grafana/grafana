@@ -17,6 +17,7 @@ describe('when fill below to option is used', () => {
       subscribe: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),
+      getPath: jest.fn(),
     };
     renderers = [];
 
