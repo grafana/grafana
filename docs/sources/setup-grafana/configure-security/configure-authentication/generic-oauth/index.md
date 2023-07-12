@@ -67,7 +67,9 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
    b. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
 
-   c. Enable the refresh token on the provider if required.
+   c. Set `use_refresh_token` to `true` in `[auth.generic_oauth]` section in Grafana configuration file.
+
+   d. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
@@ -115,6 +117,7 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                 |
 | `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                 |
 | `use_pkce`                   | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
+| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
 
 ### Configure login
 

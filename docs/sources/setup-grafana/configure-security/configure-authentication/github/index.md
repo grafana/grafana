@@ -73,6 +73,8 @@ You can also use [variable expansion]({{< relref "../../../configure-grafana#var
 
 GitHub OAuth applications do not support refresh tokens because the provided access tokens do not expire.
 
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+
 ### team_ids
 
 Require an active team membership for at least one of the given teams on

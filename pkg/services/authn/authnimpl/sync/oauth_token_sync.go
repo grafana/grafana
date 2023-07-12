@@ -17,7 +17,10 @@ import (
 )
 
 var (
-	errExpiredAccessToken = errutil.NewBase(errutil.StatusUnauthorized, "oauth.expired-token")
+	errExpiredAccessToken = errutil.NewBase(
+		errutil.StatusUnauthorized,
+		"oauth.expired-token",
+		errutil.WithPublicMessage("OAuth access token expired"))
 )
 
 func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service) *OAuthTokenSync {
@@ -94,7 +97,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		}
 
 		if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
-			s.log.FromContext(ctx).Error("Failed invalidate OAuth tokens", "id", identity.ID, "error", err)
+			s.log.FromContext(ctx).Error("Failed to invalidate OAuth tokens", "id", identity.ID, "error", err)
 		}
 
 		if err := s.sessionService.RevokeToken(ctx, identity.SessionToken, false); err != nil {
