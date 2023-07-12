@@ -42,7 +42,6 @@ import { categoriesLabels } from 'app/features/transformers/utils';
 
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
-import { styles } from '../DashboardLoading/DashboardFailed';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
