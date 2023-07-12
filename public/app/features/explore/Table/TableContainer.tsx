@@ -35,9 +35,7 @@ type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
   getMainFrames(frames: DataFrame[] | null) {
-    return (
-      frames?.filter((df) => df.meta === undefined || df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]]
-    );
+    return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
   }
 
   getTableHeight(rowCount: number, isSingleTable = true) {
@@ -83,6 +81,7 @@ export class TableContainer extends PureComponent<Props> {
       }
     }
 
+    // move dataframes to be grouped by table, with optional sub-tables for a row
     const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
     const mainFrames = this.getMainFrames(dataFrames).filter(
       (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
@@ -95,11 +94,13 @@ export class TableContainer extends PureComponent<Props> {
       tableData.push({ main: frame, sub: subFrames });
     });
 
-    const isNoData = tableData.length === 0;
-
     return (
       <>
-        {isNoData && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {tableData.length === 0 && (
+          <PanelChrome title={'Table'} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+          </PanelChrome>
+        )}
         {tableData.length > 0 &&
           tableData.map((data, i) => (
             <PanelChrome
