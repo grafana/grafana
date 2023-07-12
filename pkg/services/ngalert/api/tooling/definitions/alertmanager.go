@@ -277,7 +277,11 @@ type TestReceiversConfigBodyParams struct {
 }
 
 func (c *TestReceiversConfigBodyParams) ProcessConfig(encrypt EncryptFn) error {
-	return processReceiverConfigs(c.Receivers, encrypt)
+	err := encryptReceiverConfigs(c.Receivers, encrypt)
+	if err != nil {
+		return err
+	}
+	return assignReceiverConfigsUIDs(c.Receivers)
 }
 
 type TestReceiversConfigAlertParams struct {
@@ -615,9 +619,14 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 	return UIDs
 }
 
-// ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
-func (c *PostableUserConfig) ProcessConfig(encrypt EncryptFn) error {
-	return processReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
+// EncryptConfig parses grafana receivers and encrypts secrets.
+func (c *PostableUserConfig) EncryptConfig(encrypt EncryptFn) error {
+	return encryptReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
+}
+
+// AssignMissingConfigUIDs assigns missing UUIDs to receiver configs.
+func (c *PostableUserConfig) AssignMissingConfigUIDs() error {
+	return assignReceiverConfigsUIDs(c.AlertmanagerConfig.Receivers)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -1285,8 +1294,7 @@ type PostableGrafanaReceivers struct {
 
 type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
-func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
-	seenUIDs := make(map[string]struct{})
+func encryptReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
 		switch r.Type() {
@@ -1299,6 +1307,20 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 					}
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
+func assignReceiverConfigsUIDs(c []*PostableApiReceiver) error {
+	seenUIDs := make(map[string]struct{})
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				if gr.UID == "" {
 					retries := 5
 					for i := 0; i < retries; i++ {
