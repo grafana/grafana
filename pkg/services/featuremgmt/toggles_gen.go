@@ -371,6 +371,10 @@ const (
 	// Adds RudderStack events to incremental queries
 	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
