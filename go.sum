@@ -1303,8 +1303,8 @@ github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 h1:ubNIgVGX4PQ9YI
 github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890/go.mod h1:zEflOvMVchYhRbFb5ziXVR/JG67FOLBzQTjhHh9xaI4=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
-github.com/grafana/cuetsy v0.1.9 h1:EwT8BqHoC0B3B4Y6Lg/D1aeYUKnQC1+2jjOHNsOuUfU=
-github.com/grafana/cuetsy v0.1.9/go.mod h1:Ix97+CPD8ws9oSSxR3/Lf4ahU1I4Np83kjJmDVnLZvc=
+github.com/grafana/cuetsy v0.1.10 h1:+W9/7roI8LorL+D1RJhKGdhsTZ81adrK9dHS0r7qsXs=
+github.com/grafana/cuetsy v0.1.10/go.mod h1:Ix97+CPD8ws9oSSxR3/Lf4ahU1I4Np83kjJmDVnLZvc=
 github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad h1:bROIOQEkRlxAt+Epn9Pos8ytkVqoIAvnaUZOAb7EgEU=
 github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.6 h1:Ejlj8d1Hvy/uDLeI4sOvL34Y8WLlVDd9iN270F+8aTw=
@@ -1339,8 +1339,8 @@ github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6 h1:oHn/OOUkECNX06D
 github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
 github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
-github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8 h1:ESVwKjvGWVucGY65rJq0Hny3a6p8UYqEbClqXhP2qJk=
-github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8/go.mod h1:KWAKeFXxQYiJ/kBVbijBLRVq9atxkfkeeFIvmj4clEA=
+github.com/grafana/thema v0.0.0-20230712150238-80c1181109a8 h1:qVcjsbLmyievSOMGD/h7fV5lwkmKDGsGZ0jbOhUMIw8=
+github.com/grafana/thema v0.0.0-20230712150238-80c1181109a8/go.mod h1:3zLJnssFRPCnebCBRlq53t5LgYv9P1mbj0XMozZMTww=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -2144,8 +2144,8 @@ github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdh
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.14 h1:yFl3jyaSVLNYXlnNYM5z2pagEk1dYQhfr1p20T1NyKY=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.14/go.mod h1:fCa7OJZ/9DRTnOKmxvT6pn+LPWUptQAmHF/SBJUGEcg=
 github.com/schollz/closestmatch v2.1.0+incompatible/go.mod h1:RtP1ddjLong6gTkbtmuhtR2uUrrJOpYzYRvbcPAid+g=
-github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8 h1:R7AphSCwo1rqpRCftz9wn2azIGAtdgn1AjxTiSdFJ1o=
-github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8/go.mod h1:okjJBHFQFer+a41sAe2SaGm1glWS8oEb6CmJvn5Zdws=
+github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055 h1:ilCOPMIGucstzXKgCVzAT8g6tu+Ejyk0J1HhXZN2xm0=
+github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055/go.mod h1:okjJBHFQFer+a41sAe2SaGm1glWS8oEb6CmJvn5Zdws=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/seatgeek/logrus-gelf-formatter v0.0.0-20210219220335-367fa274be2c/go.mod h1:/THDZYi7F/BsVEcYzYPqdcWFQ+1C2InkawTKfLOAnzg=
