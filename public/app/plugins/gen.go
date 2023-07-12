@@ -17,16 +17,28 @@ import (
 	"github.com/grafana/kindsys"
 
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/plugins/codegen"
+	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/thema"
 )
 
 var skipPlugins = map[string]bool{
-	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":       true, // plugin.json fails validation (mixed)
-	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"influxdb": true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":    true, // plugin.json fails validation (mixed)
+	"opentsdb": true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
@@ -40,48 +52,61 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
+
 	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
-	rt := cuectx.GrafanaThemaRuntime()
-
-	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
-		return d.PluginMeta.Id
-	})
-
-	pluginKindGen.Append(
-		codegen.PluginTreeListJenny(),
-		codegen.PluginGoTypesJenny("pkg/tsdb"),
-		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		kind2pd(rt, corecodegen.DocsJenny(
-			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
-		)),
-		codegen.PluginTSEachMajor(rt),
-	)
-
-	schifs := kindsys.SchemaInterfaces(rt.Context())
-	schifnames := make([]string, 0, len(schifs))
-	for _, schif := range schifs {
-		schifnames = append(schifnames, strings.ToLower(schif.Name()))
-	}
-	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
-
-	declParser := pfs.NewDeclParser(rt, skipPlugins)
-	decls, err := declParser.Parse(os.DirFS(cwd))
+	srvs, err := wireServices(groot)
 	if err != nil {
-		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
+		log.Fatal("could not wire services")
+		os.Exit(1)
 	}
 
-	jfs, err := pluginKindGen.GenerateFS(decls...)
-	if err != nil {
-		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
-	}
+	plugins := srvs.pluginStore.Plugins(context.Background())
+	log.Printf("loaded plugins: %d", len(plugins))
 
-	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		if err = jfs.Verify(context.Background(), groot); err != nil {
-			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
-		}
-	} else if err = jfs.Write(context.Background(), groot); err != nil {
-		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
-	}
+	k := srvs.kindCatalog.AllKinds(context.Background())
+	log.Printf("loaded kinds: %d", len(k))
+
+	// rt := cuectx.GrafanaThemaRuntime()
+
+	// pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
+	// 	return d.PluginMeta.Id
+	// })
+
+	// pluginKindGen.Append(
+	// 	codegen.PluginTreeListJenny(),
+	// 	codegen.PluginGoTypesJenny("pkg/tsdb"),
+	// 	codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
+	// 	kind2pd(rt, corecodegen.DocsJenny(
+	// 		filepath.Join("docs", "sources", "developers", "kinds", "composable"),
+	// 	)),
+	// 	codegen.PluginTSEachMajor(rt),
+	// )
+
+	// schifs := kindsys.SchemaInterfaces(rt.Context())
+	// schifnames := make([]string, 0, len(schifs))
+	// for _, schif := range schifs {
+	// 	schifnames = append(schifnames, strings.ToLower(schif.Name()))
+	// }
+	// pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
+
+	// declParser := pfs.NewDeclParser(rt, skipPlugins)
+	// decls, err := declParser.Parse(os.DirFS(cwd))
+	// if err != nil {
+	// 	log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
+	// }
+
+	// jfs, err := pluginKindGen.GenerateFS(decls...)
+	// if err != nil {
+	// 	log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
+	// }
+
+	// if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+	// 	if err = jfs.Verify(context.Background(), groot); err != nil {
+	// 		log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
+	// 	}
+	// } else if err = jfs.Write(context.Background(), groot); err != nil {
+	// 	log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
+	// }
 }
 
 func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
@@ -118,4 +143,50 @@ func splitSchiffer(names []string) codejen.FileMapper {
 		}
 		return f, nil
 	}
+}
+
+type wiredServices struct {
+	kindCatalog kinds.Catalog
+	pluginStore *store.Service
+}
+
+func wireServices(groot string) (*wiredServices, error) {
+	cfg := &config.Cfg{}
+	gCfg := &setting.Cfg{
+		StaticRootPath:     fmt.Sprintf("%s/public", groot),
+		BundledPluginsPath: fmt.Sprintf("%s/plugins-bundled", groot),
+	}
+
+	licence := fakes.NewFakeLicensingService()
+	authorizer := signature.NewUnsignedAuthorizer(cfg)
+	backendProvider := fakes.NewFakeBackendProcessProvider()
+	processManager := fakes.NewFakeProcessManager()
+	roleRegistry := fakes.NewFakeRoleRegistry()
+	angularInspector, err := angularinspector.NewStaticInspector()
+	ap := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
+	finder := finder.NewLocalFinder(cfg)
+	sig := signature.ProvideService(cfg, statickey.New())
+
+	if err != nil {
+		return nil, err
+	}
+
+	pluginRegistry := registry.NewInMemory()
+	catalog := kinds.NewCatalog()
+	loader := loader.New(cfg, licence, authorizer, pluginRegistry, backendProvider,
+		processManager, roleRegistry, ap, finder, sig, angularInspector,
+		&fakes.FakeOauthService{}, catalog,
+	)
+
+	sources := sources.ProvideService(gCfg, cfg)
+	store, err := store.ProvideService(pluginRegistry, sources, loader)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &wiredServices{
+		kindCatalog: catalog,
+		pluginStore: store,
+	}, nil
 }

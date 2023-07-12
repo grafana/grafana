@@ -17,19 +17,19 @@ type Catalog interface {
 }
 
 func NewCatalog() Catalog {
-	return &registry{
+	return &catalog{
 		providers: []*kindsys.Provider{},
 	}
 }
 
-type registry struct {
+type catalog struct {
 	providers []*kindsys.Provider
 }
 
-func (r *registry) CoreKinds(ctx context.Context) []kindsys.Core {
+func (c *catalog) CoreKinds(ctx context.Context) []kindsys.Core {
 	kinds := []kindsys.Core{}
 
-	for _, pa := range r.providers {
+	for _, pa := range c.providers {
 		for _, ck := range pa.CoreKinds {
 			kinds = append(kinds, ck)
 		}
@@ -38,10 +38,10 @@ func (r *registry) CoreKinds(ctx context.Context) []kindsys.Core {
 	return kinds
 }
 
-func (r *registry) CustomKinds(ctx context.Context) []kindsys.Custom {
+func (c *catalog) CustomKinds(ctx context.Context) []kindsys.Custom {
 	kinds := []kindsys.Custom{}
 
-	for _, pa := range r.providers {
+	for _, pa := range c.providers {
 		for _, ck := range pa.CustomKinds {
 			kinds = append(kinds, ck)
 		}
@@ -50,10 +50,10 @@ func (r *registry) CustomKinds(ctx context.Context) []kindsys.Custom {
 	return kinds
 }
 
-func (r *registry) ComposableKinds(ctx context.Context) []kindsys.Composable {
+func (c *catalog) ComposableKinds(ctx context.Context) []kindsys.Composable {
 	kinds := []kindsys.Composable{}
 
-	for _, pa := range r.providers {
+	for _, pa := range c.providers {
 		for _, ck := range pa.ComposableKinds {
 			kinds = append(kinds, ck)
 		}
@@ -62,10 +62,10 @@ func (r *registry) ComposableKinds(ctx context.Context) []kindsys.Composable {
 	return kinds
 }
 
-func (r *registry) AllKinds(ctx context.Context) []kindsys.Kind {
+func (c *catalog) AllKinds(ctx context.Context) []kindsys.Kind {
 	kinds := []kindsys.Kind{}
 
-	for _, pa := range r.providers {
+	for _, pa := range c.providers {
 		for _, ck := range pa.ComposableKinds {
 			kinds = append(kinds, ck)
 		}
@@ -82,26 +82,26 @@ func (r *registry) AllKinds(ctx context.Context) []kindsys.Kind {
 	return kinds
 }
 
-func (r *registry) AllProviders(ctx context.Context) []kindsys.Provider {
-	providers := make([]kindsys.Provider, len(r.providers))
-	for idx, pa := range r.providers {
+func (c *catalog) AllProviders(ctx context.Context) []kindsys.Provider {
+	providers := make([]kindsys.Provider, len(c.providers))
+	for idx, pa := range c.providers {
 		providers[idx] = *pa
 	}
 	return providers
 }
 
-func (r *registry) Register(ctx context.Context, p *kindsys.Provider) {
-	r.providers = append(r.providers, p)
+func (c *catalog) Register(ctx context.Context, p *kindsys.Provider) {
+	c.providers = append(c.providers, p)
 }
 
-func (r *registry) Unregister(ctx context.Context, p *kindsys.Provider) {
+func (c *catalog) Unregister(ctx context.Context, p *kindsys.Provider) {
 	all := []*kindsys.Provider{}
 
-	for _, pa := range r.providers {
+	for _, pa := range c.providers {
 		if p.Name != pa.Name {
 			all = append(all, pa)
 		}
 	}
 
-	r.providers = all
+	c.providers = all
 }
