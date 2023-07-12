@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, FilterInput, LoadingBar, useStyles2 } from '@grafana/ui';
+import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
 import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
@@ -13,17 +15,14 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { NestedFolderList } from './NestedFolderList';
-import { FolderChange, FolderUID, ROOT_FOLDER } from './types';
+import { FolderChange, FolderUID } from './types';
 
 async function fetchRootFolders() {
   return await listFolders(undefined, undefined, 1, PAGE_SIZE);
 }
 
 interface NestedFolderPickerProps {
-  value: {
-    title?: string;
-    uid?: FolderUID;
-  };
+  value?: FolderUID;
   // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
   // vs removing selection (if possible?)
   onChange?: (folder: FolderChange) => void;
@@ -37,6 +36,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
   const rootFoldersState = useAsync(fetchRootFolders);
+  const selectedFolder = useGetFolderQuery(value || skipToken);
 
   const searchState = useAsync(async () => {
     if (!search) {
@@ -124,7 +124,10 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const handleSelectionChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
       if (onChange) {
-        onChange({ title: item.title, uid: item.uid });
+        onChange({
+          uid: item.uid,
+          title: item.title,
+        });
       }
       setOverlayOpen(false);
     },
@@ -151,8 +154,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const tree = flatTree;
 
-  let label = value.title;
-  if (value.uid === '' || value.uid === ROOT_FOLDER) {
+  let label = selectedFolder.data?.title;
+  if (value === '') {
     label = 'Dashboards';
   }
 
@@ -161,10 +164,10 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       <Button
         className={styles.button}
         variant="secondary"
-        icon={value.uid !== undefined ? 'folder' : undefined}
+        icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
       >
-        {label ?? 'Select folder'}
+        {selectedFolder.isLoading ? <Skeleton width={100} /> : label ?? 'Select folder'}
       </Button>
     );
   }
@@ -203,7 +206,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
             <NestedFolderList
               items={tree}
-              selectedFolder={value.uid}
+              selectedFolder={value}
               onFolderClick={handleFolderClick}
               onSelectionChange={handleSelectionChange}
               foldersAreOpenable={!(search && searchState.value)}

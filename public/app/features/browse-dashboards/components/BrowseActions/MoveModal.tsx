@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { Alert, Button, Field, Modal } from '@grafana/ui';
 import { P } from '@grafana/ui/src/unstable';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
+import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -21,25 +21,19 @@ export interface Props {
 }
 
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
-  const [moveTarget, setMoveTarget] = useState<{
-    uid?: string;
-    title?: string;
-  }>({});
+  const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const handleFolderChange = (newFolder: FolderChange) => {
-    setMoveTarget({
-      uid: newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid,
-      title: newFolder.title,
-    });
+    setMoveTarget(newFolder.uid);
   };
 
   const onMove = async () => {
-    if (moveTarget.uid !== undefined) {
+    if (moveTarget !== undefined) {
       setIsMoving(true);
       try {
-        await onConfirm(moveTarget.uid);
+        await onConfirm(moveTarget);
         setIsMoving(false);
         onDismiss();
       } catch {
@@ -77,7 +71,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         <Button onClick={onDismiss} variant="secondary" fill="outline">
           <Trans i18nKey="browse-dashboards.action.cancel-button">Cancel</Trans>
         </Button>
-        <Button disabled={moveTarget.uid === undefined || isMoving} onClick={onMove} variant="primary">
+        <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
           {isMoving
             ? t('browse-dashboards.action.moving', 'Moving...')
             : t('browse-dashboards.action.move-button', 'Move')}

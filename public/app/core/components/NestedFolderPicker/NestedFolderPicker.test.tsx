@@ -1,12 +1,23 @@
-import { render, screen } from '@testing-library/react';
+import 'whatwg-fetch'; // fetch polyfill
+import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { rest } from 'msw';
+import { SetupServer, setupServer } from 'msw/node';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
+
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { wellFormedTree } from '../../../features/browse-dashboards/fixtures/dashboardsTreeItem.fixture';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 
 const [mockTree, { folderA, folderB, folderC, folderA_folderA, folderA_folderB }] = wellFormedTree();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 jest.mock('app/features/browse-dashboards/api/services', () => {
   const orig = jest.requireActual('app/features/browse-dashboards/api/services');
@@ -23,30 +34,50 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
   };
 });
 
+function render(...[ui, options]: Parameters<typeof rtlRender>) {
+  rtlRender(<TestProvider>{ui}</TestProvider>, options);
+}
+
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
+  let server: SetupServer;
+
+  beforeAll(() => {
+    server = setupServer(
+      rest.get('/api/folders/:uid', (_, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.json({
+            title: folderA.item.title,
+            uid: folderA.item.uid,
+          })
+        );
+      })
+    );
+    server.listen();
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
+  afterEach(() => {
+    server.resetHandlers();
+  });
 
   it('renders a button with the correct label when no folder is selected', async () => {
-    render(<NestedFolderPicker onChange={mockOnChange} value={{}} />);
+    render(<NestedFolderPicker onChange={mockOnChange} />);
     expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
   });
 
   it('renders a button with the folder name instead when a folder is selected', async () => {
-    render(
-      <NestedFolderPicker
-        onChange={mockOnChange}
-        value={{
-          uid: 'folderA',
-          title: 'Folder A',
-        }}
-      />
-    );
-    expect(await screen.findByRole('button', { name: 'Folder A' })).toBeInTheDocument();
+    render(<NestedFolderPicker onChange={mockOnChange} value="folderA" />);
+    expect(await screen.findByRole('button', { name: folderA.item.title })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Select folder' })).not.toBeInTheDocument();
   });
 
   it('clicking the button opens the folder picker', async () => {
-    render(<NestedFolderPicker onChange={mockOnChange} value={{}} />);
+    render(<NestedFolderPicker onChange={mockOnChange} />);
     const button = await screen.findByRole('button', { name: 'Select folder' });
 
     await userEvent.click(button);
@@ -63,7 +94,7 @@ describe('NestedFolderPicker', () => {
   });
 
   it('can select a folder from the picker', async () => {
-    render(<NestedFolderPicker onChange={mockOnChange} value={{}} />);
+    render(<NestedFolderPicker onChange={mockOnChange} />);
     const button = await screen.findByRole('button', { name: 'Select folder' });
 
     await userEvent.click(button);
@@ -76,7 +107,7 @@ describe('NestedFolderPicker', () => {
   });
 
   it('can expand and collapse a folder to show its children', async () => {
-    render(<NestedFolderPicker onChange={mockOnChange} value={{}} />);
+    render(<NestedFolderPicker onChange={mockOnChange} />);
     const button = await screen.findByRole('button', { name: 'Select folder' });
 
     await userEvent.click(button);
