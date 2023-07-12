@@ -5,16 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -110,17 +112,27 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 }
 
 // uninstallPlugin removes the plugin directory
-func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
-	logger.Infof("Removing plugin: %v\n", pluginID)
-
-	pluginPath := filepath.Join(c.PluginDirectory(), pluginID)
-	fs := plugins.NewLocalFS(pluginPath)
-
-	logger.Debugf("Removing directory %v\n", pluginPath)
-	err := fs.Remove()
+func uninstallPlugin(ctx context.Context, pluginID string, c utils.CommandLine) error {
+	f := finder.NewLocalFinder(true)
+	found, err := f.Find(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{c.PluginDirectory()}))
 	if err != nil {
 		return err
 	}
+
+	for _, bundle := range found {
+		if bundle.Primary.JSONData.ID == pluginID {
+			logger.Infof("Removing plugin: %v\n", pluginID)
+			if remover, ok := bundle.Primary.FS.(plugins.FSRemover); ok {
+				logger.Debugf("Removing directory %v\n", bundle.Primary.FS.Base())
+				if err = remover.Remove(); err != nil {
+					return err
+				}
+				return nil
+			}
+		}
+	}
+
+	logger.Infof(color.RedString("%v is not installed\n", pluginID))
 	return nil
 }
 
