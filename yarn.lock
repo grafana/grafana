@@ -19168,7 +19168,7 @@ __metadata:
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
     moveable: 0.43.1
-    msw: 1.1.0
+    msw: 1.2.2
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
@@ -19505,7 +19505,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"headers-polyfill@npm:^3.1.0":
+"headers-polyfill@npm:^3.1.0, headers-polyfill@npm:^3.1.2":
   version: 3.1.2
   resolution: "headers-polyfill@npm:3.1.2"
   checksum: 510ca9637ef652404dbd432e680418f8d418ba18094ef2f64c3d8de955ebf6e68d553c7f0aeaa5fc937d130b139c1e2d7c2066cd4cf0f740a4627924eaaee9db
@@ -20799,10 +20799,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"is-node-process@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "is-node-process@npm:1.0.1"
-  checksum: 3ddb8a892a00f6eb9c2aea7e7e1426b8683512d9419933d95114f4f64b5455e26601c23a31c0682463890032136dd98a326988a770ab6b4eed54a43ade8bed50
+"is-node-process@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "is-node-process@npm:1.2.0"
+  checksum: 930765cdc6d81ab8f1bbecbea4a8d35c7c6d88a3ff61f3630e0fc7f22d624d7661c1df05c58547d0eb6a639dfa9304682c8e342c4113a6ed51472b704cee2928
   languageName: node
   linkType: hard
 
@@ -23830,9 +23830,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:1.1.0":
-  version: 1.1.0
-  resolution: "msw@npm:1.1.0"
+"msw@npm:1.2.2":
+  version: 1.2.2
+  resolution: "msw@npm:1.2.2"
   dependencies:
     "@mswjs/cookies": ^0.2.2
     "@mswjs/interceptors": ^0.17.5
@@ -23843,24 +23843,24 @@ __metadata:
     chokidar: ^3.4.2
     cookie: ^0.4.2
     graphql: ^15.0.0 || ^16.0.0
-    headers-polyfill: ^3.1.0
+    headers-polyfill: ^3.1.2
     inquirer: ^8.2.0
-    is-node-process: ^1.0.1
+    is-node-process: ^1.2.0
     js-levenshtein: ^1.1.6
     node-fetch: ^2.6.7
-    outvariant: ^1.3.0
+    outvariant: ^1.4.0
     path-to-regexp: ^6.2.0
     strict-event-emitter: ^0.4.3
     type-fest: ^2.19.0
     yargs: ^17.3.1
   peerDependencies:
-    typescript: ">= 4.4.x <= 4.9.x"
+    typescript: ">= 4.4.x <= 5.1.x"
   peerDependenciesMeta:
     typescript:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: e555547defbc3f07532bdadcbf9f4e3a32b92156d3869e85c9038ecaac220cfc93901727da097b7f9d3ecf9cbbc5a9178c0ecdd3999a9201db4c85c99b92c361
+  checksum: e42cec8f5523663020bdecf6a7977a10aa86a4718d1920def3fbde0ff3734391873668cc6e3996d6790add3c74dac95a952f8560ce2543697280125eb55138e8
   languageName: node
   linkType: hard
 
@@ -24877,10 +24877,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"outvariant@npm:^1.2.1, outvariant@npm:^1.3.0":
+"outvariant@npm:^1.2.1":
   version: 1.3.0
   resolution: "outvariant@npm:1.3.0"
   checksum: ac76ca375c1c642989e1c74f0e9ebac84c05bc9fdc8f28be949c16fae1658e9f1f2fb1133fe3cc1e98afabef78fe4298fe9360b5734baf8e6ad440c182680848
+  languageName: node
+  linkType: hard
+
+"outvariant@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "outvariant@npm:1.4.0"
+  checksum: ec32dfc315c464bb6e4906b2f450d259ce0b86caf70b70b249054359d9af21a7fccf53a8b6aa232f8d718449e31c1cfa594e6ebffaafe7bf908b502495256d7b
   languageName: node
   linkType: hard
 
