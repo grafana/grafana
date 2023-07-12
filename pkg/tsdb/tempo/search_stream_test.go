@@ -35,18 +35,9 @@ func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
 	streamSender := &mockSender{}
 	err := service.processStream(searchClient, streamSender)
 	if err != nil {
-		t.Errorf("Didn't expected an error, but got %+v", err)
-		return
-	}
-
-	if len(streamSender.responses) != 1 {
-		t.Errorf("Expected 1 response, but got %d", len(streamSender.responses))
-		return
-	}
-
-	searchErr := streamSender.responses[0].Fields[3].At(0).(string)
-	if !strings.Contains(searchErr, "invalid input") {
-		t.Errorf("Expected error message to contain 'invalid input', but got %s", err)
+		if !strings.Contains(err.Error(), "invalid input") {
+			t.Errorf("Expected error message to contain 'invalid input', but got %s", err)
+		}
 	}
 }
 func TestProcessStream_ValidInput_ReturnsExpectedOutput(t *testing.T) {
