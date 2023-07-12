@@ -174,5 +174,5 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 		params = append(params, orgID, GlobalOrgID)
 	}
 
-	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
+	return builder.String(), params
 }
