@@ -90,11 +90,11 @@ func (f *DashboardFilter) Join() (string, []interface{}) {
 
 func (f *DashboardFilter) Where() (string, []interface{}) {
 	if f.hasNoPermissions() {
-		return "(1 == 0)", nil
+		return "(1 = 0)", nil
 	}
 
 	if f.hasNoActionsToCheck() {
-		return "(1 == 1)", nil
+		return "(1 = 1)", nil
 	}
 
 	query := strings.Builder{}
