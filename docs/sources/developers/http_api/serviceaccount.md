@@ -15,6 +15,8 @@ title: Service account HTTP API
 # Service account API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+>
+> Additionally with Grafana Enterprise, fixed and custom RBAC roles can be assigned to service accounts by using the [RBAC HTTP API]({{< relref "/docs/grafana/latest/developers/http_api/access_control/#set-user-role-assignments" >}}) to set role assignments on the service account ID.
 
 ## Search service accounts with Paging
 
