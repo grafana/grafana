@@ -23,6 +23,7 @@ const installArgsSize = 2
 
 func validateInput(c utils.CommandLine) error {
 	if c.Args().Len() > installArgsSize {
+		logger.Info(color.RedString("Please specify the correct format. For example ./grafana cli (<command arguments>) plugins install <plugin ID> (<plugin version>)\n\n"))
 		return errors.New("install only supports 2 arguments: plugin and version")
 	}
 
