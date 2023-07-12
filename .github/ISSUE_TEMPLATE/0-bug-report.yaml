@@ -7,8 +7,8 @@ body:
       value: |
         Thanks for taking the time to fill out this bug report!
 
-        Please try to give your issue a good title. Try using the product-area where you are having an issue and a brief description of the problem. Like this: 
-        - `Dashboards: Template Variables break when I do X` or 
+        Please try to give your issue a good title. Try using the product-area where you are having an issue and a brief description of the problem. Like this:
+        - `Dashboards: Template Variables break when I do X` or
         - `Alerting: message templating plus Slack channel breaks when I do X`
   - type: markdown
     attributes:
@@ -24,7 +24,7 @@ body:
   - type: textarea
     attributes:
       label: What happened?
-      description: "**Hot Tip:** Record your screen and add it here as a gif."
+      description: "**Hot Tip:** Record your screen and attach it here."
     validations:
       required: true
 
@@ -37,17 +37,14 @@ body:
   - type: textarea
     attributes:
       label: Did this work before?
-      placeholder: "If this worked before, what version worked correctly?"
+      description: "If this worked before, what Grafana version worked correctly?"
     validations:
       required: true
 
   - type: textarea
     attributes:
       label: How do we reproduce it?
-      description: |
-        Whenever possible, please provide **detailed** steps for reproducing your bug.
-        **This is very helpful info**
-      placeholder: "Step 1:..."
+      placeholder: "Steps to reproduce..."
       value: |
         1.
         2.
@@ -57,12 +54,15 @@ body:
 
   - type: textarea
     attributes:
-      label: Environment (with versions)?
+      label: Is the bug inside a dashboard panel?
       description: |
-        #
-        Please provide Grafana, OS, and Browser versions.
-        [How do I find my Grafana version info?](https://community.grafana.com/t/how-to-find-your-grafana-version-info-3-different-ways/86857)
-      placeholder: "ex: v9.5.0, or v9.5.0-cloud.5.a016665c (b2a5d45589)"
+        If the bug appears inside a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations), please use the ["Get help" feature](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/). Select **Copy to clipboard** and paste the data below.
+
+  - type: textarea
+    attributes:
+      label: Environment (with versions)?
+      description: [How do I find my Grafana version info?](https://community.grafana.com/t/how-to-find-your-grafana-version-info-3-different-ways/86857)
+      placeholder: "Grafana, OS, and Browser versions..."
       value: |
         Grafana:
         OS:
@@ -72,7 +72,7 @@ body:
 
   - type: dropdown
     attributes:
-      label: Grafana Platform?
+      label: Grafana platform?
       description: How are you running/deploying Grafana?
       options:
         - I use Grafana Cloud
@@ -88,14 +88,5 @@ body:
   - type: input
     attributes:
       label: Datasource(s)?
-      description: "Is this issue specific to a datasource plugin/plugins? Please list all that apply:"
+      description: "Is this issue specific to a datasource plugin? (Please list all that apply)"
       placeholder: "ex. Elasticsearch 5.0.0 or Infinity 1.4.1 ..."
-
-  - type: textarea
-    attributes:
-      label: Is the bug inside a Dashboard Panel?
-      description: |
-        If the bug appears inside a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations), please use the ["Get-Help" feature](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/). Select **copy to clipboard** and paste the data below.
-        No need for backticks--this text will get formatted as a code-block.
-        What's a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations)?
-      placeholder: Copy "get-help" data here
