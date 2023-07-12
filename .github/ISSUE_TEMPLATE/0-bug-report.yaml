@@ -61,7 +61,8 @@ body:
   - type: textarea
     attributes:
       label: Environment (with versions)?
-      description: [How do I find my Grafana version info?](https://community.grafana.com/t/how-to-find-your-grafana-version-info-3-different-ways/86857)
+      description: |
+        [How do I find my Grafana version info?](https://community.grafana.com/t/how-to-find-your-grafana-version-info-3-different-ways/86857)
       placeholder: "Grafana, OS, and Browser versions..."
       value: |
         Grafana:
