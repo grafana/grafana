@@ -318,22 +318,18 @@ export const sortLabelSelectors = (query: LokiQuery): LokiQuery => {
         return -1;
       }
 
-      if (labelNameA > labelNameB) {
-        return 1;
-      }
-
-      return 0;
+      return labelNameA > labelNameB ? 1 : 0;
     });
 
     let response = '';
 
     matcherNodes.forEach((node) => {
       const labelNode = node.getChild(Identifier);
-      const operatorNode = labelNode ? labelNode.nextSibling : null;
+      const operatorNode = labelNode ? labelNode.nextSibling : '';
       const valueNode = node.getChild(String);
-      const label = labelNode ? selector.substring(labelNode.from, labelNode.to) : null;
-      const operator = operatorNode ? selector.substring(operatorNode.from, operatorNode.to) : null;
-      const value = valueNode ? selector.substring(valueNode.from, valueNode.to) : null;
+      const label = labelNode ? selector.substring(labelNode.from, labelNode.to) : '';
+      const operator = operatorNode ? selector.substring(operatorNode.from, operatorNode.to) : '';
+      const value = valueNode ? selector.substring(valueNode.from, valueNode.to) : '';
       response += `${label}${operator}${value}, `;
     });
 
