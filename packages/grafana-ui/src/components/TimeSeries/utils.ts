@@ -600,7 +600,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     };
     const hoverEvent = new DataHoverEvent(payload);
 
-    console.log('syncing cursor', eventBus.id);
     cursor.sync = {
       key: eventBus.id,
       filters: {

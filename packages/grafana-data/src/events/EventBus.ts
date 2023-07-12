@@ -22,7 +22,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
   private _id: string;
   constructor(id?: string) {
     this.emitter = new EventEmitter();
-    this._id = id || '__global__';
+    this._id = id || '__global_';
   }
 
   publish<T extends BusEvent>(event: T): void {
