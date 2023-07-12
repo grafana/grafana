@@ -142,8 +142,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     offset: [0, 0],
     trigger: 'click',
     onVisibleChange: (value: boolean) => {
-      // Clear search state when closing the overlay
-      if (!value) {
+      // ensure search state is clean on opening the overlay
+      if (value) {
         setSearch('');
       }
       setOverlayOpen(value);
