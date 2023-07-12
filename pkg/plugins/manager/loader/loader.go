@@ -213,18 +213,6 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-func (l *Loader) load(ctx context.Context, p *plugins.Plugin) error {
-	if err := l.pluginRegistry.Add(ctx, p); err != nil {
-		return err
-	}
-
-	if !p.IsCorePlugin() {
-		l.log.Info("Plugin registered", "pluginID", p.ID)
-	}
-
-	return l.processManager.Start(ctx, p.ID)
-}
-
 func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
 

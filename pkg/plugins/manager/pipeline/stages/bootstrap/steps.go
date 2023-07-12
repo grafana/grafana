@@ -15,7 +15,6 @@ import (
 type DefaultConstructor struct {
 	pluginFactoryFunc   pluginFactoryFunc
 	signatureCalculator plugins.SignatureCalculator
-	assetPath           *assetpath.Service
 	log                 log.Logger
 }
 
