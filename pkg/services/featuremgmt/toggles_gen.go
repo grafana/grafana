@@ -378,4 +378,8 @@ const (
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
+
+	// FlagTransformationsRedesign
+	// Enables the transformations redesign
+	FlagTransformationsRedesign = "transformationsRedesign"
 )

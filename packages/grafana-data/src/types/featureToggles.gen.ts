@@ -111,4 +111,5 @@ export interface FeatureToggles {
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
+  transformationsRedesign?: boolean;
 }
