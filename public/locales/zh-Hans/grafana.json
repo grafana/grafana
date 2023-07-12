@@ -115,7 +115,8 @@
       "import": "从库导入",
       "paste-panel": "粘贴面板",
       "row": "行",
-      "visualization": "可视化"
+      "visualization": "可视化",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "导入与其他仪表板共享的可视化。",
@@ -126,7 +127,10 @@
       "add-row-header": "添加一行",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
-      "add-visualization-header": "通过添加可视化开始您的新仪表板"
+      "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "数据",

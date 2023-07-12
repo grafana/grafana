@@ -210,6 +210,7 @@ export const getButtonStyles = (props: StyleProps) => {
       flexDirection: 'row',
       alignItems: 'center',
       whiteSpace: 'nowrap',
+      overflow: 'hidden',
       height: '100%',
     }),
   };
