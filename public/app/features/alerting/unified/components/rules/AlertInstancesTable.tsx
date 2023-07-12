@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { dateTime } from '@grafana/data';
+import { dateTime, findCommonLabels } from '@grafana/data';
 import { Alert, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
@@ -16,17 +16,23 @@ interface Props {
   footerRow?: JSX.Element;
 }
 
-type AlertTableColumnProps = DynamicTableColumnProps<Alert>;
-type AlertTableItemProps = DynamicTableItemProps<Alert>;
+interface AlertWithCommonLabels extends Alert {
+  commonLabels?: Record<string, string>;
+}
+
+type AlertTableColumnProps = DynamicTableColumnProps<AlertWithCommonLabels>;
+type AlertTableItemProps = DynamicTableItemProps<AlertWithCommonLabels>;
 
 export const AlertInstancesTable = ({ instances, pagination, footerRow }: Props) => {
+  const commonLabels = findCommonLabels(instances.map((instance) => instance.labels));
+
   const items = useMemo(
     (): AlertTableItemProps[] =>
       instances.map((instance) => ({
-        data: instance,
+        data: { ...instance, commonLabels },
         id: alertInstanceKey(instance),
       })),
-    [instances]
+    [commonLabels, instances]
   );
 
   return (
@@ -53,7 +59,9 @@ const columns: AlertTableColumnProps[] = [
     id: 'labels',
     label: 'Labels',
     // eslint-disable-next-line react/display-name
-    renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} size="sm" />,
+    renderCell: ({ data: { labels, commonLabels } }) => (
+      <AlertLabels labels={labels} commonLabels={commonLabels} size="sm" />
+    ),
   },
   {
     id: 'created',
