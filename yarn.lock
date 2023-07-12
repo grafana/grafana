@@ -4241,7 +4241,7 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     rollup-plugin-svg-import: ^1.6.0
     rxjs: 7.8.0
-    sass-loader: 13.2.0
+    sass-loader: 13.3.2
     slate: 0.47.9
     slate-plain-serializer: 0.7.13
     slate-react: 0.22.10
@@ -19261,7 +19261,7 @@ __metadata:
     rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
     sass: 1.63.6
-    sass-loader: 13.2.0
+    sass-loader: 13.3.2
     selecto: 1.22.0
     semver: 7.3.8
     sinon: 15.2.0
@@ -22421,13 +22421,6 @@ __metadata:
   version: 3.0.3
   resolution: "kleur@npm:3.0.3"
   checksum: df82cd1e172f957bae9c536286265a5cdbd5eeca487cb0a3b2a7b41ef959fc61f8e7c0e9aeea9c114ccf2c166b6a8dd45a46fd619c1c569d210ecd2765ad5169
-  languageName: node
-  linkType: hard
-
-"klona@npm:^2.0.4":
-  version: 2.0.4
-  resolution: "klona@npm:2.0.4"
-  checksum: abc6690882e0e6f5cf70451b79a6de95a27be56ced283d1d6d7e610db7d824e5da1f142f8073466dfbcfa887ee001b98f6dcfbcf02759828ba356b90202a74c5
   languageName: node
   linkType: hard
 
@@ -29043,15 +29036,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:13.2.0":
-  version: 13.2.0
-  resolution: "sass-loader@npm:13.2.0"
+"sass-loader@npm:13.3.2":
+  version: 13.3.2
+  resolution: "sass-loader@npm:13.3.2"
   dependencies:
-    klona: ^2.0.4
     neo-async: ^2.6.2
   peerDependencies:
     fibers: ">= 3.1.0"
-    node-sass: ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
+    node-sass: ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
     sass: ^1.3.0
     sass-embedded: "*"
     webpack: ^5.0.0
@@ -29064,7 +29056,7 @@ __metadata:
       optional: true
     sass-embedded:
       optional: true
-  checksum: ed6cdb5f5508e1a8a020d1451160a5e94805d0c2a97be5719c6a44ed28a258b5f37a1478d01b9d545f269367ae91ccb88adc93bd6202bfd609dbe3193228d51e
+  checksum: 7394a8d1b818a289b9caabd979543c907b83e28ae08bc80ccb836e0ccabc4ae574c077ab2fa520ba5fb8abb2ec3e7c9822a1cbd8c58a28ff30018be9d1dc6c27
   languageName: node
   linkType: hard
 
