@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { Alert, Button, Field, Modal } from '@grafana/ui';
 import { P } from '@grafana/ui/src/unstable';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
+import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -26,7 +26,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const handleFolderChange = (newFolder: FolderChange) => {
-    setMoveTarget(newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid);
+    setMoveTarget(newFolder.uid);
   };
 
   const onMove = async () => {
