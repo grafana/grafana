@@ -6,9 +6,11 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
     modal: css`
       width: 85vw;
+
       ${theme.breakpoints.down('md')} {
         width: 100%;
       }
+
       ${theme.breakpoints.up('xl')} {
         width: 60%;
       }
@@ -18,9 +20,17 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       flex-direction: row;
       flex-wrap: wrap;
     `,
+    wrapper: css`
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    `,
+    modalMetricsWrapper: css``,
+    modalLabelsWrapper: css``,
     inputItemFirst: css`
       flex-basis: 40%;
       padding-right: 16px;
+
       ${theme.breakpoints.down('md')} {
         padding-right: 0px;
         padding-bottom: 16px;
@@ -29,6 +39,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     inputItem: css`
       flex-grow: 1;
       flex-basis: 20%;
+
       ${theme.breakpoints.down('md')} {
         min-width: 100%;
       }

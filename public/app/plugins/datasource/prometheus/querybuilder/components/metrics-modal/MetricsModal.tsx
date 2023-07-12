@@ -1,44 +1,17 @@
-import { cx } from '@emotion/css';
 import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import {
-  Input,
-  Modal,
-  MultiSelect,
-  Spinner,
-  useTheme2,
-  Pagination,
-  Button,
-  Toggletip,
-  ButtonGroup,
-  Icon,
-} from '@grafana/ui';
+import { Modal, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
-import { ResultsTable } from './ResultsTable';
-import {
-  calculatePageList,
-  calculateResultsPerPage,
-  displayedMetrics,
-  getBackendSearchMetrics,
-  setMetrics,
-  placeholders,
-  promTypes,
-  tracking,
-} from './state/helpers';
-import {
-  DEFAULT_RESULTS_PER_PAGE,
-  initialState,
-  MAXIMUM_RESULTS_PER_PAGE,
-  MetricsModalMetadata,
-  stateSlice,
-} from './state/state';
+import { MetricsWrapper } from './MetricsWrapper';
+import { displayedMetrics, getBackendSearchMetrics, promTypes, setMetrics, tracking } from './state/helpers';
+import { initialState, MAXIMUM_RESULTS_PER_PAGE, MetricsModalMetadata, stateSlice } from './state/state';
 import { getStyles } from './styles';
 import { PromFilterOption } from './types';
 import { debouncedFuzzySearch } from './uFuzzy';
@@ -57,17 +30,17 @@ const {
   setIsLoading,
   buildMetrics,
   filterMetricsBackend,
-  setResultsPerPage,
-  setPageNum,
-  setFuzzySearchQuery,
   setNameHaystack,
   setMetaHaystack,
   setFullMetaSearch,
   setIncludeNullMetadata,
-  setSelectedTypes,
   setUseBackend,
   setDisableTextWrap,
+  setFuzzySearchQuery,
+  setSelectedTypes,
   showAdditionalSettings,
+  setPageNum,
+  setResultsPerPage,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -84,7 +57,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
     dispatch(setIsLoading(true));
-
     const data: MetricsModalMetadata = await setMetrics(datasource, query, initialMetrics);
     dispatch(
       buildMetrics({
@@ -204,106 +176,29 @@ export const MetricsModal = (props: MetricsModalProps) => {
       className={styles.modal}
     >
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
-      <div className={styles.inputWrapper}>
-        <div className={cx(styles.inputItem, styles.inputItemFirst)}>
-          <Input
-            autoFocus={true}
-            data-testid={testIds.searchMetric}
-            placeholder={placeholders.browse}
-            value={state.fuzzySearchQuery}
-            onInput={(e) => {
+      <div className={styles.wrapper}>
+        <div className={styles.modalMetricsWrapper}>
+          <MetricsWrapper
+            state={state}
+            searchCallback={searchCallback}
+            options={typeOptions}
+            content={additionalSettings}
+            query={query}
+            onChange={onChange}
+            onClose={onClose}
+            onFuzzySearchQuery={(e) => {
               const value = e.currentTarget.value ?? '';
               dispatch(setFuzzySearchQuery(value));
               searchCallback(value, state.fullMetaSearch);
             }}
-          />
-        </div>
-        {state.hasMetadata && (
-          <div className={styles.inputItem}>
-            <MultiSelect
-              data-testid={testIds.selectType}
-              inputId="my-select"
-              options={typeOptions}
-              value={state.selectedTypes}
-              placeholder={placeholders.type}
-              onChange={(v) => dispatch(setSelectedTypes(v))}
-            />
-          </div>
-        )}
-        <div>
-          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
-        </div>
-        <div className={styles.inputItem}>
-          <Toggletip
-            aria-label="Additional settings"
-            content={additionalSettings}
-            placement="bottom-end"
-            closeButton={false}
-          >
-            <ButtonGroup className={styles.settingsBtn}>
-              <Button
-                variant="secondary"
-                size="md"
-                onClick={() => dispatch(showAdditionalSettings())}
-                data-testid={testIds.showAdditionalSettings}
-                className={styles.noBorder}
-              >
-                Additional Settings
-              </Button>
-              <Button
-                className={styles.noBorder}
-                variant="secondary"
-                icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'}
-              />
-            </ButtonGroup>
-          </Toggletip>
-        </div>
-      </div>
-      <div className={styles.resultsData}>
-        {query.metric && <i className={styles.currentlySelected}>Currently selected: {query.metric}</i>}
-        {query.labels.length > 0 && (
-          <div className={styles.resultsDataFiltered}>
-            <Icon name="info-circle" size="sm" />
-            <div className={styles.resultsDataFilteredText}>
-              &nbsp;These metrics have been pre-filtered by labels chosen in the label filters.
-            </div>
-          </div>
-        )}
-      </div>
-      <div className={styles.results}>
-        {state.metrics && (
-          <ResultsTable
-            metrics={displayedMetrics(state, dispatch)}
-            onChange={onChange}
-            onClose={onClose}
-            query={query}
-            state={state}
-            disableTextWrap={state.disableTextWrap}
-          />
-        )}
-      </div>
-      <div className={styles.resultsFooter}>
-        <div className={styles.resultsAmount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} results
-        </div>
-        <Pagination
-          currentPage={state.pageNum ?? 1}
-          numberOfPages={calculatePageList(state).length}
-          onNavigate={(val: number) => {
-            const page = val ?? 1;
-            dispatch(setPageNum(page));
-          }}
-        />
-        <div className={styles.resultsPerPageWrapper}>
-          <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
-          <Input
-            data-testid={testIds.resultsPerPage}
-            value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-            placeholder="results per page"
-            width={10}
-            title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
-            type="number"
-            onInput={(e) => {
+            onSetSelectedTypes={(v) => dispatch(setSelectedTypes(v))}
+            onShowAdditionalSettings={() => dispatch(showAdditionalSettings())}
+            displayedMetrics={displayedMetrics(state, dispatch)}
+            onNavigate={(val: number) => {
+              const page = val ?? 1;
+              dispatch(setPageNum(page));
+            }}
+            onChangePageNumber={(e) => {
               const value = +e.currentTarget.value;
 
               if (isNaN(value) || value >= MAXIMUM_RESULTS_PER_PAGE) {
@@ -313,6 +208,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
               dispatch(setResultsPerPage(value));
             }}
           />
+        </div>
+        <div className={styles.modalLabelsWrapper}>
+          <div>Hello world</div>
         </div>
       </div>
     </Modal>
