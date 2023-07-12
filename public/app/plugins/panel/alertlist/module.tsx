@@ -12,6 +12,8 @@ import {
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { PermissionLevelString } from 'app/types';
 
+import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
+
 import { AlertList } from './AlertList';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
@@ -196,6 +198,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             id={props.id ?? 'groupBy'}
             defaultValue={props.value.map((value: string) => ({ label: value, value }))}
             onChange={props.onChange}
+            dataSource={props.context.options.datasource}
           />
         );
       },
@@ -245,6 +248,27 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       category: ['Filter'],
     })
     .addCustomEditor({
+      path: 'datasource',
+      name: 'Datasource',
+      description: 'Filter alerts from selected datasource',
+      id: 'datasource',
+      defaultValue: null,
+      editor: function RenderDatasourcePicker(props) {
+        return (
+          <DataSourcePicker
+            {...props}
+            type={['prometheus', 'loki', 'grafana']}
+            noDefault
+            current={props.value}
+            onChange={(ds) => props.onChange(ds.name)}
+            onClear={() => props.onChange(null)}
+          />
+        );
+      },
+      category: ['Filter'],
+    })
+    .addCustomEditor({
+      showIf: (options) => options.datasource === GRAFANA_DATASOURCE_NAME || !Boolean(options.datasource),
       path: 'folder',
       name: 'Folder',
       description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
@@ -261,25 +285,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             permissionLevel={PermissionLevelString.View}
             onClear={() => props.onChange('')}
             {...props}
-          />
-        );
-      },
-      category: ['Filter'],
-    })
-    .addCustomEditor({
-      path: 'datasource',
-      name: 'Datasource',
-      description: 'Filter alerts from selected datasource',
-      id: 'datasource',
-      defaultValue: null,
-      editor: function RenderDatasourcePicker(props) {
-        return (
-          <DataSourcePicker
-            {...props}
-            type={['prometheus', 'loki', 'grafana']}
-            noDefault
-            current={props.value}
-            onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
           />
         );
       },

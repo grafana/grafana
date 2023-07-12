@@ -80,13 +80,8 @@ type Service struct {
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
-	enabled := 0
-	if !accesscontrol.IsDisabled(s.cfg) {
-		enabled = 1
-	}
-
 	return map[string]interface{}{
-		"stats.oss.accesscontrol.enabled.count": enabled,
+		"stats.oss.accesscontrol.enabled.count": 1,
 	}
 }
 
@@ -165,11 +160,6 @@ func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	// If accesscontrol is disabled no need to register roles
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
-
 	for _, r := range registrations {
 		err := accesscontrol.ValidateFixedRole(r.Role)
 		if err != nil {

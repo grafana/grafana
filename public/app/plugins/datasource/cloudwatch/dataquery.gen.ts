@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export interface MetricStat {
   /**
    * The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.
