@@ -44,26 +44,22 @@ export const LogRowMenuCell = React.memo(
     );
     const getLogText = useCallback(() => logText, [logText]);
     return (
-      <>
+      // TODO: fix keyboard a11y
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <span className={styles.rowMenu} onClick={onLogRowClick}>
         {pinned && !mouseIsOver && (
-          // TODO: fix keyboard a11y
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <span className={styles.rowMenu} onClick={onLogRowClick}>
-            <IconButton
-              className={styles.unPinButton}
-              size="md"
-              name="gf-pin"
-              onClick={() => onUnpinLine && onUnpinLine(row)}
-              tooltip="Unpin line"
-              tooltipPlacement="top"
-              aria-label="Unpin line"
-            />
-          </span>
+          <IconButton
+            className={styles.unPinButton}
+            size="md"
+            name="gf-pin"
+            onClick={() => onUnpinLine && onUnpinLine(row)}
+            tooltip="Unpin line"
+            tooltipPlacement="top"
+            aria-label="Unpin line"
+          />
         )}
         {mouseIsOver && (
-          // TODO: fix keyboard a11y
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <span className={styles.rowMenu} onClick={onLogRowClick}>
+          <>
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
@@ -116,9 +112,9 @@ export const LogRowMenuCell = React.memo(
                 onClick={() => onPermalinkClick(row)}
               />
             )}
-          </span>
+          </>
         )}
-      </>
+      </span>
     );
   }
 );
