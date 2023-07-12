@@ -19,7 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
-func validateInput(c utils.CommandLine, pluginFolder string) error {
+const installArgsSize = 2
+
+func validateInput(c utils.CommandLine) error {
+	if c.Args().Len() > installArgsSize {
+		logger.Info(color.RedString("Please specify the correct format. For example ./grafana cli (<command arguments>) plugins install <plugin ID> (<plugin version>)\n\n"))
+		return errors.New("install only supports 2 arguments: plugin and version")
+	}
+
 	arg := c.Args().First()
 	if arg == "" {
 		return errors.New("please specify plugin to install")
@@ -50,8 +57,7 @@ func logRestartNotice() {
 }
 
 func installCommand(c utils.CommandLine) error {
-	pluginFolder := c.PluginDirectory()
-	if err := validateInput(c, pluginFolder); err != nil {
+	if err := validateInput(c); err != nil {
 		return err
 	}
 
