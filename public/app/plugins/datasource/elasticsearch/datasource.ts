@@ -32,6 +32,7 @@ import {
   Field,
   LogRowContextQueryDirection,
   LogRowContextOptions,
+  FieldType,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -683,7 +684,7 @@ export class ElasticDatasource
       {
         range: request.range,
         targets: request.targets,
-        extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
+        extractLevel,
       }
     );
   }
@@ -1281,4 +1282,10 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
       };
     }
   }
+}
+
+function extractLevel(dataFrame: DataFrame): LogLevel {
+  const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
+  const name = valueField?.labels?.['level'] ?? '';
+  return getLogLevelFromKey(name);
 }
