@@ -177,7 +177,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+  componentDidUpdate(prevProps: Readonly<Props>): void {
     if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
       // loading stopped, so we need to remove any permalinked log lines
       delete this.props.panelState.logs.id;
@@ -615,26 +615,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
               <div>
                 <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                  <>
-                    <RadioButtonGroup
-                      disabled={isFlipping}
-                      options={[
-                        {
-                          label: 'Newest first',
-                          value: LogsSortOrder.Descending,
-                          description: 'Show results newest to oldest',
-                        },
-                        {
-                          label: 'Oldest first',
-                          value: LogsSortOrder.Ascending,
-                          description: 'Show results oldest to newest',
-                        },
-                      ]}
-                      value={logsSortOrder}
-                      onChange={this.onChangeLogsSortOrder}
-                      className={styles.radioButtons}
-                    />
-                  </>
+                  <RadioButtonGroup
+                    disabled={isFlipping}
+                    options={[
+                      {
+                        label: 'Newest first',
+                        value: LogsSortOrder.Descending,
+                        description: 'Show results newest to oldest',
+                      },
+                      {
+                        label: 'Oldest first',
+                        value: LogsSortOrder.Ascending,
+                        description: 'Show results oldest to newest',
+                      },
+                    ]}
+                    value={logsSortOrder}
+                    onChange={this.onChangeLogsSortOrder}
+                    className={styles.radioButtons}
+                  />
                 </InlineField>
               </div>
             </div>
