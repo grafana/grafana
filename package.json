@@ -232,7 +232,7 @@
     "rudder-sdk-js": "2.25.0",
     "sass": "1.58.3",
     "sass-loader": "13.2.0",
-    "sinon": "15.0.1",
+    "sinon": "15.2.0",
     "style-loader": "3.3.1",
     "stylelint": "15.10.1",
     "stylelint-config-prettier": "9.0.5",
