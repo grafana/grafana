@@ -15,6 +15,8 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         width: 60%;
       }
     `,
+    labelsWrapper: css``,
+    labelsTitle: css``,
     inputWrapper: css`
       display: flex;
       flex-direction: row;
@@ -22,8 +24,11 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     wrapper: css`
       display: flex;
-      flex-direction: row;
+      flex-direction: column-reverse;
       justify-content: space-between;
+      @media only screen and (min-width: 768px) {
+        flex-direction: row;
+      }
     `,
     modalMetricsWrapper: css``,
     modalLabelsWrapper: css``,
@@ -108,5 +113,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     resultsPerPageWrapper: css`
       display: flex;
     `,
+    labelName: css``,
   };
 };

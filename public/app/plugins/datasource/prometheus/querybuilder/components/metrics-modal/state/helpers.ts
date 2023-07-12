@@ -54,6 +54,20 @@ export async function setMetrics(
   };
 }
 
+export async function getLabelNames(metric: string, datasource: PrometheusDatasource): Promise<string[]> {
+  let labelNames = [];
+  if (metric) {
+    labelNames = Object.keys(await datasource.languageProvider.fetchSeriesLabelsMatch(metric));
+  } else {
+    labelNames = datasource.languageProvider.getLabelKeys();
+    if (!labelNames.length) {
+      await datasource.languageProvider.fetchLabels();
+      labelNames = datasource.languageProvider.getLabelKeys();
+    }
+  }
+  return labelNames;
+}
+
 /**
  * Builds the metric data object with type and description
  *

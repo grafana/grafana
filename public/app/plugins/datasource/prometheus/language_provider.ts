@@ -711,11 +711,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
-   * @param name
+   * @param queryExpr
    * @param withName
    */
-  fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
-    const interpolatedName = this.datasource.interpolateString(name);
+  fetchSeriesLabelsMatch = async (queryExpr: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(queryExpr);
     const range = this.datasource.getAdjustedInterval();
     const urlParams = {
       ...range,

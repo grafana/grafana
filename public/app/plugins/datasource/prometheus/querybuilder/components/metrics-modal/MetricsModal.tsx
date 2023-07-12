@@ -1,16 +1,27 @@
+import { css } from '@emotion/css';
+import cx from 'classnames';
 import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Modal, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Checkbox, CollapsableSection, Input, Modal, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
+import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
 import { MetricsWrapper } from './MetricsWrapper';
-import { displayedMetrics, getBackendSearchMetrics, promTypes, setMetrics, tracking } from './state/helpers';
+import {
+  displayedMetrics,
+  getBackendSearchMetrics,
+  getLabelNames,
+  placeholders,
+  promTypes,
+  setMetrics,
+  tracking,
+} from './state/helpers';
 import { initialState, MAXIMUM_RESULTS_PER_PAGE, MetricsModalMetadata, stateSlice } from './state/state';
 import { getStyles } from './styles';
 import { PromFilterOption } from './types';
@@ -29,6 +40,7 @@ export type MetricsModalProps = {
 const {
   setIsLoading,
   buildMetrics,
+  buildLabels,
   filterMetricsBackend,
   setNameHaystack,
   setMetaHaystack,
@@ -41,6 +53,9 @@ const {
   showAdditionalSettings,
   setPageNum,
   setResultsPerPage,
+  setLabelSearchQuery,
+  setLabelValues,
+  setSelectedLabelValue,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -50,6 +65,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
+  const selectedValuesString = JSON.stringify(state.selectedLabelValues);
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -71,9 +87,50 @@ export const MetricsModal = (props: MetricsModalProps) => {
     );
   }, [query, datasource, initialMetrics]);
 
+  /**
+   * Get label names
+   */
+  const updateLabels = useCallback(async () => {
+    dispatch(setIsLoading(true));
+    const data = await getLabelNames(query.metric, datasource);
+    dispatch(
+      buildLabels({
+        isLoading: false,
+        labelNames: data,
+      })
+    );
+  }, [query.metric, datasource]);
+
   useEffect(() => {
     updateMetricsMetadata();
   }, [updateMetricsMetadata]);
+
+  useEffect(() => {
+    updateLabels();
+  }, [updateLabels]);
+  /**
+   *
+   * export interface QueryBuilderLabelFilter {
+   *   label: string;
+   *   op: string;
+   *   value: string;
+   * }
+   */
+  useEffect(() => {
+    let labels: QueryBuilderLabelFilter[] = [];
+    Object.keys(state.selectedLabelValues).forEach((labelName: string) => {
+      state.selectedLabelValues[labelName].forEach((labelValue: string) => {
+        labels.push({
+          label: labelName,
+          op: '=',
+          value: labelValue,
+        });
+      });
+    });
+
+    onChange({ ...query, labels: labels });
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedValuesString, query]);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
@@ -110,6 +167,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   function fuzzyMetaDispatch(haystackData: string[][]) {
     dispatch(setMetaHaystack(haystackData));
+  }
+
+  async function getLabelValues(labelName: string): Promise<string[]> {
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, query.metric);
   }
 
   function searchCallback(query: string, fullMetaSearchVal: boolean) {
@@ -210,11 +271,103 @@ export const MetricsModal = (props: MetricsModalProps) => {
           />
         </div>
         <div className={styles.modalLabelsWrapper}>
-          <div>Hello world</div>
+          <div className={styles.inputWrapper}>
+            <div className={cx(styles.inputItem, styles.inputItemFirst)}>
+              <Input
+                autoFocus={true}
+                data-testid={testIds.searchMetric}
+                placeholder={placeholders.browse}
+                value={state.labelSearchQuery}
+                onInput={(e) => {
+                  const value = e.currentTarget.value ?? '';
+                  dispatch(setLabelSearchQuery(value));
+                  searchCallback(value, state.fullMetaSearch);
+                }}
+              />
+            </div>
+          </div>
+          <div className={styles.labelsWrapper}>
+            <div className={styles.labelsTitle}>Label name</div>
+            {state.labelNames.map((labelName, index) => (
+              <CollapsableSection
+                key={labelName}
+                label={<LabelNameLabel labelName={labelName} />}
+                onToggle={(isOpen: boolean) => {
+                  if (isOpen) {
+                    dispatch(setIsLoading(true));
+                    getLabelValues(labelName).then((values) => {
+                      dispatch(
+                        setLabelValues({
+                          isLoading: false,
+                          labelName: labelName,
+                          labelValues: values,
+                        })
+                      );
+                    });
+                  }
+                }}
+                isOpen={false}
+              >
+                {state.labelValues[labelName]?.map((labelValue) => (
+                  <LabelNameValue
+                    key={labelValue}
+                    onChange={(e) => {
+                      const checked = e.currentTarget.checked;
+                      dispatch(
+                        setSelectedLabelValue({
+                          labelName: labelName,
+                          labelValue: labelValue,
+                          checked: checked,
+                        })
+                      );
+                    }}
+                    labelName={labelName}
+                    labelValue={labelValue}
+                    selected={state.selectedLabelValues[labelName]?.includes(labelValue) ?? false}
+                  />
+                ))}
+              </CollapsableSection>
+            ))}
+          </div>
         </div>
       </div>
     </Modal>
   );
+};
+
+export const LabelNameLabel = (props: { labelName: string }) => {
+  const { labelName } = props;
+  const theme = useTheme2();
+  const styles = getLabelNameLabelStyles(theme);
+  return <div className={styles.labelName}>{labelName}</div>;
+};
+
+export const getLabelNameLabelStyles = (theme: GrafanaTheme2) => {
+  return {
+    labelName: css``,
+  };
+};
+
+export const LabelNameValue = (props: {
+  labelName: string;
+  labelValue: string;
+  onChange: React.FormEventHandler<HTMLInputElement>;
+  selected: boolean;
+}) => {
+  const { labelValue, onChange, selected } = props;
+  const theme = useTheme2();
+  const styles = getLabelValueLabelStyles(theme);
+  return (
+    <div className={styles.labelName}>
+      <Checkbox onChange={onChange} label={labelValue} selected={selected} />
+    </div>
+  );
+};
+
+export const getLabelValueLabelStyles = (theme: GrafanaTheme2) => {
+  return {
+    labelName: css``,
+  };
 };
 
 export const testIds = {

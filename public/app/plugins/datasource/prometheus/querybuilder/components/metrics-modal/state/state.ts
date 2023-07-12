@@ -24,6 +24,10 @@ export const stateSlice = createSlice({
       state.filteredMetricCount = action.payload.filteredMetricCount;
       state.isLoading = action.payload.isLoading;
     },
+    buildLabels: (state, action: PayloadAction<MetricsLabelsData>) => {
+      state.isLoading = action.payload.isLoading;
+      state.labelNames = action.payload.labelNames;
+    },
     buildMetrics: (state, action: PayloadAction<MetricsModalMetadata>) => {
       state.isLoading = action.payload.isLoading;
       state.metrics = action.payload.metrics;
@@ -32,6 +36,33 @@ export const stateSlice = createSlice({
       state.nameHaystackDictionary = action.payload.nameHaystackDictionary;
       state.totalMetricCount = action.payload.totalMetricCount;
       state.filteredMetricCount = action.payload.filteredMetricCount;
+    },
+    setLabelValues: (state, action: PayloadAction<MetricsLabelValuesData>) => {
+      state.isLoading = action.payload.isLoading;
+      state.labelValues[action.payload.labelName] = action.payload.labelValues;
+    },
+    setSelectedLabelValue: (
+      state,
+      action: PayloadAction<{
+        labelName: string;
+        labelValue: string;
+        checked: boolean;
+      }>
+    ) => {
+      let currentlySelectedValues = state.selectedLabelValues[action.payload.labelName];
+      if (!Array.isArray(currentlySelectedValues)) {
+        currentlySelectedValues = [];
+      }
+      if (action.payload.checked) {
+        currentlySelectedValues.push(action.payload.labelValue);
+      } else {
+        state.selectedLabelValues[action.payload.labelName].splice(
+          currentlySelectedValues.indexOf(action.payload.labelValue),
+          1
+        );
+      }
+
+      state.selectedLabelValues[action.payload.labelName] = currentlySelectedValues;
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -47,6 +78,10 @@ export const stateSlice = createSlice({
     },
     setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
       state.fuzzySearchQuery = action.payload;
+      state.pageNum = 1;
+    },
+    setLabelSearchQuery: (state, action: PayloadAction<string>) => {
+      state.labelSearchQuery = action.payload;
       state.pageNum = 1;
     },
     setNameHaystack: (state, action: PayloadAction<string[][]>) => {
@@ -109,8 +144,15 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     useBackend: query?.useBackend ?? false,
     disableTextWrap: query?.disableTextWrap ?? false,
     showAdditionalSettings: false,
+    labelSearchQuery: '',
+    labelNames: [],
+    labelValues: {},
+    selectedLabelValues: {},
   };
 }
+
+type LabelName = string;
+type LabelValue = string;
 
 /**
  * The metrics explorer state object
@@ -124,6 +166,12 @@ export interface MetricsModalState {
    * it is reduced by the backend search.
    */
   metrics: MetricsData;
+  /** List of label names */
+  labelNames: string[];
+  /** Record of label values, index is the label name */
+  labelValues: Record<LabelName, LabelValue[]>;
+  /** Map of selected label names to values */
+  selectedLabelValues: Record<LabelName, LabelValue[]>;
   /** Field for disabling type select and switches that rely on metadata */
   hasMetadata: boolean;
   /** Used to display metrics and help with fuzzy order */
@@ -160,6 +208,8 @@ export interface MetricsModalState {
   disableTextWrap: boolean;
   /** Display toggle switches for settings */
   showAdditionalSettings: boolean;
+  /** Label search text */
+  labelSearchQuery: string;
 }
 
 /**
@@ -173,6 +223,17 @@ export type MetricsModalMetadata = {
   nameHaystackDictionary: HaystackDictionary;
   totalMetricCount: number;
   filteredMetricCount: number | null;
+};
+
+export type MetricsLabelsData = {
+  isLoading: boolean;
+  labelNames: string[];
+};
+
+export type MetricsLabelValuesData = {
+  isLoading: boolean;
+  labelName: string;
+  labelValues: string[];
 };
 
 // for updating the settings in the PromQuery model
