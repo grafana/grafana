@@ -166,6 +166,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 
 		initializedPlugins = append(initializedPlugins, p)
 	}
+	// </INITIALIZATION STAGE>
 
 	// <POST-INITIALIZATION STAGE>
 	for _, p := range initializedPlugins {
