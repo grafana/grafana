@@ -92,6 +92,7 @@ export function FolderAndGroup() {
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
 
   const handleFolderCreation = (folder: Folder) => {
+    resetGroup();
     setValue('folder', folder);
     setIsCreatingFolder(false);
   };
