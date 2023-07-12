@@ -94,7 +94,7 @@ export function SmartAlertTypeDetector({
 }) {
   const { getValues, setValue } = useFormContext<RuleFormValues>();
 
-  const ruleFormType = getValues('type');
+  const [ruleFormType, dataSourceName] = getValues(['type', 'dataSourceName']);
   const styles = useStyles2(getStyles);
 
   const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
@@ -132,7 +132,8 @@ export function SmartAlertTypeDetector({
       : 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.';
   const titleLabel =
     ruleFormType === RuleFormType.cloudAlerting
-      ? 'This rule is going to be managed by the data source. The use of expressions or multiple queries is not supported. If your data source does not have an Alert manager configured or you wish to use expressions or multiple queries, switch to a Grafana-managed alert.'
+      ? `This rule is going to be managed by the '${dataSourceName}' data source. 
+      If your data source does not have an Alert manager configured or you wish to use expressions or multiple queries, switch to a Grafana-managed alert.`
       : 'This is a Grafana-managed alert rule. You can switch it to a data source-managed alert rule if you have a Mimir / Loki / Cortex data source configured with an Alert manager.';
   const cantSwitchLabel = `Based on the selected data sources this alert rule will be Grafana-managed.`;
   return (
