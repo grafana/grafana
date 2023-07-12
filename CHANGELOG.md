@@ -1,3 +1,38 @@
+<!-- 10.0.2 START -->
+
+# 10.0.2 (2023-07-11)
+
+### Features and enhancements
+
+- **Alerting:** Add limit query parameter to Loki-based ASH api, drop default limit from 5000 to 1000, extend visible time range for new ASH UI. [#70857](https://github.com/grafana/grafana/issues/70857), [@alexweav](https://github.com/alexweav)
+- **Alerting:** Move rule UID from Loki stream labels into log lines. [#70686](https://github.com/grafana/grafana/issues/70686), [@rwwiv](https://github.com/rwwiv)
+- **Explore:** Clean up query subscriptions when a query is canceled. [#70516](https://github.com/grafana/grafana/issues/70516), [@ifrost](https://github.com/ifrost)
+- **Alerting:** Allow selecting the same custom group when swapping folders. [#70369](https://github.com/grafana/grafana/issues/70369), [@gillesdemey](https://github.com/gillesdemey)
+
+### Bug fixes
+
+- **Fix:** Change getExistingDashboardByTitleAndFolder to get dashboard by title, not slug. [#70936](https://github.com/grafana/grafana/issues/70936), [@yangkb09](https://github.com/yangkb09)
+- **Login:** Fix footer from displaying under the login box. [#70909](https://github.com/grafana/grafana/issues/70909), [@joshhunt](https://github.com/joshhunt)
+- **Alerting:** Convert 'Both' type Prometheus queries to 'Range' in migration. [#70854](https://github.com/grafana/grafana/issues/70854), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Variables:** Detect a name for duplicated variable. [#70823](https://github.com/grafana/grafana/issues/70823), [@Ugzuzg](https://github.com/Ugzuzg)
+- **Logs:** Fix wrong `before` and `after` texts in log context. [#70802](https://github.com/grafana/grafana/issues/70802), [@svennergr](https://github.com/svennergr)
+- **Elasticsearch:** Make it compatible with the new log context functionality. [#70748](https://github.com/grafana/grafana/issues/70748), [@gabor](https://github.com/gabor)
+- **Alerting:** Fix HA alerting membership sync. [#70700](https://github.com/grafana/grafana/issues/70700), [@jcalisto](https://github.com/jcalisto)
+- **Alerting:** Display correct results when using different filters on alerting panels. [#70639](https://github.com/grafana/grafana/issues/70639), [@VikaCep](https://github.com/VikaCep)
+- **XYChart:** Fix axis range and scale overrides. [#70614](https://github.com/grafana/grafana/issues/70614), [@leeoniya](https://github.com/leeoniya)
+- **LogContext:** Fix filtering out log lines with the same entry. [#70569](https://github.com/grafana/grafana/issues/70569), [@svennergr](https://github.com/svennergr)
+- **Dashboard:** Fix issue where a panel with a description and a cached response displays 2 info icons. [#70566](https://github.com/grafana/grafana/issues/70566), [@axelavargas](https://github.com/axelavargas)
+- **Navigation:** Fix toolbar actions flickering on mobile. [#70564](https://github.com/grafana/grafana/issues/70564), [@ashharrison90](https://github.com/ashharrison90)
+- **XYChart:** Ensure color scale is field-local and synced with data updates. [#70481](https://github.com/grafana/grafana/issues/70481), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Fix unique violation when updating rule group with title chains/cycles. [#70467](https://github.com/grafana/grafana/issues/70467), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Add file and rule_group query params in request for filtering the res…. [#70417](https://github.com/grafana/grafana/issues/70417), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+- **SAML UI:** Enforce one option for configuring IdP metadata. (Enterprise)
+
+### Plugin development fixes & changes
+
+- **Grafana UI:** Fix behaviour regression on Tooltip component. [#70742](https://github.com/grafana/grafana/issues/70742), [@eledobleefe](https://github.com/eledobleefe)
+
+<!-- 10.0.2 END -->
 <!-- 10.0.1 START -->
 
 # 10.0.1 (2023-06-22)
@@ -372,6 +407,16 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.6 START -->
+
+# 9.5.6 (2023-07-11)
+
+### Bug fixes
+
+- **Dashboard:** Fix library panels in collapsed rows not getting updated. [#66640](https://github.com/grafana/grafana/issues/66640), [@VictorColomb](https://github.com/VictorColomb)
+- **Auth:** Add and document option for enabling email lookup. [@vtorosyan](https://github.com/vtorosyan)
+
+<!-- 9.5.6 END -->
 <!-- 9.5.5 START -->
 
 # 9.5.5 (2023-06-22)
