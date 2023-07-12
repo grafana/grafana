@@ -24,7 +24,9 @@ type AlertTableColumnProps = DynamicTableColumnProps<AlertWithCommonLabels>;
 type AlertTableItemProps = DynamicTableItemProps<AlertWithCommonLabels>;
 
 export const AlertInstancesTable = ({ instances, pagination, footerRow }: Props) => {
-  const commonLabels = findCommonLabels(instances.map((instance) => instance.labels));
+  const commonLabels = useMemo(() => {
+    return instances.length > 1 ? findCommonLabels(instances.map((instance) => instance.labels)) : {};
+  }, [instances]);
 
   const items = useMemo(
     (): AlertTableItemProps[] =>
