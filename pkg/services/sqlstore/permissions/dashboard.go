@@ -526,6 +526,9 @@ func actionsToCheck(actions []string, permissions map[string][]string, wildcards
 }
 
 func needToCheckAction(action string, permissions map[string][]string, wildcards ...accesscontrol.Wildcards) bool {
+	if action == "" {
+		return false
+	}
 	var hasWildcard bool
 
 outer:
