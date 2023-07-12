@@ -570,7 +570,7 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
   return (
     <Card
       className={styles.card}
-      data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+      aria-label={selectors.components.TransformTab.newTransform(transform.name)}
       onClick={onClick}
     >
       <Card.Heading>{transform.name}</Card.Heading>
@@ -688,7 +688,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick }: Tr
         <Card
           key={transform.id}
           className={styles.newCard}
-          data-testid={selectors.components.TransformTab.newTransform(transform.name)}
+          aria-label={selectors.components.TransformTab.newTransform(transform.name)}
           onClick={() => onClick(transform.id)}
         >
           <Card.Heading className={styles.heading}>

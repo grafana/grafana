@@ -209,7 +209,7 @@ export const Components = {
   },
   TransformTab: {
     content: 'data-testid Transform editor tab content',
-    newTransform: (name: string) => `data-testid New transform ${name}`,
+    newTransform: (name: string) => `New transform ${name}`,
     transformationEditor: (name: string) => `data-testid Transformation editor ${name}`,
     transformationEditorDebugger: (name: string) => `data-testid Transformation editor debugger ${name}`,
   },
