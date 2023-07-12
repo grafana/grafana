@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -280,12 +279,8 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 		for refID := range resp.Responses {
 			keys = append(keys, refID)
 		}
-		var availableRefIds string
-		if len(keys) > 0 {
-			sort.Strings(keys)
-			availableRefIds = fmt.Sprintf(", available refIDs [%s]", strings.Join(keys, ","))
-		}
-		return nil, fmt.Errorf("cannot find reference ID %s in response%s", refID, availableRefIds)
+		logger.Warn("Can't find response by refID. Return nodata", "responseRefIds", keys)
+		return nil, nil
 	}
 
 	if response.Error != nil {
@@ -295,6 +290,10 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 }
 
 func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service, logger log.Logger) (string, mathexp.Results, error) {
+	if len(frames) == 0 {
+		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{}}}, nil
+	}
+
 	vals := make([]mathexp.Value, 0)
 	var dt data.FrameType
 	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
