@@ -52,7 +52,7 @@ export const Example: StoryFn = () => {
         <Text element="h1">This is a header</Text>
         <Text element="p">
           This is a paragraph that contains
-          <Text element="span" color="success" italic>
+          <Text color="success" italic>
             {' '}
             a span element with different color and style{' '}
           </Text>
