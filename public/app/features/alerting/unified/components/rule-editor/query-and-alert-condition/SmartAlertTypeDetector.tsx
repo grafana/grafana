@@ -60,9 +60,7 @@ const getCanSwitch = ({
     !editingExistingRule &&
     !isRecordingRuleType &&
     onlyOneDS &&
-    rulesSourcesWithRuler.some(
-      (dsJsonData: DataSourceInstanceSettings<DataSourceJsonData>) => dsJsonData.uid === dataSourceIdFromQueries
-    );
+    rulesSourcesWithRuler.some((dsJsonData) => dsJsonData.uid === dataSourceIdFromQueries);
   // check for enabled types
   const grafanaTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.grafana);
   const cloudTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.cloudAlerting);

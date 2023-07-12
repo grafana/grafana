@@ -303,6 +303,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [dispatch]
   );
 
+  // we need to keep track of the previous expressions to be able to restore them when switching back to grafana managed
   const [prevExpressions, setPrevExpressions] = useState<AlertQuery[]>([]);
 
   return (
