@@ -3,7 +3,8 @@ package modules
 const (
 	All string = "all"
 
-	CertGenerator string = "cert-generator"
+	BackgroundServices string = "background-services"
+	CertGenerator      string = "cert-generator"
 
 	HTTPServer string = "http-server"
 
@@ -15,7 +16,7 @@ const (
 	Provisioning string = "provisioning"
 )
 
-var DependencyMap = map[string][]string{
+var dependencyMap = map[string][]string{
 	CertGenerator: {},
 
 	HTTPServer: {CertGenerator},
@@ -27,5 +28,5 @@ var DependencyMap = map[string][]string{
 
 	Provisioning: {},
 
-	All: {Kubernetes, HTTPServer, Provisioning},
+	All: {BackgroundServices, Kubernetes, HTTPServer, Provisioning},
 }

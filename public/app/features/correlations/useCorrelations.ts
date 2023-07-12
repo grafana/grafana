@@ -9,25 +9,66 @@ import {
   Correlation,
   CreateCorrelationParams,
   CreateCorrelationResponse,
+  GetCorrelationsParams,
   RemoveCorrelationParams,
   RemoveCorrelationResponse,
   UpdateCorrelationParams,
   UpdateCorrelationResponse,
 } from './types';
 
+export interface CorrelationsResponse {
+  correlations: Correlation[];
+  page: number;
+  limit: number;
+  totalCount: number;
+}
+
 export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'targetUID'> {
   source: DataSourceInstanceSettings;
   target: DataSourceInstanceSettings;
 }
 
-const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Correlation): CorrelationData => ({
-  ...correlation,
-  source: getDataSourceSrv().getInstanceSettings(sourceUID)!,
-  target: getDataSourceSrv().getInstanceSettings(targetUID)!,
-});
+export interface CorrelationsData {
+  correlations: CorrelationData[];
+  page: number;
+  limit: number;
+  totalCount: number;
+}
 
-const toEnrichedCorrelationsData = (correlations: Correlation[]) => correlations.map(toEnrichedCorrelationData);
-function getData<T>(response: FetchResponse<T>) {
+const toEnrichedCorrelationData = ({
+  sourceUID,
+  targetUID,
+  ...correlation
+}: Correlation): CorrelationData | undefined => {
+  const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
+  const targetDatasource = getDataSourceSrv().getInstanceSettings(targetUID);
+
+  if (
+    sourceDatasource &&
+    sourceDatasource?.uid !== undefined &&
+    targetDatasource &&
+    targetDatasource.uid !== undefined
+  ) {
+    return {
+      ...correlation,
+      source: sourceDatasource,
+      target: targetDatasource,
+    };
+  } else {
+    return undefined;
+  }
+};
+
+const validSourceFilter = (correlation: CorrelationData | undefined): correlation is CorrelationData => !!correlation;
+
+export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
+  return {
+    ...correlationsResponse,
+    correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData).filter(validSourceFilter),
+  };
+};
+
+export function getData<T>(response: FetchResponse<T>) {
   return response.data;
 }
 
@@ -40,10 +81,15 @@ function getData<T>(response: FetchResponse<T>) {
 export const useCorrelations = () => {
   const { backend } = useGrafana();
 
-  const [getInfo, get] = useAsyncFn<() => Promise<CorrelationData[]>>(
-    () =>
+  const [getInfo, get] = useAsyncFn<(params: GetCorrelationsParams) => Promise<CorrelationsData>>(
+    (params) =>
       lastValueFrom(
-        backend.fetch<Correlation[]>({ url: '/api/datasources/correlations', method: 'GET', showErrorAlert: false })
+        backend.fetch<CorrelationsResponse>({
+          url: '/api/datasources/correlations',
+          params: { page: params.page },
+          method: 'GET',
+          showErrorAlert: false,
+        })
       )
         .then(getData)
         .then(toEnrichedCorrelationsData),
@@ -55,7 +101,12 @@ export const useCorrelations = () => {
       backend
         .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
         .then((response) => {
-          return toEnrichedCorrelationData(response.result);
+          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+          if (enrichedCorrelation !== undefined) {
+            return enrichedCorrelation;
+          } else {
+            throw new Error('invalid sourceUID');
+          }
         }),
     [backend]
   );
@@ -70,7 +121,14 @@ export const useCorrelations = () => {
     ({ sourceUID, uid, ...correlation }) =>
       backend
         .patch<UpdateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
-        .then((response) => toEnrichedCorrelationData(response.result)),
+        .then((response) => {
+          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+          if (enrichedCorrelation !== undefined) {
+            return enrichedCorrelation;
+          } else {
+            throw new Error('invalid sourceUID');
+          }
+        }),
     [backend]
   );
 

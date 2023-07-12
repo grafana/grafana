@@ -8,7 +8,8 @@ keywords:
   - documentation
   - oauth
 title: Configure Azure AD OAuth2 authentication
-weight: 600
+menuTitle: Azure AD OAuth2
+weight: 800
 ---
 
 # Configure Azure AD OAuth2 authentication
@@ -149,6 +150,7 @@ auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
 allowed_domains =
 allowed_groups =
+allowed_organizations = TENANT_ID
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 skip_org_role_sync = false
@@ -175,6 +177,19 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
 To enable a refresh token for AzureAD, extend the `scopes` in `[auth.azuread]` with `offline_access`.
+
+### Configure allowed tenants
+
+To limit access to authenticated users who are members of one or more tenants, set `allowed_organizations`
+to a comma- or space-separated list of tenant IDs. You can find tenant IDs on the Azure portal under **Azure Active Directory -> Overview**.
+
+Make sure to include the tenant IDs of all the federated Users' root directory if your Azure AD contains external identities.
+
+For example, if you want to only give access to members of the tenant `example` with an ID of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
+
+```
+allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
+```
 
 ### Configure allowed groups
 

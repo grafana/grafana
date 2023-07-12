@@ -24,7 +24,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
-import { getStreamSelectorPositions } from './modifyQuery';
+import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -145,12 +145,12 @@ export function isQueryWithNode(query: string, nodeType: number): boolean {
   return isQueryWithNode;
 }
 
-export function getNodesFromQuery(query: string, nodeTypes: number[]): SyntaxNode[] {
+export function getNodesFromQuery(query: string, nodeTypes?: number[]): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   const tree = parser.parse(query);
   tree.iterate({
     enter: (node): false | void => {
-      if (nodeTypes.includes(node.type.id)) {
+      if (nodeTypes === undefined || nodeTypes.includes(node.type.id)) {
         nodes.push(node.node);
       }
     },
@@ -158,13 +158,31 @@ export function getNodesFromQuery(query: string, nodeTypes: number[]): SyntaxNod
   return nodes;
 }
 
+export function getNodePositionsFromQuery(query: string, nodeTypes?: number[]): NodePosition[] {
+  const positions: NodePosition[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (node): false | void => {
+      if (nodeTypes === undefined || nodeTypes.includes(node.type.id)) {
+        positions.push(NodePosition.fromNode(node.node));
+      }
+    },
+  });
+  return positions;
+}
+
 export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
   const nodes = getNodesFromQuery(query, [nodeType]);
   return nodes.length > 0 ? nodes[0] : undefined;
 }
 
-export function isValidQuery(query: string): boolean {
-  return !isQueryWithNode(query, ErrorId);
+/**
+ * Parses the query and looks for error nodes. If there is at least one, it returns false.
+ * Grafana variables are considered errors, so if you need to validate a query
+ * with variables you should interpolate it first.
+ */
+export function isQueryWithError(query: string): boolean {
+  return isQueryWithNode(query, ErrorId);
 }
 
 export function isLogsQuery(query: string): boolean {
