@@ -8,7 +8,11 @@ import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 
-export const CloudDataSourceSelector = ({ dataSourceSelected }: { dataSourceSelected: string | null }) => {
+export const CloudDataSourceSelector = ({
+  onChangeCloudDatasource,
+}: {
+  onChangeCloudDatasource: (datasourceUid: string) => void;
+}) => {
   const {
     control,
     formState: { errors },
@@ -40,6 +44,7 @@ export const CloudDataSourceSelector = ({ dataSourceSelected }: { dataSourceSele
                     // reset expression as they don't need to persist after changing datasources
                     setValue('expression', '');
                     onChange(ds?.name ?? null);
+                    onChangeCloudDatasource(ds?.uid ?? null);
                   }}
                 />
               )}

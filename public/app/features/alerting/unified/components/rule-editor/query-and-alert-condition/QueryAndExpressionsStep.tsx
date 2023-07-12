@@ -270,8 +270,26 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const styles = useStyles2(getStyles);
 
+  // Cloud alerts load data from form values
+  // whereas Grafana managed alerts load data from reducer
+  //when data source is changed in the cloud selector we need to update the queries in the reducer
+
+  const onChangeCloudDatasource = useCallback(
+    (datasourceUid: string) => {
+      const newQueries = cloneDeep(queries);
+      newQueries[0].datasourceUid = datasourceUid;
+      setValue('queries', newQueries, { shouldValidate: false });
+
+      updateExpressionAndDatasource(newQueries);
+
+      dispatch(setDataQueries(newQueries));
+    },
+    [queries, setValue, updateExpressionAndDatasource, dispatch]
+  );
+
   // ExpressionEditor for cloud query needs to update queries in the reducer and in the form
-  // otherwise the value is not updated in the form
+  // otherwise the value is not updated for Grafana managed alerts
+
   const onChangeExpression = (value: string) => {
     const newQueries = cloneDeep(queries);
 
@@ -310,7 +328,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
       {/* This is the cloud data source selector */}
       {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
-        <CloudDataSourceSelector dataSourceSelected={dataSourceName} />
+        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} />
       )}
 
       {/* This is the PromQL Editor for recording rules */}
