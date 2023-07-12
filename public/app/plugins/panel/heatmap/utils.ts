@@ -95,7 +95,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     sync,
   } = opts;
 
-  console.log(dataRef.current);
+  // console.log(dataRef.current);
 
   const xScaleKey = 'x';
   let xScaleUnit = 'time';
