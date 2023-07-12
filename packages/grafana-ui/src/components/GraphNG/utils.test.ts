@@ -231,7 +231,6 @@ describe('GraphNG utils', () => {
           name: 'time',
           type: FieldType.time,
           config: {},
-          state: {},
           values: [1, 2, 4, 6, 100], // should find smallest delta === 1 from here
         },
         {
