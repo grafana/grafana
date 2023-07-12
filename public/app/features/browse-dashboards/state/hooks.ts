@@ -8,6 +8,7 @@ import { PAGE_SIZE } from '../api/services';
 import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
 import { fetchNextChildrenPage } from './actions';
+import { getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
@@ -97,7 +98,7 @@ export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
-export function useLoadNextChildrenPage() {
+export function useLoadNextChildrenPage(loadDashboards = true) {
   const dispatch = useDispatch();
   const requestInFlightRef = useRef(false);
 
@@ -109,12 +110,12 @@ export function useLoadNextChildrenPage() {
 
       requestInFlightRef.current = true;
 
-      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: PAGE_SIZE }));
+      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, loadDashboards, pageSize: PAGE_SIZE }));
       promise.finally(() => (requestInFlightRef.current = false));
 
       return promise;
     },
-    [dispatch]
+    [dispatch, loadDashboards]
   );
 
   return handleLoadMore;
@@ -185,19 +186,4 @@ export function createFlatTree(
   }
 
   return children;
-}
-
-function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
-  return new Array(amount).fill(null).map((_, index) => {
-    return {
-      parentUID,
-      level,
-      isOpen: false,
-      item: {
-        kind: 'ui' as const,
-        uiKind: 'pagination-placeholder' as const,
-        uid: `${parentUID}-pagination-${index}`,
-      },
-    };
-  });
 }

@@ -40,7 +40,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       dispatch(setFolderOpenState({ folderUID: clickedFolderUID, isOpen }));
 
       if (isOpen) {
-        dispatch(fetchNextChildrenPage({ parentUID: clickedFolderUID, pageSize: PAGE_SIZE }));
+        dispatch(fetchNextChildrenPage({ parentUID: clickedFolderUID, loadDashboards: true, pageSize: PAGE_SIZE }));
       }
     },
     [dispatch]

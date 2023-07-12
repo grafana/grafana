@@ -8,6 +8,7 @@ import { findItem } from './utils';
 
 interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
+  loadDashboards?: boolean;
   pageSize: number;
 }
 
@@ -87,7 +88,7 @@ export const refetchChildren = createAsyncThunk(
 export const fetchNextChildrenPage = createAsyncThunk(
   'browseDashboards/fetchNextChildrenPage',
   async (
-    { parentUID, pageSize }: FetchNextChildrenPageArgs,
+    { parentUID, loadDashboards, pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
@@ -107,13 +108,13 @@ export const fetchNextChildrenPage = createAsyncThunk(
       fetchKind = 'folder';
     } else if (collection.lastFetchedKind === 'dashboard' && !collection.lastKindHasMoreItems) {
       // There's nothing to load at all
-      console.warn(`FetchedChildren called for ${uid} but that collection is fully loaded`);
+      console.warn(`fetchNextChildrenPage called for ${uid} but that collection is fully loaded`);
       // return;
     } else if (collection.lastFetchedKind === 'folder' && collection.lastKindHasMoreItems) {
       // Load additional pages of folders
       page = collection.lastFetchedPage + 1;
       fetchKind = 'folder';
-    } else {
+    } else if (loadDashboards) {
       // We've already checked if there's more folders to load, so if the last fetched is folder
       // then we fetch first page of dashboards
       page = collection.lastFetchedKind === 'folder' ? 1 : collection.lastFetchedPage + 1;
@@ -133,7 +134,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
 
     // If we've loaded all folders, load the first page of dashboards.
     // This ensures dashboards are loaded if a folder contains only dashboards.
-    if (fetchKind === 'folder' && lastPageOfKind) {
+    if (fetchKind === 'folder' && lastPageOfKind && loadDashboards) {
       fetchKind = 'dashboard';
       page = 1;
 
