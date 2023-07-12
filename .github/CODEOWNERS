@@ -444,7 +444,6 @@ lerna.json @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
-/public/testdata/ @grafana/grafana-frontend-platform
 /public/views/ @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs

@@ -2,11 +2,11 @@ package testdatasource
 
 import (
 	"context"
+	"embed"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -92,6 +92,9 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 	return resp, nil
 }
 
+//go:embed plugindata/*.csv
+var embeddedCsvFiles embed.FS
+
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	validFileName := regexp.MustCompile(`^\w+\.csv$`)
 
@@ -100,11 +103,9 @@ func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	csvFilepath := filepath.Clean(filepath.Join("/", fileName))
-	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", csvFilepath)
+	filePath := filepath.Join("plugindata", csvFilepath)
 
-	// Can ignore gosec G304 here, because we check the file pattern above
-	// nolint:gosec
-	fileReader, err := os.Open(filePath)
+	fileReader, err := embeddedCsvFiles.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed open file: %v", err)
 	}
