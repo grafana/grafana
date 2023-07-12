@@ -344,5 +344,12 @@ export const sortLabelSelectors = (query: LokiQuery): LokiQuery => {
     query.expr = query.expr.replace(selector.old, selector.new);
   });
 
-  return query;
+  return trimAllLines(query);
+};
+
+const trimAllLines = (query: LokiQuery): LokiQuery => {
+  const lines = query.expr.split('\n');
+  const trimmedLines = lines.map((line) => line.trim());
+  const trimmedExpr = trimmedLines.join('\n');
+  return { ...query, expr: trimmedExpr };
 };

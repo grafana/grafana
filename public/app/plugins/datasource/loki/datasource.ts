@@ -261,14 +261,7 @@ export class LokiDatasource
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
       .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
-    const transformed = queries.map((query) => {
-      const sorted = sortLabelSelectors(query);
-
-      const lines = sorted.expr.split('\n');
-      const trimmedLines = lines.map((line) => line.trim());
-      const trimmedExpr = trimmedLines.join('\n');
-      return { ...sorted, expr: trimmedExpr };
-    });
+    const transformed = queries.map((query) => sortLabelSelectors(query));
 
     const fixedRequest: DataQueryRequest<LokiQuery> = {
       ...request,
