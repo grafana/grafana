@@ -882,4 +882,15 @@ func TestHandleAWSSettings(t *testing.T) {
 
 		assert.Equal(t, 500, cfg.AWSListMetricsPageLimit)
 	})
+	t.Run("Should pass on the limit if it is defined in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("list_metrics_page_limit", "400")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+
+		assert.Equal(t, 400, cfg.AWSListMetricsPageLimit)
+	})
 }
