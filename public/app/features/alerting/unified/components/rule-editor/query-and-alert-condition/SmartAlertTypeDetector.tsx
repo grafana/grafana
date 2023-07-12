@@ -54,11 +54,11 @@ const getCanSwitch = ({
   const onlyOneDS = onlyOneDSInQueries(queries);
   const dataSourceIdFromQueries = queries[0]?.datasourceUid ?? '';
   const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
-  // it's a smart type if we are creating a new rule and it's not a recording rule type
-  const showSmartTypeSwitch = !editingExistingRule && !isRecordingRuleType;
-  //let's check if we have a smart cloud type
-  const canBeCloud =
-    showSmartTypeSwitch &&
+
+  //let's check if we switch to cloud type
+  const canSwitchToCloudRule =
+    !editingExistingRule &&
+    !isRecordingRuleType &&
     onlyOneDS &&
     rulesSourcesWithRuler.some(
       (dsJsonData: DataSourceInstanceSettings<DataSourceJsonData>) => dsJsonData.uid === dataSourceIdFromQueries
@@ -66,13 +66,12 @@ const getCanSwitch = ({
   // check for enabled types
   const grafanaTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.grafana);
   const cloudTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.cloudAlerting);
+
   // can we switch to the other type? (cloud or grafana)
-  const canSwitch =
-    !editingExistingRule &&
-    !isRecordingRuleType &&
-    ((cloudTypeEnabled && canBeCloud && ruleFormType === RuleFormType.grafana) ||
-      (ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled));
-  return canSwitch;
+  const canSwitchFromCloudToGrafana = ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled;
+  const canSwitchFromGrafanaToCloud = ruleFormType === RuleFormType.grafana && canSwitchToCloudRule && cloudTypeEnabled;
+
+  return canSwitchFromCloudToGrafana || canSwitchFromGrafanaToCloud;
 };
 
 export function SmartAlertTypeDetector({

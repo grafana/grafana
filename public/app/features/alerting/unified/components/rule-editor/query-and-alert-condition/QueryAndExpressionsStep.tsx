@@ -52,25 +52,6 @@ interface Props {
   onDataChange: (error: string) => void;
 }
 
-const useSetExpressionAndDataSource = () => {
-  const { setValue } = useFormContext<RuleFormValues>();
-  return (updatedQueries: AlertQuery[]) => {
-    // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
-    const query = updatedQueries[0];
-    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    if (!dataSourceSettings) {
-      throw new Error('The Data source has not been defined.');
-    }
-    setValue('dataSourceName', dataSourceSettings.name);
-
-    if (isPromOrLokiQuery(query.model)) {
-      const expression = query.model.expr;
-
-      setValue('expression', expression);
-    }
-  };
-};
-
 export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
   const {
     setValue,
@@ -93,10 +74,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
 
-  const dispatch_ = useDispatch();
+  const dispatchReduxAction = useDispatch();
   useEffect(() => {
-    dispatch_(fetchAllPromBuildInfoAction());
-  }, [dispatch_]);
+    dispatchReduxAction(fetchAllPromBuildInfoAction());
+  }, [dispatchReduxAction]);
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
@@ -530,3 +511,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.link};
   `,
 });
+
+const useSetExpressionAndDataSource = () => {
+  const { setValue } = useFormContext<RuleFormValues>();
+  return (updatedQueries: AlertQuery[]) => {
+    // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
+    const query = updatedQueries[0];
+    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    if (!dataSourceSettings) {
+      throw new Error('The Data source has not been defined.');
+    }
+    setValue('dataSourceName', dataSourceSettings.name);
+
+    if (isPromOrLokiQuery(query.model)) {
+      const expression = query.model.expr;
+
+      setValue('expression', expression);
+    }
+  };
+};
