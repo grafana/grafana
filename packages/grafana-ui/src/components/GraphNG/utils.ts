@@ -60,7 +60,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
 
   // apply null insertions at interval
   frames = frames.map((frame) => {
-    if (xField?.state?.nullThresholdApplied) {
+    if (!xField?.state?.nullThresholdApplied) {
       return applyNullInsertThreshold({
         frame,
         refFieldName: xField.name,

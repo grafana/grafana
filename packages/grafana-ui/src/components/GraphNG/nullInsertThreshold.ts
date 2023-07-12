@@ -32,8 +32,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
   const refField =
     refFieldName != null
       ? frame.fields.find((field) => field.name === refFieldName)
-      : frame.fields.find((field) => field.type === FieldType.time) ??
-        frame.fields.find((field) => field.type === FieldType.number);
+      : frame.fields.find((field) => field.type === FieldType.time);
 
   if (refField == null) {
     return frame;
