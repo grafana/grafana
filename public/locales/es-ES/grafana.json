@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -38,6 +38,23 @@
       "move-modal-title": "",
       "moving": "",
       "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -292,6 +309,9 @@
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administración"
     },
@@ -398,6 +418,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
@@ -427,6 +450,12 @@
     },
     "public": {
       "title": "Paneles de control públicos"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Escenas"
@@ -460,6 +489,9 @@
     },
     "starred-empty": {
       "title": "Tus paneles de control destacados aparecerán aquí"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",

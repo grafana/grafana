@@ -189,12 +189,12 @@ describe('LogRowContextModal', () => {
   });
 
   it('should render 3 lines containing `foo123` with the same ms timestamp', async () => {
-    const dfBefore = createDataFrame({
+    const dfBeforeNs = createDataFrame({
       fields: [
         {
           name: 'time',
           type: FieldType.time,
-          values: [1689052469935, 1689052469935],
+          values: [1, 1],
         },
         {
           name: 'message',
@@ -204,16 +204,16 @@ describe('LogRowContextModal', () => {
         {
           name: 'tsNs',
           type: FieldType.string,
-          values: ['1689052469935083353', '1689052469935083354'],
+          values: ['1', '2'],
         },
       ],
     });
-    const dfNow = createDataFrame({
+    const dfNowNs = createDataFrame({
       fields: [
         {
           name: 'time',
           type: FieldType.time,
-          values: [1689052469935],
+          values: [1],
         },
         {
           name: 'message',
@@ -223,16 +223,16 @@ describe('LogRowContextModal', () => {
         {
           name: 'tsNs',
           type: FieldType.string,
-          values: ['1689052469935083354'],
+          values: ['2'],
         },
       ],
     });
-    const dfAfter = createDataFrame({
+    const dfAfterNs = createDataFrame({
       fields: [
         {
           name: 'time',
           type: FieldType.time,
-          values: [1689052469935, 1689052469935],
+          values: [1, 1],
         },
         {
           name: 'message',
@@ -242,36 +242,37 @@ describe('LogRowContextModal', () => {
         {
           name: 'tsNs',
           type: FieldType.string,
-          values: ['1689052469935083354', '1689052469935083355'],
+          values: ['2', '3'],
         },
       ],
     });
 
     let uniqueRefIdCounter = 1;
-    const logs = dataFrameToLogsModel([dfNow]);
+    const logs = dataFrameToLogsModel([dfNowNs]);
     const row = logs.rows[0];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => {
       uniqueRefIdCounter += 1;
       const refId = `refid_${uniqueRefIdCounter}`;
-      if (options.direction === LogRowContextQueryDirection.Forward) {
+      if (uniqueRefIdCounter === 2) {
         return {
           data: [
             {
               refId,
-              ...dfBefore,
+              ...dfBeforeNs,
             },
           ],
         };
-      } else {
+      } else if (uniqueRefIdCounter === 3) {
         return {
           data: [
             {
               refId,
-              ...dfAfter,
+              ...dfAfterNs,
             },
           ],
         };
       }
+      return { data: [] };
     });
 
     render(
@@ -284,8 +285,11 @@ describe('LogRowContextModal', () => {
         logsSortOrder={LogsSortOrder.Descending}
       />
     );
-    // there need to be 2 lines with that message. 1 in before, 1 in now, 1 in after
-    await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
+
+    // there need to be 3 lines with that message. 1 in before, 1 in now, 1 in after
+    await waitFor(() => {
+      expect(screen.getAllByText('foo123').length).toBe(3);
+    });
   });
 
   it('should show a split view button', async () => {

@@ -1,5 +1,5 @@
 {
-  "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "_comment": "Ŧĥįş ƒįľę įş ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş. Ēđįŧ ŧĥįş ŧő čĥäŉģę pľūřäľş äŉđ őŧĥęř pĥřäşęş ƒőř ŧĥę ŮĨ.",
   "access-control": {
     "add-permission": {
       "role-label": "Ŗőľę",
@@ -38,6 +38,18 @@
       "move-modal-title": "Mővę",
       "moving": "Mővįŉģ...",
       "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
+    },
+    "counts": {
+      "alertRule__one": "{{count}} äľęřŧ řūľę",
+      "alertRule__other": "{{count}} äľęřŧ řūľęş",
+      "dashboard__one": "{{count}} đäşĥþőäřđ",
+      "dashboard__other": "{{count}} đäşĥþőäřđş",
+      "folder__one": "{{count}} ƒőľđęř",
+      "folder__other": "{{count}} ƒőľđęřş",
+      "libraryPanel__one": "{{count}} ľįþřäřy päŉęľ",
+      "libraryPanel__other": "{{count}} ľįþřäřy päŉęľş",
+      "total__one": "{{count}} įŧęm",
+      "total__other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
       "name-column": "Ńämę",
@@ -292,6 +304,9 @@
       "subtitle": "Åpp pľūģįŉş ŧĥäŧ ęχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę",
       "title": "Åppş"
     },
+    "authentication": {
+      "title": "Åūŧĥęŉŧįčäŧįőŉ"
+    },
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
     },
@@ -398,6 +413,9 @@
     "observability": {
       "title": "Øþşęřväþįľįŧy"
     },
+    "oncall": {
+      "title": "ØŉCäľľ"
+    },
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
       "title": "Đęƒäūľŧ přęƒęřęŉčęş"
@@ -427,6 +445,12 @@
     },
     "public": {
       "title": "Pūþľįč đäşĥþőäřđş"
+    },
+    "recorded-queries": {
+      "title": "Ŗęčőřđęđ qūęřįęş"
+    },
+    "reporting": {
+      "title": "Ŗępőřŧįŉģ"
     },
     "scenes": {
       "title": "Ŝčęŉęş"
@@ -460,6 +484,9 @@
     },
     "starred-empty": {
       "title": "Ÿőūř şŧäřřęđ đäşĥþőäřđş ŵįľľ äppęäř ĥęřę"
+    },
+    "statistics-and-licensing": {
+      "title": "Ŝŧäŧįşŧįčş äŉđ ľįčęŉşįŉģ"
     },
     "storage": {
       "subtitle": "Mäŉäģę ƒįľę şŧőřäģę",

@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -38,6 +38,13 @@
       "move-modal-title": "",
       "moving": "",
       "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__other": "",
+      "dashboard__other": "",
+      "folder__other": "",
+      "libraryPanel__other": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -292,6 +299,9 @@
       "subtitle": "扩展 Grafana 体验的应用插件",
       "title": "应用"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "管理"
     },
@@ -398,6 +408,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
       "title": "默认首选项"
@@ -427,6 +440,12 @@
     },
     "public": {
       "title": "公共仪表板"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "场景"
@@ -460,6 +479,9 @@
     },
     "starred-empty": {
       "title": "您已加星标的仪表板将显示在这里"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "管理文件存储",

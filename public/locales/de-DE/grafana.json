@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -38,6 +38,18 @@
       "move-modal-title": "",
       "moving": "",
       "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -292,6 +304,9 @@
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
       "title": "Apps"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Verwaltung"
     },
@@ -398,6 +413,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
       "title": "Standardeinstellungen"
@@ -427,6 +445,12 @@
     },
     "public": {
       "title": "Öffentliche Dashboards"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Szenen"
@@ -460,6 +484,9 @@
     },
     "starred-empty": {
       "title": "Deine hervorgehobenen Dashboards werden hier angezeigt"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "Dateispeicher verwalten",

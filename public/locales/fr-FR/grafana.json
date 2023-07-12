@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -38,6 +38,23 @@
       "move-modal-title": "",
       "moving": "",
       "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -292,6 +309,9 @@
       "subtitle": "Plugins d'application qui prolongent l'expérience Grafana",
       "title": "Applications"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administration"
     },
@@ -398,6 +418,9 @@
     "observability": {
       "title": ""
     },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
       "title": "Préférences par défaut"
@@ -427,6 +450,12 @@
     },
     "public": {
       "title": "Tableaux de bord publics"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Scènes"
@@ -460,6 +489,9 @@
     },
     "starred-empty": {
       "title": "Vos tableaux de bord favoris apparaîtront ici"
+    },
+    "statistics-and-licensing": {
+      "title": ""
     },
     "storage": {
       "subtitle": "Gérer le stockage de fichiers",
