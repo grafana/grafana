@@ -519,6 +519,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     dataFrame = sortDataFrame(dataFrame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
 
     // create extract JSON transformation for every field that is `json.RawMessage`
+    // TODO: explore if `logsFrame.ts` can help us with getting the right fields
     const transformations = dataFrame.fields
       .filter((field: Field & { typeInfo?: { frame: string } }) => {
         return field.type === FieldType.other && field.typeInfo?.frame === 'json.RawMessage';
