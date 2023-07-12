@@ -417,37 +417,6 @@ describe('Logs', () => {
       const table = screen.getByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
     });
-
-    it('should render 4 table rows', async () => {
-      setup();
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
-      await userEvent.click(logsSection);
-
-      const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
-    });
-
-    it('should render 4 table rows', async () => {
-      setup();
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
-      await userEvent.click(logsSection);
-
-      const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
-    });
-
-    it('should render extracted labels as columns', async () => {
-      setup();
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
-      await userEvent.click(logsSection);
-
-      const columns = screen.getAllByRole('columnheader');
-      // tableFrame has 3 columns. time, line + extraced 'foo'; the "filter" options add one column header for each
-      expect(columns.length).toBe(6);
-      expect(columns[2].textContent).toContain('foo');
-    });
   });
 });
 

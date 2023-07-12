@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, createRef } from 'react';
-import { lastValueFrom } from 'rxjs';
 
 import {
   rangeUtil,
@@ -30,12 +29,7 @@ import {
   ExplorePanelsState,
   serializeStateToUrlParam,
   urlUtil,
-  applyFieldOverrides,
-  ValueLinkConfig,
   TimeRange,
-  transformDataFrame,
-  FieldType,
-  sortDataFrame,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -48,11 +42,9 @@ import {
   withTheme2,
   Themeable2,
   Collapse,
-  Table,
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { parseLogsFrame } from 'app/features/logs/logsFrame';
 import { getState, dispatch } from 'app/store/store';
 
 import { LogRows } from '../../logs/components/LogRows';
@@ -60,10 +52,10 @@ import { LogRowContextModal } from '../../logs/components/log-context/LogRowCont
 import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
-import { getFieldLinksForExplore } from '../utils/links';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
+import { LogsTable } from './LogsTable';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
@@ -194,19 +186,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
           ...this.props.panelState,
         })
       );
-    }
-
-    if (
-      this.state.visualisationType === 'table' &&
-      (this.props.logsFrames !== prevProps.logsFrames || prevState.visualisationType === 'logs')
-    ) {
-      this.prepareTableData();
-    }
-  }
-
-  componentDidMount(): void {
-    if (this.state.visualisationType === 'table' && this.props.logsFrames) {
-      this.prepareTableData();
     }
   }
 
@@ -464,108 +443,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
-  prepareTableFrame = memoizeOne((frame: DataFrame): DataFrame => {
-    const { timeZone, splitOpen, range } = this.props;
-
-    const logsFrame = parseLogsFrame(frame);
-    const timeIndex = logsFrame?.timeField.index;
-    const sortedFrame = sortDataFrame(frame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
-
-    const [frameWithOverrides] = applyFieldOverrides({
-      data: [sortedFrame],
-      timeZone,
-      theme: config.theme2,
-      replaceVariables: (v: string) => v,
-      fieldConfig: {
-        defaults: {
-          custom: {},
-        },
-        overrides: [],
-      },
-    });
-    // `getLinks` and `applyFieldOverrides` are taken from TableContainer.tsx
-    for (const field of frameWithOverrides.fields) {
-      field.getLinks = (config: ValueLinkConfig) => {
-        return getFieldLinksForExplore({
-          field,
-          rowIndex: config.valueRowIndex!,
-          splitOpenFn: splitOpen,
-          range: range,
-          dataFrame: sortedFrame!,
-        });
-      };
-      field.config = {
-        custom: {
-          filterable: true,
-          inspect: true,
-        },
-      };
-    }
-
-    return frameWithOverrides;
-  });
-
-  prepareTableData = async () => {
-    const { logsFrames } = this.props;
-    if (!logsFrames || !logsFrames.length) {
-      this.setState({ tableFrame: undefined });
-      return;
-    }
-    // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
-    let dataFrame = logsFrames[0];
-
-    const logsFrame = parseLogsFrame(dataFrame);
-    const timeIndex = logsFrame?.timeField.index;
-    dataFrame = sortDataFrame(dataFrame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
-
-    // create extract JSON transformation for every field that is `json.RawMessage`
-    // TODO: explore if `logsFrame.ts` can help us with getting the right fields
-    const transformations = dataFrame.fields
-      .filter((field: Field & { typeInfo?: { frame: string } }) => {
-        return field.type === FieldType.other && field.typeInfo?.frame === 'json.RawMessage';
-      })
-      .flatMap((field: Field) => {
-        return [
-          {
-            id: 'extractFields',
-            options: {
-              format: 'json',
-              keepTime: false,
-              replace: false,
-              source: field.name,
-            },
-          },
-          // hide the field that was extracted
-          {
-            id: 'organize',
-            options: {
-              excludeByName: {
-                [field.name]: true,
-              },
-            },
-          },
-        ];
-      });
-    if (transformations.length > 0) {
-      const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
-      this.setState({
-        tableFrame: this.prepareTableFrame(transformedDataFrame),
-      });
-    } else {
-      this.setState({
-        tableFrame: this.prepareTableFrame(dataFrame),
-      });
-    }
-  };
-
-  getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
-    const largestFrameLength = dataFrames?.reduce((length, frame) => {
-      return frame.length > length ? frame.length : length;
-    }, 0);
-    // from TableContainer.tsx
-    return Math.min(600, Math.max(largestFrameLength ?? 0 * 36, 300) + 40 + 46);
-  });
-
   render() {
     const {
       width,
@@ -775,14 +652,16 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            {this.state.visualisationType === 'table' && hasData && this.state.tableFrame && (
+            {this.state.visualisationType === 'table' && hasData && (
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logsnavigation and padding */}
-                <Table
-                  data={this.state.tableFrame}
+                <LogsTable
+                  logsSortOrder={this.state.logsSortOrder}
+                  range={this.props.range}
+                  splitOpen={this.props.splitOpen}
+                  timeZone={timeZone}
                   width={width - 80}
-                  height={this.getTableHeight(this.props.logsFrames)}
-                  footerOptions={{ show: true, reducer: ['count'], countRows: true }}
+                  logsFrames={this.props.logsFrames}
                 />
               </div>
             )}
