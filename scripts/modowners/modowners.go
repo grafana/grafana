@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"golang.org/x/mod/modfile"
+	"os"
 )
 
 type Module struct {
@@ -68,8 +69,7 @@ func parseGoMod(fileSystem fs.FS, name string) ([]Module, error) {
 }
 
 // Validate that each module has an owner.
-// An example CLI command is `go run dummy/modowners.go check dummy/go.txd`
-// TODO: replace above example with final filepath in the end
+// An example CLI command is `go run scripts/modowners/modowners.go check go.mod`
 func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	m, err := parseGoMod(fileSystem, args[0])
 	if err != nil {
@@ -88,9 +88,9 @@ func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	return nil
 }
 
-// TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
 // TODO: test with go test
-// Print owners.
+// Print owner(s) for a given dependency.
+// An example CLI command is `go run scripts/modowners/modowners.go owners -c go.mod github.com/Azure/go-autorest/autorest`
 func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("owners", flag.ExitOnError)
 	count := fs.Bool("c", false, "print count of dependencies per owner")
@@ -117,36 +117,15 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	return nil
 }
 
-/*
-	GOAL:
-	1. if no flags, print all direct dependencies
-	2. if -i, print all dependencies (direct + indirect)
-	3. if -o, print dependencies owned by the owner(s) listed
-	4. if -i and -o, print all dependencies owned by the owner(s) listed
-
-	print all dependencies for each owner listed in CLI after -o flag
-	check each dependency's owners
-
-		if it match one of the owners in the flag/CLI, print it
-		if not skip
-
-	CURRENT ISSUE:
-	owner flag logic not working well with indirect flag logic
-	not sure how to check for both flags
-
-	mod.Owners := [bep, as-code, delivery]
-	flag := [gaas, delivery]
-*/
-
-// Print dependencies. Can specify direct / multiple owners.
-// Example CLI command `go run dummy/modowners.go modules -m dummy/go.txd -o @as-code,@delivery`
+// Print dependencies for a given owner. Can specify one or more owners.
+// Example CLI command `go run scripts/modowners/modowners.go modules -m go.mod -o @as-code,@delivery`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
-	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
+	indirect := fs.Bool("i", false, "print indirect dependencies")
 	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
-	m, err := parseGoMod(fileSystem, *modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
+	m, err := parseGoMod(fileSystem, *modfile)
 	if err != nil {
 		return err
 	}
@@ -175,18 +154,18 @@ func hasCommonElement(a []string, b []string) bool {
 	return false
 }
 
-// func main() {
-// 	log.SetFlags(0)
-// 	log.SetOutput(os.Stdout)
-// 	if len(os.Args) < 2 {
-// 		fmt.Println("usage: modowners subcommand go.mod...")
-// 		os.Exit(1)
-// 	}
-// 	type CmdFunc func(fs.FS, *log.Logger, []string) error
-// 	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
-// 	if f, ok := cmds[os.Args[1]]; !ok { // NOTE: both f and ok are visible inside the if / else if statement, but not outside; chaining of ifs very common in go when checking errors and calling multiple funcs
-// 		log.Fatal("invalid command")
-// 	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
+func main() {
+	log.SetFlags(0)
+	log.SetOutput(os.Stdout)
+	if len(os.Args) < 2 {
+		fmt.Println("usage: modowners subcommand go.mod...")
+		os.Exit(1)
+	}
+	type CmdFunc func(fs.FS, *log.Logger, []string) error
+	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
+	if f, ok := cmds[os.Args[1]]; !ok {
+		log.Fatal("invalid command")
+	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {
+		log.Fatal(err)
+	}
+}
