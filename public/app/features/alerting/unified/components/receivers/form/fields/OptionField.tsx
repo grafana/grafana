@@ -148,7 +148,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
     case 'radio':
       return (
         <InputControl
-          render={({ field }) => (
+          render={({ field: { ref, ...field } }) => (
             <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
           )}
           control={control}
