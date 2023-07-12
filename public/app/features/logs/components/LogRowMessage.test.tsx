@@ -41,8 +41,9 @@ describe('LogRowMessage', () => {
   });
 
   describe('with show context', () => {
-    it('should show context button', () => {
+    it('should show context button', async () => {
       setup({ showContextToggle: () => true });
+      await userEvent.hover(screen.getByText('test123'));
       expect(screen.queryByLabelText('Show context')).toBeInTheDocument();
     });
 
@@ -54,6 +55,7 @@ describe('LogRowMessage', () => {
     it('should call `onOpenContext` with row on click', async () => {
       const showContextToggle = jest.fn();
       const props = setup({ showContextToggle: () => true, onOpenContext: showContextToggle });
+      await userEvent.hover(screen.getByText('test123'));
       const button = screen.getByLabelText('Show context');
 
       await userEvent.click(button);
@@ -63,8 +65,9 @@ describe('LogRowMessage', () => {
   });
 
   describe('with permalinking', () => {
-    it('should show permalinking button when `onPermalinkClick` is defined', () => {
+    it('should show permalinking button when `onPermalinkClick` is defined', async () => {
       setup({ onPermalinkClick: jest.fn() });
+      await userEvent.hover(screen.getByText('test123'));
       expect(screen.queryByLabelText('Copy shortlink')).toBeInTheDocument();
     });
 
@@ -76,6 +79,7 @@ describe('LogRowMessage', () => {
     it('should call `onPermalinkClick` with row on click', async () => {
       const permalinkClick = jest.fn();
       const props = setup({ onPermalinkClick: permalinkClick });
+      await userEvent.hover(screen.getByText('test123'));
       const button = screen.getByLabelText('Copy shortlink');
 
       await userEvent.click(button);
@@ -86,8 +90,9 @@ describe('LogRowMessage', () => {
 
   describe('with pinning', () => {
     describe('for `onPinLine`', () => {
-      it('should show pinning button when `onPinLine` is defined', () => {
+      it('should show pinning button when `onPinLine` is defined', async () => {
         setup({ onPinLine: jest.fn() });
+        await userEvent.hover(screen.getByText('test123'));
         expect(screen.queryByLabelText('Pin line')).toBeInTheDocument();
       });
 
@@ -104,6 +109,7 @@ describe('LogRowMessage', () => {
       it('should call `onPinLine` on click', async () => {
         const onPinLine = jest.fn();
         setup({ onPinLine });
+        await userEvent.hover(screen.getByText('test123'));
         const button = screen.getByLabelText('Pin line');
 
         await userEvent.click(button);
@@ -118,10 +124,10 @@ describe('LogRowMessage', () => {
         expect(screen.queryByLabelText('Unpin line')).not.toBeInTheDocument();
       });
 
-      it('should show 2 pinning buttons when `onUnpinLine` and `pinned` is defined', () => {
-        // we show 2 because we now have an "always visible" menu, and a "hover" menu
+      it('should show 1 pinning buttons when `onUnpinLine` and `pinned` is defined', () => {
+        // we show 1 because we now have an "always visible" menu, the others are rendered on mouse over
         setup({ onUnpinLine: jest.fn(), pinned: true });
-        expect(screen.queryAllByLabelText('Unpin line').length).toBe(2);
+        expect(screen.queryAllByLabelText('Unpin line').length).toBe(1);
       });
 
       it('should not show pinning button when `onUnpinLine` is not defined', () => {
@@ -132,7 +138,7 @@ describe('LogRowMessage', () => {
       it('should call `onUnpinLine` on click', async () => {
         const onUnpinLine = jest.fn();
         setup({ onUnpinLine, pinned: true });
-        const button = screen.getAllByLabelText('Unpin line')[0];
+        const button = screen.getByLabelText('Unpin line');
 
         await userEvent.click(button);
 
