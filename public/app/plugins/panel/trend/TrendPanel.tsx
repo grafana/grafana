@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DataFrame, Field, FieldType, getFieldDisplayName, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, FieldType, getFieldDisplayName, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
@@ -35,7 +35,8 @@ export const TrendPanel = ({
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
       ...dimFields,
-      x: (field: Field, frame: DataFrame, frames: DataFrame[]) => {
+      x: (field, frame, frames) => {
+        // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
         const trendXField = options.xField
           ? options.xField
           : frames[0].fields.find((field) => field.type === FieldType.number)?.name;
