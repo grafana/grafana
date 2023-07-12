@@ -115,7 +115,7 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 					return &user.SignedInUser{UserID: 1, OrgID: 2, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}}, nil
 				},
 			},
-			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
 			expectedStatus:  http.StatusOK,
 		},
 		{
