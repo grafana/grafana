@@ -96,7 +96,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		jBody, err := simplejson.NewJson(bodyBytes)
 		require.NoError(t, err)
 
-		assert.Equal(t, []string{"metrics-2018.05.15"}, jHeader.Get("index").MustStringArray())
+		assert.Equal(t, "metrics-2018.05.15", jHeader.Get("index").MustString())
 		assert.True(t, jHeader.Get("ignore_unavailable").MustBool(false))
 		assert.Equal(t, "query_then_fetch", jHeader.Get("search_type").MustString())
 		assert.Empty(t, jHeader.Get("max_concurrent_shard_requests"))
@@ -116,25 +116,25 @@ func TestClient_Index(t *testing.T) {
 		name                string
 		indexInDatasource   string
 		patternInDatasource string
-		indexInRequest      []string
+		indexInRequest      string
 	}{
 		{
 			name:                "empty string",
 			indexInDatasource:   "",
 			patternInDatasource: "",
-			indexInRequest:      []string{},
+			indexInRequest:      "",
 		},
 		{
 			name:                "single string",
 			indexInDatasource:   "logs-*",
 			patternInDatasource: "",
-			indexInRequest:      []string{"logs-*"},
+			indexInRequest:      "logs-*",
 		},
 		{
 			name:                "daily pattern",
 			indexInDatasource:   "[logs-]YYYY.MM.DD",
 			patternInDatasource: "Daily",
-			indexInRequest:      []string{"logs-2018.05.10", "logs-2018.05.11", "logs-2018.05.12"},
+			indexInRequest:      "logs-2018.05.10,logs-2018.05.11,logs-2018.05.12",
 		},
 	}
 
@@ -210,7 +210,7 @@ func TestClient_Index(t *testing.T) {
 			jHeader, err := simplejson.NewJson(headerBytes)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.indexInRequest, jHeader.Get("index").MustStringArray())
+			assert.Equal(t, test.indexInRequest, jHeader.Get("index").MustString())
 		})
 	}
 }

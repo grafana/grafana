@@ -187,7 +187,7 @@
     "type": "author",
     "name": "pr/external",
     "notMemberOf": { "org": "grafana" },
-    "ignoreList": ["renovate[bot]","dependabot[bot]"],
+    "ignoreList": ["renovate[bot]","dependabot[bot]","grafana-delivery-bot[bot]","grafanabot"],
     "action": "updateLabel",
     "addLabel": "pr/external"
   },
@@ -390,6 +390,62 @@
   {
     "type": "label",
     "name": "area/tooltip",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/gauge/**/*", "/packages/grafana-ui/src/components/Gauge/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/gauge"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/gauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/bargauge/**/*", "/packages/grafana-ui/src/components/BarGauge/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/gauge"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/bargauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/stat/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/stat"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/stat",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/piechart/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/piechart"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/piechart",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/56"

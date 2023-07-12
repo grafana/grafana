@@ -306,7 +306,7 @@ func (server *Server) Users(logins []string) (
 	}
 
 	server.log.Debug(
-		"LDAP users found", "users", fmt.Sprintf("%v", serializedUsers),
+		"LDAP users found", "users", fmt.Sprintf("%+v", serializedUsers),
 	)
 
 	return serializedUsers, nil

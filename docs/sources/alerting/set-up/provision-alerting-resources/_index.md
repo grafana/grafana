@@ -41,8 +41,16 @@ To allow editing of provisioned resources in the Grafana UI, add the `X-Disable-
 
 **Useful Links:**
 
-[Grafana provisioning](/docs/grafana/latest/administration/provisioning/)
+[Grafana provisioning][provisioning]
 
 [Grafana Cloud provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
 
-[Grafana Alerting provisioning API](/docs/grafana/latest/developers/http_api/alerting_provisioning)
+[Grafana Alerting provisioning API][alerting_provisioning]
+
+{{% docs/reference %}}
+[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+
+[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+{{% /docs/reference %}}

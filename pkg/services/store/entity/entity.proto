@@ -184,7 +184,7 @@ message WriteEntityRequest {
 
 // This operation is useful when syncing a resource from external sources
 // that have more accurate metadata information (git, or an archive).
-// This process can bypass the forced checks that 
+// This process can bypass the forced checks that
 message AdminWriteEntityRequest {
   // Entity identifier
   GRN GRN = 1;
@@ -247,7 +247,7 @@ message WriteEntityResponse {
   string GUID = 3;
 
   // Entity details with the body removed
-  EntityVersionInfo entity = 4; 
+  EntityVersionInfo entity = 4;
 
   // k8s body
   bytes body = 5;
@@ -260,7 +260,7 @@ message WriteEntityResponse {
 
   // Entity summary as JSON
   bytes summary_json = 8;
-  
+
   // Full k8s style resource (meta+spec+status)
   bytes resource_json = 9;
 
@@ -301,7 +301,7 @@ message EntityHistoryRequest {
   GRN GRN = 1;
 
   // Maximum number of items to return
-  int64 limit = 3; 
+  int64 limit = 3;
 
   // Starting from the requested page
   string next_page_token = 5;
@@ -328,7 +328,7 @@ message EntitySearchRequest {
   string next_page_token = 1;
 
   // Maximum number of items to return
-  int64 limit = 2; 
+  int64 limit = 2;
 
   // Free text query string -- mileage may vary :)
   string query = 3;
@@ -360,7 +360,7 @@ message ReferenceRequest {
   string next_page_token = 1;
 
   // Maximum number of items to return
-  int64 limit = 2; 
+  int64 limit = 2;
 
   // Free text query string -- mileage may vary :)
   string kind = 3;
@@ -438,9 +438,9 @@ message EntitySearchResponse {
 //-----------------------------------------------
 
 message EntityWatchRequest {
-  // Timestamp of last changes. Empty will default to  
-  int64 since = 1; 
-  
+  // Timestamp of last changes. Empty will default to
+  int64 since = 1;
+
   // Watch sppecific entities
   repeated GRN GRN = 2;
 
@@ -465,7 +465,7 @@ message EntityWatchRequest {
 
 message EntityWatchResponse {
   // Timestamp the event was sent
-  int64 timestamp = 1; 
+  int64 timestamp = 1;
 
   // List of entities with the same action
   repeated Entity entity = 2;
@@ -496,7 +496,7 @@ service EntityStore {
   rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
   rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
   rpc FindReferences(ReferenceRequest) returns (EntitySearchResponse);
-  
+
   // TEMPORARY... while we split this into a new service (see below)
   rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
 }

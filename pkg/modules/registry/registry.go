@@ -3,11 +3,11 @@ package registry
 import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
-
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry/coregrd"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -16,12 +16,14 @@ import (
 type Registry interface{}
 
 type registry struct {
-	ModuleManager modules.Manager
+	moduleManager modules.Manager
+	log           log.Logger
 }
 
 func ProvideRegistry(
 	moduleManager modules.Manager,
 	apiServer apiserver.Service,
+	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 	clientset client.Service,
 	certGenerator certgenerator.ServiceInterface,
 	httpServer *api.HTTPServer,
@@ -31,6 +33,7 @@ func ProvideRegistry(
 	return NewRegistry(
 		moduleManager,
 		apiServer,
+		backgroundServiceRunner,
 		clientset,
 		certGenerator,
 		httpServer,
@@ -39,24 +42,24 @@ func ProvideRegistry(
 	)
 }
 
-func NewRegistry(moduleManager modules.Manager, allServices ...services.NamedService) *registry {
-	logger := log.New("modules.registry")
+func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...services.NamedService) *registry {
 	r := &registry{
-		ModuleManager: moduleManager,
+		log:           logger,
+		moduleManager: moduleManager,
 	}
 
-	for _, service := range allServices {
-		s := service
+	// Register (invisible) modules which act solely as dependencies to module targets
+	for _, svc := range svcs {
+		s := svc
 		logger.Debug("Registering invisible module", "name", s.ServiceName())
-		r.ModuleManager.RegisterInvisibleModule(s.ServiceName(), func() (services.Service, error) {
+		r.moduleManager.RegisterInvisibleModule(s.ServiceName(), func() (services.Service, error) {
 			return s, nil
 		})
 	}
 
-	logger.Debug("Registering module", "name", modules.Kubernetes)
-	r.ModuleManager.RegisterModule(modules.Kubernetes, nil)
+	// Register module targets
 	logger.Debug("Registering module", "name", modules.All)
-	r.ModuleManager.RegisterModule(modules.All, nil)
+	r.moduleManager.RegisterModule(modules.All, nil)
 
 	return r
 }

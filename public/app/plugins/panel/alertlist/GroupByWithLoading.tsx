@@ -13,21 +13,28 @@ import { useDispatch } from 'app/types';
 import { AlertingRule } from 'app/types/unified-alerting';
 import { PromRuleType } from 'app/types/unified-alerting-dto';
 
+import { fetchPromRulesAction } from '../../../features/alerting/unified/state/actions';
+
 import { isPrivateLabel } from './util';
 
 interface Props {
   id: string;
   defaultValue: SelectableValue<string>;
   onChange: (keys: string[]) => void;
+  dataSource?: string;
 }
 
 export const GroupBy = (props: Props) => {
-  const { onChange, id, defaultValue } = props;
+  const { onChange, id, defaultValue, dataSource } = props;
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchAllPromRulesAction());
-  }, [dispatch]);
+    if (dataSource) {
+      dataSource && dispatch(fetchPromRulesAction({ rulesSourceName: dataSource }));
+    } else {
+      dispatch(fetchAllPromRulesAction());
+    }
+  }, [dispatch, dataSource]);
 
   const promRulesByDatasource = useUnifiedAlertingSelector((state) => state.promRules);
 
