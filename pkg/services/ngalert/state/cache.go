@@ -165,6 +165,10 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 		expanded = make(map[string]string, len(original))
 	)
 	for k, v := range original {
+		if !strings.Contains(v, "{{") { // If value is not a template, skip expanding it.
+			expanded[k] = v
+			continue
+		}
 		result, err := template.Expand(ctx, name, v, data, externalURL, evaluatedAt)
 		if err != nil {
 			log.Error("Error in expanding template", "error", err)
