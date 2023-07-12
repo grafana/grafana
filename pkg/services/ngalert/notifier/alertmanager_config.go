@@ -166,13 +166,21 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
+	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
+	// and add back any that weren't updated.
+	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
+	// settings were modified.
+	if err := config.EncryptConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
+		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
+	}
+
 	if err := moa.Crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return err
 	}
 
-	if err := config.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
-		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
-	}); err != nil {
+	if err := config.AssignMissingConfigUIDs(); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 

@@ -327,6 +327,10 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
+	// FlagDashboardEmbed
+	// Allow embedding dashboard for external use in Code editors
+	FlagDashboardEmbed = "dashboardEmbed"
+
 	// FlagFrontendSandboxMonitorOnly
 	// Enables monitor only in the plugin frontend sandbox (if enabled)
 	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
@@ -355,10 +359,6 @@ const (
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 
-	// FlagFlameGraphV2
-	// New version of flame graph with new features
-	FlagFlameGraphV2 = "flameGraphV2"
-
 	// FlagElasticToggleableFilters
 	// Enable support to toggle filters off from the query through the Logs Details component
 	FlagElasticToggleableFilters = "elasticToggleableFilters"
@@ -370,4 +370,8 @@ const (
 	// FlagPrometheusIncrementalQueryInstrumentation
 	// Adds RudderStack events to incremental queries
 	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
+
+	// FlagAwsDatasourcesTempCredentials
+	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
+	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
 )

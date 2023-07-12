@@ -211,14 +211,14 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:        "redshiftAsyncQueryDataSupport",
 			Description: "Enable async query data support for Redshift",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
@@ -226,7 +226,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -546,6 +546,13 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:         "dashboardEmbed",
+			Description:  "Allow embedding dashboard for external use in Code editors",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAsCodeSquad,
+		},
+		{
 			Name:         "frontendSandboxMonitorOnly",
 			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
 			Stage:        FeatureStageExperimental,
@@ -564,7 +571,7 @@ var (
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "exploreScrollableLogsContainer",
@@ -594,13 +601,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "flameGraphV2",
-			Description:  "New version of flame graph with new features",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:         "elasticToggleableFilters",
 			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
 			Stage:        FeatureStageExperimental,
@@ -620,6 +620,12 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "awsDatasourcesTempCredentials",
+			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
 		},
 	}
 )
