@@ -1,23 +1,29 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { AsyncSelect, Button, Field, InputControl, Label, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, useStyles2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import { createFolder } from 'app/features/manage-dashboards/state/actions';
+import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { AsyncRequestState } from '../../utils/redux';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 
-import { Folder, RuleFolderPicker } from './RuleFolderPicker';
+import { EvaluateEveryNewGroup } from './GrafanaEvaluationBehavior';
+import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
@@ -79,6 +85,17 @@ export function FolderAndGroup() {
 
   const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
 
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
+
+  const onOpenFolderCreationModal = () => setIsCreatingFolder(true);
+  const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
+
+  const handleFolderCreation = (folder: Folder) => {
+    setValue('folder', folder);
+    setIsCreatingFolder(false);
+  };
+
   const resetGroup = useCallback(() => {
     setValue('group', '');
   }, [setValue]);
@@ -100,45 +117,59 @@ export function FolderAndGroup() {
   return (
     <div className={styles.container}>
       <div className={styles.evaluationGroupsContainer}>
-        <Field
-          label={
-            <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
-              Folder
-            </Label>
-          }
-          className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
-          data-testid="folder-picker"
-        >
-          <InputControl
-            render={({ field: { ref, ...field } }) => (
-              <RuleFolderPicker
-                inputId="folder"
-                {...field}
-                enableReset={true}
-                onChange={({ title, uid }) => {
-                  field.onChange({ title, uid });
-                  resetGroup();
+        {
+          <Field
+            label={
+              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+                Folder
+              </Label>
+            }
+            className={styles.formInput}
+            error={errors.folder?.message}
+            invalid={!!errors.folder?.message}
+            data-testid="folder-picker"
+          >
+            {(!isCreatingFolder && (
+              <InputControl
+                render={({ field: { ref, ...field } }) => (
+                  <RuleFolderPicker
+                    inputId="folder"
+                    {...field}
+                    enableReset={true}
+                    onChange={({ title, uid }) => {
+                      field.onChange({ title, uid });
+                      resetGroup();
+                    }}
+                  />
+                )}
+                name="folder"
+                rules={{
+                  required: { value: true, message: 'Select a folder' },
+                  validate: {
+                    pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                  },
                 }}
               />
-            )}
-            name="folder"
-            rules={{
-              required: { value: true, message: 'Select a folder' },
-              validate: {
-                pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-              },
-            }}
-          />
-        </Field>
+            )) || <div>Creating new folder...</div>}
+          </Field>
+        }
 
         <div className={styles.addButton}>
           <span>or</span>
-          <Button onClick={() => {}} type="button" icon="plus" fill="outline" variant="secondary">
+          <Button
+            onClick={onOpenFolderCreationModal}
+            type="button"
+            icon="plus"
+            fill="outline"
+            variant="secondary"
+            disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+          >
             New folder
           </Button>
         </div>
+        {isCreatingFolder && (
+          <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
+        )}
       </div>
 
       <div className={styles.evaluationGroupsContainer}>
@@ -203,6 +234,63 @@ export function FolderAndGroup() {
     </div>
   );
 }
+
+function FolderCreationModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (folder: Folder) => void;
+}): React.ReactElement {
+  const styles = useStyles2(getStyles);
+
+  const [title, setTitle] = useState('');
+  const onSubmit = async () => {
+    const newFolder = await createFolder({ title: title });
+    if (!newFolder.uid) {
+      appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
+      return;
+    }
+
+    const folder: Folder = { title: newFolder.title, uid: newFolder.uid };
+    onCreate(folder);
+    appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+  };
+
+  const error = containsSlashes(title);
+
+  return (
+    <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
+      <div className={styles.modalTitle}>Create a new folder to store your rule</div>
+
+      <>
+        <Field
+          label={<Label htmlFor="folder">Folder name</Label>}
+          error={"The folder name can't contain slashes"}
+          invalid={error}
+        >
+          <Input
+            id="folderName"
+            placeholder="Enter a name"
+            value={title}
+            onChange={(e) => setTitle(e.currentTarget.value)}
+            className={styles.formInput}
+          />
+        </Field>
+
+        <Modal.ButtonRow>
+          <Button variant="secondary" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" disabled={!title || error} onClick={onSubmit}>
+            Create
+          </Button>
+        </Modal.ButtonRow>
+      </>
+    </Modal>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     margin-top: ${theme.spacing(1)};
@@ -233,5 +321,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label {
       width: ${theme.breakpoints.values.sm}px;
     }
+  `,
+
+  modal: css`
+    width: ${theme.breakpoints.values.sm}px;
+  `,
+
+  modalTitle: css`
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(2)};
   `,
 });
