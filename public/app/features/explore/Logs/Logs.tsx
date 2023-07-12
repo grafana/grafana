@@ -36,7 +36,6 @@ import {
   transformDataFrame,
   FieldType,
   sortDataFrame,
-  getTimeField,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -53,6 +52,7 @@ import {
 } from '@grafana/ui';
 import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { parseLogsFrame } from 'app/features/logs/logsFrame';
 import { getState, dispatch } from 'app/store/store';
 
 import { LogRows } from '../../logs/components/LogRows';
@@ -467,7 +467,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
   prepareTableFrame = memoizeOne((frame: DataFrame): DataFrame => {
     const { timeZone, splitOpen, range } = this.props;
 
-    const { timeIndex } = getTimeField(frame);
+    const logsFrame = parseLogsFrame(frame);
+    const timeIndex = logsFrame?.timeField.index;
     const sortedFrame = sortDataFrame(frame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
 
     const [frameWithOverrides] = applyFieldOverrides({
@@ -513,7 +514,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
     let dataFrame = logsFrames[0];
 
-    const { timeIndex } = getTimeField(dataFrame);
+    const logsFrame = parseLogsFrame(dataFrame);
+    const timeIndex = logsFrame?.timeField.index;
     dataFrame = sortDataFrame(dataFrame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
 
     // create extract JSON transformation for every field that is `json.RawMessage`
