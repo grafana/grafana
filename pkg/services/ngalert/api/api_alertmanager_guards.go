@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
@@ -84,35 +83,11 @@ func checkContactPoints(l log.Logger, currReceivers []*apimodels.GettableApiRece
 			if !present {
 				return fmt.Errorf("cannot delete provisioned contact point '%s'", contactPoint.Name)
 			}
-			editErr := fmt.Errorf("cannot save provisioned contact point '%s'", contactPoint.Name)
-			if contactPoint.DisableResolveMessage != postedContactPoint.DisableResolveMessage {
-				return editErr
-			}
-			if contactPoint.Name != postedContactPoint.Name {
-				return editErr
-			}
-			if contactPoint.Type != postedContactPoint.Type {
-				return editErr
-			}
-			for key := range contactPoint.SecureFields {
-				if value, present := postedContactPoint.SecureSettings[key]; present && value != "" {
-					return editErr
-				}
-			}
-			existingSettings := map[string]interface{}{}
-			err := json.Unmarshal(contactPoint.Settings, &existingSettings)
+
+			err := contactPoint.ValidateUnchanged(postedContactPoint)
 			if err != nil {
-				return err
-			}
-			newSettings := map[string]interface{}{}
-			err = json.Unmarshal(postedContactPoint.Settings, &newSettings)
-			if err != nil {
-				return err
-			}
-			d := cmp.Diff(existingSettings, newSettings)
-			if len(d) > 0 {
-				l.Warn("Settings of contact point with provenance status cannot be changed via regular API.", "contactPoint", postedContactPoint.Name, "settingsDiff", d, "error", editErr)
-				return editErr
+				l.Warn("Settings of contact point with provenance status cannot be changed via regular API.", "contactPoint", contactPoint.Name, "error", err)
+				return fmt.Errorf("cannot save provisioned contact point '%s' via regular API: '%w'", contactPoint.Name, err)
 			}
 		}
 	}

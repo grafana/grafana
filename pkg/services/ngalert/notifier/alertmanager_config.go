@@ -7,9 +7,10 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -156,15 +157,10 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 }
 
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
-	// Get the last known working configuration
-	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
-	if err != nil {
-		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
-		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return fmt.Errorf("failed to get latest configuration %w", err)
-		}
-	}
+	// Get the last known working configuration.
+	// If there's issues with it, we should just continue saving the new one.
+	currentConfig, _ := moa.GetAlertmanagerConfiguration(ctx, org)
+	modifiedReceivers := currentConfig.ModifiedReceivers(config)
 
 	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
 	// and add back any that weren't updated.
@@ -184,6 +180,13 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
+	// The intention of this is to prevent users from creating new invalid receivers or breaking existing ones even if
+	// ApplyConfig will only fail if the receivers are used.
+	err := moa.validateReceivers(modifiedReceivers)
+	if err != nil {
+		return AlertmanagerConfigRejectedError{err}
+	}
+
 	am, err := moa.AlertmanagerFor(org)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
@@ -197,6 +200,22 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return AlertmanagerConfigRejectedError{err}
 	}
 
+	return nil
+}
+
+// validateReceivers will validate all given receivers.
+func (moa *MultiOrgAlertmanager) validateReceivers(receivers []*definitions.PostableGrafanaReceiver) error {
+	for _, newRecv := range receivers {
+		// Validate receiver.
+		_, err := alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
+			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+				Integrations: []*alertingNotify.GrafanaIntegrationConfig{PostableGrafanaReceiverToGrafanaIntegrationConfig(newRecv)},
+			},
+		}, moa.decryptFn)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

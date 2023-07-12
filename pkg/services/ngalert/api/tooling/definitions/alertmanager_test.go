@@ -115,32 +115,6 @@ func Test_APIReceiverType(t *testing.T) {
 	}
 }
 
-func Test_AllReceivers(t *testing.T) {
-	input := &Route{
-		Receiver: "foo",
-		Routes: []*Route{
-			{
-				Receiver: "bar",
-				Routes: []*Route{
-					{
-						Receiver: "bazz",
-					},
-				},
-			},
-			{
-				Receiver: "buzz",
-			},
-		},
-	}
-
-	require.Equal(t, []string{"foo", "bar", "bazz", "buzz"}, AllReceivers(input.AsAMRoute()))
-
-	// test empty
-	var empty []string
-	emptyRoute := &Route{}
-	require.Equal(t, empty, AllReceivers(emptyRoute.AsAMRoute()))
-}
-
 func Test_ApiAlertingConfig_Marshaling(t *testing.T) {
 	for _, tc := range []struct {
 		desc  string

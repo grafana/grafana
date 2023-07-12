@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -245,6 +246,164 @@ func TestAlertmanagerConfig(t *testing.T) {
 		require.NoError(t, err)
 		newHash := am.Base.ConfigHash()
 		require.Equal(t, hash, newHash)
+	})
+
+	t.Run("receiver config is currently broken and new config is posted", func(t *testing.T) {
+		t.Run("config successfully applies", func(t *testing.T) {
+			t.Run("when broken receiver config is unused and then not modified", func(t *testing.T) {
+				sut := createSut(t)
+				rc := contextmodel.ReqContext{
+					Context: &web.Context{
+						Req: &http.Request{},
+					},
+					SignedInUser: &user.SignedInUser{
+						OrgID: 4,
+					},
+				}
+				am, err := sut.mam.AlertmanagerFor(4)
+				require.NoError(t, err)
+				require.True(t, am.Ready())
+
+				getResponse := sut.RouteGetAlertingConfig(&rc)
+				require.Equal(t, 200, getResponse.Status())
+				postable, err := notifier.Load(getResponse.Body())
+				require.NoError(t, err)
+				postable.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Name = "new name"
+
+				response := sut.RoutePostAlertingConfig(&rc, *postable)
+
+				require.Equal(t, 202, response.Status())
+			})
+
+			t.Run("when broken receiver config is unused and then fixed", func(t *testing.T) {
+				sut := createSut(t)
+				rc := contextmodel.ReqContext{
+					Context: &web.Context{
+						Req: &http.Request{},
+					},
+					SignedInUser: &user.SignedInUser{
+						OrgID: 4,
+					},
+				}
+				am, err := sut.mam.AlertmanagerFor(4)
+				require.NoError(t, err)
+				require.True(t, am.Ready())
+
+				getResponse := sut.RouteGetAlertingConfig(&rc)
+				require.Equal(t, 200, getResponse.Status())
+				postable, err := notifier.Load(getResponse.Body())
+				require.NoError(t, err)
+				postable.AlertmanagerConfig.Receivers[1].GrafanaManagedReceivers[0].Settings = apimodels.RawMessage(`{"addresses":"fixed"}`)
+
+				response := sut.RoutePostAlertingConfig(&rc, *postable)
+
+				require.Equal(t, 202, response.Status())
+			})
+
+			t.Run("when broken receiver config is unused, missing one required secure field and then fixed", func(t *testing.T) {
+				sut := createSut(t)
+				rc := contextmodel.ReqContext{
+					Context: &web.Context{
+						Req: &http.Request{},
+					},
+					SignedInUser: &user.SignedInUser{
+						OrgID: 6,
+					},
+				}
+				am, err := sut.mam.AlertmanagerFor(6)
+				require.NoError(t, err)
+				require.True(t, am.Ready())
+
+				request := createAmConfigRequest(t, brokenMultiSecureReceiverConfig)
+				request.AlertmanagerConfig.Receivers[1].GrafanaManagedReceivers[0].SecureSettings = map[string]string{
+					"userKey": "fixed",
+				}
+
+				response := sut.RoutePostAlertingConfig(&rc, request)
+				require.Equal(t, 202, response.Status())
+
+				config, err := sut.mam.GetAlertmanagerConfiguration(rc.Req.Context(), 6)
+				require.NoError(t, err)
+				require.Len(t, config.AlertmanagerConfig.Receivers[1].GrafanaManagedReceivers[0].SecureFields, 2)
+			})
+		})
+
+		t.Run("config fails to apply", func(t *testing.T) {
+			t.Run("when broken receiver config is unused and then modified but not fixed", func(t *testing.T) {
+				sut := createSut(t)
+				rc := contextmodel.ReqContext{
+					Context: &web.Context{
+						Req: &http.Request{},
+					},
+					SignedInUser: &user.SignedInUser{
+						OrgID: 4,
+					},
+				}
+				am, err := sut.mam.AlertmanagerFor(4)
+				require.NoError(t, err)
+				require.True(t, am.Ready())
+
+				getResponse := sut.RouteGetAlertingConfig(&rc)
+				require.Equal(t, 200, getResponse.Status())
+				postable, err := notifier.Load(getResponse.Body())
+				require.NoError(t, err)
+				postable.AlertmanagerConfig.Receivers[1].GrafanaManagedReceivers[0].Settings = apimodels.RawMessage(`{"addresses":"", "new":"new"}`)
+
+				response := sut.RoutePostAlertingConfig(&rc, *postable)
+
+				require.Equal(t, 400, response.Status())
+			})
+
+			t.Run("when valid receiver config is used and then broken", func(t *testing.T) {
+				sut := createSut(t)
+				rc := contextmodel.ReqContext{
+					Context: &web.Context{
+						Req: &http.Request{},
+					},
+					SignedInUser: &user.SignedInUser{
+						OrgID: 1,
+					},
+				}
+				am, err := sut.mam.AlertmanagerFor(1)
+				require.NoError(t, err)
+				require.True(t, am.Ready())
+
+				getResponse := sut.RouteGetAlertingConfig(&rc)
+				require.Equal(t, 200, getResponse.Status())
+				postable, err := notifier.Load(getResponse.Body())
+				require.NoError(t, err)
+				postable.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Settings = apimodels.RawMessage(`{"addresses":""}`)
+
+				response := sut.RoutePostAlertingConfig(&rc, *postable)
+
+				require.Equal(t, 400, response.Status())
+			})
+
+			t.Run("when broken receiver config is unused and then assigned to a route", func(t *testing.T) {
+				sut := createSut(t)
+				rc := contextmodel.ReqContext{
+					Context: &web.Context{
+						Req: &http.Request{},
+					},
+					SignedInUser: &user.SignedInUser{
+						OrgID: 4,
+					},
+				}
+				am, err := sut.mam.AlertmanagerFor(4)
+				require.NoError(t, err)
+				require.True(t, am.Ready())
+
+				getResponse := sut.RouteGetAlertingConfig(&rc)
+				require.Equal(t, 200, getResponse.Status())
+				postable, err := notifier.Load(getResponse.Body())
+				require.NoError(t, err)
+				postable.AlertmanagerConfig.Route.Receiver = postable.AlertmanagerConfig.Receivers[1].Name // broken-email
+
+				response := sut.RoutePostAlertingConfig(&rc, *postable)
+
+				require.Equal(t, 400, response.Status())
+			})
+		})
 	})
 
 	t.Run("when objects are not provisioned", func(t *testing.T) {
@@ -658,13 +817,30 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
 		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
 		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
+		4: {AlertmanagerConfiguration: brokenReceiverConfig, OrgID: 4},
+		6: {AlertmanagerConfiguration: brokenMultiSecureReceiverConfig, OrgID: 6},
 	}
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	for orgId, cfg := range configs {
+		c, err := notifier.Load([]byte(cfg.AlertmanagerConfiguration))
+		if err != nil {
+			continue
+		}
+		err = c.EncryptConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+			return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+		})
+		require.NoError(t, err)
+
+		raw, err := json.Marshal(c)
+		require.NoError(t, err)
+		configs[orgId] = &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(raw), OrgID: orgId}
+	}
+
 	configStore := notifier.NewFakeConfigStore(t, configs)
-	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3})
+	orgStore := notifier.NewFakeOrgStore(t, []int64{1, 2, 3, 4, 6})
 	provStore := provisioning.NewFakeProvisioningStore()
 	tmpDir := t.TempDir()
 	kvStore := notifier.NewFakeKVStore(t)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	reg := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(reg)
 	decryptFn := secretsService.GetDecryptedValue
@@ -760,6 +936,74 @@ var brokenConfig = `
 		}]
 	}
 }`
+var brokenReceiverConfig = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "41d7776a-941f-4d08-bedc-f2f7f41c4635",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]},
+			{
+			"name": "broken-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "e9d46238-58dc-4f62-b7a7-701eab89e7c8",
+				"name": "broken email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": ""
+				}
+			}]
+		}]
+	}
+}
+`
+var brokenMultiSecureReceiverConfig = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "6b59b125-7a4d-4d2c-af16-ff85a93e6054",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]},
+			{
+			"name": "broken-pushover",
+			"grafana_managed_receiver_configs": [{
+				"uid": "22d2cdfe-cc99-4237-999a-c48afad772b9",
+				"name": "broken pushover receiver",
+				"type": "pushover",
+				"settings": {},
+				"secureSettings": {
+					"apiToken": "1234"
+				}
+			}]
+		}]
+	}
+}
+`
 
 func silenceGen(mutatorFuncs ...func(*apimodels.PostableSilence)) func() apimodels.PostableSilence {
 	return func() apimodels.PostableSilence {

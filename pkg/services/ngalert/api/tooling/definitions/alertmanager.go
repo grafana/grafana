@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -11,12 +12,15 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/google/go-cmp/cmp"
+	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -735,6 +739,27 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 	return UIDs
 }
 
+// ModifiedReceivers will return all receivers that have been modified or created since this config.
+func (c *GettableUserConfig) ModifiedReceivers(newConfig PostableUserConfig) []*PostableGrafanaReceiver {
+	existing := make(map[string]*GettableGrafanaReceiver)
+	if c.AlertmanagerConfig.Receivers != nil {
+		existing = c.GetGrafanaReceiverMap()
+	}
+
+	modified := make([]*PostableGrafanaReceiver, 0)
+	for _, r := range newConfig.AlertmanagerConfig.Receivers {
+		for _, newRecv := range r.GrafanaManagedReceivers {
+			if existingRecv, ok := existing[newRecv.UID]; ok {
+				err := existingRecv.ValidateUnchanged(newRecv)
+				if err != nil {
+					modified = append(modified, newRecv)
+				}
+			}
+		}
+	}
+	return modified
+}
+
 type GettableHistoricUserConfig struct {
 	ID                      int64                     `yaml:"id" json:"id"`
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
@@ -797,7 +822,7 @@ func (c *GettableApiAlertingConfig) validate() error {
 		return fmt.Errorf("cannot mix Alertmanager & Grafana receiver types")
 	}
 
-	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {
+	for receiver := range alertingNotify.AllReceivers(c.Route.AsAMRoute()) {
 		_, ok := receivers[receiver]
 		if !ok {
 			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
@@ -1037,7 +1062,7 @@ func (c *PostableApiAlertingConfig) validate() error {
 		}
 	}
 
-	for _, receiver := range AllReceivers(c.Route.AsAMRoute()) {
+	for receiver := range alertingNotify.AllReceivers(c.Route.AsAMRoute()) {
 		_, ok := receivers[receiver]
 		if !ok {
 			return fmt.Errorf("unexpected receiver (%s) is undefined", receiver)
@@ -1060,23 +1085,6 @@ func (c *PostableApiAlertingConfig) ReceiverType() ReceiverType {
 		}
 	}
 	return EmptyReceiverType
-}
-
-// AllReceivers will recursively walk a routing tree and return a list of all the
-// referenced receiver names.
-func AllReceivers(route *config.Route) (res []string) {
-	if route == nil {
-		return res
-	}
-
-	if route.Receiver != "" {
-		res = append(res, route.Receiver)
-	}
-
-	for _, subRoute := range route.Routes {
-		res = append(res, AllReceivers(subRoute)...)
-	}
-	return res
 }
 
 type RawMessage json.RawMessage // This type alias adds YAML marshaling to the json.RawMessage.
@@ -1129,6 +1137,44 @@ type GettableGrafanaReceiver struct {
 	Settings              RawMessage      `json:"settings,omitempty"`
 	SecureFields          map[string]bool `json:"secureFields"`
 	Provenance            Provenance      `json:"provenance,omitempty"`
+}
+
+// ValidateUnchanged returns an error if the given new PostableGrafanaReceiver is functionally different from this receiver.
+func (recv *GettableGrafanaReceiver) ValidateUnchanged(newContact *PostableGrafanaReceiver) error {
+	if recv.DisableResolveMessage != newContact.DisableResolveMessage {
+		return errors.New("disableResolveMessage has been modified")
+	}
+	if recv.Name != newContact.Name {
+		return errors.New("name has been modified")
+	}
+	if recv.Type != newContact.Type {
+		return errors.New("type has been modified")
+	}
+	secretKeys, err := channels_config.GetSecretKeysForContactPointType(recv.Type)
+	if err != nil {
+		return err
+	}
+	for _, secretKey := range secretKeys {
+		if value, present := newContact.SecureSettings[secretKey]; present && value != "" {
+			return fmt.Errorf("secure setting '%s' has been modified", secretKey)
+		}
+	}
+	existingSettings := map[string]interface{}{}
+	err = json.Unmarshal(recv.Settings, &existingSettings)
+	if err != nil {
+		return err
+	}
+	newSettings := map[string]interface{}{}
+	err = json.Unmarshal(newContact.Settings, &newSettings)
+	if err != nil {
+		return err
+	}
+	d := cmp.Diff(existingSettings, newSettings)
+	if len(d) > 0 {
+		return fmt.Errorf("settings have been modified: %s", d)
+	}
+
+	return nil
 }
 
 type PostableGrafanaReceiver struct {
