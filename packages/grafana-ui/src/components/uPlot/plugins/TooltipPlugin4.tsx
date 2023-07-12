@@ -101,8 +101,14 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     const scheduleRender = () => {
       if (!pendingRender) {
+        // defer unrender for 100ms to reduce flickering in small gaps
+        if (!_isHovering) {
+          setTimeout(_render, 100);
+        } else {
+          queueMicrotask(_render);
+        }
+
         pendingRender = true;
-        queueMicrotask(_render);
       }
     };
 
@@ -160,7 +166,6 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         }
       }
 
-      // scheduleHide (debounce when hovering all-nulls), scheduleShow, scheduleUpdate
       scheduleRender();
     });
 
