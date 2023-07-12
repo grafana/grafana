@@ -66,8 +66,8 @@ export const Expression: FC<ExpressionProps> = ({
   //const showSummary = isAlertCondition && hasResults;
 
   const groupedByState = {
-    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) >= 1),
-    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) < 1),
+    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
+    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
   };
 
   const renderExpressionType = useCallback(

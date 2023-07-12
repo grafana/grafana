@@ -40,7 +40,14 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
+export const SaveDashboardAsForm = ({
+  dashboard,
+  isLoading,
+  isNew,
+  onSubmit,
+  onCancel,
+  onSuccess,
+}: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
@@ -129,8 +136,8 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
-            <Button type="submit" aria-label="Save dashboard button">
-              Save
+            <Button disabled={isLoading} type="submit" aria-label="Save dashboard button">
+              {isLoading ? 'Saving...' : 'Save'}
             </Button>
           </HorizontalGroup>
         </>
