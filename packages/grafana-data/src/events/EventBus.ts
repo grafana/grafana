@@ -19,7 +19,6 @@ import {
 export class EventBusSrv implements EventBus, LegacyEmitter {
   private emitter: EventEmitter;
   private subscribers = new Map<Function, Subscriber<BusEvent>>();
-
   constructor() {
     this.emitter = new EventEmitter();
   }
@@ -103,6 +102,10 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
       this.subscribers.delete(key);
     }
   }
+
+  getPath() {
+    return undefined;
+  }
 }
 
 /**
@@ -149,5 +152,9 @@ class ScopedEventBus implements EventBus {
    */
   newScopedBus(key: string, filter: EventFilterOptions): EventBus {
     return new ScopedEventBus([...this.path, key], this, filter);
+  }
+
+  getPath(): string {
+    return this.path.join('.');
   }
 }

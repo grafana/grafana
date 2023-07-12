@@ -95,6 +95,13 @@ export interface EventBus {
    * @internal -- This is included for internal use only should not be used directly
    */
   newScopedBus(key: string, filter: EventFilterOptions): EventBus;
+
+  /**
+   * Returns a string identifying scope of the bus
+   *
+   * @internal -- This is included for internal use only should not be used directly
+   */
+  getPath(): string | undefined;
 }
 
 /**

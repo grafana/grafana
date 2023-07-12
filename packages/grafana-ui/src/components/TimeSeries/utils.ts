@@ -599,8 +599,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       data: frame,
     };
     const hoverEvent = new DataHoverEvent(payload);
+
     cursor.sync = {
-      key: '__global_',
+      key: eventBus.getPath() ?? '__global_',
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (sync && sync() === DashboardCursorSync.Off) {
