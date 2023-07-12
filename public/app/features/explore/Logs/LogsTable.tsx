@@ -6,6 +6,7 @@ import {
   applyFieldOverrides,
   DataFrame,
   Field,
+  LogRowModel,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -15,6 +16,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Table } from '@grafana/ui';
+import { shouldRemoveField } from 'app/features/logs/components/logParser';
 import { parseLogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
@@ -26,6 +28,7 @@ interface Props {
   splitOpen: SplitOpen;
   range: TimeRange;
   logsSortOrder: LogsSortOrder;
+  rows: LogRowModel[];
 }
 
 const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
@@ -37,7 +40,7 @@ const getTableHeight = memoizeOne((dataFrames: DataFrame[] | undefined) => {
 });
 
 export const LogsTable: React.FunctionComponent<Props> = (props) => {
-  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames } = props;
+  const { timeZone, splitOpen, range, logsSortOrder, width, logsFrames, rows } = props;
 
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
 
@@ -124,6 +127,21 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
             },
           ];
         });
+
+      // remove fields that should not be displayed
+      dataFrame.fields.forEach((field: Field, index: number) => {
+        const row = rows[0]; // we just take the first row as the relevant row
+        if (shouldRemoveField(field, index, row, false, false)) {
+          transformations.push({
+            id: 'organize',
+            options: {
+              excludeByName: {
+                [field.name]: true,
+              },
+            },
+          });
+        }
+      });
       if (transformations.length > 0) {
         const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
         setTableFrame(prepareTableFrame(transformedDataFrame));
@@ -132,7 +150,7 @@ export const LogsTable: React.FunctionComponent<Props> = (props) => {
       }
     };
     prepare();
-  }, [prepareTableFrame, logsFrames, logsSortOrder]);
+  }, [prepareTableFrame, logsFrames, logsSortOrder, rows]);
 
   if (!tableFrame) {
     return null;
