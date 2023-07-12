@@ -53,10 +53,14 @@ interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
-type FilterCategory = TransformerCategory | 'viewAll';
+type viewAllType = 'viewAll';
+const viewAllValue = 'viewAll';
+const viewAllLabel = 'View all';
+
+type FilterCategory = TransformerCategory | viewAllType;
 
 const filterCategoriesLabels: Array<[FilterCategory, string]> = [
-  ['viewAll', 'View all'],
+  [viewAllValue, viewAllLabel],
   ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
 ];
 
@@ -86,7 +90,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       })),
       data: [],
       search: '',
-      selectedFilter: 'viewAll',
+      selectedFilter: viewAllValue,
       showIllustrations: true,
     };
   }
@@ -295,7 +299,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
-    if (this.state.selectedFilter !== 'viewAll') {
+    if (this.state.selectedFilter !== viewAllValue) {
       xforms = xforms.filter(
         (t) =>
           t.categories &&
