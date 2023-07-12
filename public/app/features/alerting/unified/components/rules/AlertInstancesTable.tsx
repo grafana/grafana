@@ -25,6 +25,8 @@ type AlertTableItemProps = DynamicTableItemProps<AlertWithCommonLabels>;
 
 export const AlertInstancesTable = ({ instances, pagination, footerRow }: Props) => {
   const commonLabels = useMemo(() => {
+    // only compute the common labels if we have more than 1 instance, if we don't then that single instance
+    // will have the complete set of common labels and no unique ones
     return instances.length > 1 ? findCommonLabels(instances.map((instance) => instance.labels)) : {};
   }, [instances]);
 
