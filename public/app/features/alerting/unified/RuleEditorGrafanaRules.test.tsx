@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -31,6 +31,10 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
+
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it

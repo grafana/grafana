@@ -7,6 +7,7 @@ import {
   MutableDataFrame,
   NodeGraphDataFrameFieldNames as Fields,
   TimeRange,
+  FieldType,
 } from '@grafana/data';
 
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
@@ -188,28 +189,35 @@ function createServiceMapDataFrames() {
   }
 
   const nodes = createDF('Nodes', [
-    { name: Fields.id },
-    { name: Fields.title, config: { displayName: 'Service name' } },
-    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.id, type: FieldType.string },
+    { name: Fields.title, type: FieldType.string, config: { displayName: 'Service name' } },
+    { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
+      type: FieldType.number,
       config: { unit: 'r/sec', displayName: 'Requests per second' },
     },
     {
       name: Fields.arc + 'success',
+      type: FieldType.number,
       config: { displayName: 'Success', color: { fixedColor: 'green', mode: FieldColorModeId.Fixed } },
     },
     {
       name: Fields.arc + 'failed',
+      type: FieldType.number,
       config: { displayName: 'Failed', color: { fixedColor: 'red', mode: FieldColorModeId.Fixed } },
     },
   ]);
   const edges = createDF('Edges', [
-    { name: Fields.id },
-    { name: Fields.source },
-    { name: Fields.target },
-    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
-    { name: Fields.secondaryStat, config: { unit: 'r/sec', displayName: 'Requests per second' } },
+    { name: Fields.id, type: FieldType.string },
+    { name: Fields.source, type: FieldType.string },
+    { name: Fields.target, type: FieldType.string },
+    { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    {
+      name: Fields.secondaryStat,
+      type: FieldType.number,
+      config: { unit: 'r/sec', displayName: 'Requests per second' },
+    },
   ]);
 
   return [nodes, edges];

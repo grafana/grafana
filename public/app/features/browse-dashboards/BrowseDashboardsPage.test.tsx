@@ -73,11 +73,22 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
   };
 }
 
-jest.mock('app/features/search/service/folders', () => {
+jest.mock('app/features/browse-dashboards/api/services', () => {
+  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
+
   return {
-    getFolderChildren(parentUID?: string) {
+    ...orig,
+    listFolders(parentUID?: string) {
       const childrenForUID = mockTree
-        .filter((v) => v.item.kind !== 'ui-empty-folder' && v.item.parentUID === parentUID)
+        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
+        .map((v) => v.item);
+
+      return Promise.resolve(childrenForUID);
+    },
+
+    listDashboards(parentUID?: string) {
+      const childrenForUID = mockTree
+        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
         .map((v) => v.item);
 
       return Promise.resolve(childrenForUID);
@@ -172,6 +183,12 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('does not show an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('does not show any tabs', async () => {
@@ -276,6 +293,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('shows an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
+
+    it('does not show the "Edit title" button if the user does not have permissions', async () => {
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          canEditInFolder: false,
+          canCreateDashboards: false,
+          canCreateFolder: false,
+        };
+      });
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {

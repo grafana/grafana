@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -110,6 +111,36 @@ func FromContext(c context.Context) *contextmodel.ReqContext {
 	return nil
 }
 
+// CopyWithReqContext returns a copy of the parent context with a semi-shallow copy of the ReqContext as a value.
+// The ReqContexts's *web.Context is deep copied so that headers are thread-safe; additional properties are shallow copied and should be treated as read-only.
+func CopyWithReqContext(ctx context.Context) context.Context {
+	origReqCtx := FromContext(ctx)
+	if origReqCtx == nil {
+		return ctx
+	}
+
+	webCtx := &web.Context{
+		Req:  origReqCtx.Req.Clone(ctx),
+		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
+	}
+	reqCtx := &contextmodel.ReqContext{
+		Context:               webCtx,
+		SignedInUser:          origReqCtx.SignedInUser,
+		UserToken:             origReqCtx.UserToken,
+		IsSignedIn:            origReqCtx.IsSignedIn,
+		IsRenderCall:          origReqCtx.IsRenderCall,
+		AllowAnonymous:        origReqCtx.AllowAnonymous,
+		SkipDSCache:           origReqCtx.SkipDSCache,
+		SkipQueryCache:        origReqCtx.SkipQueryCache,
+		Logger:                origReqCtx.Logger,
+		Error:                 origReqCtx.Error,
+		RequestNonce:          origReqCtx.RequestNonce,
+		IsPublicDashboardView: origReqCtx.IsPublicDashboardView,
+		LookupTokenErr:        origReqCtx.LookupTokenErr,
+	}
+	return context.WithValue(ctx, reqContextKey{}, reqCtx)
+}
+
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -139,7 +170,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		if h.Cfg.AuthBrokerEnabled {
 			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
 				if errors.Is(err, auth.ErrInvalidSessionToken) {
@@ -154,7 +185,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.UserToken = identity.SessionToken
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
-				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
+				reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -207,7 +238,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		)
 
 		// when using authn service this is implemented as a post auth hook
-		if !h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		if !h.Cfg.AuthBrokerEnabled {
 			// update last seen every 5min
 			if reqContext.ShouldUpdateLastSeenAt() {
 				reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)

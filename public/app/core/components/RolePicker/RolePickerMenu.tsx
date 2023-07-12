@@ -29,7 +29,7 @@ interface RolesCollectionEntry {
   roles: Role[];
 }
 
-const BasicRoles = Object.values(OrgRole);
+const BasicRoles = Object.values(OrgRole).filter((r) => r !== OrgRole.None);
 const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
   label: r,
   value: r,

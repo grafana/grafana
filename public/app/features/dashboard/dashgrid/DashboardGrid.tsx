@@ -14,7 +14,7 @@ import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
 
-import { DashboardEmpty } from './DashboardEmpty';
+import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {
@@ -93,6 +93,7 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
+    this.forceUpdate();
   };
 
   triggerForceUpdate = () => {
@@ -272,10 +273,10 @@ export class DashboardGrid extends PureComponent<Props> {
   }
 }
 
-interface GrafanaGridItemProps extends Record<string, any> {
+interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   gridWidth?: number;
   gridPos?: GridPos;
-  isViewing: string;
+  isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
   children: any;
@@ -306,8 +307,15 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     style.width = '100%';
   } else {
     // Normal grid layout. The grid framework passes width and height directly to children as style props.
-    width = parseFloat(props.style.width);
-    height = parseFloat(props.style.height);
+    if (props.style) {
+      const { width: styleWidth, height: styleHeight } = props.style;
+      if (styleWidth != null) {
+        width = typeof styleWidth === 'number' ? styleWidth : parseFloat(styleWidth);
+      }
+      if (styleHeight != null) {
+        height = typeof styleHeight === 'number' ? styleHeight : parseFloat(styleHeight);
+      }
+    }
   }
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]

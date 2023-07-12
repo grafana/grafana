@@ -22,6 +22,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
+import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
@@ -50,6 +51,7 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  addWidget?: boolean;
   panelType?: string;
   inspect?: string;
   from?: string;
@@ -411,6 +413,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
+        {queryParams.addWidget && config.featureToggles.vizAndWidgetSplit && <AddWidgetModal />}
       </>
     );
   }
@@ -437,23 +440,25 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
-  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
+  if (folderUid && pageNav) {
     if (config.featureToggles.nestedFolders) {
-      const folderNavModel = folderUid ? getNavModel(navIndex, `folder-dashboards-${folderUid}`).main : undefined;
+      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
       pageNav = {
         ...pageNav,
         parentItem: folderNavModel,
       };
     } else {
-      pageNav = {
-        ...pageNav,
-        parentItem: {
-          text: folderTitle,
-          url: `/dashboards/f/${dashboard.meta.folderUid}`,
-        },
-      };
+      // Check if folder changed
+      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
+        pageNav = {
+          ...pageNav,
+          parentItem: {
+            text: folderTitle,
+            url: `/dashboards/f/${dashboard.meta.folderUid}`,
+          },
+        };
+      }
     }
   }
 

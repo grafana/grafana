@@ -5,14 +5,15 @@ import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, L
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
+import { selectIsWaitingForData } from '../state/query';
 import { getFieldLinksForExplore } from '../utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
@@ -22,7 +23,8 @@ interface TableContainerProps {
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { loading: loadingInState, tableResult, range } = item;
+  const { tableResult, range } = item;
+  const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, tableResult, range };
 }

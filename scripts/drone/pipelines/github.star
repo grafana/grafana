@@ -6,18 +6,21 @@ load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "fetch_images_step",
-    "publish_image",
 )
 load("scripts/drone/vault.star", "from_secret")
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
 
 def publish_github_step():
     return {
         "name": "publish-github",
-        "image": publish_image,
+        "image": images["publish_image"],
         "commands": ["./bin/build publish github --repo $${GH_REGISTRY} --create"],
         "depends_on": ["fetch-images-enterprise2"],
         "environment": {

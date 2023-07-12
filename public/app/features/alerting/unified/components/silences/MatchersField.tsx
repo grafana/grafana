@@ -79,7 +79,7 @@ const MatchersField = ({ className }: Props) => {
                     <IconButton
                       className={styles.removeButton}
                       tooltip="Remove matcher"
-                      name={'trash-alt'}
+                      name="trash-alt"
                       onClick={() => remove(index)}
                     >
                       Remove

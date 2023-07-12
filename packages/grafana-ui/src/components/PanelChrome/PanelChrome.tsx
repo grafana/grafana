@@ -5,6 +5,7 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -140,7 +141,11 @@ export function PanelChrome({
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
           <Tooltip content="Cancel query">
-            <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
+            <TitleItem
+              className={cx(dragClassCancel, styles.pointer)}
+              data-testid="panel-cancel-query"
+              onClick={onCancelQuery}
+            >
               <Icon name="sync-slash" size="md" />
             </TitleItem>
           </Tooltip>
@@ -153,7 +158,9 @@ export function PanelChrome({
   );
 
   return (
-    <div className={styles.container} style={containerStyles} data-testid={testid}>
+    // tabIndex={0} is needed for keyboard accessibility in the plot area
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
@@ -257,23 +264,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
 
       '.show-on-hover': {
-        visibility: 'hidden',
         opacity: '0',
+        visibility: 'hidden',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
-          visibility: 'visible',
           opacity: '1',
+          visibility: 'visible',
         },
       },
 
-      '&:focus-visible': {
-        outline: `1px solid ${theme.colors.action.focus}`,
-      },
+      '&:focus-visible': getFocusStyles(theme),
 
-      '&:focus-within': {
+      // The not:(:focus) clause is so that this rule is only applied when decendants are focused (important otherwise the hover header is visible when panel is clicked).
+      '&:focus-within:not(:focus)': {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
@@ -296,6 +302,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+    }),
+    pointer: css({
+      cursor: 'pointer',
     }),
     streaming: css({
       label: 'panel-streaming',

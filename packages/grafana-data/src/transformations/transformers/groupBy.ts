@@ -25,13 +25,13 @@ export interface GroupByTransformerOptions {
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
   id: DataTransformerID.groupBy,
   name: 'Group by',
-  description: 'Group the data by a field values then process calculations for each group',
+  description: 'Group the data by a field values then process calculations for each group.',
   defaultOptions: {
     fields: {},
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) =>

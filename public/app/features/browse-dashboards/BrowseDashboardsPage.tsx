@@ -16,7 +16,7 @@ import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/brows
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
-import { CreateNewButton } from './components/CreateNewButton';
+import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
@@ -46,6 +46,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     dispatch(
       setAllSelection({
         isSelected: false,
+        folderUID: undefined,
       })
     );
   }, [dispatch, folderUID, stateManager]);
@@ -79,31 +80,30 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
 
-  const onEditTitle = folderUID
-    ? async (newValue: string) => {
-        if (folderDTO) {
-          const result = await saveFolder({
-            ...folderDTO,
-            title: newValue,
-          });
-          if ('error' in result) {
-            throw result.error;
-          }
-        }
+  const showEditTitle = canEditInFolder && folderUID;
+  const onEditTitle = async (newValue: string) => {
+    if (folderDTO) {
+      const result = await saveFolder({
+        ...folderDTO,
+        title: newValue,
+      });
+      if ('error' in result) {
+        throw result.error;
       }
-    : undefined;
+    }
+  };
 
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={onEditTitle}
+      onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolder) && (
             <CreateNewButton
-              inFolder={folderUID}
+              parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
               canCreateFolder={canCreateFolder}
             />

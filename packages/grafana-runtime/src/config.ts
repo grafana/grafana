@@ -29,6 +29,7 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
+  angularDetected?: boolean;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -62,6 +63,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
+  newsFeedEnabled = true;
   ldapEnabled = false;
   jwtHeaderName = '';
   jwtUrlLogin = false;
@@ -160,6 +162,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   tokenExpirationDayLimit: undefined;
+  disableFrontendSandboxForPlugins: string[] = [];
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -192,7 +195,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    overrideFeatureTogglesFromUrl(this);
+    if (this.buildInfo.env === 'development') {
+      overrideFeatureTogglesFromUrl(this);
+    }
 
     if (this.featureToggles.disableAngular) {
       this.angularSupportEnabled = false;
@@ -202,9 +207,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
-
-    // Special feature toggle that impact theme/component looks
-    this.theme2.flags.topnav = this.featureToggles.topnav;
   }
 }
 

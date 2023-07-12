@@ -22,13 +22,13 @@ export interface SortByTransformerOptions {
 export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = {
   id: DataTransformerID.sortBy,
   name: 'Sort by',
-  description: 'Sort fields in a frame',
+  description: 'Sort fields in a frame.',
   defaultOptions: {
     fields: {},
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) =>
