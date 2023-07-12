@@ -55,13 +55,15 @@ export const HeatmapPanel = ({
     [replaceVariables]
   );
 
+  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
+
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data.series, data.annotations, options, theme, getFieldLinksSupplier);
+      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, getFieldLinksSupplier);
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data.series, data.annotations, options, theme, getFieldLinksSupplier]);
+  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field
@@ -84,8 +86,6 @@ export const HeatmapPanel = ({
 
     return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars]);
-
-  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   /*
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
@@ -121,6 +121,7 @@ export const HeatmapPanel = ({
   const builder = useMemo(() => {
     const scaleConfig = dataRef.current?.heatmap?.fields[1].config?.custom
       ?.scaleDistribution as ScaleDistributionConfig;
+
     return prepConfig({
       dataRef,
       theme,
@@ -137,7 +138,6 @@ export const HeatmapPanel = ({
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
-      palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
@@ -170,8 +170,8 @@ export const HeatmapPanel = ({
           <ColorScale
             // hoverValue={hoverValue}
             colorPalette={palette}
-            min={dataRef.current.minValue!}
-            max={dataRef.current.maxValue!}
+            min={dataRef.current.heatmapColors?.minValue!}
+            max={dataRef.current.heatmapColors?.maxValue!}
             display={info.display}
           />
         </div>
