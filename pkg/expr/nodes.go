@@ -24,8 +24,9 @@ var (
 )
 
 type QueryError struct {
-	RefID string
-	Err   error
+	RefID         string
+	DatasourceUID string
+	Err           error
 }
 
 func (e QueryError) Error() string {
@@ -242,15 +243,19 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
-		return mathexp.Results{}, err
+		return mathexp.Results{}, QueryError{
+			RefID:         dn.refID,
+			DatasourceUID: dn.datasource.UID,
+			Err:           err,
+		}
 	}
 
 	var result mathexp.Results
-	responseType, result, err = queryDataResponseToResults(ctx, resp, dn.refID, dn.datasource.Type, s)
+	responseType, result, err = queryDataResponseToResults(ctx, resp, dn.refID, dn.datasource.Type, dn.datasource.UID, s)
 	return result, err
 }
 
-func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResponse, refID string, datasourceType string, s *Service) (string, mathexp.Results, error) {
+func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResponse, refID string, datasourceType string, datasourceUid string, s *Service) (string, mathexp.Results, error) {
 	vals := make([]mathexp.Value, 0)
 	response, ok := resp.Responses[refID]
 	if !ok {
@@ -265,7 +270,7 @@ func queryDataResponseToResults(ctx context.Context, resp *backend.QueryDataResp
 	}
 
 	if response.Error != nil {
-		return "", mathexp.Results{}, QueryError{RefID: refID, Err: response.Error}
+		return "", mathexp.Results{}, QueryError{RefID: refID, Err: response.Error, DatasourceUID: datasourceUid}
 	}
 
 	var dt data.FrameType
