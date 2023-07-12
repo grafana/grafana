@@ -674,8 +674,8 @@ export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseSampleValue(s1.name ?? s1.fields[1].name);
-    le2 = parseSampleValue(s2.name ?? s2.fields[1].name);
+    le1 = parseSampleValue(s1.name ?? s1.fields[1].state?.displayName ?? s1.fields[1].name);
+    le2 = parseSampleValue(s2.name ?? s2.fields[1].state?.displayName ?? s2.fields[1].name);
   } catch (err) {
     console.error(err);
     return 0;

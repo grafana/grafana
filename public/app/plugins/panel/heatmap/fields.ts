@@ -5,6 +5,7 @@ import {
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
+  getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
   outerJoinDataFrames,
@@ -65,6 +66,13 @@ export function prepareHeatmapData(
     return {};
   }
 
+  // cache field.state.displayName
+  frames.forEach((fr) => {
+    fr.fields.forEach((fl) => {
+      getFieldDisplayName(fl, fr, frames);
+    });
+  });
+
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
   if (getFieldLinks) {
@@ -95,7 +103,7 @@ export function prepareHeatmapData(
   if (!rowsHeatmap) {
     if (frames.length > 1) {
       let allNamesNumeric = frames.every(
-        (frame) => !Number.isNaN(parseSampleValue(frame.name ?? frame.fields[1].name))
+        (frame) => !Number.isNaN(parseSampleValue(frame.fields[1].state?.displayName ?? ''))
       );
 
       if (allNamesNumeric) {
@@ -110,7 +118,9 @@ export function prepareHeatmapData(
     } else {
       let frame = frames[0];
       let numberFields = frame.fields.filter((field) => field.type === FieldType.number);
-      let allNamesNumeric = numberFields.every((field) => !Number.isNaN(parseSampleValue(field.name)));
+      let allNamesNumeric = numberFields.every(
+        (field) => !Number.isNaN(parseSampleValue(field.state?.displayName ?? ''))
+      );
 
       if (allNamesNumeric) {
         numberFields.sort((a, b) => parseSampleValue(a.name) - parseSampleValue(b.name));
