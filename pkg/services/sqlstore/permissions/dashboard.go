@@ -16,6 +16,144 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+var (
+	dashWildcards   = accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
+	folderWildcards = accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
+)
+
+func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string) *DashboardFilter {
+	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
+
+	var folderActions []string
+	var dashboardActions []string
+	if queryType == searchstore.TypeFolder {
+		folderActions = append(folderActions, dashboards.ActionFoldersRead)
+		if needEdit {
+			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
+		}
+	} else if queryType == searchstore.TypeDashboard {
+		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
+		if needEdit {
+			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
+		}
+	} else if queryType == searchstore.TypeAlertFolder {
+		folderActions = append(
+			folderActions,
+			dashboards.ActionFoldersRead,
+			accesscontrol.ActionAlertingRuleRead,
+		)
+		if needEdit {
+			folderActions = append(
+				folderActions,
+				accesscontrol.ActionAlertingRuleCreate,
+			)
+		}
+	} else {
+		folderActions = append(folderActions, dashboards.ActionFoldersRead)
+		dashboardActions = append(dashboardActions, dashboards.ActionDashboardsRead)
+		if needEdit {
+			folderActions = append(folderActions, dashboards.ActionDashboardsCreate)
+			dashboardActions = append(dashboardActions, dashboards.ActionDashboardsWrite)
+		}
+	}
+
+	folderActionsToCheck := actionsToCheck(folderActions, usr.Permissions[usr.OrgID], folderWildcards)
+	dashboardActionsToCheck := actionsToCheck(dashboardActions, usr.Permissions[usr.OrgID], dashWildcards, folderWildcards)
+
+	return &DashboardFilter{usr, folderActions, folderActionsToCheck, dashboardActions, dashboardActionsToCheck}
+}
+
+type DashboardFilter struct {
+	usr                     *user.SignedInUser
+	folderActions           []string
+	folderActionsToCheck    []interface{}
+	dashboardActions        []string
+	dashboardActionsToCheck []interface{}
+}
+
+func (f *DashboardFilter) Join() (string, []interface{}) {
+	if f.hasNoPermissions() || f.hasNoActionsToCheck() {
+		return "", nil
+	}
+
+	filter, params := accesscontrol.UserRolesFilter(
+		f.usr.OrgID,
+		f.usr.UserID,
+		f.usr.Teams,
+		accesscontrol.GetOrgRoles(f.usr),
+	)
+
+	query := "LEFT JOIN permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(" + filter + ")"
+
+	return query, params
+}
+
+func (f *DashboardFilter) Where() (string, []interface{}) {
+	if f.hasNoPermissions() {
+		return "(1 == 0)", nil
+	}
+
+	if f.hasNoActionsToCheck() {
+		return "(1 == 1)", nil
+	}
+
+	query := strings.Builder{}
+
+	query.WriteByte('(')
+
+	if len(f.dashboardActions) > 0 {
+		if len(f.dashboardActionsToCheck) > 0 {
+			query.WriteString(`
+			((
+				p.action = 'dashboards:read' AND
+				p.kind = 'dashboards' AND
+				p.attribute = 'uid' AND
+				NOT dashboard.is_folder
+			) OR (
+				p.action = 'dashboards:read' AND
+				p.kind = 'folders' AND
+				p.attribute = 'uid' AND
+				NOT dashboard.is_folder
+			))
+			`)
+		} else {
+			query.WriteString("NOT dashboard.is_folder")
+		}
+	}
+
+	if len(f.folderActions) > 0 {
+		if len(f.dashboardActions) > 0 {
+			query.WriteString(" OR ")
+		}
+
+		if len(f.folderActionsToCheck) > 0 {
+			query.WriteString(`
+			(
+				p.action = 'folders:read' AND
+				p.kind = 'folders' AND
+				p.attribute = 'uid' AND
+				dashboard.is_folder
+			)
+			`)
+		} else {
+			query.WriteString("dashboard.is_folder")
+		}
+
+	}
+
+	query.WriteByte(')')
+
+	return query.String(), nil
+}
+
+func (f *DashboardFilter) hasNoPermissions() bool {
+	return f.usr == nil || f.usr.Permissions == nil || f.usr.Permissions[f.usr.OrgID] == nil
+}
+
+func (f *DashboardFilter) hasNoActionsToCheck() bool {
+	return len(f.dashboardActionsToCheck) == 0 && len(f.folderActionsToCheck) == 0
+}
+
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
 const maximumRecursiveQueries = 2
 
@@ -451,8 +589,3 @@ func getAllowedUIDs(actions []string, user *user.SignedInUser, scopePrefix strin
 	}
 	return args
 }
-
-var (
-	dashWildcards   = accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
-	folderWildcards = accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
-)
