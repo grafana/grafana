@@ -377,7 +377,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/ldap',
+      path: '/admin/authentication/ldap',
       component: LdapPage,
     },
     // LOGIN / SIGNUP
