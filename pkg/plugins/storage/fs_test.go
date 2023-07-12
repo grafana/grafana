@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -60,7 +59,7 @@ func TestExtractFiles(t *testing.T) {
 
 		pluginID := "grafana-simple-json-datasource"
 		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip"), pluginID)
-		require.True(t, strings.HasPrefix(path, filepath.Join(pluginsDir, fmt.Sprintf("%s-", pluginID))))
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		// File in zip has permissions 755
@@ -89,7 +88,7 @@ func TestExtractFiles(t *testing.T) {
 
 		pluginID := "plugin-with-symlink"
 		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink.zip"), pluginID)
-		require.True(t, strings.HasPrefix(path, filepath.Join(pluginsDir, fmt.Sprintf("%s-", pluginID))))
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(filepath.Join(path, "symlink_to_txt"))
@@ -105,7 +104,7 @@ func TestExtractFiles(t *testing.T) {
 
 		pluginID := "plugin-with-symlink-dir"
 		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink-dir.zip"), pluginID)
-		require.True(t, strings.HasPrefix(path, filepath.Join(pluginsDir, fmt.Sprintf("%s-", pluginID))))
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(filepath.Join(path, "symlink_to_dir"))
@@ -121,7 +120,7 @@ func TestExtractFiles(t *testing.T) {
 
 		pluginID := "plugin-with-absolute-symlink"
 		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink.zip"), pluginID)
-		require.True(t, strings.HasPrefix(path, filepath.Join(pluginsDir, fmt.Sprintf("%s-", pluginID))))
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(filepath.Join(path, "/test.txt"))
@@ -133,7 +132,7 @@ func TestExtractFiles(t *testing.T) {
 
 		pluginID := "plugin-with-absolute-symlink-dir"
 		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink-dir.zip"), pluginID)
-		require.True(t, strings.HasPrefix(path, filepath.Join(pluginsDir, fmt.Sprintf("%s-", pluginID))))
+		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		_, err = os.Stat(filepath.Join(path, "/plugin-with-absolute-symlink-dir/target"))

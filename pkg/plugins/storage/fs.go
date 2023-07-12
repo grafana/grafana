@@ -73,8 +73,7 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 }
 
 func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string) (string, error) {
-	randSuffix := randomString(8)
-	pluginDirName := fmt.Sprintf("%s-%s", pluginID, randSuffix)
+	pluginDirName := fmt.Sprintf("%s", pluginID)
 	installDir := filepath.Join(fs.pluginsDir, pluginDirName)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
 		fs.log.Debugf("Removing existing installation of plugin %s", installDir)
