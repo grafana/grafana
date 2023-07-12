@@ -32,7 +32,7 @@ Example plugins
 
 You might also be interested in the available tutorials around authoring a plugin.
 
-- [Grafana Tutorials](https://grafana.com/tutorials/)
+- [Grafana Tutorials](/tutorials/)
 
 ## What languages?
 
