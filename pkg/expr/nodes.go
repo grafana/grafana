@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -213,6 +214,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, err
 	}
 	span.SetAttributes("datasource.type", dn.datasource.Type, attribute.Key("datasource.type").String(dn.datasource.Type))
+	span.SetAttributes("datasource.uid", dn.datasource.UID, attribute.Key("datasource.uid").String(dn.datasource.UID))
 
 	req := &backend.QueryDataRequest{
 		PluginContext: pCtx,
@@ -235,6 +237,11 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if e != nil {
 			responseType = "error"
 			respStatus = "failure"
+			span.AddEvents([]string{"error", "message"},
+				[]tracing.EventValue{
+					{Str: fmt.Sprintf("%v", err)},
+					{Str: "failed to query data source"},
+				})
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
