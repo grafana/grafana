@@ -36,3 +36,22 @@ export function logError(error: Error, context?: LogContext) {
   };
   logErrorRuntime(error, context);
 }
+
+export function isFrontendSandboxSupported({
+  isAngular,
+  pluginId,
+}: {
+  isAngular?: boolean;
+  pluginId: string;
+}): boolean {
+  // To fast test and debug the sandbox in the browser.
+  const sandboxQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
+  const isPluginExcepted = config.disableFrontendSandboxForPlugins.includes(pluginId);
+  return (
+    !isAngular &&
+    Boolean(config.featureToggles.pluginsFrontendSandbox) &&
+    process.env.NODE_ENV !== 'test' &&
+    !isPluginExcepted &&
+    !sandboxQueryParam
+  );
+}
