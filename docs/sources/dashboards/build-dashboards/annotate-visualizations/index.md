@@ -24,7 +24,7 @@ You can annotate visualizations in three ways:
 - Using the HTTP API
 - Configuring annotation queries in the dashboard settings
 
-In the first two cases, you're creating new annotations, while in the last you're querying existing annotations from data sources. The built-in query annotation query also supports this.
+In the first two cases, you're creating new annotations, while in the last you're querying existing annotations from data sources. The built-in annotation query also supports this.
 
 This page explains the first and third options; for information about using the HTTP API, refer to [Annotations API]({{< relref "../../../developers/http_api/annotations/" >}}).
 
