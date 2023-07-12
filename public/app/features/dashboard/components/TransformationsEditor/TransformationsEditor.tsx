@@ -696,7 +696,7 @@ const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
     heading: css`
       font-weight: 400;
 
-      > * {
+      > button {
         width: 100%;
         display: flex;
         justify-content: space-between;
