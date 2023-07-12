@@ -101,22 +101,35 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, defaultReceiver)
 		}
 
+		usedReceivers := make(map[string]struct{})
+		usedReceivers[defaultRoute.Receiver] = struct{}{} // Default is always used.
+		for ar, channelUids := range rulesPerOrg[orgID] {
+			filteredReceiverNames := m.filterReceiversForAlert(ar.Title, channelUids, receiversMap, defaultReceivers)
+			for name := range filteredReceiverNames {
+				usedReceivers[name] = struct{}{}
+			}
+
+			if len(filteredReceiverNames) != 0 {
+				// Only create a contact label if there are specific receivers, otherwise it defaults to the root-level route.
+				ar.Labels[ContactLabel] = contactListToString(filteredReceiverNames)
+			}
+		}
+
 		for _, cr := range receivers {
+			// If the receiver is unused by any alert rule and invalid, we don't need to create a route for it.
+			if _, ok := usedReceivers[cr.receiver.Name]; !ok {
+				err := validateReceivers(m.mg.Logger, cr.receiver)
+				if err != nil {
+					m.mg.Logger.Warn("Receiver is invalid and unused by any alert rule, not creating route", "orgId", orgID, "receiver", cr.receiver.Name)
+					continue
+				}
+			}
 			route, err := createRoute(cr)
 			if err != nil {
 				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", cr.receiver.Name, orgID, err)
 			}
 
 			amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes, route)
-		}
-
-		for ar, channelUids := range rulesPerOrg[orgID] {
-			filteredReceiverNames := m.filterReceiversForAlert(ar.Title, channelUids, receiversMap, defaultReceivers)
-
-			if len(filteredReceiverNames) != 0 {
-				// Only create a contact label if there are specific receivers, otherwise it defaults to the root-level route.
-				ar.Labels[ContactLabel] = contactListToString(filteredReceiverNames)
-			}
 		}
 
 		// Validate the alertmanager configuration produced, this gives a chance to catch bad configuration at migration time.

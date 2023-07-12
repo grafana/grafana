@@ -15,6 +15,7 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -477,46 +478,83 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 
 // validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
 func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error {
+	usedReceivers := AllReceivers(config.AlertmanagerConfig.Route)
 	for _, r := range config.AlertmanagerConfig.Receivers {
-		for _, gr := range r.GrafanaManagedReceivers {
-			data, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return err
+		err := validateReceivers(m.mg.Logger, r)
+		if err != nil {
+			// If an invalid receiver configuration somehow passed validation but isn't actually used anywhere,
+			// we just log the event and move on. It's not necessary to fail the migration.
+			if _, ok := usedReceivers[r.Name]; !ok {
+				m.mg.Logger.Info("unused receiver has a validation error.", "receiver", r.Name, "error", err)
+				continue
 			}
-			var (
-				cfg = &alertingNotify.GrafanaIntegrationConfig{
-					UID:                   gr.UID,
-					Name:                  gr.Name,
-					Type:                  gr.Type,
-					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              data,
-					SecureSettings:        gr.SecureSettings,
-				}
-			)
-
-			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
-			// given that the previous alerting will never support it.
-			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string) string {
-				if value, ok := sjd[key]; ok {
-					decryptedData, err := util.Decrypt(value, setting.SecretKey)
-					if err != nil {
-						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
-						return fallback
-					}
-					return string(decryptedData)
-				}
-				return fallback
-			}
-			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
-				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
-			}, decryptFunc)
-			if err != nil {
-				return err
-			}
+			return err
 		}
 	}
 
 	return nil
+}
+
+func validateReceivers(l log.Logger, r *PostableApiReceiver) error {
+	for _, gr := range r.GrafanaManagedReceivers {
+		data, err := gr.Settings.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		var (
+			cfg = &alertingNotify.GrafanaIntegrationConfig{
+				UID:                   gr.UID,
+				Name:                  gr.Name,
+				Type:                  gr.Type,
+				DisableResolveMessage: gr.DisableResolveMessage,
+				Settings:              data,
+				SecureSettings:        gr.SecureSettings,
+			}
+		)
+
+		// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
+		// given that the previous alerting will never support it.
+		decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string) string {
+			if value, ok := sjd[key]; ok {
+				decryptedData, err := util.Decrypt(value, setting.SecretKey)
+				if err != nil {
+					l.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
+					return fallback
+				}
+				return string(decryptedData)
+			}
+			return fallback
+		}
+		_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
+			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
+		}, decryptFunc)
+		return err
+	}
+	return nil
+}
+
+// AllReceivers will recursively walk a routing tree and return the set of all the referenced receiver names.
+// Copied from notify.AllReceivers to use vendored Route.
+func AllReceivers(route *Route) map[string]struct{} {
+	return allReceivers(route, nil)
+}
+
+func allReceivers(route *Route, res map[string]struct{}) map[string]struct{} {
+	if res == nil {
+		res = make(map[string]struct{})
+	}
+	if route == nil {
+		return res
+	}
+
+	if route.Receiver != "" {
+		res[route.Receiver] = struct{}{}
+	}
+
+	for _, subRoute := range route.Routes {
+		allReceivers(subRoute, res)
+	}
+	return res
 }
 
 type AlertConfiguration struct {

@@ -58,43 +58,69 @@ func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {
 		name      string
-		receivers []*PostableGrafanaReceiver
+		receivers *PostableApiReceiver
+		route     *Route
 		err       error
 	}{
 		{
-			name: "when a slack receiver does not have a valid URL - it should error",
-			receivers: []*PostableGrafanaReceiver{
-				{
-					UID:            "test-uid",
-					Name:           "SlackWithBadURL",
-					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
-					SecureSettings: map[string]string{"url": invalidUri},
+			name: "when a slack receiver does not have a valid URL - it should error if the receiver is used",
+			receivers: &PostableApiReceiver{
+				Name: "test-contact-point",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{
+					{
+						UID:            "test-uid",
+						Name:           "SlackWithBadURL",
+						Type:           "slack",
+						Settings:       simplejson.NewFromAny(map[string]interface{}{}),
+						SecureSettings: map[string]string{"url": invalidUri},
+					},
 				},
 			},
-			err: fmt.Errorf("failed to validate integration \"SlackWithBadURL\" (UID test-uid) of type \"slack\": invalid URL %q", invalidUri),
+			route: &Route{Receiver: "test-contact-point"},
+			err:   fmt.Errorf("failed to validate integration \"SlackWithBadURL\" (UID test-uid) of type \"slack\": invalid URL %q", invalidUri),
+		},
+		{
+			name: "when a slack receiver does not have a valid URL - it should not error if the receiver is unused",
+			receivers: &PostableApiReceiver{
+				Name: "test-contact-point",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{
+					{
+						UID:            "test-uid",
+						Name:           "SlackWithBadURL",
+						Type:           "slack",
+						Settings:       simplejson.NewFromAny(map[string]interface{}{}),
+						SecureSettings: map[string]string{"url": invalidUri},
+					},
+				},
+			},
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",
-			receivers: []*PostableGrafanaReceiver{
-				{
-					UID:            util.GenerateShortUID(),
-					Name:           "SlackWithBadRecipient",
-					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this passes"}),
-					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
+			receivers: &PostableApiReceiver{
+				Name: "test-contact-point",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{
+					{
+						UID:            util.GenerateShortUID(),
+						Name:           "SlackWithBadRecipient",
+						Type:           "slack",
+						Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this passes"}),
+						SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
+					},
 				},
 			},
 		},
 		{
 			name: "when the configuration is valid - it should not error",
-			receivers: []*PostableGrafanaReceiver{
-				{
-					UID:            util.GenerateShortUID(),
-					Name:           "SlackWithBadURL",
-					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "#a-good-channel"}),
-					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
+			receivers: &PostableApiReceiver{
+				Name: "test-contact-point",
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{
+					{
+						UID:            util.GenerateShortUID(),
+						Name:           "SlackWithBadURL",
+						Type:           "slack",
+						Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "#a-good-channel"}),
+						SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
+					},
 				},
 			},
 		},
@@ -104,7 +130,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mg := newTestMigration(t)
 
-			config := configFromReceivers(t, tt.receivers)
+			config := configFromReceivers(t, tt.receivers, tt.route)
 			require.NoError(t, config.EncryptSecureSettings()) // make sure we encrypt the settings
 			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
@@ -117,14 +143,13 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
+func configFromReceivers(t *testing.T, apiReceiver *PostableApiReceiver, route *Route) *PostableUserConfig {
 	t.Helper()
 
 	return &PostableUserConfig{
 		AlertmanagerConfig: PostableApiAlertingConfig{
-			Receivers: []*PostableApiReceiver{
-				{GrafanaManagedReceivers: receivers},
-			},
+			Receivers: []*PostableApiReceiver{apiReceiver},
+			Route:     route,
 		},
 	}
 }

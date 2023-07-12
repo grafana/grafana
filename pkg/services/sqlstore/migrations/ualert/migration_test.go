@@ -2,6 +2,7 @@ package ualert_test
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -385,7 +386,7 @@ func TestAMConfigMigration(t *testing.T) {
 			},
 		},
 		{
-			name: "when channel not linked to any alerts, still create a receiver for it",
+			name: "when valid channel not linked to any alerts, still create a receiver and route for it",
 			legacyChannels: []*models.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
@@ -407,6 +408,43 @@ func TestAMConfigMigration(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "when invalid channel not linked to any alerts, don't create a route for it",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", brokenEmailSettings, false),
+			},
+			alerts: []*models.Alert{},
+			expected: map[int64]*ualert.PostableUserConfig{
+				int64(1): {
+					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
+						Route: &ualert.Route{
+							Receiver:   "autogen-contact-point-default",
+							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
+							Routes:     nil,
+						},
+						Receivers: []*ualert.PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*ualert.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+							{Name: "autogen-contact-point-default"},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "when invalid default channel not linked to any alerts, fail migration",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", brokenEmailSettings, true),
+			},
+			expErr: errors.New(`migration failed (id = move dashboard alerts to unified alerting): failed to validate AlertmanagerConfig in orgId 1: failed to validate integration "notifier1" (UID notifier1) of type "email": could not find addresses in settings`),
+		},
+		{
+			name: "when invalid channel is linked to an alert, fail migration",
+			legacyChannels: []*models.AlertNotification{
+				createAlertNotification(t, int64(1), "notifier1", "email", brokenEmailSettings, false),
+			},
+			alerts: []*models.Alert{createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"})},
+			expErr: errors.New(`migration failed (id = move dashboard alerts to unified alerting): failed to validate AlertmanagerConfig in orgId 1: failed to validate integration "notifier1" (UID notifier1) of type "email": could not find addresses in settings`),
 		},
 		{
 			name: "when unsupported channels, do not migrate them",
@@ -467,7 +505,7 @@ func TestAMConfigMigration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer teardown(t, x)
 			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
-			runDashAlertMigrationTestRun(t, x)
+			runDashAlertMigrationTestRun(t, x, tt.expErr)
 
 			for orgId := range tt.expected {
 				amConfig := getAlertmanagerConfig(t, x, orgId)
@@ -537,7 +575,7 @@ func TestDashAlertMigration(t *testing.T) {
 			},
 		}
 		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
-		runDashAlertMigrationTestRun(t, x)
+		runDashAlertMigrationTestRun(t, x, nil)
 
 		for orgId := range expected {
 			rules := getAlertRules(t, x, orgId)
@@ -563,7 +601,7 @@ func TestDashAlertMigration(t *testing.T) {
 			},
 		}
 		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
-		runDashAlertMigrationTestRun(t, x)
+		runDashAlertMigrationTestRun(t, x, nil)
 
 		for orgId := range expected {
 			rules := getAlertRules(t, x, orgId)
@@ -590,7 +628,7 @@ func TestDashAlertMigration(t *testing.T) {
 		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
 		require.NoError(t, err)
 
-		runDashAlertMigrationTestRun(t, x)
+		runDashAlertMigrationTestRun(t, x, nil)
 
 		rules := getAlertRules(t, x, o.ID)
 		require.Len(t, rules, 2)
@@ -614,9 +652,10 @@ func TestDashAlertMigration(t *testing.T) {
 }
 
 const (
-	emailSettings    = `{"addresses": "test"}`
-	slackSettings    = `{"recipient": "test", "token": "test"}`
-	opsgenieSettings = `{"apiKey": "test"}`
+	emailSettings       = `{"addresses": "test"}`
+	brokenEmailSettings = `{"addresses": ""}`
+	slackSettings       = `{"recipient": "test", "token": "test"}`
+	opsgenieSettings    = `{"apiKey": "test"}`
 )
 
 // setupTestDB prepares the sqlite database and runs OSS migrations to initialize the schemas.
@@ -761,7 +800,7 @@ func teardown(t *testing.T, x *xorm.Engine) {
 }
 
 // setupDashAlertMigrationTestRun runs DashAlertMigration for a new test run.
-func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
+func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine, expectedError error) {
 	_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
 	require.NoError(t, errDeleteMig)
 
@@ -770,6 +809,12 @@ func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
 	ualert.AddDashAlertMigration(alertMigrator)
 
 	errRunningMig := alertMigrator.Start(false, 0)
+	if expectedError != nil {
+		require.Error(t, errRunningMig)
+		require.EqualError(t, errRunningMig, expectedError.Error())
+		return
+	}
+
 	require.NoError(t, errRunningMig)
 }
 
