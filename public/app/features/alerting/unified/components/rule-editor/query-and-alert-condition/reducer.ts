@@ -35,6 +35,8 @@ export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
 export const addNewExpression = createAction<ExpressionQueryType>('addNewExpression');
 export const removeExpression = createAction<string>('removeExpression');
+export const removeExpressions = createAction('removeExpressions');
+export const addExpressions = createAction<AlertQuery[]>('addExpressions');
 export const updateExpression = createAction<ExpressionQuery>('updateExpression');
 export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: string }>('updateExpressionRefId');
 export const rewireExpressions = createAction<{ oldRefId: string; newRefId: string }>('rewireExpressions');
@@ -110,6 +112,12 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(removeExpression, (state, { payload }) => {
       state.queries = state.queries.filter((query) => query.refId !== payload);
+    })
+    .addCase(removeExpressions, (state) => {
+      state.queries = state.queries.filter((query) => !isExpressionQuery(query.model));
+    })
+    .addCase(addExpressions, (state, { payload }) => {
+      state.queries = [...state.queries, ...payload];
     })
     .addCase(updateExpression, (state, { payload }) => {
       state.queries = state.queries.map((query) => {
