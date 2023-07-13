@@ -10,6 +10,7 @@ keywords:
   - model
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: JSON model

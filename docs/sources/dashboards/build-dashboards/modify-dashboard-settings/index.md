@@ -7,6 +7,7 @@ keywords:
   - settings
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Modify dashboard settings

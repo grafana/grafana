@@ -12,6 +12,7 @@ keywords:
   - pdf
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Reporting

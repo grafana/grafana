@@ -14,6 +14,7 @@ keywords:
   - shortcuts
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Use dashboards

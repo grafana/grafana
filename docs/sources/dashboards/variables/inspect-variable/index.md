@@ -11,6 +11,7 @@ keywords:
   - variable
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Inspect variables

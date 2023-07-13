@@ -4,6 +4,7 @@ aliases:
   - dashboard-manage/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Public dashboards

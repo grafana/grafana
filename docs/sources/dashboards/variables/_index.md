@@ -5,6 +5,7 @@ aliases:
   - ./
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Variables

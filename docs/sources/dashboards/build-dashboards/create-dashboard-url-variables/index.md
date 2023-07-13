@@ -10,6 +10,7 @@ keywords:
   - dashboards
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Dashboard URL variables

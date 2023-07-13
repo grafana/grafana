@@ -9,6 +9,7 @@ aliases:
 description: Best practices for working with Grafana
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Best practices

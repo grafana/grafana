@@ -9,6 +9,7 @@ keywords:
   - playlist
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage playlists

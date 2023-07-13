@@ -37,6 +37,7 @@ keywords:
   - linked
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage variables

@@ -22,6 +22,7 @@ keywords:
   - scripting
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage dashboards

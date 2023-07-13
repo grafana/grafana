@@ -12,6 +12,7 @@ keywords:
   - variable
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Variable syntax

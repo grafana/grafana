@@ -10,6 +10,7 @@ aliases:
   - ../manage-library-panels/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage library panels

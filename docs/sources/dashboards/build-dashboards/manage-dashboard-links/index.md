@@ -17,6 +17,7 @@ keywords:
   - navigate
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage dashboard links

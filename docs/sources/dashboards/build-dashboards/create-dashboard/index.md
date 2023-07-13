@@ -7,6 +7,7 @@ keywords:
   - create
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Create a dashboard

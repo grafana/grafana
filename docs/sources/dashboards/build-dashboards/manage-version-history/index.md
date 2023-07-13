@@ -10,6 +10,7 @@ keywords:
   - history
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menutitle: Manage version history

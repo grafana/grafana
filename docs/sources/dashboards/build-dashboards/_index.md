@@ -8,6 +8,7 @@ keywords:
   - design
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Build dashboards

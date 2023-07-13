@@ -14,6 +14,7 @@ keywords:
   - sort
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Assess dashboard usage

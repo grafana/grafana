@@ -3,6 +3,7 @@ aliases:
   - features/dashboard/dashboards/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Dashboards
