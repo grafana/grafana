@@ -12,23 +12,22 @@ const matcherOperators = [
 ];
 
 export function parseMatcher(matcher: string): Matcher {
-  const trimmed = matcher.trim();
-  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${trimmed}`);
+  if (matcher.startsWith('{') && matcher.endsWith('}')) {
+    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${matcher}`);
   }
   const operatorsFound = matcherOperators
-    .map((op): [MatcherOperator, number] => [op, trimmed.indexOf(op)])
+    .map((op): [MatcherOperator, number] => [op, matcher.indexOf(op)])
     .filter(([_, idx]) => idx > -1)
     .sort((a, b) => a[1] - b[1]);
 
   if (!operatorsFound.length) {
-    throw new Error(`Invalid matcher: ${trimmed}`);
+    throw new Error(`Invalid matcher: ${matcher}`);
   }
   const [operator, idx] = operatorsFound[0];
-  const name = trimmed.slice(0, idx).trim();
-  const value = trimmed.slice(idx + operator.length).trim();
+  const name = matcher.slice(0, idx).trim();
+  const value = matcher.slice(idx + operator.length);
   if (!name) {
-    throw new Error(`Invalid matcher: ${trimmed}`);
+    throw new Error(`Invalid matcher: ${matcher}`);
   }
 
   return {
@@ -41,7 +40,7 @@ export function parseMatcher(matcher: string): Matcher {
 
 // Parses a list of entries like like "['foo=bar', 'baz=~bad*']" into SilenceMatcher[]
 export function parseQueryParamMatchers(matcherPairs: string[]): Matcher[] {
-  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x.trim()));
+  const parsedMatchers = matcherPairs.filter((x) => !!x.trim()).map((x) => parseMatcher(x));
 
   // Due to migration, old alert rules might have a duplicated alertname label
   // To handle that case want to filter out duplicates and make sure there are only unique labels
