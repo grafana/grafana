@@ -28,7 +28,7 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 
 require (
 	cloud.google.com/go/storage v1.28.1 // @grafana/backend-platform
-	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-app-platform-squad
+	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest v0.11.28 // @grafana/backend-platform
 	github.com/BurntSushi/toml v1.2.1 // @grafana/grafana-authnz-team
