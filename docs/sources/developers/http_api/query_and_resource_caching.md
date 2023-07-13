@@ -14,6 +14,10 @@ keywords:
   - query caching
   - resource caching
   - data source
+labels:
+  products:
+    - enterprise
+    - oss
 title: Query and Resource Caching HTTP API
 ---
 

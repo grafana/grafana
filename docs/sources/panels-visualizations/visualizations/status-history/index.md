@@ -8,6 +8,10 @@ keywords:
   - docs
   - status history
   - panel
+labels:
+  products:
+    - enterprise
+    - oss
 title: Status history
 weight: 900
 ---

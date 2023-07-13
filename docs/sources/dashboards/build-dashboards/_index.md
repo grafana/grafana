@@ -1,7 +1,4 @@
 ---
-title: Build dashboards
-menuTitle: Build dashboards
-weight: 2
 keywords:
   - grafana
   - dashboard
@@ -9,6 +6,13 @@ keywords:
   - create
   - build
   - design
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Build dashboards
+title: Build dashboards
+weight: 2
 ---
 
 # Build dashboards

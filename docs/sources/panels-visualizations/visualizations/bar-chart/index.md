@@ -9,6 +9,10 @@ keywords:
   - bar chart
   - panel
   - barchart
+labels:
+  products:
+    - enterprise
+    - oss
 title: Bar chart
 weight: 170
 ---

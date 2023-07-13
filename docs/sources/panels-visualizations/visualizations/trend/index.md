@@ -7,6 +7,10 @@ keywords:
   - guide
   - graph
   - line chart
+labels:
+  products:
+    - enterprise
+    - oss
 title: Trend
 weight: 1200
 ---

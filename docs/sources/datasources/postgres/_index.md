@@ -7,6 +7,10 @@ keywords:
   - grafana
   - postgresql
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: PostgreSQL
 title: PostgreSQL data source
 weight: 1200

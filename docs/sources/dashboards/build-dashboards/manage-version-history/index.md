@@ -8,6 +8,10 @@ keywords:
   - documentation
   - version
   - history
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Manage version history
 title: Manage dashboard version history
 weight: 400

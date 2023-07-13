@@ -1,13 +1,17 @@
 ---
-title: Modify dashboard settings
-menuTitle: Modify dashboard settings
-weight: 8
 keywords:
   - time settings
   - variables
   - links
   - dashboard
   - settings
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Modify dashboard settings
+title: Modify dashboard settings
+weight: 8
 ---
 
 # Modify dashboard settings

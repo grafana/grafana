@@ -15,6 +15,10 @@ keywords:
   - log
   - analytics
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300

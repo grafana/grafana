@@ -14,6 +14,10 @@ keywords:
   - guide
   - cloud
   - monitoring
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Google Cloud Monitoring
 title: Google Cloud Monitoring data source
 weight: 350

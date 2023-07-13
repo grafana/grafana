@@ -10,6 +10,10 @@ keywords:
   - guide
   - rules
   - view
+labels:
+  products:
+    - enterprise
+    - oss
 title: View and filter alert rules
 weight: 410
 ---

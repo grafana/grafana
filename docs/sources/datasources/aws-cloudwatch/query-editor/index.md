@@ -10,6 +10,10 @@ keywords:
   - cloudwatch
   - guide
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Amazon CloudWatch query editor
 weight: 300

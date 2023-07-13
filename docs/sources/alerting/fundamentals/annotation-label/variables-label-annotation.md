@@ -6,6 +6,10 @@ keywords:
   - templating
   - labels
   - annotations
+labels:
+  products:
+    - enterprise
+    - oss
 title: Templating labels and annotations
 weight: 117
 ---

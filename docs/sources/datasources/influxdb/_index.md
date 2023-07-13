@@ -10,6 +10,10 @@ keywords:
   - influxdb
   - guide
   - flux
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700

@@ -11,6 +11,10 @@ keywords:
   - concepts
   - timeseries
   - labels
+labels:
+  products:
+    - enterprise
+    - oss
 title: Time series dimensions
 weight: 500
 ---

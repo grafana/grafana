@@ -4,6 +4,10 @@ aliases:
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/silences/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/silences/
 description: Silences
+labels:
+  products:
+    - enterprise
+    - oss
 title: Silences
 weight: 600
 ---

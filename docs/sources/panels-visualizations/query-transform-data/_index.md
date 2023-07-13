@@ -13,6 +13,10 @@ aliases:
   - ../panels/share-query-results/
   - manage-queries/
   - query-options/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Query and transform data
 weight: 200
 ---

@@ -15,6 +15,10 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400

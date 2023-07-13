@@ -9,6 +9,10 @@ keywords:
   - Annotations
   - panel
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Annotations
 weight: 105
 ---

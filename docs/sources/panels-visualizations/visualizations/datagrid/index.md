@@ -11,6 +11,10 @@ keywords:
   - datagrid
   - datagrid panel
   - datagrid options
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Datagrid
 title: Datagrid
 weight: 350

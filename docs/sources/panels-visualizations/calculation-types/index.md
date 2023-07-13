@@ -3,6 +3,10 @@ aliases:
   - ../panels/calculation-types/
   - ../panels/calculations-list/
   - ../panels/reference-calculation-types/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Calculation types
 weight: 1100
 ---

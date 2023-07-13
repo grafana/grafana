@@ -8,6 +8,10 @@ keywords:
   - set up
   - configure
   - provisioning
+labels:
+  products:
+    - enterprise
+    - oss
 title: Provision Grafana Alerting resources
 weight: 300
 ---

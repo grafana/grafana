@@ -5,6 +5,10 @@ aliases:
   - /docs/grafana-cloud/legacy-alerting/
   - alerting/migrating-alerts/legacy-alerting/
 description: Legacy alerting
+labels:
+  products:
+    - enterprise
+    - oss
 title: Legacy alerting
 weight: 110
 ---

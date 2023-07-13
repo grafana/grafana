@@ -1,10 +1,14 @@
 ---
-menuTitle: Manage
 description: Manage alert notifications
 keywords:
   - grafana
   - alert
   - notifications
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Manage
 title: Manage your alerts
 weight: 160
 ---

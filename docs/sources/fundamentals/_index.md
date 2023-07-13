@@ -1,8 +1,12 @@
 ---
 aliases:
   - basics/
-title: Fundamentals
 description: Learn about the basics of observability.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Fundamentals
 weight: 8
 ---
 

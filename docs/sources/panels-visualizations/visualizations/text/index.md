@@ -9,6 +9,10 @@ keywords:
   - text
   - documentation
   - panel
+labels:
+  products:
+    - enterprise
+    - oss
 title: Text
 weight: 1100
 ---

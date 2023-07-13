@@ -8,6 +8,10 @@ keywords:
   - documentation
   - guide
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 title: Troubleshoot queries
 weight: 200
 ---

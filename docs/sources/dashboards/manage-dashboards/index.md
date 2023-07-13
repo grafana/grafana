@@ -20,6 +20,10 @@ keywords:
   - troubleshoot
   - time range
   - scripting
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Manage dashboards
 title: Manage dashboards
 weight: 8

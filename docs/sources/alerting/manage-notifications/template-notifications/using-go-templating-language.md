@@ -1,11 +1,15 @@
 ---
+description: Use Go's templating language in notifications
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - write templates
-description: Use Go's templating language in notifications
+labels:
+  products:
+    - enterprise
+    - oss
 title: Using Go's templating language
 weight: 100
 ---

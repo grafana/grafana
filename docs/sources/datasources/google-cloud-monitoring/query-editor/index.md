@@ -8,6 +8,10 @@ keywords:
   - cloud
   - monitoring
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Google Cloud Monitoring query editor
 weight: 300

@@ -1,10 +1,14 @@
 ---
-menuTitle: Configure
 aliases:
   - old-alerting/create-alerts/
   - rules/
   - unified-alerting/alerting-rules/
 description: Configure alerting
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Configure
 title: Configure Alerting
 weight: 130
 ---

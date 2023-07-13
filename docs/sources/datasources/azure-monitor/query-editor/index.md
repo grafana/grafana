@@ -13,6 +13,10 @@ keywords:
   - queries
   - traces
   - application insights
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300

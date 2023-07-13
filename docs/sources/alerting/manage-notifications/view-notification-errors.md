@@ -1,11 +1,15 @@
 ---
+description: View notification errors to find out why they weren't sent or received
 keywords:
   - grafana
   - alerting
   - notification
   - errors
   - contact points
-description: View notification errors to find out why they weren't sent or received
+labels:
+  products:
+    - enterprise
+    - oss
 title: View notification errors
 weight: 900
 ---

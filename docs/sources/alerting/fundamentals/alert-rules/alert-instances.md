@@ -4,6 +4,10 @@ keywords:
   - grafana
   - alerting
   - instances
+labels:
+  products:
+    - enterprise
+    - oss
 title: Alert instances
 weight: 104
 ---

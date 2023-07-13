@@ -8,6 +8,10 @@ keywords:
   - jaeger
   - guide
   - tracing
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Jaeger
 title: Jaeger data source
 weight: 800

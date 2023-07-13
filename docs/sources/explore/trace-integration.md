@@ -3,6 +3,10 @@ description: Tracing in Explore
 keywords:
   - explore
   - trace
+labels:
+  products:
+    - enterprise
+    - oss
 title: Tracing in Explore
 weight: 20
 ---

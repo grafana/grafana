@@ -7,6 +7,10 @@ keywords:
   - troubleshooting
   - documentation
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 title: Troubleshooting
 weight: 180
 ---

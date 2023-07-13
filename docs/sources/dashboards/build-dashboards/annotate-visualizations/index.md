@@ -7,6 +7,10 @@ keywords:
   - annotations
   - documentation
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Annotate visualizations
 title: Annotate visualizations
 weight: 600

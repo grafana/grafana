@@ -7,6 +7,10 @@ keywords:
   - alerting
   - guide
   - state
+labels:
+  products:
+    - enterprise
+    - oss
 title: State and health of alerting rules
 weight: 405
 ---

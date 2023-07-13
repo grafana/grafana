@@ -8,6 +8,10 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Elasticsearch template variables
 weight: 400

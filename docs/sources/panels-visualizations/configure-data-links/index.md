@@ -13,6 +13,10 @@ keywords:
   - data link
   - documentation
   - playlist
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure data links
 title: Configure data links
 weight: 400

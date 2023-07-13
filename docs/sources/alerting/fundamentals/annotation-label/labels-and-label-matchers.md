@@ -5,8 +5,12 @@ keywords:
   - alerting
   - guide
   - fundamentals
-title: How label matching works
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Label matchers
+title: How label matching works
 weight: 117
 ---
 

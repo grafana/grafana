@@ -11,6 +11,10 @@ keywords:
   - alerting
   - alerts
   - groups
+labels:
+  products:
+    - enterprise
+    - oss
 title: View and filter by alert groups
 weight: 800
 ---

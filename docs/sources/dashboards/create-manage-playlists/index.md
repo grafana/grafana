@@ -7,6 +7,10 @@ keywords:
   - dashboard
   - documentation
   - playlist
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Manage playlists
 title: Manage playlists
 weight: 9

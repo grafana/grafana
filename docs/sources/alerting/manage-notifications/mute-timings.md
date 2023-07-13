@@ -10,6 +10,10 @@ keywords:
   - mute
   - mute timings
   - mute time interval
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create mute timings
 weight: 420
 ---

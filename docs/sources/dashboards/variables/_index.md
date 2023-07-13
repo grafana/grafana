@@ -3,6 +3,10 @@ aliases:
   - ../variables/
   - ../variables/variable-examples/
   - ./
+labels:
+  products:
+    - enterprise
+    - oss
 title: Variables
 weight: 130
 ---

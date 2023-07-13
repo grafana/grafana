@@ -8,6 +8,10 @@ aliases:
   - ../../panels/library-panels/unlink-library-panel/
   - ../../panels/panel-library/
   - ../manage-library-panels/
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Manage library panels
 title: Manage library panels
 weight: 300

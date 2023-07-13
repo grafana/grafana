@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Release notes
 weight: 10000
 ---

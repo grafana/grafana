@@ -7,8 +7,12 @@ keywords:
   - alerting
   - alerting resources
   - provisioning
-title: View provisioned alerting resources in Grafana
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: View provisioned resources in Grafana
+title: View provisioned alerting resources in Grafana
 weight: 300
 ---
 

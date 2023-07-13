@@ -10,6 +10,10 @@ keywords:
   - SQL
   - guide
   - Azure SQL Database
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Microsoft SQL Server
 title: Microsoft SQL Server data source
 weight: 900

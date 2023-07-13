@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Inspector in Explore
 weight: 400
 ---

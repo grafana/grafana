@@ -1,11 +1,15 @@
 ---
-title: Notifications
 description: Introduction to notifications Policies
-weight: 107
 keywords:
   - grafana
   - alerting
   - notification policies
+labels:
+  products:
+    - enterprise
+    - oss
+title: Notifications
+weight: 107
 ---
 
 # Notifications

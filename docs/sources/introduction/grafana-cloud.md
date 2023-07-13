@@ -1,6 +1,10 @@
 ---
-title: Grafana Cloud
 description: Learn about Grafana Cloud.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Grafana Cloud
 weight: 300
 ---
 

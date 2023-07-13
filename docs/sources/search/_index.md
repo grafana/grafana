@@ -3,6 +3,10 @@ description: Learn how to search for Grafana dashboards
 keywords:
   - search
   - dashboard
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Search
 title: Search
 weight: 80

@@ -12,6 +12,10 @@ keywords:
   - presence-indicator
   - search
   - sort
+labels:
+  products:
+    - enterprise
+    - oss
 title: Assess dashboard usage
 weight: 200
 ---

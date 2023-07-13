@@ -8,6 +8,10 @@ keywords:
   - guide
   - rules
   - create
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create Grafana-managed alert rules
 weight: 400
 ---

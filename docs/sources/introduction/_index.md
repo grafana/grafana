@@ -2,8 +2,12 @@
 aliases:
   - guides/what-is-grafana/
   - oss-details/
-title: Introduction to Grafana
 description: Learn about Grafana OSS, Grafana Enterprise, and Grafana Cloud.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Introduction to Grafana
 weight: 5
 ---
 

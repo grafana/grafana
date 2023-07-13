@@ -8,6 +8,10 @@ keywords:
   - queries
   - template
   - variable
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Graphite template variables
 weight: 300

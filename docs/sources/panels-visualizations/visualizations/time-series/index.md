@@ -24,6 +24,10 @@ keywords:
   - documentation
   - guide
   - graph
+labels:
+  products:
+    - enterprise
+    - oss
 title: Time series
 weight: 90
 ---

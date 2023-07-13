@@ -1,10 +1,14 @@
 ---
+description: How to customize your notifications using templating
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
-description: How to customize your notifications using templating
+labels:
+  products:
+    - enterprise
+    - oss
 title: Customize notifications
 weight: 400
 ---

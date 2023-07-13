@@ -1,4 +1,5 @@
 ---
+description: How to create notification templates
 keywords:
   - grafana
   - alerting
@@ -7,7 +8,10 @@ keywords:
   - create templates
   - edit templates
   - delete templates
-description: How to create notification templates
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create notification templates
 weight: 200
 ---

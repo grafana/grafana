@@ -2,6 +2,10 @@
 aliases:
   - ../../../enterprise/access-control/configure-rbac/
 description: Learn how to configure RBAC.
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure RBAC
 title: Configure RBAC in Grafana
 weight: 30

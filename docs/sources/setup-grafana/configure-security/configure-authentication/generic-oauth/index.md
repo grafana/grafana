@@ -7,8 +7,12 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure generic OAuth2 authentication
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Generic OAuth2
+title: Configure generic OAuth2 authentication
 weight: 700
 ---
 

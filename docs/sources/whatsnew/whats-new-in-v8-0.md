@@ -10,6 +10,10 @@ keywords:
   - documentation
   - '8.0'
   - release notes
+labels:
+  products:
+    - enterprise
+    - oss
 title: What's new in Grafana v8.0
 weight: -33
 ---

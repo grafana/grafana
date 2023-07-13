@@ -2,6 +2,10 @@
 aliases:
   - data-sources/
   - overview/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Data sources
 weight: 60
 ---

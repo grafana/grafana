@@ -7,6 +7,10 @@ keywords:
   - documentation
   - panels
   - traces
+labels:
+  products:
+    - enterprise
+    - oss
 title: Traces
 weight: 850
 ---

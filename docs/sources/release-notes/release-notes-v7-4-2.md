@@ -1,6 +1,10 @@
 ---
 _build:
   list: false
+labels:
+  products:
+    - enterprise
+    - oss
 title: undefined
 ---
 

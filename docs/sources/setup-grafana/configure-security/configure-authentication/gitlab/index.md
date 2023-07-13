@@ -7,8 +7,12 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitLab OAuth2 authentication
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: GitLab OAuth2
+title: Configure GitLab OAuth2 authentication
 weight: 1000
 ---
 

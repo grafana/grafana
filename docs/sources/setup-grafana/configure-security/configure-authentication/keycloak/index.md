@@ -8,8 +8,12 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure Keycloak OAuth2 authentication
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Keycloak OAuth2
+title: Configure Keycloak OAuth2 authentication
 weight: 1300
 ---
 

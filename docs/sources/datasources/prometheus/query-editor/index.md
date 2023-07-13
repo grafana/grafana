@@ -7,6 +7,10 @@ keywords:
   - prometheus
   - logs
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Prometheus query editor
 weight: 300

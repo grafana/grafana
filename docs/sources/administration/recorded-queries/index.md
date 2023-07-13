@@ -7,6 +7,10 @@ keywords:
   - query
   - queries
   - recorded
+labels:
+  products:
+    - enterprise
+    - oss
 title: Recorded queries
 weight: 300
 ---

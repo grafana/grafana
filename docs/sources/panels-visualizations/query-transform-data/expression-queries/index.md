@@ -4,6 +4,10 @@ aliases:
   - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
   - ../../panels/query-a-data-source/use-expressions-to-manipulate-data/write-an-expression/
   - ./
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Write expression queries
 title: Write expression queries
 weight: 40

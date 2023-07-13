@@ -6,6 +6,10 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - enterprise
+    - oss
 title: What's new in Grafana v10.0
 weight: -37
 ---

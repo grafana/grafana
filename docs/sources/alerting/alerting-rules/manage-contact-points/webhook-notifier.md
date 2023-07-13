@@ -10,6 +10,10 @@ keywords:
   - guide
   - contact point
   - templating
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure the webhook notifier
 weight: 200
 ---

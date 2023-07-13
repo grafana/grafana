@@ -9,6 +9,10 @@ keywords:
   - guide
   - rules
   - create
+labels:
+  products:
+    - enterprise
+    - oss
 title: Labels and annotations
 weight: 110
 ---

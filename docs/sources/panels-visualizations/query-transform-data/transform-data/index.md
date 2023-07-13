@@ -13,6 +13,10 @@ aliases:
   - ../../panels/transformations/config-from-query/
   - ../../panels/transformations/rows-to-fields/
   - ../../panels/transformations/types-options/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Transform data
 weight: 100
 ---

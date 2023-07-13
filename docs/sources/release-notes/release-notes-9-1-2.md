@@ -1,6 +1,10 @@
 ---
 aliases: []
 hide_menu: true
+labels:
+  products:
+    - enterprise
+    - oss
 title: Release notes for Grafana 9.1.2
 ---
 

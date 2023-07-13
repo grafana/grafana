@@ -9,6 +9,10 @@ keywords:
   - cloudwatch
   - templates
   - variables
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: CloudWatch template variables
 weight: 400

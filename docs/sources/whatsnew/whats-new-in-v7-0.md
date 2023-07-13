@@ -10,6 +10,10 @@ keywords:
   - documentation
   - '7.0'
   - release notes
+labels:
+  products:
+    - enterprise
+    - oss
 title: What's new in Grafana v7.0
 weight: -27
 ---

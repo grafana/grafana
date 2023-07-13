@@ -8,6 +8,10 @@ keywords:
   - grafana
   - gauge
   - gauge panel
+labels:
+  products:
+    - enterprise
+    - oss
 title: Gauge
 weight: 400
 ---

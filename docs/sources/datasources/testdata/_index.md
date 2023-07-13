@@ -9,6 +9,10 @@ keywords:
   - troubleshooting
   - panels
   - testdata
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: TestData
 title: TestData data source
 weight: 1500

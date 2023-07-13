@@ -6,6 +6,10 @@ aliases:
   - ../reference/graph/
   - ../visualizations/
   - ../visualizations/graph-panel/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Visualizations
 weight: 75
 ---

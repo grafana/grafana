@@ -12,6 +12,10 @@ keywords:
   - title
   - description
   - JSON model
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure panel options
 title: Configure panel options
 weight: 2

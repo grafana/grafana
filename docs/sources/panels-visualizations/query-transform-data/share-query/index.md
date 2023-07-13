@@ -1,6 +1,10 @@
 ---
 aliases:
   - ../../panels/query-a-data-source/share-query/
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Share query results
 title: Share query results with another panel
 weight: 60

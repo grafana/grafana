@@ -10,6 +10,10 @@ keywords:
   - guide
   - contact point
   - templating
+labels:
+  products:
+    - enterprise
+    - oss
 title: Notification templating
 weight: 415
 ---

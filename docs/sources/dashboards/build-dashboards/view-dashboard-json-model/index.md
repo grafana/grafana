@@ -8,6 +8,10 @@ keywords:
   - documentation
   - json
   - model
+labels:
+  products:
+    - enterprise
+    - oss
 title: JSON model
 weight: 700
 ---

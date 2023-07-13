@@ -7,6 +7,10 @@ keywords:
   - documentation
   - panels
   - flame graph
+labels:
+  products:
+    - enterprise
+    - oss
 title: Flame graph
 weight: 850
 ---

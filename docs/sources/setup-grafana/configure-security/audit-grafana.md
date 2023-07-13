@@ -7,6 +7,10 @@ keywords:
   - auditing
   - audit
   - logs
+labels:
+  products:
+    - enterprise
+    - oss
 title: Audit a Grafana instance
 weight: 800
 ---

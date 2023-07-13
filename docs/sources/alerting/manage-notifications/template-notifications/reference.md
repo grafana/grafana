@@ -1,10 +1,14 @@
 ---
+description: Reference for templating notifications
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
-description: Reference for templating notifications
+labels:
+  products:
+    - enterprise
+    - oss
 title: Reference
 weight: 400
 ---

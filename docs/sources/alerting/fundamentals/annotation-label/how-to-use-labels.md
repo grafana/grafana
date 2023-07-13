@@ -5,6 +5,10 @@ keywords:
   - alerting
   - guide
   - fundamentals
+labels:
+  products:
+    - enterprise
+    - oss
 title: Labels in Grafana Alerting
 weight: 117
 ---

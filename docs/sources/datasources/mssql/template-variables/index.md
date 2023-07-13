@@ -11,6 +11,10 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Microsoft SQL Server template variables
 weight: 400

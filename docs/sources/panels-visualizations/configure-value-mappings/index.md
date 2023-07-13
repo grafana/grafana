@@ -9,6 +9,10 @@ aliases:
   - ../panels/format-data/map-a-special-value/
   - ../panels/format-data/map-a-value/
   - ../panels/value-mappings/
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure value mappings
 title: Configure value mappings
 weight: 600

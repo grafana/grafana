@@ -8,6 +8,10 @@ keywords:
   - Prometheus
   - metrics
   - time series
+labels:
+  products:
+    - enterprise
+    - oss
 title: What is Prometheus?
 weight: 300
 ---

@@ -3,6 +3,10 @@ description: Logs in Explore
 keywords:
   - explore
   - logs
+labels:
+  products:
+    - enterprise
+    - oss
 title: Logs in Explore
 weight: 15
 ---

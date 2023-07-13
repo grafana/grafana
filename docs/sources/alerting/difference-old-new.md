@@ -7,6 +7,10 @@ keywords:
   - grafana
   - alerting
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 title: What's new in Grafana Alerting
 weight: 108
 ---

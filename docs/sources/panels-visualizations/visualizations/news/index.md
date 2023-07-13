@@ -8,6 +8,10 @@ keywords:
   - documentation
   - panels
   - news panel
+labels:
+  products:
+    - enterprise
+    - oss
 title: News
 weight: 800
 ---

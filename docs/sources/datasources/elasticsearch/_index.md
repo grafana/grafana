@@ -7,6 +7,10 @@ keywords:
   - grafana
   - elasticsearch
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Elasticsearch
 title: Elasticsearch data source
 weight: 325

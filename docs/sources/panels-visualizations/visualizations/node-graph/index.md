@@ -9,6 +9,10 @@ keywords:
   - panels
   - node graph
   - directed graph
+labels:
+  products:
+    - enterprise
+    - oss
 title: Node graph
 weight: 850
 ---

@@ -7,6 +7,10 @@ keywords:
   - grafana
   - prometheus
   - guide
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure Prometheus
 title: Configure the Prometheus data source
 weight: 200

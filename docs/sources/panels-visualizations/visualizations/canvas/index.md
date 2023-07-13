@@ -8,6 +8,10 @@ keywords:
   - canvas
   - panel
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Canvas
 weight: 600
 ---

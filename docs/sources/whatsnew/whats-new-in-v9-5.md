@@ -6,6 +6,10 @@ keywords:
   - documentation
   - '9.5'
   - release notes
+labels:
+  products:
+    - enterprise
+    - oss
 title: What's new in Grafana v9.5
 weight: -36
 ---

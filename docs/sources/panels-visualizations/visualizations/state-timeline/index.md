@@ -8,6 +8,10 @@ keywords:
   - docs
   - state timeline
   - panel
+labels:
+  products:
+    - enterprise
+    - oss
 title: State timeline
 weight: 900
 ---

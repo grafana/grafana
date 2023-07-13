@@ -1,19 +1,16 @@
 ---
-title: Configure Alert State History
 description: Configure Alert State History
-
 keywords:
   - grafana
   - alerting
   - set up
   - configure
   - alert state history
-
 labels:
   products:
     - enterprise
     - oss
-
+title: Configure Alert State History
 weight: 600
 ---
 
