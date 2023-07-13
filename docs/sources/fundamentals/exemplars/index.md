@@ -10,6 +10,7 @@ keywords:
   - prometheus
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Exemplars

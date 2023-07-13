@@ -11,6 +11,7 @@ keywords:
   - dictionary
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Glossary

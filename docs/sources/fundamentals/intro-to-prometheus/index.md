@@ -10,6 +10,7 @@ keywords:
   - time series
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: What is Prometheus?

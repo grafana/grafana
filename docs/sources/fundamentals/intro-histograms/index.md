@@ -11,6 +11,7 @@ keywords:
   - histogram
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Histograms and heatmaps

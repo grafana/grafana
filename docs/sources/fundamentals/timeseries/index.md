@@ -10,6 +10,7 @@ keywords:
   - timeseries
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Introduction to time series

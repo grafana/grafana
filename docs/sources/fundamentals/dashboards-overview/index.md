@@ -9,6 +9,7 @@ keywords:
   - query
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Dashboard overview

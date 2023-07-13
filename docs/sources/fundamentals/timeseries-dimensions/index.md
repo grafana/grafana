@@ -13,6 +13,7 @@ keywords:
   - labels
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Time series dimensions
