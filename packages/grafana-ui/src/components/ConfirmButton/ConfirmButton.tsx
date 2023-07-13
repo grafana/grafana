@@ -164,7 +164,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     buttonHide: css`
       opacity: 0;
-      transition: opacity 0.1s ease, visibility 0 0.1s;
+      transition:
+        opacity 0.1s ease,
+        visibility 0 0.1s;
       visibility: hidden;
       z-index: 0;
     `,
@@ -178,14 +180,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     confirmButtonShow: css`
       z-index: 1;
       opacity: 1;
-      transition: opacity 0.08s ease-out, transform 0.1s ease-out;
+      transition:
+        opacity 0.08s ease-out,
+        transform 0.1s ease-out;
       transform: translateX(0);
       pointer-events: all;
     `,
     confirmButtonHide: css`
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0s 0.12s;
+      transition:
+        opacity 0.12s ease-in,
+        transform 0.14s ease-in,
+        visibility 0s 0.12s;
       transform: translateX(100px);
     `,
     disabled: css`
