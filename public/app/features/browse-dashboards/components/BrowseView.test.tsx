@@ -146,12 +146,12 @@ describe('browse-dashboards BrowseView', () => {
 
   describe('when there is no item in the folder', () => {
     it('shows a CTA for creating a dashboard if the user has editor rights', async () => {
-      render(<BrowseView canSelect={true} folderUID="fakeFolderUID" width={WIDTH} height={HEIGHT} />);
+      render(<BrowseView canSelect={true} folderUID="folderB_empty" width={WIDTH} height={HEIGHT} />);
       expect(await screen.findByText('Create Dashboard')).toBeInTheDocument();
     });
 
     it('shows a simple message if the user has viewer rights', async () => {
-      render(<BrowseView canSelect={false} folderUID="fakeFolderUID" width={WIDTH} height={HEIGHT} />);
+      render(<BrowseView canSelect={false} folderUID="folderB_empty" width={WIDTH} height={HEIGHT} />);
       expect(await screen.findByText('This folder is empty')).toBeInTheDocument();
     });
   });
