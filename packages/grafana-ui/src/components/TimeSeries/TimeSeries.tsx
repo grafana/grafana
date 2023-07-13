@@ -19,7 +19,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   panelContext: PanelContext = {} as PanelContext;
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { eventBus, sync } = this.context as PanelContext;
+    const { eventBus, eventsScope, sync } = this.context as PanelContext;
     const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
@@ -33,6 +33,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       renderers,
       tweakScale,
       tweakAxis,
+      eventsScope,
     });
   };
 
