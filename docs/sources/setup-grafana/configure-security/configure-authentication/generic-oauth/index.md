@@ -174,10 +174,12 @@ When a user logs in using an OAuth2 provider, Grafana verifies that the access t
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To configure generic OAuth2 to use a refresh token, perform one or both of the following steps, if required:
+To configure generic OAuth2 to use a refresh token, set `use_refresh_token` configuration option to `true` and perform one or both of the following steps, if required:
 
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ## Configure role mapping
 
@@ -340,6 +342,7 @@ To set up generic OAuth2 authentication with Auth0, follow these steps:
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
    use_pkce = true
+   use_refresh_token = true
    ```
 
 ### Set up OAuth2 with Bitbucket
@@ -372,6 +375,7 @@ To set up generic OAuth2 authentication with Bitbucket, follow these steps:
    team_ids_attribute_path = values[*].workspace.slug
    team_ids =
    allowed_organizations =
+   use_refresh_token = true
    ```
 
 By default, a refresh token is included in the response for the **Authorization Code Grant**.
