@@ -205,13 +205,14 @@ export const getButtonStyles = (props: StyleProps) => {
       : css({
           marginRight: theme.spacing(padding / 2),
         }),
-    content: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      white-space: nowrap;
-      height: 100%;
-    `,
+    content: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      height: '100%',
+    }),
   };
 };
 

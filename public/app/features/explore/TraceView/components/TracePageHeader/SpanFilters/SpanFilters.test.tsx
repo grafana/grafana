@@ -43,11 +43,11 @@ const trace: Trace = {
 
 describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
-  const SpanFiltersWithProps = () => {
+  const SpanFiltersWithProps = ({ showFilters = true }) => {
     const [search, setSearch] = useState(defaultFilters);
     const props = {
       trace: trace,
-      showSpanFilters: true,
+      showSpanFilters: showFilters,
       setShowSpanFilters: jest.fn(),
       showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),
@@ -216,6 +216,12 @@ describe('SpanFilters', () => {
     expect(screen.queryByText('Span0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagValue0')).not.toBeInTheDocument();
+  });
+
+  it('renders buttons when span filters is collapsed', async () => {
+    render(<SpanFiltersWithProps showFilters={false} />);
+    expect(screen.queryByRole('button', { name: 'Next result button' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Prev result button' })).toBeInTheDocument();
   });
 });
 

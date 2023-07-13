@@ -67,7 +67,6 @@ interface PrepConfigOpts {
   isToolTipOpen?: MutableRefObject<boolean>;
   timeZone: string;
   getTimeRange: () => TimeRange;
-  palette: string[];
   exemplarColor: string;
   cellGap?: number | null; // in css pixels
   hideLE?: number;
@@ -88,7 +87,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     // isToolTipOpen,
     timeZone,
     getTimeRange,
-    palette,
     cellGap,
     hideLE,
     hideGE,
@@ -527,16 +525,8 @@ export function prepConfig(opts: PrepConfigOpts) {
       ySizeDivisor,
       disp: {
         fill: {
-          values: (u, seriesIdx) => {
-            let countFacetIdx = !isSparseHeatmap ? 2 : 3;
-            return valuesToFills(
-              u.data[seriesIdx][countFacetIdx] as unknown as number[],
-              palette,
-              dataRef.current?.minValue!,
-              dataRef.current?.maxValue!
-            );
-          },
-          index: palette,
+          values: (u, seriesIdx) => dataRef.current?.heatmapColors?.values!,
+          index: dataRef.current?.heatmapColors?.palette!,
         },
       },
     }),
@@ -969,7 +959,7 @@ export const boundedMinMax = (
   return [minValue, maxValue];
 };
 
-export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
+export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number): number[] => {
   let range = maxValue - minValue || 1;
 
   let paletteSize = palette.length;

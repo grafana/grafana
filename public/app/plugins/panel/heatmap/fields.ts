@@ -21,10 +21,21 @@ import {
 import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
 import { CellValues, Options } from './types';
-import { boundedMinMax } from './utils';
+import { boundedMinMax, valuesToFills } from './utils';
 
 export interface HeatmapData {
   heatmap?: DataFrame; // data we will render
+  heatmapColors?: {
+    // quantized palette
+    palette: string[];
+    // indices into palette
+    values: number[];
+
+    // color scale range
+    minValue: number;
+    maxValue: number;
+  };
+
   exemplars?: DataFrame; // optionally linked exemplars
   exemplarColor?: string;
 
@@ -43,10 +54,6 @@ export interface HeatmapData {
   xLogSplit?: number;
   yLogSplit?: number;
 
-  // color scale range
-  minValue?: number;
-  maxValue?: number;
-
   // Print a heatmap cell value
   display?: (v: number) => string;
 
@@ -58,6 +65,7 @@ export function prepareHeatmapData(
   frames: DataFrame[],
   annotations: DataFrame[] | undefined,
   options: Options,
+  palette: string[],
   theme: GrafanaTheme2,
   getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
 ): HeatmapData {
@@ -74,7 +82,13 @@ export function prepareHeatmapData(
   }
 
   if (options.calculate) {
-    return getDenseHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
+    return getDenseHeatmapData(
+      calculateHeatmapFromData(frames, options.calculation ?? {}),
+      exemplars,
+      options,
+      palette,
+      theme
+    );
   }
 
   // Check for known heatmap types
@@ -83,8 +97,8 @@ export function prepareHeatmapData(
     switch (frame.meta?.type) {
       case DataFrameType.HeatmapCells:
         return isHeatmapCellsDense(frame)
-          ? getDenseHeatmapData(frame, exemplars, options, theme)
-          : getSparseHeatmapData(frame, exemplars, options, theme);
+          ? getDenseHeatmapData(frame, exemplars, options, palette, theme)
+          : getSparseHeatmapData(frame, exemplars, options, palette, theme);
 
       case DataFrameType.HeatmapRows:
         rowsHeatmap = frame; // the default format
@@ -134,6 +148,7 @@ export function prepareHeatmapData(
     }),
     exemplars,
     options,
+    palette,
     theme
   );
 }
@@ -142,6 +157,7 @@ const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
   options: Options,
+  palette: string[],
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
@@ -154,11 +170,13 @@ const getSparseHeatmapData = (
   // y axis tick label display
   updateFieldDisplay(frame.fields[1], options.yAxis, theme);
 
+  const valueField = frame.fields[3];
+
   // cell value display
-  const disp = updateFieldDisplay(frame.fields[3], options.cellValues, theme);
+  const disp = updateFieldDisplay(valueField, options.cellValues, theme);
 
   let [minValue, maxValue] = boundedMinMax(
-    frame.fields[3].values,
+    valueField.values,
     options.color.min,
     options.color.max,
     options.filterValues?.le,
@@ -167,8 +185,12 @@ const getSparseHeatmapData = (
 
   return {
     heatmap: frame,
-    minValue,
-    maxValue,
+    heatmapColors: {
+      palette,
+      values: valuesToFills(valueField.values, palette, minValue, maxValue),
+      minValue,
+      maxValue,
+    },
     exemplars,
     display: (v) => formattedValueToString(disp(v)),
   };
@@ -178,6 +200,7 @@ const getDenseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
   options: Options,
+  palette: string[],
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells) {
@@ -269,6 +292,13 @@ const getDenseHeatmapData = (
 
   const data: HeatmapData = {
     heatmap: frame,
+    heatmapColors: {
+      palette,
+      values: valuesToFills(valueField.values, palette, minValue, maxValue),
+      minValue,
+      maxValue,
+    },
+
     exemplars: exemplars?.length ? exemplars : undefined,
     xBucketSize: xBinIncr,
     yBucketSize: yBinIncr,
@@ -280,9 +310,6 @@ const getDenseHeatmapData = (
 
     xLogSplit: calcX?.scale?.log ? +(calcX?.value ?? '1') : 1,
     yLogSplit: calcY?.scale?.log ? +(calcY?.value ?? '1') : 1,
-
-    minValue,
-    maxValue,
 
     // TODO: improve heuristic
     xLayout:
