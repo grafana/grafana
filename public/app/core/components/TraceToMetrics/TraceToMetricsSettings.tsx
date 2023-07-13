@@ -78,31 +78,35 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <IntervalInput
-        label={getTimeShiftLabel('start')}
-        tooltip={getTimeShiftTooltip('start')}
-        value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
-        onChange={(val) => {
-          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-            ...options.jsonData.tracesToMetrics,
-            spanStartTimeShift: val,
-          });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('start')}
+          tooltip={getTimeShiftTooltip('start')}
+          value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+          onChange={(val) => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+              ...options.jsonData.tracesToMetrics,
+              spanStartTimeShift: val,
+            });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
-      <IntervalInput
-        label={getTimeShiftLabel('end')}
-        tooltip={getTimeShiftTooltip('end')}
-        value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
-        onChange={(val) => {
-          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-            ...options.jsonData.tracesToMetrics,
-            spanEndTimeShift: val,
-          });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('end')}
+          tooltip={getTimeShiftTooltip('end')}
+          value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
+          onChange={(val) => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+              ...options.jsonData.tracesToMetrics,
+              spanEndTimeShift: val,
+            });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>

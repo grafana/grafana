@@ -80,7 +80,7 @@ export const SaveDashboardAsForm = ({
 
         const clone = getSaveAsDashboardClone(dashboard);
         clone.title = data.title;
-        if (!data.copyTags) {
+        if (!isNew && !data.copyTags) {
           clone.tags = [];
         }
 
