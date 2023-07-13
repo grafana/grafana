@@ -10,6 +10,7 @@ import {
 } from '../../../../plugins/datasource/alertmanager/types';
 import { matcherToOperator } from '../utils/alertmanager';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { wrapWithQuotes } from '../utils/misc';
 
 import { alertingApi } from './alertingApi';
 
@@ -39,7 +40,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
-          .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${matcher.value}`);
+          .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${wrapWithQuotes(matcher.value)}`);
 
         const { silenced, inhibited, unprocessed, active } = filter || {};
 

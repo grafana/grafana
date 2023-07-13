@@ -155,6 +155,12 @@ describe('filterSpans', () => {
 
   // Durations
   it('should return spans whose duration match a filter', () => {
+    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2ns' }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2us' }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
     expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2ms' }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
