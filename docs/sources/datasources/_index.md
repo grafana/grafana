@@ -4,6 +4,7 @@ aliases:
   - overview/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Data sources

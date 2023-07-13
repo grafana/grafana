@@ -16,6 +16,7 @@ keywords:
   - monitoring
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Google Cloud Monitoring

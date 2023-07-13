@@ -11,6 +11,7 @@ keywords:
   - testdata
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: TestData

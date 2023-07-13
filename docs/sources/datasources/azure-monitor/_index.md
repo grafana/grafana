@@ -17,6 +17,7 @@ keywords:
   - guide
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Azure Monitor

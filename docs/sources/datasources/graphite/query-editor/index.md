@@ -13,6 +13,7 @@ keywords:
   - queries
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Query editor

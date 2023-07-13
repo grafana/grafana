@@ -10,6 +10,7 @@ keywords:
   - guide
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: OpenTSDB

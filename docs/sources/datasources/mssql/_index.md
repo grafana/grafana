@@ -12,6 +12,7 @@ keywords:
   - Azure SQL Database
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Microsoft SQL Server

@@ -12,6 +12,7 @@ keywords:
   - pyroscope
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Grafana Pyroscope

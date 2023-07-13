@@ -10,6 +10,7 @@ keywords:
   - profiling
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Parca

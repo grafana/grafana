@@ -13,6 +13,7 @@ keywords:
   - variable
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Template variables

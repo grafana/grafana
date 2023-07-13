@@ -12,6 +12,7 @@ keywords:
   - flux
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: InfluxDB

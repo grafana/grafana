@@ -10,6 +10,7 @@ keywords:
   - tracing
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Jaeger

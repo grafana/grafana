@@ -11,6 +11,7 @@ keywords:
   - queries
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Alertmanager

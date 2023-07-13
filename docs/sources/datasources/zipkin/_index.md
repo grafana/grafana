@@ -10,6 +10,7 @@ keywords:
   - querying
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Zipkin

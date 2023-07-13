@@ -8,6 +8,7 @@ keywords:
   - authentication
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Authentication

@@ -10,6 +10,7 @@ keywords:
   - authentication
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: AWS authentication

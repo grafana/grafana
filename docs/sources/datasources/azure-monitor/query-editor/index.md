@@ -15,6 +15,7 @@ keywords:
   - application insights
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Query editor
