@@ -88,15 +88,10 @@ export interface AlertmanagerReceiver {
   name: string;
 
   email_configs?: EmailConfig[];
-  pagerduty_configs?: any[];
-  pushover_configs?: any[];
-  slack_configs?: any[];
-  opsgenie_configs?: any[];
   webhook_configs?: WebhookConfig[];
-  victorops_configs?: any[];
-  wechat_configs?: any[];
 
-  [key: `${string}_configs`]: any; // this is supposedly to support any *_configs
+  // this is supposedly to support any *_configs
+  [key: `${string}_configs`]: any[] | undefined;
 }
 
 export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
