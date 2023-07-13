@@ -384,7 +384,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             />
           )}
 
-          {/* {!config.featureToggles.transformationsRedesign &&
+          {!config.featureToggles.transformationsRedesign &&
             xforms.map((t) => {
               return (
                 <TransformationCard
@@ -395,19 +395,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   }}
                 />
               );
-            })} */}
-
-          {xforms.map((t) => {
-            return (
-              <TransformationCard
-                key={t.name}
-                transform={t}
-                onClick={() => {
-                  this.onTransformationAdd({ value: t.id });
-                }}
-              />
-            );
-          })}
+            })}
 
           {config.featureToggles.transformationsRedesign && (
             <div className={styles.searchWrapper}>

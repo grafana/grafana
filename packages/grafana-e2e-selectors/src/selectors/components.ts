@@ -209,12 +209,12 @@ export const Components = {
   },
   TransformTab: {
     content: 'data-testid Transform editor tab content',
-    newTransform: (name: string) => `data-testid TransformTab New transform ${name}`,
+    newTransform: (name: string) => `data-testid New transform ${name}`,
     transformationEditor: (name: string) => `data-testid Transformation editor ${name}`,
     transformationEditorDebugger: (name: string) => `data-testid Transformation editor debugger ${name}`,
   },
   Transforms: {
-    card: (name: string) => `data-testid Transforms Card ${name}`,
+    card: (name: string) => `data-testid New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
