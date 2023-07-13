@@ -315,14 +315,14 @@ export const Table = memo((props: Props) => {
 
   const getItemSize = (index: number): number => {
     if (state.expanded[index]) {
-      const height = nestedFields?.reduce((acc, nf) => {
-        const rowSubData = nf.values[index];
+      const height = nestedFields[index]?.values.reduce((acc, field) => {
+        const rowSubData = field.length;
         if (rowSubData) {
-          const noHeader = !!rowSubData.meta?.custom?.noHeader;
-          return acc + tableStyles.rowHeight * (rowSubData.length + 1 + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
+          const noHeader = !!rowSubData.meta?.custom?.noHeader; // TODO
+          return acc + tableStyles.rowHeight * (field.length + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
         }
         return acc;
-      }, 0);
+      }, tableStyles.rowHeight); // initial height for row that expands above sub tables
       return height ?? tableStyles.rowHeight;
     }
 
