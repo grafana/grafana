@@ -15,9 +15,9 @@ interface TooltipPlugin4Props {
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
-    seriesIdx?: number | null,
-    isPinned?: boolean,
-    dismiss?: () => void
+    seriesIdx: number | null,
+    isPinned: boolean,
+    dismiss: () => void
   ) => React.ReactNode;
 }
 
