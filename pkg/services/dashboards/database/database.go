@@ -1037,7 +1037,6 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	sql, params := sb.ToSQL(limit, page)
-	fmt.Println(sql)
 
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)

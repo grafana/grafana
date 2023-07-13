@@ -21,6 +21,7 @@ var (
 	folderWildcards = accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 )
 
+// TODO: Nested folder support with cte and without...
 func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string) *DashboardFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
