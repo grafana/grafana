@@ -183,4 +183,8 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "identifier", Type: migrator.DB_NVarchar, Length: 100, Default: "''",
 	}))
 
+	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"identifier"},
+	}))
+
 }

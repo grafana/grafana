@@ -96,8 +96,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			oauthserver.AddMigration(mg)
 		}
 	}
-
-	accesscontrol.AddScopeSplitMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
