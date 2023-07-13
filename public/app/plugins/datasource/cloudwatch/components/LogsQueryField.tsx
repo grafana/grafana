@@ -6,8 +6,6 @@ import { Editor } from 'slate-react';
 import { AbsoluteTimeRange, QueryEditorProps } from '@grafana/data';
 import {
   BracesPlugin,
-  CodeEditor,
-  Monaco,
   QueryField,
   SlatePrism,
   Themeable2,
@@ -20,8 +18,6 @@ import {
 // dom also includes Element polyfills
 import { CloudWatchDatasource } from '../datasource';
 import syntax from '../language/cloudwatch-logs/syntax';
-import language from '../language/logs/definition';
-import { registerLanguage } from '../language/monarch/register';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
@@ -114,41 +110,6 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
           <div className="prom-query-field-info text-error">{data?.error?.message}</div>
         </div>
       ) : null}
-      <div>
-        <CodeEditor
-          height={'150px'}
-          showMiniMap={false}
-          monacoOptions={{
-            // without this setting, the auto-resize functionality causes an infinite loop, don't remove it!
-            scrollBeyondLastLine: false,
-
-            // These additional options are style focused and are a subset of those in the query editor in Prometheus
-            fontSize: 14,
-            lineNumbers: 'off',
-            renderLineHighlight: 'none',
-            scrollbar: {
-              vertical: 'hidden',
-              horizontal: 'hidden',
-            },
-            suggestFontSize: 12,
-            wordWrap: 'on',
-            padding: {
-              top: 6,
-            },
-          }}
-          language={language.id}
-          value={query.expression ?? ''}
-          onBlur={(value) => {
-            if (value !== query.expression) {
-              onChangeQuery(value);
-            }
-          }}
-          onBeforeEditorMount={(monaco: Monaco) =>
-            registerLanguage(monaco, language, datasource.logsCompletionItemProvider)
-          }
-          // onEditorDidMount={onEditorMount}
-        />
-      </div>
     </>
   );
 };

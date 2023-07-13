@@ -22,7 +22,6 @@ import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
 import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
 import { SQLCompletionItemProvider } from './language/cloudwatch-sql/completion/CompletionItemProvider';
-import { LogsCompletionItemProvider } from './language/logs/completion/CompletionItemProvider';
 import { MetricMathCompletionItemProvider } from './language/metric-math/completion/CompletionItemProvider';
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
@@ -45,7 +44,6 @@ export class CloudWatchDatasource
   languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
-  logsCompletionItemProvider: LogsCompletionItemProvider;
   defaultLogGroups?: string[];
 
   type = 'cloudwatch';
@@ -66,7 +64,6 @@ export class CloudWatchDatasource
     this.languageProvider = new CloudWatchLogsLanguageProvider(this);
     this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
     this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
-    this.logsCompletionItemProvider = new LogsCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
