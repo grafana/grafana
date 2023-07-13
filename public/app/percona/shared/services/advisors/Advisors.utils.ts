@@ -1,4 +1,4 @@
-import { Advisor, CategorizedAdvisor } from './Advisors.types';
+import { Advisor, CategorizedAdvisor, Family } from './Advisors.types';
 
 export const groupAdvisorsIntoCategories = (advisors: Advisor[]): CategorizedAdvisor => {
   const result: CategorizedAdvisor = {};
@@ -8,6 +8,7 @@ export const groupAdvisorsIntoCategories = (advisors: Advisor[]): CategorizedAdv
 
     const modifiedChecks = checks.map((check) => ({
       ...check,
+      family: check.family ? Family[check.family] : undefined,
       disabled: check.disabled ? true : false,
     }));
 

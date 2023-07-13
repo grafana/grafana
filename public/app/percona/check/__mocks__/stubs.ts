@@ -171,6 +171,7 @@ export const allChecksStub: CheckDetails[] = [
     interval: 'STANDARD',
     readMoreUrl: 'https://example.com',
     category: '',
+    family: 'ADVISOR_CHECK_FAMILY_MONGODB',
   },
   {
     name: 'test2',
@@ -178,6 +179,7 @@ export const allChecksStub: CheckDetails[] = [
     description: 'Test number 2',
     interval: 'RARE',
     category: '',
+    family: 'ADVISOR_CHECK_FAMILY_MONGODB',
   },
   {
     name: 'test3',
@@ -187,12 +189,14 @@ export const allChecksStub: CheckDetails[] = [
     disabled: true,
     readMoreUrl: 'https://example.com',
     category: '',
+    family: 'ADVISOR_CHECK_FAMILY_MONGODB',
   },
   {
     name: 'test4',
     summary: 'Test 4',
     interval: 'FREQUENT',
     category: '',
+    family: 'ADVISOR_CHECK_FAMILY_MONGODB',
   },
   {
     name: 'test5',
@@ -200,5 +204,6 @@ export const allChecksStub: CheckDetails[] = [
     disabled: true,
     interval: 'STANDARD',
     category: '',
+    family: 'ADVISOR_CHECK_FAMILY_MONGODB',
   },
 ];

@@ -4,6 +4,12 @@ export enum Interval {
   FREQUENT = 'Frequent',
 }
 
+export const Family: { [key: string]: string } = {
+  ADVISOR_CHECK_FAMILY_MYSQL: 'MySQL',
+  ADVISOR_CHECK_FAMILY_POSTGRESQL: 'PostgreSQL',
+  ADVISOR_CHECK_FAMILY_MONGODB: 'MongoDB',
+};
+
 export interface Advisor {
   // Machine-readable name (ID) that is used in expression.
   name: string;
@@ -25,6 +31,7 @@ export interface AdvisorCheck {
   description: string;
   summary: string;
   interval: keyof typeof Interval;
+  family?: string;
 }
 
 export interface CategorizedAdvisor {

@@ -21,6 +21,7 @@ const TEST_CHECK: CheckDetails = {
   description: 'test description',
   disabled: false,
   category: '',
+  family: 'ADVISOR_CHECK_FAMILY_MONGODB',
 };
 
 describe('ChangeCheckIntervalModal', () => {
