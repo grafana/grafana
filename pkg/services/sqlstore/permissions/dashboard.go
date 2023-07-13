@@ -90,35 +90,68 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 		return
 	}
 
+	useSelfContained := f.usr.AuthenticatedBy == login.ExtendedJWTModule
+
 	query := strings.Builder{}
 
-	// build join clause
-	filter, params := accesscontrol.UserRolesFilter(f.usr.OrgID, f.usr.UserID, f.usr.Teams, accesscontrol.GetOrgRoles(f.usr))
-	query.WriteString("permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(")
-	query.WriteString(filter)
-	query.WriteByte(')')
-	f.join = clause{string: query.String(), params: params}
+	if !useSelfContained {
+		// build join clause
+		filter, params := accesscontrol.UserRolesFilter(f.usr.OrgID, f.usr.UserID, f.usr.Teams, accesscontrol.GetOrgRoles(f.usr))
+		query.WriteString("permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(")
+		query.WriteString(filter)
+		query.WriteByte(')')
+		f.join = clause{string: query.String(), params: params}
 
-	// recycle and reuse
-	query.Reset()
+		// recycle and reuse
+		query.Reset()
+	}
 
+	params := []interface{}{}
 	query.WriteByte('(')
 
 	if dashboardAction != "" {
 		if f.needToCheckDashboardAction {
-			query.WriteString(fmt.Sprintf(`
-			((
-				p.action = '%s' AND
-				p.kind = 'dashboards' AND
-				p.attribute = 'uid' AND
-				NOT dashboard.is_folder
-			) OR (
-				p.action = '%s' AND
-				p.kind = 'folders' AND
-				p.attribute = 'uid' AND
-				NOT dashboard.is_folder
-			))
-			`, dashboardAction, dashboardAction))
+			if !useSelfContained {
+				query.WriteString(fmt.Sprintf(`
+				((
+					p.action = '%s' AND
+					p.kind = 'dashboards' AND
+					p.attribute = 'uid' AND
+					NOT dashboard.is_folder
+				) OR (
+					p.action = '%s' AND
+					p.kind = 'folders' AND
+					p.attribute = 'uid' AND
+					NOT dashboard.is_folder
+				))
+				`, dashboardAction, dashboardAction))
+			} else {
+				args := getAllowedUIDs([]string{dashboardAction}, f.usr, dashboards.ScopeDashboardsPrefix)
+
+				// Only add the IN clause if we have any dashboards to check
+				if len(args) > 0 {
+					query.WriteString("(dashboard.uid IN (?" + strings.Repeat(", ?", len(args)-1) + "")
+					query.WriteString(") AND NOT dashboard.is_folder)")
+					params = append(params, args...)
+				} else {
+					query.WriteString("(1 = 0)")
+				}
+
+				query.WriteString(" OR ")
+
+				args = getAllowedUIDs([]string{dashboardAction}, f.usr, dashboards.ScopeFoldersPrefix)
+
+				// Only add the IN clause if we have any folders to check
+				if len(args) > 0 {
+					query.WriteString("(folder.uid IN (?" + strings.Repeat(", ?", len(args)-1))
+					query.WriteString(") AND NOT dashboard.is_folder)")
+					params = append(params, args...)
+
+				} else {
+					query.WriteString("(1 = 0 AND NOT dashboard.is_folder)")
+				}
+
+			}
 		} else {
 			query.WriteString("NOT dashboard.is_folder")
 		}
@@ -130,21 +163,33 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 		}
 
 		if f.needToCheckFolderAction {
-			query.WriteString(fmt.Sprintf(`
-			(
-				p.action = '%s' AND
-				p.kind = 'folders' AND
-				p.attribute = 'uid' AND
-				dashboard.is_folder
-			)
-			`, folderAction))
+			if !useSelfContained {
+				query.WriteString(fmt.Sprintf(`
+				(
+					p.action = '%s' AND
+					p.kind = 'folders' AND
+					p.attribute = 'uid' AND
+					dashboard.is_folder
+				)
+				`, folderAction))
+			} else {
+				args := getAllowedUIDs([]string{folderAction}, f.usr, dashboards.ScopeFoldersPrefix)
+
+				if len(args) > 0 {
+					query.WriteString("(dashboard.uid IN(?" + strings.Repeat(", ?", len(args)-1))
+					query.WriteString(") AND dashboard.is_folder)")
+					params = append(params, args...)
+				} else {
+					query.WriteString("(1 = 0 AND dashboard.is_folder)")
+				}
+			}
 		} else {
 			query.WriteString("dashboard.is_folder")
 		}
 	}
 
 	query.WriteByte(')')
-	f.where = clause{string: query.String()}
+	f.where = clause{string: query.String(), params: params}
 }
 
 func (f *DashboardFilter) hasNoPermissions() bool {
