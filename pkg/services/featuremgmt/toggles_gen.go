@@ -386,4 +386,8 @@ const (
 	// FlagTransformationsRedesign
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
 )

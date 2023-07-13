@@ -126,6 +126,7 @@ Experimental features might be changed or removed without prior notice.
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
 | `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
+| `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                          |
 
 ## Development feature toggles
 
