@@ -4,8 +4,8 @@ aliases:
 description: Learn how to use Hashicorp Vault to encrypt secrets in the Grafana database.
 labels:
   products:
+    - cloud
     - enterprise
-    - oss
 title: Encrypt database secrets using Hashicorp Vault
 weight: 200
 ---
