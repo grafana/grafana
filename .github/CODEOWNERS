@@ -326,6 +326,7 @@
 .browserslistrc @grafana/frontend-ops
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
+eslint-local-rules @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
