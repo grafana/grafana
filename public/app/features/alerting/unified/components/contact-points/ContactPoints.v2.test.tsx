@@ -5,14 +5,13 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 
 import { disableRBAC } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
-import server from './__mocks__/server';
+
+import './__mocks__/server';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -30,17 +29,7 @@ import server from './__mocks__/server';
  */
 describe('ContactPoints', () => {
   beforeAll(() => {
-    setBackendSrv(backendSrv);
     disableRBAC();
-    server.listen({ onUnhandledRequest: 'error' });
-  });
-
-  beforeEach(() => {
-    server.resetHandlers();
-  });
-
-  afterAll(() => {
-    server.close();
   });
 
   it('should show / hide loading states', async () => {
