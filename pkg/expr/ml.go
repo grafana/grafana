@@ -122,8 +122,17 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		data = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{}}
 	}
 
+	dataFrames, err := getResponseFrame(data, m.refID)
+	if err != nil {
+		return mathexp.Results{}, QueryError{
+			RefID:         m.refID,
+			DatasourceUID: mlPluginID,
+			Err:           err,
+		}
+	}
+
 	// process the response the same way DSNode does. Use plugin ID as data source type. Semantically, they are the same.
-	responseType, result, err = queryDataResponseToResults(ctx, data, m.refID, mlPluginID, s)
+	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, mlPluginID, s, logger)
 	return result, err
 }
 
