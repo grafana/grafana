@@ -18,6 +18,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
     prettifyLogMessage: false,
     app: CoreApp.Explore,
     styles,
+    mouseIsOver: true,
     ...(propOverrides || {}),
   };
 
