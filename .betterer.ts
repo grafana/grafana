@@ -12,7 +12,6 @@ export default {
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
 };
 
-
 function countUndocumentedStories() {
   return new BettererFileTest(async (filePaths, fileTestResult) => {
     await Promise.all(
