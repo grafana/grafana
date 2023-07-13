@@ -20,9 +20,9 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
-import { HeatmapTooltip } from './HeatmapTooltip';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
+import { HeatmapTooltip } from './tooltip/HeatmapTooltip';
 import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
@@ -89,31 +89,31 @@ export const HeatmapPanel = ({
   }, [info.heatmap, info.exemplars]);
 
   /*
-  const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
-  const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
-  const isToolTipOpen = useRef<boolean>(false);
+ const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
+ const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+ const isToolTipOpen = useRef<boolean>(false);
 
-  const onCloseToolTip = () => {
-    isToolTipOpen.current = false;
-    setShouldDisplayCloseButton(false);
-    onhover(null);
-  };
+ const onCloseToolTip = () => {
+   isToolTipOpen.current = false;
+   setShouldDisplayCloseButton(false);
+   onhover(null);
+ };
 
-  const onclick = () => {
-    isToolTipOpen.current = !isToolTipOpen.current;
+ const onclick = () => {
+   isToolTipOpen.current = !isToolTipOpen.current;
 
-    // Linking into useState required to re-render tooltip
-    setShouldDisplayCloseButton(isToolTipOpen.current);
-  };
+   // Linking into useState required to re-render tooltip
+   setShouldDisplayCloseButton(isToolTipOpen.current);
+ };
 
-  const onhover = useCallback(
-    (evt?: HeatmapHoverEvent | null) => {
-      setHover(evt ?? undefined);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [options, data.structureRev]
-  );
-  */
+ const onhover = useCallback(
+   (evt?: HeatmapHoverEvent | null) => {
+     setHover(evt ?? undefined);
+   },
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   [options, data.structureRev]
+ );
+   */
 
   // ugh
   const dataRef = useRef(info);
@@ -139,6 +139,7 @@ export const HeatmapPanel = ({
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
+      palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
@@ -197,15 +198,23 @@ export const HeatmapPanel = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
-            <TooltipPlugin4
-              config={builder}
-              render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                // console.log('render', dataIdxs, seriesIdx);
-                // return getRandomContent();
-                // return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
-                return <HeatmapTooltip dataIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned} u={u} />;
-              }}
-            />
+            {/*children ? children(config, alignedFrame) : null*/}
+            {options.tooltip.show && (
+              <TooltipPlugin4
+                config={builder}
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss: () => void) => {
+                  return (
+                    <HeatmapTooltip
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      data={info}
+                      isPinned={isPinned}
+                      onClose={dismiss}
+                    />
+                  );
+                }}
+              />
+            )}
           </UPlotChart>
         )}
       </VizLayout>

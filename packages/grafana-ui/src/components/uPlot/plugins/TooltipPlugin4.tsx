@@ -263,7 +263,6 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   if (plot && isHovering) {
     return createPortal(
       <div className={className} style={style} ref={domRef}>
-        <div>{isPinned ? '!!PINNED!! [X]' : ''}</div>
         {contents}
       </div>,
       plot.over
