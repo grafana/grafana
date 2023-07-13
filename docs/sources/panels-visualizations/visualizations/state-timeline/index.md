@@ -46,6 +46,10 @@ Controls line width of state regions.
 
 Controls the opacity of state regions.
 
+{{< docs/shared "visualizations/connect-null-values.md" >}}
+
+{{< docs/shared "visualizations/disconnect-values.md" >}}
+
 ## Value mappings
 
 To assign colors to boolean or string values, you can use [Value mappings]({{< relref "../../configure-value-mappings/" >}}).
