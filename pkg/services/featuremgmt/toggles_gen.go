@@ -27,10 +27,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPrometheusAzureOverrideAudience
-	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
-	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
