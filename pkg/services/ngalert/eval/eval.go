@@ -637,7 +637,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		case expr.TypeMLNode:
 			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
 			if !found {
-				return fmt.Errorf("data source '%s' refID %s could not be found: %w", query.DataSource.Type, query.RefID, plugins.ErrPluginUnavailable)
+				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
 			}
 		case expr.TypeCMDNode:
 		}

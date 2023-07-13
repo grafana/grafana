@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 )
 
-// OutlierCommand sends a request to Machine Learning Outlier Proxy API and parses the request fro
+// OutlierCommand implements Command that sends a request to outlier proxy API and converts response to backend.QueryDataResponse
 type OutlierCommand struct {
 	config   OutlierCommandConfiguration
 	appURL   string
