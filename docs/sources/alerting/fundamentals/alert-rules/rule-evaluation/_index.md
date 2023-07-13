@@ -6,6 +6,7 @@ keywords:
   - evaluation
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alert rule evaluation

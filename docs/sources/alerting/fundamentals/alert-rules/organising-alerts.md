@@ -6,6 +6,7 @@ keywords:
   - organization
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Organising alert rules

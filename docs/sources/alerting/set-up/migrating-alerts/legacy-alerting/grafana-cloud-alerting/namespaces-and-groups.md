@@ -6,6 +6,7 @@ aliases:
 description: Namespaces and rule groups
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Namespaces and rule groups

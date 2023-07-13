@@ -12,6 +12,7 @@ keywords:
   - silences
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Notification policies

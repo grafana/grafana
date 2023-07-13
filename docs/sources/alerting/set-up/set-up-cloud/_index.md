@@ -11,6 +11,7 @@ aliases:
 description: How to configure Alerting for Cloud
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Set up Alerting for Cloud

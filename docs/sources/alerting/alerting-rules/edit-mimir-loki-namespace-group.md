@@ -13,6 +13,7 @@ keywords:
   - loki
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Grafana Mimir or Loki rule groups and namespaces

@@ -6,6 +6,7 @@ keywords:
   - rule types
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alert rule types

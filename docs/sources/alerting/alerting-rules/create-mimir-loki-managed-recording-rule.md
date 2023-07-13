@@ -12,6 +12,7 @@ keywords:
   - create
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Create Grafana Mimir or Loki managed recording rules

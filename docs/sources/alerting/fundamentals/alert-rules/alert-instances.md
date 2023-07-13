@@ -6,6 +6,7 @@ keywords:
   - instances
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alert instances

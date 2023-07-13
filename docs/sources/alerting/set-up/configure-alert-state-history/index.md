@@ -8,6 +8,7 @@ keywords:
   - alert state history
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure Alert State History

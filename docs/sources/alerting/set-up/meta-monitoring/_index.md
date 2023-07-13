@@ -9,6 +9,7 @@ keywords:
   - meta-monitoring
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Meta monitoring

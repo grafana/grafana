@@ -10,6 +10,7 @@ keywords:
   - provisioning
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Provision Grafana Alerting resources

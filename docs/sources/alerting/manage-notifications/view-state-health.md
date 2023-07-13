@@ -12,6 +12,7 @@ keywords:
   - health
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: View the state and health of alert rules

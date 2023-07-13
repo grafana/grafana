@@ -12,6 +12,7 @@ keywords:
   - mute time interval
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Create mute timings

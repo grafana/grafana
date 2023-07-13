@@ -10,6 +10,7 @@ keywords:
   - delete templates
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Create notification templates

@@ -6,6 +6,7 @@ aliases:
 description: Grafana Cloud Alerting
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Grafana Cloud Alerting

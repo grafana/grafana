@@ -10,6 +10,7 @@ keywords:
   - Terraform
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Create and manage alerting resources using Terraform

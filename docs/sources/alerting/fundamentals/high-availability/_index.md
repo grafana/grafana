@@ -11,6 +11,7 @@ keywords:
   - high availability
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alerting high availability

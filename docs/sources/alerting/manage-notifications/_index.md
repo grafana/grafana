@@ -6,6 +6,7 @@ keywords:
   - notifications
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage

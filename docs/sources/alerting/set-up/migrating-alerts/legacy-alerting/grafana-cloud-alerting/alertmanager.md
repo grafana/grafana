@@ -6,6 +6,7 @@ aliases:
 description: Alertmanager
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alertmanager

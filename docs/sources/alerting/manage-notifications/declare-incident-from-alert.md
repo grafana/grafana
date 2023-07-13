@@ -8,6 +8,7 @@ keywords:
   - incident
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Declare incidents from firing alerts

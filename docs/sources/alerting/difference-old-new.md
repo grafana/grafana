@@ -9,6 +9,7 @@ keywords:
   - guide
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: What's new in Grafana Alerting

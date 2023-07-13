@@ -10,6 +10,7 @@ keywords:
   - limitations
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Performance considerations and limitations

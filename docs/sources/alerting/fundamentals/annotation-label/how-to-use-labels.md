@@ -7,6 +7,7 @@ keywords:
   - fundamentals
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Labels in Grafana Alerting

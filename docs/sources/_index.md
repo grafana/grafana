@@ -5,13 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/alerting/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
-  - _target:
       path: /docs/grafana/*/breaking-changes/**
     labels:
       products:

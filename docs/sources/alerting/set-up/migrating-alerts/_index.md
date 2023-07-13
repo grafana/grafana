@@ -7,6 +7,7 @@ aliases:
 description: Upgrade Grafana alerts
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Upgrade Alerting

@@ -7,6 +7,7 @@ keywords:
   - conditions
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Queries and conditions

@@ -6,6 +6,7 @@ aliases:
 description: Create and edit alert rules
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Create and edit alert rules

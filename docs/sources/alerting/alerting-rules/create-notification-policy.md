@@ -12,6 +12,7 @@ keywords:
   - routes
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure notification policies

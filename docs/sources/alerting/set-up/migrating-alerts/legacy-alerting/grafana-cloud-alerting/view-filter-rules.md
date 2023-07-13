@@ -6,6 +6,7 @@ aliases:
 description: View and filter alert rules
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: View and filter alert rules

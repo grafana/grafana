@@ -6,6 +6,7 @@ aliases:
 description: Configure alerting
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure

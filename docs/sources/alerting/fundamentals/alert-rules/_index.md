@@ -6,6 +6,7 @@ keywords:
   - rules
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alert rules

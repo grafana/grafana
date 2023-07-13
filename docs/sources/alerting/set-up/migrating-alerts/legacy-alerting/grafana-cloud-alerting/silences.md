@@ -6,6 +6,7 @@ aliases:
 description: Silences
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Silences

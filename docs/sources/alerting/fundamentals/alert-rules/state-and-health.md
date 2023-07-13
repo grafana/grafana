@@ -9,6 +9,7 @@ keywords:
   - state
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: State and health of alerting rules

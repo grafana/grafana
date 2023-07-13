@@ -12,6 +12,7 @@ keywords:
   - view
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: View and filter alert rules

@@ -6,6 +6,7 @@ keywords:
   - notification policies
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Notifications

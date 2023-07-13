@@ -4,6 +4,7 @@ aliases:
 description: How to configure alerting features and integrations
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Set up

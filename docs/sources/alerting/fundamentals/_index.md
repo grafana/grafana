@@ -5,6 +5,7 @@ aliases:
 description: Intro to the key concepts in Alerting and how it works
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Introduction

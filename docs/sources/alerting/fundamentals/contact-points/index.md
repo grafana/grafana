@@ -13,6 +13,7 @@ keywords:
   - create
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Contact points

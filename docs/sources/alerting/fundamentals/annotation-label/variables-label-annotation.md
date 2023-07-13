@@ -8,6 +8,7 @@ keywords:
   - annotations
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Templating labels and annotations

@@ -11,6 +11,7 @@ keywords:
   - contact points
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure integrations

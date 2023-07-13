@@ -9,6 +9,7 @@ keywords:
   - provisioning
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: View provisioned resources in Grafana

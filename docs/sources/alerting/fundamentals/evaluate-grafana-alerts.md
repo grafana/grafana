@@ -5,6 +5,7 @@ aliases:
 description: How to alert on numeric data
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alerting on numeric data

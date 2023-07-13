@@ -8,6 +8,7 @@ keywords:
   - use templates
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Use notification templates

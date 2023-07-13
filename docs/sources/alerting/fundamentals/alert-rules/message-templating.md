@@ -12,6 +12,7 @@ keywords:
   - templating
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Notification templating

@@ -10,6 +10,7 @@ keywords:
   - external Alertmanager
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Add an external Alertmanager

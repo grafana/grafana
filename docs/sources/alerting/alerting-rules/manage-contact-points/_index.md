@@ -15,6 +15,7 @@ keywords:
   - templating
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure contact points

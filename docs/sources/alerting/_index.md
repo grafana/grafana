@@ -5,6 +5,7 @@ aliases:
 description: Intro to key benefits and features of Grafana Alerting
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alerting

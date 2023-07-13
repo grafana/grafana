@@ -8,6 +8,7 @@ keywords:
   - write templates
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Using Go's templating language

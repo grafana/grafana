@@ -8,6 +8,7 @@ keywords:
   - contact points
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: View notification errors

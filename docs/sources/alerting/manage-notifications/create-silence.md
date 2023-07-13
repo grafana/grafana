@@ -13,6 +13,7 @@ keywords:
   - mute
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Manage silences

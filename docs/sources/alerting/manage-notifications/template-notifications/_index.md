@@ -7,6 +7,7 @@ keywords:
   - templates
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Customize notifications
