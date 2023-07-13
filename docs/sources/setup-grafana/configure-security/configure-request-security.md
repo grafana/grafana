@@ -6,6 +6,7 @@ description: Request security enables you to limit requests from the Grafana ser
   alert notifications.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure request security

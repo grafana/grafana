@@ -5,13 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/setup-grafana/configure-security/configure-request-security/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
-  - _target:
       path: /docs/grafana/*/setup-grafana/configure-security/configure-team-sync/**
     labels:
       products:
