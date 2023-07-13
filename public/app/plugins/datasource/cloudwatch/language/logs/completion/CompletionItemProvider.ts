@@ -55,6 +55,7 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
             addSuggestion(command, {
               insertText: `${command} $0`,
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              command: TRIGGER_SUGGEST,
             });
           });
           break;
@@ -63,19 +64,23 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
             addSuggestion(f, {
               insertText: `${f}($0)`,
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+              command: TRIGGER_SUGGEST,
             });
           });
+          break;
         case SuggestionKind.SortOrderDirectionKeyword:
           SORT_DIRECTION_KEYWORDS.forEach((direction) => {
-            addSuggestion(direction, { sortText: CompletionItemPriority.High, command: TRIGGER_SUGGEST });
+            addSuggestion(direction, { sortText: CompletionItemPriority.High });
           });
           break;
         case SuggestionKind.InKeyword:
-          addSuggestion('in', {
+          addSuggestion('in []', {
             insertText: 'in ["$0"]',
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
             kind: monaco.languages.CompletionItemKind.Snippet,
+            sortText: CompletionItemPriority.High,
           });
+          break;
       }
 
       this.templateSrv.getVariables().map((v) => {

@@ -20,6 +20,8 @@ export function getSuggestionKinds(statementPosition: StatementPosition): Sugges
     case StatementPosition.BooleanOperatorArg:
     case StatementPosition.ComparisonOperatorArg:
       return [SuggestionKind.Function];
+    case StatementPosition.FilterArg:
+      return [SuggestionKind.InKeyword, SuggestionKind.Function];
   }
 
   return [];

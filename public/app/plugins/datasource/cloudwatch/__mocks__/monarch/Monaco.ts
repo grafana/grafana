@@ -47,6 +47,9 @@ const MonacoMock: Monaco = {
           [CloudwatchLogsTestData.commentOnlyQuery.query]: CloudwatchLogsTestData.commentOnlyQuery.tokens,
           [CloudwatchLogsTestData.singleLineFullQuery.query]: CloudwatchLogsTestData.singleLineFullQuery.tokens,
           [CloudwatchLogsTestData.multiLineFullQuery.query]: CloudwatchLogsTestData.multiLineFullQuery.tokens,
+          [CloudwatchLogsTestData.filterQuery.query]: CloudwatchLogsTestData.filterQuery.tokens,
+          [CloudwatchLogsTestData.newCommandQuery.query]: CloudwatchLogsTestData.newCommandQuery.tokens,
+          [CloudwatchLogsTestData.sortQuery.query]: CloudwatchLogsTestData.sortQuery.tokens,
         };
         return TestData[value];
       }
