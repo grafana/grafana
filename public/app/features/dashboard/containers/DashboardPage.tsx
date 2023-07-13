@@ -393,7 +393,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-          {hasAngularPlugins && <AngularDeprecationNotice dashboardUid={dashboard.uid} />}
+          {hasAngularPlugins && dashboard.uid !== null && <AngularDeprecationNotice dashboardUid={dashboard.uid} />}
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
