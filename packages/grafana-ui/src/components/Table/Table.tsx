@@ -1,4 +1,14 @@
-import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
+import React, {
+  CSSProperties,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  UIEventHandler,
+  ReactElement,
+} from 'react';
 import {
   Cell,
   useAbsoluteLayout,
@@ -210,38 +220,40 @@ export const Table = memo((props: Props) => {
 
   const renderSubTables = useCallback(
     (rowIndex: number) => {
-      return (
-        nestedFields?.map((nf, tableIndex) => {
-          if (state.expanded[rowIndex]) {
-            const rowSubData = nf.values[rowIndex];
-            if (rowSubData) {
-              const noHeader = !!rowSubData.meta?.custom?.noHeader;
-              const height = tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)); // account for the header with + 1
-              const top = tableStyles.rowHeight + (height * tableIndex + 1);
+      const subTables: ReactElement[] = [];
 
-              const subTableStyle: CSSProperties = {
-                height: height,
-                background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
-                paddingLeft: EXPANDER_WIDTH,
-                position: 'absolute',
-                top,
-              };
+      nestedFields?.forEach((nf, nfIndex) => {
+        if (rowIndex === nfIndex && state.expanded[rowIndex]) {
+          // rowIndex === nfIndex so we get appropriate nestedFields based on row
+          let top = tableStyles.rowHeight; // initial height for row that expands above sub tables
+          nf.values.forEach((rowSubData, rowSubDataIndex) => {
+            const noHeader = !!rowSubData.meta?.custom?.noHeader;
+            const height = tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)); // account for the header with + 1
 
-              return (
-                <div style={subTableStyle} key={nf.name}>
-                  <Table
-                    data={rowSubData}
-                    width={width - EXPANDER_WIDTH}
-                    height={tableStyles.rowHeight * (rowSubData.length + 1)}
-                    noHeader={noHeader}
-                  />
-                </div>
-              );
-            }
-          }
-          return null;
-        }) || null
-      );
+            const subTableStyle: CSSProperties = {
+              height: height,
+              background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
+              paddingLeft: EXPANDER_WIDTH,
+              position: 'absolute',
+              top,
+            };
+            top += height;
+
+            subTables.push(
+              <div style={subTableStyle} key={`${nf.name}_${rowSubDataIndex}`}>
+                <Table
+                  data={rowSubData}
+                  width={width - EXPANDER_WIDTH}
+                  height={tableStyles.rowHeight * (rowSubData.length + 1)}
+                  noHeader={noHeader}
+                />
+              </div>
+            );
+          });
+        }
+      });
+
+      return subTables;
     },
     [state.expanded, tableStyles.rowHeight, theme.colors, width, nestedFields]
   );
@@ -318,7 +330,7 @@ export const Table = memo((props: Props) => {
       const height = nestedFields[index]?.values.reduce((acc, field) => {
         if (field.length) {
           const noHeader = !!field.meta?.custom?.noHeader;
-          return acc + tableStyles.rowHeight * (field.length + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
+          return acc + tableStyles.rowHeight * (field.length + (noHeader ? 0 : 1)); // account for the header with + 1
         }
         return acc;
       }, tableStyles.rowHeight); // initial height for row that expands above sub tables
