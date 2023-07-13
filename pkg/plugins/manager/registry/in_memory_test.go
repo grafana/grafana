@@ -197,7 +197,6 @@ func TestInMemory_Plugins(t *testing.T) {
 			})
 			t.Logf("%+v\n", result)
 			require.Equal(t, tt.expected, result)
-
 		})
 	}
 }
