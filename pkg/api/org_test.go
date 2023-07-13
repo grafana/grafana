@@ -253,7 +253,7 @@ func TestAPIEndpoint_GetOrg(t *testing.T) {
 				hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: tt.permissions}
 			})
 			verify := func(path string) {
-				req := webtest.RequestWithSignedInUser(server.NewGetRequest(path), userWithPermissions(2, nil))
+				req := webtest.RequestWithSignedInUser(server.NewGetRequest(path), userWithPermissions(2, tt.permissions))
 				res, err := server.Send(req)
 				require.NoError(t, err)
 				assert.Equal(t, tt.expectedCode, res.StatusCode)
