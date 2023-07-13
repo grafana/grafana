@@ -1,7 +1,6 @@
 ---
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Create a new correlation

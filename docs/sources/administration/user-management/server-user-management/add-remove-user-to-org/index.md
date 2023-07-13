@@ -6,7 +6,6 @@ description: Describes how a Grafana server administrator can add or remove user
   in an organization
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Add or remove a user in an organization

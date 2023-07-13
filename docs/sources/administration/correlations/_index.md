@@ -4,7 +4,6 @@ keywords:
   - Explore
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Correlations

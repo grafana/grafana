@@ -10,7 +10,6 @@ keywords:
   - Service accounts
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Service accounts

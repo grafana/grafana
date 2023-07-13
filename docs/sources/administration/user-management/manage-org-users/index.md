@@ -9,7 +9,6 @@ aliases:
   - ../manage-users-and-permissions/manage-org-users/view-list-org-users/
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Manage users in an organization

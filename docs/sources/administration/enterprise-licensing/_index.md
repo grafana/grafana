@@ -16,6 +16,7 @@ keywords:
 labels:
   products:
     - enterprise
+    - oss
 title: Grafana Enterprise license
 weight: 500
 ---

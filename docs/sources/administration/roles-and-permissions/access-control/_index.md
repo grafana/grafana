@@ -8,7 +8,6 @@ description: Role-based access control (RBAC) provides a standardized way of gra
   such as users and reports.
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Role-based access control (RBAC)

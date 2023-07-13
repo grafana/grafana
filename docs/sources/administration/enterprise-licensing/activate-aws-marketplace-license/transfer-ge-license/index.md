@@ -13,6 +13,7 @@ keywords:
 labels:
   products:
     - enterprise
+    - oss
 title: Transfer your AWS Marketplace Grafana Enterprise license
 weight: 400
 ---

@@ -1,7 +1,6 @@
 ---
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Add permissions

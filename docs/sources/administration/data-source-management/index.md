@@ -9,7 +9,6 @@ aliases:
 description: Data source management information for Grafana administrators
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Data source management

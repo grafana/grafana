@@ -1,11 +1,11 @@
 ---
 keywords:
-  - grafana
-  - schema
+- grafana
+- schema
 labels:
   products:
-    - enterprise
-    - oss
+  - enterprise
+  - oss
 title: ServiceAccount kind
 ---
 

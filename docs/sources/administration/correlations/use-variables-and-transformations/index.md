@@ -1,7 +1,6 @@
 ---
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Use variables and transformations in a correlation

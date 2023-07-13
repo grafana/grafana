@@ -3,7 +3,6 @@ aliases:
   - ../../manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions/
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Grant editors administrator permissions

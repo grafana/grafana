@@ -13,6 +13,7 @@ keywords:
 labels:
   products:
     - enterprise
+    - oss
 title: Activate a Grafana Enterprise license from AWS Marketplace on ECS
 weight: 250
 ---

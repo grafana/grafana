@@ -3,7 +3,6 @@ aliases:
   - manage-users-and-permissions/
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: User management
