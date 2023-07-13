@@ -56,6 +56,7 @@ aliases:
 description: Learn about new and changed features in Grafana.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: What's new

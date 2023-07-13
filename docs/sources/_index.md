@@ -3,14 +3,6 @@ aliases:
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
   - guides/reference/admin/
-cascade:
-  - _target:
-      path: /docs/grafana/*/whatsnew/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-        - oss
 description: Guides, installation, and feature documentation
 keywords:
   - grafana
