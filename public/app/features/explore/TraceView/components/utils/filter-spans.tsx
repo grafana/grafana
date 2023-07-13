@@ -157,8 +157,12 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
 };
 
 export const convertTimeFilter = (time: string) => {
-  if (time.includes('μs')) {
-    return parseFloat(time.split('μs')[0]);
+  if (time.includes('ns')) {
+    return parseFloat(time.split('ns')[0]) / 1000;
+  } else if (time.includes('us')) {
+    return parseFloat(time.split('us')[0]);
+  } else if (time.includes('µs')) {
+    return parseFloat(time.split('µs')[0]);
   } else if (time.includes('ms')) {
     return parseFloat(time.split('ms')[0]) * 1000;
   } else if (time.includes('s')) {
