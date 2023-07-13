@@ -5,6 +5,7 @@ aliases:
 description: Learn about Grafana OSS, Grafana Enterprise, and Grafana Cloud.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Introduction to Grafana

@@ -5,7 +5,6 @@ description: Grafana Enterprise overview
 labels:
   products:
     - enterprise
-    - oss
 title: Grafana Enterprise
 weight: 200
 ---

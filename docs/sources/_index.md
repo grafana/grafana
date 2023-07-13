@@ -5,11 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/introduction/grafana-enterprise/**
-    labels:
-      products:
-        - enterprise
-  - _target:
       path: /docs/grafana/*/panels-visualizations/**
     labels:
       products:
