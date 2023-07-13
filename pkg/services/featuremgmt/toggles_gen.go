@@ -39,9 +39,9 @@ const (
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
-	// FlagLokiLive
-	// Support WebSocket streaming for loki (early prototype)
-	FlagLokiLive = "lokiLive"
+	// FlagLokiExperimentalStreaming
+	// Support new streaming approach for loki (prototype, needs special loki build)
+	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
@@ -159,6 +159,10 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
+	// FlagNestedFolderPicker
+	// Enables the still in-development new folder picker to support nested folders
+	FlagNestedFolderPicker = "nestedFolderPicker"
+
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
@@ -216,7 +220,7 @@ const (
 	FlagTraceqlSearch = "traceqlSearch"
 
 	// FlagPrometheusMetricEncyclopedia
-	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
 	// FlagTimeSeriesTable
@@ -295,10 +299,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagPluginsAPIManifestKey
-	// Use grafana.com API to retrieve the public manifest key
-	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
-
 	// FlagAdvancedDataSourcePicker
 	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
@@ -327,6 +327,14 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
+	// FlagDashboardEmbed
+	// Allow embedding dashboard for external use in Code editors
+	FlagDashboardEmbed = "dashboardEmbed"
+
+	// FlagFrontendSandboxMonitorOnly
+	// Enables monitor only in the plugin frontend sandbox (if enabled)
+	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
+
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
@@ -335,7 +343,43 @@ const (
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
 
+	// FlagExploreScrollableLogsContainer
+	// Improves the scrolling behavior of logs in Explore
+	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
+
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
+
+	// FlagPluginsDynamicAngularDetectionPatterns
+	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
+	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
+
+	// FlagAlertingLokiRangeToInstant
+	// Rewrites eligible loki range queries to instant queries
+	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
+
+	// FlagElasticToggleableFilters
+	// Enable support to toggle filters off from the query through the Logs Details component
+	FlagElasticToggleableFilters = "elasticToggleableFilters"
+
+	// FlagVizAndWidgetSplit
+	// Split panels between vizualizations and widgets
+	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagPrometheusIncrementalQueryInstrumentation
+	// Adds RudderStack events to incremental queries
+	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
+
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+
+	// FlagAwsDatasourcesTempCredentials
+	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
+	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
+
+	// FlagTransformationsRedesign
+	// Enables the transformations redesign
+	FlagTransformationsRedesign = "transformationsRedesign"
 )
