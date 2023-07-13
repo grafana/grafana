@@ -27,10 +27,6 @@ function generateToken(query: string, position: monacoTypes.IPosition) {
   );
 }
 
-jest.mock('monaco-editor/esm/vs/editor/editor.api', () => ({
-  Token: jest.fn((offset, type, language) => ({ offset, type, language })),
-}));
-
 describe('getStatementPosition', () => {
   it('should return StatementPosition.NewCommand the current token is null', () => {
     expect(getStatementPosition(null)).toEqual(StatementPosition.NewCommand);
