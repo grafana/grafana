@@ -260,7 +260,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.30.1
 	github.com/dave/dst v0.27.2
 	github.com/go-jose/go-jose/v3 v3.0.0
-	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
+	github.com/grafana/dataplane/examples v0.0.1
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
