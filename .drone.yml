@@ -3909,7 +3909,7 @@ steps:
   image: golang:1.20.6
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
+  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -3978,7 +3978,7 @@ steps:
   image: golang:1.20.6
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
+  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -6885,6 +6885,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 35192e2a51d31c9468629bcd4d72e2bc0840dcc81d770e24bc9dd57fb24ec00f
+hmac: 37c2d1623b9816fac3e31dc9c03125c90c421702730ea00652459e6be03a2c8a
 
 ...
