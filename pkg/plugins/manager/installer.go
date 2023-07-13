@@ -110,7 +110,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	// download dependency plugins
 	pathsToScan := []string{extractedArchive.Path}
 	for _, dep := range extractedArchive.Dependencies {
-		m.log.Info("Fetching %s dependencies...", dep.ID)
+		m.log.Info(fmt.Sprintf("Fetching %s dependencies...", dep.ID))
 		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)

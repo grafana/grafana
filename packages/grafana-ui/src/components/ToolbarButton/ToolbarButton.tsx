@@ -139,17 +139,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }
   `;
 
-  const defaultTopNav = css`
-    color: ${theme.colors.text.secondary};
-    background: transparent;
-    border: 1px solid transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
   return {
     button: css`
       label: toolbar-button;
@@ -195,18 +184,33 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: defaultTopNav,
-    canvas: defaultOld,
-    active: css`
-      color: ${theme.v1.palette.orangeDark};
-      border-color: ${theme.v1.palette.orangeDark};
-      background-color: transparent;
+    default: css`
+      color: ${theme.colors.text.secondary};
+      background: transparent;
+      border: 1px solid transparent;
 
       &:hover {
         color: ${theme.colors.text.primary};
-        background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
+        background: ${theme.colors.background.secondary};
       }
     `,
+    canvas: defaultOld,
+    active: cx(
+      defaultOld,
+      css(`
+    &::before {
+      display: block;
+      content: ' ';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      bottom: 0px;
+      border-radius: ${theme.shape.radius.default};
+      background-image: ${theme.colors.gradients.brandHorizontal};
+    }
+    `)
+    ),
     primary: css(primaryVariant),
     destructive: css(destructiveVariant),
     narrow: css`
@@ -236,7 +240,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     highlight: css`
       background-color: ${theme.colors.success.main};
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       width: 6px;
       height: 6px;
       position: absolute;

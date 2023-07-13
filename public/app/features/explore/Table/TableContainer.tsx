@@ -5,14 +5,15 @@ import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, L
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
+import { selectIsWaitingForData } from '../state/query';
 import { getFieldLinksForExplore } from '../utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
@@ -22,7 +23,8 @@ interface TableContainerProps {
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { loading: loadingInState, tableResult, range } = item;
+  const { tableResult, range } = item;
+  const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, tableResult, range };
 }
@@ -32,25 +34,21 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getMainFrame(frames: DataFrame[] | null) {
-    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
+  getMainFrames(frames: DataFrame[] | null) {
+    return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
   }
 
-  getTableHeight() {
-    const { tableResult } = this.props;
-    const mainFrame = this.getMainFrame(tableResult);
-
-    if (!mainFrame || mainFrame.length === 0) {
+  getTableHeight(rowCount: number, isSingleTable = true) {
+    if (rowCount === 0) {
       return 200;
     }
-
-    // tries to estimate table height
-    return Math.min(600, Math.max(mainFrame.length * 36, 300) + 40 + 46);
+    // tries to estimate table height, with a min of 300 and a max of 600
+    // if there are multiple tables, there is no min
+    return Math.min(600, Math.max(rowCount * 36, isSingleTable ? 300 : 0) + 40 + 46);
   }
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
-    const height = this.getTableHeight();
 
     let dataFrames = tableResult;
 
@@ -83,33 +81,48 @@ export class TableContainer extends PureComponent<Props> {
       }
     }
 
-    const mainFrame = this.getMainFrame(dataFrames);
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+    // move dataframes to be grouped by table, with optional sub-tables for a row
+    const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
+    const mainFrames = this.getMainFrames(dataFrames).filter(
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
+    );
+
+    mainFrames?.forEach((frame) => {
+      const subFrames =
+        dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) ||
+        undefined;
+      tableData.push({ main: frame, sub: subFrames });
+    });
 
     return (
-      <PanelChrome
-        title="Table"
-        width={width}
-        height={height}
-        loadingState={loading ? LoadingState.Loading : undefined}
-      >
-        {(innerWidth, innerHeight) => (
-          <>
-            {mainFrame?.length ? (
-              <Table
-                ariaLabel={ariaLabel}
-                data={mainFrame}
-                subData={subFrames}
-                width={innerWidth}
-                height={innerHeight}
-                onCellFilterAdded={onCellFilterAdded}
-              />
-            ) : (
-              <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
-            )}
-          </>
+      <>
+        {tableData.length === 0 && (
+          <PanelChrome title={'Table'} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+          </PanelChrome>
         )}
-      </PanelChrome>
+        {tableData.length > 0 &&
+          tableData.map((data, i) => (
+            <PanelChrome
+              key={data.main.refId || `table-${i}`}
+              title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
+              width={width}
+              height={this.getTableHeight(data.main.length, tableData.length === 1)}
+              loadingState={loading ? LoadingState.Loading : undefined}
+            >
+              {(innerWidth, innerHeight) => (
+                <Table
+                  ariaLabel={ariaLabel}
+                  data={data.main}
+                  subData={data.sub}
+                  width={innerWidth}
+                  height={innerHeight}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              )}
+            </PanelChrome>
+          ))}
+      </>
     );
   }
 }

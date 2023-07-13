@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection } from '@grafana/experimental';
+import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
@@ -25,6 +25,14 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
   return (
     <div className={styles.container}>
+      <DataSourceDescription
+        dataSourceName="Tempo"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/tempo"
+        hasRequiredFields={false}
+      />
+
+      <Divider />
+
       <DataSourceHttpSettings
         defaultUrl="http://tempo"
         dataSourceConfig={options}
@@ -129,6 +137,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     label: container;
     margin-bottom: ${theme.spacing(2)};
-    max-width: '578px';
+    max-width: 900px;
   `,
 });

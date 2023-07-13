@@ -513,6 +513,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('panel_tests_flame_graph', import '../dev-dashboards/panel-flamegraph/panel_tests_flame_graph.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('panels_without_title', import '../dev-dashboards/panel-common/panels_without_title.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -570,6 +577,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('table_pagination', import '../dev-dashboards/panel-table/table_pagination.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('table_sparkline_cell', import '../dev-dashboards/panel-table/table_sparkline_cell.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

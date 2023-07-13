@@ -16,7 +16,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.38"
+grabpl_version = "v3.0.39"
 
 trigger_oss = {
     "repo": [
@@ -88,8 +88,17 @@ def identify_runner_step(platform = "linux"):
             ],
         }
 
-def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True):
-    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise")
+def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, isPromote = False):
+    """Setup the enterprise source into the ./grafana-enterprise directory.
+
+    Args:
+      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
+      canFail: controls whether the step can fail. This is useful for pull requests where the enterprise source may not exist.
+      isPromote: controls whether or not this step is being used in a promote pipeline. If it is, then the clone enterprise step will not check if the pull request is a fork.
+    Returns:
+        Drone step.
+    """
+    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise", isPromote = isPromote)
     step["commands"] += [
         "cd ../",
         "ln -s src grafana",
@@ -122,7 +131,7 @@ def clone_enterprise_step(source = "${DRONE_COMMIT}"):
 
     return step
 
-def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise"):
+def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise", isPromote = False):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
@@ -130,9 +139,19 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
       target: controls which revision of grafana-enterprise is checked out, if it 'source' does not exist. The name 'target' derives from the 'target branch' of a pull request. If this does not exist, then 'main' will be checked out.
       canFail: controls whether or not this step is allowed to fail. If it fails and this is true, then the pipeline will continue. canFail is used in pull request pipelines where enterprise may be cloned but may not clone in forks.
       location: the path where grafana-enterprise is cloned.
+      isPromote: controls whether or not this step is being used in a promote pipeline. If it is, then the step will not check if the pull request is a fork.
     Returns:
       Drone step.
     """
+
+    if isPromote:
+        check = []
+    else:
+        check = [
+            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
+        ]
+
     step = {
         "name": "clone-enterprise",
         "image": images["build_image"],
@@ -140,8 +159,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
-            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
-            'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
+        ] + check + [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
@@ -1130,7 +1148,7 @@ def fetch_images_step(edition):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
+def publish_images_step(edition, ver_mode, docker_repo, trigger = None):
     """Generates a step for publishing public Docker images with grabpl.
 
     Args:
@@ -1138,7 +1156,6 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         It also controls which publishing implementation is used.
       ver_mode: controls whether the image needs to be built or retrieved from a previous build.
         If ver_mode == 'release', the previously built image is fetched instead of being built again.
-      mode: uses to control the publishing of security images when mode == 'security'.
       docker_repo: the Docker image name.
         It is combined with the 'grafana/' library prefix.
       trigger: a Drone trigger for the pipeline.
@@ -1149,10 +1166,6 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
     """
     name = docker_repo
     docker_repo = "grafana/{}".format(docker_repo)
-    if mode == "security":
-        mode = "--{} ".format(mode)
-    else:
-        mode = ""
 
     environment = {
         "GCP_KEY": from_secret("gcp_key"),
@@ -1163,8 +1176,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
-    cmd = "./bin/grabpl artifacts docker publish {}--dockerhub-repo {}".format(
-        mode,
+    cmd = "./bin/grabpl artifacts docker publish --dockerhub-repo {}".format(
         docker_repo,
     )
 
@@ -1210,6 +1222,27 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
 
     return step
 
+def integration_tests_step(name, cmds, environment = None):
+    step = {
+        "name": "{}-integration-tests".format(name),
+        "image": images["build_image"],
+        "depends_on": ["wire-install"],
+        "commands": cmds,
+    }
+
+    if environment:
+        step["environment"] = environment
+
+    return step
+
+def integration_benchmarks_step(name, environment = None):
+    cmds = [
+        "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
+        "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
+    ]
+
+    return integration_tests_step("{}-benchmark".format(name), cmds, environment)
+
 def postgres_integration_tests_step():
     cmds = [
         "apt-get update",
@@ -1220,17 +1253,14 @@ def postgres_integration_tests_step():
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
-    return {
-        "name": "postgres-integration-tests",
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "PGPASSWORD": "grafanatest",
-            "GRAFANA_TEST_DB": "postgres",
-            "POSTGRES_HOST": "postgres",
-        },
-        "commands": cmds,
+
+    environment = {
+        "PGPASSWORD": "grafanatest",
+        "GRAFANA_TEST_DB": "postgres",
+        "POSTGRES_HOST": "postgres",
     }
+
+    return integration_tests_step("postgres", cmds, environment)
 
 def mysql_integration_tests_step(hostname, version):
     cmds = [
@@ -1241,46 +1271,39 @@ def mysql_integration_tests_step(hostname, version):
         "go clean -testcache",
         "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
-    return {
-        "name": "mysql-{}-integration-tests".format(version),
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "GRAFANA_TEST_DB": "mysql",
-            "MYSQL_HOST": hostname,
-        },
-        "commands": cmds,
+
+    environment = {
+        "GRAFANA_TEST_DB": "mysql",
+        "MYSQL_HOST": hostname,
     }
+
+    return integration_tests_step("mysql-{}".format(version), cmds, environment)
 
 def redis_integration_tests_step():
-    return {
-        "name": "redis-integration-tests",
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "REDIS_URL": "redis://redis:6379/0",
-        },
-        "commands": [
-            "dockerize -wait tcp://redis:6379/0 -timeout 120s",
-            "go clean -testcache",
-            "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
-        ],
+    cmds = [
+        "dockerize -wait tcp://redis:6379/0 -timeout 120s",
+        "go clean -testcache",
+        "go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...",
+    ]
+
+    environment = {
+        "REDIS_URL": "redis://redis:6379/0",
     }
 
+    return integration_tests_step("redis", cmds, environment)
+
 def memcached_integration_tests_step():
-    return {
-        "name": "memcached-integration-tests",
-        "image": images["build_image"],
-        "depends_on": ["wire-install"],
-        "environment": {
-            "MEMCACHED_HOSTS": "memcached:11211",
-        },
-        "commands": [
-            "dockerize -wait tcp://memcached:11211 -timeout 120s",
-            "go clean -testcache",
-            "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
-        ],
+    cmds = [
+        "dockerize -wait tcp://memcached:11211 -timeout 120s",
+        "go clean -testcache",
+        "go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...",
+    ]
+
+    environment = {
+        "MEMCACHED_HOSTS": "memcached:11211",
     }
+
+    return integration_tests_step("memcached", cmds, environment)
 
 def release_canary_npm_packages_step(trigger = None):
     """Releases canary NPM packages.
@@ -1359,7 +1382,7 @@ def publish_grafanacom_step(edition, ver_mode):
       ver_mode: if ver_mode == 'main', pass the DRONE_BUILD_NUMBER environment
         variable as the value for the --build-id option.
         TODO: is this actually used by the grafanacom subcommand? I think it might
-        just use the environment varaiable directly.
+        just use the environment variable directly.
 
     Returns:
       Drone step.
@@ -1652,21 +1675,6 @@ def trigger_test_release():
             ],
             "branch": "main",
         },
-    }
-
-def artifacts_page_step():
-    return {
-        "name": "artifacts-page",
-        "image": images["build_image"],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
-        "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
-        },
-        "commands": [
-            "./bin/build artifacts-page",
-        ],
     }
 
 def end_to_end_tests_deps():

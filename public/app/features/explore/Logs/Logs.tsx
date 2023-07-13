@@ -26,8 +26,12 @@ import {
   DataHoverClearEvent,
   EventBus,
   LogRowContextOptions,
+  ExplorePanelsState,
+  serializeStateToUrlParam,
+  urlUtil,
+  TimeRange,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
@@ -39,15 +43,19 @@ import {
   Themeable2,
   Collapse,
 } from '@grafana/ui';
-import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
-import { ExploreId } from 'app/types/explore';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { getState, dispatch } from 'app/store/store';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
+import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { changePanelState } from '../state/explorePane';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
+import { LogsTable } from './LogsTable';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
@@ -66,7 +74,7 @@ interface Props extends Themeable2 {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  exploreId: ExploreId;
+  exploreId: string;
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
@@ -78,14 +86,20 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
-  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<any>;
+  getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
   getRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
   eventBus: EventBus;
+  panelState?: ExplorePanelsState;
+  scrollElement?: HTMLDivElement;
+  logsFrames?: DataFrame[];
+  range: TimeRange;
 }
+
+type VisualisationType = 'table' | 'logs';
 
 interface State {
   showLabels: boolean;
@@ -94,16 +108,20 @@ interface State {
   prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
-  logsSortOrder: LogsSortOrder | null;
+  logsSortOrder: LogsSortOrder;
   isFlipping: boolean;
   displayedFields: string[];
   forceEscape: boolean;
   contextOpen: boolean;
   contextRow?: LogRowModel;
+  tableFrame?: DataFrame;
+  visualisationType?: VisualisationType;
 }
 
+const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
 const styleOverridesForStickyNavigation = css`
+  ${scrollableLogsContainer && 'margin-bottom: 0px'};
   & > div {
     overflow: visible;
     & > div {
@@ -125,6 +143,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
+  logsContainer = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -139,6 +158,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     forceEscape: false,
     contextOpen: false,
     contextRow: undefined,
+    tableFrame: undefined,
+    visualisationType: 'logs',
   };
 
   constructor(props: Props) {
@@ -153,6 +174,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
+    }
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>): void {
+    if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
+      // loading stopped, so we need to remove any permalinked log lines
+      delete this.props.panelState.logs.id;
+      dispatch(
+        changePanelState(this.props.exploreId, 'logs', {
+          ...this.props.panelState,
+        })
+      );
     }
   }
 
@@ -187,6 +220,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
   onEscapeNewlines = () => {
     this.setState((prevState) => ({
       forceEscape: !prevState.forceEscape,
+    }));
+  };
+
+  onChangeVisualisation = (visualisation: VisualisationType) => {
+    this.setState(() => ({
+      visualisationType: visualisation,
     }));
   };
 
@@ -259,6 +298,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     event.preventDefault();
     if (this.props.onStartScanning) {
       this.props.onStartScanning();
+      reportInteraction('grafana_explore_logs_scanning_button_clicked', {
+        type: 'start',
+        datasourceType: this.props.datasourceType,
+      });
     }
   };
 
@@ -328,6 +371,50 @@ class UnthemedLogs extends PureComponent<Props, State> {
       });
       onClose();
     };
+  };
+
+  onPermalinkClick = async (row: LogRowModel) => {
+    // get explore state, add log-row-id and make timerange absolute
+    const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
+    urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
+    urlState.range = {
+      from: new Date(this.props.absoluteRange.from).toISOString(),
+      to: new Date(this.props.absoluteRange.to).toISOString(),
+    };
+
+    // append changed urlState to baseUrl
+    const serializedState = serializeStateToUrlParam(urlState);
+    const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+    const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+    await createAndCopyShortLink(url);
+
+    reportInteraction('grafana_explore_logs_permalink_clicked', {
+      datasourceType: row.datasourceType ?? 'unknown',
+      logRowUid: row.uid,
+      logRowLevel: row.logLevel,
+    });
+  };
+
+  scrollIntoView = (element: HTMLElement) => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      this.scrollToTopLogs();
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'smooth',
+          top: this.logsContainer.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+        });
+      }
+
+      return;
+    }
+    const { scrollElement } = this.props;
+
+    if (scrollElement) {
+      scrollElement.scroll({
+        behavior: 'smooth',
+        top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
   };
 
   checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
@@ -421,7 +508,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             open={contextOpen}
             row={contextRow}
             onClose={this.onCloseContext}
-            getRowContext={getRowContext}
+            getRowContext={(row, options) => getRowContext(row, contextRow, options)}
             getRowContextQuery={getRowContextQuery}
             getLogRowContextUi={getLogRowContextUi}
             logsSortOrder={logsSortOrder}
@@ -444,81 +531,116 @@ class UnthemedLogs extends PureComponent<Props, State> {
             />
           )}
         </Collapse>
-        <Collapse label="Logs" loading={loading} isOpen className={styleOverridesForStickyNavigation}>
-          <div className={styles.logOptions}>
-            <InlineFieldRow>
-              <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={showTime}
-                  onChange={this.onChangeTime}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`show-time_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={showLabels}
-                  onChange={this.onChangeLabels}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`unique-labels_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={wrapLogMessage}
-                  onChange={this.onChangeWrapLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`wrap-lines_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={prettifyLogMessage}
-                  onChange={this.onChangePrettifyLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`prettify_${exploreId}`}
-                />
-              </InlineField>
-              <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
-                <RadioButtonGroup
-                  options={DEDUP_OPTIONS.map((dedupType) => ({
-                    label: capitalize(dedupType),
-                    value: dedupType,
-                    description: LogsDedupDescription[dedupType],
-                  }))}
-                  value={dedupStrategy}
-                  onChange={this.onChangeDedup}
-                  className={styles.radioButtons}
-                />
-              </InlineField>
-            </InlineFieldRow>
-            <div>
-              <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                <RadioButtonGroup
-                  disabled={isFlipping}
-                  options={[
-                    {
-                      label: 'Newest first',
-                      value: LogsSortOrder.Descending,
-                      description: 'Show results newest to oldest',
-                    },
-                    {
-                      label: 'Oldest first',
-                      value: LogsSortOrder.Ascending,
-                      description: 'Show results oldest to newest',
-                    },
-                  ]}
-                  value={logsSortOrder}
-                  onChange={this.onChangeLogsSortOrder}
-                  className={styles.radioButtons}
-                />
-              </InlineField>
+        <Collapse
+          label={
+            <>
+              {config.featureToggles.logsExploreTableVisualisation && (
+                <div className={styles.visualisationType}>
+                  {this.state.visualisationType === 'logs' ? 'Logs' : 'Table'}
+                  <RadioButtonGroup
+                    className={styles.visualisationTypeRadio}
+                    options={[
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
+                      },
+                      {
+                        label: 'Logs',
+                        value: 'logs',
+                        description: 'Show results in logs visualisation',
+                      },
+                    ]}
+                    size="sm"
+                    value={this.state.visualisationType}
+                    onChange={this.onChangeVisualisation}
+                  />
+                </div>
+              )}
+              {!config.featureToggles.logsExploreTableVisualisation && 'Logs'}
+            </>
+          }
+          loading={loading}
+          isOpen
+          className={styleOverridesForStickyNavigation}
+        >
+          {this.state.visualisationType !== 'table' && (
+            <div className={styles.logOptions}>
+              <InlineFieldRow>
+                <InlineField label="Time" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={showTime}
+                    onChange={this.onChangeTime}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`show-time_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Unique labels" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={showLabels}
+                    onChange={this.onChangeLabels}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`unique-labels_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={wrapLogMessage}
+                    onChange={this.onChangeWrapLogMessage}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`wrap-lines_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={prettifyLogMessage}
+                    onChange={this.onChangePrettifyLogMessage}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`prettify_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
+                  <RadioButtonGroup
+                    options={DEDUP_OPTIONS.map((dedupType) => ({
+                      label: capitalize(dedupType),
+                      value: dedupType,
+                      description: LogsDedupDescription[dedupType],
+                    }))}
+                    value={dedupStrategy}
+                    onChange={this.onChangeDedup}
+                    className={styles.radioButtons}
+                  />
+                </InlineField>
+              </InlineFieldRow>
+
+              <div>
+                <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
+                  <RadioButtonGroup
+                    disabled={isFlipping}
+                    options={[
+                      {
+                        label: 'Newest first',
+                        value: LogsSortOrder.Descending,
+                        description: 'Show results newest to oldest',
+                      },
+                      {
+                        label: 'Oldest first',
+                        value: LogsSortOrder.Ascending,
+                        description: 'Show results oldest to newest',
+                      },
+                    ]}
+                    value={logsSortOrder}
+                    onChange={this.onChangeLogsSortOrder}
+                    className={styles.radioButtons}
+                  />
+                </InlineField>
+              </div>
             </div>
-          </div>
+          )}
           <div ref={this.topLogsRef} />
           <LogsMetaRow
             logRows={logRows}
@@ -532,47 +654,70 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows">
-              <LogRows
-                logRows={logRows}
-                deduplicatedRows={dedupedRows}
-                dedupStrategy={dedupStrategy}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                showContextToggle={showContextToggle}
-                showLabels={showLabels}
-                showTime={showTime}
-                enableLogDetails={true}
-                forceEscape={forceEscape}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                displayedFields={displayedFields}
-                onClickShowField={this.showField}
-                onClickHideField={this.hideField}
-                app={CoreApp.Explore}
-                onLogRowHover={this.onLogRowHover}
-                onOpenContext={this.onOpenContext}
-              />
-              {!loading && !hasData && !scanning && (
+            {this.state.visualisationType === 'table' && hasData && (
+              <div className={styles.logRows} data-testid="logRowsTable">
+                {/* Width should be full width minus logsnavigation and padding */}
+                <LogsTable
+                  rows={logRows}
+                  logsSortOrder={this.state.logsSortOrder}
+                  range={this.props.range}
+                  splitOpen={this.props.splitOpen}
+                  timeZone={timeZone}
+                  width={width - 80}
+                  logsFrames={this.props.logsFrames}
+                />
+              </div>
+            )}
+            {this.state.visualisationType === 'logs' && hasData && (
+              <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
+                <LogRows
+                  logRows={logRows}
+                  deduplicatedRows={dedupedRows}
+                  dedupStrategy={dedupStrategy}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  showContextToggle={showContextToggle}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  enableLogDetails={true}
+                  forceEscape={forceEscape}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
+                  displayedFields={displayedFields}
+                  onClickShowField={this.showField}
+                  onClickHideField={this.hideField}
+                  app={CoreApp.Explore}
+                  onLogRowHover={this.onLogRowHover}
+                  onOpenContext={this.onOpenContext}
+                  onPermalinkClick={this.onPermalinkClick}
+                  permalinkedRowId={this.props.panelState?.logs?.id}
+                  scrollIntoView={this.scrollIntoView}
+                />
+              </div>
+            )}
+            {!loading && !hasData && !scanning && (
+              <div className={styles.logRows}>
                 <div className={styles.noData}>
                   No logs found.
                   <Button size="sm" variant="secondary" onClick={this.onClickScan}>
                     Scan for older logs
                   </Button>
                 </div>
-              )}
-              {scanning && (
+              </div>
+            )}
+            {scanning && (
+              <div className={styles.logRows}>
                 <div className={styles.noData}>
                   <span>{scanText}</span>
                   <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
                     Stop scan
                   </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
             <LogsNavigation
               logsSortOrder={logsSortOrder}
               visibleRange={navigationRange ?? absoluteRange}
@@ -632,9 +777,18 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       justify-content: space-between;
     `,
     logRows: css`
-      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
       overflow-y: visible;
       width: 100%;
+      ${scrollableLogsContainer && 'max-height: calc(100vh - 170px);'}
+    `,
+    visualisationType: css`
+      display: flex;
+      flex: 1;
+      justify-content: space-between;
+    `,
+    visualisationTypeRadio: css`
+      margin: 0 0 0 ${theme.spacing(1)};
     `,
   };
 };
