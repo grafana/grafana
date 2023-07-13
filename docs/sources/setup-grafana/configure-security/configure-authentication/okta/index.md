@@ -58,7 +58,7 @@ To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integr
    c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
-1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization-enterprise-only" >}}).
 1. Restart Grafana.
 
    You should now see a Okta OAuth2 login button on the login page and be able to log in or sign up with your OAuth2 provider.
