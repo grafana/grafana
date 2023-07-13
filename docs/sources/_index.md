@@ -5,12 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/setup-grafana/configure-security/export-logs/**
-    labels:
-      products:
-        - cloud
-        - oss
-  - _target:
       path: /docs/grafana/*/troubleshooting/**
     labels:
       products:

@@ -9,8 +9,8 @@ keywords:
   - enterprise
 labels:
   products:
+    - cloud
     - enterprise
-    - oss
 title: Export logs of usage insights
 weight: 900
 ---
