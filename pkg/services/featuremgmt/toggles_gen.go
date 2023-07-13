@@ -247,6 +247,10 @@ const (
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
 
+	// FlagLokiLogsDataplane
+	// Changes logs responses from Loki to be compliant with the dataplane specification.
+	FlagLokiLogsDataplane = "lokiLogsDataplane"
+
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
@@ -371,11 +375,15 @@ const (
 	// Adds RudderStack events to incremental queries
 	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
 
-	// FlagDisableTraceQLStreaming
-	// Disables the option to stream the response of TraceQL queries of the Tempo data source
-	FlagDisableTraceQLStreaming = "disableTraceQLStreaming"
+	// FlagTransformationsRedesign
+	// Enables the transformations redesign
+	FlagTransformationsRedesign = "transformationsRedesign"
 )

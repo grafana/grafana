@@ -127,6 +127,10 @@ If your Grafana configuration does not set `serve_from_sub_path` to true then yo
  rewrite  ^/grafana/(.*)  /$1 break;
 ```
 
+{{% admonition type="note" %}}
+If Grafana is being served from behind a NGINX proxy with TLS termination enabled, then the `root_url` should be set accordingly. For example, if Grafana is being served from `https://example.com/grafana` then the `root_url` should be set to `https://example.com/grafana/` or `https://%(domain)s/grafana/` (and the corresponding `domain` should be set to `example.com`) in the `server` section of the Grafana configuration file. The `protocol` setting should be set to `http`, because the TLS handshake is being handled by NGINX.
+{{% /admonition %}}
+
 ## Configure HAProxy
 
 To configure HAProxy to serve Grafana under a _sub path_:

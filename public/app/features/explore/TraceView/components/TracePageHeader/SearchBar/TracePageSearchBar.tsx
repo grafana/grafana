@@ -20,8 +20,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import SearchBarInput from '../common/SearchBarInput';
-import { ubFlexAuto, ubJustifyEnd } from '../uberUtilityStyles';
+import SearchBarInput from '../../common/SearchBarInput';
+import { ubFlexAuto, ubJustifyEnd } from '../../uberUtilityStyles';
 
 // eslint-disable-next-line no-duplicate-imports
 
