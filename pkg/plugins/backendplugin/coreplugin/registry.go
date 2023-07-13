@@ -52,6 +52,20 @@ func init() {
 	// Non-optimal global solution to replace plugin SDK default loggers for core plugins.
 	sdklog.DefaultLogger = &logWrapper{logger: log.New("plugin.coreplugin")}
 	backend.Logger = sdklog.DefaultLogger
+	backend.NewLoggerWith = func(args ...interface{}) sdklog.Logger {
+		if len(args) > 0 {
+			// Obtain logger name from args.
+			// This assumes that the first argument will be the logger name.
+			if s, ok := args[0].(string); ok && s == "logger" {
+				l := &logWrapper{logger: log.New(args[1].(string))}
+				if len(args) > 2 {
+					return l.With(args[2:]...)
+				}
+				return l
+			}
+		}
+		return sdklog.DefaultLogger
+	}
 }
 
 type Registry struct {

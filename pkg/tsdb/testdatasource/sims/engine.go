@@ -59,7 +59,7 @@ func NewSimulationEngine() (*SimulationEngine, error) {
 	s := &SimulationEngine{
 		registry: make(map[string]simulationInfo),
 		running:  make(map[string]Simulation),
-		logger:   backend.Logger.With("tsdb.sims"),
+		logger:   backend.NewLoggerWith("logger", "tsdb.sims"),
 	}
 	// Initialize each type
 	initializers := []simulationInitializer{

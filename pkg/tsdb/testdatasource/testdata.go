@@ -27,7 +27,7 @@ func ProvideService() *Service {
 			data.NewField("Time", nil, make([]time.Time, 1)),
 			data.NewField("Value", nil, make([]float64, 1)),
 		),
-		logger: backend.Logger.With("tsdb.testdata"),
+		logger: backend.NewLoggerWith("logger", "tsdb.testdata"),
 	}
 
 	var err error
