@@ -264,7 +264,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/go-mssqldb v0.9.1 // @grafana/grafana-bi-squad
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
-	github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8 // @grafana/grafana-app-platform-squad
+	github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8 // @grafana/grafana-as-code
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend
