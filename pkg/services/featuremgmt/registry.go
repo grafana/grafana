@@ -412,6 +412,12 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:        "lokiLogsDataplane",
+			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "dataplaneFrontendFallback",
 			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
 			Stage:        FeatureStageGeneralAvailability,
@@ -640,6 +646,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "mlExpressions",
+			Description:  "Enable support for Machine Learning in server-side expressions",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
 		},
 	}
 )
