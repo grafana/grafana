@@ -13,7 +13,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
 replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 
 // contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8
+replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055
 
 // For some insane reason, client-go seems to have a broken v12.0.0 tag on it that forces us to
 // hoist a replace statement.
@@ -59,7 +59,7 @@ require (
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 // @grafana/alerting-squad-backend
-	github.com/grafana/cuetsy v0.1.9 // @grafana/grafana-as-code
+	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.15.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.165.0 // @grafana/alerting-squad-backend
@@ -238,7 +238,7 @@ require (
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
 	github.com/getkin/kin-openapi v0.115.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery 
+	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/dskit v0.0.0-20230620150242-3dc2113b720d // @grafana/backend-platform
 	github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 // @grafana/observability-traces-and-profiling
@@ -260,11 +260,11 @@ require (
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
 	github.com/go-jose/go-jose/v3 v3.0.0 // @grafana/backend-platform
-	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad // @grafana/observability-metrics
+	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/go-mssqldb v0.9.1 // @grafana/grafana-bi-squad
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
-	github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8 // @grafana/grafana-as-code
+	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend

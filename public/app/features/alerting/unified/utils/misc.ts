@@ -102,7 +102,15 @@ export function makeAMLink(path: string, alertManagerName?: string, options?: UR
   return `${path}?${search.toString()}`;
 }
 
+export const escapeQuotes = (input: string) => input.replace(/\"/g, '\\"');
+
+export function wrapWithQuotes(input: string) {
+  const alreadyWrapped = input.startsWith('"') && input.endsWith('"');
+  return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
+}
+
 export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
+  // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
   const labels: Labels = {
     alertname: rule.name,
     ...rule.labels,
