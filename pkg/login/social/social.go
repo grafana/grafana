@@ -284,6 +284,7 @@ func (b *BasicUserInfo) String() string {
 		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups)
 }
 
+//go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ../socialtest/
 type SocialConnector interface {
 	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool

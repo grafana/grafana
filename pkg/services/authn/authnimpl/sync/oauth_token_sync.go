@@ -54,9 +54,9 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	}
 
 	// if we recently have performed this it would be cached, so we can skip the hook
-	// if _, ok := s.cache.Get(identity.ID); ok {
-	// 	return nil
-	// }
+	if _, ok := s.cache.Get(identity.ID); ok {
+		return nil
+	}
 
 	token, exists, _ := s.service.HasOAuthEntry(ctx, &user.SignedInUser{UserID: id})
 	// user is not authenticated through oauth so skip further checks

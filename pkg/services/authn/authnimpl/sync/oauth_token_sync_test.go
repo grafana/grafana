@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -118,11 +120,18 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				},
 			}
 
+			socialService := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: &social.OAuthInfo{
+					UseRefreshToken: true,
+				},
+			}
+
 			sync := &OAuthTokenSync{
 				log:            log.NewNopLogger(),
 				cache:          localcache.New(0, 0),
 				service:        service,
 				sessionService: sessionService,
+				socialService:  socialService,
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)
