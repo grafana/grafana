@@ -22,17 +22,14 @@ type ResultsTableProps = {
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, disableTextWrap } = props;
+  const { metrics, onChange, query, state, disableTextWrap } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
 
   function selectMetric(metric: MetricData) {
-    if (metric.value) {
-      onChange({ ...query, metric: metric.value });
-      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
-      onClose();
-    }
+    onChange({ ...query, metric: metric.value });
+    tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
   }
 
   function metaRows(metric: MetricData) {
@@ -167,8 +164,8 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td>
                     <Button
                       size="md"
-                      variant="secondary"
-                      onClick={() => selectMetric(metric)}
+                      variant={`${metric?.value === query.metric ? 'success' : 'secondary'}`}
+                      onClick={() => selectMetric(metric?.value !== query.metric ? metric : { ...metric, value: '' })}
                       className={styles.centerButton}
                     >
                       Select

@@ -31,6 +31,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       }
     `,
     modalMetricsWrapper: css``,
+    submitQueryButton: css``,
     modalLabelsWrapper: css``,
     inputItemFirst: css`
       flex-basis: 40%;

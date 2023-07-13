@@ -2,7 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { SelectableValue } from '@grafana/data';
 
-import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricsData } from '../types';
 
@@ -11,7 +10,7 @@ export const MAXIMUM_RESULTS_PER_PAGE = 1000;
 
 export const stateSlice = createSlice({
   name: 'metrics-modal-state',
-  initialState: initialState(),
+  initialState: initialState({ labels: [], metric: '', operations: [] }),
   reducers: {
     filterMetricsBackend: (
       state,
@@ -19,11 +18,15 @@ export const stateSlice = createSlice({
         metrics: MetricsData;
         filteredMetricCount: number;
         isLoading: boolean;
+        metricsStale?: boolean;
       }>
     ) => {
       state.metrics = action.payload.metrics;
       state.filteredMetricCount = action.payload.filteredMetricCount;
       state.isLoading = action.payload.isLoading;
+      if (action.payload.metricsStale !== undefined) {
+        state.metricsStale = action.payload.metricsStale;
+      }
     },
     buildLabels: (state, action: PayloadAction<MetricsLabelsData>) => {
       state.isLoading = action.payload.isLoading;
@@ -42,12 +45,19 @@ export const stateSlice = createSlice({
     clear: (state) => {
       state.metrics = [];
       state.pageNum = 1;
-      state.selectedLabelValues = [];
+      state.query.metric = '';
+      state.query.labels = [];
       state.metricsStale = true;
     },
     setLabelValues: (state, action: PayloadAction<MetricsLabelValuesData>) => {
       state.isLoading = action.payload.isLoading;
       state.labelValues[action.payload.labelName] = action.payload.labelValues;
+    },
+    setQuery: (state, action: PayloadAction<{ query: PromVisualQuery; refreshMetrics?: boolean }>) => {
+      state.query = { ...state.query, ...action.payload.query };
+      if (action.payload.refreshMetrics) {
+        state.metricsStale = true;
+      }
     },
     setSelectedLabelValue: (
       state,
@@ -57,7 +67,7 @@ export const stateSlice = createSlice({
         checked: boolean;
       }>
     ) => {
-      const existingLabel = state.selectedLabelValues.find((label) => label.label === action.payload.labelName);
+      const existingLabel = state.query.labels.find((label) => label.label === action.payload.labelName);
       const numberOfExistingValues = existingLabel ? existingLabel.value?.split('|')?.length : 0;
 
       if (action.payload.checked) {
@@ -67,7 +77,7 @@ export const stateSlice = createSlice({
           existingLabel.value = existingLabel.value + '|' + action.payload.labelValue;
         } else {
           // No values for this label yet, so add it
-          state.selectedLabelValues.push({
+          state.query.labels.push({
             label: action.payload.labelName,
             value: action.payload.labelValue,
             op: '=',
@@ -85,14 +95,15 @@ export const stateSlice = createSlice({
             existingLabel.op = '=';
           }
         } else {
-          state.selectedLabelValues.splice(
-            state.selectedLabelValues.findIndex(
+          state.query.labels.splice(
+            state.query.labels.findIndex(
               (label) => label.label === action.payload.labelName && label.value.includes(action.payload.labelValue)
             ),
             1
           );
         }
       }
+      state.metricsStale = true;
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -152,7 +163,8 @@ export const stateSlice = createSlice({
  * Initial state for the metrics explorer
  * @returns
  */
-export function initialState(query?: PromVisualQuery): MetricsModalState {
+export function initialState(query: PromVisualQuery): MetricsModalState {
+  console.log('initial state');
   return {
     isLoading: true,
     metrics: [],
@@ -177,9 +189,12 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     labelSearchQuery: '',
     labelNames: [],
     labelValues: {},
-    // @todo refactor to use QueryBuilderLabelFilter
-    selectedLabelValues: query?.labels ?? [],
     metricsStale: false,
+    labelNamesStale: false,
+    query: query,
+    initialQuery: query,
+    initialMetrics: [],
+    staleLabelValues: [],
   };
 }
 
@@ -198,12 +213,14 @@ export interface MetricsModalState {
    * it is reduced by the backend search.
    */
   metrics: MetricsData;
+  /** The initial metrics state, needed for reset */
+  initialMetrics: MetricsData;
   /** List of label names */
   labelNames: string[];
   /** Record of label values, index is the label name */
   labelValues: Record<LabelName, LabelValue[]>;
   /** Map of selected label names to values */
-  selectedLabelValues: QueryBuilderLabelFilter[];
+  // selectedLabels: QueryBuilderLabelFilter[];
   /** Field for disabling type select and switches that rely on metadata */
   hasMetadata: boolean;
   /** Used to display metrics and help with fuzzy order */
@@ -242,8 +259,14 @@ export interface MetricsModalState {
   showAdditionalSettings: boolean;
   /** Label search text */
   labelSearchQuery: string;
-  /** mark when the metrics are stale */
+  /** mark when the metrics are stale @todo remove? */
   metricsStale: boolean;
+  labelNamesStale: boolean;
+  staleLabelValues: LabelValue[];
+  /** The pending query changes */
+  query: PromVisualQuery;
+  /** The initial query state, needed for reset */
+  initialQuery: PromVisualQuery;
 }
 
 /**

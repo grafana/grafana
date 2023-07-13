@@ -4,9 +4,10 @@ import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Checkbox, CollapsableSection, Input, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, CollapsableSection, Input, Modal, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
+import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
@@ -56,15 +57,25 @@ const {
   setLabelValues,
   setSelectedLabelValue,
   clear,
+  setQuery,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
-  const { datasource, isOpen, onClose, onChange, query, initialMetrics } = props;
+  const { datasource, isOpen, onClose, onChange: onChangeParent, query } = props;
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query));
 
   const theme = useTheme2();
   const styles = getStyles(theme, state.disableTextWrap);
+
+  const onChange = (query: PromVisualQuery) => {
+    dispatch(setQuery({ query }));
+  };
+
+  const onRevert = () => {
+    dispatch(setQuery({ query: state.initialQuery }));
+    onChangeParent(state.initialQuery);
+  };
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -72,7 +83,13 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
     dispatch(setIsLoading(true));
-    const data: MetricsModalMetadata = await setMetrics(datasource, query, initialMetrics);
+    // console.log('query', state.query)
+    console.log('initialMetrics', state.initialMetrics);
+    const data: MetricsModalMetadata = await setMetrics(
+      datasource,
+      state.initialMetrics.map((metric) => metric.value)
+    );
+    console.log('MetricsModalMetadata', data);
     dispatch(
       buildMetrics({
         isLoading: false,
@@ -84,21 +101,46 @@ export const MetricsModal = (props: MetricsModalProps) => {
         filteredMetricCount: data.metrics.length,
       })
     );
-  }, [query, datasource, initialMetrics]);
+  }, [datasource, state.initialMetrics]);
+
+  useEffect(() => {
+    if (state.metricsStale) {
+      fetchMetrics(state.fuzzySearchQuery);
+    }
+
+    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.metricsStale]);
+
+  useEffect(() => {
+    if (state.labelNamesStale) {
+      getLabelNames(state.query.metric, datasource);
+    }
+
+    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.labelNamesStale]);
+
+  useEffect(() => {
+    if (state.staleLabelValues.length) {
+    }
+    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.staleLabelValues]);
 
   /**
    * Get label names
    */
   const updateLabels = useCallback(async () => {
     dispatch(setIsLoading(true));
-    const data = await getLabelNames(query.metric, datasource);
+    const data = await getLabelNames(state.query.metric, datasource);
     dispatch(
       buildLabels({
         isLoading: false,
         labelNames: data,
       })
     );
-  }, [query.metric, datasource]);
+  }, [state.query.metric, datasource]);
 
   useEffect(() => {
     updateMetricsMetadata();
@@ -109,10 +151,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
   }, [updateLabels]);
 
   useEffect(() => {
-    if (state.metricsStale === true) {
-      updateMetricsMetadata();
-    }
-  }, [state.metricsStale, updateMetricsMetadata]);
+    updateMetricsMetadata();
+  }, [updateMetricsMetadata]);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
@@ -122,6 +162,24 @@ export const MetricsModal = (props: MetricsModalProps) => {
     };
   });
 
+  const fetchMetrics = useCallback(
+    async (metricText: string) => {
+      console.log('metricText', metricText);
+      const metrics = await getBackendSearchMetrics(metricText, state.query.labels, datasource);
+      console.log('metrics', metrics);
+      dispatch(
+        filterMetricsBackend({
+          metrics: metrics,
+          filteredMetricCount: metrics.length,
+          isLoading: false,
+          metricsStale: false,
+        })
+      );
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [datasource, state.query.labels, state.query.metric]
+  );
+
   /**
    * The backend debounced search
    */
@@ -130,17 +188,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
       debounce(async (metricText: string) => {
         dispatch(setIsLoading(true));
 
-        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource);
-
-        dispatch(
-          filterMetricsBackend({
-            metrics: metrics,
-            filteredMetricCount: metrics.length,
-            isLoading: false,
-          })
-        );
+        await fetchMetrics(metricText);
       }, datasource.getDebounceTimeInMilliseconds()),
-    [datasource, query]
+    [datasource, fetchMetrics]
   );
 
   function fuzzyNameDispatch(haystackData: string[][]) {
@@ -152,10 +202,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
   }
 
   async function getLabelValues(labelName: string): Promise<string[]> {
-    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, query.metric);
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, state.query.metric);
   }
 
-  function searchCallback(query: string, fullMetaSearchVal: boolean) {
+  function metricsSearchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
       // get all metrics data if a user erases everything in the input
       updateMetricsMetadata();
@@ -172,6 +222,14 @@ export const MetricsModal = (props: MetricsModalProps) => {
     }
   }
 
+  const submitQuery = () => {
+    onChangeParent({
+      ...query,
+      ...state.query,
+    });
+    onClose();
+  };
+
   /* Settings switches */
   const additionalSettings = (
     <AdditionalSettings
@@ -179,22 +237,22 @@ export const MetricsModal = (props: MetricsModalProps) => {
       onChangeFullMetaSearch={() => {
         const newVal = !state.fullMetaSearch;
         dispatch(setFullMetaSearch(newVal));
-        onChange({ ...query, fullMetaSearch: newVal });
-        searchCallback(state.fuzzySearchQuery, newVal);
+        onChange({ ...state.query, fullMetaSearch: newVal });
+        metricsSearchCallback(state.fuzzySearchQuery, newVal);
       }}
       onChangeIncludeNullMetadata={() => {
         dispatch(setIncludeNullMetadata(!state.includeNullMetadata));
-        onChange({ ...query, includeNullMetadata: !state.includeNullMetadata });
+        onChange({ ...state.query, includeNullMetadata: !state.includeNullMetadata });
       }}
       onChangeDisableTextWrap={() => {
         dispatch(setDisableTextWrap());
-        onChange({ ...query, disableTextWrap: !state.disableTextWrap });
+        onChange({ ...state.query, disableTextWrap: !state.disableTextWrap });
         tracking('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', state, '');
       }}
       onChangeUseBackend={() => {
         const newVal = !state.useBackend;
         dispatch(setUseBackend(newVal));
-        onChange({ ...query, useBackend: newVal });
+        onChange({ ...state.query, useBackend: newVal });
         if (newVal === false) {
           // rebuild the metrics metadata if we turn off useBackend
           updateMetricsMetadata();
@@ -209,15 +267,17 @@ export const MetricsModal = (props: MetricsModalProps) => {
     />
   );
 
-  console.log('state.selectedLabelValues', state.selectedLabelValues);
-  console.log('state.labelValues', state.labelValues);
+  console.log('state', state);
 
   return (
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
       title="Metrics explorer"
-      onDismiss={onClose}
+      onDismiss={() => {
+        onRevert();
+        onClose();
+      }}
       aria-label="Browse metrics"
       className={styles.modal}
     >
@@ -226,16 +286,16 @@ export const MetricsModal = (props: MetricsModalProps) => {
         <div className={styles.modalMetricsWrapper}>
           <MetricsWrapper
             state={state}
-            searchCallback={searchCallback}
+            searchCallback={metricsSearchCallback}
             options={typeOptions}
             content={additionalSettings}
-            query={query}
+            query={state.query} /* @todo fix the hack */
             onChange={onChange}
             onClose={onClose}
             onFuzzySearchQuery={(e) => {
               const value = e.currentTarget.value ?? '';
               dispatch(setFuzzySearchQuery(value));
-              searchCallback(value, state.fullMetaSearch);
+              metricsSearchCallback(value, state.fullMetaSearch);
             }}
             onSetSelectedTypes={(v) => dispatch(setSelectedTypes(v))}
             onShowAdditionalSettings={() => dispatch(showAdditionalSettings())}
@@ -267,7 +327,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 onInput={(e) => {
                   const value = e.currentTarget.value ?? '';
                   dispatch(setLabelSearchQuery(value));
-                  searchCallback(value, state.fullMetaSearch);
+                  metricsSearchCallback(value, state.fullMetaSearch);
                 }}
               />
             </div>
@@ -310,8 +370,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
                     labelName={labelName}
                     labelValue={labelValue}
                     checked={
-                      state.selectedLabelValues.some(
-                        (label) =>
+                      state.query.labels.some(
+                        (label: QueryBuilderLabelFilter) =>
                           label.label === labelName && (label.value.includes(labelValue) || label.value === labelValue)
                       ) ?? false
                     }
@@ -320,6 +380,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
               </CollapsableSection>
             ))}
           </div>
+        </div>
+        <div className={styles.submitQueryButton}>
+          <Button onClick={submitQuery}>Use query</Button>
         </div>
       </div>
     </Modal>

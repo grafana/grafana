@@ -15,7 +15,6 @@ const { setFilteredMetricCount } = stateSlice.actions;
 
 export async function setMetrics(
   datasource: PrometheusDatasource,
-  query: PromVisualQuery,
   initialMetrics?: string[]
 ): Promise<MetricsModalMetadata> {
   // metadata is set in the metric select now
@@ -65,6 +64,8 @@ export async function getLabelNames(metric: string, datasource: PrometheusDataso
       labelNames = datasource.languageProvider.getLabelKeys();
     }
   }
+
+  // dispatch set the label names as fresh
   return labelNames;
 }
 
@@ -195,13 +196,14 @@ export async function getBackendSearchMetrics(
   labels: QueryBuilderLabelFilter[],
   datasource: PrometheusDatasource
 ): Promise<Array<{ value: string }>> {
-  const queryString = regexifyLabelValuesQueryString(metricText);
+  // If there's no querystring, we're asking for all of the results.
+  const queryString = metricText !== '' ? regexifyLabelValuesQueryString(metricText) : '';
 
   const labelsParams = labels.map((label) => {
     return `,${label.label}="${label.value}"`;
   });
 
-  const params = `label_values({__name__=~".*${queryString}"${labels ? labelsParams.join() : ''}},__name__)`;
+  const params = `label_values({__name__=~".+${queryString}"${labels ? labelsParams.join() : ''}},__name__)`;
 
   const results = datasource.metricFindQuery(params);
 
