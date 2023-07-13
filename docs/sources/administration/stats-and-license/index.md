@@ -13,8 +13,8 @@ keywords:
   - settings
 labels:
   products:
+    - cloud
     - enterprise
-    - oss
 title: View server statistics and license
 weight: 400
 ---

@@ -5,12 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/administration/stats-and-license/**
-    labels:
-      products:
-        - enterprise
-        - oss
-  - _target:
       path: /docs/grafana/*/alerting/**
     labels:
       products:
