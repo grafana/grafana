@@ -108,6 +108,12 @@ export const MetricsModal = (props: MetricsModalProps) => {
     updateLabels();
   }, [updateLabels]);
 
+  useEffect(() => {
+    if (state.metricsStale === true) {
+      updateMetricsMetadata();
+    }
+  }, [state.metricsStale, updateMetricsMetadata]);
+
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
       value: t.value,

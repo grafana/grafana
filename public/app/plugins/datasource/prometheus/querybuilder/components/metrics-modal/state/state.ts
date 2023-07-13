@@ -37,11 +37,13 @@ export const stateSlice = createSlice({
       state.nameHaystackDictionary = action.payload.nameHaystackDictionary;
       state.totalMetricCount = action.payload.totalMetricCount;
       state.filteredMetricCount = action.payload.filteredMetricCount;
+      state.metricsStale = false;
     },
     clear: (state) => {
       state.metrics = [];
       state.pageNum = 1;
       state.selectedLabelValues = [];
+      state.metricsStale = true;
     },
     setLabelValues: (state, action: PayloadAction<MetricsLabelValuesData>) => {
       state.isLoading = action.payload.isLoading;
@@ -177,6 +179,7 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     labelValues: {},
     // @todo refactor to use QueryBuilderLabelFilter
     selectedLabelValues: query?.labels ?? [],
+    metricsStale: false,
   };
 }
 
@@ -239,6 +242,8 @@ export interface MetricsModalState {
   showAdditionalSettings: boolean;
   /** Label search text */
   labelSearchQuery: string;
+  /** mark when the metrics are stale */
+  metricsStale: boolean;
 }
 
 /**
