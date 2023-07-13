@@ -37,7 +37,7 @@ To follow this guide:
 - Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
-## Integrate an OAuth2 provider with Grafana
+## Steps
 
 To integrate your OAuth2 provider with Grafana using our generic OAuth2 authentication, follow these steps:
 
@@ -46,7 +46,7 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
    Ensure that the callback URL is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/generic_oauth`.
 
-   For the callback URL to be correct, it might be necessary to set the `root_url` option to `[server]`, for example, if you are serving Grafana behind a proxy.
+   For the callback URL to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
 
 1. Refer to the following table to update field values located in the `[auth.generic_oauth]` section of the Grafana configuration file:
 
@@ -54,9 +54,7 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
    | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your OAuth2 app.                                                                                                                     |
    | `auth_url`                   | The authorization endpoint of your OAuth2 provider.                                                                                                                                               |
-   | `token_url`                  | The token endpoint of your OAuth2 provider.                                                                                                                                                       |
    | `api_url`                    | The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo). |
-   | `token_url`                  | The token endpoint of your OAuth2 provider.                                                                                                                                                       |
    | `enabled`                    | Enables generic OAuth2 authentication. Set this value to `true`.                                                                                                                                  |
 
    Review the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
@@ -277,6 +275,7 @@ allow_assign_grafana_admin = true
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
 By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
 Generic OAuth2 groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options]({{< relref "#configuration-options" >}}).
