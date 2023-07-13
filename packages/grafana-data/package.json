@@ -49,7 +49,7 @@
     "marked": "4.2.12",
     "moment": "2.29.4",
     "moment-timezone": "0.5.41",
-    "ol": "7.2.2",
+    "ol": "7.4.0",
     "papaparse": "5.4.1",
     "react-use": "17.4.0",
     "regenerator-runtime": "0.13.11",

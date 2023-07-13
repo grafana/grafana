@@ -3768,7 +3768,7 @@ __metadata:
     marked: 4.2.12
     moment: 2.29.4
     moment-timezone: 0.5.41
-    ol: 7.2.2
+    ol: 7.4.0
     papaparse: 5.4.1
     react: 18.2.0
     react-dom: 18.2.0
@@ -4204,7 +4204,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.4
     monaco-editor: 0.34.0
-    ol: 7.2.2
+    ol: 7.4.0
     prismjs: 1.29.0
     process: ^0.11.10
     rc-cascader: 3.12.1
@@ -19206,7 +19206,7 @@ __metadata:
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
-    ol: 7.2.2
+    ol: 7.4.0
     ol-ext: 4.0.6
     papaparse: 5.4.1
     pluralize: ^8.0.0
@@ -24737,26 +24737,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:^9.2.0":
-  version: 9.5.0
-  resolution: "ol-mapbox-style@npm:9.5.0"
+"ol-mapbox-style@npm:^10.1.0":
+  version: 10.6.0
+  resolution: "ol-mapbox-style@npm:10.6.0"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.23.1
     mapbox-to-css-font: ^2.4.1
-  checksum: b85103c0d8e2a6338ce90aedaccf1597a768f9e06baee13b41903868712639e4516f662d88ee5a3f8f2e4b84788f5a5700190fe9aa244bdd67758fd8416a0e31
+    ol: ^7.3.0
+  checksum: 41ed5cc4c3a65fb141471ba69876e459dae196667bc3d62b39974a4b3684c72d6f815a5e97cb42221d82f9f2bf90946b968c68ac5761b35ac9a97ed7da7f5561
   languageName: node
   linkType: hard
 
-"ol@npm:7.2.2":
-  version: 7.2.2
-  resolution: "ol@npm:7.2.2"
+"ol@npm:7.4.0, ol@npm:^7.3.0":
+  version: 7.4.0
+  resolution: "ol@npm:7.4.0"
   dependencies:
     earcut: ^2.2.3
     geotiff: ^2.0.7
-    ol-mapbox-style: ^9.2.0
+    ol-mapbox-style: ^10.1.0
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 025b58ad79d8b3f1036632306cc2f38fa02aa6e18504916ec4242b5b4f5672d8068d8f45190896241cb1975d331f993b512b60b667e92e9fa126bfbb6b87557d
+  checksum: 0cc8cfbbb0fb2f2d6037e53e56cfbe24eabce647eefc73e03b3ee285973ee39f6ec45276fb2b3ef877878b3f28b75914cac054e036ea3b82e1314d5eeb28e723
   languageName: node
   linkType: hard
 
