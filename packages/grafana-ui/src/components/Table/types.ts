@@ -7,7 +7,7 @@ import * as schema from '@grafana/schema';
 
 import { TableStyles } from './styles';
 
-export { type FieldTextAlignment, TableCellBackgroundDisplayMode } from '@grafana/schema';
+export { type FieldTextAlignment, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -87,6 +87,10 @@ export interface Props {
   timeRange?: TimeRange;
 }
 
+/**
+ * @alpha
+ * Props that will be passed to the TableCustomCellOptions.cellComponent when rendered.
+ */
 export interface CustomCellRendererProps {
   field: Field;
   rowIndex: number;
@@ -96,7 +100,10 @@ export interface CustomCellRendererProps {
   value: unknown;
 }
 
-// Can be used to define completely custom cell contents by providing a custom cellComponent.
+/**
+ * @alpha
+ * Can be used to define completely custom cell contents by providing a custom cellComponent.
+ */
 export interface TableCustomCellOptions {
   cellComponent: FC<CustomCellRendererProps>;
   type: schema.TableCellDisplayMode.Custom;
