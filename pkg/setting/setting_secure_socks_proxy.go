@@ -3,6 +3,7 @@ package setting
 import (
 	"errors"
 
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"gopkg.in/ini.v1"
 )
 
@@ -41,6 +42,15 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	} else if s.ProxyAddress == "" {
 		return s, errors.New("proxy address required")
 	}
+
+	sdkproxy.SetSecureSocksProxyConfig(&sdkproxy.SecureSocksProxyConfig{
+		Enabled:      true,
+		ClientCert:   s.ClientCert,
+		ClientKey:    s.ClientKey,
+		RootCA:       s.RootCA,
+		ProxyAddress: s.ProxyAddress,
+		ServerName:   s.ServerName,
+	})
 
 	return s, nil
 }
