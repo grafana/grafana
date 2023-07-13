@@ -132,7 +132,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedEmail:     "gitlab-editor@example.org",
 			ExpectedRole:      "Viewer",
 		},
-		{ // Edge case, no attribute path with strict mode => User has an empty role
+		{ // Edge case, no attribute path with strict mode => Error
 			Name:              "Strict mode with no attribute path",
 			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.RoleViewer},
 			UserRespBody:      editorUserRespBody,
