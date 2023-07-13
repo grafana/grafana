@@ -103,7 +103,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	}
 
 	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
-	extractedArchive, err := pluginFs.Extract(ctx, pluginID, archive.File)
+	extractedArchive, err := pluginFs.Extract(ctx, pluginID, storage.SimpleDirNameGeneratorFunc, archive.File)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		_, err = pluginFs.Extract(ctx, dep.ID, d.File)
+		_, err = pluginFs.Extract(ctx, dep.ID, storage.SimpleDirNameGeneratorFunc, d.File)
 		if err != nil {
 			return err
 		}

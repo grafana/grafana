@@ -32,31 +32,20 @@ func FileSystem(logger log.PrettyLogger, pluginsDir string) *FS {
 	}
 }
 
-func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.ReadCloser) (
+var SimpleDirNameGeneratorFunc = func(pluginID string) string {
+	return pluginID
+}
+
+func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameGeneratorFunc, pluginArchive *zip.ReadCloser) (
 	*ExtractedPluginArchive, error) {
-	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID)
+	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID, dirNameFunc)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to extract plugin archive", err)
 	}
 
-	pluginJSON, err := readPluginJSON(pluginID, pluginDir)
+	pluginJSON, err := readPluginJSON(pluginDir)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to convert to plugin DTO", err)
-	}
-
-	// rename folder to $pluginID-$version
-	if pluginJSON.Info.Version != "" {
-		pluginPath := filepath.Join(filepath.Dir(pluginDir), fmt.Sprintf("%s-%s", pluginJSON.ID, pluginJSON.Info.Version))
-		if _, err = os.Stat(pluginPath); errors.Is(err, os.ErrNotExist) {
-			err = os.Rename(pluginDir, pluginPath)
-			if err != nil {
-				fs.log.Warnf("Failed to rename plugin directory %s: %w. Will use generated path %s.", pluginPath, err, pluginDir)
-			} else {
-				pluginDir = pluginPath
-			}
-		} else {
-			fs.log.Warnf("Plugin directory %s already exists. %s v%s might already be installed.", pluginPath, pluginID, pluginJSON.Info.Version)
-		}
 	}
 
 	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", pluginJSON.ID, pluginJSON.Info.Version, pluginDir)
@@ -77,8 +66,8 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, pluginArchive *zip.R
 	}, nil
 }
 
-func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string) (string, error) {
-	pluginDirName := fmt.Sprintf("%s-%s", pluginID, randomString(5))
+func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string, dirNameFunc DirNameGeneratorFunc) (string, error) {
+	pluginDirName := dirNameFunc(pluginID)
 	installDir := filepath.Join(fs.pluginsDir, pluginDirName)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {
 		fs.log.Debugf("Removing existing installation of plugin %s", installDir)
@@ -236,7 +225,7 @@ func removeGitBuildFromName(filename, pluginID string) string {
 	return reGitBuild.ReplaceAllString(filename, pluginID+"/")
 }
 
-func readPluginJSON(pluginID, pluginDir string) (plugins.JSONData, error) {
+func readPluginJSON(pluginDir string) (plugins.JSONData, error) {
 	pluginPath := filepath.Join(pluginDir, "plugin.json")
 
 	// It's safe to ignore gosec warning G304 since the file path suffix is hardcoded
@@ -248,7 +237,7 @@ func readPluginJSON(pluginID, pluginDir string) (plugins.JSONData, error) {
 		// nolint:gosec
 		data, err = os.ReadFile(pluginPath)
 		if err != nil {
-			return plugins.JSONData{}, fmt.Errorf("could not find plugin.json or dist/plugin.json for %s in %s", pluginID, pluginDir)
+			return plugins.JSONData{}, fmt.Errorf("could not find plugin.json or dist/plugin.json for in %s", pluginDir)
 		}
 	}
 
