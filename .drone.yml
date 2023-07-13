@@ -24,7 +24,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -74,13 +74,13 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-starlark .
   depends_on:
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: lint-starlark
 trigger:
   event:
@@ -127,13 +127,13 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: betterer-frontend
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -153,7 +153,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - yarn run ci:test-frontend
@@ -162,7 +162,7 @@ steps:
   - clone-enterprise
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
   event:
@@ -216,7 +216,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -225,7 +225,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -236,7 +236,7 @@ steps:
   - clone-enterprise
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: lint-frontend
 - commands:
   - |-
@@ -250,7 +250,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-i18n
 trigger:
   event:
@@ -304,7 +304,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -315,7 +315,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -325,7 +325,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -334,19 +334,19 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend
 - commands:
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -354,7 +354,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
   event:
@@ -403,7 +403,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -423,13 +423,13 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - make gen-go
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update && apt-get install make
@@ -438,12 +438,12 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
   failure: ignore
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: validate-modfile
 trigger:
   event:
@@ -499,7 +499,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -508,7 +508,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -516,18 +516,18 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -550,7 +550,7 @@ steps:
       from_secret: github_token_pr
     TEST_TAG: v0.0.0-test
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: trigger-test-release
   when:
     branch: main
@@ -578,7 +578,7 @@ steps:
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -587,7 +587,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -598,7 +598,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
@@ -606,7 +606,7 @@ steps:
   - compile-build-cmd
   - yarn-install
   environment: null
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/build package --jobs 8 --edition oss
@@ -617,7 +617,7 @@ steps:
   - build-frontend
   - build-frontend-packages
   environment: null
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package
 - commands:
   - ./scripts/grafana-server/start-server
@@ -630,7 +630,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
@@ -729,7 +729,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-storybook
   when:
     paths:
@@ -740,7 +740,7 @@ steps:
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - yarn wait-on http://$HOST:$PORT
@@ -891,7 +891,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mkdir -p bin
@@ -904,7 +904,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -918,7 +918,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -927,13 +927,13 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update
@@ -950,7 +950,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -967,7 +967,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -984,7 +984,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -994,7 +994,7 @@ steps:
   - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -1004,7 +1004,7 @@ steps:
   - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: memcached-integration-tests
 trigger:
   event:
@@ -1059,7 +1059,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - |-
@@ -1071,7 +1071,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
@@ -1079,7 +1079,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1123,13 +1123,13 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build shellcheck
   depends_on:
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: shellcheck
 trigger:
   event:
@@ -1218,14 +1218,14 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1235,7 +1235,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -1244,20 +1244,20 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - clone-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: sqlite-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
@@ -1268,7 +1268,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
@@ -1278,7 +1278,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
@@ -1288,7 +1288,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-benchmark-integration-tests
 trigger:
   event:
@@ -1333,7 +1333,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - |-
@@ -1345,7 +1345,7 @@ steps:
     wan" > words_to_ignore.txt
   - codespell -I words_to_ignore.txt docs/
   - rm words_to_ignore.txt
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: codespell
 - commands:
   - yarn run prettier:checkDocs
@@ -1353,7 +1353,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: lint-docs
 - commands:
   - mkdir -p /hugo/content/docs/grafana/latest
@@ -1406,13 +1406,13 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -1420,7 +1420,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
   branch: main
@@ -1460,7 +1460,7 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn run prettier:check
@@ -1470,7 +1470,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: lint-frontend
 - commands:
   - |-
@@ -1484,7 +1484,7 @@ steps:
   - yarn run i18n:compile
   depends_on:
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-i18n
 trigger:
   branch: main
@@ -1526,7 +1526,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1535,7 +1535,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -1543,19 +1543,19 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend
 - commands:
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -1563,7 +1563,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
   branch: main
@@ -1605,12 +1605,12 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update && apt-get install make
@@ -1619,12 +1619,12 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
   failure: ignore
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: validate-modfile
 - commands:
   - ./bin/build verify-drone
@@ -1678,7 +1678,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1687,7 +1687,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -1695,25 +1695,25 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -1722,7 +1722,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -1733,7 +1733,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
@@ -1743,7 +1743,7 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
@@ -1761,7 +1761,7 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package
 - commands:
   - ./scripts/grafana-server/start-server
@@ -1774,7 +1774,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
@@ -1873,7 +1873,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-storybook
   when:
     paths:
@@ -1884,7 +1884,7 @@ steps:
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - yarn wait-on http://$HOST:$PORT
@@ -1928,7 +1928,7 @@ steps:
     GRAFANA_MISC_STATS_API_KEY:
       from_secret: grafana_misc_stats_api_key
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: publish-frontend-metrics
   when:
     repo:
@@ -2021,7 +2021,7 @@ steps:
   environment:
     NPM_TOKEN:
       from_secret: npm_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: release-canary-npm-packages
   when:
     paths:
@@ -2142,7 +2142,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -2155,7 +2155,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -2163,13 +2163,13 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update
@@ -2186,7 +2186,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -2203,7 +2203,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -2220,7 +2220,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -2230,7 +2230,7 @@ steps:
   - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -2240,7 +2240,7 @@ steps:
   - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: memcached-integration-tests
 trigger:
   branch: main
@@ -2469,13 +2469,13 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build whatsnew-checker
   depends_on:
   - compile-build-cmd
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: whats-new-checker
 trigger:
   event:
@@ -2525,32 +2525,32 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss ${DRONE_TAG}
@@ -2559,7 +2559,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss ${DRONE_TAG}
@@ -2568,7 +2568,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
@@ -2578,7 +2578,7 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build package --jobs 8 --edition oss  --sign ${DRONE_TAG}
@@ -2596,14 +2596,14 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - ./bin/build build-docker --edition oss --shouldSave
@@ -2642,7 +2642,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
@@ -2715,7 +2715,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-storybook
   when:
     event:
@@ -2774,7 +2774,7 @@ steps:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: store-npm-packages
 trigger:
   event:
@@ -2820,13 +2820,13 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -2834,7 +2834,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
   event:
@@ -2876,7 +2876,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2885,7 +2885,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -2893,19 +2893,19 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend
 - commands:
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -2913,7 +2913,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
   event:
@@ -3028,7 +3028,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3045,7 +3045,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -3053,19 +3053,19 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3075,7 +3075,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -3084,14 +3084,14 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise ${DRONE_TAG}
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -3100,7 +3100,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -3109,7 +3109,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
@@ -3119,7 +3119,7 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise  --sign ${DRONE_TAG}
@@ -3137,14 +3137,14 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - ./bin/build build-docker --edition enterprise --shouldSave
@@ -3184,7 +3184,7 @@ steps:
     ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
@@ -3315,7 +3315,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3332,7 +3332,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -3342,14 +3342,14 @@ steps:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
   - init-enterprise
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -3358,7 +3358,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
   event:
@@ -3398,7 +3398,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mkdir -p bin
@@ -3421,7 +3421,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -3433,7 +3433,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3443,7 +3443,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -3452,19 +3452,19 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend
 - commands:
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -3472,7 +3472,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
   event:
@@ -3609,7 +3609,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -3626,7 +3626,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -3634,19 +3634,19 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3656,7 +3656,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -3665,7 +3665,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise ${DRONE_TAG}
@@ -3674,7 +3674,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
@@ -3684,14 +3684,14 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise2 ${DRONE_TAG}
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend-enterprise2
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise2  --sign ${DRONE_TAG}
@@ -3709,7 +3709,7 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package-enterprise2
 - commands:
   - ./bin/build upload-cdn --edition enterprise2
@@ -3729,7 +3729,7 @@ steps:
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package-enterprise2
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - ./bin/build build-docker --edition enterprise2 --shouldSave
@@ -3870,7 +3870,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -3978,7 +3978,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise
@@ -4053,7 +4053,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise2
@@ -4116,7 +4116,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition enterprise2
@@ -4180,7 +4180,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafanaenterprise
@@ -4231,10 +4231,10 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
+  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -4300,10 +4300,10 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
+  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
   depends_on:
   - compile-build-cmd
   environment:
@@ -4369,12 +4369,12 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - ./bin/build artifacts npm retrieve --tag ${DRONE_TAG}
@@ -4398,7 +4398,7 @@ steps:
     NPM_TOKEN:
       from_secret: npm_token
   failure: ignore
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: release-npm-packages
 trigger:
   event:
@@ -4435,7 +4435,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4526,7 +4526,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -4880,32 +4880,32 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -4914,7 +4914,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -4925,7 +4925,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition oss
@@ -4935,7 +4935,7 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build package --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER} --sign
@@ -4953,14 +4953,14 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - ./bin/build build-docker --edition oss --shouldSave
@@ -4999,7 +4999,7 @@ steps:
   environment:
     ARCH: linux-amd64
     PORT: 3001
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
@@ -5072,7 +5072,7 @@ steps:
   - build-frontend-packages
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-storybook
   when:
     paths:
@@ -5156,13 +5156,13 @@ steps:
 - commands:
   - yarn install --immutable
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -5170,7 +5170,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
   ref:
@@ -5206,7 +5206,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5215,7 +5215,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -5223,19 +5223,19 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend
 - commands:
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -5243,7 +5243,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
   ref:
@@ -5327,7 +5327,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -5335,13 +5335,13 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update
@@ -5358,7 +5358,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -5375,7 +5375,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -5392,7 +5392,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -5402,7 +5402,7 @@ steps:
   - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -5412,7 +5412,7 @@ steps:
   - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: memcached-integration-tests
 trigger:
   ref:
@@ -5520,7 +5520,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -5536,7 +5536,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -5544,19 +5544,19 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5566,7 +5566,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -5575,14 +5575,14 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -5591,7 +5591,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -5602,7 +5602,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
@@ -5612,7 +5612,7 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -5631,14 +5631,14 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package
 - commands:
   - ls dist/*.tar.gz*
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - ./bin/build build-docker --edition enterprise --shouldSave
@@ -5678,7 +5678,7 @@ steps:
     ARCH: linux-amd64
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
@@ -5818,7 +5818,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -5834,7 +5834,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -5844,14 +5844,14 @@ steps:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - yarn betterer ci
   depends_on:
   - init-enterprise
   - yarn-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: betterer-frontend
 - commands:
   - yarn run ci:test-frontend
@@ -5860,7 +5860,7 @@ steps:
   - yarn-install
   environment:
     TEST_MAX_WORKERS: 50%
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
   ref:
@@ -5894,7 +5894,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mkdir -p bin
@@ -5916,7 +5916,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
@@ -5928,7 +5928,7 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5938,7 +5938,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -5947,19 +5947,19 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend
 - commands:
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
@@ -5967,7 +5967,7 @@ steps:
     | grep -o '\(.*\)/' | sort -u)
   depends_on:
   - wire-install
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
   ref:
@@ -6051,7 +6051,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -6067,7 +6067,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -6077,7 +6077,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -6086,13 +6086,13 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update
@@ -6109,7 +6109,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -6126,7 +6126,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -6143,7 +6143,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -6153,7 +6153,7 @@ steps:
   - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -6163,7 +6163,7 @@ steps:
   - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: memcached-integration-tests
 trigger:
   ref:
@@ -6293,7 +6293,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -6309,7 +6309,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -6317,19 +6317,19 @@ steps:
   - init-enterprise
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - make gen-go
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - yarn install --immutable
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -6339,7 +6339,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - ./bin/build build-frontend --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -6348,7 +6348,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend
 - commands:
   - ./bin/build build-frontend-packages --jobs 8 --edition enterprise --build-id ${DRONE_BUILD_NUMBER}
@@ -6359,7 +6359,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-frontend-packages
 - commands:
   - ./bin/build  build-plugins --jobs 8 --edition enterprise
@@ -6369,7 +6369,7 @@ steps:
   environment:
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-plugins
 - commands:
   - ./bin/build build-backend --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
@@ -6377,7 +6377,7 @@ steps:
   depends_on:
   - wire-install
   - compile-build-cmd
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: build-backend-enterprise2
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
@@ -6396,7 +6396,7 @@ steps:
       from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: package-enterprise2
 - commands:
   - ./bin/build upload-cdn --edition enterprise2
@@ -6416,7 +6416,7 @@ steps:
   - cp dist/*.tar.gz* packaging/docker/
   depends_on:
   - package-enterprise2
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: copy-packages-for-docker
 - commands:
   - ./bin/build build-docker --edition enterprise2 --shouldSave
@@ -6593,7 +6593,7 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -6601,13 +6601,13 @@ steps:
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on: []
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update
@@ -6624,7 +6624,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -6641,7 +6641,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -6658,7 +6658,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -6668,7 +6668,7 @@ steps:
   - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -6678,7 +6678,7 @@ steps:
   - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: memcached-integration-tests
 trigger:
   event:
@@ -6772,7 +6772,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: clone-enterprise
 - commands:
   - mv bin/grabpl /tmp/
@@ -6789,7 +6789,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: init-enterprise
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -6799,7 +6799,7 @@ steps:
   - CODEGEN_VERIFY=1 make gen-cue
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-cue
 - commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
@@ -6808,13 +6808,13 @@ steps:
   - CODEGEN_VERIFY=1 make gen-jsonnet
   depends_on:
   - init-enterprise
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
   - verify-gen-cue
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
   - apt-get update
@@ -6831,7 +6831,7 @@ steps:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
     POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: postgres-integration-tests
 - commands:
   - apt-get update
@@ -6848,7 +6848,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-5.7-integration-tests
 - commands:
   - apt-get update
@@ -6865,7 +6865,7 @@ steps:
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: mysql-8.0-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
@@ -6875,7 +6875,7 @@ steps:
   - wire-install
   environment:
     REDIS_URL: redis://redis:6379/0
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
@@ -6885,7 +6885,7 @@ steps:
   - wire-install
   environment:
     MEMCACHED_HOSTS: memcached:11211
-  image: grafana/build-container:1.7.4
+  image: grafana/build-container:1.7.5
   name: memcached-integration-tests
 trigger:
   event:
@@ -7139,11 +7139,11 @@ platform:
 steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.4
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.5
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.4
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.6
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
@@ -7161,11 +7161,11 @@ steps:
   name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.4
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.5
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.4
+  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.6
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
@@ -7208,7 +7208,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.6
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss
@@ -7389,6 +7389,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 40067d8264011b21622962b49317ff7031e721ba59a38b6c5be533b60dcdae77
+hmac: e46187b774e81830bb55dbf9ce1681f60b172a0867dd32cd78927bae56bdf4ae
 
 ...

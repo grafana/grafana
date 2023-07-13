@@ -193,9 +193,9 @@ func ProvideService(cfg *setting.Cfg,
 			ss.socialMap["azuread"] = &SocialAzureAD{
 				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				cache:                cache,
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
 				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
 		}
