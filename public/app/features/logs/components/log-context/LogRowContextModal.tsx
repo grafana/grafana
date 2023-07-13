@@ -156,11 +156,37 @@ const getLoadMoreDirection = (place: Place, sortOrder: LogsSortOrder): LogRowCon
   return LogRowContextQueryDirection.Backward;
 };
 
+type LoadCounter = Record<Place, number>;
+
+const normalizeLogRowRefId = (row: LogRowModel, counter: LoadCounter): LogRowModel => {
+  // the datasoure plugins often create the context-query based on the row's dataframe's refId,
+  // by appending something to it. for example:
+  // - let's say the row's dataframe's refId is "query"
+  // - the datasource plugin will take "query" and append "-context" to it, so it becomes "query-context".
+  // - later we want to load even more lines, so we make a context query
+  // - the datasource plugin does the same transform again, but now the source is "query-context",
+  //   so the new refId becomes "query-context-context"
+  // - next time it becomes "query-context-context-context", and so on.
+  // we do not want refIds to grow unbounded.
+  // to avoid this, we set the refId to a value that does not grow.
+  // on the other hand, the refId is also used in generating the row's UID, so it is useful
+  // when the refId is not always the exact same string, otherwise UID duplication can occur,
+  // which may cause problems.
+  // so we go with an approach where the refId always changes, but does not grow.
+  return {
+    ...row,
+    dataFrame: {
+      ...row.dataFrame,
+      refId: `context_${counter.above}_${counter.below}`,
+    },
+  };
+};
+
 const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
   return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
 };
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 100;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
   row,
@@ -184,6 +210,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
   const aboveLoadingElement = useRef<HTMLDivElement | null>(null);
   const belowLoadingElement = useRef<HTMLDivElement | null>(null);
+
+  const loadCountRef = useRef<LoadCounter>({ above: 0, below: 0 });
 
   const dispatch = useDispatch();
   const theme = useTheme2();
@@ -255,14 +283,24 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   };
 
   const loadMore = async (place: Place, allRows: LogRowModel[]): Promise<LogRowModel[]> => {
+    loadCountRef.current[place] += 1;
     const refRow = allRows.at(place === 'above' ? 0 : -1);
     if (refRow == null) {
       throw new Error('should never happen. the array always contains at least 1 item (the middle row)');
     }
 
+    reportInteraction('grafana_explore_logs_log_context_load_more_called', {
+      datasourceType: refRow.datasourceType,
+      above: loadCountRef.current.above,
+      below: loadCountRef.current.below,
+    });
+
     const direction = getLoadMoreDirection(place, logsSortOrder);
 
-    const result = await getRowContext(refRow, { limit: PAGE_SIZE, direction });
+    const result = await getRowContext(normalizeLogRowRefId(refRow, loadCountRef.current), {
+      limit: PAGE_SIZE,
+      direction,
+    });
     const newRows = dataFrameToLogsModel(result.data).rows;
 
     if (logsSortOrder === LogsSortOrder.Ascending) {

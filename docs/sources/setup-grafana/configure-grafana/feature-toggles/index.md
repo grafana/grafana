@@ -103,6 +103,7 @@ Experimental features might be changed or removed without prior notice.
 | `prometheusResourceBrowserCache`            | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`                  | Query InfluxDB InfluxQL without the proxy                                                                    |
 | `clientTokenRotation`                       | Replaces the current in-request token rotation so that the client initiates the rotation                     |
+| `lokiLogsDataplane`                         | Changes logs responses from Loki to be compliant with the dataplane specification.                           |
 | `disableSSEDataplane`                       | Disables dataplane specific processing in server side expressions.                                           |
 | `alertStateHistoryLokiSecondary`            | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations. |
 | `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                 |
