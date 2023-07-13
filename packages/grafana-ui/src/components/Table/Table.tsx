@@ -266,26 +266,22 @@ export const Table = memo((props: Props) => {
       }
 
       prepareRow(row);
-      // console.log(ariaLabel, row);
 
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {renderSubTables(rowIndex)}
-          {row.cells.map((cell: Cell, index: number) => {
-            // console.log(ariaLabel, 'render cell', cell);
-            return (
-              <TableCell
-                key={index}
-                tableStyles={tableStyles}
-                cell={cell}
-                onCellFilterAdded={onCellFilterAdded}
-                columnIndex={index}
-                columnCount={row.cells.length}
-                timeRange={timeRange}
-              />
-            );
-          })}
+          {row.cells.map((cell: Cell, index: number) => (
+            <TableCell
+              key={index}
+              tableStyles={tableStyles}
+              cell={cell}
+              onCellFilterAdded={onCellFilterAdded}
+              columnIndex={index}
+              columnCount={row.cells.length}
+              timeRange={timeRange}
+            />
+          ))}
         </div>
       );
     },

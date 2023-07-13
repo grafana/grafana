@@ -69,7 +69,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, tableResult.length * 35) + 35);
+    return Math.max(Math.min(600, tableResult[0].length * 35) + 35);
   }
 
   renderLabel = () => {
