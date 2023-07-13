@@ -22,7 +22,7 @@ Data source and panel plugins will show up like normal plugins. The app pages wi
 ### Prerequisites
 
 - Grafana 7.0
-- NodeJS 12.x
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 
