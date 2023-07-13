@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
@@ -31,15 +32,17 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
 
-	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
-			return nil, err
-		}
+	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+		return nil, err
+	}
+
+	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+		return nil, err
 	}
 
 	return service, nil
