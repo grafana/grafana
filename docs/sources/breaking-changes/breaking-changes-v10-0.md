@@ -8,6 +8,7 @@ keywords:
   - release notes
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Breaking changes in Grafana v10.0
