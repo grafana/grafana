@@ -14,6 +14,7 @@ keywords:
   - users
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Manage your Grafana Enterprise license in AWS Marketplace

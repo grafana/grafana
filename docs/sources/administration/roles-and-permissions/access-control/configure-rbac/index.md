@@ -4,6 +4,7 @@ aliases:
 description: Learn how to configure RBAC.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure RBAC

@@ -3,6 +3,7 @@ aliases:
   - ../../manage-users-and-permissions/manage-server-users/change-user-org-permissions/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Change a user's organization permissions

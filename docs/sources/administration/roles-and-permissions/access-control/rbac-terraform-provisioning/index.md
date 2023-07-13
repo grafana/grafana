@@ -5,6 +5,7 @@ description: Learn about RBAC Terraform provisioning and view an example of prov
   configuration for Grafana roles and role assignments.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Provisioning RBAC with Terraform

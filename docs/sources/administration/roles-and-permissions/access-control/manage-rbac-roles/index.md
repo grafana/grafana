@@ -7,6 +7,7 @@ description: Learn how to view permissions associated with roles, create custom 
   and update and delete roles in Grafana.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage RBAC roles

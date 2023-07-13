@@ -4,6 +4,7 @@ aliases:
 description: RBAC troubleshooting guide.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Troubleshooting RBAC

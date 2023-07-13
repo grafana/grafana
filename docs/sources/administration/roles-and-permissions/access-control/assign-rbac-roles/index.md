@@ -6,6 +6,7 @@ aliases:
 description: Learn how to assign RBAC roles to users and teams in Grafana.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Assign RBAC roles

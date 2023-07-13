@@ -5,6 +5,7 @@ aliases:
 description: Learn about Grafana RBAC permissions, actions, and scopes.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: RBAC permissions, actions, and scopes

@@ -9,6 +9,7 @@ keywords:
   - recorded
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Recorded queries

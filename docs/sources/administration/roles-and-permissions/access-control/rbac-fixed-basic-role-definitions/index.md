@@ -6,6 +6,7 @@ description: This topic includes a table that lists permission associated with G
   fixed and basic roles.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: RBAC role definitions

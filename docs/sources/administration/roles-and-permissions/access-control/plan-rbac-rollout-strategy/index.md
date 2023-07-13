@@ -6,6 +6,7 @@ description: Plan your RBAC rollout strategy before you begin assigning roles to
   and teams.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Plan your RBAC rollout strategy

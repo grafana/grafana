@@ -2,6 +2,7 @@
 description: Administration
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Administration

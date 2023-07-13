@@ -6,6 +6,7 @@ aliases:
   - manage-users-and-permissions/manage-teams/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Team management

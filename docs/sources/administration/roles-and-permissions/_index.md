@@ -8,6 +8,7 @@ aliases:
 description: Information about Grafana user, team, and organization roles and permissions
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Roles and permissions

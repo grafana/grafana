@@ -7,6 +7,7 @@ aliases:
   - ../plugins/plugin-signatures/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Plugin management

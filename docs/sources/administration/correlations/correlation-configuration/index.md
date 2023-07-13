@@ -1,6 +1,7 @@
 ---
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Correlation

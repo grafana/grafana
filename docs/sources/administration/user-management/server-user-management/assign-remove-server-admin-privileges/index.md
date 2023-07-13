@@ -5,6 +5,7 @@ description: Describes how to assign and remove Grafana administrator privileges
   a server user.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Assign or remove Grafana server administrator privileges

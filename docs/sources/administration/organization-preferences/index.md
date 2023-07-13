@@ -8,6 +8,7 @@ aliases:
   - preferences/change-home-dashboard/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Organization preferences

@@ -4,6 +4,7 @@ aliases:
   - ../manage-users-and-permissions/manage-dashboard-permissions/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Manage dashboard permissions

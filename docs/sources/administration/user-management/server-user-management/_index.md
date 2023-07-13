@@ -10,6 +10,7 @@ aliases:
   - ../manage-users-and-permissions/manage-server-users/view-user-account-details/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Server user management

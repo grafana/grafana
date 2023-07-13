@@ -10,6 +10,7 @@ keywords:
   - dashboards
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Manage organizations

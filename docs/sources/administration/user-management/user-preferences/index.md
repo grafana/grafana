@@ -10,6 +10,7 @@ keywords:
   - change
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Manage user preferences
