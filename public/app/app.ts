@@ -56,6 +56,7 @@ import { GrafanaContextType } from './core/context/GrafanaContext';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { ModalManager } from './core/services/ModalManager';
+import { PanelExporterService } from './core/services/PanelExporterService';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
@@ -189,6 +190,10 @@ export class GrafanaApp {
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
+
+      //init panel exporter
+      const panelExporter = new PanelExporterService();
+      panelExporter.init();
 
       // Preload selected app plugins
       const preloadResults = await preloadPlugins(config.apps);

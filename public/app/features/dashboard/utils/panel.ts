@@ -12,9 +12,10 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
+import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { dispatch } from 'app/store/store';
 
-import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { PanelExportEvent, ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -66,6 +67,23 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
         panel: panel,
       },
     })
+  );
+};
+
+export const exportPanel = (htmlElement: HTMLCanvasElement | null, panel: PanelModel, exportType: String) => {
+  // add exportType?
+  console.log('panel', panel);
+  console.log('htmlEl', htmlElement);
+  console.log('exportType', exportType);
+
+  if (!htmlElement) {
+    console.log('AAAAAAAA, no HTML element');
+    //TODO: throw error
+    return;
+  }
+
+  appEvents.publish(
+    new PanelExportEvent({ panel, htmlElement, exportType }) // exportType not in ExportPanelPayload
   );
 };
 

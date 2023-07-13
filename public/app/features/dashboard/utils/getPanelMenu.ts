@@ -18,6 +18,7 @@ import {
   addLibraryPanel,
   copyPanel,
   duplicatePanel,
+  exportPanel,
   removePanel,
   sharePanel,
   toggleLegend,
@@ -59,6 +60,27 @@ export function getPanelMenu(
     sharePanel(dashboard, panel);
     reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
+
+  const onExportPanel = (event: React.MouseEvent<HTMLElement> & { target: HTMLElement }) => {
+    console.log('e', event);
+    event.preventDefault();
+    //todo avoid as   DONE? (or maybe causes problems elsewhere)
+    const exportHtmlElement: HTMLElement = event.target;
+    console.log('html', exportHtmlElement);
+    // reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
+    exportPanel(exportHtmlElement.closest('[id="reactRoot"]')?.querySelector('canvas')!, panel, 'PNG'); // Just slecting the first one right now
+  };
+
+  /*const onExportPanel = (tab?: ExportTab) => {
+    locationService.partial({
+      inspect: panel.id,
+      inspectTab: tab,
+    });
+
+    reportInteraction('grafana_panel_menu_export', {
+      tab: tab ?? ExportTab.Data,
+    });
+  }; */
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -141,6 +163,92 @@ export function getPanelMenu(
     iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
+  });
+
+  const subMenuEnable = false;
+
+  const exportMenu: PanelMenuItem[] = [];
+  let exportImageMenu = exportMenu;
+  let exportDataMenu = exportMenu;
+
+  if (subMenuEnable) {
+    exportImageMenu = [];
+
+    exportDataMenu = [];
+  }
+
+  console.log(exportImageMenu);
+
+  exportImageMenu.push({
+    text: `PNG`,
+    iconClassName: 'camera',
+    onClick: onExportPanel,
+  });
+
+  exportImageMenu.push({
+    text: `JPG`,
+    iconClassName: 'camera',
+    onClick: onExportPanel,
+  });
+
+  exportImageMenu.push({
+    text: `BMP`,
+    iconClassName: 'camera',
+    onClick: onExportPanel,
+  });
+
+  exportImageMenu.push({
+    type: 'divider',
+    text: '',
+  });
+
+  exportDataMenu.push({
+    text: `CSV`,
+    iconClassName: 'book',
+    onClick: () => onInspectPanel(InspectTab.Data), // plhold
+  });
+
+  exportDataMenu.push({
+    text: `Excel`,
+    iconClassName: 'book',
+    onClick: () => onInspectPanel(InspectTab.Data), // plhold
+  });
+
+  exportDataMenu.push({
+    text: `Numbers`,
+    iconClassName: 'book',
+    onClick: () => onInspectPanel(InspectTab.Data), // plhold
+  });
+
+  exportDataMenu.push({
+    text: `JSON`,
+    iconClassName: 'book',
+    onClick: () => onInspectPanel(InspectTab.JSON), // plhold
+  });
+
+  console.log('2', exportImageMenu);
+
+  if (subMenuEnable) {
+    exportMenu.push({
+      type: 'submenu',
+      text: `Image`,
+      subMenu: exportImageMenu,
+    });
+
+    exportMenu.push({
+      type: 'submenu',
+      text: `Data`,
+      subMenu: exportDataMenu,
+    });
+  }
+
+  menu.push({
+    type: 'submenu',
+    text: t('panel.header-menu.export', `Export`),
+    iconClassName: 'download-alt',
+    onClick: onExportPanel,
+    shortcut: 't', // if multiple letters, overlaps with > symbol
+    subMenu: exportMenu,
   });
 
   if (
