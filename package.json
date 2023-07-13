@@ -249,7 +249,7 @@
     "webpack-cli": "5.0.1",
     "webpack-dev-server": "4.11.1",
     "webpack-manifest-plugin": "5.0.0",
-    "webpack-merge": "5.8.0",
+    "webpack-merge": "5.9.0",
     "yargs": "^17.5.1"
   },
   "dependencies": {
