@@ -5,12 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/enhanced-ldap/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-  - _target:
       path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/saml/**
     labels:
       products:

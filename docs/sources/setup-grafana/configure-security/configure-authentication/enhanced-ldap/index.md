@@ -14,7 +14,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 menuTitle: Enhanced LDAP
 title: Configure enhanced LDAP integration
 weight: 400
