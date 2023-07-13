@@ -34,6 +34,8 @@ export async function updateQueries(
         const templateSrv = getTemplateSrv();
         const reducedQueries: DataQuery[] = [];
         const nextUid = templateSrv.replace(nextDS.uid);
+        // Queries will only be preserved if the datasource UID of the query matches the UID
+        // of the next chosen datasource
         const nextDsQueries = queries.reduce((reduced, currentQuery) => {
           if (currentQuery.datasource) {
             const currUid = templateSrv.replace(currentQuery.datasource.uid);
