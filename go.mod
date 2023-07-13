@@ -238,7 +238,7 @@ require (
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
 	github.com/getkin/kin-openapi v0.115.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-app-platform-squad
+	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery 
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/dskit v0.0.0-20230620150242-3dc2113b720d // @grafana/alerting-squad-backend
 	github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 // @grafana/observability-traces-and-profiling
