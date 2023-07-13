@@ -6,8 +6,8 @@ description: Learn how to use Team Sync to synchronize between your authenticati
   provider teams and Grafana teams.
 labels:
   products:
+    - cloud
     - enterprise
-    - oss
 title: Configure Team Sync
 weight: 1000
 ---
