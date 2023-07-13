@@ -123,10 +123,8 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	return nil
 }
 
-// uninstallPlugin removes all plugin directory for the given plugin ID.
+// uninstallPlugin removes the plugin directory
 func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
-	uninstalled := false
-
 	for _, bundle := range services.GetLocalPlugins(c.PluginDirectory()) {
 		if bundle.Primary.JSONData.ID == pluginID {
 			logger.Infof("Removing plugin: %v\n", pluginID)
@@ -135,16 +133,11 @@ func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) er
 				if err := remover.Remove(); err != nil {
 					return err
 				}
-				// don't exit early, we want to remove all versions of the plugin
-				uninstalled = true
+				return nil
 			} else {
 				return fmt.Errorf("plugin %v is immutable and therefore cannot be uninstalled", pluginID)
 			}
 		}
-	}
-
-	if !uninstalled {
-		services.Logger.Failuref("%v is not installed.", pluginID)
 	}
 
 	return nil
