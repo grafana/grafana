@@ -75,6 +75,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	provider := strings.TrimPrefix(token.AuthModule, "oauth_")
 	currentOAuthInfo := s.socialService.GetOAuthInfoProvider(provider)
 	if currentOAuthInfo == nil {
+		s.log.Warn("OAuth provider not found", "provider", provider)
 		return nil
 	}
 

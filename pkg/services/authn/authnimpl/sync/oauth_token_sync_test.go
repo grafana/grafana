@@ -22,8 +22,9 @@ import (
 
 func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
-		desc     string
-		identity *authn.Identity
+		desc      string
+		identity  *authn.Identity
+		oauthInfo *social.OAuthInfo
 
 		expectedHasEntryToken *login.UserAuth
 		expectHasEntryCalled  bool
@@ -86,6 +87,13 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectRevokeTokenCalled:           true,
 			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
 			expectedErr:                       errExpiredAccessToken,
+		}, {
+			desc:                        "should skip sync when use_refresh_token is disabled",
+			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthModule: "oauth_gitlab"},
+			expectHasEntryCalled:        true,
+			expectTryRefreshTokenCalled: false,
+			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+			oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
 		},
 	}
 
@@ -120,10 +128,14 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				},
 			}
 
-			socialService := &socialtest.FakeSocialService{
-				ExpectedAuthInfoProvider: &social.OAuthInfo{
+			if tt.oauthInfo == nil {
+				tt.oauthInfo = &social.OAuthInfo{
 					UseRefreshToken: true,
-				},
+				}
+			}
+
+			socialService := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthInfo,
 			}
 
 			sync := &OAuthTokenSync{
