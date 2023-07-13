@@ -26,8 +26,8 @@ interface TooltipContainerState {
   style: Partial<CSSProperties>;
   isHovering: boolean;
   isPinned: boolean;
+  dismiss: () => void;
   contents?: React.ReactNode;
-  onClose?: () => void;
 }
 
 interface TooltipContainerSize {
@@ -53,6 +53,7 @@ const INITIAL_STATE: TooltipContainerState = {
   isPinned: false,
   contents: null,
   plot: null,
+  dismiss: () => {},
 };
 
 /**
@@ -61,7 +62,7 @@ const INITIAL_STATE: TooltipContainerState = {
 export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
-  const [{ plot, isHovering, isPinned, contents, style, onClose }, setState] = useReducer(mergeState, INITIAL_STATE);
+  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
 
   const sizeRef = useRef<TooltipContainerSize>();
 
@@ -128,7 +129,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         isPinned: _isPinned,
         isHovering: _isHovering,
         contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
-        onClose: dismiss,
+        dismiss,
       };
 
       setState(state);
@@ -266,7 +267,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   if (plot && isHovering) {
     return createPortal(
       <div className={className} style={style} ref={domRef}>
-        {isPinned && <CloseButton onClick={onClose} style={{ position: 'absolute', top: '20px', right: '8px' }} />}
+        {isPinned && <CloseButton onClick={dismiss} style={{ position: 'absolute', top: '20px', right: '8px' }} />}
         {contents}
       </div>,
       plot.over
