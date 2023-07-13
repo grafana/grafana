@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState, useReducer, CSSProperties } from 'react';
+import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
@@ -11,7 +11,13 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 interface TooltipPlugin4Props {
   config: UPlotConfigBuilder;
   // or via .children() render prop callback?
-  render: (u: uPlot, dataIdxs: Array<number | null>, seriesIdx?: number | null, isPinned?: boolean) => React.ReactNode;
+  render: (
+    u: uPlot,
+    dataIdxs: Array<number | null>,
+    seriesIdx?: number | null,
+    isPinned?: boolean,
+    dismiss?: () => void
+  ) => React.ReactNode;
 }
 
 interface TooltipContainerState {
@@ -119,10 +125,20 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         style: _style,
         isPinned: _isPinned,
         isHovering: _isHovering,
-        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned) : null,
+        contents: _isHovering ? render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned, dismiss) : null,
       };
 
       setState(state);
+    };
+
+    const dismiss = () => {
+      _isPinned = false;
+      _isHovering = false;
+
+      // @ts-ignore
+      _plot!.cursor._lock = _isPinned;
+
+      scheduleRender();
     };
 
     config.addHook('init', (u) => {
