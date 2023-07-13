@@ -115,7 +115,7 @@ require (
 	golang.org/x/tools v0.7.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.11.0 // @grafana/observability-metrics
 	google.golang.org/api v0.111.0 // @grafana/backend-platform
-	google.golang.org/grpc v1.55.0 // @grafana/backend-platform
+	google.golang.org/grpc v1.55.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.30.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0 // @grafana/alerting-squad-backend
