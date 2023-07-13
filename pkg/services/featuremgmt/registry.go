@@ -412,6 +412,12 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:        "lokiLogsDataplane",
+			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "dataplaneFrontendFallback",
 			Description:  "Support dataplane contract field name change for transformations and field name matchers where the name is different",
 			Stage:        FeatureStageGeneralAvailability,
@@ -633,6 +639,13 @@ var (
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageExperimental,
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:         "transformationsRedesign",
+			Description:  "Enables the transformations redesign",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

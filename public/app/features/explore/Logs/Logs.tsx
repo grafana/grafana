@@ -784,6 +784,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
     `,
     visualisationType: css`
       display: flex;
+      flex: 1;
       justify-content: space-between;
     `,
     visualisationTypeRadio: css`
