@@ -46,6 +46,7 @@ func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.Permi
 		folderAction = dashboards.ActionFoldersRead
 		dashboardAction = dashboards.ActionDashboardsRead
 		if needEdit {
+			folderAction = dashboards.ActionDashboardsCreate
 			dashboardAction = dashboards.ActionDashboardsWrite
 		}
 	}

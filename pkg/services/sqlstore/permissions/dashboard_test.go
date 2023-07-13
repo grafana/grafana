@@ -3,6 +3,7 @@ package permissions_test
 import (
 	"context"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,6 +31,153 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestIntegration_DashboardFilter(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	type testCase struct {
+		desc           string
+		queryType      string
+		permission     dashboards.PermissionType
+		permissions    []accesscontrol.Permission
+		expectedResult int
+	}
+
+	tests := []testCase{
+		{
+			desc:       "Should be able to view all dashboards with wildcard scope",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+			},
+			expectedResult: 100,
+		},
+		{
+			desc:       "Should be able to view all dashboards with folder wildcard scope",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+			},
+			expectedResult: 100,
+		},
+		{
+			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99"},
+			},
+			expectedResult: 6,
+		},
+		{
+			desc:       "Should be able to view a subset of dashboards with dashboard action and folder scope",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:10"},
+			},
+			expectedResult: 20,
+		},
+		{
+			desc:       "Should be able to view all folders with folder wildcard",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
+			},
+			expectedResult: 10,
+		},
+		{
+			desc:       "Should be able to view a subset folders",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9"},
+			},
+			expectedResult: 3,
+		},
+		{
+			desc:       "Should return folders and dashboard with 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 2,
+		},
+		{
+			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+		},
+		{
+			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+		},
+		{
+			desc:       "Should return folders that users can read alerts from",
+			permission: dashboards.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			store := setupTest(t, 10, 100, tt.permissions)
+
+			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
+			filter := permissions.NewDashboardFilter(usr, tt.permission, tt.queryType)
+
+			var result int
+			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				query := strings.Builder{}
+				params := []interface{}{}
+
+				query.WriteString("SELECT COUNT(*) FROM dashboard ")
+				query.WriteString(" LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id ")
+				join, joinParams := filter.Join()
+				query.WriteString(join)
+				query.WriteString(" WHERE ")
+				params = append(params, joinParams...)
+				where, whereParams := filter.Where()
+				query.WriteString(where)
+				params = append(params, whereParams...)
+				sql := query.String()
+
+				_, err := sess.SQL(sql, params...).Get(&result)
+				return err
+			})
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedResult, result)
+		})
+	}
+}
 
 func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	if testing.Short() {
@@ -646,9 +794,13 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 		}
 
 		for i := range permissions {
+			kind, attribute, identifier := permissions[i].SplitScope()
 			permissions[i].RoleID = role.ID
 			permissions[i].Created = time.Now()
 			permissions[i].Updated = time.Now()
+			permissions[i].Kind = kind
+			permissions[i].Attribute = attribute
+			permissions[i].Identifier = identifier
 		}
 		if len(permissions) > 0 {
 			_, err = sess.InsertMulti(&permissions)
