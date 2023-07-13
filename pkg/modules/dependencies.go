@@ -1,13 +1,22 @@
 package modules
 
 const (
-	All              string = "all"
-	CertGenerator    string = "cert-generator"
+	// All includes all modules necessary for Grafana to run as a standalone application.
+	All string = "all"
+	// BackgroundServices includes all Grafana services that run in the background
+	BackgroundServices string = "background-services"
+	// CertGenerator generates certificates for grafana-apiserver
+	CertGenerator string = "cert-generator"
+	// GrafanaAPIServer is the Kubertenes API server for Grafana Resources
 	GrafanaAPIServer string = "grafana-apiserver"
 )
 
-var DependencyMap = map[string][]string{
+// dependencyMap defines Module Targets => Dependencies
+var dependencyMap = map[string][]string{
+	BackgroundServices: {},
+
 	CertGenerator:    {},
 	GrafanaAPIServer: {CertGenerator},
-	All:              {},
+
+	All: {BackgroundServices},
 }
