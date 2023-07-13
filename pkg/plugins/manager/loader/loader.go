@@ -373,8 +373,6 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	}
 }
 
-// /public/img/icn-app.svg -> localhost:3000/a/my-app
-
 func defaultLogoPath(pluginType plugins.Type) string {
 	return "/public/img/icn-" + string(pluginType) + ".svg"
 }
