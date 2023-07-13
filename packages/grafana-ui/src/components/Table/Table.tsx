@@ -316,9 +316,8 @@ export const Table = memo((props: Props) => {
   const getItemSize = (index: number): number => {
     if (state.expanded[index]) {
       const height = nestedFields[index]?.values.reduce((acc, field) => {
-        const rowSubData = field.length;
-        if (rowSubData) {
-          const noHeader = !!rowSubData.meta?.custom?.noHeader; // TODO
+        if (field.length) {
+          const noHeader = !!field.meta?.custom?.noHeader;
           return acc + tableStyles.rowHeight * (field.length + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
         }
         return acc;
