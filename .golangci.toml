@@ -82,6 +82,11 @@ linters = ["stylecheck"]
 text = "ST1001"
 
 # Enable when appropriate
+# http.CloseNotifier has been deprecated since Go 1.11 and an alternative has been available since Go 1.7: We currently need it in pkg/web/response_writer.go.
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019: http.CloseNotifier"
+
 # strings.Title has been deprecated since Go 1.18 and an alternative has been available since Go 1.0: The rule Title uses for word boundaries does not handle Unicode punctuation properly.
 # Use golang.org/x/text/cases instead.
 [[issues.exclude-rules]]

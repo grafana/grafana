@@ -75,7 +75,7 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error
 		handler := func(c *contextmodel.ReqContext) {
 			if s.handler == nil {
 				c.Resp.WriteHeader(404)
-				c.Resp.Write([]byte("Not found"))
+				_, _ = c.Resp.Write([]byte("Not found"))
 				return
 			}
 

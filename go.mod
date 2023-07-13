@@ -285,13 +285,13 @@ require (
 )
 
 require (
-	github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d
-	go.opentelemetry.io/collector/pdata v0.50.0
-	go.opentelemetry.io/otel v1.16.0
-	k8s.io/apimachinery v0.27.1
-	k8s.io/apiserver v0.27.1
-	k8s.io/client-go v0.27.1
-	k8s.io/klog/v2 v2.90.1
+	github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d // @grafana/grafana-app-platform-squad
+	go.opentelemetry.io/collector/pdata v0.50.0 // @grafana/backend-platform
+	go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
+	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
+	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
+	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
 )
 
 require (
@@ -443,7 +443,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
-	github.com/go-logr/logr v1.2.4
+	github.com/go-logr/logr v1.2.4 // @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-app-platform-squad
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
