@@ -42,7 +42,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
 
 const categoryStyles = ['Graph styles'];
 
-type NullEditorSettings = { isTime: boolean };
+export type NullEditorSettings = { isTime: boolean };
 
 export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   return {
