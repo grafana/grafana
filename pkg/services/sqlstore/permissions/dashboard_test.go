@@ -152,7 +152,7 @@ func TestIntegration_DashboardFilter(t *testing.T) {
 			store := setupTest(t, 10, 100, tt.permissions)
 
 			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
-			filter := permissions.NewDashboardFilter(usr, tt.permission, tt.queryType)
+			filter := permissions.NewDashboardFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures(), false)
 
 			count, err := queryWithFilter(store, filter)
 			require.NoError(t, err)
@@ -160,7 +160,7 @@ func TestIntegration_DashboardFilter(t *testing.T) {
 
 			// test with self-contained permissions
 			usr = &user.SignedInUser{OrgID: 1, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
-			filter = permissions.NewDashboardFilter(usr, tt.permission, tt.queryType)
+			filter = permissions.NewDashboardFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures(), false)
 
 			count, err = queryWithFilter(store, filter)
 			require.NoError(t, err)

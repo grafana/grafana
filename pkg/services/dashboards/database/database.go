@@ -960,18 +960,19 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	/*
-		filters := []interface{}{
-			permissions.DashboardPermissionFilter{
-				OrgRole:         query.SignedInUser.OrgRole,
-				OrgId:           query.SignedInUser.OrgID,
-				Dialect:         d.store.GetDialect(),
-				UserId:          query.SignedInUser.UserID,
-				PermissionLevel: query.Permission,
-			},
-		}
+	// FIXME: this filter is no longer used, remove and clean-up/rewrite tests
+	filters := []interface{}{
+		permissions.DashboardPermissionFilter{
+			OrgRole:         query.SignedInUser.OrgRole,
+			OrgId:           query.SignedInUser.OrgID,
+			Dialect:         d.store.GetDialect(),
+			UserId:          query.SignedInUser.UserID,
+			PermissionLevel: query.Permission,
+		},
+	}
 
-		if !ac.IsDisabled(d.cfg) {
+	if !ac.IsDisabled(d.cfg) {
+		/*
 			recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
 			if err != nil {
 				return nil, err
@@ -981,12 +982,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			filters = []interface{}{
 				permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 			}
+		*/
+		filters = []interface{}{
+			permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type, d.features, false),
 		}
-
-	*/
-
-	filters := []interface{}{
-		permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type),
 	}
 
 	for _, filter := range query.Sort.Filter {

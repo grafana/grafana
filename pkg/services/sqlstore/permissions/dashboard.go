@@ -22,7 +22,13 @@ var (
 )
 
 // TODO: Nested folder support with cte and without...
-func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string) *DashboardFilter {
+func NewDashboardFilter(
+	usr *user.SignedInUser,
+	permissionLevel dashboards.PermissionType,
+	queryType string,
+	features featuremgmt.FeatureToggles,
+	reqQrySupported bool,
+) *DashboardFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderAction string
@@ -55,7 +61,11 @@ func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.Permi
 	needToCheckFolderAction := needToCheckAction(folderAction, usr.Permissions[usr.OrgID], folderWildcards)
 	needToCheckDashboardAction := needToCheckAction(dashboardAction, usr.Permissions[usr.OrgID], dashWildcards, folderWildcards)
 
-	f := &DashboardFilter{usr: usr, needToCheckFolderAction: needToCheckFolderAction, needToCheckDashboardAction: needToCheckDashboardAction}
+	f := &DashboardFilter{
+		usr: usr, features: features, reqQrySupported: reqQrySupported,
+		needToCheckFolderAction: needToCheckFolderAction, needToCheckDashboardAction: needToCheckDashboardAction,
+	}
+
 	f.buildClauses(folderAction, dashboardAction)
 	return f
 }
@@ -64,6 +74,9 @@ type DashboardFilter struct {
 	usr   *user.SignedInUser
 	join  clause
 	where clause
+
+	reqQrySupported bool
+	features        featuremgmt.FeatureToggles
 
 	needToCheckFolderAction    bool
 	needToCheckDashboardAction bool
