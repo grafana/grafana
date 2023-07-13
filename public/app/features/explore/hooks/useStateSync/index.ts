@@ -315,14 +315,10 @@ async function getPaneDatasource(
   queries: DataQuery[],
   orgId: number
 ) {
-  // If there's a root datasource, use it unless it's mixed and we don't allow mixed.
+  // If there's a root datasource, use it unless it's unavailable
   if (rootDatasource) {
     try {
-      const ds = await getDatasourceSrv().get(rootDatasource);
-
-      if (!isMixedDatasource(ds)) {
-        return ds;
-      }
+      return await getDatasourceSrv().get(rootDatasource);
     } catch (_) {}
   }
 
