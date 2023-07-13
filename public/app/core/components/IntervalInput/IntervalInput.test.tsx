@@ -20,8 +20,6 @@ describe('IntervalInput', () => {
           setValue(v);
         }}
         isInvalidError={invalidTimeShiftError}
-        placeholder="0"
-        width={10}
       />
     );
   };

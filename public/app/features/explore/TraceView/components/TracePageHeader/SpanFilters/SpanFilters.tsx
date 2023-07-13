@@ -343,13 +343,13 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           >
             <HorizontalGroup spacing="xs" align="flex-start">
               <Select
-                aria-label="Select from operator"
+                aria-label="Select min span operator"
                 onChange={(v) => setSpanFiltersSearch({ ...search, fromOperator: v.value! })}
                 options={[toOption('>'), toOption('>=')]}
                 value={search.fromOperator}
               />
               <IntervalInput
-                ariaLabel="Select from value"
+                ariaLabel="Select min span duration"
                 onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
                 isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"
@@ -358,13 +358,13 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 validationRegex={durationRegex}
               />
               <Select
-                aria-label="Select to operator"
+                aria-label="Select max span operator"
                 onChange={(v) => setSpanFiltersSearch({ ...search, toOperator: v.value! })}
                 options={[toOption('<'), toOption('<=')]}
                 value={search.toOperator}
               />
               <IntervalInput
-                ariaLabel="Select to value"
+                ariaLabel="Select max span duration"
                 onChange={(val) => setSpanFiltersSearch({ ...search, to: val })}
                 isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"

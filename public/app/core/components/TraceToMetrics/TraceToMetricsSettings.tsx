@@ -89,9 +89,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               spanStartTimeShift: val,
             });
           }}
-          placeholder="0"
           isInvalidError={invalidTimeShiftError}
-          width={40}
         />
       </InlineFieldRow>
 
@@ -106,9 +104,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
               spanEndTimeShift: val,
             });
           }}
-          placeholder="0"
           isInvalidError={invalidTimeShiftError}
-          width={40}
         />
       </InlineFieldRow>
 

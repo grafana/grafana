@@ -7,10 +7,10 @@ import { validateInterval, validateIntervalRegex } from './validation';
 
 interface Props {
   value: string;
-  placeholder: string;
   onChange: (val: string) => void;
   isInvalidError: string;
-  width: number;
+  placeholder?: string;
+  width?: number;
   ariaLabel?: string;
   label?: string;
   tooltip?: string;
@@ -56,8 +56,8 @@ export const IntervalInput = (props: Props) => {
     <InlineField {...fieldProps}>
       <Input
         type="text"
-        placeholder={props.placeholder}
-        width={props.width}
+        placeholder={props.placeholder || '0'}
+        width={props.width || 40}
         onChange={(e) => {
           props.onChange(e.currentTarget.value);
         }}

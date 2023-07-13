@@ -51,9 +51,7 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
             spanStartTimeShift: val,
           });
         }}
-        placeholder="0"
         isInvalidError={invalidTimeShiftError}
-        width={40}
       />
 
       <IntervalInput
@@ -67,9 +65,7 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
             spanEndTimeShift: val,
           });
         }}
-        placeholder="0"
         isInvalidError={invalidTimeShiftError}
-        width={40}
       />
     </div>
   );
