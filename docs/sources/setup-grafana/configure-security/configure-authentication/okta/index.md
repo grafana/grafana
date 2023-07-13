@@ -112,11 +112,11 @@ If no valid role is found, the user is assigned the role specified by [the `auto
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 This setting denies user access if no role or an invalid role is returned.
 
-Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/main/#add-a-custom-claim-to-a-token) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "../../generic-oauth/index.md#role-mapping-examples" >}}).
+Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/main/#add-a-custom-claim-to-a-token) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth/index.md#role-mapping-examples" >}}).
 
 ### Configure team synchronization (Enterprise only)
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../../introduction/grafana-cloud" >}}).
 
 By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
 
