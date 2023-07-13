@@ -4841,34 +4841,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.113":
-  version: 0.0.113
-  resolution: "@kusto/language-service-next@npm:0.0.113"
-  checksum: a210433a3a124d7cbe728f9dc1a2345e52c610798b8e1cbe87a33e17b1a547e0b100127ef75339d4efae984f8e5bb314be9bfd7ce2146d700a64fb10d9f1bba0
+"@kusto/language-service-next@npm:0.0.121":
+  version: 0.0.121
+  resolution: "@kusto/language-service-next@npm:0.0.121"
+  checksum: 783eb817557ac70c3956f41a530d2a76e466cf2e1472ad06caf12869d48cac388932cffea71b10b1696e46f26b42e5c7c346ddabb16a3d69a0ec995ac1fbf8b4
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.90":
-  version: 0.0.90
-  resolution: "@kusto/language-service@npm:0.0.90"
-  checksum: 91c8492e4013047bc54173cb7e0eda0a20b3fedffbf19e84322c2464404e09d204c8cfa525f0045dbf066c514d53216e63697f478cc335d04750a8b14e1dda97
+"@kusto/language-service@npm:0.0.98":
+  version: 0.0.98
+  resolution: "@kusto/language-service@npm:0.0.98"
+  checksum: b3b8226eb686c73a4cc5fa618c40323f56a7b1973e991a543625eb190bb314d3987bde92332f1fc84e6d7b475f287526da85bd293d1b038f5a977a920939b40d
   languageName: node
   linkType: hard
 
 "@kusto/monaco-kusto@npm:^7.4.0":
-  version: 7.6.2
-  resolution: "@kusto/monaco-kusto@npm:7.6.2"
+  version: 7.7.0
+  resolution: "@kusto/monaco-kusto@npm:7.7.0"
   dependencies:
-    "@kusto/language-service": 0.0.90
-    "@kusto/language-service-next": 0.0.113
+    "@kusto/language-service": 0.0.98
+    "@kusto/language-service-next": 0.0.121
     lodash-es: ^4.17.21
     vscode-languageserver-types: 3.16.0
     xregexp: ^5.1.1
   peerDependencies:
-    monaco-editor: ~0.39.0
+    monaco-editor: ~0.40.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: d6e70af979f13714076e7ea80aca9ca233085185449bc633e991cb35b82b38427906188be2c91542b6f25b493240877ac39947aa0faa2fb7b33797b3d52a425d
+  checksum: 7cf2f9f86f60c3b2a4c140d3ef376ccb20f89b14971b0f1b65721a77754d2531d7650f6ea3dd22a9eed378bce2427664ed69fd229974919df51758f57f0d8768
   languageName: node
   linkType: hard
 
