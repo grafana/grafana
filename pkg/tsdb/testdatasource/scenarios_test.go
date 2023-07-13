@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -23,11 +22,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
 			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			model := simplejson.New()
-			model.Set("startValue", 1.234)
-			modelBytes, err := model.MarshalJSON()
-			require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
@@ -36,7 +30,7 @@ func TestTestdataScenarios(t *testing.T) {
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
-				JSON:          modelBytes,
+				JSON:          []byte(`{"startValue": 1.234}`),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -67,10 +61,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
 			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			model := simplejson.New()
-			modelBytes, err := model.MarshalJSON()
-			require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
@@ -79,7 +69,7 @@ func TestTestdataScenarios(t *testing.T) {
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
-				JSON:          modelBytes,
+				JSON:          []byte(`{}`),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -121,12 +111,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("Should return a table with some nil values", func(t *testing.T) {
 			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			model := simplejson.New()
-			model.Set("withNil", true)
-
-			modelBytes, err := model.MarshalJSON()
-			require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
@@ -135,7 +119,7 @@ func TestTestdataScenarios(t *testing.T) {
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
-				JSON:          modelBytes,
+				JSON:          []byte(`{"withNil": true}`),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -199,32 +183,32 @@ func TestParseLabels(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		model    map[string]interface{}
+		model    JSONModel
 		expected data.Labels
 	}{
 		{
 			name:     "wrapped in {} and quoted value ",
-			model:    map[string]interface{}{"labels": `{job="foo", instance="bar"}`},
+			model:    JSONModel{Labels: `{job="foo", instance="bar"}`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated non-quoted",
-			model:    map[string]interface{}{"labels": `job=foo, instance=bar`},
+			model:    JSONModel{Labels: `job=foo, instance=bar`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated quoted",
-			model:    map[string]interface{}{"labels": `job="foo"", instance="bar"`},
+			model:    JSONModel{Labels: `job="foo"", instance="bar"`},
 			expected: expectedTags,
 		},
 		{
 			name:     "comma-separated with spaces, non quoted",
-			model:    map[string]interface{}{"labels": `job = foo,instance = bar`},
+			model:    JSONModel{Labels: `job = foo,instance = bar`},
 			expected: expectedTags,
 		},
 		{
 			name:  "expands $seriesIndex",
-			model: map[string]interface{}{"labels": `job=series-$seriesIndex,instance=bar`},
+			model: JSONModel{Labels: `job=series-$seriesIndex,instance=bar`},
 			expected: data.Labels{
 				"job":      fmt.Sprintf("series-%d", seriesIndex),
 				"instance": "bar",
@@ -234,8 +218,7 @@ func TestParseLabels(t *testing.T) {
 
 	for i, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			model := simplejson.NewFromAny(tc.model)
-			assert.Equal(t, tc.expected, parseLabels(model, seriesIndex), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
+			assert.Equal(t, tc.expected, parseLabels(tc.model, seriesIndex), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
 		})
 	}
 }
