@@ -133,10 +133,6 @@ export function setupMswServer() {
     server.listen({ onUnhandledRequest: 'error' });
   });
 
-  beforeEach(() => {
-    server.restoreHandlers();
-  });
-
   afterAll(() => {
     server.close();
   });
