@@ -64,8 +64,8 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
       {display && (
         <div className={styles.followerContainer}>
           <div className={styles.legendValues}>
-            <span>{display(min)}</span>
-            <span>{display(max)}</span>
+            <span className={styles.disabled}>{display(min)}</span>
+            <span className={styles.disabled}>{display(max)}</span>
           </div>
           {percent != null && (scaleHover.isShown || hoverValue !== undefined) && (
             <span className={styles.hoverValue} style={{ left: `${percent}%` }}>
@@ -159,9 +159,12 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     position: absolute;
     height: 14px;
     width: 14px;
-    border-radius: 50%;
+    border-radius: 2px;
     transform: translateX(-50%) translateY(-50%);
-    border: 2px solid ${theme.colors.text.primary};
+    border: 2px solid ${theme.colors.background.secondary};
     margin-top: 5px;
+  `,
+  disabled: css`
+    color: ${theme.colors.text.disabled};
   `,
 });
