@@ -9,6 +9,7 @@ keywords:
   - flame graph
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Flame graph

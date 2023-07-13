@@ -10,6 +10,7 @@ keywords:
   - gauge panel
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Gauge

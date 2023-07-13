@@ -8,6 +8,7 @@ aliases:
   - ../visualizations/graph-panel/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Visualizations

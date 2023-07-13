@@ -10,6 +10,7 @@ keywords:
   - queries
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Troubleshoot queries

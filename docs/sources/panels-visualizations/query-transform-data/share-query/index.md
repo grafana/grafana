@@ -3,6 +3,7 @@ aliases:
   - ../../panels/query-a-data-source/share-query/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Share query results

@@ -15,6 +15,7 @@ aliases:
   - ../../panels/transformations/types-options/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Transform data

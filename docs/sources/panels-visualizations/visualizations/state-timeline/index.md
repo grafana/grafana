@@ -10,6 +10,7 @@ keywords:
   - panel
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: State timeline

@@ -7,6 +7,7 @@ keywords:
   - pie chart
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Pie chart

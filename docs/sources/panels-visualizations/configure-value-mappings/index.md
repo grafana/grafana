@@ -11,6 +11,7 @@ aliases:
   - ../panels/value-mappings/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure value mappings

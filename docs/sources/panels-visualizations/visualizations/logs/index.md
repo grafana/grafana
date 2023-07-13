@@ -12,6 +12,7 @@ keywords:
   - logs panel
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Logs panel

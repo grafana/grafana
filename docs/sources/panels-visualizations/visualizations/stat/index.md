@@ -12,6 +12,7 @@ keywords:
   - stat panel
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Stat

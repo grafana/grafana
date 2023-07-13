@@ -6,6 +6,7 @@ aliases:
   - ./
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Write expression queries

@@ -15,6 +15,7 @@ keywords:
   - playlist
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure data links

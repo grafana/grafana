@@ -9,6 +9,7 @@ keywords:
   - line chart
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Trend

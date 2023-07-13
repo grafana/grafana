@@ -11,6 +11,7 @@ keywords:
   - panel
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Text

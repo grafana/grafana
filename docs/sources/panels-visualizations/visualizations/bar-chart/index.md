@@ -11,6 +11,7 @@ keywords:
   - barchart
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Bar chart

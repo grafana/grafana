@@ -10,6 +10,7 @@ aliases:
 description: This section includes information about using thresholds in your visualizations.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure thresholds

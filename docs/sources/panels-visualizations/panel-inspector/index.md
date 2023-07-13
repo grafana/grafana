@@ -6,6 +6,7 @@ aliases:
   - ../panels/working-with-panels/navigate-inspector-panel/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: The panel inspect view

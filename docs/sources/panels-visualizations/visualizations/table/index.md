@@ -18,6 +18,7 @@ keywords:
   - filter columns
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Table

@@ -5,6 +5,7 @@ aliases:
   - ../panels/reference-calculation-types/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Calculation types

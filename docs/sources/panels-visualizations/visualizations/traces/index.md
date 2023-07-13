@@ -9,6 +9,7 @@ keywords:
   - traces
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Traces

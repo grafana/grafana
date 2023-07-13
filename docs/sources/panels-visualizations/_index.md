@@ -10,6 +10,7 @@ keywords:
   - visualizations
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Panels and visualizations

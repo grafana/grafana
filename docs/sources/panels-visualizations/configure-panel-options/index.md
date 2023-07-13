@@ -14,6 +14,7 @@ keywords:
   - JSON model
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure panel options

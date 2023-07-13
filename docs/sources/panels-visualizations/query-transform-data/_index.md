@@ -15,6 +15,7 @@ aliases:
   - query-options/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Query and transform data

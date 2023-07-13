@@ -4,6 +4,7 @@ aliases:
   - visualizations/configure-legend/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure a legend

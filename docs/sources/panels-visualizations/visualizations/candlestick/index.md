@@ -12,6 +12,7 @@ keywords:
   - documentation
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Candlestick

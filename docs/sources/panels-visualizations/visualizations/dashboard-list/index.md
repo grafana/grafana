@@ -12,6 +12,7 @@ keywords:
   - dashlist
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Dashboard list

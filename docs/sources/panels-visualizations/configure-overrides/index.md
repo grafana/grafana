@@ -10,6 +10,7 @@ aliases:
   - ../panels/override-field-values/view-field-override/
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Configure field overrides

@@ -12,6 +12,7 @@ keywords:
   - alertlist
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Alert list

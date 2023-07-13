@@ -11,6 +11,7 @@ keywords:
   - directed graph
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Node graph

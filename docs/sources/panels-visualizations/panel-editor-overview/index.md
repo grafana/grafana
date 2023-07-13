@@ -19,6 +19,7 @@ keywords:
   - add
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Panel editor overview

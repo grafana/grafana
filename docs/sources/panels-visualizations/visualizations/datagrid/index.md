@@ -13,6 +13,7 @@ keywords:
   - datagrid options
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Datagrid

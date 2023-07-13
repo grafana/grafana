@@ -26,6 +26,7 @@ keywords:
   - graph
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Time series

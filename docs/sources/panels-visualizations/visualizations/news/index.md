@@ -10,6 +10,7 @@ keywords:
   - news panel
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: News
