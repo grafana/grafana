@@ -1,6 +1,7 @@
 package corekind
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/google/wire"
@@ -45,4 +46,17 @@ func (b *Base) All() []kindsys.Core {
 	ret := make([]kindsys.Core, len(b.all))
 	copy(ret, b.all)
 	return ret
+}
+
+// ByName looks up a kind in the registry by name. If no kind exists for the
+// given name, nil is returned.
+func (b *Base) ByName(name string) kindsys.Core {
+	i := sort.Search(len(b.all), func(i int) bool {
+		return b.all[i].Name() >= name
+	})
+
+	if b.all[i].Name() == name {
+		return b.all[i]
+	}
+	return nil
 }

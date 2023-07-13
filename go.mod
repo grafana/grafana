@@ -13,7 +13,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
 replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 
 // contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230419165817-251c3ae823d8
+replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055
 
 replace k8s.io/client-go => k8s.io/client-go v0.27.1
 
@@ -67,7 +67,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890
-	github.com/grafana/cuetsy v0.1.9
+	github.com/grafana/cuetsy v0.1.10
 	github.com/grafana/grafana-aws-sdk v0.15.0
 	github.com/grafana/grafana-azure-sdk-go v1.7.0
 	github.com/grafana/grafana-plugin-sdk-go v0.165.0
@@ -268,8 +268,8 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/grafana-apiserver v0.0.0-20230708003113-8a0ae77345b1
-	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
-	github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8
+	github.com/grafana/kindsys v0.0.0-20230710031138-57f73e1488a7
+	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903

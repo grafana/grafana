@@ -1021,7 +1021,7 @@ export interface Dashboard {
    * Unique numeric identifier for the dashboard.
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
    */
-  id?: number;
+  id?: (number | null); // TODO eliminate this null option
   /**
    * Links with references to other dashboards or external websites.
    */
