@@ -24,12 +24,25 @@ export function AngularDeprecationNotice({ dashboardUid }: Props) {
           <div>
             <Alert
               severity="warning"
-              title="This dashboard is using deprecated plugin APIs."
+              title="This dashboard depends on Angular, which is deprecated and will stop working in future releases of Grafana."
               onRemove={() => {
                 onDismiss(true);
               }}
             >
-              There are panels or datasources in this dashboard that are using deprecated plugin APIs.
+              <div className="markdown-html">
+                <ul>
+                  <li>
+                    <a
+                      href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
+                      className="external-link"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Read our deprecation notice and migration advice.
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </Alert>
           </div>
         );

@@ -8,17 +8,23 @@ import { PanelLinks } from '../PanelLinks';
 
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
+interface AngularNotice {
+  show: boolean;
+  isAngularPanel: boolean;
+  isAngularDatasource: boolean;
+}
+
 export interface Props {
   alertState?: string;
   data: PanelData;
   panelId: number;
   onShowPanelLinks?: () => Array<LinkModel<PanelModel>>;
   panelLinks?: DataLink[];
-  showAngularNotice: boolean;
+  angularNotice?: AngularNotice;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { alertState, data, panelId, onShowPanelLinks, panelLinks, showAngularNotice } = props;
+  const { alertState, data, panelId, onShowPanelLinks, panelLinks, angularNotice } = props;
   const styles = useStyles2(getStyles);
 
   // panel health
@@ -48,10 +54,13 @@ export function PanelHeaderTitleItems(props: Props) {
     </>
   );
 
-  const angularNotice = (
-    <Tooltip content="This panel or its datasource is using deprecated plugin APIs.">
+  const message = `This ${
+    angularNotice?.isAngularPanel ? 'panel' : angularNotice?.isAngularDatasource ? 'datasource' : 'panel or datasource'
+  } requires Angular (deprecated).`;
+  const angularNoticeTooltip = (
+    <Tooltip content={message}>
       <PanelChrome.TitleItem className={styles.angularNotice}>
-        <Icon name="exclamation-circle" size="md" />
+        <Icon name="exclamation-triangle" size="md" />
       </PanelChrome.TitleItem>
     </Tooltip>
   );
@@ -65,7 +74,7 @@ export function PanelHeaderTitleItems(props: Props) {
       {<PanelHeaderNotices panelId={panelId} frames={data.series} />}
       {timeshift}
       {alertState && alertStateItem}
-      {showAngularNotice && angularNotice}
+      {angularNotice?.show && angularNoticeTooltip}
     </>
   );
 }

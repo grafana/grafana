@@ -83,9 +83,10 @@ export function getPanelChromeProps(props: CommonProps) {
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
   const alertState = props.data.alertState?.state;
 
+  const isAngularDatasource = props.panel.isAngularDatasourcePlugin();
+  const isAngularPanel = props.panel.isAngularPlugin();
   const showAngularNotice =
-    (config.featureToggles.angularDeprecationUI ?? false) &&
-    (props.panel.isAngularPlugin() || props.panel.isAngularDatasourcePlugin());
+    (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);
 
   const showTitleItems =
     (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
@@ -100,7 +101,11 @@ export function getPanelChromeProps(props: CommonProps) {
       data={props.data}
       panelId={props.panel.id}
       panelLinks={props.panel.links}
-      showAngularNotice={showAngularNotice}
+      angularNotice={{
+        show: showAngularNotice,
+        isAngularDatasource,
+        isAngularPanel,
+      }}
       onShowPanelLinks={onShowPanelLinks}
     />
   );
