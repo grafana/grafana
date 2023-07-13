@@ -57,6 +57,7 @@ export enum StatementPosition {
   AfterFieldsKeyword,
   FilterKeyword,
   AfterFilterKeyword,
+  FilterArg,
   LimitKeyword,
   AfterLimitKeyword,
   ParseKeyword,

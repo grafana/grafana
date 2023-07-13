@@ -166,6 +166,9 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       if (nearestKeyword.value === SORT) {
         return StatementPosition.SortArg;
       }
+      if (nearestKeyword.value === FILTER) {
+        return StatementPosition.FilterArg;
+      }
       return StatementPosition.CommandArg;
     }
 
@@ -180,6 +183,9 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       ) {
         if (nearestKeyword.value === SORT) {
           return StatementPosition.SortArg;
+        }
+        if (nearestKeyword.value === FILTER) {
+          return StatementPosition.FilterArg;
         }
         return StatementPosition.CommandArg;
       }
