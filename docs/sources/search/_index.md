@@ -5,6 +5,7 @@ keywords:
   - dashboard
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menutitle: Search
