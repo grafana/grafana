@@ -123,6 +123,7 @@ function FolderGroupAndEvaluationInterval({
           group={existingGroup ?? emptyGroup}
           onClose={() => closeEditGroupModal()}
           intervalEditOnly
+          hideFolder={true}
         />
       )}
       {folderName && groupName && (
