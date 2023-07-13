@@ -223,6 +223,7 @@ function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
     for (const feature of features) {
       const [featureName, featureValue] = feature.split('=');
       const toggleState = featureValue === 'true' || featureValue === '1';
+      // eslint-disable-next-line
       featureToggles[featureName as keyof FeatureToggles] = toggleState;
       console.log(`Setting feature toggle ${featureName} = ${toggleState} via localstorage`);
     }
