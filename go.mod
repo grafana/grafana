@@ -54,8 +54,8 @@ require (
 	github.com/gogo/protobuf v1.3.2 // @grafana/alerting-squad-backend
 	github.com/golang/mock v1.6.0 // @grafana/alerting-squad-backend
 	github.com/golang/snappy v0.0.4 // @grafana/alerting-squad-backend
-	github.com/google/go-cmp v0.5.9 // @grafana/alerting-squad-backend
-	github.com/google/uuid v1.3.0 // @grafana/alerting-squad-backend
+	github.com/google/go-cmp v0.5.9 // @grafana/backend-platform
+	github.com/google/uuid v1.3.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 // @grafana/alerting-squad-backend
@@ -91,7 +91,7 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20210621150501-ff58416a0b02 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
-	github.com/stretchr/testify v1.8.4 // @grafana/alerting-squad-backend
+	github.com/stretchr/testify v1.8.4 // @grafana/backend-platform
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
