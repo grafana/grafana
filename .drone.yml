@@ -1335,19 +1335,10 @@ steps:
   image: alpine:3.17.1
   name: identify-runner
 - commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.20.6
-  name: compile-build-cmd
-- commands:
   - make -C pkg/services/ngalert/api/tooling post.json
   - git diff --exit-code || (printf "\nAlerting Swagger API spec is out of date, please
     run 'make -C pkg/services/ngalert/api/tooling post.json' and commit the changes\n"
     && exit 1)
-  depends_on:
-  - compile-build-cmd
   image: grafana/build-container:1.7.5
   name: verify-alerting-swagger
 trigger:
@@ -7464,6 +7455,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 705af882bde514645df137c696a40838beb9785dad247bd4a9051bed7e31c324
+hmac: ef899e8e6706d3b4af86758dd53b3d8c9ab7b80fd7cc5f86bc9590db00815853
 
 ...

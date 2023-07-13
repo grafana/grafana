@@ -20,9 +20,6 @@ def verify_alerting_swagger_step():
     return {
         "name": "verify-alerting-swagger",
         "image": images["build_image"],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
         "commands": [
             "make -C pkg/services/ngalert/api/tooling post.json",
             "git diff --exit-code || (printf \"\\nAlerting Swagger API spec is out of date, please run 'make -C pkg/services/ngalert/api/tooling post.json' and commit the changes\\n\" && exit 1)",
@@ -33,7 +30,6 @@ def verify_alerting_swagger(trigger, ver_mode):
     environment = {"EDITION": "oss"}
     steps = [
         identify_runner_step(),
-        compile_build_cmd(),
         verify_alerting_swagger_step(),
     ]
     return pipeline(
