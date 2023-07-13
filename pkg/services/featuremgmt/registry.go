@@ -648,6 +648,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "mlExpressions",
+			Description:  "Enable support for Machine Learning in server-side expressions",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:         "disableTraceQLStreaming",
 			Description:  "Disables the option to stream the response of TraceQL queries of the Tempo data source",
 			Stage:        FeatureStageExperimental,

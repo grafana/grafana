@@ -94,4 +94,4 @@ prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-me
 logsExploreTableVisualisation,experimental,@grafana/observability-logs,false,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false,false
 transformationsRedesign,experimental,@grafana/observability-metrics,false,false,false,true
-disableTraceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
+mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false

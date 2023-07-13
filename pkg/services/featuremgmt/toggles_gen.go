@@ -387,7 +387,7 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
-	// FlagDisableTraceQLStreaming
-	// Disables the option to stream the response of TraceQL queries of the Tempo data source
-	FlagDisableTraceQLStreaming = "disableTraceQLStreaming"
+	// FlagMlExpressions
+	// Enable support for Machine Learning in server-side expressions
+	FlagMlExpressions = "mlExpressions"
 )
