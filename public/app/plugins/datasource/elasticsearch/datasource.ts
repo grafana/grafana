@@ -32,7 +32,7 @@ import {
   toUtc,
   AnnotationEvent,
   AnalyzeQueryOptions,
-  DataSourceWithQueryManipulationSupport,
+  DataSourceWithQueryModificationSupport,
   FieldType,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
@@ -93,7 +93,7 @@ export class ElasticDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
     DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
-    DataSourceWithQueryManipulationSupport<ElasticsearchQuery>
+    DataSourceWithQueryModificationSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;

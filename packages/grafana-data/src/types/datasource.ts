@@ -320,7 +320,7 @@ abstract class DataSourceApi<
 
   /**
    * Used in explore
-   * @deprecated instead implement `DataSourceWithQueryManipulationSupport`
+   * @deprecated instead implement `DataSourceWithQueryModificationSupport`
    */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
 

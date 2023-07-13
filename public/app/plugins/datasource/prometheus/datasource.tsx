@@ -17,7 +17,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
-  DataSourceWithQueryManipulationSupport,
+  DataSourceWithQueryModificationSupport,
   dateTime,
   LoadingState,
   QueryFixAction,
@@ -85,7 +85,7 @@ export class PrometheusDatasource
   implements
     DataSourceWithQueryImportSupport<PromQuery>,
     DataSourceWithQueryExportSupport<PromQuery>,
-    DataSourceWithQueryManipulationSupport<PromQuery>
+    DataSourceWithQueryModificationSupport<PromQuery>
 {
   type: string;
   ruleMappings: { [index: string]: string };

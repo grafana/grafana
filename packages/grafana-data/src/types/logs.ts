@@ -271,7 +271,7 @@ export interface AnalyzeQueryOptions {
  * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
  */
-export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
+export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
   /**
    * Used in explore
    */
@@ -290,7 +290,7 @@ export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery
  */
 export const hasQueryManipulationSupport = <TQuery extends DataQuery>(
   datasource: unknown,
-  method: keyof DataSourceWithQueryManipulationSupport<TQuery>
-): datasource is DataSourceWithQueryManipulationSupport<TQuery> => {
+  method: keyof DataSourceWithQueryModificationSupport<TQuery>
+): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
   return datasource !== null && typeof datasource === 'object' && method in datasource;
 };
