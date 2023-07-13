@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -38,9 +37,11 @@ type Service struct {
 	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
-	cacheService         *localcache.CacheService
-	caching              bool
-	concurrencyFactor    int
+	localCacheService    *localcache.CacheService
+
+	cacheEnabled      bool
+	cacheExpiration   int64
+	concurrencyFactor int
 
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
@@ -57,10 +58,15 @@ func ProvideService(
 	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
-	cacheService *localcache.CacheService,
+	localCacheService *localcache.CacheService,
 ) folder.Service {
-	concurrencyFactor := runtime.NumCPU()
-	store := ProvideStore(db, cfg, features, concurrencyFactor)
+	store := ProvideStore(db, cfg, features)
+
+	sec := cfg.Raw.Section("folder")
+	cacheEnabled := sec.Key("cache_enabled").MustBool(false)
+	cacheExpiration := sec.Key("cache_expiration").MustInt64()
+	concurrencyFactor := sec.Key("concurrency_factor").MustInt(1)
+
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
@@ -72,9 +78,10 @@ func ProvideService(
 		bus:                  bus,
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
-		cacheService:         cacheService,
+		localCacheService:    localCacheService,
 		concurrencyFactor:    concurrencyFactor,
-		caching:              true,
+		cacheEnabled:         cacheEnabled,
+		cacheExpiration:      cacheExpiration,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -260,7 +267,7 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 		return &folder.GeneralFolder, nil
 	}
 
-	return s.withCaching(get_folder_by_id_cache_key(orgID, id), func() (*folder.Folder, error) {
+	return s.withCaching(ctx, getFolderByIDCacheKey(orgID, id), func() (*folder.Folder, error) {
 		return s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
 	})
 }
@@ -269,7 +276,7 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 // It caches the result for 5 minutes. It should only be used for the operations that can tolerate stale data.
 // For the operations that require up-to-date data, use s.dashboardFolderStore.GetFolderByUID instead.
 func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
-	return s.withCaching(get_folder_by_uid_cache_key(orgID, uid), func() (*folder.Folder, error) {
+	return s.withCaching(ctx, getFolderByUIDCacheKey(orgID, uid), func() (*folder.Folder, error) {
 		return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 	})
 }
@@ -278,7 +285,7 @@ func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (
 // It caches the result for 5 minutes. It should only be used for the operations that can tolerate stale data.
 // For the operations that require up-to-date data, use s.dashboardFolderStore.GetFolderByTitle instead.
 func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	return s.withCaching(get_folder_by_title_cache_key(orgID, title), func() (*folder.Folder, error) {
+	return s.withCaching(ctx, getFolderByTitleCacheKey(orgID, title), func() (*folder.Folder, error) {
 		return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
 	})
 }
@@ -479,9 +486,9 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	// clear cache from obsolete entries
-	s.cacheService.Delete(get_folder_by_uid_cache_key(dashFolder.OrgID, dashFolder.UID))
-	s.cacheService.Delete(get_folder_by_title_cache_key(dashFolder.OrgID, dashFolder.Title))
-	s.cacheService.Delete(get_folder_by_id_cache_key(dashFolder.OrgID, dashFolder.ID))
+	s.localCacheService.Delete(getFolderByUIDCacheKey(dashFolder.OrgID, dashFolder.UID))
+	s.localCacheService.Delete(getFolderByTitleCacheKey(dashFolder.OrgID, dashFolder.Title))
+	s.localCacheService.Delete(getFolderByIDCacheKey(dashFolder.OrgID, dashFolder.ID))
 
 	return foldr, nil
 }
@@ -586,9 +593,9 @@ func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderComm
 		return toFolderError(err)
 	}
 
-	s.cacheService.Delete(get_folder_by_uid_cache_key(dashFolder.OrgID, dashFolder.UID))
-	s.cacheService.Delete(get_folder_by_title_cache_key(dashFolder.OrgID, dashFolder.Title))
-	s.cacheService.Delete(get_folder_by_id_cache_key(dashFolder.OrgID, dashFolder.ID))
+	s.localCacheService.Delete(getFolderByUIDCacheKey(dashFolder.OrgID, dashFolder.UID))
+	s.localCacheService.Delete(getFolderByTitleCacheKey(dashFolder.OrgID, dashFolder.Title))
+	s.localCacheService.Delete(getFolderByIDCacheKey(dashFolder.OrgID, dashFolder.ID))
 	return nil
 }
 
@@ -966,12 +973,12 @@ func (s *Service) RegisterService(r folder.RegistryService) error {
 	return nil
 }
 
-func (s *Service) withCaching(cacheKey string, f func() (*folder.Folder, error)) (*folder.Folder, error) {
-	if !s.caching {
+func (s *Service) withCaching(ctx context.Context, cacheKey string, f func() (*folder.Folder, error)) (*folder.Folder, error) {
+	if !s.cacheEnabled {
 		return f()
 	}
 
-	if v, ok := s.cacheService.Get(cacheKey); ok {
+	if v, ok := s.localCacheService.Get(cacheKey); ok {
 		f := v.(*folder.Folder)
 		s.log.Debug("cache hit", "key", cacheKey, "version", f.Version)
 		return f, nil
@@ -983,20 +990,28 @@ func (s *Service) withCaching(cacheKey string, f func() (*folder.Folder, error))
 		return nil, err
 	}
 
-	s.cacheService.Set(get_folder_by_title_cache_key(res.OrgID, res.Title), res, 0)
-	s.cacheService.Set(get_folder_by_uid_cache_key(res.OrgID, res.UID), res, 0)
-	s.cacheService.Set(get_folder_by_id_cache_key(res.OrgID, res.ID), res, 0)
+	if !s.cacheEnabled {
+		return res, nil
+	}
+
+	CacheKeyTitle := getFolderByTitleCacheKey(res.OrgID, res.Title)
+	CacheKeyUID := getFolderByUIDCacheKey(res.OrgID, res.Title)
+	CacheKeyID := getFolderByIDCacheKey(res.OrgID, res.ID)
+
+	s.localCacheService.Set(CacheKeyTitle, res, time.Duration(s.cacheExpiration)*time.Second)
+	s.localCacheService.Set(CacheKeyUID, res, time.Duration(s.cacheExpiration)*time.Second)
+	s.localCacheService.Set(CacheKeyID, res, time.Duration(s.cacheExpiration)*time.Second)
 	return res, nil
 }
 
-func get_folder_by_uid_cache_key(orgID int64, uid string) string {
+func getFolderByUIDCacheKey(orgID int64, uid string) string {
 	return fmt.Sprintf("folderByUID-%d-%s", orgID, uid)
 }
 
-func get_folder_by_title_cache_key(orgID int64, title string) string {
+func getFolderByTitleCacheKey(orgID int64, title string) string {
 	return fmt.Sprintf("folderByTitle-%d-%s", orgID, title)
 }
 
-func get_folder_by_id_cache_key(orgID int64, id int64) string {
+func getFolderByIDCacheKey(orgID int64, id int64) string {
 	return fmt.Sprintf("folderByID-%d-%d", orgID, id)
 }

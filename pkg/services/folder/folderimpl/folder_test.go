@@ -63,7 +63,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
-		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}), runtime.NumCPU())
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
 
 		folderStore := foldertest.NewFakeFolderStore(t)
 
@@ -80,7 +80,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 			db:                   db,
 			accessControl:        acimpl.ProvideAccessControl(cfg),
-			cacheService:         localcache.ProvideService(),
+			localCacheService:    localcache.ProvideService(),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -341,7 +341,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn, runtime.NumCPU())
+	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(cfg)
@@ -357,7 +357,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		db:                   db,
 		accessControl:        ac,
 		registry:             make(map[string]folder.RegistryService),
-		cacheService:         cache,
+		localCacheService:    cache,
 	}
 
 	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
@@ -418,7 +418,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff, runtime.NumCPU())
+			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
 
 			serviceWithFlagOff := &Service{
 				cfg:                  cfg,
@@ -430,7 +430,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				bus:                  b,
 				db:                   db,
 				registry:             make(map[string]folder.RegistryService),
-				cacheService:         localcache.ProvideService(),
+				localCacheService:    localcache.ProvideService(),
 			}
 
 			origNewGuardian := guardian.New
@@ -555,7 +555,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff, runtime.NumCPU())
+			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
 
 			dashSrv, err := service.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, nil, featuresFlagOff, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn)
 			require.NoError(t, err)
@@ -571,7 +571,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				features:             featuresFlagOff,
 				bus:                  b,
 				db:                   db,
-				cacheService:         cache,
+				localCacheService:    cache,
 			}
 			t.Run("With force deletion of rules", func(t *testing.T) {
 				origNewGuardian := guardian.New
@@ -668,7 +668,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		log:                  log.New("test-folder-service"),
 		accessControl:        acimpl.ProvideAccessControl(cfg),
-		cacheService:         localcache.ProvideService(),
+		localCacheService:    localcache.ProvideService(),
 	}
 	t.Run("create folder", func(t *testing.T) {
 		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}

@@ -12,7 +12,7 @@ import (
 )
 
 // NewFakeStore creates store for testing
-func NewFakeStore(t *testing.T) *RemoteCache {
+func NewFakeStore(t testing.TB) *RemoteCache {
 	t.Helper()
 
 	opts := &setting.RemoteCacheOptions{

@@ -3,7 +3,6 @@ package folderimpl
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"sort"
 	"testing"
 
@@ -29,7 +28,7 @@ func TestIntegrationCreate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
@@ -149,7 +148,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
@@ -196,7 +195,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
@@ -395,7 +394,7 @@ func TestIntegrationGet(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
@@ -476,7 +475,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
@@ -544,7 +543,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
@@ -704,7 +703,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders), runtime.NumCPU())
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
 	orgID := CreateOrg(t, db)
 
