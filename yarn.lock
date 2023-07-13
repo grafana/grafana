@@ -3775,7 +3775,7 @@ __metadata:
     react-test-renderer: 18.2.0
     react-use: 17.4.0
     regenerator-runtime: 0.13.11
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -3803,7 +3803,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.1.0
     "@types/node": 18.16.16
     esbuild: 0.18.6
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -3851,7 +3851,7 @@ __metadata:
     lodash: 4.17.21
     mocha: 10.2.0
     resolve-bin: 1.0.1
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4032,7 +4032,7 @@ __metadata:
     lodash: 4.17.21
     react: 18.2.0
     react-dom: 18.2.0
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4073,7 +4073,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.1.0
     esbuild: 0.18.6
     glob: ^10.2.7
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4234,7 +4234,7 @@ __metadata:
     react-transition-group: 4.4.5
     react-use: 17.4.0
     react-window: 1.8.8
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4841,34 +4841,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.113":
-  version: 0.0.113
-  resolution: "@kusto/language-service-next@npm:0.0.113"
-  checksum: a210433a3a124d7cbe728f9dc1a2345e52c610798b8e1cbe87a33e17b1a547e0b100127ef75339d4efae984f8e5bb314be9bfd7ce2146d700a64fb10d9f1bba0
+"@kusto/language-service-next@npm:0.0.121":
+  version: 0.0.121
+  resolution: "@kusto/language-service-next@npm:0.0.121"
+  checksum: 783eb817557ac70c3956f41a530d2a76e466cf2e1472ad06caf12869d48cac388932cffea71b10b1696e46f26b42e5c7c346ddabb16a3d69a0ec995ac1fbf8b4
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.90":
-  version: 0.0.90
-  resolution: "@kusto/language-service@npm:0.0.90"
-  checksum: 91c8492e4013047bc54173cb7e0eda0a20b3fedffbf19e84322c2464404e09d204c8cfa525f0045dbf066c514d53216e63697f478cc335d04750a8b14e1dda97
+"@kusto/language-service@npm:0.0.98":
+  version: 0.0.98
+  resolution: "@kusto/language-service@npm:0.0.98"
+  checksum: b3b8226eb686c73a4cc5fa618c40323f56a7b1973e991a543625eb190bb314d3987bde92332f1fc84e6d7b475f287526da85bd293d1b038f5a977a920939b40d
   languageName: node
   linkType: hard
 
 "@kusto/monaco-kusto@npm:^7.4.0":
-  version: 7.6.2
-  resolution: "@kusto/monaco-kusto@npm:7.6.2"
+  version: 7.7.0
+  resolution: "@kusto/monaco-kusto@npm:7.7.0"
   dependencies:
-    "@kusto/language-service": 0.0.90
-    "@kusto/language-service-next": 0.0.113
+    "@kusto/language-service": 0.0.98
+    "@kusto/language-service-next": 0.0.121
     lodash-es: ^4.17.21
     vscode-languageserver-types: 3.16.0
     xregexp: ^5.1.1
   peerDependencies:
-    monaco-editor: ~0.39.0
+    monaco-editor: ~0.40.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: d6e70af979f13714076e7ea80aca9ca233085185449bc633e991cb35b82b38427906188be2c91542b6f25b493240877ac39947aa0faa2fb7b33797b3d52a425d
+  checksum: 7cf2f9f86f60c3b2a4c140d3ef376ccb20f89b14971b0f1b65721a77754d2531d7650f6ea3dd22a9eed378bce2427664ed69fd229974919df51758f57f0d8768
   languageName: node
   linkType: hard
 
@@ -10833,12 +10833,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ws@npm:^8.5.1":
-  version: 8.5.3
-  resolution: "@types/ws@npm:8.5.3"
+"@types/ws@npm:^8.5.5":
+  version: 8.5.5
+  resolution: "@types/ws@npm:8.5.5"
   dependencies:
     "@types/node": "*"
-  checksum: 0ce46f850d41383fcdc2149bcacc86d7232fa7a233f903d2246dff86e31701a02f8566f40af5f8b56d1834779255c04ec6ec78660fe0f9b2a69cf3d71937e4ae
+  checksum: d00bf8070e6938e3ccf933010921c6ce78ac3606696ce37a393b27a9a603f7bd93ea64f3c5fa295a2f743575ba9c9a9fdb904af0f5fe2229bf2adf0630386e4a
   languageName: node
   linkType: hard
 
@@ -18767,7 +18767,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^10.2.7":
+"glob@npm:^10.2.5, glob@npm:^10.2.7":
   version: 10.3.3
   resolution: "glob@npm:10.3.3"
   dependencies:
@@ -18806,18 +18806,6 @@ __metadata:
     minimatch: ^5.0.1
     once: ^1.3.0
   checksum: 92fbea3221a7d12075f26f0227abac435de868dd0736a17170663783296d0dd8d3d532a5672b4488a439bf5d7fb85cdd07c11185d6cd39184f0385cbdfb86a47
-  languageName: node
-  linkType: hard
-
-"glob@npm:^9.2.0":
-  version: 9.3.5
-  resolution: "glob@npm:9.3.5"
-  dependencies:
-    fs.realpath: ^1.0.0
-    minimatch: ^8.0.2
-    minipass: ^4.2.4
-    path-scurry: ^1.6.1
-  checksum: 94b093adbc591bc36b582f77927d1fb0dbf3ccc231828512b017601408be98d1fe798fc8c0b19c6f2d1a7660339c3502ce698de475e9d938ccbb69b47b647c84
   languageName: node
   linkType: hard
 
@@ -19264,7 +19252,7 @@ __metadata:
     redux-thunk: 2.4.2
     regenerator-runtime: 0.13.11
     reselect: 4.1.7
-    rimraf: 4.4.0
+    rimraf: 5.0.1
     rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
     sass: 1.63.6
@@ -19300,9 +19288,9 @@ __metadata:
     webpack: 5.76.0
     webpack-bundle-analyzer: 4.8.0
     webpack-cli: 5.0.1
-    webpack-dev-server: 4.11.1
+    webpack-dev-server: 4.15.1
     webpack-manifest-plugin: 5.0.0
-    webpack-merge: 5.8.0
+    webpack-merge: 5.9.0
     whatwg-fetch: 3.6.2
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     yargs: ^17.5.1
@@ -22454,6 +22442,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"launch-editor@npm:^2.6.0":
+  version: 2.6.0
+  resolution: "launch-editor@npm:2.6.0"
+  dependencies:
+    picocolors: ^1.0.0
+    shell-quote: ^1.7.3
+  checksum: 48e4230643e8fdb5c14c11314706d58d9f3fbafe2606be3d6e37da1918ad8bfe39dd87875c726a1b59b9f4da99d87ec3e36d4c528464f0b820f9e91e5cb1c02d
+  languageName: node
+  linkType: hard
+
 "lazy-ass@npm:^1.6.0":
   version: 1.6.0
   resolution: "lazy-ass@npm:1.6.0"
@@ -23491,15 +23489,6 @@ __metadata:
   dependencies:
     brace-expansion: ^2.0.1
   checksum: 9e341b04e69d5ab03e4206dcb61c8a158e3b8709628bf5e1a4eaa9f3b72c0ba925e24ad959b1f6ce6835caa5a927131d5087fae6836b69e7d99d7d5e63ef0bd8
-  languageName: node
-  linkType: hard
-
-"minimatch@npm:^8.0.2":
-  version: 8.0.4
-  resolution: "minimatch@npm:8.0.4"
-  dependencies:
-    brace-expansion: ^2.0.1
-  checksum: 2e46cffb86bacbc524ad45a6426f338920c529dd13f3a732cc2cf7618988ee1aae88df4ca28983285aca9e0f45222019ac2d14ebd17c1edadd2ee12221ab801a
   languageName: node
   linkType: hard
 
@@ -28787,14 +28776,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:4.4.0":
-  version: 4.4.0
-  resolution: "rimraf@npm:4.4.0"
+"rimraf@npm:5.0.1":
+  version: 5.0.1
+  resolution: "rimraf@npm:5.0.1"
   dependencies:
-    glob: ^9.2.0
+    glob: ^10.2.5
   bin:
     rimraf: dist/cjs/src/bin.js
-  checksum: 0cedaf9d138589d1bb0ab851f05804c6d30827aa66563472b04ab76245f83537e23e7b94f1f79ea6c368c0d84a18fcde6a756fca3a44c967e08792671b3a0a6e
+  checksum: bafce85391349a2d960847980bf9b5caa2a8887f481af630f1ea27e08288217293cec72d75e9a2ba35495c212789f66a7f3d23366ba6197026ab71c535126857
   languageName: node
   linkType: hard
 
@@ -29411,6 +29400,13 @@ __metadata:
   version: 3.0.0
   resolution: "shebang-regex@npm:3.0.0"
   checksum: 1a2bcae50de99034fcd92ad4212d8e01eedf52c7ec7830eedcf886622804fe36884278f2be8be0ea5fde3fd1c23911643a4e0f726c8685b61871c8908af01222
+  languageName: node
+  linkType: hard
+
+"shell-quote@npm:^1.7.3":
+  version: 1.8.1
+  resolution: "shell-quote@npm:1.8.1"
+  checksum: 5f01201f4ef504d4c6a9d0d283fa17075f6770bfbe4c5850b074974c68062f37929ca61700d95ad2ac8822e14e8c4b990ca0e6e9272e64befd74ce5e19f0736b
   languageName: node
   linkType: hard
 
@@ -32722,9 +32718,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-dev-server@npm:4.11.1":
-  version: 4.11.1
-  resolution: "webpack-dev-server@npm:4.11.1"
+"webpack-dev-server@npm:4.15.1":
+  version: 4.15.1
+  resolution: "webpack-dev-server@npm:4.15.1"
   dependencies:
     "@types/bonjour": ^3.5.9
     "@types/connect-history-api-fallback": ^1.3.5
@@ -32732,7 +32728,7 @@ __metadata:
     "@types/serve-index": ^1.9.1
     "@types/serve-static": ^1.13.10
     "@types/sockjs": ^0.3.33
-    "@types/ws": ^8.5.1
+    "@types/ws": ^8.5.5
     ansi-html-community: ^0.0.8
     bonjour-service: ^1.0.11
     chokidar: ^3.5.3
@@ -32745,6 +32741,7 @@ __metadata:
     html-entities: ^2.3.2
     http-proxy-middleware: ^2.0.3
     ipaddr.js: ^2.0.1
+    launch-editor: ^2.6.0
     open: ^8.0.9
     p-retry: ^4.5.0
     rimraf: ^3.0.2
@@ -32754,15 +32751,17 @@ __metadata:
     sockjs: ^0.3.24
     spdy: ^4.0.2
     webpack-dev-middleware: ^5.3.1
-    ws: ^8.4.2
+    ws: ^8.13.0
   peerDependencies:
     webpack: ^4.37.0 || ^5.0.0
   peerDependenciesMeta:
+    webpack:
+      optional: true
     webpack-cli:
       optional: true
   bin:
     webpack-dev-server: bin/webpack-dev-server.js
-  checksum: b7601a39ee0f413988259e29a36835b0a68522cfaa161de5b7ec99b3399acdd99d44189add4aaf4a5191258bb130f9cf3e68919324a1955c7557f5fe6ab0d96c
+  checksum: cd0063b068d2b938fd76c412d555374186ac2fa84bbae098265212ed50a5c15d6f03aa12a5a310c544a242943eb58c0bfde4c296d5c36765c182f53799e1bc71
   languageName: node
   linkType: hard
 
@@ -32789,7 +32788,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-merge@npm:5.8.0, webpack-merge@npm:^5.7.3":
+"webpack-merge@npm:5.9.0":
+  version: 5.9.0
+  resolution: "webpack-merge@npm:5.9.0"
+  dependencies:
+    clone-deep: ^4.0.1
+    wildcard: ^2.0.0
+  checksum: 64fe2c23aacc5f19684452a0e84ec02c46b990423aee6fcc5c18d7d471155bd14e9a6adb02bd3656eb3e0ac2532c8e97d69412ad14c97eeafe32fa6d10050872
+  languageName: node
+  linkType: hard
+
+"webpack-merge@npm:^5.7.3":
   version: 5.8.0
   resolution: "webpack-merge@npm:5.8.0"
   dependencies:
@@ -33250,7 +33259,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.2.3":
+"ws@npm:^8.13.0, ws@npm:^8.2.3":
   version: 8.13.0
   resolution: "ws@npm:8.13.0"
   peerDependencies:
@@ -33262,21 +33271,6 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: 53e991bbf928faf5dc6efac9b8eb9ab6497c69feeb94f963d648b7a3530a720b19ec2e0ec037344257e05a4f35bd9ad04d9de6f289615ffb133282031b18c61c
-  languageName: node
-  linkType: hard
-
-"ws@npm:^8.4.2":
-  version: 8.5.0
-  resolution: "ws@npm:8.5.0"
-  peerDependencies:
-    bufferutil: ^4.0.1
-    utf-8-validate: ^5.0.2
-  peerDependenciesMeta:
-    bufferutil:
-      optional: true
-    utf-8-validate:
-      optional: true
-  checksum: 76f2f90e40344bf18fd544194e7067812fb1372b2a37865678d8f12afe4b478ff2ebc0c7c0aff82cd5e6b66fc43d889eec0f1865c2365d8f7a66d92da7744a77
   languageName: node
   linkType: hard
 
