@@ -6,6 +6,3 @@ export DOC_VALIDATOR_IMAGE := $(shell sed -En 's, *image: "(grafana/doc-validato
 
 # Skip some doc-validator checks.
 export DOC_VALIDATOR_SKIP_CHECKS := ^(?:image.+|canonical-does-not-match-pretty-URL)$
-
-# Use alternative image until make-docs 3.0.0 is rolled out.
-export DOCS_IMAGE := grafana/docs-base:dbd975af06
