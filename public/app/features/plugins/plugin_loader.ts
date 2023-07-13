@@ -14,7 +14,7 @@ import { GenericDataSourcePlugin } from '../datasources/types';
 import builtInPlugins from './built_in_plugins';
 import { registerPluginInCache } from './loader/cache';
 import { sharedDependenciesMap } from './loader/sharedDependencies';
-import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemJsHooks';
+import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
 import { buildImportMap } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
