@@ -141,6 +141,15 @@ Choose how null values, which are gaps in the data, appear on the graph. Null va
 - **Always:** Time series data points with gaps in the the data are always connected.
 - **Threshold:** Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range, and gaps outside this range should no longer be connected.
 
+### Disconnect values
+
+Choose a threshold for your data where gaps in the data should appear on the graph. Values can be set to a threshold above which values in the data are disconnected.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values.png" max-width="750px" caption="Disconnect values" >}}
+
+- **Never:** Time series data points in the the data are never disconnected.
+- **Threshold:** Specify a threshold above which values in the data are disconnected. This can be useful when desired values in the data are of a known size and/or within a known range, and gaps outside this range should no longer be connected.
+
 ### Stack series
 
 _Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
