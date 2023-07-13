@@ -252,7 +252,7 @@ describe('updateQueries', () => {
   });
 
   it('should preserve query when switching from mixed to a datasource where a query exists for the new datasource - when using datasource template variable', async () => {
-    const vars = templateSrv.init([
+    templateSrv.init([
       {
         current: {
           text: 'Azure Monitor',
