@@ -6,6 +6,7 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, FilterInput, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui/src/components/Text/Text';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
@@ -141,8 +142,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     offset: [0, 0],
     trigger: 'click',
     onVisibleChange: (value: boolean) => {
-      // Clear search state when closing the overlay
-      if (!value) {
+      // ensure search state is clean on opening the overlay
+      if (value) {
         setSearch('');
       }
       setOverlayOpen(value);
@@ -167,7 +168,13 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
       >
-        {selectedFolder.isLoading ? <Skeleton width={100} /> : label ?? 'Select folder'}
+        {selectedFolder.isLoading ? (
+          <Skeleton width={100} />
+        ) : (
+          <Text as="span" truncate>
+            {label ?? 'Select folder'}
+          </Text>
+        )}
       </Button>
     );
   }
