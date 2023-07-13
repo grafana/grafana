@@ -10,28 +10,28 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
+replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible // @grafana/grafana-delivery
 
 // contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055
+replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055 // @grafana/grafana-as-code
 
-replace k8s.io/client-go => k8s.io/client-go v0.27.1
+replace k8s.io/client-go => k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
 
-replace k8s.io/api => k8s.io/api v0.27.1
+replace k8s.io/api => k8s.io/api v0.27.1 // @grafana/grafana-app-platform-squad
 
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.27.1
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
 
-replace k8s.io/apiserver => k8s.io/apiserver v0.27.1
+replace k8s.io/apiserver => k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
 
 // TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
 // will need bumps as we upgrade otel in Grafana
-replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
+replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // @grafana/backend-platform
 
-replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.16.0
+replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
 
-replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.16.0
+replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.16.0 // @grafana/backend-platform
 
-replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16.0
+replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16.0 // @grafana/backend-platform
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
