@@ -307,11 +307,11 @@ For example, if a value is within a certain range, you can configure a range val
 
 Range to match against and the result to apply when the value is within the range
 
-| Property | Type                                      | Required | Default | Description                                                                                                                                                                          |
-| -------- | ----------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `from`   | number or null                            | **Yes**  |         | Min value of the range. It can be null which means -Infinity<br/>Constraint: `>=-1.797693134862315708145274237317043567981E+308 & <=1.797693134862315708145274237317043567981E+308`. |
-| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches                                                                                                                |
-| `to`     | number or null                            | **Yes**  |         | Max value of the range. It can be null which means +Infinity<br/>Constraint: `>=-1.797693134862315708145274237317043567981E+308 & <=1.797693134862315708145274237317043567981E+308`. |
+| Property | Type                                      | Required | Default | Description                                                           |
+|----------|-------------------------------------------|----------|---------|-----------------------------------------------------------------------|
+| `from`   | number or null                            | **Yes**  |         | Min value of the range. It can be null which means -Infinity          |
+| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches |
+| `to`     | number or null                            | **Yes**  |         | Max value of the range. It can be null which means +Infinity          |
 
 ### ValueMappingResult
 
