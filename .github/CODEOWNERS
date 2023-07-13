@@ -605,6 +605,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
+/.github/workflows/sync-mirror.yml @grafana/grafana-delivery
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
 /.github/workflows/remove-milestone.yml @grafana/grafana-frontend-platform
