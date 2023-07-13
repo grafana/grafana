@@ -12,9 +12,7 @@ keywords:
   - activate
 labels:
   products:
-    - cloud
     - enterprise
-    - oss
 title: Activate a Grafana Enterprise license from AWS on an instance deployed outside
   of AWS
 weight: 300

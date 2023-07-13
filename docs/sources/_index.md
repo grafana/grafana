@@ -5,11 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/administration/enterprise-licensing/**
-    labels:
-      products:
-        - enterprise
-  - _target:
       path: /docs/grafana/*/administration/organization-management/**
     labels:
       products:
