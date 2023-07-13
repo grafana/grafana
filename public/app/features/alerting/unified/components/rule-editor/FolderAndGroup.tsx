@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, useStyles2 } from '@grafana/ui';
@@ -21,8 +21,8 @@ import { AsyncRequestState } from '../../utils/redux';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
+import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { EvaluateEveryNewGroup } from './GrafanaEvaluationBehavior';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
@@ -70,7 +70,11 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
   return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
-export function FolderAndGroup() {
+export function FolderAndGroup({
+  groupfoldersForGrafana,
+}: {
+  groupfoldersForGrafana: AsyncRequestState<RulerRulesConfigDTO | null>;
+}) {
   const {
     formState: { errors },
     watch,
@@ -95,6 +99,12 @@ export function FolderAndGroup() {
     resetGroup();
     setValue('folder', folder);
     setIsCreatingFolder(false);
+  };
+
+  const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
+    setValue('group', groupName);
+    setValue('evaluateEvery', evaluationInterval);
+    setIsCreatingEvaluationGroup(false);
   };
 
   const resetGroup = useCallback(() => {
@@ -227,10 +237,23 @@ export function FolderAndGroup() {
 
         <div className={styles.addButton}>
           <span>or</span>
-          <Button onClick={() => {}} type="button" icon="plus" fill="outline" variant="secondary">
+          <Button
+            onClick={onOpenEvaluationGroupCreationModal}
+            type="button"
+            icon="plus"
+            fill="outline"
+            variant="secondary"
+          >
             New evaluation group
           </Button>
         </div>
+        {isCreatingEvaluationGroup && (
+          <EvaluationGroupCreationModal
+            onCreate={handleEvalGroupCreation}
+            onClose={() => setIsCreatingEvaluationGroup(false)}
+            groupfoldersForGrafana={groupfoldersForGrafana}
+          />
+        )}
       </div>
     </div>
   );
@@ -288,6 +311,99 @@ function FolderCreationModal({
           </Button>
         </Modal.ButtonRow>
       </>
+    </Modal>
+  );
+}
+
+function EvaluationGroupCreationModal({
+  onClose,
+  onCreate,
+  groupfoldersForGrafana,
+}: {
+  onClose: () => void;
+  onCreate: (group: string, evaluationInterval: string) => void;
+  groupfoldersForGrafana: AsyncRequestState<RulerRulesConfigDTO | null>;
+}): React.ReactElement {
+  const styles = useStyles2(getStyles);
+  const onSubmit = () => {
+    onCreate(getValues('group'), getValues('evaluateEvery'));
+  };
+
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const evaluateEveryId = 'eval-every-input';
+  const [groupName, folderName] = watch(['group', 'folder.title']);
+
+  const groupRules =
+    (groupfoldersForGrafana.result &&
+      groupfoldersForGrafana.result[folderName]?.find((g) => g.name === groupName)?.rules) ??
+    [];
+
+  const onCancel = () => {
+    onClose();
+  };
+
+  const formAPI = useForm({
+    defaultValues: { group: '', evaluateEvery: '' },
+    mode: 'onChange',
+    shouldFocusError: true,
+  });
+
+  const { register, handleSubmit, formState, getValues } = formAPI;
+
+  return (
+    <Modal
+      className={styles.modal}
+      isOpen={true}
+      title={'New evaluation group'}
+      onDismiss={onCancel}
+      onClickBackdrop={onCancel}
+    >
+      <div className={styles.modalTitle}>Create a new evaluation group to use for this alert rule.</div>
+
+      <FormProvider {...formAPI}>
+        <Field
+          label={<Label htmlFor={'group'}>Evaluation group name</Label>}
+          error={formState.errors.group?.message}
+          invalid={!!formState.errors.group}
+        >
+          <Input
+            className={styles.formInput}
+            id={'group'}
+            placeholder="Enter a name"
+            {...register('group', { required: { value: true, message: 'Required.' } })}
+          />
+        </Field>
+
+        <Field
+          error={formState.errors.evaluateEvery?.message}
+          invalid={!!formState.errors.evaluateEvery}
+          label={
+            <Label
+              htmlFor={evaluateEveryId}
+              description="How often is the rule evaluated. Applies to every rule within the group."
+            >
+              Evaluation interval
+            </Label>
+          }
+        >
+          <Input
+            className={styles.formInput}
+            id={evaluateEveryId}
+            placeholder="e.g. 5m"
+            {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+          />
+        </Field>
+      </FormProvider>
+
+      <Modal.ButtonRow>
+        <Button variant="secondary" type="button" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="button" disabled={!formState.isValid} onClick={handleSubmit(() => onSubmit())}>
+          Create
+        </Button>
+      </Modal.ButtonRow>
     </Modal>
   );
 }

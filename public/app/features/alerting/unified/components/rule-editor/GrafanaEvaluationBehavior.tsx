@@ -4,8 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, InlineLabel, Input, InputControl, Label, Switch, Tooltip, useStyles2 } from '@grafana/ui';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { Field, Icon, IconButton, Input, InputControl, Label, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { logInfo, LogMessages } from '../../Analytics';
@@ -13,10 +12,9 @@ import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { MINUTE } from '../../utils/rule-form';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
-import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
+import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
@@ -70,50 +68,6 @@ const useIsNewGroup = (folder: string, group: string) => {
   return !groupIsInGroupOptions(group);
 };
 
-export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | null | undefined }) => {
-  const {
-    watch,
-    register,
-    formState: { errors },
-  } = useFormContext<RuleFormValues>();
-  const styles = useStyles2(getStyles);
-  const evaluateEveryId = 'eval-every-input';
-  const [groupName, folderName] = watch(['group', 'folder.title']);
-
-  const groupRules = (rules && rules[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];
-
-  return (
-    <Field
-      label="Evaluation interval"
-      description="Applies to every rule within a group. It can overwrite the interval of an existing alert rule."
-    >
-      <div className={styles.alignInterval}>
-        <Stack direction="row" justify-content="left" align-items="baseline" gap={0}>
-          <InlineLabel
-            htmlFor={evaluateEveryId}
-            width={16}
-            tooltip="How often the alert will be evaluated to see if it fires"
-          >
-            Evaluate every
-          </InlineLabel>
-          <Field
-            className={styles.inlineField}
-            error={errors.evaluateEvery?.message}
-            invalid={!!errors.evaluateEvery}
-            validationMessageHorizontalOverflow={true}
-          >
-            <Input
-              id={evaluateEveryId}
-              width={8}
-              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
-            />
-          </Field>
-        </Stack>
-      </div>
-    </Field>
-  );
-};
-
 function FolderGroupAndEvaluationInterval({
   evaluateEvery,
   setEvaluateEvery,
@@ -122,7 +76,7 @@ function FolderGroupAndEvaluationInterval({
   setEvaluateEvery: (value: string) => void;
 }) {
   const styles = useStyles2(getStyles);
-  const { watch, setValue } = useFormContext<RuleFormValues>();
+  const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
   const [groupName, folderName] = watch(['group', 'folder.title']);
@@ -139,9 +93,6 @@ function FolderGroupAndEvaluationInterval({
   useEffect(() => {
     if (!isNewGroup && existingGroup?.interval) {
       setEvaluateEvery(existingGroup.interval);
-    } else {
-      setEvaluateEvery(MINUTE);
-      setValue('evaluateEvery', MINUTE);
     }
   }, [setEvaluateEvery, isNewGroup, setValue, existingGroup]);
 
@@ -165,7 +116,7 @@ function FolderGroupAndEvaluationInterval({
 
   return (
     <div>
-      <FolderAndGroup />
+      <FolderAndGroup groupfoldersForGrafana={groupfoldersForGrafana} />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
@@ -178,37 +129,22 @@ function FolderGroupAndEvaluationInterval({
         <div className={styles.evaluationContainer}>
           <Stack direction="column" gap={0}>
             <div className={styles.marginTop}>
-              {isNewGroup && groupName ? (
-                <EvaluateEveryNewGroup rules={groupfoldersForGrafana?.result} />
-              ) : (
-                <Stack direction="column" gap={1}>
-                  <div className={styles.evaluateLabel}>
-                    {`Alert rules in the `} <span className={styles.bold}>{groupName}</span> group are evaluated every{' '}
-                    <span className={styles.bold}>{evaluateEvery}</span>.
-                  </div>
-                  {!isNewGroup && (
-                    <div>
-                      {`Evaluation group interval applies to every rule within a group. It overwrites intervals defined for existing alert rules.`}
-                    </div>
-                  )}
-                </Stack>
-              )}
+              <Stack direction="column" gap={1}>
+                {getValues('group') && getValues('evaluateEvery') && (
+                  <span>
+                    All rules in the selected group are evaluated every {evaluateEvery}.{' '}
+                    {!isNewGroup && (
+                      <IconButton
+                        name="pen"
+                        aria-label="Edit"
+                        disabled={editGroupDisabled}
+                        onClick={onOpenEditGroupModal}
+                      />
+                    )}
+                  </span>
+                )}
+              </Stack>
             </div>
-            <Stack direction="row" justify-content="right" align-items="center">
-              {!isNewGroup && (
-                <div className={styles.marginTop}>
-                  <Button
-                    icon={'edit'}
-                    type="button"
-                    variant="secondary"
-                    disabled={editGroupDisabled}
-                    onClick={onOpenEditGroupModal}
-                  >
-                    <span>{'Edit evaluation group'}</span>
-                  </Button>
-                </div>
-              )}
-            </Stack>
           </Stack>
         </div>
       )}
@@ -366,8 +302,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
   `,
   evaluationContainer: css`
-    background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(2)};
+    color: ${theme.colors.text.secondary};
     max-width: ${theme.breakpoints.values.sm}px;
     font-size: ${theme.typography.size.sm};
   `,
