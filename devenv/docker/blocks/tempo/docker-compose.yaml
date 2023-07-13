@@ -72,7 +72,7 @@
         labels: namespace
 
   tempo:
-    image: grafana/tempo:main-dcf8a2a
+    image: grafana/tempo:main-c633387
     command:
       - --config.file=/etc/tempo.yaml
     volumes:
