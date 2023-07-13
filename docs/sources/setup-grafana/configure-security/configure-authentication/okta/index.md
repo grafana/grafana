@@ -106,7 +106,7 @@ If a refresh token doesn't exist, Grafana logs the user out of the system after 
 
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option against the `api_url` endpoint payload.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
-Refer to [configuration options]({{< relref "../../generic-oauth/index.md#configuration-options" >}}) for more information.
+Refer to [configuration options]({{< relref "../generic-oauth/index.md#configuration-options" >}}) for more information.
 
 If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
