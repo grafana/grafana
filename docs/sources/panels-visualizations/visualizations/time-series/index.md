@@ -143,7 +143,7 @@ Choose how null values, which are gaps in the data, appear on the graph. Null va
 
 ### Disconnect values
 
-Choose a threshold for your data where gaps in the data should appear on the graph. Values can be set to a threshold above which values in the data are disconnected.
+Choose whether to set a threshold above which values in the data should be disconnected.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values.png" max-width="750px" caption="Disconnect values" >}}
 
