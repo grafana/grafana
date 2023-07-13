@@ -7,6 +7,7 @@ keywords:
   - bundles
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menutitle: Send a support bundle to support

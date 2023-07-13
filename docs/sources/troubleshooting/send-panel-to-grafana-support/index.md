@@ -7,6 +7,7 @@ keywords:
   - dashboards
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menutitle: Send panel to support
