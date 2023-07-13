@@ -122,7 +122,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedError:     errRoleAttributeStrictViolation,
 		},
-		{ // Edge case, no match, no strict mode and no fallback => User has a default role
+		{ // Edge case, no match, no strict mode and no fallback => User has the Viewer role (hard coded)
 			Name:              "Fallback with no default will create a user with a default role",
 			Cfg:               conf{},
 			UserRespBody:      editorUserRespBody,
