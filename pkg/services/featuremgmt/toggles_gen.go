@@ -386,4 +386,8 @@ const (
 	// FlagTransformationsRedesign
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagMlExpressions
+	// Enable support for Machine Learning in server-side expressions
+	FlagMlExpressions = "mlExpressions"
 )
