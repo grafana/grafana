@@ -50,7 +50,7 @@
 /docs/sources/upgrade-guide/              @chri2547 @imatwawana
 /docs/sources/whatsnew/                   @chri2547 @imatwawana
 /docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend/ @Eve832 @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/introduction-to-plugin-development/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
 /go.mod @grafana/backend-platform
@@ -66,6 +66,7 @@
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
+/pkg/systemd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
 /pkg/components/satokengen/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
@@ -160,14 +161,14 @@
 /devenv/docker/blocks/elastic* @grafana/observability-logs
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
-/devenv/bulk_alerting_dashboards/ @grafana/alerting-squad-backend
+/devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
 /devenv/create_docker_compose.sh @grafana/backend-platform
 /devenv/dashboards.yaml @grafana/dashboards-squad
 /devenv/datasources.yaml @grafana/backend-platform
 /devenv/datasources_docker.yaml @grafana/backend-platform
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/ @grafana/dashboards-squad
-/devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-squad-backend
+/devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-backend-product
 /devenv/docker/blocks/clickhouse/ @grafana/partner-datasources
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
 /devenv/docker/blocks/grafana/ @grafana/grafana-as-code
@@ -177,7 +178,7 @@
 /devenv/docker/blocks/influxdb/ @grafana/observability-metrics
 /devenv/docker/blocks/influxdb1/ @grafana/observability-metrics
 /devenv/docker/blocks/jaeger/ @grafana/observability-traces-and-profiling
-/devenv/docker/blocks/maildev/ @grafana/alerting-squad-frontend
+/devenv/docker/blocks/maildev/ @grafana/alerting-frontend
 /devenv/docker/blocks/mariadb/ @grafana/grafana-bi-squad
 /devenv/docker/blocks/memcached/ @grafana/backend-platform
 /devenv/docker/blocks/mssql/ @grafana/grafana-bi-squad
@@ -205,7 +206,7 @@
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/backend-platform
 /devenv/docker/debtest/ @bergquist
-/devenv/docker/ha-test-unified-alerting/ @grafana/alerting-squad-backend
+/devenv/docker/ha-test-unified-alerting/ @grafana/alerting-backend-product
 /devenv/docker/ha_test/ @grafana/backend-platform
 /devenv/docker/loadtest/ @grafana/backend-platform
 /devenv/docker/rpmtest/ @grafana/backend-platform
@@ -215,7 +216,7 @@
 /devenv/setup.sh @grafana/backend-platform
 
 # Emails
-/emails/ @grafana/alerting-squad-frontend
+/emails/ @grafana/alerting-frontend
 
 #Packaging
 /packaging/ @DanCech
@@ -266,11 +267,11 @@
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 
 # Alerting
-/pkg/services/ngalert/ @grafana/alerting-squad-backend
-/pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-squad-backend
-/pkg/services/alerting/ @grafana/alerting-squad-backend
-/pkg/tests/api/alerting/ @grafana/alerting-squad-backend
-/public/app/features/alerting/ @grafana/alerting-squad-frontend
+/pkg/services/ngalert/ @grafana/alerting-backend-product
+/pkg/services/sqlstore/migrations/ualert/ @grafana/alerting-backend-product
+/pkg/services/alerting/ @grafana/alerting-backend-product
+/pkg/tests/api/alerting/ @grafana/alerting-backend-product
+/public/app/features/alerting/ @grafana/alerting-frontend
 
 # Library Services
 /pkg/services/libraryelements/ @grafana/grafana-frontend-platform
@@ -395,8 +396,8 @@ lerna.json @grafana/frontend-ops
 /public/app/features/transformers/ @grafana/dataviz-squad
 /public/app/features/users/ @grafana/grafana-authnz-team
 /public/app/features/variables/ @grafana/dashboards-squad
-/public/app/plugins/panel/alertGroups/ @grafana/alerting-squad-frontend
-/public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
+/public/app/plugins/panel/alertGroups/ @grafana/alerting-frontend
+/public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
 /public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
@@ -434,7 +435,7 @@ lerna.json @grafana/frontend-ops
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/dashboards/ @grafana/dashboards-squad
-/public/fonts/ @grafana/alerting-squad-frontend
+/public/fonts/ @grafana/alerting-frontend
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
@@ -443,7 +444,6 @@ lerna.json @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
-/public/testdata/ @grafana/grafana-frontend-platform
 /public/views/ @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
@@ -610,6 +610,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
+/.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
+/.github/workflows/pr-patch-mirror-and-apply.yml @grafana/grafana-delivery
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
 /.github/workflows/remove-milestone.yml @grafana/grafana-delivery
@@ -623,6 +625,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+/.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 
 
 # Generated files not requiring owner approval
@@ -638,7 +641,7 @@ embed.go @grafana/grafana-as-code
 /conf/ldap.toml @grafana/grafana-authnz-team
 /conf/ldap_multiple.toml @grafana/grafana-authnz-team
 /conf/provisioning/access-control/ @grafana/grafana-authnz-team
-/conf/provisioning/alerting/ @grafana/alerting-squad-backend
+/conf/provisioning/alerting/ @grafana/alerting-backend-product
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/notifiers/ @bergquist

@@ -277,8 +277,6 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
-	s.log.Debug("user found", "user", user)
-
 	name, surname := splitName(user.Name)
 
 	u := &LDAPUserDTO{

@@ -627,13 +627,6 @@ type UpdateUserParams struct {
 	UserID int64 `json:"user_id"`
 }
 
-// swagger:response searchUsersResponse
-type SearchUsersResponse struct {
-	// The response message
-	// in: body
-	Body user.SearchUserQueryResult `json:"body"`
-}
-
 // swagger:response userResponse
 type UserResponse struct {
 	// The response message
