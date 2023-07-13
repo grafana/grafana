@@ -280,8 +280,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     left: 0;
     position: absolute;
     z-index: 1;
+    border-radius: 6px;
 
-    padding: 10px;
+    padding: 8px;
     white-space: pre;
   `,
 });
