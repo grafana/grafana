@@ -46,7 +46,7 @@ module.exports = {
     'no-redeclare': 'off',
     '@typescript-eslint/no-redeclare': ['error'],
     // custom local rules
-    'rulesdir/check-border-radius-tokens': 'error',
+    'rulesdir/no-border-radius-literal': 'error',
   },
   overrides: [
     {
