@@ -4,8 +4,8 @@ aliases:
 description: Learn how to configure RBAC.
 labels:
   products:
+    - cloud
     - enterprise
-    - oss
 menuTitle: Configure RBAC
 title: Configure RBAC in Grafana
 weight: 30

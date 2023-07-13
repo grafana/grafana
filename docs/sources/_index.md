@@ -5,12 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/administration/roles-and-permissions/access-control/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-  - _target:
       path: /docs/grafana/*/administration/stats-and-license/**
     labels:
       products:
