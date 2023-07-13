@@ -335,13 +335,10 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 	}
 
 	for _, frame := range frames {
-		// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
-		// the WideToMany() function to error out, which results in unhealthy alerts.
-		// This check should be removed once inconsistencies in data source responses are solved.
-		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && datasourceType == datasources.DS_INFLUXDB {
-			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
+		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot {
 			continue
 		}
+
 		var series []mathexp.Series
 		series, err := WideToMany(frame)
 		if err != nil {
