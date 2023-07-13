@@ -10,27 +10,8 @@ export default {
       .include('**/*.{ts,tsx}')
       .exclude(/public\/app\/angular/),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
-  'no borderRadius without token': () => countBorderRadiusWithoutToken().include('**/*.ts*'),
 };
 
-function countBorderRadiusWithoutToken() {
-  return new BettererFileTest(async (filePaths, fileTestResult) => {
-    await Promise.all(
-      filePaths.map(async (filePath) => {
-        // look for borderRadius in the story file and check if it uses the token
-        const regexBorder = new RegExp('border.*radius:.*', 'gmi');
-        const regexToken = new RegExp('theme.border.radius.*', 'gm');
-        const fileText = await fs.readFile(filePath, 'utf8');
-        if (regexBorder.test(fileText) && !regexToken.test(fileText)) {
-          // In this case the file contents don't matter:
-          const file = fileTestResult.addFile(filePath, '');
-          // Add the issue to the first character of the file:
-          file.addIssue(0, 0, 'No borderRadius with custom value is allowed, please use tokens instead');
-        }
-      })
-    );
-  });
-}
 
 function countUndocumentedStories() {
   return new BettererFileTest(async (filePaths, fileTestResult) => {

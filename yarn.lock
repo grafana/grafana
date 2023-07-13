@@ -17009,6 +17009,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-local-rules@npm:^1.3.2":
+  version: 1.3.2
+  resolution: "eslint-plugin-local-rules@npm:1.3.2"
+  checksum: d1d94c0832d7a5e1686c4d685614c407998e7a60318893a405fb8c97c3856b05a8d9479c20ad2799667a59ebfebc4c4f3268528d21d849d2062dee2041b9e909
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-lodash@npm:7.4.0":
   version: 7.4.0
   resolution: "eslint-plugin-lodash@npm:7.4.0"
@@ -19151,6 +19158,7 @@ __metadata:
     eslint-plugin-jest: 27.2.1
     eslint-plugin-jsdoc: 40.0.1
     eslint-plugin-jsx-a11y: 6.7.1
+    eslint-plugin-local-rules: ^1.3.2
     eslint-plugin-lodash: 7.4.0
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
