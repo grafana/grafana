@@ -212,6 +212,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   }
 }
 
+// localstorage key: grafana.featureToggles
+// example value: panelEditor=1,panelInspector=1
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
