@@ -183,6 +183,13 @@ func TestInMemory_Plugins(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "No existing plugins",
+			mocks: mocks{
+				store: map[string]*plugins.Plugin{},
+			},
+			expected: []*plugins.Plugin{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
