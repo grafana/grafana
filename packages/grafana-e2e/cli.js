@@ -14,7 +14,15 @@ const cypress = (commandName, { updateScreenshots, browser }) => {
   // For plugins/compareSnapshots
   const UPDATE_SCREENSHOTS = `UPDATE_SCREENSHOTS=${updateScreenshots ? 1 : 0}`;
 
-  const cypressOptions = [commandName, '--env', `${CWD},${UPDATE_SCREENSHOTS}`, `--project=${projectPath}`];
+  const cypressOptions = [
+    commandName,
+    '--env',
+    `${CWD},${UPDATE_SCREENSHOTS}`,
+    `--project=${projectPath}`,
+    // keeping this for backwards compatibility of plugins using cypress 9
+    '--config-file',
+    resolve(__dirname, 'legacy-cypress.json'),
+  ];
 
   if (browser) {
     cypressOptions.push('--browser', browser);
