@@ -87,6 +87,7 @@ func (b *Builder) buildSelect() {
 
 func (b *Builder) applyFilters() (ordering string) {
 	joins := []string{}
+	jointParams := []interface{}{}
 	orderJoins := []string{}
 
 	wheres := []string{}
@@ -100,6 +101,14 @@ func (b *Builder) applyFilters() (ordering string) {
 	for _, f := range b.Filters {
 		if f, ok := f.(FilterLeftJoin); ok {
 			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+		}
+
+		if f, ok := f.(FilterLeftJoinParams); ok {
+			sql, params := f.LeftJoinParams()
+			if sql != "" {
+				joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", sql))
+				jointParams = append(jointParams, params...)
+			}
 		}
 
 		if f, ok := f.(FilterWhere); ok {
@@ -127,7 +136,12 @@ func (b *Builder) applyFilters() (ordering string) {
 	}
 
 	b.sql.WriteString("SELECT dashboard.id FROM dashboard")
+	b.sql.WriteString(`
+		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
+	`)
+
 	b.sql.WriteString(strings.Join(joins, ""))
+	b.params = append(b.params, jointParams...)
 
 	if len(wheres) > 0 {
 		b.sql.WriteString(fmt.Sprintf(" WHERE %s", strings.Join(wheres, " AND ")))

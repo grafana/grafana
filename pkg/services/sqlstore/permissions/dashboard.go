@@ -65,7 +65,7 @@ type DashboardFilter struct {
 	needToCheckDashboardAction bool
 }
 
-func (f *DashboardFilter) Join() (string, []interface{}) {
+func (f *DashboardFilter) LeftJoinParams() (string, []interface{}) {
 	if f.hasNoPermissions() || f.hasNoActionsToCheck() {
 		return "", nil
 	}
@@ -77,7 +77,7 @@ func (f *DashboardFilter) Join() (string, []interface{}) {
 		accesscontrol.GetOrgRoles(f.usr),
 	)
 
-	query := "LEFT JOIN permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(" + filter + ")"
+	query := "permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(" + filter + ")"
 
 	return query, params
 }

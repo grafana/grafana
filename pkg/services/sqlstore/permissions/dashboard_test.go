@@ -160,16 +160,15 @@ func TestIntegration_DashboardFilter(t *testing.T) {
 
 				query.WriteString("SELECT COUNT(*) FROM dashboard ")
 				query.WriteString(" LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id ")
-				join, joinParams := filter.Join()
+				join, joinParams := filter.LeftJoinParams()
+				query.WriteString(" LEFT OUTER JOIN ")
 				query.WriteString(join)
 				query.WriteString(" WHERE ")
 				params = append(params, joinParams...)
 				where, whereParams := filter.Where()
 				query.WriteString(where)
 				params = append(params, whereParams...)
-				sql := query.String()
-
-				_, err := sess.SQL(sql, params...).Get(&result)
+				_, err := sess.SQL(query.String(), params...).Get(&result)
 				return err
 			})
 

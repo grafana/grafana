@@ -39,6 +39,13 @@ type FilterLeftJoin interface {
 	LeftJoin() string
 }
 
+// FilterLeftJoinParams adds the returned string as a "LEFT OUTER JOIN" to
+// allow for fetching extra columns from a table outside of the
+// dashboard column with support for params.
+type FilterLeftJoinParams interface {
+	LeftJoinParams() (string, []interface{})
+}
+
 type FilterSelect interface {
 	Select() string
 }
@@ -109,6 +116,10 @@ func (f DashboardFilter) Where() (string, []interface{}) {
 
 type TagsFilter struct {
 	Tags []string
+}
+
+func (f TagsFilter) LeftJoin() string {
+	return `dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id`
 }
 
 func (f TagsFilter) GroupBy() (string, []interface{}) {
