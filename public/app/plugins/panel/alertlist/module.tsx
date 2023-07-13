@@ -260,7 +260,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             type={['prometheus', 'loki', 'grafana']}
             noDefault
             current={props.value}
-            onChange={(ds) => props.onChange(ds.name)}
+            onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
             onClear={() => props.onChange(null)}
           />
         );
