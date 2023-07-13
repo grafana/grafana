@@ -3,6 +3,7 @@ _build:
   list: false
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Release notes for Grafana 7.3.7
