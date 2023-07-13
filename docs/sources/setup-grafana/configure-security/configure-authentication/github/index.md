@@ -9,6 +9,7 @@ keywords:
   - oauth
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: GitHub OAuth2

@@ -10,6 +10,7 @@ keywords:
   - proxy
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Auth proxy

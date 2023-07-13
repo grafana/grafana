@@ -4,6 +4,7 @@ aliases:
 description: Grafana Okta OAuth Guide
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Okta OAuth2

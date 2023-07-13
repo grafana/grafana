@@ -5,6 +5,7 @@ aliases:
 description: Grafana LDAP Authentication Guide
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: LDAP

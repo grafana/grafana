@@ -4,6 +4,7 @@ aliases:
 description: Grafana OAuthentication Guide
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Basic auth

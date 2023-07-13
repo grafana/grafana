@@ -6,6 +6,7 @@ description: Learn about all the ways in which you can configure Grafana to auth
   users.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Configure authentication

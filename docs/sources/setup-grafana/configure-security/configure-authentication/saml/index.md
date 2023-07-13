@@ -12,6 +12,7 @@ description: Learn how to configure SAML authentication in Grafana's configurati
   file.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: SAML

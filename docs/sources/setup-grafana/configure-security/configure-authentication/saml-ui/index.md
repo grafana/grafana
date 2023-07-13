@@ -2,6 +2,7 @@
 description: Learn how to configure SAML authentication in Grafana's UI.
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: SAML user interface

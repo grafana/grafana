@@ -12,6 +12,7 @@ keywords:
   - enterprise
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Enhanced LDAP

@@ -4,6 +4,7 @@ aliases:
 description: Grafana Com Authentication
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Grafana Com OAuth2

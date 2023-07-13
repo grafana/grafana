@@ -10,6 +10,7 @@ keywords:
   - oauth
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 menuTitle: Keycloak OAuth2
