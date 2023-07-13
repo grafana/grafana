@@ -14,7 +14,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 menuTitle: SAML
 title: Configure SAML authentication using the configuration file
 weight: 500
