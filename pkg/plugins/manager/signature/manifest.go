@@ -110,13 +110,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	f, err := plugin.FS.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
-			s.log.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+			s.log.Debug("Could not find a MANIFEST.txt", "pluginID", plugin.JSONData.ID, "err", err)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusUnsigned,
 			}, nil
 		}
 
-		s.log.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		s.log.Debug("Could not open MANIFEST.txt", "pluginID", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -132,7 +132,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	byteValue, err := io.ReadAll(f)
 	if err != nil || len(byteValue) < 10 {
-		s.log.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
+		s.log.Debug("MANIFEST.TXT is invalid", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusUnsigned,
 		}, nil
@@ -140,7 +140,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
-		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
+		s.log.Warn("Plugin signature invalid", "pluginID", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -213,7 +213,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		}, nil
 	}
 
-	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
+	s.log.Debug("Plugin signature valid", "pluginID", plugin.JSONData.ID)
 	return plugins.Signature{
 		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,

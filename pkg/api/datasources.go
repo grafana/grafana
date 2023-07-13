@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginuid"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -74,10 +75,11 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
+		pluginUID := pluginuid.FromDataSource(ds)
+		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginUID); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
-			dsItem.Type = plugin.ID // may be from an alias
+			dsItem.Type = pluginUID // may be from an alias
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -664,7 +666,8 @@ func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
 		return
 	}
 
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	pluginUID := pluginuid.FromDataSource(ds)
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginUID)
 	if !exists {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return

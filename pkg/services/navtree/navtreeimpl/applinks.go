@@ -229,7 +229,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Url:        s.cfg.AppSubURL + "/alerts-and-incidents",
 			})
 		default:
-			s.log.Error("Plugin app nav id not found", "pluginId", plugin.ID, "navId", sectionID)
+			s.log.Error("Plugin app nav id not found", "pluginUID", plugin.UID, "navId", sectionID)
 		}
 	}
 }

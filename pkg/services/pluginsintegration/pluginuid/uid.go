@@ -1,4 +1,4 @@
-package uid
+package pluginuid
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -10,6 +10,6 @@ func FromPluginContext(pCtx backend.PluginContext) string {
 	return pCtx.PluginID
 }
 
-func FromDataSource(ds datasources.DataSource) string {
+func FromDataSource(ds *datasources.DataSource) string {
 	return ds.Type
 }

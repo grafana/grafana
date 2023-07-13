@@ -221,6 +221,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
+							UID:    "test-app",
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
@@ -254,6 +255,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
+							UID:    "test-app",
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
@@ -287,6 +289,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
+							UID:    "test-app",
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
 								ID:      "test-app",

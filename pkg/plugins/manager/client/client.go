@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/uid"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginuid"
 )
 
 const (
@@ -248,7 +248,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pCtx backend.PluginContext) (*plugins.Plugin, bool) {
-	pluginUID := uid.FromPluginContext(pCtx)
+	pluginUID := pluginuid.FromPluginContext(pCtx)
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginUID)
 	if !exists {
 		return nil, false

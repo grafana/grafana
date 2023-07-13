@@ -148,7 +148,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",
-				"pluginUID", plugin.ID, "status", signingError.SignatureStatus)
+				"pluginUID", plugin.UID, "status", signingError.SignatureStatus)
 			plugin.SignatureError = signingError
 			l.errs[plugin.UID] = signingError
 			// skip plugin so it will not be loaded any further

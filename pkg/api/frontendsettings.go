@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginuid"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -39,7 +40,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	apps := make(map[string]*plugins.AppDTO, 0)
 	for _, ap := range availablePlugins[plugins.TypeApp] {
-		apps[ap.Plugin.ID] = newAppDTO(
+		apps[ap.Plugin.UID] = newAppDTO(
 			ap.Plugin,
 			ap.Settings,
 		)
@@ -64,11 +65,11 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		if panel.ID == "datagrid" && !hs.Features.IsEnabled(featuremgmt.FlagEnableDatagridEditing) {
+		if panel.UID == "datagrid" && !hs.Features.IsEnabled(featuremgmt.FlagEnableDatagridEditing) {
 			continue
 		}
 
-		panels[panel.ID] = plugins.PanelDTO{
+		panels[panel.UID] = plugins.PanelDTO{
 			ID:              panel.ID,
 			Name:            panel.Name,
 			Alias:           panel.Alias,
@@ -314,13 +315,14 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)
+		pluginUID := pluginuid.FromDataSource(ds)
+		ap, exists := availablePlugins.Get(plugins.TypeDataSource, pluginUID)
 		if !exists {
 			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
 		plugin := ap.Plugin
-		dsDTO.Type = plugin.ID
+		dsDTO.Type = plugin.UID
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
@@ -491,13 +493,13 @@ type availablePluginDTO struct {
 // For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
 type AvailablePlugins map[plugins.Type]map[string]*availablePluginDTO
 
-func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*availablePluginDTO, bool) {
-	p, exists := ap[pluginType][pluginID]
+func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginUID string) (*availablePluginDTO, bool) {
+	p, exists := ap[pluginType][pluginUID]
 	if exists {
 		return p, true
 	}
 	for _, p = range ap[pluginType] {
-		if p.Plugin.ID == pluginID || p.Plugin.Alias == pluginID {
+		if p.Plugin.UID == pluginUID || p.Plugin.Alias == pluginUID {
 			return p, true
 		}
 	}
@@ -514,9 +516,9 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 
 	apps := make(map[string]*availablePluginDTO)
 	for _, app := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
-		if s, exists := pluginSettingMap[app.ID]; exists {
+		if s, exists := pluginSettingMap[app.UID]; exists {
 			app.Pinned = s.Pinned
-			apps[app.ID] = &availablePluginDTO{
+			apps[app.UID] = &availablePluginDTO{
 				Plugin:   app,
 				Settings: *s,
 			}
@@ -526,8 +528,8 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 
 	dataSources := make(map[string]*availablePluginDTO)
 	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.TypeDataSource) {
-		if s, exists := pluginSettingMap[ds.ID]; exists {
-			dataSources[ds.ID] = &availablePluginDTO{
+		if s, exists := pluginSettingMap[ds.UID]; exists {
+			dataSources[ds.UID] = &availablePluginDTO{
 				Plugin:   ds,
 				Settings: *s,
 			}
@@ -537,8 +539,8 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 
 	panels := make(map[string]*availablePluginDTO)
 	for _, p := range hs.pluginStore.Plugins(ctx, plugins.TypePanel) {
-		if s, exists := pluginSettingMap[p.ID]; exists {
-			panels[p.ID] = &availablePluginDTO{
+		if s, exists := pluginSettingMap[p.UID]; exists {
+			panels[p.UID] = &availablePluginDTO{
 				Plugin:   p,
 				Settings: *s,
 			}
@@ -564,7 +566,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	// fill settings from app plugins
 	for _, plugin := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
 		// ignore settings that already exist
-		if _, exists := pluginSettings[plugin.ID]; exists {
+		if _, exists := pluginSettings[plugin.UID]; exists {
 			continue
 		}
 
@@ -577,13 +579,13 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 			PluginVersion: plugin.Info.Version,
 		}
 
-		pluginSettings[plugin.ID] = pluginSetting
+		pluginSettings[plugin.UID] = pluginSetting
 	}
 
 	// fill settings from all remaining plugins (including potential app child plugins)
 	for _, plugin := range hs.pluginStore.Plugins(ctx) {
 		// ignore settings that already exist
-		if _, exists := pluginSettings[plugin.ID]; exists {
+		if _, exists := pluginSettings[plugin.UID]; exists {
 			continue
 		}
 
@@ -604,7 +606,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 				pluginSetting.Enabled = p.Enabled
 			}
 		}
-		pluginSettings[plugin.ID] = pluginSetting
+		pluginSettings[plugin.UID] = pluginSetting
 	}
 
 	return pluginSettings, nil

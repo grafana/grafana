@@ -377,7 +377,7 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 	}
 	hs.log.Warn(
 		"plugin cdn redirect hit",
-		"pluginID", plugin.ID,
+		"pluginUID", plugin.UID,
 		"pluginVersion", plugin.Info.Version,
 		"assetPath", assetPath,
 		"remoteURL", remoteURL,
