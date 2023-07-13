@@ -1,12 +1,13 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana"],
+  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana", "eslint-plugin-local-rules"],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
     "import/external-module-folders": ["node_modules", ".yarn"]
   },
   "rules": {
+    "local-rules/check-border-radius-tokens": "error",
     "react/prop-types": "off",
     // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
     "react/no-unknown-property": ["error", { "ignore": ["css"] }],
