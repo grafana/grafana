@@ -3,9 +3,8 @@ package registry
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/dskit/services"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
