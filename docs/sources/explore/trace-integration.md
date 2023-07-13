@@ -5,6 +5,7 @@ keywords:
   - trace
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Tracing in Explore

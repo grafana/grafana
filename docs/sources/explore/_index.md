@@ -7,6 +7,7 @@ keywords:
   - logs
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Explore

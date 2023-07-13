@@ -5,6 +5,7 @@ keywords:
   - logs
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Logs in Explore
