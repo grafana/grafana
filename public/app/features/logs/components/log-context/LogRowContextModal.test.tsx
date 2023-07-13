@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { render } from 'test/redux-rtl';
@@ -475,7 +475,7 @@ describe('LogRowContextModal', () => {
       expect(rows).toHaveStyle('position: sticky');
     });
     const unpinButtons = screen.getAllByLabelText('Unpin line')[0];
-    await userEvent.click(unpinButtons);
+    fireEvent.click(unpinButtons);
     const rows = screen.getByTestId('entry-row');
     expect(rows).not.toHaveStyle('position: sticky');
   });

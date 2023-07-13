@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
@@ -140,7 +140,8 @@ describe('LogRowMessage', () => {
         setup({ onUnpinLine, pinned: true });
         const button = screen.getByLabelText('Unpin line');
 
-        await userEvent.click(button);
+        // There's an issue with userEvent and this button, so we use fireEvent instead
+        fireEvent.click(button);
 
         expect(onUnpinLine).toHaveBeenCalledTimes(1);
       });
