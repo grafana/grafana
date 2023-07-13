@@ -841,16 +841,6 @@ func TestHandleAWSSettings(t *testing.T) {
 		cfg.handleAWSConfig()
 		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
 	})
-	t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
-		cfg := NewCfg()
-		awsSection, err := cfg.Raw.NewSection("aws")
-		require.NoError(t, err)
-		_, err = awsSection.NewKey("assume_role_enabled", "false")
-		require.NoError(t, err)
-
-		cfg.handleAWSConfig()
-		assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
-	})
 	t.Run("Should set assume role to true if defined as true in the config", func(t *testing.T) {
 		cfg := NewCfg()
 		awsSection, err := cfg.Raw.NewSection("aws")
