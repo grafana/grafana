@@ -19,7 +19,7 @@ export const HeaderLabel = ({ showCloseButton, headerLabel, onClose }: HeaderLab
   return (
     <HorizontalGroup justify-content="space-between" spacing="lg">
       <div>
-        <span className={styles.label}>{headerLabel.label}</span>{' '}
+        <span className={styles.label}>{headerLabel.label}</span>
         <span className={styles.value}>{headerLabel.value}</span>
       </div>
       {showCloseButton && <CloseButton onClick={onClose} style={{ position: 'absolute', top: '20px', right: '8px' }} />}
