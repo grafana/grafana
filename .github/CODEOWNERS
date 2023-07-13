@@ -33,23 +33,32 @@
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
-/docs/                                    @Eve832 @jdbaldry
-/docs/sources/                            @Eve832
-/docs/sources/administration/             @Eve832 @GrafanaWriter
-/docs/sources/alerting/                   @brendamuir
-/docs/sources/dashboards/                 @imatwawana
-/docs/sources/datasources/                @lwandz13
-/docs/sources/explore/                    @Eve832 @GrafanaWriter
-/docs/sources/fundamentals                @chri2547
-/docs/sources/getting-started/            @chri2547
-/docs/sources/introduction/               @chri2547
-/docs/sources/old-alerting/               @brendamuir
-/docs/sources/panels-visualizations/      @imatwawana
-/docs/sources/release-notes/              @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/              @chri2547
-/docs/sources/upgrade-guide/              @chri2547 @imatwawana
-/docs/sources/whatsnew/                   @chri2547 @imatwawana
-/docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+# `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
+/.github/workflows/update-make-docs.yml                        @docs-tooling
+/.github/workflows/publish-technical-documentation-next.yml    @docs-tooling
+/.github/workflows/publish-technical-documentation-release.yml @docs-tooling
+/.github/workflows/doc-validator.yml                           @docs-tooling
+/docs/Makefile                                                 @docs-tooling
+/docs/docs.mk                                                  @docs-tooling
+/docs/make-docs                                                @docs-tooling
+/docs/variables.mk                                             @docs-tooling
+# Documentation sources might have different owners.
+/docs/sources/                                                               @Eve832
+/docs/sources/administration/                                                @Eve832 @GrafanaWriter
+/docs/sources/alerting/                                                      @brendamuir
+/docs/sources/dashboards/                                                    @imatwawana
+/docs/sources/datasources/                                                   @lwandz13
+/docs/sources/explore/                                                       @Eve832 @GrafanaWriter
+/docs/sources/fundamentals                                                   @chri2547
+/docs/sources/getting-started/                                               @chri2547
+/docs/sources/introduction/                                                  @chri2547
+/docs/sources/old-alerting/                                                  @brendamuir
+/docs/sources/panels-visualizations/                                         @imatwawana
+/docs/sources/release-notes/                                                 @Eve832 @GrafanaWriter
+/docs/sources/setup-grafana/                                                 @chri2547
+/docs/sources/upgrade-guide/                                                 @chri2547 @imatwawana
+/docs/sources/whatsnew/                                                      @chri2547 @imatwawana
+/docs/sources/developers/plugins/                                            @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/introduction-to-plugin-development/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
