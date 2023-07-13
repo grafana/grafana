@@ -336,7 +336,7 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (*kindsys.Provider, er
 		return &provider, nil
 	}
 
-	gpv := loadGP(rt.Context())
+	//gpv := loadGP(rt.Context())
 
 	fsys, err = ensureCueMod(fsys, provider.Name)
 	if err != nil {
@@ -390,9 +390,9 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (*kindsys.Provider, er
 	// Temporary hack while we figure out what in the elasticsearch lineage turns
 	// this into an endless loop in thema, and why unifying twice is anything other
 	// than a total no-op.
-	if provider.Name != "elasticsearch" {
-		gpi = gpi.Unify(gpv)
-	}
+	// if provider.Name != "elasticsearch" {
+	// 	gpi = gpi.Unify(gpv)
+	// }
 	if gpi.Err() != nil {
 		return &kindsys.Provider{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, provider.Name), gpi.Err())
 	}

@@ -263,9 +263,11 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 func (l *Loader) registerKinds(ctx context.Context, p *plugins.Plugin) error {
 	provider, err := pfs.CompilePluginProvider(p.FS, nil)
 	if err != nil {
+		fmt.Printf("Error: %s, Plugin: %s\n", err, p.ID)
 		return err
 	}
 	l.kindsCatalog.Register(ctx, provider)
+
 	return nil
 }
 

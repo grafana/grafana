@@ -24,19 +24,30 @@ var (
 )
 
 type Local struct {
-	log        log.Logger
-	production bool
+	log   log.Logger
+	newFS NewFSFunc
 }
 
-func NewLocalFinder(cfg *config.Cfg) *Local {
+type NewFSFunc func(dir string) (plugins.FS, error)
+
+func NewLocalFinder(cfg *config.Cfg, newFS NewFSFunc) *Local {
+	if newFS == nil {
+		newFS = func(dir string) (plugins.FS, error) {
+			lfs := plugins.NewLocalFS(dir)
+			if cfg.DevMode {
+				return lfs, nil
+			}
+			return plugins.NewStaticFS(lfs)
+		}
+	}
 	return &Local{
-		production: !cfg.DevMode,
-		log:        log.New("local.finder"),
+		log:   log.New("local.finder"),
+		newFS: newFS,
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg)
+	return NewLocalFinder(cfg, nil)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -88,16 +99,9 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 
 	res := make(map[string]*plugins.FoundBundle)
 	for pluginDir, data := range foundPlugins {
-		var pluginFs plugins.FS
-		pluginFs = plugins.NewLocalFS(pluginDir)
-		if l.production {
-			// In prod, tighten up security by allowing access only to the files present up to this point.
-			// Any new file "sneaked in" won't be allowed and will acts as if the file did not exist.
-			var err error
-			pluginFs, err = plugins.NewStaticFS(pluginFs)
-			if err != nil {
-				return nil, err
-			}
+		pluginFs, err := l.newFS(pluginDir)
+		if err != nil {
+			return nil, err
 		}
 		res[pluginDir] = &plugins.FoundBundle{
 			Primary: plugins.FoundPlugin{

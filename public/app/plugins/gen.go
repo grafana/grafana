@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -164,7 +166,7 @@ func wireServices(groot string) (*wiredServices, error) {
 	roleRegistry := fakes.NewFakeRoleRegistry()
 	angularInspector, err := angularinspector.NewStaticInspector()
 	ap := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
-	finder := finder.NewLocalFinder(cfg)
+	finder := finder.NewLocalFinder(cfg, newGenFS)
 	sig := signature.ProvideService(cfg, statickey.New())
 
 	if err != nil {
@@ -189,4 +191,32 @@ func wireServices(groot string) (*wiredServices, error) {
 		kindCatalog: catalog,
 		pluginStore: store,
 	}, nil
+}
+
+func newGenFS(dir string) (plugins.FS, error) {
+	return &genFS{
+		fs:   os.DirFS(dir),
+		base: dir,
+	}, nil
+}
+
+type genFS struct {
+	fs   fs.FS
+	base string
+}
+
+func (dir *genFS) Open(name string) (fs.File, error) {
+	return dir.fs.Open(name)
+}
+
+func (dir *genFS) Stat(name string) (fs.FileInfo, error) {
+	return fs.Stat(dir.fs, name)
+}
+
+func (dir *genFS) Base() string {
+	return dir.base
+}
+
+func (dir *genFS) Files() ([]string, error) {
+	return fs.Glob(dir, "*")
 }
