@@ -54,49 +54,57 @@ func NewDashboardFilter(usr *user.SignedInUser, permissionLevel dashboards.Permi
 	needToCheckFolderAction := needToCheckAction(folderAction, usr.Permissions[usr.OrgID], folderWildcards)
 	needToCheckDashboardAction := needToCheckAction(dashboardAction, usr.Permissions[usr.OrgID], dashWildcards, folderWildcards)
 
-	return &DashboardFilter{usr, folderAction, needToCheckFolderAction, dashboardAction, needToCheckDashboardAction}
+	f := &DashboardFilter{usr: usr, needToCheckFolderAction: needToCheckFolderAction, needToCheckDashboardAction: needToCheckDashboardAction}
+	f.buildClauses(folderAction, dashboardAction)
+	return f
 }
 
 type DashboardFilter struct {
-	usr                        *user.SignedInUser
-	folderAction               string
+	usr   *user.SignedInUser
+	join  clause
+	where clause
+
 	needToCheckFolderAction    bool
-	dashboardAction            string
 	needToCheckDashboardAction bool
 }
 
 func (f *DashboardFilter) LeftJoinParams() (string, []interface{}) {
-	if f.hasNoPermissions() || f.hasNoActionsToCheck() {
-		return "", nil
-	}
-
-	filter, params := accesscontrol.UserRolesFilter(
-		f.usr.OrgID,
-		f.usr.UserID,
-		f.usr.Teams,
-		accesscontrol.GetOrgRoles(f.usr),
-	)
-
-	query := "permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(" + filter + ")"
-
-	return query, params
+	return f.join.string, f.join.params
 }
 
 func (f *DashboardFilter) Where() (string, []interface{}) {
+	return f.where.string, f.where.params
+}
+
+func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 	if f.hasNoPermissions() {
-		return "(1 = 0)", nil
+		f.join = clause{string: ""}
+		f.where = clause{string: "(1 = 0)"}
+		return
 	}
 
-	// user has wildcard for both folders and dashboard so we can skip performing access check
+	// user has wildcard for both folders and dashboard we can skip performing access check
 	if f.hasNoActionsToCheck() {
-		return "(1 = 1)", nil
+		f.join = clause{string: ""}
+		f.where = clause{string: "(1 = 1)"}
+		return
 	}
 
 	query := strings.Builder{}
 
+	// build join clause
+	filter, params := accesscontrol.UserRolesFilter(f.usr.OrgID, f.usr.UserID, f.usr.Teams, accesscontrol.GetOrgRoles(f.usr))
+	query.WriteString("permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(")
+	query.WriteString(filter)
+	query.WriteByte(')')
+	f.join = clause{string: query.String(), params: params}
+
+	// recycle and reuse
+	query.Reset()
+
 	query.WriteByte('(')
 
-	if f.dashboardAction != "" {
+	if dashboardAction != "" {
 		if f.needToCheckDashboardAction {
 			query.WriteString(fmt.Sprintf(`
 			((
@@ -110,14 +118,14 @@ func (f *DashboardFilter) Where() (string, []interface{}) {
 				p.attribute = 'uid' AND
 				NOT dashboard.is_folder
 			))
-			`, f.dashboardAction, f.dashboardAction))
+			`, dashboardAction, dashboardAction))
 		} else {
 			query.WriteString("NOT dashboard.is_folder")
 		}
 	}
 
-	if f.folderAction != "" {
-		if f.dashboardAction != "" {
+	if folderAction != "" {
+		if dashboardAction != "" {
 			query.WriteString(" OR ")
 		}
 
@@ -129,15 +137,14 @@ func (f *DashboardFilter) Where() (string, []interface{}) {
 				p.attribute = 'uid' AND
 				dashboard.is_folder
 			)
-			`, f.folderAction))
+			`, folderAction))
 		} else {
 			query.WriteString("dashboard.is_folder")
 		}
 	}
 
 	query.WriteByte(')')
-
-	return query.String(), nil
+	f.where = clause{string: query.String()}
 }
 
 func (f *DashboardFilter) hasNoPermissions() bool {
@@ -151,6 +158,7 @@ func (f *DashboardFilter) hasNoActionsToCheck() bool {
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
 const maximumRecursiveQueries = 2
 
+// FIXME: Remove this, unused
 type DashboardPermissionFilter struct {
 	OrgRole         org.RoleType
 	Dialect         migrator.Dialect
