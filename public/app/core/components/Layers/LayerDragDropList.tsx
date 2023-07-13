@@ -67,6 +67,8 @@ export const LayerDragDropList = <T extends LayerElement>({
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         onMouseDown={() => onSelect(element)}
+                        role="button"
+                        tabIndex={0}
                       >
                         <LayerName
                           name={uid}

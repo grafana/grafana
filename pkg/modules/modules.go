@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/systemd"
 )
 
 type Engine interface {
@@ -97,6 +98,13 @@ func (m *service) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	err = m.serviceManager.AwaitHealthy(ctx)
+	if err != nil {
+		return err
+	}
+
+	systemd.NotifyReady(m.log)
 
 	err = m.serviceManager.AwaitStopped(ctx)
 	if err != nil {
