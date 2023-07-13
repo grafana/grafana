@@ -15,29 +15,29 @@ weight: 1400
 
 # Configure Okta OAuth2 authentication
 
-To enable the Okta OAuth2 you must first register your application at [Okta](https://www.okta.com/). Okta will generate a `client_id` and a `client_secret` for you to use.
+{{< docs/shared "auth/intro.md" >}}
 
 ## Before you begin
 
 To follow this guide:
 
 - Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
-- Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
+- Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the [documentation of Okta OAuth2](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard.htm) for more information.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
-## Integrate Okta OAuth2 with Grafana
+## Steps
 
-To integrate your Okta OAuth2 provicer with Grafana using our Okta OAuth2 integration, follow these steps:
+To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integration, follow these steps:
 
-1. [Create SWA app integrations](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) section.
+1. [Create SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [create OCID app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) at the Okta applications section.
 
-1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth`.
+1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
 
-   Ensure that the callback URL is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/generic_oauth`.
+   Ensure that the callback URL is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/okta`.
 
    For the callback URL to be correct, it might be necessary to set the root_url option to [server], for example, if you are serving Grafana behind a proxy.
 
-1. Refer to the following table to update field values located in the `[auth.generic_oauth]` section of the Grafana configuration file:
+1. Refer to the following table to update field values located in the `[auth.okta]` section of the Grafana configuration file:
 
    | Field                        | Description                                                                                                   |
    | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -53,7 +53,7 @@ To integrate your Okta OAuth2 provicer with Grafana using our Okta OAuth2 integr
 
    a. Enable `accessTokenExpirationCheck` feature toggle.
 
-   b. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
+   b. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
 
    c. Enable the refresh token on the provider if required.
 
@@ -61,11 +61,11 @@ To integrate your Okta OAuth2 provicer with Grafana using our Okta OAuth2 integr
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
 1. Restart Grafana.
 
-   You should now see a generic OAuth2 login button on the login page and be able to log in or sign up with your OAuth2 provider.
+   You should now see a Okta OAuth2 login button on the login page and be able to log in or sign up with your OAuth2 provider.
 
 ## Configuration options
 
-The following table outlines the various generic OAuth2 configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana.
+The following table outlines the various Okta OAuth2 configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana.
 
 | Setting                 | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Default      |
 | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
@@ -78,7 +78,7 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `token_url`             | Yes      | Endpoint used to obtain the Okta OAuth2 access token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |              |
 | `api_url`               | Yes      | Endpoint used to obtain user information.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |              |
 | `scopes`                | No       | List of comma- or space-separated Okta OAuth2 scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `user:email` |
-| `allow_sign_up`         | No       | Controls Grafana user creation through the generic Okta OAuth2 login. Only existing Grafana users can log in with Okta OAuth2 if set to `false`.                                                                                                                                                                                                                                                                                                                                                                               | `true`       |
+| `allow_sign_up`         | No       | Controls Grafana user creation through the Okta OAuth2 login. Only existing Grafana users can log in with Okta OAuth2 if set to `false`.                                                                                                                                                                                                                                                                                                                                                                                       | `true`       |
 | `auto_login`            | No       | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                                                         | `false`      |
 | `role_attribute_path`   | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the Okta OAuth2 ID token. If no role is found, the expression will be evaluated using the user information obtained from the UserInfo endpoint. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}). |              |
 | `role_attribute_strict` | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                                                                                  | `false`      |
@@ -86,24 +86,6 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `allowed_groups`        | No       | List of comma- or space-separated groups. The user should be a member of at least one group to log in. If you configure `allowed_groups`, you must also configure `groups_attribute_path`.                                                                                                                                                                                                                                                                                                                                     |              |
 | `allowed_domains`       | No       | List comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                               |              |
 | `use_pkce`              | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                             | `false`      |
-
-### Configure Login
-
-Grafana will resolve a user's login from the Okta OAuth2 ID token or user information retrieved from the Okta OAuth2 UserInfo endpoint.
-Grafana will resolve the user's login field from the `api_url` configuration option.
-The only option needed to retrieve the user's login from the Okta OAuth2 ID token is `api_url`.
-
-### Configure display name
-
-Grafana will resolve a user's display name from the OAuth2 ID token or user information retrieved from the OAuth2 UserInfo endpoint.
-Grafana will resolve the user's display name field from the `api_url` configuration option.
-The only option needed to retrieve the user's login from the Okta OAuth2 ID token is `api_url`.
-
-### Configure email address
-
-Grafana will resolve the user's email address from the OAuth2 ID token or user information retrieved from the OAuth2 UserInfo endpoint.
-Grafana will resolve the user's email from the `api_url` configuration option.
-The only option needed to retrieve the user's email from the Okta OAuth2 ID token is `api_url`.
 
 ### Configure a refresh token
 
