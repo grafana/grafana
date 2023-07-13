@@ -5,12 +5,6 @@ aliases:
   - guides/reference/admin/
 cascade:
   - _target:
-      path: /docs/grafana/*/setup-grafana/configure-security/audit-grafana/**
-    labels:
-      products:
-        - cloud
-        - enterprise
-  - _target:
       path: /docs/grafana/*/setup-grafana/configure-security/configure-authentication/**
     labels:
       products:
