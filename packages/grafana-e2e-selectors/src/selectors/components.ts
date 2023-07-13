@@ -307,7 +307,7 @@ export const Components = {
      * @deprecated use inputV2 instead
      */
     input: () => 'input[id="data-source-picker"]',
-    inputV2: 'Select a data source',
+    inputV2: 'data-testid Select a data source',
   },
   TimeZonePicker: {
     /**

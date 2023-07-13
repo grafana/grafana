@@ -189,6 +189,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           isLoading={isLoading}
           disabled={disabled}
           aria-label={selectors.components.DataSourcePicker.inputV2}
+          data-testid={selectors.components.DataSourcePicker.inputV2}
           inputId={inputId || 'data-source-picker'}
           className="ds-picker select-container"
           isMulti={false}
