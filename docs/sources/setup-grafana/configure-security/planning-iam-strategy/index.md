@@ -112,7 +112,6 @@ In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}),
 Service accounts can only act in the organization they are created for. We recommend creating service accounts in each organization if you have the same task needed for multiple organizations.
 {{% /admonition %}}
 
-
 {{< vimeo 742056367 >}}
 <br>
 
@@ -191,9 +190,7 @@ Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterpr
 Team synchronization occurs only when a user logs in. However, if you are using LDAP, it is possible to enable active background synchronization. This allows for the continuous synchronization of teams.
 {{% /admonition %}}
 
-
 ### Organization sync
-
 
 Organization sync is the process of binding all the users from an organization in Grafana. This delegates the role of managing users to the identity provider. This way, there's no need to manage user access from Grafana since the identity provider will be queried whenever a new user tries to log in.
 
