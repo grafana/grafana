@@ -10,67 +10,87 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStoreTest struct {
-	name          string
-	dbType        string
-	dbHost        string
-	dbURL         string
-	connStrValues []string
-	err           error
+	name       string
+	dbType     string
+	dbHost     string
+	dbURL      string
+	dbUser     string
+	dbPwd      string
+	expConnStr string
+	features   []string
+	err        error
 }
 
 var sqlStoreTestCases = []sqlStoreTest{
 	{
-		name:          "MySQL IPv4",
-		dbType:        "mysql",
-		dbHost:        "1.2.3.4:5678",
-		connStrValues: []string{"tcp(1.2.3.4:5678)"},
+		name:       "MySQL IPv4",
+		dbType:     "mysql",
+		dbHost:     "1.2.3.4:5678",
+		expConnStr: ":@tcp(1.2.3.4:5678)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
-		name:          "Postgres IPv4",
-		dbType:        "postgres",
-		dbHost:        "1.2.3.4:5678",
-		connStrValues: []string{"host=1.2.3.4", "port=5678"},
+		name:       "Postgres IPv4",
+		dbType:     "postgres",
+		dbHost:     "1.2.3.4:5678",
+		expConnStr: "user='' host=1.2.3.4 port=5678 dbname=test_db sslmode='' sslcert='' sslkey='' sslrootcert=''",
 	},
 	{
-		name:          "Postgres IPv4 (Default Port)",
-		dbType:        "postgres",
-		dbHost:        "1.2.3.4",
-		connStrValues: []string{"host=1.2.3.4", "port=5432"},
+		name:       "Postgres IPv4 (Default Port)",
+		dbType:     "postgres",
+		dbHost:     "1.2.3.4",
+		expConnStr: "user='' host=1.2.3.4 port=5432 dbname=test_db sslmode='' sslcert='' sslkey='' sslrootcert=''",
 	},
 	{
-		name:          "MySQL IPv4 (Default Port)",
-		dbType:        "mysql",
-		dbHost:        "1.2.3.4",
-		connStrValues: []string{"tcp(1.2.3.4)"},
+		name:       "Postgres username and password",
+		dbType:     "postgres",
+		dbHost:     "1.2.3.4",
+		dbUser:     "grafana",
+		dbPwd:      "password",
+		expConnStr: "user=grafana host=1.2.3.4 port=5432 dbname=test_db sslmode='' sslcert='' sslkey='' sslrootcert='' password=password",
 	},
 	{
-		name:          "MySQL IPv6",
-		dbType:        "mysql",
-		dbHost:        "[fe80::24e8:31b2:91df:b177]:1234",
-		connStrValues: []string{"tcp([fe80::24e8:31b2:91df:b177]:1234)"},
+		name:       "Postgres username no password",
+		dbType:     "postgres",
+		dbHost:     "1.2.3.4",
+		dbUser:     "grafana",
+		dbPwd:      "",
+		expConnStr: "user=grafana host=1.2.3.4 port=5432 dbname=test_db sslmode='' sslcert='' sslkey='' sslrootcert=''",
 	},
 	{
-		name:          "Postgres IPv6",
-		dbType:        "postgres",
-		dbHost:        "[fe80::24e8:31b2:91df:b177]:1234",
-		connStrValues: []string{"host=fe80::24e8:31b2:91df:b177", "port=1234"},
+		name:       "MySQL IPv4 (Default Port)",
+		dbType:     "mysql",
+		dbHost:     "1.2.3.4",
+		expConnStr: ":@tcp(1.2.3.4)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
-		name:          "MySQL IPv6 (Default Port)",
-		dbType:        "mysql",
-		dbHost:        "[::1]",
-		connStrValues: []string{"tcp([::1])"},
+		name:       "MySQL IPv6",
+		dbType:     "mysql",
+		dbHost:     "[fe80::24e8:31b2:91df:b177]:1234",
+		expConnStr: ":@tcp([fe80::24e8:31b2:91df:b177]:1234)/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
 	},
 	{
-		name:          "Postgres IPv6 (Default Port)",
-		dbType:        "postgres",
-		dbHost:        "[::1]",
-		connStrValues: []string{"host=::1", "port=5432"},
+		name:       "Postgres IPv6",
+		dbType:     "postgres",
+		dbHost:     "[fe80::24e8:31b2:91df:b177]:1234",
+		expConnStr: "user='' host=fe80::24e8:31b2:91df:b177 port=1234 dbname=test_db sslmode='' sslcert='' sslkey='' sslrootcert=''",
+	},
+	{
+		name:       "MySQL IPv6 (Default Port)",
+		dbType:     "mysql",
+		dbHost:     "[::1]",
+		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
+	},
+	{
+		name:       "Postgres IPv6 (Default Port)",
+		dbType:     "postgres",
+		dbHost:     "[::1]",
+		expConnStr: "user='' host=::1 port=5432 dbname=test_db sslmode='' sslcert='' sslkey='' sslrootcert=''",
 	},
 	{
 		name:  "Invalid database URL",
@@ -78,10 +98,18 @@ var sqlStoreTestCases = []sqlStoreTest{
 		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
 	{
-		name:          "Sql mode set to ANSI_QUOTES",
-		dbType:        "mysql",
-		dbHost:        "[::1]",
-		connStrValues: []string{"sql_mode='ANSI_QUOTES'"},
+		name:       "MySQL with ANSI_QUOTES mode",
+		dbType:     "mysql",
+		dbHost:     "[::1]",
+		features:   []string{featuremgmt.FlagMysqlAnsiQuotes},
+		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'",
+	},
+	{
+		name:       "New DB library",
+		dbType:     "mysql",
+		dbHost:     "[::1]",
+		features:   []string{featuremgmt.FlagNewDBLibrary},
+		expConnStr: ":@tcp([::1])/test_db?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&sql_mode='ANSI_QUOTES'&parseTime=true",
 	},
 }
 
@@ -92,13 +120,11 @@ func TestIntegrationSQLConnectionString(t *testing.T) {
 	for _, testCase := range sqlStoreTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}
-			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase.dbType, testCase.dbHost, testCase.dbURL)
+			sqlstore.Cfg = makeSQLStoreTestConfig(t, testCase)
 			connStr, err := sqlstore.buildConnectionString()
 			require.Equal(t, testCase.err, err)
 
-			for _, connSubStr := range testCase.connStrValues {
-				require.Contains(t, connStr, connSubStr)
-			}
+			assert.Equal(t, testCase.expConnStr, connStr)
 		})
 	}
 }
@@ -151,27 +177,34 @@ func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
 	}
 }
 
-func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.Cfg {
+func makeSQLStoreTestConfig(t *testing.T, tc sqlStoreTest) *setting.Cfg {
 	t.Helper()
 
 	cfg := setting.NewCfg()
 
 	sec, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
-	_, err = sec.NewKey("type", dbType)
+	_, err = sec.NewKey("type", tc.dbType)
 	require.NoError(t, err)
-	_, err = sec.NewKey("host", host)
+	_, err = sec.NewKey("host", tc.dbHost)
 	require.NoError(t, err)
-	_, err = sec.NewKey("url", dbURL)
+	_, err = sec.NewKey("url", tc.dbURL)
 	require.NoError(t, err)
-	_, err = sec.NewKey("user", "user")
+	_, err = sec.NewKey("user", tc.dbUser)
 	require.NoError(t, err)
 	_, err = sec.NewKey("name", "test_db")
 	require.NoError(t, err)
-	_, err = sec.NewKey("password", "pass")
+	_, err = sec.NewKey("password", tc.dbPwd)
 	require.NoError(t, err)
 
-	cfg.IsFeatureToggleEnabled = func(key string) bool { return true }
+	cfg.IsFeatureToggleEnabled = func(key string) bool {
+		for _, f := range tc.features {
+			if f == key {
+				return true
+			}
+		}
+		return false
+	}
 
 	return cfg
 }

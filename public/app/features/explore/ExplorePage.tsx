@@ -13,7 +13,6 @@ import { ExploreQueryParams } from 'app/types/explore';
 
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { useExploreCorrelations } from './hooks/useExploreCorrelations';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
@@ -39,7 +38,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   // if we were to update the URL on state change, the title would not match the URL.
   // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
   useExplorePageTitle(props.queryParams);
-  useExploreCorrelations();
   const dispatch = useDispatch();
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');

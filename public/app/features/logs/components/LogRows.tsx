@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
+import { UniqueKeyMaker } from '../UniqueKeyMaker';
 import { sortLogRows } from '../utils';
 
 //Components
@@ -123,13 +124,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
 
+    const keyMaker = new UniqueKeyMaker();
+
     return (
       <table className={styles.logsRowsTable}>
         <tbody>
           {hasData &&
             firstRows.map((row) => (
               <LogRow
-                key={row.uid}
+                key={keyMaker.getKey(row.uid)}
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}
@@ -150,7 +153,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             renderAll &&
             lastRows.map((row) => (
               <LogRow
-                key={row.uid}
+                key={keyMaker.getKey(row.uid)}
                 getRows={getRows}
                 row={row}
                 showDuplicates={showDuplicates}

@@ -50,7 +50,7 @@
 /docs/sources/upgrade-guide/              @chri2547 @imatwawana
 /docs/sources/whatsnew/                   @chri2547 @imatwawana
 /docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend/ @Eve832 @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/introduction-to-plugin-development/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
 /go.mod @grafana/backend-platform
@@ -66,6 +66,7 @@
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
+/pkg/systemd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
 /pkg/components/satokengen/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
@@ -443,7 +444,6 @@ lerna.json @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
-/public/testdata/ @grafana/grafana-frontend-platform
 /public/views/ @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
@@ -610,6 +610,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
+/.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
+/.github/workflows/pr-patch-mirror-and-apply.yml @grafana/grafana-delivery
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
 /.github/workflows/remove-milestone.yml @grafana/grafana-delivery
@@ -623,6 +625,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+/.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 
 
 # Generated files not requiring owner approval

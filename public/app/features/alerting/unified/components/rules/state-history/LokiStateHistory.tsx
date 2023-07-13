@@ -66,14 +66,24 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
 
+  const refToHighlight = useRef<HTMLElement | undefined>(undefined);
+
   const onTimelinePointerMove = useCallback(
     (seriesIdx: number, pointIdx: number) => {
-      const timestamp = frameSubsetTimestamps[pointIdx];
+      // remove the highlight from the previous refToHighlight
+      refToHighlight.current?.classList.remove(styles.highlightedLogRecord);
 
-      const refToScroll = logsRef.current.get(timestamp);
-      refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const timestamp = frameSubsetTimestamps[pointIdx];
+      const newTimestampRef = logsRef.current.get(timestamp);
+
+      // now we have the new ref, add the styles
+      newTimestampRef?.classList.add(styles.highlightedLogRecord);
+      // keeping this here (commented) in case we decide we want to go back to this
+      // newTimestampRef?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      refToHighlight.current = newTimestampRef;
     },
-    [frameSubsetTimestamps]
+    [frameSubsetTimestamps, styles.highlightedLogRecord]
   );
 
   if (isLoading) {
@@ -258,6 +268,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   commonLabels: css`
     display: grid;
     grid-template-columns: max-content auto;
+  `,
+  // we need !important here to override the list item default styles
+  highlightedLogRecord: css`
+    background: ${theme.colors.primary.transparent} !important;
+    outline: 1px solid ${theme.colors.primary.shade} !important;
   `,
 });
 

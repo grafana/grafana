@@ -215,8 +215,10 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             clearCache={() => clearCache(exploreId)}
             eventBus={this.props.eventBus}
             panelState={this.props.panelState}
+            logsFrames={this.props.logsFrames}
             scrollElement={scrollElement}
             isFilterLabelActive={this.props.isFilterLabelActive}
+            range={range}
           />
         </LogsCrossFadeTransition>
       </>
@@ -260,6 +262,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     logsVolume,
     panelState,
+    logsFrames: item.queryResponse.logsFrames,
   };
 }
 
