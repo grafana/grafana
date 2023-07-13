@@ -9,19 +9,11 @@ import { VizTooltipHeaderLabelValue } from './VizTooltipHeaderLabelValue';
 import { LabelValue } from './tooltipUtils';
 
 interface VizTooltipHeaderProps {
-  showCloseButton: boolean;
   headerLabel: LabelValue;
-  onClose: () => void;
   keyValuePairs?: LabelValue[];
   customValueDisplay?: JSX.Element;
 }
-export const VizTooltipHeader = ({
-  showCloseButton = false,
-  headerLabel,
-  onClose,
-  keyValuePairs,
-  customValueDisplay,
-}: VizTooltipHeaderProps) => {
+export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay }: VizTooltipHeaderProps) => {
   const styles = useStyles2(getStyles);
 
   const renderKeyValue = () => {
@@ -33,7 +25,7 @@ export const VizTooltipHeader = ({
   };
   return (
     <div className={styles.wrapper}>
-      <HeaderLabel headerLabel={headerLabel} showCloseButton={showCloseButton} onClose={onClose} />
+      <HeaderLabel headerLabel={headerLabel} />
       {renderKeyValue()}
     </div>
   );

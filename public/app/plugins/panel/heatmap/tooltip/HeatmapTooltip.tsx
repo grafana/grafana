@@ -131,6 +131,7 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
     };
   };
 
+  // Color scale
   const getCustomValueDisplay = () => {
     if (colorPalette) {
       return (
@@ -150,11 +151,9 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader
-        showCloseButton={isPinned}
         headerLabel={getHeaderLabel()}
         keyValuePairs={getLabelValue()}
         // customValueDisplay={getCustomValueDisplay()}
-        onClose={onClose}
       />
     </div>
   );
