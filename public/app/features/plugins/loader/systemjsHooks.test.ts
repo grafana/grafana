@@ -8,7 +8,7 @@ jest.mock('./cache', () => ({
 }));
 
 import { server, mockAmdModule, mockSystemModule } from './pluginLoader.mock';
-import { decorateSystemJSFetch, decorateSystemJSResolve } from './systemJsHooks';
+import { decorateSystemJSFetch, decorateSystemJSResolve } from './systemjsHooks';
 import { SystemJSWithLoaderHooks } from './types';
 
 describe('SystemJS Loader Hooks', () => {
