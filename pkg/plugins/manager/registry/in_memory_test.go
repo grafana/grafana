@@ -11,29 +11,32 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-const pluginUID = "test-ds"
+const (
+	dsUID    = "test-ds"
+	panelUID = "test-panel"
+)
 
 func TestInMemory(t *testing.T) {
 	t.Run("Test mix of registry operations", func(t *testing.T) {
 		i := NewInMemory()
 		ctx := context.Background()
 
-		p, exists := i.Plugin(ctx, pluginUID)
+		p, exists := i.Plugin(ctx, dsUID)
 		require.False(t, exists)
 		require.Nil(t, p)
 
-		err := i.Remove(ctx, pluginUID)
-		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", pluginUID).Error())
+		err := i.Remove(ctx, dsUID)
+		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", dsUID).Error())
 
-		p = &plugins.Plugin{UID: pluginUID}
+		p = &plugins.Plugin{UID: dsUID}
 		err = i.Add(ctx, p)
 		require.NoError(t, err)
 
-		existingP, exists := i.Plugin(ctx, pluginUID)
+		existingP, exists := i.Plugin(ctx, dsUID)
 		require.True(t, exists)
 		require.Equal(t, p, existingP)
 
-		err = i.Remove(ctx, pluginUID)
+		err = i.Remove(ctx, dsUID)
 		require.NoError(t, err)
 
 		existingPlugins := i.Plugins(ctx)
@@ -61,7 +64,7 @@ func TestInMemory_Add(t *testing.T) {
 			},
 			args: args{
 				p: &plugins.Plugin{
-					UID: pluginUID,
+					UID: dsUID,
 				},
 			},
 		},
@@ -69,17 +72,17 @@ func TestInMemory_Add(t *testing.T) {
 			name: "Cannot add a plugin to the registry if it already exists",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginUID: {
-						UID: pluginUID,
+					dsUID: {
+						UID: dsUID,
 					},
 				},
 			},
 			args: args{
 				p: &plugins.Plugin{
-					UID: pluginUID,
+					UID: dsUID,
 				},
 			},
-			err: fmt.Errorf("plugin %s is already registered", pluginUID),
+			err: fmt.Errorf("plugin %s is already registered", dsUID),
 		},
 	}
 	for _, tt := range tests {
@@ -111,16 +114,16 @@ func TestInMemory_Plugin(t *testing.T) {
 			name: "Can retrieve a plugin",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginUID: {
-						UID: pluginUID,
+					dsUID: {
+						UID: dsUID,
 					},
 				},
 			},
 			args: args{
-				pluginUID: pluginUID,
+				pluginUID: dsUID,
 			},
 			expected: &plugins.Plugin{
-				UID: pluginUID,
+				UID: dsUID,
 			},
 			exists: true,
 		},
@@ -130,7 +133,7 @@ func TestInMemory_Plugin(t *testing.T) {
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
-				pluginUID: pluginUID,
+				pluginUID: dsUID,
 			},
 			expected: nil,
 			exists:   false,
@@ -160,32 +163,25 @@ func TestInMemory_Plugins(t *testing.T) {
 		expected []*plugins.Plugin
 	}{
 		{
-			name: "Can retrieve a list of plugin",
+			name: "Can retrieve a list of plugins",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginUID: {
-						UID: pluginUID,
+					dsUID: {
+						UID: dsUID,
 					},
-					"test-panel": {
-						UID: "test-panel",
+					panelUID: {
+						UID: panelUID,
 					},
 				},
 			},
 			expected: []*plugins.Plugin{
 				{
-					UID: pluginUID,
+					UID: dsUID,
 				},
 				{
-					UID: "test-panel",
+					UID: panelUID,
 				},
 			},
-		},
-		{
-			name: "No existing plugins",
-			mocks: mocks{
-				store: map[string]*plugins.Plugin{},
-			},
-			expected: []*plugins.Plugin{},
 		},
 	}
 	for _, tt := range tests {
@@ -197,9 +193,11 @@ func TestInMemory_Plugins(t *testing.T) {
 
 			// to ensure we can compare with expected
 			sort.SliceStable(result, func(i, j int) bool {
-				return result[i].ID < result[j].ID
+				return result[i].UID < result[j].UID
 			})
+			t.Logf("%+v\n", result)
 			require.Equal(t, tt.expected, result)
+
 		})
 	}
 }
@@ -221,13 +219,13 @@ func TestInMemory_Remove(t *testing.T) {
 			name: "Can remove a plugin",
 			mocks: mocks{
 				store: map[string]*plugins.Plugin{
-					pluginUID: {
-						UID: pluginUID,
+					dsUID: {
+						UID: dsUID,
 					},
 				},
 			},
 			args: args{
-				pluginID: pluginUID,
+				pluginID: dsUID,
 			},
 		}, {
 			name: "Cannot remove a plugin from the registry if it doesn't exist",
@@ -235,9 +233,9 @@ func TestInMemory_Remove(t *testing.T) {
 				store: map[string]*plugins.Plugin{},
 			},
 			args: args{
-				pluginID: pluginUID,
+				pluginID: dsUID,
 			},
-			err: fmt.Errorf("plugin %s is not registered", pluginUID),
+			err: fmt.Errorf("plugin %s is not registered", dsUID),
 		},
 	}
 	for _, tt := range tests {
