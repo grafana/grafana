@@ -1,11 +1,11 @@
 import {
+  cacheFieldDisplayNames,
   DataFrame,
   DataFrameType,
   Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
-  getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
   outerJoinDataFrames,
@@ -74,12 +74,7 @@ export function prepareHeatmapData(
     return {};
   }
 
-  // cache field.state.displayName
-  frames.forEach((fr) => {
-    fr.fields.forEach((fl) => {
-      getFieldDisplayName(fl, fr, frames);
-    });
-  });
+  cacheFieldDisplayNames(frames);
 
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
 
