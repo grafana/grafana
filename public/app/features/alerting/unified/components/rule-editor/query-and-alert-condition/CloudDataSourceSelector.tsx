@@ -8,11 +8,10 @@ import { Field, InputControl, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 
-export const CloudDataSourceSelector = ({
-  onChangeCloudDatasource,
-}: {
+export interface CloudDataSourceSelectorProps {
   onChangeCloudDatasource: (datasourceUid: string) => void;
-}) => {
+}
+export const CloudDataSourceSelector = ({ onChangeCloudDatasource }: CloudDataSourceSelectorProps) => {
   const {
     control,
     formState: { errors },
