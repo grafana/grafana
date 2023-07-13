@@ -34,14 +34,14 @@
 
 # Technical documentation
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
-/.github/workflows/update-make-docs.yml                        @docs-tooling
-/.github/workflows/publish-technical-documentation-next.yml    @docs-tooling
-/.github/workflows/publish-technical-documentation-release.yml @docs-tooling
-/.github/workflows/doc-validator.yml                           @docs-tooling
-/docs/Makefile                                                 @docs-tooling
-/docs/docs.mk                                                  @docs-tooling
-/docs/make-docs                                                @docs-tooling
-/docs/variables.mk                                             @docs-tooling
+/.github/workflows/update-make-docs.yml                        @grafana/docs-tooling
+/.github/workflows/publish-technical-documentation-next.yml    @grafana/docs-tooling
+/.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
+/.github/workflows/doc-validator.yml                           @grafana/docs-tooling
+/docs/Makefile                                                 @grafana/docs-tooling
+/docs/docs.mk                                                  @grafana/docs-tooling
+/docs/make-docs                                                @grafana/docs-tooling
+/docs/variables.mk                                             @grafana/docs-tooling
 # Documentation sources might have different owners.
 /docs/sources/                                                               @Eve832
 /docs/sources/administration/                                                @Eve832 @GrafanaWriter
