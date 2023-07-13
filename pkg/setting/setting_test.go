@@ -811,7 +811,7 @@ func TestRedactedValue(t *testing.T) {
 }
 
 func TestHandleAWSSettings(t *testing.T) {
-	t.Run("Should set deafult auth providers if not defined", func(t *testing.T) {
+	t.Run("Should set default auth providers if not defined", func(t *testing.T) {
 		cfg := NewCfg()
 		awsSection, err := cfg.Raw.NewSection("aws")
 		require.NoError(t, err)
@@ -861,7 +861,7 @@ func TestHandleAWSSettings(t *testing.T) {
 		cfg.handleAWSConfig()
 		assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
 	})
-	t.Run("Should set deafult page limit if not defined", func(t *testing.T) {
+	t.Run("Should set default page limit if not defined", func(t *testing.T) {
 		cfg := NewCfg()
 		awsSection, err := cfg.Raw.NewSection("aws")
 		require.NoError(t, err)
