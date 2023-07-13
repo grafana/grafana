@@ -712,12 +712,12 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	if dashboard.IsFolder {
 		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
 
-		if err := d.deleteChildrenDashboardAssociations(sess, dashboard); err != nil {
+		if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
 			return err
 		}
 
 		// remove all access control permission with folder scope
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
+		err := d.deleteResourcePermissions(sess, dashboard.OrgID, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.UID))
 		if err != nil {
 			return err
 		}
@@ -726,8 +726,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 			return err
 		}
 	} else {
-		_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dashboard.UID))
-		if err != nil {
+		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dashboard.UID)); err != nil {
 			return err
 		}
 	}
@@ -757,7 +756,25 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	return nil
 }
 
-func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard dashboards.Dashboard) error {
+// FIXME: Remove me and handle nested deletions in the service with the DashboardPermissionsService
+func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64, resourceScope string) error {
+	// retrieve all permissions for the resource scope and org id
+	var permissionIDs []int64
+	err := sess.SQL("SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?", resourceScope, orgID).Find(&permissionIDs)
+	if err != nil {
+		return err
+	}
+
+	if len(permissionIDs) == 0 {
+		return nil
+	}
+
+	// delete the permissions
+	_, err = sess.In("id", permissionIDs).Delete(&ac.Permission{})
+	return err
+}
+
+func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard *dashboards.Dashboard) error {
 	var dashIds []struct {
 		Id  int64
 		Uid string
@@ -774,8 +791,7 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 			}
 
 			// remove all access control permission with child dashboard scopes
-			_, err = sess.Exec("DELETE FROM permission WHERE scope = ?", ac.GetResourceScopeUID("dashboards", dash.Uid))
-			if err != nil {
+			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dash.Uid)); err != nil {
 				return err
 			}
 		}
@@ -1078,7 +1094,7 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 			return dashboards.ErrFolderNotFound
 		}
 
-		if err := d.deleteChildrenDashboardAssociations(sess, dashboard); err != nil {
+		if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
 			return err
 		}
 

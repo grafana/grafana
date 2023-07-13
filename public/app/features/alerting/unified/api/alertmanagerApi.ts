@@ -19,7 +19,7 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
-import { retryWhile } from '../utils/misc';
+import { retryWhile, wrapWithQuotes } from '../utils/misc';
 import { messageFromError, withSerializedError } from '../utils/redux';
 
 import { alertingApi } from './alertingApi';
@@ -53,7 +53,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
-          .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${matcher.value}`);
+          .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${wrapWithQuotes(matcher.value)}`);
 
         const { silenced, inhibited, unprocessed, active } = filter || {};
 
