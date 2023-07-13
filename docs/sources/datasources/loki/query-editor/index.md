@@ -16,11 +16,11 @@ weight: 300
 
 The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
-This topic explains querying specific to the Loki data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Choose a query editing mode
 
+The Loki query editor has two modes:
 You can switch the Loki query editor between two modes:
 
 - [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries
@@ -41,6 +41,38 @@ When you switch from Code mode to Builder mode with such a query, the editor dis
 You can then decide whether you still want to switch to Builder mode.
 
 You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+
+## Toolbar elements
+
+The query editor toolbar contains the following elements:
+
+- **Kick start your query** - Click to see a list of queries that help you quickly get started creating LogQL queries. You can then continue to complete your query.
+
+These include:
+
+- Log query starters
+- Metric query starters
+
+Click the arrow next to each to see available query options.
+
+- **Label browser** - Use the Loki label browser to navigate through your labels and values, and build queries.
+
+**To navigate Loki and build a query:**
+
+1. Choose labels to locate.
+1. Search for the values of your selected labels.
+
+   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
+
+1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button.
+
+{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+
+- **Explain query** - Toggle to display a step-by-step explanation of all query components and operations.
+
+{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
+
+- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
 
 ## Code mode
 
@@ -176,35 +208,6 @@ Available in Grafana v6.3 and higher.
 You can use LogQL to wrap a log query with functions that create metrics from your logs.
 
 For more information about metric queries, refer to the [Loki metric queries documentation](/docs/loki/latest/logql/metric_queries/).
-
-## Review toolbar features
-
-In addition to the **Run query** button and mode switcher, Builder mode provides additional elements:
-
-| Name                      | Description                                                                               |
-| ------------------------- | ----------------------------------------------------------------------------------------- |
-| **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
-| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
-| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
-
-### Label browser
-
-You can use the Loki label browser to navigate through your labels and values, and build queries.
-
-**To navigate Loki and build a query:**
-
-1. Choose labels to locate.
-1. Search for the values of your selected labels.
-
-   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
-
-1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button.
-
-{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
-
-### Explain query
-
-This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
 ## Configure query settings
 

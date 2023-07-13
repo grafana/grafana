@@ -10,7 +10,7 @@ keywords:
   - guide
 menuTitle: Configure Loki
 title: Configure the Loki data source
-weight: 820
+weight: 200
 ---
 
 ## Configure the Loki data source
