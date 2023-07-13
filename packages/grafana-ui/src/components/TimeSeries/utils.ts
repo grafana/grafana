@@ -599,7 +599,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
       data: frame,
     };
-    console.log('syncing cursor', eventsScope);
+
     const hoverEvent = new DataHoverEvent(payload);
     cursor.sync = {
       key: eventsScope,
