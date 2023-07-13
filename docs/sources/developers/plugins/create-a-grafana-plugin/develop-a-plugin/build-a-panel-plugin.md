@@ -23,7 +23,7 @@ For more information about panels, refer to the documentation on [Panels](/docs/
 ### Prerequisites
 
 - Grafana >=7.0
-- NodeJS >=14
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 

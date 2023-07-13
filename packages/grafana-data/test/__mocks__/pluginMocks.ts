@@ -66,6 +66,7 @@ export function getPanelPlugin(
     hideFromList: options.hideFromList === true,
     module: options.module ?? '',
     baseUrl: '',
+    skipDataQuery: options.skipDataQuery,
   };
   return plugin;
 }

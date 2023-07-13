@@ -19,17 +19,8 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import {
-  Collapse,
-  HorizontalGroup,
-  Icon,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Select,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
@@ -69,6 +60,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
 
   const clear = useCallback(() => {
     setServiceNames(undefined);
@@ -343,33 +336,41 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Duration" labelWidth={16}>
-            <HorizontalGroup spacing={'xs'}>
+          <InlineField
+            label="Duration"
+            labelWidth={16}
+            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+          >
+            <HorizontalGroup spacing="xs" align="flex-start">
               <Select
-                aria-label="Select from operator"
+                aria-label="Select min span operator"
                 onChange={(v) => setSpanFiltersSearch({ ...search, fromOperator: v.value! })}
                 options={[toOption('>'), toOption('>=')]}
                 value={search.fromOperator}
               />
-              <Input
-                aria-label="Select from value"
-                onChange={(v) => setSpanFiltersSearch({ ...search, from: v.currentTarget.value })}
+              <IntervalInput
+                ariaLabel="Select min span duration"
+                onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
+                isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.from || ''}
                 width={18}
+                value={search.from || ''}
+                validationRegex={durationRegex}
               />
               <Select
-                aria-label="Select to operator"
+                aria-label="Select max span operator"
                 onChange={(v) => setSpanFiltersSearch({ ...search, toOperator: v.value! })}
                 options={[toOption('<'), toOption('<=')]}
                 value={search.toOperator}
               />
-              <Input
-                aria-label="Select to value"
-                onChange={(v) => setSpanFiltersSearch({ ...search, to: v.currentTarget.value })}
+              <IntervalInput
+                ariaLabel="Select max span duration"
+                onChange={(val) => setSpanFiltersSearch({ ...search, to: val })}
+                isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.to || ''}
                 width={18}
+                value={search.to || ''}
+                validationRegex={durationRegex}
               />
             </HorizontalGroup>
           </InlineField>
