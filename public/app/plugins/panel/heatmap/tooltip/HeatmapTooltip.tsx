@@ -22,9 +22,11 @@ interface Props {
 }
 
 export const HeatmapTooltip = (props: Props) => {
+  // exemplars
   if (props.seriesIdx === 2) {
     return <DataHoverView data={props.data.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />;
   }
+
   return <HeatmapTooltipHover {...props} />;
 };
 const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: Props) => {
@@ -142,7 +144,7 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
       );
     }
 
-    return <></>;
+    return null;
   };
 
   return (
