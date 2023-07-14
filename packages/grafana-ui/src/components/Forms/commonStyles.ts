@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-import { focusCss } from '../../themes/mixins';
+import { getFocusStyles } from '../../themes/mixins';
 import { ComponentSize } from '../../types/size';
 
-export const getFocusStyle = (theme: GrafanaTheme | GrafanaTheme2) =>
+export const getFocusStyle = (theme: GrafanaTheme2) =>
   css({
-    '&:focus': focusCss(theme),
+    '&:focus': getFocusStyles(theme),
   });
 
 export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {

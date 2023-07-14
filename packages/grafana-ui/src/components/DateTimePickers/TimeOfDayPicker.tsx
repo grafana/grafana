@@ -5,7 +5,7 @@ import React from 'react';
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
 
 import { Icon, useStyles2 } from '../../index';
-import { focusCss } from '../../themes/mixins';
+import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 
@@ -137,7 +137,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderColor,
         height: theme.spacing(4),
 
-        '&:focus': focusCss(theme),
+        '&:focus': getFocusStyles(theme),
 
         '&:disabled': {
           backgroundColor: theme.colors.action.disabledBackground,
