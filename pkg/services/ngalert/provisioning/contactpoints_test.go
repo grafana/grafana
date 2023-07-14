@@ -494,6 +494,58 @@ func TestStitchReceivers(t *testing.T) {
 			},
 		},
 		{
+			name: "rename with only one receiver in group to another existing group: moves receiver, renames group and references, removes old group",
+			new: &definitions.PostableGrafanaReceiver{
+				UID:  "abc",
+				Name: "receiver-2",
+				Type: "slack",
+			},
+			expModified: true,
+			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-2",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-2",
+							},
+						},
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-2",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "def",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+								{
+									UID:  "ghi",
+									Name: "receiver-2",
+									Type: "email",
+								},
+								{
+									UID:  "jkl",
+									Name: "receiver-2",
+									Type: "discord",
+								},
+								{
+									UID:  "abc",
+									Name: "receiver-2",
+									Type: "slack",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "rename to another, larger group",
 			initial: &definitions.PostableUserConfig{
 				AlertmanagerConfig: definitions.PostableApiAlertingConfig{

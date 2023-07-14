@@ -421,7 +421,7 @@ func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.Postabl
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 	configModified := false
 groupLoop:
-	for _, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
+	for j, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
 		// Does the current group contain the grafana receiver we're interested in?
 		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == target.UID {
@@ -438,16 +438,6 @@ groupLoop:
 					break groupLoop
 				}
 
-				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
-				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
-				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
-					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
-					receiverGroup.Name = target.Name
-					receiverGroup.GrafanaManagedReceivers[i] = target
-					configModified = true
-					break groupLoop
-				}
-
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
 				// Check to see whether a different group with the name we want already exists.
 				for _, candidateExistingGroup := range cfg.AlertmanagerConfig.Receivers {
@@ -458,8 +448,24 @@ groupLoop:
 						// Add the modified receiver to the new group...
 						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
 						configModified = true
+
+						// If this is the only receiver left in the old group, remove it and replace references with the new group.
+						if len(receiverGroup.GrafanaManagedReceivers) == 0 {
+							cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:j], cfg.AlertmanagerConfig.Receivers[j+1:]...)
+							replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
+						}
 						break groupLoop
 					}
+				}
+
+				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
+				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
+				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
+					receiverGroup.Name = target.Name
+					receiverGroup.GrafanaManagedReceivers[i] = target
+					configModified = true
+					break groupLoop
 				}
 
 				// Doesn't exist? Create a new group just for the receiver.
