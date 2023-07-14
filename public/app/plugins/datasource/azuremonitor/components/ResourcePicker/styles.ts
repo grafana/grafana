@@ -9,9 +9,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'scroll',
   }),
 
-  tableScroller: css({
-    maxHeight: '20vh',
+  scrollableTable: css({
     overflow: 'auto',
+  }),
+
+  tableScroller: css({
+    maxHeight: '16vh',
+  }),
+
+  selectedTableScroller: css({
+    maxHeight: '13vh',
   }),
 
   header: css({
@@ -82,8 +89,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 
   selectionFooter: css({
-    position: 'sticky',
-    bottom: 0,
     background: theme.colors.background.primary,
     paddingTop: theme.spacing(2),
   }),
