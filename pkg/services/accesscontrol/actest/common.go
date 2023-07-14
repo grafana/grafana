@@ -130,5 +130,4 @@ func AddUserPermissionToDB(t testing.TB, db db.DB, user *user.SignedInUser) {
 	})
 
 	require.NoError(t, err)
-
 }

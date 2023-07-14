@@ -164,7 +164,6 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 					query.WriteString("(folder.uid IN (?" + strings.Repeat(", ?", len(args)-1))
 					query.WriteString(") AND NOT dashboard.is_folder)")
 					params = append(params, args...)
-
 				} else {
 					query.WriteString("(1 = 0 AND NOT dashboard.is_folder)")
 				}

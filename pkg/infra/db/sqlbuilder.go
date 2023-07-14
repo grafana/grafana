@@ -77,7 +77,6 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		sb.params = append(sb.params, params...)
 		sb.recQry = recQry
 		sb.recQryParams = recQryParams
-
 	} else {
 		sb.sql.WriteString(" AND ")
 
