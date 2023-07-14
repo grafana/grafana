@@ -21,7 +21,6 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 ## Choose a query editing mode
 
 The Loki query editor has two modes:
-You can switch the Loki query editor between two modes:
 
 - [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries
 - [Builder mode]({{< relref "#builder-mode" >}}), which provides a visual query designer

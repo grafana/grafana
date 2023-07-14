@@ -13,7 +13,14 @@ title: Configure the Loki data source
 weight: 200
 ---
 
-# Configure the Loki data source
+# Loki data source
+
+Grafana ships with built-in support for [Loki](/docs/loki/latest/), an open-source log aggregation system by Grafana Labs. If you are new to Loki the following documentation will help you get started:
+
+- [Getting started](/docs/loki/latest/getting-started/)
+- [Best practices](/docs/loki/latest/best-practices/#best-practices)
+
+## Configure the Loki data source
 
 To add the Loki data source, complete the following steps:
 
@@ -109,3 +116,14 @@ Each derived field consists of the following:
 - **Show example log message** - Click to paste an example log line to test the regular expression of your derived fields.
 
 Click **Save & test** to test your connection.
+
+#### Troubleshoot interpolation
+
+You can use a debug section to see what your fields extract and how the URL is interpolated.
+Select **Show example log message** to display a text area where you can enter a log message.
+
+{{< figure src="/static/img/docs/v75/loki_derived_fields_settings.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the derived fields debugging" >}}
+
+The new field with the link shown in log details:
+
+{{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
