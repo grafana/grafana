@@ -7,7 +7,7 @@ import { useStyles2 } from '../../themes';
 
 export interface TextProps {
   /** Defines what HTML element is defined underneath. "span" by default */
-  element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
+  element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
@@ -27,8 +27,8 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
   ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, italic, textAlignment),
-        [color, textAlignment, truncate, italic, weight, variant]
+        (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
+        [color, textAlignment, truncate, italic, weight, variant, element]
       )
     );
 
@@ -47,6 +47,7 @@ Text.displayName = 'Text';
 
 const getTextStyles = (
   theme: GrafanaTheme2,
+  element?: TextProps['element'],
   variant?: keyof ThemeTypographyVariantTypes,
   color?: TextProps['color'],
   weight?: TextProps['weight'],
@@ -55,12 +56,13 @@ const getTextStyles = (
   textAlignment?: TextProps['textAlignment']
 ) => {
   return css([
-    variant && {
-      ...theme.typography[variant],
-    },
     {
       margin: 0,
       padding: 0,
+      ...customVariant(theme, element, variant),
+    },
+    variant && {
+      ...theme.typography[variant],
     },
     color && {
       color: customColor(color, theme),
@@ -108,5 +110,30 @@ const customColor = (color: TextProps['color'], theme: GrafanaTheme2): string | 
       return theme.colors.warning.text;
     default:
       return color ? theme.colors.text[color] : undefined;
+  }
+};
+const customVariant = (
+  theme: GrafanaTheme2,
+  element: TextProps['element'],
+  variant?: keyof ThemeTypographyVariantTypes
+) => {
+  if (variant) {
+    return theme.typography[variant];
+  }
+  switch (element) {
+    case 'h1':
+      return theme.typography.h1;
+    case 'h2':
+      return theme.typography.h2;
+    case 'h3':
+      return theme.typography.h3;
+    case 'h4':
+      return theme.typography.h4;
+    case 'h5':
+      return theme.typography.h5;
+    case 'h6':
+      return theme.typography.h6;
+    default:
+      return theme.typography.body;
   }
 };
