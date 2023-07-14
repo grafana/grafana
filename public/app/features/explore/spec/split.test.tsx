@@ -8,7 +8,7 @@ import { serializeStateToUrlParam } from '@grafana/data';
 import * as mainState from '../state/main';
 
 import { makeLogsQueryResponse } from './helper/query';
-import { setupExplore, tearDown, waitForExplore } from './helper/setup';
+import { setupExplore, waitForExplore } from './helper/setup';
 
 jest.mock('app/core/core', () => {
   return {
@@ -47,10 +47,6 @@ jest.mock('rxjs', () => ({
 }));
 
 describe('Handles open/close splits and related events in UI and URL', () => {
-  afterEach(() => {
-    tearDown();
-  });
-
   it('opens the split pane when split button is clicked', async () => {
     const { location } = setupExplore();
 
