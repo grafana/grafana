@@ -116,11 +116,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: DATASOURCES_ROUTES.Dashboards,
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/pages/DataSourceDashboardsPage'
-          )
+      component: (props: RouteComponentProps<{ uid: string }>) => (
+        <Redirect to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
