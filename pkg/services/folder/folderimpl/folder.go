@@ -238,8 +238,6 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			return err
 		}
 		if canView {
-			// always expose the dashboard store sequential ID
-			f.ID = dashFolder.ID
 			m.Lock()
 			filtered = append(filtered, f)
 			m.Unlock()
