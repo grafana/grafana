@@ -6,7 +6,12 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SettingsBarHeader } from './SettingsBarHeader';
 
-export interface Props {
+import { SettingsBarHeader, Props as SettingsBarHeaderProps } from './SettingsBarHeader';
+
+export interface Props extends Pick<SettingsBarHeaderProps, 'headerElement' | 'title'> {
+  children: React.ReactNode;
+}
+
   title: string;
   headerElement?: React.ReactNode | ((props: { className?: string }) => React.ReactNode);
   children: React.ReactNode;
