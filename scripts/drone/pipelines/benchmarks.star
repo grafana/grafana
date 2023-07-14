@@ -71,7 +71,6 @@ def integration_benchmarks(prefix):
 
     return pipeline(
         name = "{}-integration-benchmarks".format(prefix),
-        edition = "oss",
         trigger = {
             "event": ["promote"],
             "target": ["gobenchmarks"],
