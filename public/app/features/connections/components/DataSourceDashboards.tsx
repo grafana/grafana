@@ -5,8 +5,9 @@ import { importDashboard, removeDashboard } from 'app/features/dashboard/state/a
 import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
 import { PluginDashboard, StoreState, useDispatch, useSelector } from 'app/types';
 
-import DashboardTable from '../components/DashboardsTable';
-import { useLoadDataSource } from '../state';
+import { useLoadDataSource } from '../../datasources/state';
+
+import DashboardTable from './DashboardsTable';
 
 export type Props = {
   // The UID of the data source

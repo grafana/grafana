@@ -2,8 +2,9 @@ import * as React from 'react';
 import { useParams } from 'react-router-dom';
 
 import { Page } from 'app/core/components/Page/Page';
-import { DataSourceDashboards } from 'app/features/datasources/components/DataSourceDashboards';
 import { useDataSourceSettingsNav } from 'app/features/datasources/state';
+
+import { DataSourceDashboards } from '../components/DataSourceDashboards';
 
 export function DataSourceDashboardsPage() {
   const { uid } = useParams<{ uid: string }>();

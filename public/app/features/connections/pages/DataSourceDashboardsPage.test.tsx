@@ -1,19 +1,20 @@
 import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import React from 'react';
+import { Route, Router } from 'react-router-dom';
 import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setAngularLoader } from '@grafana/runtime';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
+import * as api from '../../datasources/api';
+import { initialState as dataSourcesInitialState } from '../../datasources/state';
 import { navIndex, getMockDataSource } from '../__mocks__';
-import * as api from '../api';
-import { initialState as dataSourcesInitialState } from '../state';
 
-import DataSourceDashboardsPage from './DataSourceDashboardsPage';
+import { DataSourceDashboardsPage } from './DataSourceDashboardsPage';
 
-jest.mock('../api');
+jest.mock('../../datasources/api');
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
@@ -21,21 +22,19 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-const setup = (uid: string, store: Store) =>
-  render(
+const setup = (uid: string, store: Store) => {
+  const history = createMemoryHistory({ initialEntries: [`/datasources/edit/${uid}`] });
+
+  return render(
     <TestProvider store={store}>
-      <DataSourceDashboardsPage
-        {...getRouteComponentProps({
-          // @ts-ignore
-          match: {
-            params: {
-              uid,
-            },
-          },
-        })}
-      />
+      <Router history={history}>
+        <Route path="/datasources/edit/:uid">
+          <DataSourceDashboardsPage />
+        </Route>
+      </Router>
     </TestProvider>
   );
+};
 
 describe('<DataSourceDashboardsPage>', () => {
   const uid = 'foo';
