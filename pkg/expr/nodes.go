@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -290,6 +291,8 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 	return response.Frames, nil
 }
 
+var ReadErrorTemplate = errutil.NewBase(errutil.StatusBadRequest, "sse.readData").MustTemplate("[{{ .Public.refId }}] got error: {{ .Error }}", errutil.WithPublic("failed to read data from from query {{ .Public.refId }}"))
+
 func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service, logger log.Logger) (string, mathexp.Results, error) {
 	if len(frames) == 0 {
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
@@ -345,7 +348,8 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 		var series []mathexp.Series
 		series, err := WideToMany(frame)
 		if err != nil {
-			return "", mathexp.Results{}, err
+			//return "", mathexp.Results{}, err
+			return "", mathexp.Results{}, MakeReadError(frame.RefID, err)
 		}
 		for _, ser := range series {
 			vals = append(vals, ser)
