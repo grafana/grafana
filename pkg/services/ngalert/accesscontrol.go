@@ -122,7 +122,7 @@ var (
 				},
 			}),
 		},
-		Grants: []string{string(org.RoleViewer)},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	notificationsReaderRole = accesscontrol.RoleRegistration{

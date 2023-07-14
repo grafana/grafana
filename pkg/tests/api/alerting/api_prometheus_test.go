@@ -732,7 +732,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	removeFolderPermission(t, permissionsStore, 1, userID, org.RoleEditor, "folder1")
 	apiClient.ReloadCachedPermissions(t)
 
-	// make sure that no folders are included in the response
+	// make sure editor no longer has access to any rules
 	{
 		promRulesURL := fmt.Sprintf("http://grafana:password@%s/api/prometheus/grafana/api/v1/rules", grafanaListedAddr)
 		// nolint:gosec
@@ -742,17 +742,8 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-
-		require.JSONEq(t, `
-{
-	"status": "success",
-	"data": {
-		"groups": []
-	}
-}`, string(b))
+		require.Equal(t, 403, resp.StatusCode)
 	}
 }
 
