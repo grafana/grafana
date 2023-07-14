@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/core';
 import { Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
-import { useDataSourcesRoutes } from '../state';
+import { useDataSourcesRoutes } from '../../datasources/state';
 
 export function DataSourceAddButton(): JSX.Element | null {
   const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
