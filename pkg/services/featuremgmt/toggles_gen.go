@@ -382,4 +382,8 @@ const (
 	// FlagTransformationsRedesign
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagGrafanaApiserver
+	// Enables the Kubernetes API server for Grafana resources
+	FlagGrafanaApiserver = "grafanaApiserver"
 )

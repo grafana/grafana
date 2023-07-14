@@ -641,5 +641,11 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "grafanaApiserver",
+			Description: "Enables the Kubernetes API server for Grafana resources",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+		},
 	}
 )

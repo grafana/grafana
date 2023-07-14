@@ -112,4 +112,5 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
+  grafanaApiserver?: boolean;
 }
