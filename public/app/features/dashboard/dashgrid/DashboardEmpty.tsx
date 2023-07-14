@@ -61,14 +61,14 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           {config.featureToggles.vizAndWidgetSplit && (
             <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
               <div className={styles.headerSmall}>
-                <H3 textAlignment="center" weight="medium">
+                <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
-                </H3>
+                </Text>
               </div>
               <div className={styles.bodySmall}>
-                <P textAlignment="center" color="secondary">
+                <Text element="p" textAlignment="center" color="secondary">
                   <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
-                </P>
+                </Text>
               </div>
               <Button
                 icon="plus"
