@@ -7,8 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/collector/model/pdata"
-	"go.opentelemetry.io/collector/translator/conventions"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
+	semconv "go.opentelemetry.io/collector/model/semconv/v1.8.0"
 )
 
 type KeyValue struct {
@@ -178,14 +177,14 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	attrs := resource.Attributes()
-	serviceName := tracetranslator.ResourceNoServiceName
+	serviceName := ResourceNoServiceName
 	if attrs.Len() == 0 {
 		return serviceName, nil
 	}
 
 	tags := make([]*KeyValue, 0, attrs.Len()-1)
 	attrs.Range(func(key string, attr pdata.AttributeValue) bool {
-		if key == conventions.AttributeServiceName {
+		if key == semconv.AttributeServiceName {
 			serviceName = attr.StringVal()
 		}
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
@@ -206,7 +205,7 @@ func getAttributeVal(attr pdata.AttributeValue) interface{} {
 	case pdata.AttributeValueTypeDouble:
 		return attr.DoubleVal()
 	case pdata.AttributeValueTypeMap, pdata.AttributeValueTypeArray:
-		return tracetranslator.AttributeValueToString(attr)
+		return attr.AsString()
 	default:
 		return nil
 	}
@@ -225,15 +224,15 @@ func getSpanKind(spanKind pdata.SpanKind) string {
 	var tagStr string
 	switch spanKind {
 	case pdata.SpanKindClient:
-		tagStr = string(tracetranslator.OpenTracingSpanKindClient)
+		tagStr = string(OpenTracingSpanKindClient)
 	case pdata.SpanKindServer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindServer)
+		tagStr = string(OpenTracingSpanKindServer)
 	case pdata.SpanKindProducer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindProducer)
+		tagStr = string(OpenTracingSpanKindProducer)
 	case pdata.SpanKindConsumer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindConsumer)
+		tagStr = string(OpenTracingSpanKindConsumer)
 	case pdata.SpanKindInternal:
-		tagStr = string(tracetranslator.OpenTracingSpanKindInternal)
+		tagStr = string(OpenTracingSpanKindInternal)
 	default:
 		return ""
 	}
@@ -259,7 +258,7 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 		fields := make([]*KeyValue, 0, event.Attributes().Len()+1)
 		if event.Name() != "" {
 			fields = append(fields, &KeyValue{
-				Key:   tracetranslator.TagMessage,
+				Key:   TagMessage,
 				Value: event.Name(),
 			})
 		}

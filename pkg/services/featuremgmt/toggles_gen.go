@@ -390,4 +390,8 @@ const (
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
+
+	// FlagDisableTraceQLStreaming
+	// Disables the option to stream the response of TraceQL queries of the Tempo data source
+	FlagDisableTraceQLStreaming = "disableTraceQLStreaming"
 )
