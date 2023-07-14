@@ -20,7 +20,7 @@ alerting:
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['localhost:9090', 'host.docker.internal:8090']
 
   - job_name: 'node_exporter'
     static_configs:
