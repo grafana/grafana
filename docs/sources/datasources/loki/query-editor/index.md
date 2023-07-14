@@ -57,7 +57,7 @@ Click the arrow next to each to see available query options.
 
 - **Label browser** - Use the Loki label browser to navigate through your labels and values, and build queries.
 
-**To navigate Loki and build a query:**
+To navigate Loki and build a query:
 
 1. Choose labels to locate.
 1. Search for the values of your selected labels.

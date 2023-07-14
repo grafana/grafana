@@ -13,7 +13,7 @@ title: Configure the Loki data source
 weight: 200
 ---
 
-## Configure the Loki data source
+# Configure the Loki data source
 
 To add the Loki data source, complete the following steps:
 
@@ -37,7 +37,7 @@ The first option to configure is the name of your connection:
 
 ### HTTP section
 
-- **URL** - The URL of your Loki server. Loki uses port 3100. If your Loki server is local, use `<http://localhost:3100>`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `<http://loki.example.orgname:3100>`.
+- **URL** - The URL of your Loki server. Loki uses port 3100. If your Loki server is local, use `http://localhost:3100`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `http://loki.example.orgname:3100`.
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
@@ -91,7 +91,7 @@ These links appear in the [log details]({{< relref "../../explore/logs-integrati
 You can add multiple derived fields.
 
 {{% admonition type="note" %}}
-If you use Grafana Cloud, you can request modifications to this feature by clicking **Open a Support Ticket** from the Cloud Portal.
+If you use Grafana Cloud, you can request modifications to this feature by clicking **Open a Support Ticket** from the Grafana Cloud Portal.
 {{% /admonition %}}
 
 Each derived field consists of the following:
@@ -108,4 +108,4 @@ Each derived field consists of the following:
 
 - **Show example log message** - Click to paste an example log line to test the regular expression of your derived fields.
 
-Click **Save & test** to test your new connection.
+Click **Save & test** to test your connection.
