@@ -22,7 +22,7 @@ const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
       // allow passing ARIA and data- attributes
       {...rest}
     >
-      <Text variant="bodySmall" color={color}>
+      <Text color={color}>
         <Stack direction="row" alignItems="center" gap={0.5}>
           {icon && <Icon name={icon} />}
           {children}
