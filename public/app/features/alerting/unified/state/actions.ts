@@ -126,14 +126,6 @@ export const fetchPromRulesAction = createAsyncThunk(
   }
 );
 
-export const fetchAlertManagerConfigAction = createAsyncThunk(
-  'unifiedalerting/fetchAmConfig',
-  (alertManagerSourceName: string, thunkAPI): Promise<AlertManagerCortexConfig> => {
-    const fetchConfig = alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName);
-    return withSerializedError(thunkAPI.dispatch(fetchConfig).unwrap());
-  }
-);
-
 export const fetchExternalAlertmanagersAction = createAsyncThunk(
   'unifiedAlerting/fetchExternalAlertmanagers',
   (): Promise<ExternalAlertmanagersResponse> => {

@@ -9,7 +9,8 @@ import { useAlertmanagerConfig } from './useAlertmanagerConfig';
 
 export function useMuteTimingOptions(): Array<SelectableValue<string>> {
   const { selectedAlertmanager } = useAlertmanager();
-  const { config } = useAlertmanagerConfig(selectedAlertmanager);
+  const { currentData } = useAlertmanagerConfig(selectedAlertmanager);
+  const config = currentData?.alertmanager_config;
 
   return useMemo(() => {
     const muteTimingsOptions: Array<SelectableValue<string>> =

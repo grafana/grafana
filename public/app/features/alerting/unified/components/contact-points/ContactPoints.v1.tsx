@@ -25,7 +25,7 @@ export interface NotificationErrorProps {
 const Receivers = () => {
   const { selectedAlertmanager: alertManagerSourceName } = useAlertmanager();
   const dispatch = useDispatch();
-  const { result: config, loading, error } = useAlertmanagerConfig(alertManagerSourceName);
+  const { currentData: config, isLoading: loading, error } = useAlertmanagerConfig(alertManagerSourceName);
 
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 

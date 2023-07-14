@@ -14,14 +14,18 @@ import { useAlertmanager } from './state/AlertmanagerContext';
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
   const { selectedAlertmanager } = useAlertmanager();
-  const { config, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { currentData, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+  const config = currentData?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
       const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
-        const provenance = (config?.muteTimeProvenances ?? {})[timing.name];
+        const provenance = config?.muteTimeProvenances?.[timing.name];
 
         return {
           ...timing,
@@ -36,15 +40,15 @@ const MuteTimings = () => {
 
   return (
     <>
-      {error && !loading && !config && (
+      {error && !isLoading && !currentData && (
         <Alert severity="error" title={`Error loading Alertmanager config for ${selectedAlertmanager}`}>
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {config && !error && (
+      {currentData && !error && (
         <Switch>
           <Route exact path="/alerting/routes/mute-timing/new">
-            <MuteTimingForm loading={loading} />
+            <MuteTimingForm loading={isLoading} />
           </Route>
           <Route exact path="/alerting/routes/mute-timing/edit">
             {() => {
@@ -54,9 +58,9 @@ const MuteTimings = () => {
 
                 return (
                   <MuteTimingForm
-                    loading={loading}
+                    loading={isLoading}
                     muteTiming={muteTiming}
-                    showError={!muteTiming && !loading}
+                    showError={!muteTiming && !isLoading}
                     provenance={provenance}
                   />
                 );

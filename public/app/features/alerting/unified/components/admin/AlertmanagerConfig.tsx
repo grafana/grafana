@@ -31,7 +31,11 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   const [selectedAmConfig, setSelectedAmConfig] = useState<ValidAmConfigOption | undefined>();
 
-  const { result: config, error: loadingError, loading: isLoadingConfig } = useAlertmanagerConfig(selectedAlertmanager);
+  const {
+    currentData: config,
+    error: loadingError,
+    isLoading: isLoadingConfig,
+  } = useAlertmanagerConfig(selectedAlertmanager);
 
   const resetConfig = () => {
     if (selectedAlertmanager) {

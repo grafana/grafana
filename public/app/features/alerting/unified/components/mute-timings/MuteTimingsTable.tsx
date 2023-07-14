@@ -31,10 +31,11 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
   const dispatch = useDispatch();
   const permissions = getNotificationsPermissions(alertManagerSourceName);
 
-  const { config } = useAlertmanagerConfig(alertManagerSourceName, {
+  const { currentData } = useAlertmanagerConfig(alertManagerSourceName, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
   });
+  const config = currentData?.alertmanager_config;
 
   const [muteTimingName, setMuteTimingName] = useState<string>('');
 

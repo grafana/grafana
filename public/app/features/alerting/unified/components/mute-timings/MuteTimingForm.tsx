@@ -57,13 +57,17 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
 
   const [updating, setUpdating] = useState(false);
 
-  const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
-  const { result = defaultAmCortexConfig, config } = useAlertmanagerConfig(selectedAlertmanager);
+  const { currentData: result } = useAlertmanagerConfig(selectedAlertmanager);
+  const config = result?.alertmanager_config;
 
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
 
   const onSubmit = (values: MuteTimingFields) => {
+    if (!result) {
+      return;
+    }
+
     const newMuteTiming = createMuteTiming(values);
 
     const muteTimings = muteTiming
