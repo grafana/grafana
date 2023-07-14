@@ -7,6 +7,7 @@ import {
   FieldType,
   MutableDataFrame,
   PreferredVisualisationType,
+  Field,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import TableModel from 'app/core/TableModel';
@@ -569,6 +570,9 @@ export class ElasticResponse {
 
         const target = this.targets[n];
         series.refId = target.refId;
+        if (isLogsRequest) {
+          addIdFieldToDataFrame(series);
+        }
         dataFrame.push(series);
       }
 
@@ -801,3 +805,47 @@ const guessType = (value: unknown): FieldType => {
       return FieldType.other;
   }
 };
+
+function makeId(index: string, elasticId: string): string {
+  // the elastic-index-name and elastic-id together are unique.
+  // a simple way would be `${index}-${elasticId}`,
+  // but that can make duplicates if the strings contain
+  // `-`:
+  // - [ind-ex1,id1]
+  // - [ind,ex1-id1]
+  // so we do escaping in the index-name.we will do these replacements:
+  // - we replace <underscore> with <underscore><underscore>
+  // - we replace <dash> with <underscore><dash>
+  const escapedIndex = index.replace(/_/g, '__').replace(/-/g, '_-');
+  return `${escapedIndex}-${elasticId}`;
+}
+
+// exported for tests
+export function addIdFieldToDataFrame(frame: MutableDataFrame): void {
+  // if there already is a field with name `id`, we stop.
+  if (frame.fields.find((f) => f.name === 'id') !== undefined) {
+    return;
+  }
+
+  const elasticIdField = frame.fields.find((f) => f.name === '_id' && f.type === FieldType.string);
+  const indexField = frame.fields.find((f) => f.name === '_index' && f.type === FieldType.string);
+  if (elasticIdField === undefined || indexField === undefined) {
+    return;
+  }
+
+  const values = new Array(frame.length);
+  for (let i = 0; i < frame.length; i++) {
+    const index = indexField.values[i];
+    const elasticId = elasticIdField.values[i];
+    values[i] = makeId(index, elasticId);
+  }
+
+  const f: Field = {
+    name: 'id',
+    config: {},
+    type: FieldType.string,
+    values,
+  };
+
+  frame.addField(f);
+}

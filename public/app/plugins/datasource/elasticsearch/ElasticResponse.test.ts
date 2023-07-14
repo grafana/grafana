@@ -1,7 +1,7 @@
 import { DataFrame, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
-import { ElasticResponse } from './ElasticResponse';
+import { ElasticResponse, addIdFieldToDataFrame } from './ElasticResponse';
 import { highlightTags } from './queryDef';
 import { ElasticsearchQuery } from './types';
 
@@ -1340,6 +1340,11 @@ describe('ElasticResponse', () => {
       expect(timeField).toBeDefined();
       expect(timeField?.values[0]).toBe(1546300800000);
     });
+
+    it('should not have an id-field created', () => {
+      const idFields = result.data[0].fields.filter((f) => f.name === 'id');
+      expect(idFields).toHaveLength(0);
+    });
   });
 
   describe('simple logs query and count', () => {
@@ -1492,6 +1497,13 @@ describe('ElasticResponse', () => {
       expect(fields).toContainEqual({ name: 'number', type: 'number' });
       expect(fields).toContainEqual({ name: 'message', type: 'string' });
     });
+
+    it('should create an id-field', () => {
+      const result = new ElasticResponse(targets, response).getLogs(undefined, 'fields.lvl');
+      const idField = result.data[0].fields.find((f) => f.type === FieldType.string && f.name === 'id');
+      expect(idField).not.toBeUndefined();
+      expect(idField?.values).toStrictEqual(['mock_-index-fdsfs', 'mock_-index-kdospaidopa']);
+    });
   });
 
   describe('logs query with empty response', () => {
@@ -1527,6 +1539,100 @@ describe('ElasticResponse', () => {
       const result = new ElasticResponse(targets, response).getLogs('message', 'level');
       expect(result.data.length).toBe(2);
     });
+  });
+});
+
+describe('addIdFieldToDataFrame', () => {
+  it('adds id field to the end of the field-list, if it does not exist yet', () => {
+    const df: DataFrame = {
+      fields: [
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: [1, 2],
+        },
+        {
+          name: 'body',
+          type: FieldType.string,
+          config: {},
+          values: [1, 2],
+        },
+        {
+          name: 'hostname',
+          type: FieldType.string,
+          config: {},
+          values: ['host1', 'host2'],
+        },
+        {
+          name: '_id',
+          type: FieldType.string,
+          config: {},
+          values: ['id-1', 'id-2'],
+        },
+        {
+          name: '_index',
+          type: FieldType.string,
+          config: {},
+          values: ['i_d-x', 'i_dx-'],
+        },
+      ],
+      length: 2,
+    };
+
+    const mdf = new MutableDataFrame(df);
+
+    addIdFieldToDataFrame(mdf);
+
+    const lastField = mdf.fields.at(-1);
+    expect(lastField?.name).toBe('id');
+    expect(lastField?.type === FieldType.string);
+    expect(lastField?.values).toStrictEqual(['i__d_-x-id-1', 'i__dx_--id-2']);
+  });
+
+  it('does not add id field if it already exists', () => {
+    const df: DataFrame = {
+      fields: [
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: [1, 2],
+        },
+        {
+          name: 'body',
+          type: FieldType.string,
+          config: {},
+          values: [1, 2],
+        },
+        {
+          name: 'id',
+          type: FieldType.string,
+          config: {},
+          values: ['x1', 'x2'],
+        },
+        {
+          name: '_id',
+          type: FieldType.string,
+          config: {},
+          values: ['id1', 'id2'],
+        },
+        {
+          name: '_index',
+          type: FieldType.string,
+          config: {},
+          values: ['idx', 'idx'],
+        },
+      ],
+      length: 2,
+    };
+
+    const mdf = new MutableDataFrame(df);
+    addIdFieldToDataFrame(mdf);
+
+    const idFields = mdf.fields.filter((f) => f.name === 'id');
+    expect(idFields).toHaveLength(1);
+    expect(idFields[0]?.values).toStrictEqual(['x1', 'x2']);
   });
 });
 
