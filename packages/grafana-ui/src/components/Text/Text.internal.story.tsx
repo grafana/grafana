@@ -95,15 +95,5 @@ export const Basic: StoryFn = (args) => {
     </div>
   );
 };
-// Basic.args = {
-//   element: 'h1',
-//   variant: undefined,
-//   weight: 'light',
-//   textAlignment: 'center',
-//   truncate: false,
-//   italic: false,
-//   color: 'primary',
-//   children: 'This is a H1 component',
-// };
 
 export default meta;
