@@ -233,16 +233,16 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 }
 
 type FakePluginStorage struct {
-	ExtractFunc func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+	ExtractFunc func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 }
 
 func NewFakePluginStorage() *FakePluginStorage {
 	return &FakePluginStorage{}
 }
 
-func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 	if s.ExtractFunc != nil {
-		return s.ExtractFunc(ctx, pluginID, z)
+		return s.ExtractFunc(ctx, pluginID, dirNameFunc, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
 }
