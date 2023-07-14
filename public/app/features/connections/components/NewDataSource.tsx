@@ -7,15 +7,16 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
 import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 
-import { DataSourceCategories } from '../components/DataSourceCategories';
-import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
 import {
   useAddDatasource,
   useLoadDataSourcePlugins,
   getFilteredDataSourcePlugins,
   setDataSourceTypeSearchQuery,
   useDataSourcesRoutes,
-} from '../state';
+} from '../../datasources/state';
+
+import { DataSourceCategories } from './DataSourceCategories';
+import { DataSourceTypeCardList } from './DataSourceTypeCardList';
 
 export function NewDataSource() {
   useLoadDataSourcePlugins();

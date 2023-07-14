@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { DataSourcePluginCategory } from 'app/types';
 
-import { ROUTES } from '../../connections/constants';
+import { ROUTES } from '../constants';
 
 import { DataSourceTypeCardList } from './DataSourceTypeCardList';
 
