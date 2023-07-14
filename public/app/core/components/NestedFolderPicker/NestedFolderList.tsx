@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from 'app/core/internationalization';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -39,15 +40,21 @@ export function NestedFolderList({
 
   return (
     <div className={styles.table}>
-      <List
-        height={ROW_HEIGHT * Math.min(6.5, items.length)}
-        width="100%"
-        itemData={virtualData}
-        itemSize={ROW_HEIGHT}
-        itemCount={items.length}
-      >
-        {Row}
-      </List>
+      {items.length > 0 ? (
+        <List
+          height={ROW_HEIGHT * Math.min(6.5, items.length)}
+          width="100%"
+          itemData={virtualData}
+          itemSize={ROW_HEIGHT}
+          itemCount={items.length}
+        >
+          {Row}
+        </List>
+      ) : (
+        <div className={styles.emptyMessage}>
+          <Trans i18nKey="browse-dashboards.folder-picker.empty-message">No folders found</Trans>
+        </div>
+      )}
     </div>
   );
 }
@@ -155,6 +162,12 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     table: css({
       background: theme.components.input.background,
+    }),
+
+    emptyMessage: css({
+      padding: theme.spacing(1),
+      textAlign: 'center',
+      width: '100%',
     }),
 
     // Should be the same size as the <IconButton /> for proper alignment

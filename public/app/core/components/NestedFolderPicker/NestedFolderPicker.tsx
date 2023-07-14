@@ -5,8 +5,9 @@ import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, FilterInput, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
@@ -175,14 +176,15 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   return (
     <>
-      <FilterInput
+      <Input
         ref={setTriggerRef}
         autoFocus
-        placeholder={label ?? 'Search folder'}
+        placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
-        escapeRegex={false}
         className={styles.search}
-        onChange={(val) => setSearch(val)}
+        onChange={(e) => setSearch(e.currentTarget.value)}
+        role="combobox"
+        suffix={<Icon name="search" />}
       />
       <fieldset
         ref={setTooltipRef}
@@ -194,8 +196,12 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         })}
       >
         {error ? (
-          <Alert className={styles.error} severity="warning" title="Error loading folders">
-            {error.message || error.toString?.() || 'Unknown error'}
+          <Alert
+            className={styles.error}
+            severity="warning"
+            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+          >
+            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
           </Alert>
         ) : (
           <div>

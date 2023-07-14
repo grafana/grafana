@@ -62,7 +62,7 @@ export const Example: StoryFn = (args) => {
         <Text {...args} element="h1">
           This is a header
         </Text>
-        <Text {...args} element="p">
+        <Text {...args} element="h3">
           This is a paragraph that contains
           <Text color="success" italic>
             {' '}
