@@ -31,6 +31,20 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
+const fetch = jest.fn().mockResolvedValue({ correlations: [] });
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ fetch }),
+}));
+
+jest.mock('rxjs', () => ({
+  ...jest.requireActual('rxjs'),
+  lastValueFrom: () =>
+    new Promise((resolve, reject) => {
+      resolve({ data: { correlations: [] } });
+    }),
+}));
+
 describe('ExplorePage', () => {
   afterEach(() => {
     tearDown();
@@ -164,7 +178,7 @@ describe('ExplorePage', () => {
       });
 
       act(() => {
-        store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
+        store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', queries: [{ expr: 'error', refId: 'A' }] }));
       });
 
       // Editor renders the new query

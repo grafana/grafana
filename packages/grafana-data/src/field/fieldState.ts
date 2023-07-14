@@ -43,6 +43,14 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
+export function cacheFieldDisplayNames(frames: DataFrame[]) {
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      getFieldDisplayName(field, frame, frames);
+    });
+  });
+}
+
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const existingTitle = field.state?.displayName;
   const multipleFrames = Boolean(allFrames && allFrames.length > 1);

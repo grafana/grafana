@@ -17,11 +17,11 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -32,11 +32,16 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	OfflineAccessScope = "offline_access"
+)
+
 type SocialService struct {
 	cfg *setting.Cfg
 
 	socialMap     map[string]SocialConnector
 	oAuthProvider map[string]*OAuthInfo
+	log           log.Logger
 }
 
 type OAuthInfo struct {
@@ -66,6 +71,7 @@ type OAuthInfo struct {
 	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
 	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
 	UsePKCE                 bool     `toml:"use_pkce"`
+	UseRefreshToken         bool     `toml:"use_refresh_token"`
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -78,6 +84,7 @@ func ProvideService(cfg *setting.Cfg,
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
+		log:           log.New("login.social"),
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
@@ -110,6 +117,7 @@ func ProvideService(cfg *setting.Cfg,
 			TlsClientCa:             sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:           sec.Key("tls_skip_verify_insecure").MustBool(),
 			UsePKCE:                 sec.Key("use_pkce").MustBool(),
+			UseRefreshToken:         sec.Key("use_refresh_token").MustBool(false),
 			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
 			AutoLogin:               sec.Key("auto_login").MustBool(false),
 		}
@@ -138,7 +146,7 @@ func ProvideService(cfg *setting.Cfg,
 		case "autodetect", "":
 			authStyle = oauth2.AuthStyleAutoDetect
 		default:
-			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
 			authStyle = oauth2.AuthStyleAutoDetect
 		}
 
@@ -177,6 +185,9 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Google.
 		if name == "google" {
+			if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+				ss.log.Warn("Using legacy Google API URL, please update your configuration")
+			}
 			ss.socialMap["google"] = &SocialGoogle{
 				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				hostedDomain: info.HostedDomain,
@@ -189,10 +200,13 @@ func ProvideService(cfg *setting.Cfg,
 			ss.socialMap["azuread"] = &SocialAzureAD{
 				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				cache:                cache,
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
 				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
-				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
+			}
+			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+				appendUniqueScope(&config, OfflineAccessScope)
 			}
 		}
 
@@ -203,6 +217,9 @@ func ProvideService(cfg *setting.Cfg,
 				apiUrl:          info.ApiUrl,
 				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
 				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
+			}
+			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+				appendUniqueScope(&config, OfflineAccessScope)
 			}
 		}
 
@@ -267,6 +284,7 @@ func (b *BasicUserInfo) String() string {
 		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups)
 }
 
+//go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ../socialtest/
 type SocialConnector interface {
 	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
@@ -291,6 +309,7 @@ type SocialBase struct {
 	autoAssignOrgRole   string
 	skipOrgRoleSync     bool
 	features            featuremgmt.FeatureManager
+	useRefreshToken     bool
 }
 
 type Error struct {
@@ -340,6 +359,7 @@ func newSocialBase(name string,
 		roleAttributeStrict:     info.RoleAttributeStrict,
 		skipOrgRoleSync:         skipOrgRoleSync,
 		features:                features,
+		useRefreshToken:         info.UseRefreshToken,
 	}
 }
 
@@ -475,7 +495,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCert: %w", err)
 		}
 
@@ -485,7 +505,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCa != "" {
 		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)
 		}
 		caCertPool := x509.NewCertPool()
@@ -587,4 +607,10 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 	}
 
 	return rawJSON, nil
+}
+
+func appendUniqueScope(config *oauth2.Config, scope string) {
+	if !slices.Contains(config.Scopes, OfflineAccessScope) {
+		config.Scopes = append(config.Scopes, OfflineAccessScope)
+	}
 }

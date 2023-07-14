@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import produce from 'immer';
+import { produce } from 'immer';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
@@ -205,6 +205,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   flexColumn: css`
     display: flex;
     flex-direction: column;
+    margin-top: ${theme.spacing(2)};
   `,
   field: css`
     margin-bottom: ${theme.spacing(0.5)};

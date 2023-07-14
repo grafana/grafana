@@ -304,10 +304,12 @@ function useFocusSpanLink(options: {
         ? () =>
             options.splitOpenFn({
               datasourceUid: options.datasource?.uid!,
-              query: {
-                ...query!,
-                query: traceId,
-              },
+              queries: [
+                {
+                  ...query!,
+                  query: traceId,
+                },
+              ],
               panelsState: {
                 trace: {
                   spanId,
