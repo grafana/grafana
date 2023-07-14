@@ -1,7 +1,7 @@
 // mock fetch for SystemJS
 import 'whatwg-fetch';
 
-import { SystemJS } from '@grafana/runtime';
+import { SystemJS, config } from '@grafana/runtime';
 
 jest.mock('./cache', () => ({
   resolveWithCache: (url: string) => `${url}?_cache=1234`,
@@ -48,6 +48,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(source).toBe(mockSystemModule);
     });
     it('only transforms plugin source code hosted on cdn with cdn paths', async () => {
+      config.pluginsCDNBaseURL = 'http://my-cdn.com/plugins';
       const cdnUrl = 'http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js';
       const cdnResult = await decorateSystemJSFetch(originalFetch, cdnUrl, {});
       const cdnSource = await cdnResult.text();
