@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -22,11 +22,11 @@ export function SettingsSummary({
   const styles = useStyles2(getStyles);
 
   return isDataLoading ? (
-    <div className={(styles.summaryWrapper, className)}>
+    <div className={cx(styles.summaryWrapper, className)}>
       <Spinner className={styles.summary} inline={true} size={14} />
     </div>
   ) : (
-    <div className={(styles.summaryWrapper, className)}>
+    <div className={cx(styles.summaryWrapper, className)}>
       <div className={styles.summary}>
         {'Time range = '}
         <TimeRangeLabel className={styles.timeRange} value={timeRange} />
