@@ -99,7 +99,6 @@ require (
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
 	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
-	go.opentelemetry.io/collector v0.46.0 // @grafana/backend-platform
 	go.opentelemetry.io/collector/model v0.46.0 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.37.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel v1.14.0 // @grafana/alerting-squad-backend
@@ -221,7 +220,7 @@ require (
 	golang.org/x/text v0.11.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // @grafana/backend-platform
+	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect; @grafana/backend-platform
 )
 
 require (
