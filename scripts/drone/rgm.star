@@ -111,7 +111,9 @@ def rgm_windows():
             ver_mode = "release",
             bucket = "grafana-prerelease-dev",
         ),
-        depends_on = [],
+        depends_on = ["rgm-tag-prerelease"],
+        platform = "windows",
+        environment = {"EDITION": "oss"}
     )
 
 def rgm():
