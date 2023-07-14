@@ -289,6 +289,7 @@ Content-Type: application/json
   "activeUsers":1
 }
 ```
+>**Note**: `activeUsers` agreggates the number users who have logged-in in the last 30 days. `monthlyActiveUsers` aggregates the number of users who have logged-in during the calendar month. 
 
 ## Grafana Usage Report preview
 
