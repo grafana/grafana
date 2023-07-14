@@ -3530,6 +3530,7 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
+- rgm-tag-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4910,6 +4911,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 6be2fedc92e41743b35ba980ab1b497ca52282e0dac168b338efa9ac494f1edb
+hmac: 7796dccc1ebde8bf6985375aab1803a5d59dd3b8b0ce725d7ce23c5ca39e2c80
 
 ...

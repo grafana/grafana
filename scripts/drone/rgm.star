@@ -124,7 +124,7 @@ def rgm():
         verify_release_pipeline(
             name = "rgm-tag-verify-prerelease-assets",
             trigger = tag_trigger,
-            depends_on = ["rgm-tag-prerelease"],
+            depends_on = ["rgm-tag-prerelease", "rgm-tag-prerelease-windows"],
             bucket = "grafana-prerelease-dev",
         ),
     ]
