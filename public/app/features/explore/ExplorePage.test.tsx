@@ -178,7 +178,7 @@ describe('ExplorePage', () => {
       });
 
       act(() => {
-        store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
+        store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', queries: [{ expr: 'error', refId: 'A' }] }));
       });
 
       // Editor renders the new query

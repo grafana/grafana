@@ -61,6 +61,13 @@
       "manage-permissions": "Manage permissions",
       "move": "Move"
     },
+    "folder-picker": {
+      "button-label": "Select folder",
+      "empty-message": "No folders found",
+      "error-title": "Error loading folders",
+      "search-placeholder": "Search folders",
+      "unknown-error": "Unknown error"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
@@ -120,7 +127,8 @@
       "import": "Import from library",
       "paste-panel": "Paste panel",
       "row": "Row",
-      "visualization": "Visualization"
+      "visualization": "Visualization",
+      "widget": "Widget"
     },
     "empty": {
       "add-import-body": "Import visualizations that are shared with other dashboards.",
@@ -131,7 +139,10 @@
       "add-row-header": "Add a row",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
-      "add-visualization-header": "Start your new dashboard by adding a visualization"
+      "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-widget-body": "Create lists, markdowns and other widgets",
+      "add-widget-button": "Add widget",
+      "add-widget-header": "Add a widget"
     },
     "inspect": {
       "data-tab": "Data",
