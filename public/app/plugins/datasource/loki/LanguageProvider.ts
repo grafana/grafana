@@ -1,5 +1,5 @@
 import { chain, difference } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
 
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';

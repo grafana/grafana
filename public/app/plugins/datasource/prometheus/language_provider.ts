@@ -1,5 +1,5 @@
 import { chain, difference, once } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
 

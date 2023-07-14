@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
