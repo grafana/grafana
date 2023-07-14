@@ -18,27 +18,29 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginRepo     repo.Service
-	pluginStorage  storage.ZipExtractor
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	log            log.Logger
+	pluginRepo           repo.Service
+	pluginStorage        storage.ZipExtractor
+	pluginStorageDirFunc storage.DirNameGeneratorFunc
+	pluginRegistry       registry.Service
+	pluginLoader         loader.Service
+	log                  log.Logger
 }
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
 	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc)
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor) *PluginInstaller {
+	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc) *PluginInstaller {
 	return &PluginInstaller{
-		pluginLoader:   pluginLoader,
-		pluginRegistry: pluginRegistry,
-		pluginRepo:     pluginRepo,
-		pluginStorage:  pluginStorage,
-		log:            log.New("plugin.installer"),
+		pluginLoader:         pluginLoader,
+		pluginRegistry:       pluginRegistry,
+		pluginRepo:           pluginRepo,
+		pluginStorage:        pluginStorage,
+		pluginStorageDirFunc: pluginStorageDirFunc,
+		log:                  log.New("plugin.installer"),
 	}
 }
 
@@ -102,7 +104,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 	}
 
-	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, pluginArchive.File)
+	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
 	if err != nil {
 		return err
 	}
@@ -116,7 +118,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, d.File)
+		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, m.pluginStorageDirFunc, d.File)
 		if err != nil {
 			return err
 		}

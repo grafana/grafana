@@ -3739,8 +3739,8 @@ __metadata:
     "@types/marked": 4.0.8
     "@types/node": 18.16.16
     "@types/papaparse": 5.3.7
-    "@types/react": 18.0.28
-    "@types/react-dom": 18.0.11
+    "@types/react": 18.2.15
+    "@types/react-dom": 18.2.7
     "@types/sinon": 10.0.13
     "@types/string-hash": 1.1.1
     "@types/testing-library__jest-dom": 5.14.5
@@ -4012,8 +4012,8 @@ __metadata:
     "@types/history": 4.7.11
     "@types/jest": 29.2.3
     "@types/lodash": 4.14.191
-    "@types/react": 18.0.28
-    "@types/react-dom": 18.0.11
+    "@types/react": 18.2.15
+    "@types/react-dom": 18.2.7
     "@types/systemjs": ^0.20.6
     esbuild: 0.18.6
     history: 4.10.1
@@ -4154,11 +4154,11 @@ __metadata:
     "@types/mock-raf": 1.0.3
     "@types/node": 18.16.16
     "@types/prismjs": 1.26.0
-    "@types/react": 18.0.28
+    "@types/react": 18.2.15
     "@types/react-beautiful-dnd": 13.1.3
     "@types/react-calendar": 3.9.0
     "@types/react-color": 3.0.6
-    "@types/react-dom": 18.0.11
+    "@types/react-dom": 18.2.7
     "@types/react-highlight-words": 0.16.4
     "@types/react-router-dom": 5.3.3
     "@types/react-table": 7.7.14
@@ -10415,21 +10415,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*":
-  version: 17.0.10
-  resolution: "@types/react-dom@npm:17.0.10"
+"@types/react-dom@npm:*, @types/react-dom@npm:18.2.7, @types/react-dom@npm:^18.0.0":
+  version: 18.2.7
+  resolution: "@types/react-dom@npm:18.2.7"
   dependencies:
     "@types/react": "*"
-  checksum: cc7d8d5b77ee2f3b989c107abd8ec0f2460ba1b1ee6e6d637124e1939594b5619fa4166ef0ea7632a69b68358e0b71aa618de446ccc416dcc0017175549da601
-  languageName: node
-  linkType: hard
-
-"@types/react-dom@npm:18.0.11, @types/react-dom@npm:^18.0.0":
-  version: 18.0.11
-  resolution: "@types/react-dom@npm:18.0.11"
-  dependencies:
-    "@types/react": "*"
-  checksum: 579691e4d5ec09688087568037c35edf8cfb1ab3e07f6c60029280733ee7b5c06d66df6fcc90786702c93ac8cb13bc7ff16c79ddfc75d082938fbaa36e1cdbf4
+  checksum: e02ea908289a7ad26053308248d2b87f6aeafd73d0e2de2a3d435947bcea0422599016ffd1c3e38ff36c42f5e1c87c7417f05b0a157e48649e4a02f21727d54f
   languageName: node
   linkType: hard
 
@@ -10569,7 +10560,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:18.0.28":
+"@types/react@npm:*, @types/react@npm:18.2.15, @types/react@npm:>=16":
+  version: 18.2.15
+  resolution: "@types/react@npm:18.2.15"
+  dependencies:
+    "@types/prop-types": "*"
+    "@types/scheduler": "*"
+    csstype: ^3.0.2
+  checksum: 36989f638201bfe2f4110b06c119180f6df9c0e13d7060481e82e7a745f81745a01ae543c478a25b61e0767cb52e82da2ad5b0dedacabf99339e523d06176705
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:18.0.28":
   version: 18.0.28
   resolution: "@types/react@npm:18.0.28"
   dependencies:
@@ -10577,17 +10579,6 @@ __metadata:
     "@types/scheduler": "*"
     csstype: ^3.0.2
   checksum: e752df961105e5127652460504785897ca6e77259e0da8f233f694f9e8f451cde7fa0709d4456ade0ff600c8ce909cfe29f9b08b9c247fa9b734e126ec53edd7
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:>=16":
-  version: 18.0.33
-  resolution: "@types/react@npm:18.0.33"
-  dependencies:
-    "@types/prop-types": "*"
-    "@types/scheduler": "*"
-    csstype: ^3.0.2
-  checksum: 4fbd2b2b6a26378bdfde121081a6406ec2d39e4ba87ea5f6897ab7bb2198713165e6fd703ad4ed7ba1d4f23ef54a4c9f108f3105c7ed8e136411ee6bdebc5669
   languageName: node
   linkType: hard
 
@@ -19306,9 +19297,9 @@ __metadata:
     "@types/papaparse": 5.3.7
     "@types/pluralize": ^0.0.29
     "@types/prismjs": 1.26.0
-    "@types/react": 18.0.28
+    "@types/react": 18.2.15
     "@types/react-beautiful-dnd": 13.1.3
-    "@types/react-dom": 18.0.11
+    "@types/react-dom": 18.2.7
     "@types/react-grid-layout": 1.3.2
     "@types/react-highlight-words": 0.16.4
     "@types/react-redux": 7.1.25
@@ -19423,7 +19414,7 @@ __metadata:
     lint-staged: 13.2.3
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.17.0
+    lru-cache: 10.0.0
     lru-memoize: ^1.1.0
     marked: ^4.3.0
     memoize-one: 6.0.0
@@ -23168,10 +23159,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.17.0":
-  version: 7.17.0
-  resolution: "lru-cache@npm:7.17.0"
-  checksum: 28c2a98ad313b8d61beac1f08257b6f0ca990e39d24a9bc831030b6e209447cfb11c6d9d1a774282189bfc9609d1dfd17ebe485228dd68f7b96b6b9b7740894e
+"lru-cache@npm:10.0.0, lru-cache@npm:^9.1.1 || ^10.0.0":
+  version: 10.0.0
+  resolution: "lru-cache@npm:10.0.0"
+  checksum: 18f101675fe283bc09cda0ef1e3cc83781aeb8373b439f086f758d1d91b28730950db785999cd060d3c825a8571c03073e8c14512b6655af2188d623031baf50
   languageName: node
   linkType: hard
 
@@ -23197,13 +23188,6 @@ __metadata:
   version: 7.12.0
   resolution: "lru-cache@npm:7.12.0"
   checksum: fdb62262978393df7a4bd46a072bc5c3808c50ca5a347a82bb9459410efd841b7bae50655c3cf9004c70d12c756cf6d018f6bff155a16cdde9eba9a82899b5eb
-  languageName: node
-  linkType: hard
-
-"lru-cache@npm:^9.1.1 || ^10.0.0":
-  version: 10.0.0
-  resolution: "lru-cache@npm:10.0.0"
-  checksum: 18f101675fe283bc09cda0ef1e3cc83781aeb8373b439f086f758d1d91b28730950db785999cd060d3c825a8571c03073e8c14512b6655af2188d623031baf50
   languageName: node
   linkType: hard
 
