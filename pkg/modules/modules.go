@@ -3,6 +3,7 @@ package modules
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -62,8 +63,9 @@ func ProvideService(
 func (m *service) Init(_ context.Context) error {
 	var err error
 
-	// enable or disable targets based on feature flags
-	m.targets = m.processFeatureFlags()
+	if err = m.processFeatureFlags(); err != nil {
+		return err
+	}
 
 	m.log.Debug("Initializing module manager", "targets", m.targets)
 	for mod, targets := range dependencyMap {
@@ -164,17 +166,29 @@ func (m *service) IsModuleEnabled(name string) bool {
 }
 
 // processFeatureFlags adds or removes targets based on feature flags.
-func (m *service) processFeatureFlags() []string {
-	targets := m.targets
+func (m *service) processFeatureFlags() error {
+	// add GrafanaAPIServer to targets if feature is enabled
 	if m.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		targets = append(targets, GrafanaAPIServer)
-	} else {
-		// remove GrafanaAPIServer from targets
-		for i, t := range m.targets {
+		m.targets = append(m.targets, GrafanaAPIServer)
+	}
+
+	if !m.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
+		// error if GrafanaAPIServer is in targets
+		for _, t := range m.targets {
 			if t == GrafanaAPIServer {
-				targets = append(targets[:i], targets[i+1:]...)
+				return fmt.Errorf("feature flag %s is disabled, but target %s is still enabled", featuremgmt.FlagGrafanaAPIServer, GrafanaAPIServer)
+			}
+		}
+
+		// error if GrafanaAPIServer is a dependency of a target
+		for parent, targets := range dependencyMap {
+			for _, t := range targets {
+				if t == GrafanaAPIServer && m.IsModuleEnabled(parent) {
+					return fmt.Errorf("feature flag %s is disabled, but target %s is enabled with dependency on %s", featuremgmt.FlagGrafanaAPIServer, parent, GrafanaAPIServer)
+				}
 			}
 		}
 	}
-	return targets
+
+	return nil
 }
