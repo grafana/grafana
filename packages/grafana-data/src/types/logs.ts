@@ -278,7 +278,7 @@ export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery
   modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
 }
 
-export interface DataSourceWithAnalyzeQuerySupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
+export interface DataSourceWithQueryAnalysisSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
   /**
    * Used in explore for Log details
    *
@@ -299,7 +299,7 @@ export const hasQueryModificationSupport = <TQuery extends DataQuery>(
 /**
  * @internal
  */
-export const hasAnalyzeQuerySupport = <TQuery extends DataQuery>(
+export const hasQueryAnalysisSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
   return datasource !== null && typeof datasource === 'object' && 'analyzeQuery' in datasource;

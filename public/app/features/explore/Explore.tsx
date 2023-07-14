@@ -15,7 +15,7 @@ import {
   EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
-  hasAnalyzeQuerySupport,
+  hasQueryAnalysisSupport,
   hasQueryModificationSupport,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -194,7 +194,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
     for (const query of this.props.queries) {
       const ds = await getDataSourceSrv().get(query.datasource);
-      if (!hasAnalyzeQuerySupport(ds)) {
+      if (!hasQueryAnalysisSupport(ds)) {
         return false;
       }
       const hasFilter = ds.analyzeQuery(query, {

@@ -34,7 +34,7 @@ import {
   AnalyzeQueryOptions,
   DataSourceWithQueryModificationSupport,
   FieldType,
-  DataSourceWithAnalyzeQuerySupport,
+  DataSourceWithQueryAnalysisSupport,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -95,7 +95,7 @@ export class ElasticDatasource
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
     DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
     DataSourceWithQueryModificationSupport<ElasticsearchQuery>,
-    DataSourceWithAnalyzeQuerySupport<ElasticsearchQuery>
+    DataSourceWithQueryAnalysisSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
