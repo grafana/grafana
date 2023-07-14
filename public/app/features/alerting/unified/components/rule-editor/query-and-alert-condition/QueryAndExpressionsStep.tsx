@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, xor } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -161,15 +161,18 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
-      // check if we need to rewire expressions
-      updatedQueries.forEach((query, index) => {
-        const oldRefId = queries[index].refId;
-        const newRefId = query.refId;
 
-        if (oldRefId !== newRefId) {
-          dispatch(rewireExpressions({ oldRefId, newRefId }));
-        }
-      });
+      // check if we need to rewire expressions (and which ones)
+      const updatedDataQueries = updatedQueries.map((query) => query.refId);
+      const previousDataQueries = queries
+        .filter((query) => !isExpressionQuery(query.model))
+        .map((query) => query.refId);
+
+      // this code assumes not more than 1 query refId has changed per "onChangeQueries"
+      const [oldRefId, newRefId] = xor(previousDataQueries, updatedDataQueries);
+      if (oldRefId && newRefId) {
+        dispatch(rewireExpressions({ oldRefId, newRefId }));
+      }
     },
     [queries, setValue, updateExpressionAndDatasource]
   );
@@ -526,9 +529,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const useSetExpressionAndDataSource = () => {
   const { setValue } = useFormContext<RuleFormValues>();
+
   return (updatedQueries: AlertQuery[]) => {
     // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
     const query = updatedQueries[0];
+    if (!query) {
+      return;
+    }
+
     const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
     if (!dataSourceSettings) {
       throw new Error('The Data source has not been defined.');
