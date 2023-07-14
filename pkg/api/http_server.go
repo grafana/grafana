@@ -458,7 +458,7 @@ func (hs *HTTPServer) running(ctx context.Context) error {
 
 func (hs *HTTPServer) stop(failureReason error) error {
 	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-		hs.log.Error("Failed to shutdown server", "error", err)
+		return fmt.Errorf("failed to shutdown server: %w", err)
 	}
 	return failureReason
 }
