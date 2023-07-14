@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -415,8 +415,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		dashInParentTitle    = "dashboard in parent"
 		dashInSubfolderTitle = "dashboard in subfolder"
 	)
-	var viewer user.SignedInUser
-	var role *accesscontrol.Role
+	var viewer *user.SignedInUser
 
 	setup := func() {
 		sqlStore = db.InitTestDB(t)
@@ -431,7 +430,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		require.NoError(t, err)
 
 		usr := createUser(t, sqlStore, "viewer", "Viewer", false)
-		viewer = user.SignedInUser{
+		viewer = &user.SignedInUser{
 			UserID:  usr.ID,
 			OrgID:   usr.OrgID,
 			OrgRole: org.RoleViewer,
@@ -530,8 +529,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		}
 		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
-
-		role = setupRBACRole(t, *sqlStore, &viewer)
 	}
 
 	setup()
@@ -593,10 +590,10 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			require.NoError(t, err)
 
 			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}
-			setupRBACPermission(t, *sqlStore, role, &viewer)
+			actest.AddUserPermissionToDB(t, sqlStore, viewer)
 
 			query := &dashboards.FindPersistedDashboardsQuery{
-				SignedInUser: &viewer,
+				SignedInUser: viewer,
 				OrgId:        viewer.OrgID,
 			}
 
@@ -625,62 +622,4 @@ func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, d
 	require.NoError(t, err)
 
 	return dash
-}
-
-func setupRBACRole(t *testing.T, db sqlstore.SQLStore, user *user.SignedInUser) *accesscontrol.Role {
-	t.Helper()
-	var role *accesscontrol.Role
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		role = &accesscontrol.Role{
-			OrgID:   user.OrgID,
-			UID:     "test_role",
-			Name:    "test:role",
-			Updated: time.Now(),
-			Created: time.Now(),
-		}
-		_, err := sess.Insert(role)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Insert(accesscontrol.UserRole{
-			OrgID:   role.OrgID,
-			RoleID:  role.ID,
-			UserID:  user.UserID,
-			Created: time.Now(),
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
-	require.NoError(t, err)
-	return role
-}
-
-func setupRBACPermission(t *testing.T, db sqlstore.SQLStore, role *accesscontrol.Role, user *user.SignedInUser) {
-	t.Helper()
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
-			return err
-		}
-
-		var acPermission []accesscontrol.Permission
-		for action, scopes := range user.Permissions[user.OrgID] {
-			for _, scope := range scopes {
-				acPermission = append(acPermission, accesscontrol.Permission{
-					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
-				})
-			}
-		}
-
-		if _, err := sess.InsertMulti(&acPermission); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	require.NoError(t, err)
 }
