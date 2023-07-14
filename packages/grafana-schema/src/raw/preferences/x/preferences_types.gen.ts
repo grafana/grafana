@@ -15,7 +15,17 @@ export interface QueryHistoryPreference {
   homeTab?: string;
 }
 
+export interface CookiePreferences {
+  analytics?: Record<string, unknown>;
+  functional?: Record<string, unknown>;
+  performance?: Record<string, unknown>;
+}
+
 export interface Preferences {
+  /**
+   * Cookie preferences
+   */
+  cookiePreferences?: CookiePreferences;
   /**
    * UID for the home dashboard
    */
