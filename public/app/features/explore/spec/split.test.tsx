@@ -5,9 +5,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 
-import { makeLogsQueryResponse } from './spec/helper/query';
-import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
-import * as mainState from './state/main';
+import * as mainState from '../state/main';
+
+import { makeLogsQueryResponse } from './helper/query';
+import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 jest.mock('app/core/core', () => {
   return {
