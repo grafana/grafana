@@ -972,7 +972,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if !ac.IsDisabled(d.cfg) {
-		/*
+		if d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
 			if err != nil {
 				return nil, err
@@ -982,9 +982,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			filters = []interface{}{
 				permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 			}
-		*/
-		filters = []interface{}{
-			permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type, d.features, false),
+		} else {
+			filters = []interface{}{
+				permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type, d.features, false),
+			}
 		}
 	}
 
