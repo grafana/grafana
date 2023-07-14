@@ -120,7 +120,8 @@
       "import": "Ĩmpőřŧ ƒřőm ľįþřäřy",
       "paste-panel": "Päşŧę päŉęľ",
       "row": "Ŗőŵ",
-      "visualization": "Vįşūäľįžäŧįőŉ"
+      "visualization": "Vįşūäľįžäŧįőŉ",
+      "widget": "Ŵįđģęŧ"
     },
     "empty": {
       "add-import-body": "Ĩmpőřŧ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
@@ -131,7 +132,10 @@
       "add-row-header": "Åđđ ä řőŵ",
       "add-visualization-body": "Ŝęľęčŧ ä đäŧä şőūřčę äŉđ ŧĥęŉ qūęřy äŉđ vįşūäľįžę yőūř đäŧä ŵįŧĥ čĥäřŧş, şŧäŧş äŉđ ŧäþľęş őř čřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş.",
       "add-visualization-button": "Åđđ vįşūäľįžäŧįőŉ",
-      "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ"
+      "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ",
+      "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
+      "add-widget-button": "Åđđ ŵįđģęŧ",
+      "add-widget-header": "Åđđ ä ŵįđģęŧ"
     },
     "inspect": {
       "data-tab": "Đäŧä",
