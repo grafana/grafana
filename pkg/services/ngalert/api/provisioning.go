@@ -28,6 +28,10 @@ func (f *ProvisioningApiHandler) handleRouteGetContactpoints(ctx *contextmodel.R
 	return f.svc.RouteGetContactPoints(ctx)
 }
 
+func (f *ProvisioningApiHandler) handleRouteGetContactpointsExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetContactPointsExport(ctx)
+}
+
 func (f *ProvisioningApiHandler) handleRoutePostContactpoints(ctx *contextmodel.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {
 	return f.svc.RoutePostContactPoint(ctx, cp)
 }

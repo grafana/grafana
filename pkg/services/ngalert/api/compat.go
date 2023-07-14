@@ -215,3 +215,40 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 		Model:         mdl,
 	}, nil
 }
+
+// AlertingFileExportFromEmbeddedContactPoints creates a definitions.AlertingFileExport DTO from []definitions.EmbeddedContactPoint.
+func AlertingFileExportFromEmbeddedContactPoints(orgID int64, ecps []definitions.EmbeddedContactPoint) (definitions.AlertingFileExport, error) {
+	f := definitions.AlertingFileExport{APIVersion: 1}
+
+	cache := make(map[string]*definitions.ContactPointExport)
+	contactPoints := make([]*definitions.ContactPointExport, 0)
+	for _, ecp := range ecps {
+		c, ok := cache[ecp.Name]
+		if !ok {
+			c = &definitions.ContactPointExport{
+				OrgID:     orgID,
+				Name:      ecp.Name,
+				Receivers: make([]definitions.ReceiverExport, 0),
+			}
+			cache[ecp.Name] = c
+			contactPoints = append(contactPoints, c)
+		}
+
+		c.Receivers = append(c.Receivers, ReceiverExportFromEmbeddedContactPoint(ecp))
+	}
+
+	for _, c := range contactPoints {
+		f.ContactPoints = append(f.ContactPoints, *c)
+	}
+	return f, nil
+}
+
+// ReceiverExportFromEmbeddedContactPoint creates a definitions.ReceiverExport DTO from definitions.EmbeddedContactPoint.
+func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactPoint) definitions.ReceiverExport {
+	return definitions.ReceiverExport{
+		UID:                   contact.UID,
+		Type:                  contact.Type,
+		Settings:              contact.Settings,
+		DisableResolveMessage: contact.DisableResolveMessage,
+	}
+}
