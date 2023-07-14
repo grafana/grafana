@@ -1,7 +1,7 @@
 import { alertingApi } from './alertingApi';
 
 export interface OnCallIntegration {
-  id: number;
+  id: string;
   connected_escalations_chains_count: number;
   integration: string;
   integration_url: string;

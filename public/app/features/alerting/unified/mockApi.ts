@@ -1,3 +1,4 @@
+import { uniqueId } from 'lodash';
 import { rest } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
 import 'whatwg-fetch';
@@ -15,6 +16,8 @@ import {
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../types';
+
+import { CreateIntegrationDTO, OnCallIntegration } from './api/onCallApi';
 
 class AlertmanagerConfigBuilder {
   private alertmanagerConfig: AlertmanagerConfig = { receivers: [] };
@@ -134,6 +137,38 @@ export function mockApi(server: SetupServer) {
         server.use(
           rest.get(`api/plugins/${response.id}/settings`, (req, res, ctx) =>
             res(ctx.status(200), ctx.json<PluginMeta>(response))
+          )
+        );
+      },
+    },
+
+    oncall: {
+      getOnCallIntegrations: (response: OnCallIntegration[]) => {
+        server.use(
+          rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, (_, res, ctx) =>
+            res(ctx.status(200), ctx.json<OnCallIntegration[]>(response))
+          )
+        );
+      },
+      createIntegraion: () => {
+        server.use(
+          rest.post<CreateIntegrationDTO>(
+            `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`,
+            async (req, res, ctx) => {
+              const body = await req.json<CreateIntegrationDTO>();
+              const integrationId = uniqueId('oncall-integration-');
+
+              return res(
+                ctx.status(200),
+                ctx.json<OnCallIntegration>({
+                  id: integrationId,
+                  integration: body.integration,
+                  integration_url: `https://oncall-endpoint.example.com/${integrationId}`,
+                  verbal_name: body.verbal_name,
+                  connected_escalations_chains_count: 0,
+                })
+              );
+            }
           )
         );
       },
