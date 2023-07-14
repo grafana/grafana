@@ -113,7 +113,7 @@ def rgm_windows():
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
-        environment = {"EDITION": "oss"}
+        environment = {"EDITION": "oss"},
     )
 
 def rgm():

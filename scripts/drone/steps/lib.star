@@ -1261,7 +1261,7 @@ def windows_clone_step():
         ],
     }
 
-def get_windows_steps(ver_mode, bucket="%PRERELEASE_BUCKET%"):
+def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     """Generate the list of Windows steps.
 
     Args:
