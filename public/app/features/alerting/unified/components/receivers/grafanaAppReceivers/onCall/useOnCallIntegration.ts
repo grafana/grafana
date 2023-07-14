@@ -34,21 +34,24 @@ export function useOnCallIntegration() {
     return onCallIntegrations.filter((i) => i.integration === GRAFANA_INTEGRATION_TYPE);
   }, [onCallIntegrations]);
 
-  const onCallFormValidators = useMemo(
-    () => ({
+  const onCallFormValidators = useMemo(() => {
+    return {
       integration_name: (value: string) => {
         return grafanaOnCallIntegrations.map((i) => i.verbal_name).includes(value)
           ? 'Integration of this name already exists in OnCall'
           : true;
       },
       url: (value: string) => {
+        if (!isOnCallEnabled) {
+          return true;
+        }
+
         return grafanaOnCallIntegrations.map((i) => i.integration_url).includes(value)
           ? true
           : 'Selection of existing OnCall integration is required';
       },
-    }),
-    [grafanaOnCallIntegrations]
-  );
+    };
+  }, [grafanaOnCallIntegrations, isOnCallEnabled]);
 
   const extendOnCalReceivers = useCallback(
     (receiver: Receiver): Receiver => {
@@ -103,7 +106,7 @@ export function useOnCallIntegration() {
 
   const extendOnCallNotifierFeatures = useCallback(
     (notifier: NotifierDTO): NotifierDTO => {
-      if (notifier.type === 'oncall') {
+      if (notifier.type === 'oncall' && isOnCallEnabled) {
         const options = notifier.options.filter((o) => o.propertyName !== 'url');
 
         options.unshift(
@@ -144,14 +147,16 @@ export function useOnCallIntegration() {
 
       return notifier;
     },
-    [onCallIntegrations]
+    [onCallIntegrations, isOnCallEnabled]
   );
 
   return {
     onCallNotifierMeta: {
       enabled: !!isOnCallEnabled,
       order: 1,
-      description: 'Connect effortlessly to Grafana OnCall',
+      description: isOnCallEnabled
+        ? 'Connect effortlessly to Grafana OnCall'
+        : 'Enable Grafana OnCall plugin to use this integration',
       iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
     },
     extendOnCallNotifierFeatures,

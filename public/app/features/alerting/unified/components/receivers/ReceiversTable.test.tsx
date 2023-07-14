@@ -16,8 +16,8 @@ import * as receiversApi from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
 import { ReceiversTable } from './ReceiversTable';
-import * as grafanaApp from './grafanaAppReceivers/grafanaApp';
-import type { ReceiverMetadata } from './grafanaAppReceivers/grafanaApp';
+import * as receiversMeta from './grafanaAppReceivers/useReceiversMetadata';
+import { ReceiverMetadata } from './grafanaAppReceivers/useReceiversMetadata';
 
 const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierDTO[]) => {
   const config: AlertManagerCortexConfig = {
@@ -53,7 +53,7 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
-const useReceiversMetadata = jest.spyOn(grafanaApp, 'useReceiversMetadata');
+const useReceiversMetadata = jest.spyOn(receiversMeta, 'useReceiversMetadata');
 const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
 
 setBackendSrv(backendSrv);

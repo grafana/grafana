@@ -25,7 +25,7 @@ import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
 import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
-import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/grafanaApp';
+import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
 import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {

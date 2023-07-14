@@ -3,18 +3,19 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, Icon, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { ReceiverMetadata } from './grafanaApp';
+import { ReceiverMetadata } from './useReceiversMetadata';
 
-export const ReceiverMetadataBadge = ({
-  metadata: { icon, title, externalUrl, warning },
-}: {
+interface Props {
   metadata: ReceiverMetadata;
-}) => {
+}
+
+export const ReceiverMetadataBadge = ({ metadata: { icon, title, externalUrl, warning } }: Props) => {
   const styles = useStyles2(getStyles);
+
   return (
-    <Stack>
+    <Stack alignItems="center" gap={1}>
       <div className={styles.wrapper}>
         <HorizontalGroup align="center" spacing="xs">
           <img src={icon} alt="" height="12px" />
@@ -22,7 +23,11 @@ export const ReceiverMetadataBadge = ({
         </HorizontalGroup>
       </div>
       {externalUrl && <LinkButton icon="external-link-alt" href={externalUrl} variant="secondary" size="sm" />}
-      {warning && <Icon name="exclamation-triangle" title={warning} />}
+      {warning && (
+        <Tooltip content={warning} theme="error">
+          <Icon name="exclamation-triangle" size="lg" className={styles.warnIcon} />
+        </Tooltip>
+      )}
     </Stack>
   );
 };
@@ -37,5 +42,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid rgba(245, 95, 62, 1);
     color: rgba(245, 95, 62, 1);
     font-weight: ${theme.typography.fontWeightRegular};
+  `,
+  warnIcon: css`
+    fill: ${theme.colors.warning.main};
   `,
 });
