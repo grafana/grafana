@@ -346,7 +346,7 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 	}
 
 	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
-		recursiveQueriesAreSupported: false,
+		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 	}
 
 	f.buildClauses()
