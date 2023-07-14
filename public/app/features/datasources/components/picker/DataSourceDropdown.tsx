@@ -163,6 +163,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
+          aria-label="Select a data source"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
