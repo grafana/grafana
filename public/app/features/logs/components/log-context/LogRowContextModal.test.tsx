@@ -476,7 +476,9 @@ describe('LogRowContextModal', () => {
     });
     const unpinButtons = screen.getAllByLabelText('Unpin line')[0];
     fireEvent.click(unpinButtons);
-    const rows = screen.getByTestId('entry-row');
-    expect(rows).not.toHaveStyle('position: sticky');
+    await waitFor(() => {
+      const rows = screen.getByTestId('entry-row');
+      expect(rows).not.toHaveStyle('position: sticky');
+    });
   });
 });
