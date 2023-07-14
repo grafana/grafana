@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -39,7 +39,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 	}
 	sql := db.InitTestDB(t)
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength, features: featuremgmt.WithFeatures()}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -587,7 +587,6 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		UserID: 1,
 		OrgID:  1,
 	}
-	role := setupRBACRole(t, sql, user)
 
 	type testStruct struct {
 		description           string
@@ -648,7 +647,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			setupRBACPermission(t, sql, role, user)
+			actest.AddUserPermissionToDB(t, sql, user)
 
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -686,8 +685,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		OrgID:       orgID,
 		Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)},
 	}
-
-	var role *accesscontrol.Role
 
 	dashboardIDs := make([]int64, 0, folder.MaxNestedFolderDepth+1)
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
@@ -762,7 +759,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			annotationsTexts = append(annotationsTexts, annotationTxt)
 		}
 
-		role = setupRBACRole(t, db, usr)
 		return db
 	}
 
@@ -801,7 +797,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: tc.features}
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			setupRBACPermission(t, db, role, usr)
+			actest.AddUserPermissionToDB(t, db, usr)
 
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -818,64 +814,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			}
 		})
 	}
-}
-
-func setupRBACRole(t *testing.T, db *sqlstore.SQLStore, user *user.SignedInUser) *accesscontrol.Role {
-	t.Helper()
-	var role *accesscontrol.Role
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		role = &accesscontrol.Role{
-			OrgID:   user.OrgID,
-			UID:     "test_role",
-			Name:    "test:role",
-			Updated: time.Now(),
-			Created: time.Now(),
-		}
-		_, err := sess.Insert(role)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Insert(accesscontrol.UserRole{
-			OrgID:   role.OrgID,
-			RoleID:  role.ID,
-			UserID:  user.UserID,
-			Created: time.Now(),
-		})
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
-	require.NoError(t, err)
-	return role
-}
-
-func setupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontrol.Role, user *user.SignedInUser) {
-	t.Helper()
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
-			return err
-		}
-
-		var acPermission []accesscontrol.Permission
-		for action, scopes := range user.Permissions[user.OrgID] {
-			for _, scope := range scopes {
-				acPermission = append(acPermission, accesscontrol.Permission{
-					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
-				})
-			}
-		}
-
-		if _, err := sess.InsertMulti(&acPermission); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	require.NoError(t, err)
 }
 
 func BenchmarkFindTags_10k(b *testing.B) {
