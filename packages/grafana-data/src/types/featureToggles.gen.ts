@@ -115,4 +115,5 @@ export interface FeatureToggles {
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
+  awsAsyncQueryCaching?: boolean;
 }

@@ -648,6 +648,7 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+
 			Name:         "grafanaAPIServer",
 			Description:  "Enable Kubernetes API Server for Grafana resources",
 			Stage:        FeatureStageExperimental,
@@ -661,6 +662,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "awsAsyncQueryCaching",
+			Description:  "Enable caching for async query for Redshift and Athena. Requires useCachingService and the datasource to have caching and async query support enabled",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        awsDatasourcesSquad,
 		},
 	}
 )

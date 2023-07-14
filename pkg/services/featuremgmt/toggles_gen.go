@@ -394,4 +394,8 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagAwsAsyncQueryCaching
+	// Enable caching for async query for Redshift and Athena. Requires useCachingService and the datasource to have caching and async query support enabled
+	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 )

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -75,8 +76,11 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// Cache miss; do the actual queries
 	resp, err := m.next.QueryData(ctx, req)
 
+	// Check if an async query is still running, if it is don't cache it
+	shouldCache := awsds.ShouldCacheQuery(resp)
+
 	// Update the query cache with the result for this metrics request
-	if err == nil && cr.UpdateCacheFn != nil {
+	if shouldCache && err == nil && cr.UpdateCacheFn != nil {
 		cr.UpdateCacheFn(ctx, resp)
 	}
 
