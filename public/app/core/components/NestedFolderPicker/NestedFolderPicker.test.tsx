@@ -86,7 +86,7 @@ describe('NestedFolderPicker', () => {
     expect(screen.queryByRole('button', { name: 'Select folder' })).not.toBeInTheDocument();
 
     // Search input and folder tree are visible
-    expect(screen.getByPlaceholderText('Search folder')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search folders')).toBeInTheDocument();
     expect(screen.getByLabelText('Dashboards')).toBeInTheDocument();
     expect(screen.getByLabelText(folderA.item.title)).toBeInTheDocument();
     expect(screen.getByLabelText(folderB.item.title)).toBeInTheDocument();
