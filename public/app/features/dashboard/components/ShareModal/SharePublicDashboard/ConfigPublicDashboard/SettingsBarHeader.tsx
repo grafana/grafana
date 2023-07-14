@@ -32,7 +32,7 @@ export function SettingsBarHeader({ headerElement, isContentVisible = false, onR
           // this is just to provide a better experience for mouse users
           // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div className={styles.titleWrapper} onClick={onRowToggle}>
-            <div className={styles.title}>{title}</div>
+            <span className={styles.title}>{title}</span>
           </div>
         )}
         {headerElementRendered}

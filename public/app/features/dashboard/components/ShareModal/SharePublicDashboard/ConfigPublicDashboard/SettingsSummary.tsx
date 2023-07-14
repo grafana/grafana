@@ -27,12 +27,12 @@ export function SettingsSummary({
     </div>
   ) : (
     <div className={cx(styles.summaryWrapper, className)}>
-      <div className={styles.summary}>
+      <span className={styles.summary}>
         {'Time range = '}
         <TimeRangeLabel className={styles.timeRange} value={timeRange} />
-      </div>
-      <div className={styles.summary}>{`Time range picker = ${timeSelectionEnabled ? 'enabled' : 'disabled'}`}</div>
-      <div className={styles.summary}>{`Annotations = ${annotationsEnabled ? 'show' : 'hide'}`}</div>
+      </span>
+      <span className={styles.summary}>{`Time range picker = ${timeSelectionEnabled ? 'enabled' : 'disabled'}`}</span>
+      <span className={styles.summary}>{`Annotations = ${annotationsEnabled ? 'show' : 'hide'}`}</span>
     </div>
   );
 }
@@ -45,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
     }),
     summary: css`
-      label: collapsed text;
+      label: collapsedText;
       margin-left: ${theme.spacing.gridSize * 2}px;
       font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text.secondary};
