@@ -21,6 +21,7 @@ interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   styles: LogRowStyles;
+  mouseIsOver: boolean;
 }
 
 interface LogMessageProps {
@@ -73,9 +74,11 @@ export const LogRowMessage = React.memo((props: Props) => {
     onUnpinLine,
     onPinLine,
     pinned,
+    mouseIsOver,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
   return (
     <>
       {
@@ -90,17 +93,20 @@ export const LogRowMessage = React.memo((props: Props) => {
         </div>
       </td>
       <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
-        <LogRowMenuCell
-          logText={restructuredEntry}
-          row={row}
-          showContextToggle={showContextToggle}
-          onOpenContext={onOpenContext}
-          onPermalinkClick={onPermalinkClick}
-          onPinLine={onPinLine}
-          onUnpinLine={onUnpinLine}
-          pinned={pinned}
-          styles={styles}
-        />
+        {shouldShowMenu && (
+          <LogRowMenuCell
+            logText={restructuredEntry}
+            row={row}
+            showContextToggle={showContextToggle}
+            onOpenContext={onOpenContext}
+            onPermalinkClick={onPermalinkClick}
+            onPinLine={onPinLine}
+            onUnpinLine={onUnpinLine}
+            pinned={pinned}
+            styles={styles}
+            mouseIsOver={mouseIsOver}
+          />
+        )}
       </td>
     </>
   );
