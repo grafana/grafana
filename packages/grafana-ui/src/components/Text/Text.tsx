@@ -24,7 +24,7 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'span', variant, weight, color, truncate, italic = false, textAlignment, children }, ref) => {
+  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
         (theme) => getTextStyles(theme, variant, color, weight, truncate, italic, textAlignment),
