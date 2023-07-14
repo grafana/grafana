@@ -61,19 +61,19 @@
       "manage-permissions": "Manage permissions",
       "move": "Move"
     },
+    "folder-picker": {
+      "button-label": "Select folder",
+      "empty-message": "No folders found",
+      "error-title": "Error loading folders",
+      "search-placeholder": "Search folders",
+      "unknown-error": "Unknown error"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
       "panels": "Panels",
       "permissions": "Permissions",
       "settings": "Settings"
-    },
-    "nested-folder-picker": {
-      "button-label": "Select folder",
-      "empty-message": "No folders found",
-      "error-title": "Error loading folders",
-      "search-placeholder": "Search folders",
-      "unknown-error": "Unknown error"
     },
     "new-folder-form": {
       "cancel-label": "Cancel",

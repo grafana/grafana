@@ -173,7 +173,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
           <Skeleton width={100} />
         ) : (
           <Text as="span" truncate>
-            {label ?? <Trans i18nKey="browse-dashboards.nested-folder-picker.button-label">Select folder</Trans>}
+            {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
           </Text>
         )}
       </Button>
@@ -185,7 +185,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       <Input
         ref={setTriggerRef}
         autoFocus
-        placeholder={label ?? t('browse-dashboards.nested-folder-picker.search-placeholder', 'Search folders')}
+        placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         className={styles.search}
         onChange={(e) => setSearch(e.currentTarget.value)}
@@ -205,11 +205,9 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
           <Alert
             className={styles.error}
             severity="warning"
-            title={t('browse-dashboards.nested-folder-picker.error-title', 'Error loading folders')}
+            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
           >
-            {error.message ||
-              error.toString?.() ||
-              t('browse-dashboards.nested-folder-picker.unknown-error', 'Unknown error')}
+            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
           </Alert>
         ) : (
           <div>

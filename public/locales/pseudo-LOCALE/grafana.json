@@ -61,19 +61,19 @@
       "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
       "move": "Mővę"
     },
+    "folder-picker": {
+      "button-label": "Ŝęľęčŧ ƒőľđęř",
+      "empty-message": "Ńő ƒőľđęřş ƒőūŉđ",
+      "error-title": "Ēřřőř ľőäđįŉģ ƒőľđęřş",
+      "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
+      "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
+    },
     "manage-folder-nav": {
       "alert-rules": "Åľęřŧ řūľęş",
       "dashboards": "Đäşĥþőäřđş",
       "panels": "Päŉęľş",
       "permissions": "Pęřmįşşįőŉş",
       "settings": "Ŝęŧŧįŉģş"
-    },
-    "nested-folder-picker": {
-      "button-label": "Ŝęľęčŧ ƒőľđęř",
-      "empty-message": "Ńő ƒőľđęřş ƒőūŉđ",
-      "error-title": "Ēřřőř ľőäđįŉģ ƒőľđęřş",
-      "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
-      "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
     },
     "new-folder-form": {
       "cancel-label": "Cäŉčęľ",

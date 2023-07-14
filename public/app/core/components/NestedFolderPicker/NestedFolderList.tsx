@@ -52,7 +52,7 @@ export function NestedFolderList({
         </List>
       ) : (
         <div className={styles.emptyMessage}>
-          <Trans i18nKey="browse-dashboards.nested-folder-picker.empty-message">No folders found</Trans>
+          <Trans i18nKey="browse-dashboards.folder-picker.empty-message">No folders found</Trans>
         </div>
       )}
     </div>
