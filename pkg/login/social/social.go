@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
@@ -29,6 +30,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	OfflineAccessScope = "offline_access"
 )
 
 type SocialService struct {
@@ -66,6 +71,7 @@ type OAuthInfo struct {
 	RoleAttributeStrict     bool     `toml:"role_attribute_strict"`
 	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
 	UsePKCE                 bool     `toml:"use_pkce"`
+	UseRefreshToken         bool     `toml:"use_refresh_token"`
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -111,6 +117,7 @@ func ProvideService(cfg *setting.Cfg,
 			TlsClientCa:             sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:           sec.Key("tls_skip_verify_insecure").MustBool(),
 			UsePKCE:                 sec.Key("use_pkce").MustBool(),
+			UseRefreshToken:         sec.Key("use_refresh_token").MustBool(false),
 			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
 			AutoLogin:               sec.Key("auto_login").MustBool(false),
 		}
@@ -198,6 +205,9 @@ func ProvideService(cfg *setting.Cfg,
 				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
 				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
+			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+				appendUniqueScope(&config, OfflineAccessScope)
+			}
 		}
 
 		// Okta
@@ -207,6 +217,9 @@ func ProvideService(cfg *setting.Cfg,
 				apiUrl:          info.ApiUrl,
 				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
 				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
+			}
+			if info.UseRefreshToken && features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+				appendUniqueScope(&config, OfflineAccessScope)
 			}
 		}
 
@@ -271,6 +284,7 @@ func (b *BasicUserInfo) String() string {
 		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups)
 }
 
+//go:generate mockery --name SocialConnector --structname MockSocialConnector --outpkg socialtest --filename social_connector_mock.go --output ../socialtest/
 type SocialConnector interface {
 	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
@@ -295,6 +309,7 @@ type SocialBase struct {
 	autoAssignOrgRole   string
 	skipOrgRoleSync     bool
 	features            featuremgmt.FeatureManager
+	useRefreshToken     bool
 }
 
 type Error struct {
@@ -344,6 +359,7 @@ func newSocialBase(name string,
 		roleAttributeStrict:     info.RoleAttributeStrict,
 		skipOrgRoleSync:         skipOrgRoleSync,
 		features:                features,
+		useRefreshToken:         info.UseRefreshToken,
 	}
 }
 
@@ -591,4 +607,10 @@ func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
 	}
 
 	return rawJSON, nil
+}
+
+func appendUniqueScope(config *oauth2.Config, scope string) {
+	if !slices.Contains(config.Scopes, OfflineAccessScope) {
+		config.Scopes = append(config.Scopes, OfflineAccessScope)
+	}
 }
