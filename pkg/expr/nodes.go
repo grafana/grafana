@@ -20,6 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+// label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
+const nameLabelName = "__name__"
+
 var (
 	logger = log.New("expr")
 )
@@ -504,4 +507,72 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 	}
 
 	return series, nil
+}
+
+// checkIfSeriesNeedToBeFixed scans all value fields of all provided frames and determines whether the resulting mathexp.Series
+// needs to be updated so each series could be identifiable by labels.
+// NOTE: applicable only to only datasources.DS_GRAPHITE and datasources.DS_TESTDATA data sources
+// returns a function that patches the mathexp.Series with information from data.Field from which it was created if the all series need to be fixed. Otherwise, returns nil
+func checkIfSeriesNeedToBeFixed(frames []*data.Frame, datasourceType string) func(series mathexp.Series, valueField *data.Field) {
+	if !(datasourceType == datasources.DS_GRAPHITE || datasourceType == datasources.DS_TESTDATA) {
+		return nil
+	}
+
+	// get all value fields
+	var valueFields []*data.Field
+	for _, frame := range frames {
+		tsSchema := frame.TimeSeriesSchema()
+		for _, index := range tsSchema.ValueIndices {
+			field := frame.Fields[index]
+			// if at least one value field contains labels, the result does not need to be fixed.
+			if len(field.Labels) > 0 {
+				return nil
+			}
+			if valueFields == nil {
+				valueFields = make([]*data.Field, 0, len(frames)*len(tsSchema.ValueIndices))
+			}
+			valueFields = append(valueFields, field)
+		}
+	}
+
+	// selectors are in precedence order.
+	nameSelectors := []func(f *data.Field) string{
+		func(f *data.Field) string {
+			if f == nil || f.Config == nil {
+				return ""
+			}
+			return f.Config.DisplayNameFromDS
+		},
+		func(f *data.Field) string {
+			if f == nil || f.Config == nil {
+				return ""
+			}
+			return f.Config.DisplayName
+		},
+		func(f *data.Field) string {
+			return f.Name
+		},
+	}
+
+	// now look for the first selector that would make all value fields be unique
+	for _, selector := range nameSelectors {
+		names := make(map[string]struct{}, len(valueFields))
+		good := true
+		for _, field := range valueFields {
+			name := selector(field)
+			if _, ok := names[name]; ok || name == "" {
+				good = false
+				break
+			}
+			names[name] = struct{}{}
+		}
+		if good {
+			return func(series mathexp.Series, valueField *data.Field) {
+				series.SetLabels(data.Labels{
+					nameLabelName: selector(valueField),
+				})
+			}
+		}
+	}
+	return nil
 }
