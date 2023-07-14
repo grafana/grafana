@@ -134,15 +134,20 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           render={({ field: { onChange, ref, ...field } }) => (
             <Select
               disabled={readOnly}
-              {...field}
-              defaultValue={option.defaultValue}
               options={option.selectOptions ?? undefined}
               invalid={invalid}
               onChange={(value) => onChange(value.value)}
+              {...field}
             />
           )}
           control={control}
           name={name}
+          defaultValue={option.defaultValue}
+          rules={{
+            validate: {
+              customValidator: (v) => (customValidator ? customValidator(v) : true),
+            },
+          }}
         />
       );
     case 'radio':
@@ -153,6 +158,13 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           )}
           control={control}
           name={name}
+          rules={{
+            required: option.required ? 'Option is required' : false,
+            validate: {
+              validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
+              customValidator: (v) => (customValidator ? customValidator(v) : true),
+            },
+          }}
         />
       );
     case 'textarea':

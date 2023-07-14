@@ -3,11 +3,15 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { HorizontalGroup, Icon, LinkButton, useStyles2 } from '@grafana/ui';
 
 import { ReceiverMetadata } from './grafanaApp';
 
-export const ReceiverMetadataBadge = ({ metadata: { icon, title, externalUrl } }: { metadata: ReceiverMetadata }) => {
+export const ReceiverMetadataBadge = ({
+  metadata: { icon, title, externalUrl, warning },
+}: {
+  metadata: ReceiverMetadata;
+}) => {
   const styles = useStyles2(getStyles);
   return (
     <Stack>
@@ -18,6 +22,7 @@ export const ReceiverMetadataBadge = ({ metadata: { icon, title, externalUrl } }
         </HorizontalGroup>
       </div>
       {externalUrl && <LinkButton icon="external-link-alt" href={externalUrl} variant="secondary" size="sm" />}
+      {warning && <Icon name="exclamation-triangle" title={warning} />}
     </Stack>
   );
 };

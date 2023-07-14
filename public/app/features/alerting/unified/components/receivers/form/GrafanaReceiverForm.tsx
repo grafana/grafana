@@ -46,10 +46,11 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   const dispatch = useDispatch();
 
   const {
-    onCallNotifier,
+    onCallNotifierMeta,
+    extendOnCallNotifierFeatures,
+    extendOnCalReceivers,
     onCallFormValidators,
-    mapWebhookReceiversToOnCalls,
-    mapOnCallReceiversToWebhooks,
+    createOnCallIntegrations,
     isLoadingOnCallIntegration,
     hasOnCallError,
   } = useOnCallIntegration();
@@ -68,13 +69,12 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
       return [undefined, {}];
     }
 
-    const existingWithOnCall = mapWebhookReceiversToOnCalls(existing);
-    return grafanaReceiverToFormValues(existingWithOnCall, grafanaNotifiers);
-  }, [existing, isLoadingNotifiers, grafanaNotifiers, isLoadingOnCallIntegration, mapWebhookReceiversToOnCalls]);
+    return grafanaReceiverToFormValues(extendOnCalReceivers(existing), grafanaNotifiers);
+  }, [existing, isLoadingNotifiers, grafanaNotifiers, extendOnCalReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
-    const receiverWithOnCall = await mapOnCallReceiversToWebhooks(newReceiver);
+    const receiverWithOnCall = await createOnCallIntegrations(newReceiver);
 
     const newConfig = updateConfigWithReceiver(config, receiverWithOnCall, existing?.name);
     dispatch(
@@ -133,7 +133,16 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
-  const notifiers: Notifier[] = [...grafanaNotifiers.map((n) => ({ dto: n })), onCallNotifier];
+  const notifiers: Notifier[] = grafanaNotifiers.map((n) => {
+    if (n.type === 'oncall') {
+      return {
+        dto: extendOnCallNotifierFeatures(n),
+        meta: onCallNotifierMeta,
+      };
+    }
+
+    return { dto: n };
+  });
 
   return (
     <>

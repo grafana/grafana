@@ -7,7 +7,7 @@ import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { createBridgeURL } from '../../PluginBridge';
 
-import { isOnCallReceiver } from './onCall/onCall';
+import { isOnCallReceiver, ReceiverTypes } from './onCall/onCall';
 import { AmRouteReceiver, GRAFANA_APP_RECEIVERS_SOURCE_IMAGE, ReceiverWithTypes } from './types';
 
 export const useGetGrafanaReceiverTypeChecker = () => {
@@ -38,6 +38,7 @@ export interface ReceiverMetadata {
   icon: string;
   title: string;
   externalUrl?: string;
+  warning?: string;
 }
 
 export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, ReceiverMetadata> => {
@@ -54,18 +55,20 @@ export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, Recei
     const result = new Map<Receiver, ReceiverMetadata>();
 
     receivers.forEach((receiver) => {
-      const onCallIntegration = onCallIntegrations.find((i) => {
-        return (
-          receiver.grafana_managed_receiver_configs &&
-          i.integration_url === receiver.grafana_managed_receiver_configs[0]?.settings?.url
-        );
-      });
+      const onCallReceiver = receiver.grafana_managed_receiver_configs?.find((c) => c.type === ReceiverTypes.OnCall);
 
-      if (onCallIntegration) {
+      if (onCallReceiver) {
+        const matchingOnCallIntegration = onCallIntegrations.find(
+          (i) => i.integration_url === onCallReceiver.settings.url
+        );
+
         result.set(receiver, {
           icon: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
           title: 'Grafana OnCall',
-          externalUrl: createBridgeURL(SupportedPlugin.OnCall, `/integrations/${onCallIntegration.id}`),
+          externalUrl: matchingOnCallIntegration
+            ? createBridgeURL(SupportedPlugin.OnCall, `/integrations/${matchingOnCallIntegration.id}`)
+            : undefined,
+          warning: matchingOnCallIntegration ? undefined : 'OnCall Integration no longer exists',
         });
       }
     });

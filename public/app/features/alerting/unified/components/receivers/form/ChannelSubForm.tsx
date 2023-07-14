@@ -70,7 +70,7 @@ export function ChannelSubForm<R extends ChannelValues>({
       }
       // Restore initial value of an existing oncall integration
       if (initialValues && name === fieldName('settings.integration_type') && value === 'existing_oncall_integration') {
-        setValue(fieldName('settings.oncall_url'), initialValues.settings['oncall_url']);
+        setValue(fieldName('settings.url'), initialValues.settings['url']);
       }
     });
 

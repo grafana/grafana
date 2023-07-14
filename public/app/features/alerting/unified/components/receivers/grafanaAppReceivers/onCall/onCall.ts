@@ -1,5 +1,9 @@
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
+export enum ReceiverTypes {
+  OnCall = 'oncall',
+}
+
 export const isInOnCallIntegrations = (url: string, integrationsUrls: string[]) => {
   return integrationsUrls.includes(url);
 };
