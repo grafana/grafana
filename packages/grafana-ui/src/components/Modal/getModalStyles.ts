@@ -43,7 +43,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       min-height: 42px;
-      margin: ${theme.spacing(2, 2, 0, 2)};
+      margin: ${theme.spacing(1, 2, 0, 2)};
     `,
     modalHeaderWithTabs: css`
       border-bottom: 1px solid ${theme.colors.border.weak};
@@ -73,7 +73,7 @@ export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     modalContent: css`
       overflow: auto;
-      padding: ${theme.spacing(3, 2, 2, 2)};
+      padding: ${theme.spacing(3)};
       width: 100%;
     `,
     modalButtonRow: css`

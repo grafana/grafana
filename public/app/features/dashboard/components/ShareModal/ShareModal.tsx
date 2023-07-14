@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
@@ -122,12 +123,19 @@ export class ShareModal extends React.Component<Props, State> {
   }
 
   render() {
+    const styles = getStyles();
     const { dashboard, panel } = this.props;
     const activeTabModel = this.getActiveTab();
     const ActiveTab = activeTabModel.component;
 
     return (
-      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
+      <Modal
+        isOpen={true}
+        title={this.renderTitle()}
+        onDismiss={this.props.onDismiss}
+        className={styles.container}
+        contentClassName={styles.content}
+      >
         <TabContent>
           <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>
@@ -135,3 +143,14 @@ export class ShareModal extends React.Component<Props, State> {
     );
   }
 }
+
+const getStyles = () => {
+  return {
+    container: css({
+      paddingTop: '8px',
+    }),
+    content: css({
+      padding: '24px 16px 16px 16px',
+    }),
+  };
+};
