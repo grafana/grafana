@@ -101,6 +101,7 @@ Alert.displayName = 'Alert';
 export const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
     case 'error':
+      return 'exclamation-circle';
     case 'warning':
       return 'exclamation-triangle';
     case 'info':
