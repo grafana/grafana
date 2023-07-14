@@ -433,7 +433,7 @@
     "@types/slate": "0.47.11",
     "@rushstack/rig-package": "0.4.0",
     "@rushstack/ts-command-line": "4.15.1",
-    "ngtemplate-loader/loader-utils": "^2.0.0",
+    "ngtemplate-loader/loader-utils": "^3.0.0",
     "trim": "1.0.1",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
     "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
