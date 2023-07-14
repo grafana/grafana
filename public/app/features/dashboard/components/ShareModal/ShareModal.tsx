@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -64,7 +65,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
   };
 }
 
-interface Props {
+interface Props extends Themeable2 {
   dashboard: DashboardModel;
   panel?: PanelModel;
   activeTab?: string;
@@ -86,7 +87,7 @@ function getInitialState(props: Props): State {
   };
 }
 
-export class ShareModal extends React.Component<Props, State> {
+class UnthemedShareModal extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = getInitialState(props);
@@ -123,8 +124,8 @@ export class ShareModal extends React.Component<Props, State> {
   }
 
   render() {
-    const styles = getStyles();
-    const { dashboard, panel } = this.props;
+    const { dashboard, panel, theme } = this.props;
+    const styles = getStyles(theme);
     const activeTabModel = this.getActiveTab();
     const ActiveTab = activeTabModel.component;
 
@@ -144,13 +145,15 @@ export class ShareModal extends React.Component<Props, State> {
   }
 }
 
-const getStyles = () => {
+export const ShareModal = withTheme2(UnthemedShareModal);
+
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
-      paddingTop: '8px',
+      paddingTop: theme.spacing(1),
     }),
     content: css({
-      padding: '24px 16px 16px 16px',
+      padding: theme.spacing(3, 2, 2, 2),
     }),
   };
 };
