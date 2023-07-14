@@ -29,7 +29,7 @@ func NewAnnotationStore(svc AnnotationService, dashboards dashboards.DashboardSe
 	}
 }
 
-func (s *AnnotationServiceStore) Save(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
+func (s *AnnotationServiceStore) Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
 	if panel != nil {
 		dashID, err := s.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {

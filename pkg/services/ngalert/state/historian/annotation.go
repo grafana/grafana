@@ -40,7 +40,7 @@ type RuleStore interface {
 
 type AnnotationStore interface {
 	Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
-	Save(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
+	Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
 }
 
 func NewAnnotationBackend(annotations AnnotationStore, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
