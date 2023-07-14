@@ -66,6 +66,9 @@ func ProvideService(
 	cacheEnabled := sec.Key("cache_enabled").MustBool(false)
 	cacheExpiration := sec.Key("cache_expiration").MustInt64()
 	concurrencyFactor := sec.Key("concurrency_factor").MustInt(1)
+	if concurrencyFactor < 1 {
+		concurrencyFactor = 1
+	}
 
 	srv := &Service{
 		cfg:                  cfg,

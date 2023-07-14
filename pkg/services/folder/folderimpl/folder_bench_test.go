@@ -3,7 +3,6 @@ package folderimpl
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -57,9 +56,6 @@ func setupGetChildren(b testing.TB, folderNum int, parentUID string, overrideCon
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
-	require.NoError(b, err)
-	s, err := db.Cfg.Raw.NewSection("folder")
-	s.NewKey("concurrency_factor", strconv.Itoa(overrideConcurrencyFactor))
 	require.NoError(b, err)
 	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
 

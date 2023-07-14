@@ -7,6 +7,8 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
+	"strconv"
 	"testing"
 	"time"
 
@@ -69,6 +71,9 @@ type benchScenario struct {
 	signedInUser *user.SignedInUser
 	teamSvc      team.Service
 	userSvc      user.Service
+
+	cacheEnabled      bool
+	concurrencyFactor int64
 }
 
 func BenchmarkFolderListAndSearch(b *testing.B) {
@@ -90,10 +95,12 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 	}
 
 	benchmarks := []struct {
-		desc        string
-		url         string
-		expectedLen int
-		features    *featuremgmt.FeatureManager
+		desc              string
+		url               string
+		expectedLen       int
+		cacheEnabled      bool
+		concurrencyFactor int64
+		features          *featuremgmt.FeatureManager
 	}{
 		{
 			desc:        "get root folders with nested folders feature enabled",
@@ -102,10 +109,26 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
+			desc:              "get root folders with nested folders feature and caching enabled",
+			url:               "/api/folders",
+			expectedLen:       LEVEL0_FOLDER_NUM,
+			features:          featuremgmt.WithFeatures("nestedFolders"),
+			cacheEnabled:      true,
+			concurrencyFactor: int64(runtime.NumCPU()),
+		},
+		{
 			desc:        "get subfolders with nested folders feature enabled",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
 			features:    featuremgmt.WithFeatures("nestedFolders"),
+		},
+		{
+			desc:              "get subfolders with nested folders feature and caching enabled",
+			url:               "/api/folders?parentUid=folder0",
+			expectedLen:       LEVEL1_FOLDER_NUM,
+			features:          featuremgmt.WithFeatures("nestedFolders"),
+			cacheEnabled:      true,
+			concurrencyFactor: int64(runtime.NumCPU()),
 		},
 		{
 			desc:        "list all inherited dashboards with nested folders feature enabled",
@@ -130,6 +153,14 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:              "get root folders with nested folders feature disabled and caching enabled",
+			url:               "/api/folders?limit=5000",
+			expectedLen:       withLimit(LEVEL0_FOLDER_NUM),
+			features:          featuremgmt.WithFeatures(),
+			cacheEnabled:      true,
+			concurrencyFactor: int64(runtime.NumCPU()),
 		},
 		{
 			desc:        "list all dashboards with nested folders feature disabled",
@@ -420,6 +451,13 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	require.NoError(b, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
+
+	s, err := sc.cfg.Raw.NewSection("folder")
+	require.NoError(b, err)
+	_, err = s.NewKey("cache_enabled", strconv.FormatBool(sc.cacheEnabled))
+	require.NoError(b, err)
+	_, err = s.NewKey("concurrency_factor", strconv.FormatInt(sc.concurrencyFactor, 10))
+	require.NoError(b, err)
 
 	ac := acimpl.ProvideAccessControl(sc.cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, localcache.ProvideService())

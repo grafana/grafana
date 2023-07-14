@@ -28,6 +28,9 @@ var _ store = (*sqlStore)(nil)
 func ProvideStore(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *sqlStore {
 	sec := cfg.Raw.Section("folder")
 	concurrencyFactor := sec.Key("concurrency_factor").MustInt(1)
+	if concurrencyFactor < 1 {
+		concurrencyFactor = 1
+	}
 	return &sqlStore{db: db, log: log.New("folder-store"), cfg: cfg, fm: features, concurrencyFactor: concurrencyFactor}
 }
 
