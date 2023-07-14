@@ -10163,13 +10163,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/long@npm:^4.0.1":
-  version: 4.0.2
-  resolution: "@types/long@npm:4.0.2"
-  checksum: d16cde7240d834cf44ba1eaec49e78ae3180e724cd667052b194a372f350d024cba8dd3f37b0864931683dab09ca935d52f0c4c1687178af5ada9fc85b0635f4
-  languageName: node
-  linkType: hard
-
 "@types/marked@npm:4.0.8, @types/marked@npm:^4":
   version: 4.0.8
   resolution: "@types/marked@npm:4.0.8"
@@ -13682,13 +13675,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:3.1.0":
-  version: 3.1.0
-  resolution: "centrifuge@npm:3.1.0"
+"centrifuge@npm:4.0.1":
+  version: 4.0.1
+  resolution: "centrifuge@npm:4.0.1"
   dependencies:
     events: ^3.3.0
-    protobufjs: ^6.11.3
-  checksum: 24bcf02ad896f66929b4c8f44632da708b6888c03bf09ed756940fda181e46197c28673b74680da33005ec3770725bd7f286c689bdf373cc25d1f10db4fb9fc5
+    protobufjs: ^7.2.4
+  checksum: 5cfa25d2688089e5c70e2a894b0f133cfc852828ff84d44a08a0ff2d60c2dceaea50f4ee5b1ffb37b1bab61ef28a25e6d803c63d03fd93566f1466e02b15262f
   languageName: node
   linkType: hard
 
@@ -19356,7 +19349,7 @@ __metadata:
     brace: 0.11.1
     browserslist: ^4.21.4
     calculate-size: 1.1.1
-    centrifuge: 3.1.0
+    centrifuge: 4.0.1
     chance: ^1.0.10
     classnames: 2.3.2
     codeowners: ^5.1.1
@@ -23131,10 +23124,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"long@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "long@npm:4.0.0"
-  checksum: 16afbe8f749c7c849db1f4de4e2e6a31ac6e617cead3bdc4f9605cb703cd20e1e9fc1a7baba674ffcca57d660a6e5b53a9e236d7b25a295d3855cca79cc06744
+"long@npm:^5.0.0":
+  version: 5.2.3
+  resolution: "long@npm:5.2.3"
+  checksum: 885ede7c3de4facccbd2cacc6168bae3a02c3e836159ea4252c87b6e34d40af819824b2d4edce330bfb5c4d6e8ce3ec5864bdcf9473fa1f53a4f8225860e5897
   languageName: node
   linkType: hard
 
@@ -26534,9 +26527,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^6.11.3":
-  version: 6.11.3
-  resolution: "protobufjs@npm:6.11.3"
+"protobufjs@npm:^7.2.4":
+  version: 7.2.4
+  resolution: "protobufjs@npm:7.2.4"
   dependencies:
     "@protobufjs/aspromise": ^1.1.2
     "@protobufjs/base64": ^1.1.2
@@ -26548,13 +26541,9 @@ __metadata:
     "@protobufjs/path": ^1.1.2
     "@protobufjs/pool": ^1.1.0
     "@protobufjs/utf8": ^1.1.0
-    "@types/long": ^4.0.1
     "@types/node": ">=13.7.0"
-    long: ^4.0.0
-  bin:
-    pbjs: bin/pbjs
-    pbts: bin/pbts
-  checksum: 4a6ce1964167e4c45c53fd8a312d7646415c777dd31b4ba346719947b88e61654912326101f927da387d6b6473ab52a7ea4f54d6f15d63b31130ce28e2e15070
+    long: ^5.0.0
+  checksum: a952cdf2a5e5250c16ae651b570849b6f5b20a5475c3eef63ffb290ad239aa2916adfc1cc676f7fc93c69f48113df268761c0c246f7f023118c85bdd1a170044
   languageName: node
   linkType: hard
 
