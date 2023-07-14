@@ -16,9 +16,9 @@ export function SettingsBar({ children, title, headerElement }: Props) {
   const styles = useStyles2(getStyles);
   const [isContentVisible, setIsContentVisible] = useState(false);
 
-  const onRowToggle = useCallback(() => {
-    setIsContentVisible(!isContentVisible);
-  }, [isContentVisible, setIsContentVisible]);
+ const onRowToggle = () => {
+    setIsContentVisible((prevState) => !prevState);
+  };
 
   return (
     <>
