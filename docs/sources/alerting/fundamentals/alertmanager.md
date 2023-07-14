@@ -45,4 +45,9 @@ If you are provisioning your data source, set the flag `handleGrafanaManagedAler
 
 [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
-[Add an external Alertmanager]({{< relref "../set-up/configure-alertmanager" >}})
+[Add an external Alertmanager][configure-alertmanager]
+
+{{% docs/reference %}}
+[configure-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/configure-alertmanager"
+[configure-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
+{{% /docs/reference %}}

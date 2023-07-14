@@ -32,8 +32,8 @@ func (c *Grafana) String() string {
 
 func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
 	identity := &authn.Identity{
-		AuthModule: login.AuthProxyAuthModule,
-		AuthID:     username,
+		AuthenticatedBy: login.AuthProxyAuthModule,
+		AuthID:          username,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
@@ -109,7 +109,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 		return nil, err
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}, login.PasswordAuthModule), nil
 }
 
 func comparePassword(password, salt, hash string) bool {

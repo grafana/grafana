@@ -83,6 +83,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-weight: ${theme.typography.fontWeightMedium};
     margin-right: ${theme.spacing(1)};
     font-size: ${theme.typography.size.md};
+    display: flex;
+    flex: 0 0 100%;
   `,
   icon: css`
     label: collapse__icon;
