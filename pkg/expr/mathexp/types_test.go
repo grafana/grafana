@@ -66,7 +66,7 @@ func TestSeriesSort(t *testing.T) {
 	}
 }
 
-func TestSeriesFromFrame(t *testing.T) {
+func TestSeriesFromFrameFields(t *testing.T) {
 	var tests = []struct {
 		name   string
 		frame  *data.Frame
@@ -75,7 +75,7 @@ func TestSeriesFromFrame(t *testing.T) {
 		Series Series
 	}{
 		{
-			name: "[]time, []float frame should convert",
+			name: "[]float, []time frame should convert",
 			frame: &data.Frame{
 				Fields: []*data.Field{
 					data.NewField("time", nil, []time.Time{}),
@@ -94,30 +94,11 @@ func TestSeriesFromFrame(t *testing.T) {
 			},
 		},
 		{
-			name: "[]time, []*float frame should convert",
-			frame: &data.Frame{
-				Fields: []*data.Field{
-					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-					data.NewField("value", nil, []*float64{float64Pointer(5)}),
-				},
-			},
-			errIs: assert.NoError,
-			Is:    assert.Equal,
-			Series: Series{
-				Frame: &data.Frame{
-					Fields: []*data.Field{
-						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
-						data.NewField("value", nil, []*float64{float64Pointer(5)}),
-					},
-				},
-			},
-		},
-		{
 			name: "[]*float, []time frame should convert",
 			frame: &data.Frame{
 				Fields: []*data.Field{
-					data.NewField("value", nil, []*float64{float64Pointer(5)}),
 					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
+					data.NewField("value", nil, []*float64{float64Pointer(5)}),
 				},
 			},
 			errIs: assert.NoError,
@@ -249,11 +230,20 @@ func TestSeriesFromFrame(t *testing.T) {
 			name: "[]*time, []*time frame should error",
 			frame: &data.Frame{
 				Fields: []*data.Field{
-					data.NewField("time", nil, []*time.Time{}),
-					data.NewField("time", nil, []*time.Time{}),
+					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
+					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 				},
 			},
-			errIs: assert.Error,
+			errIs: assert.NoError,
+			Is:    assert.Equal,
+			Series: Series{
+				Frame: &data.Frame{
+					Fields: []*data.Field{
+						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
+						data.NewField("time", nil, []*float64{float64Pointer(5000)}),
+					},
+				},
+			},
 		},
 		{
 			name: "[]*float64, []float64 frame should error",
@@ -277,7 +267,7 @@ func TestSeriesFromFrame(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := SeriesFromFrame(tt.frame)
+			s, err := SeriesFromFrameFields(tt.frame, 0, 1)
 			tt.errIs(t, err)
 			if err == nil {
 				tt.Is(t, s, tt.Series)
@@ -317,7 +307,7 @@ func TestSeriesName(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			s, err := SeriesFromFrame(test.frame)
+			s, err := SeriesFromFrameFields(test.frame, 0, 1)
 			require.NoError(t, err)
 			require.Equal(t, test.expectedSeriesName, s.GetName())
 		})

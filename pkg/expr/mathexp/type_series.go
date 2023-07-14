@@ -1,6 +1,7 @@
 package mathexp
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -22,70 +23,24 @@ type Series struct {
 	Frame *data.Frame
 }
 
-// SeriesFromFrame validates that the dataframe can be considered a Series type
-// and mutates the frame to be in the format that additional SSE operations expect.
-func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
-	if len(frame.Fields) != 2 {
-		return s, fmt.Errorf("frame must have exactly two fields to be a series, has %v", len(frame.Fields))
+// SeriesFromFrameFields creates a series from the frame fields: one time field and one value field. If value field is not a float64, it tries to convert values to float64.
+// Returns Series created from time and value fields or error if the value field is not a number of indices point to fields of wrong type.
+func SeriesFromFrameFields(frame *data.Frame, timeIdx, valueIdx int) (s Series, e error) {
+	if len(frame.Fields) <= timeIdx {
+		return s, errors.New("cannot find time field")
+	}
+	if len(frame.Fields) <= valueIdx {
+		return s, errors.New("cannot find value field")
 	}
 
-	valueIdx := -1
-	timeIdx := -1
-
-	timeNullable := false
-	valueNullable := false
-
-FIELDS:
-	for i, field := range frame.Fields {
-		switch field.Type() {
-		case data.FieldTypeTime:
-			timeIdx = i
-		case data.FieldTypeNullableTime:
-			timeNullable = true
-			timeIdx = i
-		case data.FieldTypeFloat64:
-			valueIdx = i
-		case data.FieldTypeNullableFloat64:
-			valueNullable = true
-			valueIdx = i
-		default:
-			// Handle default case
-			// try to convert to *float64
-			var convertedField *data.Field
-			for j := 0; j < field.Len(); j++ {
-				ff, err := field.NullableFloatAt(j)
-				if err != nil {
-					break
-				}
-				if convertedField == nil { // initialise field
-					convertedField = data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, field.Len())
-					convertedField.Name = field.Name
-					convertedField.Labels = field.Labels
-				}
-				convertedField.Set(j, ff)
-			}
-			if convertedField != nil {
-				frame.Fields[i] = convertedField
-				valueNullable = true
-				valueIdx = i
-			}
-			if valueIdx != -1 && timeIdx != -1 {
-				break FIELDS
-			}
-		}
-	}
-
-	if timeIdx == -1 {
-		return s, fmt.Errorf("no time column found in frame %v", frame.Name)
-	}
-	if valueIdx == -1 {
-		return s, fmt.Errorf("no float64 value column found in frame %v", frame.Name)
-	}
-
-	if timeNullable { // make time not nullable if it is in the input
-		timeSlice := make([]time.Time, 0, frame.Fields[timeIdx].Len())
-		for rowIdx := 0; rowIdx < frame.Fields[timeIdx].Len(); rowIdx++ {
-			val, ok := frame.At(timeIdx, rowIdx).(*time.Time)
+	timeField := frame.Fields[timeIdx]
+	switch timeField.Type() {
+	case data.FieldTypeTime:
+		// do nothing here
+	case data.FieldTypeNullableTime:
+		timeSlice := make([]time.Time, 0, timeField.Len())
+		for rowIdx := 0; rowIdx < timeField.Len(); rowIdx++ {
+			val, ok := timeField.At(rowIdx).(*time.Time)
 			if !ok {
 				return s, fmt.Errorf("unexpected time type, expected *time.Time but got %T", val)
 			}
@@ -94,31 +49,39 @@ FIELDS:
 			}
 			timeSlice = append(timeSlice, *val)
 		}
-		nF := data.NewField(frame.Fields[timeIdx].Name, nil, timeSlice) // (labels are not used on time field)
-		nF.Config = frame.Fields[timeIdx].Config
-		frame.Fields[timeIdx] = nF
+		nF := data.NewField(timeField.Name, nil, timeSlice) // (labels are not used on time field)
+		nF.Config = timeField.Config
+		timeField = nF
+	default:
+		return s, fmt.Errorf("invalid type %s for time field", timeField.Type())
 	}
 
-	if !valueNullable { // make value nullable if it is not in the input
-		floatSlice := make([]*float64, 0, frame.Fields[valueIdx].Len())
-		for rowIdx := 0; rowIdx < frame.Fields[valueIdx].Len(); rowIdx++ {
-			val, ok := frame.At(valueIdx, rowIdx).(float64)
-			if !ok {
-				return s, fmt.Errorf("unexpected time type, expected float64 but got %T", val)
+	valueField := frame.Fields[valueIdx]
+	// if value field is not *float64, try to convert to it
+	if valueField.Type() != data.FieldTypeNullableFloat64 {
+		floatSlice := make([]*float64, 0, valueField.Len())
+		for rowIdx := 0; rowIdx < valueField.Len(); rowIdx++ {
+			val, err := valueField.NullableFloatAt(rowIdx)
+			if err != nil {
+				return s, fmt.Errorf("unexpected value type, expected float64 but got %T", valueField.Type().String())
 			}
-			floatSlice = append(floatSlice, &val)
+			floatSlice = append(floatSlice, val)
 		}
-		nF := data.NewField(frame.Fields[valueIdx].Name, frame.Fields[valueIdx].Labels, floatSlice)
-		nF.Config = frame.Fields[valueIdx].Config
-		frame.Fields[valueIdx] = nF
+		nF := data.NewField(valueField.Name, valueField.Labels, floatSlice)
+		nF.Config = valueField.Config
+		valueField = nF
 	}
 
 	fields := make([]*data.Field, 2)
-	fields[seriesTypeTimeIdx] = frame.Fields[timeIdx]
-	fields[seriesTypeValIdx] = frame.Fields[valueIdx]
+	fields[seriesTypeTimeIdx] = timeField
+	fields[seriesTypeValIdx] = valueField
 
-	frame.Fields = fields
-	s.Frame = frame
+	s.Frame = data.NewFrame(frame.Name, fields...)
+	s.Frame.RefID = frame.RefID
+	s.Frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
 
 	// We use the frame name as series name if the frame name is set
 	if s.Frame.Name != "" {
