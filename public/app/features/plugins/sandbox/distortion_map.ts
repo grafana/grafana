@@ -1,8 +1,11 @@
 import { cloneDeep, isFunction } from 'lodash';
 
+import { PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
+import { SandboxEnvironment } from './types';
 import { logWarning } from './utils';
 
 /**
@@ -56,7 +59,10 @@ import { logWarning } from './utils';
  * The code in this file defines that generalDistortionMap.
  */
 
-type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown, pluginId: string) => unknown>;
+type DistortionMap = Map<
+  unknown,
+  (originalAttrOrMethod: unknown, pluginMeta: PluginMeta, sandboxEnv?: SandboxEnvironment) => unknown
+>;
 const generalDistortionMap: DistortionMap = new Map();
 
 const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
@@ -77,9 +83,9 @@ export function getGeneralSandboxDistortionMap() {
   return generalDistortionMap;
 }
 
-function failToSet(originalAttrOrMethod: unknown, pluginId: string) {
-  logWarning(`Plugin ${pluginId} tried to set a sandboxed property`, {
-    pluginId,
+function failToSet(originalAttrOrMethod: unknown, meta: PluginMeta) {
+  logWarning(`Plugin ${meta.id} tried to set a sandboxed property`, {
+    pluginId: meta.id,
     attrOrMethod: String(originalAttrOrMethod),
     entity: 'window',
   });
@@ -98,7 +104,8 @@ function distortIframeAttributes(distortions: DistortionMap) {
   for (const property of iframeHtmlForbiddenProperties) {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, property);
     if (descriptor) {
-      function fail(originalAttrOrMethod: unknown, pluginId: string) {
+      function fail(originalAttrOrMethod: unknown, meta: PluginMeta) {
+        const pluginId = meta.id;
         logWarning(`Plugin ${pluginId} tried to access iframe.${property}`, {
           pluginId,
           attrOrMethod: property,
@@ -131,7 +138,8 @@ function distortIframeAttributes(distortions: DistortionMap) {
 function distortConsole(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(window, 'console');
   if (descriptor?.value) {
-    function getSandboxConsole(originalAttrOrMethod: unknown, pluginId: string) {
+    function getSandboxConsole(originalAttrOrMethod: unknown, meta: PluginMeta) {
+      const pluginId = meta.id;
       // we don't monitor the console because we expect a high volume of calls
       if (monitorOnly) {
         return originalAttrOrMethod;
@@ -159,7 +167,8 @@ function distortConsole(distortions: DistortionMap) {
 
 // set distortions to alert to always output to the console
 function distortAlert(distortions: DistortionMap) {
-  function getAlertDistortion(originalAttrOrMethod: unknown, pluginId: string) {
+  function getAlertDistortion(originalAttrOrMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     logWarning(`Plugin ${pluginId} accessed window.alert`, {
       pluginId,
       attrOrMethod: 'alert',
@@ -184,7 +193,8 @@ function distortAlert(distortions: DistortionMap) {
 }
 
 function distortInnerHTML(distortions: DistortionMap) {
-  function getInnerHTMLDistortion(originalMethod: unknown, pluginId: string) {
+  function getInnerHTMLDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
       for (const arg of args) {
         const lowerCase = arg?.toLowerCase() || '';
@@ -228,7 +238,8 @@ function distortInnerHTML(distortions: DistortionMap) {
 }
 
 function distortCreateElement(distortions: DistortionMap) {
-  function getCreateElementDistortion(originalMethod: unknown, pluginId: string) {
+  function getCreateElementDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function createElementDistortion(this: HTMLElement, arg?: string, options?: unknown) {
       if (arg && forbiddenElements.includes(arg)) {
         logWarning(`Plugin ${pluginId} tried to create ${arg}`, {
@@ -253,7 +264,8 @@ function distortCreateElement(distortions: DistortionMap) {
 }
 
 function distortInsert(distortions: DistortionMap) {
-  function getInsertDistortion(originalMethod: unknown, pluginId: string) {
+  function getInsertDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function insertChildDistortion(this: HTMLElement, node?: Node, ref?: Node) {
       const nodeType = node?.nodeName?.toLowerCase() || '';
 
@@ -274,7 +286,8 @@ function distortInsert(distortions: DistortionMap) {
     };
   }
 
-  function getinsertAdjacentElementDistortion(originalMethod: unknown, pluginId: string) {
+  function getinsertAdjacentElementDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function insertAdjacentElementDistortion(this: HTMLElement, position?: string, node?: Node) {
       const nodeType = node?.nodeName?.toLowerCase() || '';
       if (node && forbiddenElements.includes(nodeType)) {
@@ -315,7 +328,8 @@ function distortInsert(distortions: DistortionMap) {
 // set distortions to append elements to the document
 function distortAppend(distortions: DistortionMap) {
   // append accepts an array of nodes to append https://developer.mozilla.org/en-US/docs/Web/API/Node/append
-  function getAppendDistortion(originalMethod: unknown, pluginId: string) {
+  function getAppendDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
       let acceptedNodes = args;
       const filteredAcceptedNodes = args?.filter((node) => !forbiddenElements.includes(node.nodeName.toLowerCase()));
@@ -341,7 +355,8 @@ function distortAppend(distortions: DistortionMap) {
   }
 
   // appendChild accepts a single node to add https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
-  function getAppendChildDistortion(originalMethod: unknown, pluginId: string) {
+  function getAppendChildDistortion(originalMethod: unknown, meta: PluginMeta, sandboxEnv?: SandboxEnvironment) {
+    const pluginId = meta.id;
     return function appendChildDistortion(this: HTMLElement, arg?: Node) {
       const nodeType = arg?.nodeName?.toLowerCase() || '';
       if (arg && forbiddenElements.includes(nodeType)) {
@@ -355,6 +370,19 @@ function distortAppend(distortions: DistortionMap) {
         if (!monitorOnly) {
           return document.createDocumentFragment();
         }
+      }
+      // if the node is a script, load it into the sandbox
+      // this allows webpack chunks to be loaded into the sandbox
+      // loadScriptIntoSandbox has restrictions on what scripts can be loaded
+      if (sandboxEnv && arg && nodeType === 'script' && arg instanceof HTMLScriptElement) {
+        loadScriptIntoSandbox(arg.src, meta, sandboxEnv)
+          .then(() => {
+            arg.onload?.call(arg, new Event('load'));
+          })
+          .catch((err) => {
+            arg.onerror?.call(arg, new ErrorEvent('error', { error: err }));
+          });
+        return undefined;
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, arg);
