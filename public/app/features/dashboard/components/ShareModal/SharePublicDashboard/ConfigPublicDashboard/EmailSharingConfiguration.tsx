@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
@@ -154,13 +154,7 @@ export const EmailSharingConfiguration = () => {
 
   return (
     <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
-      <Field
-        label="Can view dashboard"
-        className={cx(
-          { [styles.emailViewOptionsContainer]: watch('shareType') === PublicDashboardShareType.EMAIL },
-          { [styles.linkViewOptionsContainer]: watch('shareType') === PublicDashboardShareType.PUBLIC }
-        )}
-      >
+      <Field label="Can view dashboard" className={styles.field}>
         <InputControl
           name="shareType"
           control={control}
@@ -190,7 +184,7 @@ export const EmailSharingConfiguration = () => {
             description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
-            className={styles.emailField}
+            className={styles.field}
           >
             <div className={styles.emailContainer}>
               <Input
@@ -228,35 +222,30 @@ export const EmailSharingConfiguration = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    label: 'sharing config container';
+    label: emailConfigContainer;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
   `,
-  emailField: css`
-    label: 'email field';
+  field: css`
+    label: field-noMargin;
     margin-bottom: 0;
   `,
   emailContainer: css`
-    label: 'email container';
+    label: emailContainer;
     display: flex;
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
-    label: email input;
+    label: emailInput;
     flex-grow: 1;
-  `,
-  emailViewOptionsContainer: css`
-    label: email view options container;
-    margin-bottom: ${theme.spacing(3)};
-  `,
-  linkViewOptionsContainer: css`
-    label: link view options container;
-    margin-bottom: 0;
   `,
   table: css`
     label: table;
     display: flex;
     max-height: 220px;
     overflow-y: scroll;
-    margin-bottom: ${theme.spacing(1)};
 
     & tbody {
       display: flex;
