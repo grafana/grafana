@@ -2947,7 +2947,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG}.windows-amd64.zip
+  - .\grabpl.exe windows-installer --target gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://%PRERELEASE_BUCKET%/artifacts/downloads/${DRONE_TAG}/oss/release/
@@ -3495,7 +3495,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG}.windows-amd64.zip
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/oss/release/
@@ -4910,6 +4910,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 2661f4688d650d7c1c2f5c47c5831336943fb190e440b6959bbdee0bfbcd6642
+hmac: 6be2fedc92e41743b35ba980ab1b497ca52282e0dac168b338efa9ac494f1edb
 
 ...
