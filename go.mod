@@ -13,9 +13,19 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
 replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 
 // contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055
+replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055 // @grafana/grafana-as-code
 
-require k8s.io/apimachinery v0.27.1 // @grafana/backend-platform
+// TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
+// will need bumps as we upgrade otel in Grafana
+replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // @grafana/backend-platform
+
+replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
+
+replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.16.0 // @grafana/backend-platform
+
+replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16.0 // @grafana/backend-platform
+
+replace go.opentelemetry.io/collector/pdata => go.opentelemetry.io/collector/pdata v0.50.0 // @grafana/backend-platform
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
@@ -96,7 +106,7 @@ require (
 	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
 	go.opentelemetry.io/collector/model v0.50.0 // @grafana/backend-platform
-	go.opentelemetry.io/collector/pdata v0.50.0 // @grafana/backend-platform
+	go.opentelemetry.io/collector/pdata v1.0.0-rc8 // @grafana/backend-platform
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.37.0 // @grafana/grafana-operator-experience-squad
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.16.0 // @grafana/backend-platform
@@ -258,7 +268,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/go-mssqldb v0.9.1 // @grafana/grafana-bi-squad
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
-	github.com/grafana/tempo v1.5.0 // @grafana/observability-traces-and-profiling
+	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
@@ -274,6 +284,7 @@ require (
 	github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
+	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
 )
