@@ -126,7 +126,7 @@ func (f *BetterFrame) FindRowWithValue(fieldName string, value interface{}) Row 
 }
 
 func rootSpan(frame *BetterFrame) Row {
-	return frame.FindRowWithValue("parentSpanID", "")
+	return frame.FindRowWithValue("parentSpanID", "0000000000000000")
 }
 
 func fieldNames(frame *data.Frame) []string {
