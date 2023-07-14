@@ -19,11 +19,15 @@ import (
 	"errors"
 	"net"
 	"net/http"
+
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 )
 
 var (
-	_ http.ResponseWriter = &responseWriter{}
-	_ http.Hijacker       = &responseWriter{}
+	_ http.ResponseWriter                  = &responseWriter{}
+	_ http.Hijacker                        = &responseWriter{}
+	_ responsewriter.CloseNotifierFlusher  = &responseWriter{}
+	_ responsewriter.UserProvidedDecorator = &responseWriter{}
 )
 
 // ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
@@ -41,6 +45,10 @@ type ResponseWriter interface {
 	// Before allows for a function to be called before the ResponseWriter has been written to. This is
 	// useful for setting headers or any other operations that must happen before a response has been written.
 	Before(BeforeFunc)
+
+	// Needed to support https://pkg.go.dev/k8s.io/apiserver@v0.27.2/pkg/endpoints/responsewriter#WrapForHTTP1Or2
+	http.CloseNotifier
+	Unwrap() http.ResponseWriter
 }
 
 // BeforeFunc is a function that is called before the ResponseWriter has been written to.
@@ -138,4 +146,17 @@ func (rw *responseWriter) Flush() {
 	if ok {
 		flusher.Flush()
 	}
+}
+
+func (rw *responseWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
+func (rw *responseWriter) CloseNotify() <-chan bool {
+	notifier, ok := rw.ResponseWriter.(http.CloseNotifier)
+	if ok {
+		return notifier.CloseNotify()
+	}
+	// TODO: this is probably not the right thing to do here
+	return make(<-chan bool)
 }

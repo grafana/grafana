@@ -128,6 +128,7 @@ Experimental features might be changed or removed without prior notice.
 | `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
 | `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                               |
 | `disableTraceQLStreaming`                   | Disables the option to stream the response of TraceQL queries of the Tempo data source                       |
+| `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 
 ## Development feature toggles
 

@@ -96,3 +96,4 @@ awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,
 transformationsRedesign,experimental,@grafana/observability-metrics,false,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 disableTraceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
+grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
