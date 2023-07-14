@@ -168,13 +168,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
       >
-        {selectedFolder.isLoading ? (
-          <Skeleton width={100} />
-        ) : (
-          <Text as="span" truncate>
-            {label ?? 'Select folder'}
-          </Text>
-        )}
+        {selectedFolder.isLoading ? <Skeleton width={100} /> : <Text truncate>{label ?? 'Select folder'}</Text>}
       </Button>
     );
   }
