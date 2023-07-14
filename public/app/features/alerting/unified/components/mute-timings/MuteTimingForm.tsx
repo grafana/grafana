@@ -4,21 +4,16 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import {
-  AlertmanagerConfig,
-  AlertManagerCortexConfig,
-  MuteTimeInterval,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { renameMuteTimings } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
@@ -62,21 +57,22 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
 
   const [updating, setUpdating] = useState(false);
 
-  const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { result = defaultAmCortexConfig } =
-    (selectedAlertmanager && amConfigs[selectedAlertmanager]) || initialAsyncRequestState;
+  const { currentData: result } = useAlertmanagerConfig(selectedAlertmanager);
+  const config = result?.alertmanager_config;
 
-  const config: AlertmanagerConfig = result?.alertmanager_config ?? {};
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
 
   const onSubmit = (values: MuteTimingFields) => {
+    if (!result) {
+      return;
+    }
+
     const newMuteTiming = createMuteTiming(values);
 
     const muteTimings = muteTiming
       ? config?.mute_time_intervals?.filter(({ name }) => name !== muteTiming.name)
-      : config.mute_time_intervals;
+      : config?.mute_time_intervals;
 
     const newConfig: AlertManagerCortexConfig = {
       ...result,
@@ -84,8 +80,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
         ...config,
         route:
           muteTiming && newMuteTiming.name !== muteTiming.name
-            ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config.route ?? {})
-            : config.route,
+            ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config?.route ?? {})
+            : config?.route,
         mute_time_intervals: [...(muteTimings || []), newMuteTiming],
       },
     };

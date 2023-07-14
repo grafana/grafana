@@ -114,5 +114,6 @@ export interface FeatureToggles {
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
   mlExpressions?: boolean;
+  disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
 }

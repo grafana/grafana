@@ -13,37 +13,6 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.15.0"
 )
 
-// The following constants used to exist in public otel-collector lib but have now moved to internal code
-// https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/internal/coreinternal/tracetranslator
-
-const (
-	ResourceNoServiceName = "OTLPResourceNoServiceName"
-)
-
-const (
-	TagMessage = "message"
-
-	TagSpanKind = "span.kind"
-
-	TagStatusCode    = "status.code"
-	TagStatusMsg     = "status.message"
-	TagError         = "error"
-	TagHTTPStatusMsg = "http.status_message"
-
-	TagW3CTraceState = "w3c.tracestate"
-)
-
-type OpenTracingSpanKind string
-
-const (
-	OpenTracingSpanKindUnspecified OpenTracingSpanKind = ""
-	OpenTracingSpanKindClient      OpenTracingSpanKind = "client"
-	OpenTracingSpanKindServer      OpenTracingSpanKind = "server"
-	OpenTracingSpanKindConsumer    OpenTracingSpanKind = "consumer"
-	OpenTracingSpanKindProducer    OpenTracingSpanKind = "producer"
-	OpenTracingSpanKindInternal    OpenTracingSpanKind = "internal"
-)
-
 type KeyValue struct {
 	Value interface{} `json:"value"`
 	Key   string      `json:"key"`

@@ -655,6 +655,13 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
+			Name:         "disableTraceQLStreaming",
+			Description:  "Disables the option to stream the response of TraceQL queries of the Tempo data source",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:         "grafanaAPIServer",
 			Description:  "Enable Kubernetes API Server for Grafana resources",
 			Stage:        FeatureStageExperimental,
