@@ -43,14 +43,26 @@ const meta: Meta = {
       options: ['inherit', 'initial', 'left', 'right', 'center', 'justify', undefined],
     },
   },
+  args: {
+    element: 'h1',
+    variant: undefined,
+    weight: 'light',
+    textAlignment: 'left',
+    truncate: false,
+    italic: false,
+    color: 'primary',
+    children: 'This is a H1 component',
+  },
 };
 
-export const Example: StoryFn = () => {
+export const Example: StoryFn = (args) => {
   return (
     <VerticalGroup>
       <StoryExample name="Header, paragraph and span">
-        <Text element="h1">This is a header</Text>
-        <Text element="p">
+        <Text {...args} element="h1">
+          This is a header
+        </Text>
+        <Text {...args} element="p">
           This is a paragraph that contains
           <Text color="success" italic>
             {' '}
@@ -64,7 +76,7 @@ export const Example: StoryFn = () => {
 };
 Example.parameters = {
   controls: {
-    exclude: ['variant', 'weight', 'textAlignment', 'truncate', 'italic', 'color', 'children'],
+    exclude: ['element', 'variant', 'weight', 'textAlignment', 'truncate', 'italic', 'color', 'children'],
   },
 };
 
@@ -83,15 +95,15 @@ export const Basic: StoryFn = (args) => {
     </div>
   );
 };
-Basic.args = {
-  element: 'h1',
-  variant: undefined,
-  weight: 'light',
-  textAlignment: 'center',
-  truncate: false,
-  italic: false,
-  color: 'primary',
-  children: 'This is a H1 component',
-};
+// Basic.args = {
+//   element: 'h1',
+//   variant: undefined,
+//   weight: 'light',
+//   textAlignment: 'center',
+//   truncate: false,
+//   italic: false,
+//   color: 'primary',
+//   children: 'This is a H1 component',
+// };
 
 export default meta;
