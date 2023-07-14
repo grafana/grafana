@@ -11,7 +11,7 @@ import (
 )
 
 var DefaultFindFunc = func(cfg *config.Cfg) FindFunc {
-	return finder.NewLocalFinder(cfg).Find
+	return finder.NewLocalFinder(cfg.DevMode).Find
 }
 
 var DefaultFindFilterFunc = func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
