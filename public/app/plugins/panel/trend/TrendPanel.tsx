@@ -31,16 +31,15 @@ export const TrendPanel = ({
   id,
 }: PanelProps<Options>) => {
   const { sync } = usePanelContext();
+  // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
+  const trendXFieldName = options.xField
+    ? options.xField
+    : data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
 
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
       ...dimFields,
       x: (field, frame, frames) => {
-        // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
-        const trendXFieldName = options.xField
-          ? options.xField
-          : frames[0].fields.find((field) => field.type === FieldType.number)?.name;
-
         return getFieldDisplayName(field, frame, frames) === trendXFieldName;
       },
     };
