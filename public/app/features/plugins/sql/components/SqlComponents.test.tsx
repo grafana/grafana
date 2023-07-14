@@ -69,7 +69,7 @@ describe('TableSelector', () => {
 });
 
 describe('SQLWhereRow', () => {
-  it('should remove quotes in a where clause including multi-value variable', async () => {
+  it('should remove quotes in a where clause including multi-value variable', () => {
     const exp: SQLExpression = {
       whereString: "hostname IN ('${multiHost}')",
     };
@@ -84,12 +84,10 @@ describe('SQLWhereRow', () => {
 
     removeQuotesForMultiVariables(exp, variables);
 
-    await waitFor(() => {
-      expect(exp.whereString).toBe('hostname IN (${multiHost})');
-    });
+    expect(exp.whereString).toBe('hostname IN (${multiHost})');
   });
 
-  it('should not remove quotes in a where clause not including a multi-value variable', async () => {
+  it('should not remove quotes in a where clause not including a multi-value variable', () => {
     const exp: SQLExpression = {
       whereString: "hostname IN ('${nonMultiHost}')",
     };
@@ -104,8 +102,6 @@ describe('SQLWhereRow', () => {
 
     removeQuotesForMultiVariables(exp, variables);
 
-    await waitFor(() => {
-      expect(exp.whereString).toBe("hostname IN ('${nonMultiHost}')");
-    });
+    expect(exp.whereString).toBe("hostname IN ('${nonMultiHost}')");
   });
 });
