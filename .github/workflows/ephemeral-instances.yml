@@ -11,7 +11,6 @@ jobs:
     continue-on-error: true
     steps:        
       - name: Get pull request repo
-        if: github.triggering_actor == 'PoorlyDefinedBehaviour'
         uses: actions/github-script@v6
         id: get-pull-request-repo
         with:
@@ -30,7 +29,6 @@ jobs:
             return response.data.head.ref
             
       - name: Checkout Grafana
-        if: github.triggering_actor == 'PoorlyDefinedBehaviour'
         uses: actions/checkout@v3
         with:
           repository: grafana/grafana
@@ -38,13 +36,11 @@ jobs:
           path: grafana
 
       - name: Setup Go
-        if: github.triggering_actor == 'PoorlyDefinedBehaviour'
         uses: actions/setup-go@v4
         with:
           go-version: '>=1.20'
 
       - name: Generate a GitHub app installation token
-        if: github.triggering_actor == 'PoorlyDefinedBehaviour'
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
@@ -60,7 +56,6 @@ jobs:
           path: ephemeral
         
       - name: Run action
-        if: github.triggering_actor == 'PoorlyDefinedBehaviour'
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}
         run: |
