@@ -628,7 +628,7 @@ func nestedFoldersSelectors(permSelector string, permSelectorArgs []interface{},
 
 	prev := "d"
 	onCol := "uid"
-	for i := 1; i <= 2; i++ {
+	for i := 1; i <= folder.MaxNestedFolderDepth+2; i++ {
 		t := fmt.Sprintf("f%d", i)
 		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
 		joins = append(joins, s)
