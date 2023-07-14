@@ -6,7 +6,8 @@ on:
       types: [opened, reopened, closed]
 jobs:      
   handle-pull-request-event:
-    runs-on: ubuntu-latest
+    runs-on: 
+      labels: ubuntu-latest-8-cores
     continue-on-error: true
     steps:        
       - name: Get pull request repo
