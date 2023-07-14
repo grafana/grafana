@@ -284,7 +284,7 @@ def publish_static_assets_step():
             "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
         "commands": [
-            "./bin/build artifacts static-assets --tag ${DRONE_TAG}",
+            "./bin/build artifacts static-assets --tag ${DRONE_TAG} --static-asset-editions=grafana-oss",
         ],
         "depends_on": ["compile-build-cmd"],
     }
