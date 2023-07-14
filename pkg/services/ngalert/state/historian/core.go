@@ -58,7 +58,7 @@ type PanelKey struct {
 }
 
 // PanelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func ParsePanelKey(rule history_model.RuleMeta, logger log.Logger) *PanelKey {
+func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *PanelKey {
 	if rule.DashboardUID != "" {
 		return &PanelKey{
 			orgID:   rule.OrgID,
