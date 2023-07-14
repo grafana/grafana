@@ -112,7 +112,7 @@ export function prepareHeatmapData(
   if (!rowsHeatmap) {
     if (frames.length > 1) {
       let allNamesNumeric = frames.every(
-        (frame) => !Number.isNaN(parseSampleValue(frame.fields[1].state?.displayName ?? ''))
+        (frame) => !Number.isNaN(parseSampleValue(frame.fields[1].state?.displayName!))
       );
 
       if (allNamesNumeric) {
