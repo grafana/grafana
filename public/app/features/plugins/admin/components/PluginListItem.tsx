@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PluginType, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 
 import { CatalogPlugin, PluginIconName, PluginListDisplayMode } from '../types';
 
@@ -21,8 +22,13 @@ export function PluginListItem({ plugin, pathName, displayMode = PluginListDispl
   const styles = useStyles2(getStyles);
   const isList = displayMode === PluginListDisplayMode.List;
 
+  const href =
+    plugin.type === PluginType.datasource
+      ? locationUtil.assureBaseUrl(`${CONNECTIONS_ROUTES.DataSources}/${plugin.id}`)
+      : `${pathName}/${plugin.id}`;
+
   return (
-    <a href={`${pathName}/${plugin.id}`} className={cx(styles.container, { [styles.list]: isList })}>
+    <a href={href} className={cx(styles.container, { [styles.list]: isList })}>
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>
