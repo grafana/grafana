@@ -265,7 +265,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
   }, [onClickAddCSV, onClose]);
 
-  const styles = useStyles2((theme: GrafanaTheme2) => getStylesPickerContent(theme, props));
+  const styles = useStyles2(getStylesPickerContent);
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
@@ -333,7 +333,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 });
 PickerContent.displayName = 'PickerContent';
 
-function getStylesPickerContent(theme: GrafanaTheme2, props: PickerContentProps) {
+function getStylesPickerContent(theme: GrafanaTheme2) {
   return {
     container: css`
       display: flex;
