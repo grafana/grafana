@@ -15,7 +15,7 @@ import (
 
 func testServer(t *testing.T, m *modules.MockModuleEngine) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, m)
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, m)
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.

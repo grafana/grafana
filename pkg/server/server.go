@@ -19,7 +19,6 @@ import (
 	moduleRegistry "github.com/grafana/grafana/pkg/modules/registry"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,13 +34,12 @@ type Options struct {
 
 // New returns a new instance of Server.
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
 	moduleService modules.Engine,
 	_ moduleRegistry.Registry, // imported to invoke initialization via Wire
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
-	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, moduleService)
+	s, err := newServer(opts, cfg, httpServer, roleRegistry, moduleService)
 	if err != nil {
 		return nil, err
 	}
@@ -54,20 +52,18 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 }
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	provisioningService provisioning.ProvisioningService,
 	moduleService modules.Engine) (*Server, error) {
 	return &Server{
-		HTTPServer:          httpServer,
-		provisioningService: provisioningService,
-		roleRegistry:        roleRegistry,
-		shutdownFinished:    make(chan struct{}),
-		log:                 log.New("server"),
-		cfg:                 cfg,
-		pidFile:             opts.PidFile,
-		version:             opts.Version,
-		commit:              opts.Commit,
-		buildBranch:         opts.BuildBranch,
-		moduleService:       moduleService,
+		HTTPServer:       httpServer,
+		roleRegistry:     roleRegistry,
+		shutdownFinished: make(chan struct{}),
+		log:              log.New("server"),
+		cfg:              cfg,
+		pidFile:          opts.PidFile,
+		version:          opts.Version,
+		commit:           opts.Commit,
+		buildBranch:      opts.BuildBranch,
+		moduleService:    moduleService,
 	}, nil
 }
 
@@ -85,10 +81,9 @@ type Server struct {
 	commit      string
 	buildBranch string
 
-	HTTPServer          *api.HTTPServer
-	roleRegistry        accesscontrol.RoleRegistry
-	provisioningService provisioning.ProvisioningService
-	moduleService       modules.Engine
+	HTTPServer    *api.HTTPServer
+	roleRegistry  accesscontrol.RoleRegistry
+	moduleService modules.Engine
 }
 
 // init initializes the server and its services.
@@ -114,11 +109,7 @@ func (s *Server) init(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.roleRegistry.RegisterFixedRoles(ctx); err != nil {
-		return err
-	}
-
-	return s.provisioningService.RunInitProvisioners(ctx)
+	return s.roleRegistry.RegisterFixedRoles(ctx)
 }
 
 // Run initializes and starts services. This will block until all services have

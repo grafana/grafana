@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/modules"
 	plugifaces "github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -52,7 +53,7 @@ func ProvideService(
 	secrectService secrets.Service,
 	orgService org.Service,
 ) (*ProvisioningServiceImpl, error) {
-	s := &ProvisioningServiceImpl{
+	ps := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
 		ac:                           ac,
@@ -76,12 +77,14 @@ func ProvideService(
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
 	}
-	return s, nil
+
+	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
+
+	return ps, nil
 }
 
 type ProvisioningService interface {
-	registry.BackgroundService
-	RunInitProvisioners(ctx context.Context) error
+	services.NamedService
 	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
@@ -94,13 +97,15 @@ type ProvisioningService interface {
 // Add a public constructor for overriding service to be able to instantiate OSS as fallback
 func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 	logger := log.New("provisioning")
-	return &ProvisioningServiceImpl{
+	ps := &ProvisioningServiceImpl{
 		log:                     logger,
 		newDashboardProvisioner: dashboards.New,
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 	}
+	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
+	return ps
 }
 
 // Used for testing purposes
@@ -110,16 +115,20 @@ func newProvisioningServiceImpl(
 	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, plugifaces.Store, pluginsettings.Service, org.Service) error,
 ) *ProvisioningServiceImpl {
-	return &ProvisioningServiceImpl{
+	ps := &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 	}
+	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
+	return ps
 }
 
 type ProvisioningServiceImpl struct {
+	*services.BasicService
+
 	Cfg                          *setting.Cfg
 	SQLStore                     db.DB
 	orgService                   org.Service
@@ -198,7 +207,7 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			// Root server context was cancelled so cancel polling and leave.
 			ps.cancelPolling()
-			return ctx.Err()
+			return nil
 		}
 	}
 }
