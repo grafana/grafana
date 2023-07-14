@@ -66,6 +66,13 @@
       "manage-permissions": "",
       "move": ""
     },
+    "folder-picker": {
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
@@ -125,7 +132,8 @@
       "import": "Importar de la biblioteca",
       "paste-panel": "Pegar panel",
       "row": "Fila",
-      "visualization": "Visualización"
+      "visualization": "Visualización",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
@@ -136,7 +144,10 @@
       "add-row-header": "Añadir una fila",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
-      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
+      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "Datos",

@@ -41,6 +41,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 32px;
       position: relative;
       border: 1px solid ${theme.colors.background.secondary};
+      white-space: nowrap;
 
       &:hover {
         background: ${theme.colors.action.hover};

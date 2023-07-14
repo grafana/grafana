@@ -61,6 +61,13 @@
       "manage-permissions": "",
       "move": ""
     },
+    "folder-picker": {
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
@@ -120,7 +127,8 @@
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
       "row": "Zeile",
-      "visualization": "Visualisierung"
+      "visualization": "Visualisierung",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "Visualisierungen importieren, die mit anderen Dashboards geteilt werden.",
@@ -131,7 +139,10 @@
       "add-row-header": "Eine Zeile hinzufügen",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
-      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen"
+      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "Daten",

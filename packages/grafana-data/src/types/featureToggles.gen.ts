@@ -78,6 +78,7 @@ export interface FeatureToggles {
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
+  lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
@@ -109,5 +110,8 @@ export interface FeatureToggles {
   elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
+  logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
+  transformationsRedesign?: boolean;
+  mlExpressions?: boolean;
 }

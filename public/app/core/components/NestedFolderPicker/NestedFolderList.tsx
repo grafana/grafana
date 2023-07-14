@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from 'app/core/internationalization';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -39,15 +40,21 @@ export function NestedFolderList({
 
   return (
     <div className={styles.table}>
-      <List
-        height={ROW_HEIGHT * Math.min(6.5, items.length)}
-        width="100%"
-        itemData={virtualData}
-        itemSize={ROW_HEIGHT}
-        itemCount={items.length}
-      >
-        {Row}
-      </List>
+      {items.length > 0 ? (
+        <List
+          height={ROW_HEIGHT * Math.min(6.5, items.length)}
+          width="100%"
+          itemData={virtualData}
+          itemSize={ROW_HEIGHT}
+          itemCount={items.length}
+        >
+          {Row}
+        </List>
+      ) : (
+        <div className={styles.emptyMessage}>
+          <Trans i18nKey="browse-dashboards.folder-picker.empty-message">No folders found</Trans>
+        </div>
+      )}
     </div>
   );
 }
@@ -116,8 +123,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         onKeyDown={handleKeyDown}
       />
 
-      <Indent level={level} />
       <div className={styles.rowBody}>
+        <Indent level={level} />
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}
@@ -132,7 +139,6 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         )}
 
         <label className={styles.label} htmlFor={id}>
-          {/* TODO: text is not truncated properly, it still overflows the container */}
           <Text as="span" truncate>
             {item.title}
           </Text>
@@ -150,7 +156,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     alignItems: 'center',
     flexGrow: 1,
     gap: theme.spacing(0.5),
-    paddingLeft: theme.spacing(1),
+    overflow: 'hidden',
+    padding: theme.spacing(0, 1),
   });
 
   return {
@@ -158,17 +165,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.components.input.background,
     }),
 
+    emptyMessage: css({
+      padding: theme.spacing(1),
+      textAlign: 'center',
+      width: '100%',
+    }),
+
     // Should be the same size as the <IconButton /> for proper alignment
     folderButtonSpacer: css({
       paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(0.5)})`,
-    }),
-
-    headerRow: css({
-      backgroundColor: theme.colors.background.secondary,
-      height: ROW_HEIGHT,
-      lineHeight: ROW_HEIGHT + 'px',
-      margin: 0,
-      paddingLeft: theme.spacing(3.5),
     }),
 
     row: css({
@@ -210,6 +215,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     label: css({
       lineHeight: ROW_HEIGHT + 'px',
       flexGrow: 1,
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
       '&:hover': {
         textDecoration: 'underline',
         cursor: 'pointer',

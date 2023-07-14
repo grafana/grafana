@@ -1494,7 +1494,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
+		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg.DevMode),
 		signature.ProvideService(statickey.New()), angularInspector, &fakes.FakeOauthService{})
 
 	for _, cb := range cbs {
