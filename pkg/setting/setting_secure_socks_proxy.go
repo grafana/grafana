@@ -52,7 +52,7 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 //
 // Note: Not optimal changing global state, but hard to not do in this case.
 func setDefaultProxyCli(cfg SecureSocksDSProxySettings) {
-	sdkproxy.ProxyCli = sdkproxy.NewWithCfg(&sdkproxy.ProxyClientCfg{
+	sdkproxy.Cli = sdkproxy.NewWithCfg(&sdkproxy.ClientCfg{
 		Enabled:      cfg.Enabled,
 		ClientCert:   cfg.ClientCert,
 		ClientKey:    cfg.ClientKey,
