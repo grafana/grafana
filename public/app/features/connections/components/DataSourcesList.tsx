@@ -11,12 +11,8 @@ import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../../datasources/state';
-import {
-  trackCreateDashboardClicked,
-  trackExploreClicked,
-  trackDataSourcesListViewed,
-} from '../../datasources/tracking';
 import { constructDataSourceExploreUrl } from '../../datasources/utils';
+import { trackCreateDashboardClicked, trackExploreClicked, trackDataSourcesListViewed } from '../tracking';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 

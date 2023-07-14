@@ -2,12 +2,12 @@ import React from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
 
-import { EditDataSource } from '../components/EditDataSource';
-import { EditDataSourceActions } from '../components/EditDataSourceActions';
-import { useDataSourceInfo } from '../components/useDataSourceInfo';
-import { useDataSourceSettingsNav } from '../state';
+import { useDataSourceSettingsNav } from '../../datasources/state';
 
 import { DataSourceTitle } from './DataSourceTitle';
+import { EditDataSource } from './EditDataSource';
+import { EditDataSourceActions } from './EditDataSourceActions';
+import { useDataSourceInfo } from './useDataSourceInfo';
 
 export interface Props {
   uid: string;
