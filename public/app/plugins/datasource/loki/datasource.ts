@@ -35,6 +35,7 @@ import {
   LogRowContextOptions,
   AnalyzeQueryOptions,
   DataSourceWithQueryModificationSupport,
+  DataSourceWithAnalyzeQuerySupport,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -134,7 +135,8 @@ export class LokiDatasource
     DataSourceWithSupplementaryQueriesSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
     DataSourceWithQueryExportSupport<LokiQuery>,
-    DataSourceWithQueryModificationSupport<LokiQuery>
+    DataSourceWithQueryModificationSupport<LokiQuery>,
+    DataSourceWithAnalyzeQuerySupport<LokiQuery>
 {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;

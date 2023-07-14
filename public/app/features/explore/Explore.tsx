@@ -15,7 +15,8 @@ import {
   EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
-  hasQueryManipulationSupport,
+  hasAnalyzeQuerySupport,
+  hasQueryModificationSupport,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -193,7 +194,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
     for (const query of this.props.queries) {
       const ds = await getDataSourceSrv().get(query.datasource);
-      if (!hasQueryManipulationSupport(ds, 'analyzeQuery') || !ds.analyzeQuery) {
+      if (!hasAnalyzeQuerySupport(ds)) {
         return false;
       }
       const hasFilter = ds.analyzeQuery(query, {
@@ -244,7 +245,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
-      if (hasQueryManipulationSupport(ds, 'modifyQuery')) {
+      if (hasQueryModificationSupport(ds)) {
         return ds.modifyQuery(query, modification);
       } else {
         return query;
@@ -382,9 +383,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         ariaLabel={selectors.pages.Explore.General.table}
         width={width}
         exploreId={exploreId}
-        onCellFilterAdded={
-          hasQueryManipulationSupport(datasourceInstance, 'modifyQuery') ? this.onCellFilterAdded : undefined
-        }
+        onCellFilterAdded={hasQueryModificationSupport(datasourceInstance) ? this.onCellFilterAdded : undefined}
         timeZone={timeZone}
         splitOpenFn={this.onSplitOpen('table')}
       />

@@ -271,26 +271,36 @@ export interface AnalyzeQueryOptions {
  * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
  */
-export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
+export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery> {
   /**
    * Used in explore
    */
   modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
+}
 
+export interface DataSourceWithAnalyzeQuerySupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
   /**
    * Used in explore for Log details
    *
    * @alpha
    */
-  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): TAnalyzeQueryResult;
+  analyzeQuery(query: TQuery, options: AnalyzeQueryOptions): TAnalyzeQueryResult;
 }
 
 /**
  * @internal
  */
-export const hasQueryManipulationSupport = <TQuery extends DataQuery>(
-  datasource: unknown,
-  method: keyof DataSourceWithQueryModificationSupport<TQuery>
+export const hasQueryModificationSupport = <TQuery extends DataQuery>(
+  datasource: unknown
 ): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
-  return datasource !== null && typeof datasource === 'object' && method in datasource;
+  return datasource !== null && typeof datasource === 'object' && 'modifyQuery' in datasource;
+};
+
+/**
+ * @internal
+ */
+export const hasAnalyzeQuerySupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
+  return datasource !== null && typeof datasource === 'object' && 'analyzeQuery' in datasource;
 };
