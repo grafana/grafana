@@ -1266,6 +1266,7 @@ def get_windows_steps(ver_mode, bucket="%PRERELEASE_BUCKET%"):
 
     Args:
       ver_mode: used to differentiate steps for different version modes.
+      bucket: used to override prerelease bucket.
 
     Returns:
       List of Drone steps.
@@ -1315,7 +1316,7 @@ def get_windows_steps(ver_mode, bucket="%PRERELEASE_BUCKET%"):
         ]
 
         if ver_mode in ("release",):
-            version = ver_part.strip("v")
+            version = ver_part.lstrip("v")
             installer_commands.extend(
                 [
                     ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
