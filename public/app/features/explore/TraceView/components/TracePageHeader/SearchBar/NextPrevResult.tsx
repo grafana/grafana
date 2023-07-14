@@ -13,31 +13,34 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import React, { memo, Dispatch, SetStateAction, useEffect } from 'react';
+import { get, maxBy, values } from 'lodash';
+import React, { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/src/components/Button';
 
+import { Trace } from '../../types';
+
 export type NextPrevResultProps = {
+  trace: Trace;
   spanFilterMatches: Set<string> | undefined;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   focusedSpanIndexForSearch: number;
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
   datasourceType: string;
-  totalSpans: number;
   showSpanFilters: boolean;
 };
 
 export default memo(function NextPrevResult(props: NextPrevResultProps) {
   const {
+    trace,
     spanFilterMatches,
     setFocusedSpanIdForSearch,
     focusedSpanIndexForSearch,
     setFocusedSpanIndexForSearch,
     datasourceType,
-    totalSpans,
     showSpanFilters,
   } = props;
   const styles = getStyles(useTheme2(), showSpanFilters);
@@ -109,30 +112,88 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
   };
 
   const buttonEnabled = (spanFilterMatches && spanFilterMatches?.size > 0) ?? false;
-  const amountText = spanFilterMatches?.size === 1 ? 'match' : 'matches';
-  const matches =
-    spanFilterMatches?.size === 0 ? (
-      <>
-        <span>0 matches</span>
-        <Tooltip
-          content="There are 0 span matches for the filters selected. Please try removing some of the selected filters."
-          placement="left"
-        >
-          <span className={styles.matchesTooltip}>
-            <Icon name="info-circle" size="lg" />
+  const buttonClass = buttonEnabled ? styles.button : cx(styles.button, styles.buttonDisabled);
+
+  const getTooltip = useCallback(
+    (content: PopoverContent) => {
+      return (
+        <Tooltip content={content} placement="top">
+          <span className={styles.tooltip}>
+            <Icon name="info-circle" size="md" />
           </span>
         </Tooltip>
-      </>
-    ) : focusedSpanIndexForSearch !== -1 ? (
-      `${focusedSpanIndexForSearch + 1}/${spanFilterMatches?.size} ${amountText}`
-    ) : (
-      `${spanFilterMatches?.size} ${amountText}`
-    );
-  const buttonClass = buttonEnabled ? styles.button : cx(styles.button, styles.buttonDisabled);
+      );
+    },
+    [styles.tooltip]
+  );
+
+  const getMatchesMetadata = useCallback(
+    (depth: number, services: number) => {
+      const matchedServices: string[] = [];
+      const matchedDepth: number[] = [];
+      let metadata = (
+        <>
+          <span>{`${trace.spans.length} spans`}</span>
+          {getTooltip(
+            <>
+              <div>Services: {services}</div>
+              <div>Depth: {depth}</div>
+            </>
+          )}
+        </>
+      );
+
+      if (spanFilterMatches) {
+        spanFilterMatches.forEach((spanID) => {
+          matchedServices.push(trace.processes[spanID].serviceName);
+          matchedDepth.push(trace.spans.find((span) => span.spanID === spanID)?.depth || 0);
+        });
+
+        if (spanFilterMatches.size === 0) {
+          metadata = (
+            <>
+              <span>0 matches</span>
+              {getTooltip(
+                'There are 0 span matches for the filters selected. Please try removing some of the selected filters.'
+              )}
+            </>
+          );
+        } else {
+          const type = spanFilterMatches.size === 1 ? 'match' : 'matches';
+          const text =
+            focusedSpanIndexForSearch !== -1
+              ? `${focusedSpanIndexForSearch + 1}/${spanFilterMatches.size} ${type}`
+              : `${spanFilterMatches.size} ${type}`;
+
+          metadata = (
+            <>
+              <span>{text}</span>
+              {getTooltip(
+                <>
+                  <div>
+                    Services: {new Set(matchedServices).size}/{services}
+                  </div>
+                  <div>
+                    Depth: {new Set(matchedDepth).size}/{depth}
+                  </div>
+                </>
+              )}
+            </>
+          );
+        }
+      }
+
+      return metadata;
+    },
+    [focusedSpanIndexForSearch, getTooltip, spanFilterMatches, trace.processes, trace.spans]
+  );
+
+  const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
+  const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
 
   return (
     <>
-      <span className={styles.matches}>{spanFilterMatches ? matches : `${totalSpans} spans`}</span>
+      <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
       <div className={buttonEnabled ? styles.buttons : cx(styles.buttons, styles.buttonsDisabled)}>
         <div
           aria-label="Prev result button"
@@ -186,9 +247,9 @@ export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
     matches: css`
       margin-right: ${theme.spacing(2)};
     `,
-    matchesTooltip: css`
+    tooltip: css`
       color: #aaa;
-      margin: -2px 0 0 10px;
+      margin: 0 0 0 5px;
     `,
   };
 };
