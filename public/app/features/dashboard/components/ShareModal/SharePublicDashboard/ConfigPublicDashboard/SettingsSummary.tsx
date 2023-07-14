@@ -31,8 +31,8 @@ export function SettingsSummary({
         {'Time range = '}
         <TimeRangeLabel className={styles.timeRange} value={timeRange} />
       </div>
-      <div className={styles.summary}>{`Time range picker = ${timeSelectionEnabled}`}</div>
-      <div className={styles.summary}>{`Annotations = ${annotationsEnabled}`}</div>
+      <div className={styles.summary}>{`Time range picker = ${timeSelectionEnabled ? 'enabled' : 'disabled'}`}</div>
+      <div className={styles.summary}>{`Annotations = ${annotationsEnabled ? 'show' : 'hide'}`}</div>
     </div>
   );
 }

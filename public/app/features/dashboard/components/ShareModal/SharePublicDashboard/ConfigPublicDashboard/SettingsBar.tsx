@@ -1,10 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-
-import { SettingsBarHeader } from './SettingsBarHeader';
 
 import { SettingsBarHeader, Props as SettingsBarHeaderProps } from './SettingsBarHeader';
 
@@ -12,16 +10,11 @@ export interface Props extends Pick<SettingsBarHeaderProps, 'headerElement' | 't
   children: React.ReactNode;
 }
 
-  title: string;
-  headerElement?: React.ReactNode | ((props: { className?: string }) => React.ReactNode);
-  children: React.ReactNode;
-}
-
 export function SettingsBar({ children, title, headerElement }: Props) {
   const styles = useStyles2(getStyles);
   const [isContentVisible, setIsContentVisible] = useState(false);
 
- const onRowToggle = () => {
+  const onRowToggle = () => {
     setIsContentVisible((prevState) => !prevState);
   };
 
