@@ -100,15 +100,10 @@ func (b *Builder) applyFilters() (ordering string) {
 
 	for _, f := range b.Filters {
 		if f, ok := f.(FilterLeftJoin); ok {
+			sql := f.LeftJoin()
+			if sql != "" {
 			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
 		}
-
-		if f, ok := f.(FilterLeftJoinParams); ok {
-			sql, params := f.LeftJoinParams()
-			if sql != "" {
-				joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", sql))
-				jointParams = append(jointParams, params...)
-			}
 		}
 
 		if f, ok := f.(FilterWhere); ok {

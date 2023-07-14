@@ -39,13 +39,6 @@ type FilterLeftJoin interface {
 	LeftJoin() string
 }
 
-// FilterLeftJoinParams adds the returned string as a "LEFT OUTER JOIN" to
-// allow for fetching extra columns from a table outside of the
-// dashboard column with support for params.
-type FilterLeftJoinParams interface {
-	LeftJoinParams() (string, []interface{})
-}
-
 type FilterSelect interface {
 	Select() string
 }

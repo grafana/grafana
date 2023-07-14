@@ -82,8 +82,8 @@ type DashboardFilter struct {
 	needToCheckDashboardAction bool
 }
 
-func (f *DashboardFilter) LeftJoinParams() (string, []interface{}) {
-	return f.join.string, f.join.params
+func (f *DashboardFilter) LeftJoin() string {
+	return f.join.string
 }
 
 func (f *DashboardFilter) Where() (string, []interface{}) {
@@ -110,11 +110,8 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 
 	if !useSelfContained {
 		// build join clause
-		filter, params := accesscontrol.UserRolesFilter(f.usr.OrgID, f.usr.UserID, f.usr.Teams, accesscontrol.GetOrgRoles(f.usr))
-		query.WriteString("permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier) AND p.role_id IN(")
-		query.WriteString(filter)
-		query.WriteByte(')')
-		f.join = clause{string: query.String(), params: params}
+		query.WriteString("permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier)")
+		f.join = clause{string: query.String()}
 
 		// recycle and reuse
 		query.Reset()
@@ -122,6 +119,8 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 
 	params := []interface{}{}
 	query.WriteByte('(')
+
+	roleFilter, roleFilterParams := accesscontrol.UserRolesFilter(f.usr.OrgID, f.usr.UserID, f.usr.Teams, accesscontrol.GetOrgRoles(f.usr))
 
 	if dashboardAction != "" {
 		if f.needToCheckDashboardAction {
@@ -131,14 +130,19 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 					p.action = '%s' AND
 					p.kind = 'dashboards' AND
 					p.attribute = 'uid' AND
+					p.role_id IN(%s) AND
 					NOT dashboard.is_folder
 				) OR (
 					p.action = '%s' AND
 					p.kind = 'folders' AND
 					p.attribute = 'uid' AND
+					p.role_id IN(%s) AND
 					NOT dashboard.is_folder
 				))
-				`, dashboardAction, dashboardAction))
+				`, dashboardAction, roleFilter, dashboardAction, roleFilter))
+
+				params = append(params, roleFilterParams...)
+				params = append(params, roleFilterParams...)
 			} else {
 				args := getAllowedUIDs([]string{dashboardAction}, f.usr, dashboards.ScopeDashboardsPrefix)
 
@@ -183,9 +187,11 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 					p.action = '%s' AND
 					p.kind = 'folders' AND
 					p.attribute = 'uid' AND
+					p.role_id IN(%s) AND
 					dashboard.is_folder
 				)
-				`, folderAction))
+				`, folderAction, roleFilter))
+				params = append(params, roleFilterParams...)
 			} else {
 				args := getAllowedUIDs([]string{folderAction}, f.usr, dashboards.ScopeFoldersPrefix)
 
@@ -340,7 +346,7 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 	}
 
 	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
-		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+		recursiveQueriesAreSupported: false,
 	}
 
 	f.buildClauses()
@@ -622,7 +628,7 @@ func nestedFoldersSelectors(permSelector string, permSelectorArgs []interface{},
 
 	prev := "d"
 	onCol := "uid"
-	for i := 1; i <= folder.MaxNestedFolderDepth+2; i++ {
+	for i := 1; i <= 2; i++ {
 		t := fmt.Sprintf("f%d", i)
 		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
 		joins = append(joins, s)

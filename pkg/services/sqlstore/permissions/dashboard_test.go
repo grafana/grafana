@@ -178,11 +178,10 @@ func queryWithFilter(store db.DB, filter *permissions.DashboardFilter) (int, err
 
 		query.WriteString("SELECT COUNT(*) FROM dashboard ")
 		query.WriteString(" LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id ")
-		join, joinParams := filter.LeftJoinParams()
+		join := filter.LeftJoin()
 		if join != "" {
 			query.WriteString(" LEFT OUTER JOIN ")
 			query.WriteString(join)
-			params = append(params, joinParams...)
 		}
 
 		query.WriteString(" WHERE ")
