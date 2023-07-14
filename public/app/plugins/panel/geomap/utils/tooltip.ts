@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import { MapBrowserEvent } from 'ol';
 import { toLonLat } from 'ol/proj';
 
@@ -12,7 +13,7 @@ import { getMapLayerState } from './layers';
 export const setTooltipListeners = (panel: GeomapPanel) => {
   // Tooltip listener
   panel.map?.on('singleclick', panel.pointerClickListener);
-  panel.map?.on('pointermove', panel.pointerMoveListener);
+  panel.map?.on('pointermove', debounce(panel.pointerMoveListener, 200));
   panel.map?.getViewport().addEventListener('mouseout', (evt: MouseEvent) => {
     panel.props.eventBus.publish(new DataHoverClearEvent());
   });
