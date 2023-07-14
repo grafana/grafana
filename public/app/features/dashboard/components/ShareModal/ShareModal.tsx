@@ -150,9 +150,11 @@ export const ShareModal = withTheme2(UnthemedShareModal);
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
+      label: 'shareModalContainer',
       paddingTop: theme.spacing(1),
     }),
     content: css({
+      label: 'shareModalContent',
       padding: theme.spacing(3, 2, 2, 2),
     }),
   };
