@@ -32,17 +32,8 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
       config={{ fields: state.value || {} }}
       sql={query.sql!}
       onSqlChange={(val: SQLExpression) => {
-        const templateSrv = getTemplateSrv();
-        const templateVars = templateSrv.getVariables() as VariableWithMultiSupport[];
-
-        if (
-          templateVars.some((tv) => {
-            return tv.multi && val.whereString?.includes('${' + tv.name + '}');
-          })
-        ) {
-          val.whereString = val.whereString?.replaceAll("')", ')');
-          val.whereString = val.whereString?.replaceAll("('", '(');
-        }
+        const templateVars = getTemplateSrv().getVariables() as VariableWithMultiSupport[];
+        removeQuotesForMultiVariables(val, templateVars);
 
         onSqlChange(val);
       }}
@@ -61,4 +52,15 @@ function mapFieldsToTypes(columns: SQLSelectableValue[]) {
     };
   }
   return fields;
+}
+
+export function removeQuotesForMultiVariables(val: SQLExpression, templateVars: VariableWithMultiSupport[]) {
+  if (
+    templateVars.some((tv) => {
+      return tv.multi && (val.whereString?.includes('${' + tv.name + '}') || val.whereString?.includes('$' + tv.name));
+    })
+  ) {
+    val.whereString = val.whereString?.replaceAll("')", ')');
+    val.whereString = val.whereString?.replaceAll("('", '(');
+  }
 }
