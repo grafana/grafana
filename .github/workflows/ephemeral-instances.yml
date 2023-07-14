@@ -10,31 +10,6 @@ jobs:
       labels: ubuntu-latest-8-cores
     continue-on-error: true
     steps:        
-      - name: Get pull request repo
-        uses: actions/github-script@v6
-        id: get-pull-request-repo
-        with:
-          result-encoding: string
-          script: |
-            if(context.payload.pull_request?.head.ref) {  
-              return context.payload.pull_request.head.ref
-            }
-
-            const response = await github.rest.pulls.get({
-              owner: "grafana",
-              repo: "grafana",
-              pull_number: context.payload.issue.number,
-            });
-            
-            return response.data.head.ref
-            
-      - name: Checkout Grafana
-        uses: actions/checkout@v3
-        with:
-          repository: grafana/grafana
-          ref: ${{ steps.get-pull-request-repo.outputs.result }}
-          path: grafana
-
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
