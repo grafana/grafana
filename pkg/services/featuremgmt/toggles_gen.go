@@ -390,4 +390,8 @@ const (
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
+
+	// FlagGrafanaAPIServer
+	// Enable Kubernetes API Server for Grafana resources
+	FlagGrafanaAPIServer = "grafanaAPIServer"
 )

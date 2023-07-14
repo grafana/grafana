@@ -114,4 +114,5 @@ export interface FeatureToggles {
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
   mlExpressions?: boolean;
+  grafanaAPIServer?: boolean;
 }
