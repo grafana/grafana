@@ -45,8 +45,6 @@ jobs:
             -GCOM_TOKEN="${{ secrets.EI_GCOM_TOKEN }}" \
             -HOSTED_GRAFANA_IMAGE_TAG="$GRAFANA_VERSION-ephemeral-grafana-${{ github.triggering_actor }}-${{ github.run_number }}-${{ github.run_attempt }}" \
             -REGISTRY="${{ secrets.EI_EPHEMERAL_INSTANCES_REGISTRY }}" \
-            -GRAFANA_DIR="$GITHUB_WORKSPACE/grafana" \
-            -ENTERPRISE_REF="main" \
             -GRAFANA_VERSION="$GRAFANA_VERSION" \
             -GCP_SERVICE_ACCOUNT_KEY_BASE64="${{ secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 }}" \
             -EPHEMERAL_ORG_ID="${{ secrets.EI_EPHEMERAL_ORG_ID }}" || true
