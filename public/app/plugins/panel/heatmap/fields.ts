@@ -127,12 +127,10 @@ export function prepareHeatmapData(
     } else {
       let frame = frames[0];
       let numberFields = frame.fields.filter((field) => field.type === FieldType.number);
-      let allNamesNumeric = numberFields.every(
-        (field) => !Number.isNaN(parseSampleValue(field.state?.displayName ?? ''))
-      );
+      let allNamesNumeric = numberFields.every((field) => !Number.isNaN(parseSampleValue(field.state?.displayName!)));
 
       if (allNamesNumeric) {
-        numberFields.sort((a, b) => parseSampleValue(a.name) - parseSampleValue(b.name));
+        numberFields.sort((a, b) => parseSampleValue(a.state?.displayName!) - parseSampleValue(b.state?.displayName!));
 
         rowsHeatmap = {
           ...frame,
