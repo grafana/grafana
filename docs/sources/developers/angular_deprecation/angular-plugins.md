@@ -539,7 +539,6 @@ Lack of recent activity in the [project repository](https://github.com/algenty/g
 
 > **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
 
-
 ### [HTML](https://grafana.com/grafana/plugins/aidanmountford-html-panel/)
 
 Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
@@ -873,4 +872,3 @@ Latest Version: 1.2.2 | Signature: Community | Last Updated: 2021
 {{% admonition type="warning" %}}
 Unknown whether migration to React will be undertaken - [migration issue](https://github.com/zuburqan/grafana-parity-report/issues/17).
 {{% /admonition %}}
-
