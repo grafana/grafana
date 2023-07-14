@@ -47,6 +47,10 @@ jest.mock('rxjs', () => ({
 }));
 
 describe('Handles open/close splits and related events in UI and URL', () => {
+  afterEach(() => {
+    tearDown();
+  });
+
   it('opens the split pane when split button is clicked', async () => {
     const { location } = setupExplore();
 
