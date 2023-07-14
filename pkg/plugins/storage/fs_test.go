@@ -27,25 +27,24 @@ func TestAdd(t *testing.T) {
 	pluginID := "test-app"
 
 	fs := FileSystem(log.NewTestPrettyLogger(), testDir)
-	archive, err := fs.Extract(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
+	archive, err := fs.Extract(context.Background(), pluginID, SimpleDirNameGeneratorFunc, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
 	require.NotNil(t, archive)
 	require.NoError(t, err)
 
 	// verify extracted contents
-	files, err := os.ReadDir(filepath.Join(testDir, pluginID))
+	files, err := os.ReadDir(archive.Path)
 	require.NoError(t, err)
-	file2, err := files[2].Info()
-	require.NoError(t, err)
-	file4, err := files[4].Info()
-	require.NoError(t, err)
-
 	require.Len(t, files, 6)
 	require.Equal(t, files[0].Name(), "MANIFEST.txt")
 	require.Equal(t, files[1].Name(), "dashboards")
 	require.Equal(t, files[2].Name(), "extra")
+	file2, err := files[2].Info()
+	require.NoError(t, err)
 	require.Equal(t, os.ModeSymlink, file2.Mode()&os.ModeSymlink)
 	require.Equal(t, files[3].Name(), "plugin.json")
 	require.Equal(t, files[4].Name(), "symlink_to_txt")
+	file4, err := files[4].Info()
+	require.NoError(t, err)
 	require.Equal(t, os.ModeSymlink, file4.Mode()&os.ModeSymlink)
 	require.Equal(t, files[5].Name(), "text.txt")
 }
@@ -59,27 +58,27 @@ func TestExtractFiles(t *testing.T) {
 		skipWindows(t)
 
 		pluginID := "grafana-simple-json-datasource"
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip"), pluginID)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip"), pluginID, SimpleDirNameGeneratorFunc)
 		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
 		// File in zip has permissions 755
-		fileInfo, err := os.Stat(filepath.Join(pluginsDir, "grafana-simple-json-datasource", "simple-plugin_darwin_amd64"))
+		fileInfo, err := os.Stat(filepath.Join(path, "simple-plugin_darwin_amd64"))
 		require.NoError(t, err)
 		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		// File in zip has permission 755
-		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/simple-plugin_linux_amd64")
+		fileInfo, err = os.Stat(filepath.Join(path, "simple-plugin_linux_amd64"))
 		require.NoError(t, err)
 		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		// File in zip has permission 644
-		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/simple-plugin_windows_amd64.exe")
+		fileInfo, err = os.Stat(filepath.Join(path, "simple-plugin_windows_amd64.exe"))
 		require.NoError(t, err)
 		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		// File in zip has permission 755
-		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/non-plugin-binary")
+		fileInfo, err = os.Stat(filepath.Join(path, "non-plugin-binary"))
 		require.NoError(t, err)
 		require.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 	})
@@ -88,43 +87,43 @@ func TestExtractFiles(t *testing.T) {
 		skipWindows(t)
 
 		pluginID := "plugin-with-symlink"
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink.zip"), pluginID)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink.zip"), pluginID, SimpleDirNameGeneratorFunc)
 		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
-		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
+		_, err = os.Stat(filepath.Join(path, "symlink_to_txt"))
 		require.NoError(t, err)
 
-		target, err := filepath.EvalSymlinks(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
+		target, err := filepath.EvalSymlinks(filepath.Join(path, "symlink_to_txt"))
 		require.NoError(t, err)
-		require.Equal(t, pluginsDir+"/plugin-with-symlink/text.txt", target)
+		require.Equal(t, filepath.Join(path, "text.txt"), target)
 	})
 
 	t.Run("Should extract directory with relative symlink", func(t *testing.T) {
 		skipWindows(t)
 
 		pluginID := "plugin-with-symlink-dir"
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink-dir.zip"), pluginID)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-symlink-dir.zip"), pluginID, SimpleDirNameGeneratorFunc)
 		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
-		_, err = os.Stat(pluginsDir + "/plugin-with-symlink-dir/symlink_to_dir")
+		_, err = os.Stat(filepath.Join(path, "symlink_to_dir"))
 		require.NoError(t, err)
 
-		target, err := filepath.EvalSymlinks(pluginsDir + "/plugin-with-symlink-dir/symlink_to_dir")
+		target, err := filepath.EvalSymlinks(filepath.Join(path, "symlink_to_dir"))
 		require.NoError(t, err)
-		require.Equal(t, pluginsDir+"/plugin-with-symlink-dir/dir", target)
+		require.Equal(t, filepath.Join(path, "dir"), target)
 	})
 
 	t.Run("Should not extract file with absolute symlink", func(t *testing.T) {
 		skipWindows(t)
 
 		pluginID := "plugin-with-absolute-symlink"
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink.zip"), pluginID)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink.zip"), pluginID, SimpleDirNameGeneratorFunc)
 		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
-		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink/test.txt")
+		_, err = os.Stat(filepath.Join(path, "/test.txt"))
 		require.True(t, os.IsNotExist(err))
 	})
 
@@ -132,16 +131,16 @@ func TestExtractFiles(t *testing.T) {
 		skipWindows(t)
 
 		pluginID := "plugin-with-absolute-symlink-dir"
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink-dir.zip"), pluginID)
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-symlink-dir.zip"), pluginID, SimpleDirNameGeneratorFunc)
 		require.Equal(t, filepath.Join(pluginsDir, pluginID), path)
 		require.NoError(t, err)
 
-		_, err = os.Stat(pluginsDir + "/plugin-with-absolute-symlink-dir/target")
+		_, err = os.Stat(filepath.Join(path, "/plugin-with-absolute-symlink-dir/target"))
 		require.True(t, os.IsNotExist(err))
 	})
 
 	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-parent-member.zip"), "plugin-with-parent-member")
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-parent-member.zip"), "plugin-with-parent-member", SimpleDirNameGeneratorFunc)
 		require.Empty(t, path)
 		require.EqualError(t, err, fmt.Sprintf(
 			`archive member "../member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
@@ -150,7 +149,7 @@ func TestExtractFiles(t *testing.T) {
 	})
 
 	t.Run("Should detect if archive members are absolute", func(t *testing.T) {
-		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-member.zip"), "plugin-with-absolute-member")
+		path, err := i.extractFiles(context.Background(), zipFile(t, "testdata/plugin-with-absolute-member.zip"), "plugin-with-absolute-member", SimpleDirNameGeneratorFunc)
 		require.Empty(t, path)
 		require.EqualError(t, err, fmt.Sprintf(
 			`archive member "/member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,

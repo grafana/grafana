@@ -5,6 +5,7 @@ pull_secret = "dockerconfigjson"
 drone_token = "drone_token"
 prerelease_bucket = "prerelease_bucket"
 gcp_upload_artifacts_key = "gcp_upload_artifacts_key"
+gcp_download_build_container_assets_key = "gcp_download_build_container_assets_key"
 azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
@@ -36,6 +37,11 @@ def secrets():
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
+            "credentials.json",
+        ),
+        vault_secret(
+            gcp_download_build_container_assets_key,
+            "infra/data/ci/grafana/assets-downloader-build-container-service-account",
             "credentials.json",
         ),
         vault_secret(
@@ -83,21 +89,6 @@ def secrets():
             "packages_secret_access_key",
             "infra/data/ci/packages-publish/bucket-credentials",
             "Secret",
-        ),
-        vault_secret(
-            "aws_region",
-            "secret/data/common/aws-marketplace",
-            "aws_region",
-        ),
-        vault_secret(
-            "aws_access_key_id",
-            "secret/data/common/aws-marketplace",
-            "aws_access_key_id",
-        ),
-        vault_secret(
-            "aws_secret_access_key",
-            "secret/data/common/aws-marketplace",
-            "aws_secret_access_key",
         ),
         vault_secret(
             "static_asset_editions",
