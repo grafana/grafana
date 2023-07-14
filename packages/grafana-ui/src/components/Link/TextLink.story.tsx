@@ -29,27 +29,36 @@ const meta: Meta = {
     },
     inline: { control: 'boolean' },
   },
+  args: {
+    variant: 'body',
+    weight: 'light',
+    color: undefined,
+    inline: false,
+    href: 'https://www.google.com',
+    external: true,
+    icon: 'external-link-alt',
+  },
 };
 
-export const Example: StoryFn = () => {
+export const Example: StoryFn = (args) => {
   return (
     <VerticalGroup>
       <StoryExample name="This is a 'inline + external' link with the default behaviour">
         <P>
           To get started with a forever free Grafana Cloud account, sign up at &#160;
-          <TextLink href="https://grafana.com/" external>
+          <TextLink href="https://grafana.com/" external {...args}>
             grafana.com
           </TextLink>
           .
         </P>
       </StoryExample>
       <StoryExample name="This is a 'standalone + external' link with the default behaviour">
-        <TextLink href="https://grafana.com/docs/grafana/latest/" inline={false} external>
+        <TextLink href="https://grafana.com/docs/grafana/latest/" inline={false} external {...args}>
           Learn how in the docs
         </TextLink>
       </StoryExample>
       <hr />
-      <p>*The examples cannot contemplate an internal link due to conflicts between Storybook and React Router</p>
+      <P>*The examples cannot contemplate an internal link due to conflicts between Storybook and React Router</P>
     </VerticalGroup>
   );
 };
@@ -66,15 +75,6 @@ export const Basic: StoryFn = (args) => {
       </TextLink>
     </div>
   );
-};
-Basic.args = {
-  variant: 'bodySmall',
-  weight: 'light',
-  color: undefined,
-  inline: false,
-  href: 'https://www.google.com',
-  external: true,
-  icon: 'external-link-alt',
 };
 
 export default meta;
