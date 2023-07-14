@@ -28,7 +28,7 @@ export async function decorateSystemJSFetch(
     }
 
     // JS files on the CDN need their asset paths transformed in the source
-    if (res.url.startsWith(config.pluginsCDNBaseURL)) {
+    if (isHostedOnCDN(res.url)) {
       const cdnTransformedSrc = transformPluginSourceForCDN({ url: res.url, source: transformedSrc });
       return new Response(new Blob([cdnTransformedSrc], { type: 'text/javascript' }));
     }
@@ -44,19 +44,20 @@ export function decorateSystemJSResolve(
   id: string,
   parentUrl?: string
 ) {
-  const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && id.startsWith(config.pluginsCDNBaseURL);
+  const isFileSystemModule = id.endsWith('module.js') && !isHostedOnCDN(id);
+  const idWithAppSubUrlMaybe = isFileSystemModule ? `${config.appSubUrl ?? ''}${id}` : id;
+
   try {
-    const url = originalResolve.apply(this, [id, parentUrl]);
+    const url = originalResolve.apply(this, [idWithAppSubUrlMaybe, parentUrl]);
     const cleanedUrl = getBackWardsCompatibleUrl(url);
     // Add a cache query param for filesystem module.js requests
     // CDN hosted plugins contain the version in the path so skip
-    const shouldAddCacheQueryParam = cleanedUrl.endsWith('module.js') && !isHostedAtCDN;
-
-    return shouldAddCacheQueryParam ? resolveWithCache(cleanedUrl) : cleanedUrl;
+    return isFileSystemModule ? resolveWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
     // Provide fallback for old plugins that use `loadPluginCss` to load theme styles
+    // Only affect plugins on the filesystem.
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
-      return `/public/${id}`;
+      return `${config.appSubUrl ?? ''}/public/${id}`;
     }
     console.log(`SystemJS: failed to resolve '${id}'`);
     return id;
@@ -93,4 +94,8 @@ function preventAMDLoaderCollision(source: string) {
   return `(function(define) {
   ${source}
 })(window.__grafana_amd_define);`;
+}
+
+function isHostedOnCDN(path: string) {
+  return Boolean(config.pluginsCDNBaseURL) && path.startsWith(config.pluginsCDNBaseURL);
 }
