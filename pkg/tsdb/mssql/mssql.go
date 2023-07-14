@@ -97,7 +97,7 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		driverName := "mssql"
 		// register a new proxy driver if the secure socks proxy is enabled
 		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
-		if sdkproxy.SecureSocksProxyEnabled(proxyOpts) {
+		if sdkproxy.ProxyCli.SecureSocksProxyEnabled(proxyOpts) {
 			driverName, err = createMSSQLProxyDriver(cnnstr, proxyOpts)
 			if err != nil {
 				return nil, err

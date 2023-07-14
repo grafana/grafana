@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.SecureSocksProxyConfig {
+func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ProxyClientCfg {
 	t.Helper()
 	proxyAddress := "localhost:3000"
 	serverName := "localhost"
@@ -89,15 +89,15 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.SecureSocksProxyC
 	})
 	require.NoError(t, err)
 
-	settings := &sdkproxy.SecureSocksProxyConfig{
+	settings := &sdkproxy.ProxyClientCfg{
 		Enabled:      true,
 		ClientCert:   clientCert,
 		ClientKey:    clientKey,
 		RootCA:       rootCACert,
 		ServerName:   serverName,
-		ProxyAddress: proxyAddress}
+		ProxyAddress: proxyAddress,
+	}
 
-	sdkproxy.SetSecureSocksProxyConfig(settings)
-
+	sdkproxy.ProxyCli = sdkproxy.NewWithCfg(settings)
 	return settings
 }

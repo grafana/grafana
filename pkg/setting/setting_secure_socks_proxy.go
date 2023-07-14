@@ -43,14 +43,21 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 		return s, errors.New("proxy address required")
 	}
 
-	sdkproxy.SetSecureSocksProxyConfig(&sdkproxy.SecureSocksProxyConfig{
-		Enabled:      true,
-		ClientCert:   s.ClientCert,
-		ClientKey:    s.ClientKey,
-		RootCA:       s.RootCA,
-		ProxyAddress: s.ProxyAddress,
-		ServerName:   s.ServerName,
-	})
+	setDefaultProxyCli(s)
 
 	return s, nil
+}
+
+// setDefaultProxyCli overrides the default proxy cli for the sdk
+//
+// Note: Not optimal changing global state, but hard to not do in this case.
+func setDefaultProxyCli(cfg SecureSocksDSProxySettings) {
+	sdkproxy.ProxyCli = sdkproxy.NewWithCfg(&sdkproxy.ProxyClientCfg{
+		Enabled:      cfg.Enabled,
+		ClientCert:   cfg.ClientCert,
+		ClientKey:    cfg.ClientKey,
+		ServerName:   cfg.ServerName,
+		RootCA:       cfg.RootCA,
+		ProxyAddress: cfg.ProxyAddress,
+	})
 }
