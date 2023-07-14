@@ -32,9 +32,8 @@ export const TrendPanel = ({
 }: PanelProps<Options>) => {
   const { sync } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
-  const trendXFieldName = options.xField
-    ? options.xField
-    : data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
+  const trendXFieldName =
+    options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
 
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
