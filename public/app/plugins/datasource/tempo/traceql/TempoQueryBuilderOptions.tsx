@@ -18,6 +18,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
     query.limit = DEFAULT_LIMIT;
   }
 
+  if (!query.hasOwnProperty('streaming')) {
+    query.streaming = true;
+  }
+
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
   };
