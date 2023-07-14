@@ -108,29 +108,6 @@ def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, isP
 
     return step
 
-def clone_enterprise_step(source = "${DRONE_COMMIT}"):
-    """Clone the enterprise source into the ./grafana-enterprise directory.
-
-    Args:
-      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
-    Returns:
-      Drone step.
-    """
-    step = {
-        "name": "clone-enterprise",
-        "image": images["build_image"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        },
-        "commands": [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
-            "cd grafana-enterprise",
-            "git checkout {}".format(source),
-        ],
-    }
-
-    return step
-
 def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise", isPromote = False):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
@@ -170,109 +147,6 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
         step["failure"] = "ignore"
 
     return step
-
-def init_enterprise_step(ver_mode):
-    """Adds the enterprise deployment configuration into the source directory.
-
-    Args:
-      ver_mode: controls what revision of the OSS source to use.
-        If ver_mode is 'release', the step uses the tagged revision.
-        Otherwise, the DRONE_SOURCE_BRANCH is used.
-
-    Returns:
-      Drone step.
-    """
-    source_commit = ""
-    if ver_mode == "release":
-        source_commit = " ${DRONE_TAG}"
-        environment = {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        }
-        token = "--github-token $${GITHUB_TOKEN}"
-    elif ver_mode == "release-branch":
-        environment = {
-            "GITHUB_TOKEN": from_secret("github_token"),
-        }
-        token = "--github-token $${GITHUB_TOKEN}"
-    else:
-        environment = {}
-        token = ""
-    return {
-        "name": "init-enterprise",
-        "image": images["build_image"],
-        "depends_on": [
-            "clone-enterprise",
-            "grabpl",
-        ],
-        "environment": environment,
-        "commands": [
-            "mv bin/grabpl /tmp/",
-            "rmdir bin",
-            "mv grafana-enterprise /tmp/",
-            "/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}".format(
-                token,
-                source_commit,
-            ).rstrip(),
-            "mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json",
-            "mkdir bin",
-            "mv /tmp/grabpl bin/",
-        ],
-    }
-
-def windows_init_enterprise_steps(ver_mode):
-    """Performs init-enterprise steps in a Windows environment
-
-    Args:
-        ver_mode: in what mode should this be run
-
-    Returns:
-        A list of steps setting up an enterprise folder
-    """
-    if ver_mode == "release":
-        source = "${DRONE_TAG}"
-    elif ver_mode == "release-branch":
-        source = "$$env:DRONE_BRANCH"
-    else:
-        source = "main"
-
-    clone_cmds = [
-        'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
-        "cd grafana-enterprise",
-        "git checkout {}".format(source),
-    ]
-
-    init_cmds = [
-        # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
-        "cp -r grafana-enterprise C:\\App\\grafana-enterprise",
-        "rm -r -force grafana-enterprise",
-        "cp grabpl.exe C:\\App\\grabpl.exe",
-        "rm -force grabpl.exe",
-        "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}".format(source),
-        "cp C:\\App\\grabpl.exe grabpl.exe",
-    ]
-
-    steps = []
-    steps.extend(
-        [
-            download_grabpl_step(platform = "windows"),
-            {
-                "name": "clone",
-                "image": windows_images["wix_image"],
-                "environment": {
-                    "GITHUB_TOKEN": from_secret("github_token"),
-                },
-                "commands": clone_cmds,
-            },
-            {
-                "name": "windows-init",
-                "image": windows_images["wix_image"],
-                "commands": init_cmds,
-                "depends_on": ["clone"],
-                "environment": {"GITHUB_TOKEN": from_secret("github_token")},
-            },
-        ],
-    )
-    return steps
 
 def download_grabpl_step(platform = "linux"):
     if platform == "windows":
@@ -514,11 +388,10 @@ def e2e_tests_artifacts():
         ],
     }
 
-def upload_cdn_step(edition, ver_mode, trigger = None):
+def upload_cdn_step(ver_mode, trigger = None):
     """Uploads CDN assets using the Grafana build tool.
 
     Args:
-      edition: controls the output directory for the CDN assets.
       ver_mode: only uses the step trigger when ver_mode == 'release-branch' or 'main'
       trigger: a Drone trigger for the step.
         Defaults to None.
@@ -526,41 +399,29 @@ def upload_cdn_step(edition, ver_mode, trigger = None):
     Returns:
       Drone step.
     """
-    deps = []
-    if edition in "enterprise2":
-        deps.extend(
-            [
-                "package" + enterprise2_suffix(edition),
-            ],
-        )
-    else:
-        deps.extend(
-            [
-                "grafana-server",
-            ],
-        )
 
     step = {
-        "name": "upload-cdn-assets" + enterprise2_suffix(edition),
+        "name": "upload-cdn-assets",
         "image": images["publish_image"],
-        "depends_on": deps,
+        "depends_on": [
+            "grafana-server",
+        ],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": [
-            "./bin/build upload-cdn --edition {}".format(edition),
+            "./bin/build upload-cdn --edition oss",
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
     return step
 
-def build_backend_step(edition, ver_mode, variants = None):
+def build_backend_step(ver_mode, variants = None):
     """Build the backend code using the Grafana build tool.
 
     Args:
-      edition: controls which edition of the backend is built.
       ver_mode: if ver_mode != 'release', pass the DRONE_BUILD_NUMBER environment
         variable as the value for the --build-id option.
         TODO: is this option actually used by the build-backend subcommand?
@@ -578,22 +439,19 @@ def build_backend_step(edition, ver_mode, variants = None):
     # TODO: Convert number of jobs to percentage
     if ver_mode == "release":
         cmds = [
-            "./bin/build build-backend --jobs 8 --edition {} ${{DRONE_TAG}}".format(
-                edition,
-            ),
+            "./bin/build build-backend --jobs 8 --edition oss ${DRONE_TAG}",
         ]
     else:
         build_no = "${DRONE_BUILD_NUMBER}"
         cmds = [
-            "./bin/build build-backend --jobs 8 --edition {} --build-id {}{}".format(
-                edition,
+            "./bin/build build-backend --jobs 8 --edition oss --build-id {}{}".format(
                 build_no,
                 variants_str,
             ),
         ]
 
     return {
-        "name": "build-backend" + enterprise2_suffix(edition),
+        "name": "build-backend",
         "image": images["build_image"],
         "depends_on": [
             "wire-install",
@@ -602,11 +460,10 @@ def build_backend_step(edition, ver_mode, variants = None):
         "commands": cmds,
     }
 
-def build_frontend_step(edition, ver_mode):
+def build_frontend_step(ver_mode):
     """Build the frontend code using the Grafana build tool.
 
     Args:
-      edition: controls which edition of the frontend is built.
       ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
 
@@ -619,11 +476,11 @@ def build_frontend_step(edition, ver_mode):
     if ver_mode == "release":
         cmds = [
             "./bin/build build-frontend --jobs 8 " +
-            "--edition {} ${{DRONE_TAG}}".format(edition),
+            "--edition oss ${DRONE_TAG}",
         ]
     else:
         cmds = [
-            "./bin/build build-frontend --jobs 8 --edition {} ".format(edition) +
+            "./bin/build build-frontend --jobs 8 --edition oss" +
             "--build-id {}".format(build_no),
         ]
 
@@ -640,11 +497,10 @@ def build_frontend_step(edition, ver_mode):
         "commands": cmds,
     }
 
-def build_frontend_package_step(edition, ver_mode):
+def build_frontend_package_step(ver_mode):
     """Build the frontend packages using the Grafana build tool.
 
     Args:
-      edition: controls which edition of the frontend is built.
       ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
 
@@ -657,11 +513,11 @@ def build_frontend_package_step(edition, ver_mode):
     if ver_mode == "release":
         cmds = [
             "./bin/build build-frontend-packages --jobs 8 " +
-            "--edition {} ${{DRONE_TAG}}".format(edition),
+            "--edition oss ${DRONE_TAG}",
         ]
     else:
         cmds = [
-            "./bin/build build-frontend-packages --jobs 8 --edition {} ".format(edition) +
+            "./bin/build build-frontend-packages --jobs 8 --edition oss" +
             "--build-id {}".format(build_no),
             "yarn packages:pack",
             "./scripts/validate-npm-packages.sh",
@@ -680,7 +536,7 @@ def build_frontend_package_step(edition, ver_mode):
         "commands": cmds,
     }
 
-def build_plugins_step(edition, ver_mode):
+def build_plugins_step(ver_mode):
     if ver_mode != "pr":
         env = {
             "GRAFANA_API_KEY": from_secret("grafana_api_key"),
@@ -697,7 +553,7 @@ def build_plugins_step(edition, ver_mode):
         ],
         "commands": [
             # TODO: Use percentage for num jobs
-            "./bin/build  build-plugins --jobs 8 --edition {}".format(edition),
+            "./bin/build  build-plugins --jobs 8 --edition oss",
         ],
     }
 
@@ -729,50 +585,40 @@ def test_backend_integration_step():
         ],
     }
 
-def betterer_frontend_step(edition = "oss"):
+def betterer_frontend_step():
     """Run betterer on frontend code.
-
-    Args:
-      edition: controls whether enterprise code is also included in the source.
-        Defaults to 'oss'.
 
     Returns:
       Drone step.
     """
-    deps = []
-    if edition == "enterprise":
-        deps.extend(["init-enterprise"])
-    deps.extend(["yarn-install"])
+
     return {
         "name": "betterer-frontend",
         "image": images["build_image"],
-        "depends_on": deps,
+        "depends_on": [
+            "yarn-install",
+        ],
         "commands": [
             "yarn betterer ci",
         ],
     }
 
-def test_frontend_step(edition = "oss"):
+def test_frontend_step():
     """Runs tests on frontend code.
-
-    Args:
-      edition: controls whether enterprise code is also included in the source.
-        Defaults to 'oss'.
 
     Returns:
       Drone step.
     """
-    deps = []
-    if edition == "enterprise":
-        deps.extend(["init-enterprise"])
-    deps.extend(["yarn-install"])
+
     return {
         "name": "test-frontend",
         "image": images["build_image"],
         "environment": {
             "TEST_MAX_WORKERS": "50%",
         },
-        "depends_on": deps,
+        "depends_on": [
+            "yarn-install",
+        ],
         "commands": [
             "yarn run ci:test-frontend",
         ],
@@ -905,11 +751,10 @@ def codespell_step():
         ],
     }
 
-def package_step(edition, ver_mode):
+def package_step(ver_mode):
     """Packages Grafana with the Grafana build tool.
 
     Args:
-      edition: controls which edition of Grafana is packaged.
       ver_mode: controls whether the packages are signed for a release.
         If ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
@@ -919,7 +764,7 @@ def package_step(edition, ver_mode):
     """
     deps = [
         "build-plugins",
-        "build-backend" + enterprise2_suffix(edition),
+        "build-backend",
         "build-frontend",
         "build-frontend-packages",
     ]
@@ -943,29 +788,28 @@ def package_step(edition, ver_mode):
     # TODO: Use percentage for jobs
     if ver_mode == "release":
         cmds = [
-            "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
-            "{} ${{DRONE_TAG}}".format(sign_args),
+            "{}./bin/build package --jobs 8 --edition oss ".format(test_args) +
+            "{} $${{DRONE_TAG}}".format(sign_args),
         ]
     else:
         build_no = "${DRONE_BUILD_NUMBER}"
         cmds = [
-            "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
+            "{}./bin/build package --jobs 8 --edition oss ".format(test_args) +
             "--build-id {}{}".format(build_no, sign_args),
         ]
 
     return {
-        "name": "package" + enterprise2_suffix(edition),
+        "name": "package",
         "image": images["build_image"],
         "depends_on": deps,
         "environment": env,
         "commands": cmds,
     }
 
-def grafana_server_step(edition, port = 3001):
+def grafana_server_step(port = 3001):
     """Runs the grafana-server binary as a service.
 
     Args:
-      edition: controls which edition of grafana-server to run.
       port: port to listen on.
         Defaults to 3001.
 
@@ -973,8 +817,6 @@ def grafana_server_step(edition, port = 3001):
       Drone step.
     """
     environment = {"PORT": port, "ARCH": "linux-amd64"}
-    if edition == "enterprise":
-        environment["RUNDIR"] = "scripts/grafana-server/tmp-grafana-enterprise"
 
     return {
         "name": "grafana-server",
@@ -1072,12 +914,12 @@ def build_docs_website_step():
         ],
     }
 
-def copy_packages_for_docker_step(edition = None):
+def copy_packages_for_docker_step():
     return {
         "name": "copy-packages-for-docker",
         "image": images["build_image"],
         "depends_on": [
-            "package" + enterprise2_suffix(edition),
+            "package",
         ],
         "commands": [
             "ls dist/*.tar.gz*",
@@ -1085,11 +927,10 @@ def copy_packages_for_docker_step(edition = None):
         ],
     }
 
-def build_docker_images_step(edition, archs = None, ubuntu = False, publish = False):
+def build_docker_images_step(archs = None, ubuntu = False, publish = False):
     """Build Docker images using the Grafana build tool.
 
     Args:
-      edition: controls which repository the image is published to.
       archs: a list of architectures to build the image for.
         Defaults to None.
       ubuntu: controls whether the final image is built from an Ubuntu base image.
@@ -1100,7 +941,7 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
     Returns:
       Drone step.
     """
-    cmd = "./bin/build build-docker --edition {}".format(edition)
+    cmd = "./bin/build build-docker --edition oss"
     if publish:
         cmd += " --shouldSave"
 
@@ -1116,11 +957,6 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
         "GCP_KEY": from_secret("gcp_key"),
     }
 
-    if edition == "enterprise2":
-        environment.update(
-            {"DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo")},
-        )
-
     return {
         "name": "build-docker-images" + ubuntu_sfx,
         "image": images["cloudsdk_image"],
@@ -1133,27 +969,24 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
         "environment": environment,
     }
 
-def fetch_images_step(edition):
+def fetch_images_step():
     return {
-        "name": "fetch-images-{}".format(edition),
+        "name": "fetch-images",
         "image": images["cloudsdk_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
-            "DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo"),
         },
-        "commands": ["./bin/build artifacts docker fetch --edition {}".format(edition)],
+        "commands": ["./bin/build artifacts docker fetch --edition oss"],
         "depends_on": ["compile-build-cmd"],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def publish_images_step(edition, ver_mode, docker_repo, trigger = None):
+def publish_images_step(ver_mode, docker_repo, trigger = None):
     """Generates a step for publishing public Docker images with grabpl.
 
     Args:
-      edition: controls which version of an image is fetched in the case of a release.
-        It also controls which publishing implementation is used.
       ver_mode: controls whether the image needs to be built or retrieved from a previous build.
         If ver_mode == 'release', the previously built image is fetched instead of being built again.
       docker_repo: the Docker image name.
@@ -1182,21 +1015,8 @@ def publish_images_step(edition, ver_mode, docker_repo, trigger = None):
 
     deps = ["build-docker-images", "build-docker-images-ubuntu"]
     if ver_mode == "release":
-        deps = ["fetch-images-{}".format(edition)]
+        deps = ["fetch-images"]
         cmd += " --version-tag ${DRONE_TAG}"
-
-    if edition == "enterprise2":
-        name = edition
-        docker_repo = "$${DOCKER_ENTERPRISE2_REPO}"
-        environment.update(
-            {
-                "GCP_KEY": from_secret("gcp_key_hg"),
-                "DOCKER_ENTERPRISE2_REPO": from_secret("docker_enterprise2_repo"),
-            },
-        )
-        cmd = "./bin/build artifacts docker publish-enterprise2 --dockerhub-repo {}".format(
-            docker_repo,
-        )
 
     if ver_mode == "pr":
         environment = {
@@ -1340,16 +1160,10 @@ def release_canary_npm_packages_step(trigger = None):
         )
     return step
 
-def enterprise2_suffix(edition):
-    if edition == "enterprise2":
-        return "-{}".format(edition)
-    return ""
-
-def upload_packages_step(edition, ver_mode, trigger = None):
+def upload_packages_step(ver_mode, trigger = None):
     """Upload packages to object storage.
 
     Args:
-      edition: controls which edition of Grafana packages to upload.
       ver_mode: when ver_mode == 'main', inhibit upload of enterprise
         edition packages when executed.
       trigger: a Drone trigger for the step.
@@ -1359,7 +1173,7 @@ def upload_packages_step(edition, ver_mode, trigger = None):
       Drone step.
     """
     step = {
-        "name": "upload-packages" + enterprise2_suffix(edition),
+        "name": "upload-packages",
         "image": images["publish_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
@@ -1367,18 +1181,17 @@ def upload_packages_step(edition, ver_mode, trigger = None):
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
-            "./bin/build upload-packages --edition {}".format(edition),
+            "./bin/build upload-packages --edition oss",
         ],
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
     return step
 
-def publish_grafanacom_step(edition, ver_mode):
+def publish_grafanacom_step(ver_mode):
     """Publishes Grafana packages to grafana.com.
 
     Args:
-      edition: controls which edition of Grafana to publish to.
       ver_mode: if ver_mode == 'main', pass the DRONE_BUILD_NUMBER environment
         variable as the value for the --build-id option.
         TODO: is this actually used by the grafanacom subcommand? I think it might
@@ -1388,20 +1201,17 @@ def publish_grafanacom_step(edition, ver_mode):
       Drone step.
     """
     if ver_mode == "release":
-        cmd = "./bin/build publish grafana-com --edition {} ${{DRONE_TAG}}".format(
-            edition,
-        )
+        cmd = "./bin/build publish grafana-com --edition oss ${DRONE_TAG}"
     elif ver_mode == "main":
         build_no = "${DRONE_BUILD_NUMBER}"
-        cmd = "./bin/build publish grafana-com --edition {} --build-id {}".format(
-            edition,
+        cmd = "./bin/build publish grafana-com --edition oss --build-id {}".format(
             build_no,
         )
     else:
         fail("Unexpected version mode {}".format(ver_mode))
 
     return {
-        "name": "publish-grafanacom-{}".format(edition),
+        "name": "publish-grafanacom",
         "image": images["publish_image"],
         "depends_on": [
             "publish-linux-packages-deb",
@@ -1416,7 +1226,7 @@ def publish_grafanacom_step(edition, ver_mode):
         ],
     }
 
-def publish_linux_packages_step(edition, package_manager = "deb"):
+def publish_linux_packages_step(package_manager = "deb"):
     return {
         "name": "publish-linux-packages-{}".format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
@@ -1432,8 +1242,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
             "gpg_passphrase": from_secret("packages_gpg_passphrase"),
             "gpg_public_key": from_secret("packages_gpg_public_key"),
             "gpg_private_key": from_secret("packages_gpg_private_key"),
-            "package_path": "gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/{}/**.{}".format(
-                edition,
+            "package_path": "gs://grafana-prerelease/artifacts/downloads/*$${{DRONE_TAG}}/oss/**.{}".format(
                 package_manager,
             ),
         },
@@ -1452,11 +1261,10 @@ def windows_clone_step():
         ],
     }
 
-def get_windows_steps(edition, ver_mode):
+def get_windows_steps(ver_mode):
     """Generate the list of Windows steps.
 
     Args:
-      edition: used to differentiate steps for different Grafana editions.
       ver_mode: used to differentiate steps for different version modes.
 
     Returns:
@@ -1466,80 +1274,24 @@ def get_windows_steps(edition, ver_mode):
         identify_runner_step("windows"),
     ]
 
-    if edition in ("enterprise", "enterprise2"):
-        if ver_mode == "release":
-            source = "${DRONE_TAG}"
-        elif ver_mode == "release-branch":
-            source = "$$env:DRONE_BRANCH"
-        else:
-            source = "$$env:DRONE_COMMIT"
+    init_cmds = [
+        '$$ProgressPreference = "SilentlyContinue"',
+        "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
+            grabpl_version,
+        ),
+    ]
 
-        # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
-        download_grabpl_cmds = [
-            '$$ProgressPreference = "SilentlyContinue"',
-            "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
-                grabpl_version,
-            ),
-        ]
+    steps.extend(
+        [
+            {
+                "name": "windows-init",
+                "image": windows_images["wix_image"],
+                "commands": init_cmds,
+            },
+        ],
+    )
 
-        clone_cmds = [
-            'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
-            "cd grafana-enterprise",
-            "git checkout {}".format(source),
-        ]
-
-        init_cmds = [
-            # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
-            "cp -r grafana-enterprise C:\\App\\grafana-enterprise",
-            "rm -r -force grafana-enterprise",
-            "cp grabpl.exe C:\\App\\grabpl.exe",
-            "rm -force grabpl.exe",
-            "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}".format(source),
-            "cp C:\\App\\grabpl.exe grabpl.exe",
-        ]
-
-        steps.extend(
-            [
-                {
-                    "name": "clone",
-                    "image": windows_images["wix_image"],
-                    "environment": {
-                        "GITHUB_TOKEN": from_secret("github_token"),
-                    },
-                    "commands": download_grabpl_cmds + clone_cmds,
-                },
-                {
-                    "name": "windows-init",
-                    "image": windows_images["wix_image"],
-                    "commands": init_cmds,
-                    "depends_on": ["clone"],
-                    "environment": {"GITHUB_TOKEN": from_secret("github_token")},
-                },
-            ],
-        )
-    else:
-        init_cmds = [
-            '$$ProgressPreference = "SilentlyContinue"',
-            "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
-                grabpl_version,
-            ),
-        ]
-
-        steps.extend(
-            [
-                {
-                    "name": "windows-init",
-                    "image": windows_images["wix_image"],
-                    "commands": init_cmds,
-                },
-            ],
-        )
-
-    # TODO: Run windows backend tests
-
-    if (
-        ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))
-    ) or ver_mode in (
+    if ver_mode in (
         "release",
         "release-branch",
     ):
@@ -1561,13 +1313,11 @@ def get_windows_steps(edition, ver_mode):
             "rm gcpkey.json",
             "cp C:\\App\\nssm-2.24.zip .",
         ]
-        if (
-            ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))
-        ) or ver_mode in ("release",):
+
+        if ver_mode in ("release",):
             installer_commands.extend(
                 [
-                    ".\\grabpl.exe windows-installer --edition {} {}".format(
-                        edition,
+                    ".\\grabpl.exe windows-installer --edition oss {}".format(
                         ver_part,
                     ),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
@@ -1576,10 +1326,9 @@ def get_windows_steps(edition, ver_mode):
             if ver_mode == "main":
                 installer_commands.extend(
                     [
-                        "gsutil cp $$fname gs://{}/{}/{}/".format(bucket, edition, dir),
-                        'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(
+                        "gsutil cp $$fname gs://{}/oss/{}/".format(bucket, dir),
+                        'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
                             bucket,
-                            edition,
                             dir,
                         ),
                     ],
@@ -1587,16 +1336,14 @@ def get_windows_steps(edition, ver_mode):
             else:
                 installer_commands.extend(
                     [
-                        "gsutil cp $$fname gs://{}/{}/{}/{}/".format(
+                        "gsutil cp $$fname gs://{}/{}/oss/{}/".format(
                             bucket,
                             ver_part,
-                            edition,
                             dir,
                         ),
-                        'gsutil cp "$$fname.sha256" gs://{}/{}/{}/{}/'.format(
+                        'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(
                             bucket,
                             ver_part,
-                            edition,
                             dir,
                         ),
                     ],
@@ -1685,12 +1432,9 @@ def end_to_end_tests_deps():
         "end-to-end-tests-various-suite",
     ]
 
-def compile_build_cmd(edition = "oss"):
+def compile_build_cmd():
     dependencies = []
-    if edition in ("enterprise", "enterprise2"):
-        dependencies = [
-            "init-enterprise",
-        ]
+
     return {
         "name": "compile-build-cmd",
         "image": images["go_image"],
