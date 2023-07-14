@@ -298,12 +298,12 @@ describe('Logs', () => {
       const row = screen.getAllByRole('row');
       await userEvent.hover(row[0]);
 
-      const linkButtons = row[1].querySelectorAll('button');
-      await userEvent.click(linkButtons[2]);
+      const linkButton = screen.getByLabelText('Copy shortlink');
+      await userEvent.click(linkButton);
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
         datasourceType: 'unknown',
-        logRowUid: '2',
+        logRowUid: '1',
         logRowLevel: 'debug',
       });
     });
@@ -315,11 +315,11 @@ describe('Logs', () => {
       const row = screen.getAllByRole('row');
       await userEvent.hover(row[0]);
 
-      const linkButtons = row[1].querySelectorAll('button');
-      await userEvent.click(linkButtons[2]);
+      const linkButton = screen.getByLabelText('Copy shortlink');
+      await userEvent.click(linkButton);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
-        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%222%22%7D%7D%7D'
+        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%221%22%7D%7D%7D'
       );
     });
   });
