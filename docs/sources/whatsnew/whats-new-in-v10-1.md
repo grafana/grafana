@@ -25,3 +25,17 @@ Description. Include an overview of the feature and problem it solves, and where
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
 {{% /admonition %}}
 -->
+
+## Dashboards and visualizations
+
+### Disconnect values in time series, trend, and state timeline visualizations
+
+_Generally available in all editions of Grafana._
+
+<!-- Nathan Marrs -->
+
+You can now choose whether to set a threshold above which values in the data should be disconnected. This can be useful in cases where you have sensors that report a value at a set interval, but you want to disconnect the values when the sensor does not respond. This feature complements the existing [connect null values functionality]({{< relref "../panels-visualizations/visualizations/time-series/#connect-null-values" >}}).
+
+To learn more, refer to our [disconnect values documentation]({{< relref "../panels-visualizations/visualizations/time-series/#disconnect-values" >}}).
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
