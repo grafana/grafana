@@ -39,7 +39,6 @@ def lint_backend_pipeline(trigger, ver_mode):
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(enterprise_setup_step())
-        wire_step["depends_on"].append("clone-enterprise")
 
     init_steps.append(wire_step)
 
@@ -52,7 +51,6 @@ def lint_backend_pipeline(trigger, ver_mode):
 
     return pipeline(
         name = "{}-lint-backend".format(ver_mode),
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = init_steps + test_steps,
