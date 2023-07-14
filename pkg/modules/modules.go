@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/systemd"
 )
@@ -35,10 +36,13 @@ type service struct {
 	moduleManager  *modules.Manager
 	serviceManager *services.Manager
 	serviceMap     map[string]services.Service
+
+	features *featuremgmt.FeatureManager
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
+	features *featuremgmt.FeatureManager,
 ) *service {
 	logger := log.New("modules")
 
@@ -49,12 +53,17 @@ func ProvideService(
 
 		moduleManager: modules.NewManager(logger),
 		serviceMap:    map[string]services.Service{},
+
+		features: features,
 	}
 }
 
 // Init initializes all registered modules.
 func (m *service) Init(_ context.Context) error {
 	var err error
+
+	// enable or disable targets based on feature flags
+	m.targets = m.processFeatureFlags()
 
 	m.log.Debug("Initializing module manager", "targets", m.targets)
 	for mod, targets := range dependencyMap {
@@ -152,4 +161,20 @@ func (m *service) RegisterInvisibleModule(name string, initFn func() (services.S
 // IsModuleEnabled returns true if the module is enabled.
 func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
+}
+
+// processFeatureFlags adds or removes targets based on feature flags.
+func (m *service) processFeatureFlags() []string {
+	targets := m.targets
+	if m.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
+		targets = append(targets, GrafanaAPIServer)
+	} else {
+		// remove GrafanaAPIServer from targets
+		for i, t := range m.targets {
+			if t == GrafanaAPIServer {
+				targets = append(targets[:i], targets[i+1:]...)
+			}
+		}
+	}
+	return targets
 }
