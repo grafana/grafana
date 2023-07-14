@@ -35,6 +35,7 @@ import {
 } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from '../../mocks/grafana-notifiers';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -69,19 +70,6 @@ const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   numExternalAlertmanagers: 0,
 };
 
-const renderReceivers = (alertManagerSourceName?: string) => {
-  locationService.push(
-    '/alerting/notifications' +
-      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
-  );
-
-  return render(
-    <TestProvider>
-      <Receivers />
-    </TestProvider>
-  );
-};
-
 const dataSources = {
   alertManager: mockDataSource({
     name: 'CloudManager',
@@ -94,6 +82,21 @@ const dataSources = {
       implementation: AlertManagerImplementation.prometheus,
     },
   }),
+};
+
+const renderReceivers = (alertManagerSourceName?: string) => {
+  locationService.push(
+    '/alerting/notifications' +
+      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
+  );
+
+  return render(
+    <TestProvider>
+      <AlertmanagerProvider accessType="notification">
+        <Receivers />
+      </AlertmanagerProvider>
+    </TestProvider>
+  );
 };
 
 const ui = {
@@ -116,7 +119,6 @@ const ui = {
 
   channelFormContainer: byTestId('item-container'),
 
-  notificationError: byTestId('receivers-notification-error'),
   contactPointsCollapseToggle: byTestId('collapse-toggle'),
 
   inputs: {
@@ -210,25 +212,6 @@ describe('Receivers', () => {
     expect(mocks.api.fetchConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME);
     expect(mocks.api.fetchNotifiers).toHaveBeenCalledTimes(1);
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual(undefined);
-
-    // select external cloud alertmanager, check that data is retrieved and contents are rendered as appropriate
-    await clickSelectOption(ui.alertManagerPicker.get(), 'CloudManager');
-    await byText('cloud-receiver').find();
-    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
-    expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
-
-    await ui.receiversTable.find();
-    templatesTable = await ui.templatesTable.find();
-    templateRows = templatesTable.querySelectorAll('tbody tr');
-    expect(templateRows[0]).toHaveTextContent('foo template');
-    expect(templateRows).toHaveLength(1);
-    receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
-    expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
-    expect(receiverRows).toHaveLength(1);
-    expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
-
-    //should not render any notification error
-    expect(ui.notificationError.query()).not.toBeInTheDocument();
   });
 
   it('Grafana receiver can be tested', async () => {
@@ -593,9 +576,6 @@ describe('Receivers', () => {
 
       //
       await ui.receiversTable.find();
-      //should render notification error
-      expect(ui.notificationError.query()).toBeInTheDocument();
-      expect(ui.notificationError.get()).toHaveTextContent('1 error with contact points');
 
       const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
       expect(receiverRows[0]).toHaveTextContent('1 error');
@@ -665,9 +645,6 @@ describe('Receivers', () => {
 
       //
       await ui.receiversTable.find();
-      //should render notification error
-      expect(ui.notificationError.query()).toBeInTheDocument();
-      expect(ui.notificationError.get()).toHaveTextContent('1 error with contact points');
 
       const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
       expect(receiverRows[0]).toHaveTextContent('1 error');
@@ -700,8 +677,6 @@ describe('Receivers', () => {
       renderReceivers();
 
       await ui.receiversTable.find();
-      //should not render notification error
-      expect(ui.notificationError.query()).not.toBeInTheDocument();
       //contact points are not expandable
       expect(ui.contactPointsCollapseToggle.query()).not.toBeInTheDocument();
       //should render receivers, only one dynamic table
@@ -723,8 +698,6 @@ describe('Receivers', () => {
       renderReceivers();
 
       await ui.receiversTable.find();
-      //should not render notification error
-      expect(ui.notificationError.query()).not.toBeInTheDocument();
       //contact points are not expandable
       expect(ui.contactPointsCollapseToggle.query()).not.toBeInTheDocument();
       //should render receivers, only one dynamic table

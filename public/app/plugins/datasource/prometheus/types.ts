@@ -44,6 +44,7 @@ export interface PromOptions extends DataSourceJsonData {
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
+  disableRecordingRules?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {

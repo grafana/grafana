@@ -247,6 +247,10 @@ const (
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
 
+	// FlagLokiLogsDataplane
+	// Changes logs responses from Loki to be compliant with the dataplane specification.
+	FlagLokiLogsDataplane = "lokiLogsDataplane"
+
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
 	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
@@ -327,6 +331,14 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
+	// FlagDashboardEmbed
+	// Allow embedding dashboard for external use in Code editors
+	FlagDashboardEmbed = "dashboardEmbed"
+
+	// FlagFrontendSandboxMonitorOnly
+	// Enables monitor only in the plugin frontend sandbox (if enabled)
+	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
+
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
@@ -351,10 +363,6 @@ const (
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 
-	// FlagFlameGraphV2
-	// New version of flame graph with new features
-	FlagFlameGraphV2 = "flameGraphV2"
-
 	// FlagElasticToggleableFilters
 	// Enable support to toggle filters off from the query through the Logs Details component
 	FlagElasticToggleableFilters = "elasticToggleableFilters"
@@ -362,4 +370,24 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagPrometheusIncrementalQueryInstrumentation
+	// Adds RudderStack events to incremental queries
+	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
+
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+
+	// FlagAwsDatasourcesTempCredentials
+	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
+	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
+
+	// FlagTransformationsRedesign
+	// Enables the transformations redesign
+	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagMlExpressions
+	// Enable support for Machine Learning in server-side expressions
+	FlagMlExpressions = "mlExpressions"
 )

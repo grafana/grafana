@@ -14,7 +14,6 @@ interface PanelMenuProps {
   title?: string;
   placement?: TooltipPlacement;
   offset?: [number, number];
-  onVisibleChange?: (state: boolean) => void;
   onOpenMenu?: () => void;
 }
 
@@ -25,7 +24,6 @@ export function PanelMenu({
   offset,
   dragClassCancel,
   menuButtonClass,
-  onVisibleChange,
   onOpenMenu,
 }: PanelMenuProps) {
   const testId = title ? selectors.components.Panels.Panel.menu(title) : `panel-menu-button`;
@@ -35,9 +33,8 @@ export function PanelMenu({
       if (show && onOpenMenu) {
         onOpenMenu();
       }
-      return onVisibleChange;
     },
-    [onOpenMenu, onVisibleChange]
+    [onOpenMenu]
   );
 
   return (
