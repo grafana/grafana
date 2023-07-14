@@ -48,9 +48,10 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
-		if setting.Env != setting.Prod {
-			data.ErrorMsg = err
-		}
+		// TODO: Uncomment and restore
+		// if setting.Env != setting.Prod {
+		// 	data.ErrorMsg = err
+		// }
 	}
 
 	ctx.HTML(status, cfg.ErrTemplateName, data)
@@ -72,9 +73,10 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 			ctx.Logger.Warn(message, "error", err, "traceID", traceID)
 		}
 
-		if setting.Env != setting.Prod {
-			resp["error"] = err.Error()
-		}
+		// TODO: Uncomment and restore
+		// if setting.Env != setting.Prod {
+		// 	resp["error"] = err.Error()
+		// }
 	}
 
 	switch status {
