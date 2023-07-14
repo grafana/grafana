@@ -374,6 +374,13 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 		}
 
 		stringInput := model.StringInput
+		if strings.TrimSpace(stringInput) == "" {
+			qr := resp.Responses[q.RefID]
+			qr.Frames = data.Frames{
+				data.NewFrame("").SetMeta(&data.FrameMeta{ExecutedQueryString: stringInput}),
+			}
+			return resp, nil
+		}
 		valueField, err := csvLineToField(stringInput)
 		if err != nil {
 			return nil, err
