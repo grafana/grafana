@@ -375,17 +375,45 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (ac
 		}
 		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
 		if t == annotations.Dashboard.String() {
-			recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
-			if err != nil {
-				return acFilter{}, err
+			var filter string
+
+			if r.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+				recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
+				if err != nil {
+					return acFilter{}, err
+				}
+
+				filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
+				dashboardFilter, dashboardParams := filterRBAC.Where()
+				recQueries, recQueriesParams = filterRBAC.With()
+				filter = fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
+				params = dashboardParams
+
+			} else {
+				filterRBAC := permissions.NewDashboardFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, false)
+				where, filterParams := filterRBAC.Where()
+
+				var br strings.Builder
+				br.WriteString(`
+				a.dashboard_id IN(
+					SELECT dashboard.id FROM dashboard
+					LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id
+				`)
+
+				join := filterRBAC.LeftJoin()
+				if join != "" {
+					br.WriteString("LEFT OUTER JOIN " + join)
+				}
+
+				br.WriteString(" WHERE ")
+				br.WriteString(where)
+				br.WriteByte(')')
+
+				filter = br.String()
+				params = append(params, filterParams...)
 			}
 
-			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
-			dashboardFilter, dashboardParams := filterRBAC.Where()
-			recQueries, recQueriesParams = filterRBAC.With()
-			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
 			filters = append(filters, filter)
-			params = dashboardParams
 		}
 	}
 
