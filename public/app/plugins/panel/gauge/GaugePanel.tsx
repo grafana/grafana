@@ -31,6 +31,7 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
+        orientation={options.orientation}
       />
     );
   };
@@ -90,6 +91,8 @@ export class GaugePanel extends PureComponent<PanelProps<Options>> {
         autoGrid={true}
         renderCounter={renderCounter}
         orientation={options.orientation}
+        minVizHeight={options.minVizHeight}
+        minVizWidth={options.minVizWidth}
       />
     );
   }

@@ -9,6 +9,7 @@ import {
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   GrafanaTheme2,
+  VizOrientation,
 } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
@@ -28,6 +29,7 @@ export interface Props {
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
   theme: GrafanaTheme2;
+  orientation: VizOrientation;
 }
 
 export class Gauge extends PureComponent<Props> {
@@ -145,11 +147,15 @@ export class Gauge extends PureComponent<Props> {
   }
 
   renderVisualization = () => {
-    const { width, value, height, onClick, text, theme } = this.props;
+    const { width, value, height, onClick, text, theme, orientation } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
+
+    // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
+    const gaugeWidth = orientation === VizOrientation.Vertical ? `${autoProps.gaugeHeight}px` : '100%';
+
     const gaugeElement = (
       <div
-        style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
+        style={{ height: `${autoProps.gaugeHeight}px`, width: gaugeWidth }}
         ref={(element) => (this.canvasElement = element)}
       />
     );

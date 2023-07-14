@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, VizOrientation } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
@@ -37,6 +37,20 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
         name: 'Show threshold markers',
         description: 'Renders the thresholds as an outer bar',
         defaultValue: defaultOptions.showThresholdMarkers,
+      })
+      .addNumberInput({
+        path: 'minVizWidth',
+        name: 'Min width',
+        description: 'Minimum column width',
+        defaultValue: 250,
+        showIf: (options: Options) => options.orientation === VizOrientation.Vertical,
+      })
+      .addNumberInput({
+        path: 'minVizHeight',
+        name: 'Min height',
+        description: 'Minimum row height',
+        defaultValue: 200,
+        showIf: (options: Options) => options.orientation === VizOrientation.Horizontal,
       });
 
     commonOptionsBuilder.addTextSizeOptions(builder);
