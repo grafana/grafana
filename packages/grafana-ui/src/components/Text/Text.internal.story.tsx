@@ -51,7 +51,7 @@ const meta: Meta = {
     truncate: false,
     italic: false,
     color: 'primary',
-    children: 'This is a H1 component',
+    children: `This is an example of a Text component`,
   },
 };
 
