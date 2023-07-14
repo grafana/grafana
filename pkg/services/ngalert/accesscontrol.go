@@ -54,6 +54,7 @@ var (
 				},
 			}),
 		},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	rulesWriterRole = accesscontrol.RoleRegistration{
@@ -206,8 +207,8 @@ var (
 
 func DeclareFixedRoles(service accesscontrol.Service) error {
 	return service.DeclareFixedRoles(
-		rulesReaderRole, rulesWriterRole,
-		instancesReaderRole, instancesWriterRole,
+		externalRulesReaderRole, rulesReaderRole, externalRulesWriterRole,
+		rulesWriterRole, instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingProvisionerRole,
 	)

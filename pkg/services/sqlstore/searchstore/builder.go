@@ -102,8 +102,8 @@ func (b *Builder) applyFilters() (ordering string) {
 		if f, ok := f.(FilterLeftJoin); ok {
 			sql := f.LeftJoin()
 			if sql != "" {
-			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
-		}
+				joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+			}
 		}
 
 		if f, ok := f.(FilterWhere); ok {

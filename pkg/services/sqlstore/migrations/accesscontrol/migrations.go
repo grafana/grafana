@@ -186,5 +186,4 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
 		Cols: []string{"identifier"},
 	}))
-
 }

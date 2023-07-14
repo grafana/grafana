@@ -168,7 +168,6 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 				} else {
 					query.WriteString("(1 = 0 AND NOT dashboard.is_folder)")
 				}
-
 			}
 		} else {
 			query.WriteString("NOT dashboard.is_folder")

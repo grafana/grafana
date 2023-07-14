@@ -16,10 +16,12 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	t := time.Now()
 	var count = 0
 	err := db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		// TODO: DROP INDEXES IF EXISTS?
 		var permissions []accesscontrol.Permission
 
-		sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND kind = '' AND attribute = '' AND identifier = ''").Find(&permissions)
+		err := sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND kind = '' AND attribute = '' AND identifier = ''").Find(&permissions)
+		if err != nil {
+			return err
+		}
 
 		for i, p := range permissions {
 			count++

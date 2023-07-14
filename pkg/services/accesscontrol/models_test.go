@@ -136,5 +136,4 @@ func TestPermission_ScopeSplit(t *testing.T) {
 			assert.Equal(t, tt.identifier, identifier)
 		})
 	}
-
 }
