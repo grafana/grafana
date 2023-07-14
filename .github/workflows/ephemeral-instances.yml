@@ -6,6 +6,7 @@ on:
       types: [opened, reopened, closed]
 jobs:      
   handle-pull-request-event:
+    if: github.event.sender.type == 'User'
     runs-on: 
       labels: ubuntu-latest-8-cores
     continue-on-error: true
