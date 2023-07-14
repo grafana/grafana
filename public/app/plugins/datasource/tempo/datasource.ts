@@ -431,7 +431,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     query?: string
   ): Observable<DataQueryResponse> {
     const validTargets = targets
-      .filter((t) => t.query)
+      .filter((t) => t.query || query)
       .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
