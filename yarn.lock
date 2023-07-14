@@ -10415,30 +10415,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*":
-  version: 17.0.10
-  resolution: "@types/react-dom@npm:17.0.10"
-  dependencies:
-    "@types/react": "*"
-  checksum: cc7d8d5b77ee2f3b989c107abd8ec0f2460ba1b1ee6e6d637124e1939594b5619fa4166ef0ea7632a69b68358e0b71aa618de446ccc416dcc0017175549da601
-  languageName: node
-  linkType: hard
-
-"@types/react-dom@npm:18.2.7":
+"@types/react-dom@npm:*, @types/react-dom@npm:18.2.7, @types/react-dom@npm:^18.0.0":
   version: 18.2.7
   resolution: "@types/react-dom@npm:18.2.7"
   dependencies:
     "@types/react": "*"
   checksum: e02ea908289a7ad26053308248d2b87f6aeafd73d0e2de2a3d435947bcea0422599016ffd1c3e38ff36c42f5e1c87c7417f05b0a157e48649e4a02f21727d54f
-  languageName: node
-  linkType: hard
-
-"@types/react-dom@npm:^18.0.0":
-  version: 18.0.11
-  resolution: "@types/react-dom@npm:18.0.11"
-  dependencies:
-    "@types/react": "*"
-  checksum: 579691e4d5ec09688087568037c35edf8cfb1ab3e07f6c60029280733ee7b5c06d66df6fcc90786702c93ac8cb13bc7ff16c79ddfc75d082938fbaa36e1cdbf4
   languageName: node
   linkType: hard
 
@@ -10578,18 +10560,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:18.0.28":
-  version: 18.0.28
-  resolution: "@types/react@npm:18.0.28"
-  dependencies:
-    "@types/prop-types": "*"
-    "@types/scheduler": "*"
-    csstype: ^3.0.2
-  checksum: e752df961105e5127652460504785897ca6e77259e0da8f233f694f9e8f451cde7fa0709d4456ade0ff600c8ce909cfe29f9b08b9c247fa9b734e126ec53edd7
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.2.15":
+"@types/react@npm:*, @types/react@npm:18.2.15, @types/react@npm:>=16":
   version: 18.2.15
   resolution: "@types/react@npm:18.2.15"
   dependencies:
@@ -10600,14 +10571,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:>=16":
-  version: 18.0.33
-  resolution: "@types/react@npm:18.0.33"
+"@types/react@npm:18.0.28":
+  version: 18.0.28
+  resolution: "@types/react@npm:18.0.28"
   dependencies:
     "@types/prop-types": "*"
     "@types/scheduler": "*"
     csstype: ^3.0.2
-  checksum: 4fbd2b2b6a26378bdfde121081a6406ec2d39e4ba87ea5f6897ab7bb2198713165e6fd703ad4ed7ba1d4f23ef54a4c9f108f3105c7ed8e136411ee6bdebc5669
+  checksum: e752df961105e5127652460504785897ca6e77259e0da8f233f694f9e8f451cde7fa0709d4456ade0ff600c8ce909cfe29f9b08b9c247fa9b734e126ec53edd7
   languageName: node
   linkType: hard
 
