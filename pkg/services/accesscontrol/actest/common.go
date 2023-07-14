@@ -75,9 +75,14 @@ func ConcurrentBatch(workers, count, size int, eachFn func(start, end int) error
 func AddUserPermissionToDB(t testing.TB, db db.DB, user *user.SignedInUser) {
 	t.Helper()
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		if _, err := sess.Exec("DELETE FROM role WHERE uid = 'test_role'"); err != nil {
+		var oldRole accesscontrol.Role
+		hadOldRole, err := sess.SQL("SELECT * FROM role where uid = 'test_role'").Get(&oldRole)
+		if err != nil {
 			return err
 		}
+
+		_, err = sess.Exec("DELETE FROM role WHERE uid = 'test_role'")
+		require.NoError(t, err)
 
 		role := &accesscontrol.Role{
 			OrgID:   user.OrgID,
@@ -91,14 +96,18 @@ func AddUserPermissionToDB(t testing.TB, db db.DB, user *user.SignedInUser) {
 			return err
 		}
 
-		_, err := sess.Insert(accesscontrol.UserRole{
+		_, err = sess.Insert(accesscontrol.UserRole{
 			OrgID:   role.OrgID,
 			RoleID:  role.ID,
 			UserID:  user.UserID,
 			Created: time.Now(),
 		})
-		if err != nil {
-			return err
+		require.NoError(t, err)
+
+		if hadOldRole {
+			if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", oldRole.ID); err != nil {
+				return err
+			}
 		}
 
 		var permissions []accesscontrol.Permission
