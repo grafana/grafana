@@ -1,6 +1,7 @@
 import intersect from 'fast_array_intersect';
 
 import { getTimeField, sortDataFrame } from '../../dataframe';
+import { cacheFieldDisplayNames } from '../../field';
 import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
@@ -131,11 +132,13 @@ function copyField(field: Field, frameIndex: number, fieldIndex: number, keepOri
  * the default will use the first time field
  */
 export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
-  const { frames, mode = JoinMode.outer, keepOriginIndices = false } = options;
+  const { frames, mode = JoinMode.outer, keepOriginIndices = false, keep = () => true } = options;
 
   if (frames.length === 0) {
     return;
   }
+
+  // cacheFieldDisplayNames(frames);
 
   const joinFieldMatcher = getJoinMatcher(options);
 
@@ -143,83 +146,58 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   const allData: number[][][] = [];
   const allFields: Field[] = [];
 
-  for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
     const frame = frames[frameIndex];
 
-    if (!frame || !frame.fields?.length) {
-      continue; // skip the frame
-    }
+    const joinFieldIdx = frame.fields.findIndex((field) => joinFieldMatcher(field, frame, frames));
 
-    const joinField = frame.fields.find((field) => joinFieldMatcher(field, frame, frames));
-
-    if (joinField == null) {
-      continue; // skip the frame
+    if (joinFieldIdx === -1) {
+      continue;
+    } else if (allFields.length === 0) {
+      allFields.push(copyField(frame.fields[joinFieldIdx], frameIndex, joinFieldIdx, keepOriginIndices));
     }
 
     const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
-    const fields: Field[] = [];
+    const frameValues: number[][] = [frame.fields[joinFieldIdx].values];
 
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
 
-      if (field === joinField) {
-        if (allFields.length === 0) {
-          const fieldCopy = copyField(field, frameIndex, fieldIndex, keepOriginIndices);
+      if (fieldIndex !== joinFieldIdx && keep(field, frame, frames)) {
+        const copy = copyField(field, frameIndex, fieldIndex, keepOriginIndices);
 
-          // first join field
-          allFields.push(fieldCopy);
-        }
-      } else {
-        if (options.keep && !options.keep(field, frame, frames)) {
-          continue; // skip field
-        }
-
-        const fieldCopy = copyField(field, frameIndex, fieldIndex, keepOriginIndices);
-
-        // Support the standard graph span nulls field config
         let spanNulls = field.config.custom?.spanNulls;
         nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         if (frame.name) {
           if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
-            fieldCopy.name = frame.name;
+            copy.name = frame.name;
           } else {
-            fieldCopy.labels = { ...field.labels, name: frame.name };
+            copy.labels = { ...field.labels, name: frame.name };
           }
         }
 
-        fields.push(fieldCopy);
+        frameValues.push(copy.values);
+        allFields.push(copy);
       }
     }
 
     nullModes.push(nullModesFrame);
-    const frameValues: number[][] = [joinField.values];
-
-    for (const field of fields) {
-      frameValues.push(field.values);
-      allFields.push(field);
-      // clear field displayName state
-      delete field.state?.displayName;
-    }
-
     allData.push(frameValues);
   }
 
-  let joined: number[][];
   let cheap = frames.length === 1 || (mode === JoinMode.outer && canDoCheapOuterJoin(allData));
 
-  if (cheap) {
-    joined = [allData[0][0], ...allData.flatMap((table) => table.slice(1))];
-  } else {
-    joined = join(allData, nullModes, options.mode);
-  }
+  let joinedData = cheap
+    ? [allData[0][0], ...allData.flatMap((table) => table.slice(1))]
+    : join(allData, nullModes, mode);
 
   let joinedFrame = {
     // ...options.data[0], // keep name, meta?
-    length: joined[0].length,
+    length: joinedData[0].length,
     fields: allFields.map((f, index) => ({
       ...f,
-      values: joined[index],
+      values: joinedData[index],
     })),
   };
 
