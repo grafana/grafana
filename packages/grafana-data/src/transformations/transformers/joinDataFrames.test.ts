@@ -5,7 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 
 import { calculateFieldTransformer } from './calculateField';
 import { JoinMode } from './joinByField';
-import { cheapOuterJoinDataFrames, isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
+import { canDoCheapOuterJoin, isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -29,52 +29,9 @@ describe('align frames', () => {
       ],
     });
 
-    it('should perform cheap outer join', () => {
-      const out = cheapOuterJoinDataFrames({ frames: [series1, series2] })!;
-      expect(
-        out.fields.map((f) => ({
-          name: f.name,
-          values: f.values,
-        }))
-      ).toMatchInlineSnapshot(`
-        [
-          {
-            "name": "Time",
-            "values": [
-              1000,
-              2000,
-            ],
-          },
-          {
-            "name": "A",
-            "values": [
-              1,
-              100,
-            ],
-          },
-          {
-            "name": "A",
-            "values": [
-              2,
-              200,
-            ],
-          },
-          {
-            "name": "B",
-            "values": [
-              3,
-              300,
-            ],
-          },
-          {
-            "name": "C",
-            "values": [
-              "first",
-              "second",
-            ],
-          },
-        ]
-      `);
+    it('can perform cheap outer join', () => {
+      const can = canDoCheapOuterJoin([series1.fields.map((f) => f.values), series2.fields.map((f) => f.values)])!;
+      expect(can).toBe(true);
     });
   });
 

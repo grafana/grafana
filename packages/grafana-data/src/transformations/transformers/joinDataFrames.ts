@@ -84,104 +84,28 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
 /**
  * @internal
  *
- * checks if values of all joinBy fields match, then just cheaply glue the frames together
+ * checks if values of all joinBy fields match and are already sorted
  */
-export function cheapOuterJoinDataFrames(options: JoinOptions) {
-  if (options.frames.length === 1) {
-    return options.frames[0];
-  }
+export function canDoCheapOuterJoin(allData: number[][][]) {
+  let vals0 = allData[0][0];
 
-  const joinFieldMatcher = getJoinMatcher(options);
-
-  const joinFields = options.frames.map((frame, frameIndex) => {
-    let fieldIndex = frame.fields.findIndex((field) => joinFieldMatcher(field, frame, options.frames));
-
-    if (fieldIndex !== -1) {
-      let field = frame.fields[fieldIndex];
-
-      if (options.keepOriginIndices) {
-        field.state = {
-          ...field.state,
-          origin: {
-            frameIndex,
-            fieldIndex,
-          },
-        };
-      }
-
-      return field;
-    }
-
-    return null;
-  });
-
-  if (joinFields.indexOf(null) === -1 && isLikelyAscendingVector(joinFields[0]!.values)) {
-    let same = true;
-    let vals0 = joinFields[0]!.values;
-
-    loop: for (let i = 1; i < joinFields.length; i++) {
-      let vals1 = joinFields[i]!.values;
+  if (isLikelyAscendingVector(vals0)) {
+    for (let i = 1; i < allData.length; i++) {
+      let vals1 = allData[i][0];
 
       if (vals1.length !== vals0.length) {
-        same = false;
-        break loop;
+        return false;
       }
 
       for (let j = 0; j < vals0.length; j++) {
         if (vals1[j] !== vals0[j]) {
-          same = false;
-          break loop;
+          return false;
         }
       }
     }
 
-    if (!same) {
-      return null;
-    }
-
-    let joinedFrame = {
-      length: vals0.length,
-      fields: [
-        { ...joinFields[0]! },
-        ...options.frames.flatMap((frame, frameIndex) =>
-          frame.fields
-            .map((field, fieldIndex) => {
-              if (field === joinFields[frameIndex]) {
-                return null;
-              }
-
-              let fieldCopy = {
-                ...field,
-              };
-
-              if (frame.name) {
-                fieldCopy.labels = {
-                  ...fieldCopy.labels,
-                  name: frame.name,
-                };
-              }
-
-              if (options.keepOriginIndices) {
-                fieldCopy.state = {
-                  ...fieldCopy.state,
-                  origin: {
-                    frameIndex,
-                    fieldIndex,
-                  },
-                };
-              }
-
-              return fieldCopy;
-            })
-            .filter((field) => field != null)
-        ),
-      ],
-    };
-
-    return joinedFrame as DataFrame;
+    return true;
   }
-
-  return null;
 }
 
 /**
@@ -252,17 +176,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     return frameCopy;
   }
 
-  if (options.mode === JoinMode.outer) {
-    let joinedFrame = cheapOuterJoinDataFrames(options);
-
-    if (joinedFrame != null) {
-      // console.log('did cheapJoin!');
-      return joinedFrame;
-    }
-  }
-
   const nullModes: JoinNullMode[][] = [];
-  const allData: AlignedData[] = [];
+  const allData: number[][][] = [];
   const originalFields: Field[] = [];
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
@@ -327,7 +242,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     }
 
     nullModes.push(nullModesFrame);
-    const a: AlignedData = [join.values]; //
+    const a: number[][] = [join.values]; //
 
     for (const field of fields) {
       a.push(field.values);
@@ -339,7 +254,14 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes, options.mode);
+  let joined: number[][];
+
+  if (options.mode !== JoinMode.inner && canDoCheapOuterJoin(allData)) {
+    joined = [allData[0][0], ...allData.flatMap((table) => table.slice(1))];
+    console.log('cheapJoin!');
+  } else {
+    joined = join(allData, nullModes, options.mode);
+  }
 
   return {
     // ...options.data[0], // keep name, meta?
@@ -400,7 +322,7 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+export function join(tables: number[][][], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
   let xVals: Set<number>;
 
   if (mode === JoinMode.inner) {
@@ -471,7 +393,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: any[], samples = 50) {
+export function isLikelyAscendingVector(data: Array<number | null> | TypedArray, samples = 50) {
   const len = data.length;
 
   // empty or single value
@@ -502,7 +424,7 @@ export function isLikelyAscendingVector(data: any[], samples = 50) {
     const v = data[i];
 
     if (v != null) {
-      if (v <= prevVal) {
+      if (v <= prevVal!) {
         return false;
       }
 
