@@ -33,23 +33,25 @@
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
-/docs/                                    @Eve832 @jdbaldry
-/docs/sources/                            @Eve832
-/docs/sources/administration/             @Eve832 @GrafanaWriter
-/docs/sources/alerting/                   @brendamuir
-/docs/sources/dashboards/                 @imatwawana
-/docs/sources/datasources/                @lwandz13
-/docs/sources/explore/                    @Eve832 @GrafanaWriter
-/docs/sources/fundamentals                @chri2547
-/docs/sources/getting-started/            @chri2547
-/docs/sources/introduction/               @chri2547
-/docs/sources/old-alerting/               @brendamuir
-/docs/sources/panels-visualizations/      @imatwawana
-/docs/sources/release-notes/              @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/              @chri2547
-/docs/sources/upgrade-guide/              @chri2547 @imatwawana
-/docs/sources/whatsnew/                   @chri2547 @imatwawana
-/docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+# `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
+# Documentation sources might have different owners.
+/docs/                                                                       @grafana/docs-tooling
+/docs/sources/                                                               @Eve832
+/docs/sources/administration/                                                @Eve832 @GrafanaWriter
+/docs/sources/alerting/                                                      @brendamuir
+/docs/sources/dashboards/                                                    @imatwawana
+/docs/sources/datasources/                                                   @lwandz13
+/docs/sources/explore/                                                       @Eve832 @GrafanaWriter
+/docs/sources/fundamentals                                                   @chri2547
+/docs/sources/getting-started/                                               @chri2547
+/docs/sources/introduction/                                                  @chri2547
+/docs/sources/old-alerting/                                                  @brendamuir
+/docs/sources/panels-visualizations/                                         @imatwawana
+/docs/sources/release-notes/                                                 @Eve832 @GrafanaWriter
+/docs/sources/setup-grafana/                                                 @chri2547
+/docs/sources/upgrade-guide/                                                 @chri2547 @imatwawana
+/docs/sources/whatsnew/                                                      @chri2547 @imatwawana
+/docs/sources/developers/plugins/                                            @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/introduction-to-plugin-development/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
@@ -97,6 +99,7 @@
 /pkg/server/ @grafana/backend-platform
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/grafana-authnz-team
+/pkg/services/certgenerator @grafana/grafana-app-platform-squad
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/backend-platform
@@ -106,6 +109,7 @@
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
+/pkg/services/grafana-apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
 /pkg/services/licensing/ @grafana/backend-platform
@@ -444,7 +448,6 @@ lerna.json @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
-/public/testdata/ @grafana/grafana-frontend-platform
 /public/views/ @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
@@ -597,7 +600,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
-/.github/workflows/doc-validator.yml @grafana/docs-grafana
+/.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @torkelo
 /.github/workflows/issue-labeled.yml @armandgrillet
@@ -611,22 +614,24 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
-/.github/workflows/pr-security-patch-check.yml @grafana/grafana-delivery
-/.github/workflows/pr-security-patch-mirror-and-apply.yml @grafana/grafana-delivery
-/.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
-/.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
+/.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
+/.github/workflows/sync-mirror.yml @grafana/grafana-delivery
+/.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
+/.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
 /.github/workflows/remove-milestone.yml @grafana/grafana-delivery
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-delivery
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
+/.github/workflows/update-make-docs.yml @grafana/docs-tooling
 /.github/workflows/snyk.yml @grafana/security-team
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/grafana-as-code
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
+/.github/workflows/ephemeral-instances.yml @grafana/grafana-operator-experience-squad
 
 
 # Generated files not requiring owner approval

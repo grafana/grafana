@@ -5,12 +5,17 @@ import React, { ComponentProps } from 'react';
 import {
   EventBusSrv,
   ExploreLogsPanelState,
+  FieldType,
   LoadingState,
   LogLevel,
   LogRowModel,
   MutableDataFrame,
+  standardTransformersRegistry,
   toUtc,
 } from '@grafana/data';
+import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { config } from '@grafana/runtime';
+import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { Logs } from './Logs';
 
@@ -65,6 +70,21 @@ describe('Logs', () => {
       writable: true,
     });
   });
+  beforeAll(() => {
+    const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
+    standardTransformersRegistry.setInit(() => {
+      return transformers.map((t) => {
+        return {
+          id: t.id,
+          aliasIds: t.aliasIds,
+          name: t.name,
+          transformation: t,
+          description: t.description,
+          editor: () => null,
+        };
+      });
+    });
+  });
 
   afterAll(() => {
     Object.defineProperty(window, 'location', {
@@ -82,6 +102,32 @@ describe('Logs', () => {
       makeLog({ uid: '3', timeEpochMs: 3 }),
     ];
 
+    const testDataFrame = {
+      fields: [
+        {
+          config: {},
+          name: 'Time',
+          type: FieldType.time,
+          values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00', '2019-01-01 12:00:00'],
+        },
+        {
+          config: {},
+          name: 'line',
+          type: FieldType.string,
+          values: ['log message 1', 'log message 2', 'log message 3'],
+        },
+        {
+          config: {},
+          name: 'labels',
+          type: FieldType.other,
+          typeInfo: {
+            frame: 'json.RawMessage',
+          },
+          values: ['{"foo":"bar"}', '{"foo":"bar"}', '{"foo":"bar"}'],
+        },
+      ],
+      length: 3,
+    };
     return (
       <Logs
         exploreId={'left'}
@@ -101,6 +147,11 @@ describe('Logs', () => {
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
         }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
+        }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
         clearCache={() => {}}
@@ -108,6 +159,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        logsFrames={[testDataFrame]}
         {...partialProps}
       />
     );
@@ -158,6 +210,11 @@ describe('Logs', () => {
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
         }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
+        }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
         clearCache={() => {}}
@@ -194,6 +251,11 @@ describe('Logs', () => {
         absoluteRange={{
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
         }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
@@ -235,6 +297,11 @@ describe('Logs', () => {
         absoluteRange={{
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
         }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
@@ -298,12 +365,12 @@ describe('Logs', () => {
       const row = screen.getAllByRole('row');
       await userEvent.hover(row[0]);
 
-      const linkButtons = row[1].querySelectorAll('button');
-      await userEvent.click(linkButtons[2]);
+      const linkButton = screen.getByLabelText('Copy shortlink');
+      await userEvent.click(linkButton);
 
       expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
         datasourceType: 'unknown',
-        logRowUid: '2',
+        logRowUid: '1',
         logRowLevel: 'debug',
       });
     });
@@ -315,12 +382,40 @@ describe('Logs', () => {
       const row = screen.getAllByRole('row');
       await userEvent.hover(row[0]);
 
-      const linkButtons = row[1].querySelectorAll('button');
-      await userEvent.click(linkButtons[2]);
+      const linkButton = screen.getByLabelText('Copy shortlink');
+      await userEvent.click(linkButton);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
-        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%222%22%7D%7D%7D'
+        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%221%22%7D%7D%7D'
       );
+    });
+  });
+
+  describe('with table visualisation', () => {
+    let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
+
+    beforeAll(() => {
+      originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
+      config.featureToggles.logsExploreTableVisualisation = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+    });
+
+    it('should show visualisation type radio group', () => {
+      setup();
+      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      expect(logsSection).toBeInTheDocument();
+    });
+
+    it('should change visualisation to table on toggle', async () => {
+      setup();
+      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      await userEvent.click(logsSection);
+
+      const table = screen.getByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
     });
   });
 });
