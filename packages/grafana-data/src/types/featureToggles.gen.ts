@@ -115,4 +115,5 @@ export interface FeatureToggles {
   transformationsRedesign?: boolean;
   mlExpressions?: boolean;
   disableTraceQLStreaming?: boolean;
+  grafanaAPIServer?: boolean;
 }
