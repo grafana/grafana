@@ -25,8 +25,6 @@ import (
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
 type AnnotationBackend struct {
-	// annotations AnnotationService
-	// dashboards  *dashboardResolver
 	store   AnnotationStore
 	rules   RuleStore
 	clock   clock.Clock
