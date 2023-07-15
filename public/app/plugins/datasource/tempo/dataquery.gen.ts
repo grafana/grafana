@@ -10,14 +10,8 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
-/**
- * search = Loki search, nativeSearch = Tempo search for backwards compatibility
- */
-export type TempoQueryType = ('traceql' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
-
-export interface Tempo extends common.DataQuery {
+export interface TempoQuery extends common.DataQuery {
+  filters: Array<TraceqlFilter>;
   /**
    * Defines the maximum number of traces that are returned from Tempo
    */
@@ -50,4 +44,65 @@ export interface Tempo extends common.DataQuery {
    * Query traces by span name
    */
   spanName?: string;
+  /**
+   * Use the streaming API to get partial results as they are available
+   */
+  streaming?: boolean;
 }
+
+export const defaultTempoQuery: Partial<TempoQuery> = {
+  filters: [],
+};
+
+/**
+ * search = Loki search, nativeSearch = Tempo search for backwards compatibility
+ */
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+/**
+ * The state of the TraceQL streaming search query
+ */
+export enum SearchStreamingState {
+  Done = 'done',
+  Error = 'error',
+  Pending = 'pending',
+  Streaming = 'streaming',
+}
+
+/**
+ * static fields are pre-set in the UI, dynamic fields are added by the user
+ */
+export enum TraceqlSearchScope {
+  Resource = 'resource',
+  Span = 'span',
+  Unscoped = 'unscoped',
+}
+
+export interface TraceqlFilter {
+  /**
+   * Uniquely identify the filter, will not be used in the query generation
+   */
+  id: string;
+  /**
+   * The operator that connects the tag to the value, for example: =, >, !=, =~
+   */
+  operator?: string;
+  /**
+   * The scope of the filter, can either be unscoped/all scopes, resource or span
+   */
+  scope?: TraceqlSearchScope;
+  /**
+   * The tag for the search filter, for example: .http.status_code, .service.name, status
+   */
+  tag?: string;
+  /**
+   * The value for the search filter
+   */
+  value?: (string | Array<string>);
+  /**
+   * The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
+   */
+  valueType?: string;
+}
+
+export interface Tempo {}

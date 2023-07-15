@@ -5,9 +5,15 @@ pull_secret = "dockerconfigjson"
 drone_token = "drone_token"
 prerelease_bucket = "prerelease_bucket"
 gcp_upload_artifacts_key = "gcp_upload_artifacts_key"
+gcp_download_build_container_assets_key = "gcp_download_build_container_assets_key"
 azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
+
+rgm_gcp_key_base64 = "gcp_key_base64"
+rgm_destination = "destination"
+rgm_github_token = "github_token"
+rgm_dagger_token = "dagger_token"
 
 def from_secret(secret):
     return {"from_secret": secret}
@@ -31,6 +37,11 @@ def secrets():
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
+            "credentials.json",
+        ),
+        vault_secret(
+            gcp_download_build_container_assets_key,
+            "infra/data/ci/grafana/assets-downloader-build-container-service-account",
             "credentials.json",
         ),
         vault_secret(
@@ -80,18 +91,49 @@ def secrets():
             "Secret",
         ),
         vault_secret(
-            "aws_region",
-            "secret/data/common/aws-marketplace",
-            "aws_region",
+            "static_asset_editions",
+            "infra/data/ci/grafana-release-eng/artifact-publishing",
+            "static_asset_editions",
         ),
         vault_secret(
-            "aws_access_key_id",
-            "secret/data/common/aws-marketplace",
-            "aws_access_key_id",
+            "enterprise2-cdn-path",
+            "infra/data/ci/grafana-release-eng/enterprise2",
+            "cdn_path",
         ),
         vault_secret(
-            "aws_secret_access_key",
-            "secret/data/common/aws-marketplace",
-            "aws_secret_access_key",
+            rgm_gcp_key_base64,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "gcp_service_account_base64",
+        ),
+        vault_secret(
+            rgm_destination,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "destination",
+        ),
+        vault_secret(
+            rgm_dagger_token,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "dagger_token",
+        ),
+        vault_secret(
+            rgm_github_token,
+            "infra/data/ci/github/grafanabot",
+            "pat",
+        ),
+        # grafana-delivery-bot secrets
+        vault_secret(
+            "delivery-bot-app-id",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-id",
+        ),
+        vault_secret(
+            "delivery-bot-app-installation-id",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-installation-id",
+        ),
+        vault_secret(
+            "delivery-bot-app-private-key",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-private-key",
         ),
     ]

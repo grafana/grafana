@@ -20,7 +20,7 @@ import (
 func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
 	opts, err := settings.HTTPClientOptions()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}
 
 	jsonData, err := utils.GetJsonData(settings)

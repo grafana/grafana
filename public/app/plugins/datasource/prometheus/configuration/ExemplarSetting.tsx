@@ -1,11 +1,12 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
-import { Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
+import { Button, InlineField, Input, Switch, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
+
+import { docsTip, overhaulStyles, PROM_CONFIG_LABEL_WIDTH } from './ConfigEditor';
 
 type Props = {
   value: ExemplarTraceIdDestination;
@@ -17,38 +18,40 @@ type Props = {
 export default function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) {
   const [isInternalLink, setIsInternalLink] = useState(Boolean(value.datasourceUid));
 
+  const theme = useTheme2();
+  const styles = overhaulStyles(theme);
+
   return (
     <div className="gf-form-group">
-      <InlineField label="Internal link" labelWidth={24} disabled={disabled}>
+      <InlineField
+        label="Internal link"
+        labelWidth={PROM_CONFIG_LABEL_WIDTH}
+        disabled={disabled}
+        tooltip={
+          <>
+            Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select
+            the backend tracing data store for your exemplar data. {docsTip()}
+          </>
+        }
+        interactive={true}
+        className={styles.switchField}
+      >
         <>
-          <InlineSwitch
+          <Switch
             value={isInternalLink}
             aria-label={selectors.components.DataSource.Prometheus.configPage.internalLinkSwitch}
             onChange={(ev) => setIsInternalLink(ev.currentTarget.checked)}
           />
-          {!disabled && (
-            <Button
-              variant="destructive"
-              title="Remove link"
-              icon="times"
-              onClick={(event) => {
-                event.preventDefault();
-                onDelete();
-              }}
-              className={css`
-                margin-left: 8px;
-              `}
-            />
-          )}
         </>
       </InlineField>
 
       {isInternalLink ? (
         <InlineField
           label="Data source"
-          labelWidth={24}
-          tooltip="The data source the exemplar is going to navigate to."
+          labelWidth={PROM_CONFIG_LABEL_WIDTH}
+          tooltip={<>The data source the exemplar is going to navigate to. {docsTip()}</>}
           disabled={disabled}
+          interactive={true}
         >
           <DataSourcePicker
             tracing={true}
@@ -67,9 +70,10 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
       ) : (
         <InlineField
           label="URL"
-          labelWidth={24}
-          tooltip="The URL of the trace backend the user would go to see its trace."
+          labelWidth={PROM_CONFIG_LABEL_WIDTH}
+          tooltip={<>The URL of the trace backend the user would go to see its trace. {docsTip()}</>}
           disabled={disabled}
+          interactive={true}
         >
           <Input
             placeholder="https://example.com/${__value.raw}"
@@ -89,9 +93,10 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
 
       <InlineField
         label="URL Label"
-        labelWidth={24}
-        tooltip="Use to override the button label on the exemplar traceID field."
+        labelWidth={PROM_CONFIG_LABEL_WIDTH}
+        tooltip={<>Use to override the button label on the exemplar traceID field. {docsTip()}</>}
         disabled={disabled}
+        interactive={true}
       >
         <Input
           placeholder="Go to example.com"
@@ -108,9 +113,10 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
       </InlineField>
       <InlineField
         label="Label name"
-        labelWidth={24}
-        tooltip="The name of the field in the labels object that should be used to get the traceID."
+        labelWidth={PROM_CONFIG_LABEL_WIDTH}
+        tooltip={<>The name of the field in the labels object that should be used to get the traceID. {docsTip()}</>}
         disabled={disabled}
+        interactive={true}
       >
         <Input
           placeholder="traceID"
@@ -125,6 +131,19 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
           }
         />
       </InlineField>
+      {!disabled && (
+        <InlineField label="Remove exemplar link" labelWidth={PROM_CONFIG_LABEL_WIDTH} disabled={disabled}>
+          <Button
+            variant="destructive"
+            title="Remove exemplar link"
+            icon="times"
+            onClick={(event) => {
+              event.preventDefault();
+              onDelete();
+            }}
+          />
+        </InlineField>
+      )}
     </div>
   );
 }

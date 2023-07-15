@@ -53,6 +53,7 @@ const parserAndLabelKeys = {
   unwrapLabelKeys: ['unwrap', 'labels'],
   hasJSON: true,
   hasLogfmt: false,
+  hasPack: false,
 };
 
 describe('CompletionDataProvider', () => {

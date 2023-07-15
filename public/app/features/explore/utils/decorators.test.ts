@@ -1,18 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import {
-  ArrayVector,
-  DataFrame,
-  DataQueryRequest,
-  FieldColorModeId,
-  FieldType,
-  LoadingState,
-  PanelData,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
-import { config } from '@grafana/runtime/src/config';
-import { GraphDrawStyle, StackingMode } from '@grafana/schema';
+import { DataFrame, FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
 
@@ -26,8 +14,18 @@ import {
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
-  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+  dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
+
+jest.mock('../../plugins/importPanelPlugin', () => {
+  const actual = jest.requireActual('../../plugins/importPanelPlugin');
+  return {
+    ...actual,
+    hasPanelPlugin: (id: string) => {
+      return id === 'someCustomPanelPlugin';
+    },
+  };
+});
 
 const getTestContext = () => {
   const timeSeries = toDataFrame({
@@ -96,6 +94,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: null,
     traceFrames: [],
     nodeGraphFrames: [],
+    customFrames: [],
     flameGraphFrames: [],
     rawPrometheusFrames: [],
     rawPrometheusResult: null,
@@ -114,8 +113,6 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       state: LoadingState.Done,
       timeRange,
     };
-    // Needed so flamegraph does not fallback to table, will be removed when feature flag no longer necessary
-    config.featureToggles.flameGraph = true;
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,
@@ -125,6 +122,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       tableFrames: [table, emptyTable],
       logsFrames: [logs],
       traceFrames: [],
+      customFrames: [],
       nodeGraphFrames: [],
       flameGraphFrames: [flameGraph],
       graphResult: null,
@@ -153,6 +151,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       logsFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      customFrames: [],
       flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
@@ -183,6 +182,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      customFrames: [],
       flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
@@ -281,9 +281,9 @@ describe('decorateWithTableResult', () => {
     expect(tableResult?.fields[0].name).toBe('Time');
     expect(tableResult?.fields[1].name).toBe('A-series');
     expect(tableResult?.fields[2].name).toBe('B-series');
-    expect(tableResult?.fields[0].values.toArray()).toEqual([100, 200, 300]);
-    expect(tableResult?.fields[1].values.toArray()).toEqual([4, 5, 6]);
-    expect(tableResult?.fields[2].values.toArray()).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[0].values).toEqual([100, 200, 300]);
+    expect(tableResult?.fields[1].values).toEqual([4, 5, 6]);
+    expect(tableResult?.fields[2].values).toEqual([4, 5, 6]);
   });
 
   it('should not override fields display property when filled', async () => {
@@ -317,112 +317,6 @@ describe('decorateWithTableResult', () => {
 });
 
 describe('decorateWithLogsResult', () => {
-  it('should correctly transform logs dataFrames', () => {
-    const { logs } = getTestContext();
-    const request = { timezone: 'utc', intervalMs: 60000 } as unknown as DataQueryRequest;
-    const panelData = createExplorePanelData({ logsFrames: [logs], request });
-    expect(decorateWithLogsResult()(panelData).logsResult).toEqual({
-      hasUniqueLabels: false,
-      meta: [],
-      rows: [
-        {
-          rowIndex: 0,
-          dataFrame: logs,
-          entry: 'this is a message',
-          entryFieldIndex: 3,
-          hasAnsi: false,
-          hasUnescapedContent: false,
-          labels: {},
-          logLevel: 'unknown',
-          raw: 'this is a message',
-          searchWords: [],
-          timeEpochMs: 100,
-          timeEpochNs: '100000002',
-          timeFromNow: 'fromNow() jest mocked',
-          timeLocal: 'format() jest mocked',
-          timeUtc: 'format() jest mocked',
-          uid: '0',
-          uniqueLabels: {},
-        },
-        {
-          rowIndex: 2,
-          dataFrame: logs,
-          entry: 'third',
-          entryFieldIndex: 3,
-          hasAnsi: false,
-          hasUnescapedContent: false,
-          labels: {},
-          logLevel: 'unknown',
-          raw: 'third',
-          searchWords: [],
-          timeEpochMs: 100,
-          timeEpochNs: '100000001',
-          timeFromNow: 'fromNow() jest mocked',
-          timeLocal: 'format() jest mocked',
-          timeUtc: 'format() jest mocked',
-          uid: '2',
-          uniqueLabels: {},
-        },
-        {
-          rowIndex: 1,
-          dataFrame: logs,
-          entry: 'second message',
-          entryFieldIndex: 3,
-          hasAnsi: false,
-          hasUnescapedContent: false,
-          labels: {},
-          logLevel: 'unknown',
-          raw: 'second message',
-          searchWords: [],
-          timeEpochMs: 100,
-          timeEpochNs: '100000000',
-          timeFromNow: 'fromNow() jest mocked',
-          timeLocal: 'format() jest mocked',
-          timeUtc: 'format() jest mocked',
-          uid: '1',
-          uniqueLabels: {},
-        },
-      ],
-      series: [
-        {
-          name: 'unknown',
-          length: 1,
-          fields: [
-            { name: 'Time', type: 'time', values: new ArrayVector([0]), config: {} },
-            {
-              name: 'Value',
-              type: 'number',
-              labels: undefined,
-              values: new ArrayVector([3]),
-              config: {
-                color: {
-                  fixedColor: '#8e8e8e',
-                  mode: FieldColorModeId.Fixed,
-                },
-                min: 0,
-                decimals: 0,
-                unit: undefined,
-                custom: {
-                  drawStyle: GraphDrawStyle.Bars,
-                  barAlignment: 0,
-                  barMaxWidth: 5,
-                  barWidthFactor: 0.9,
-                  lineColor: '#8e8e8e',
-                  fillColor: '#8e8e8e',
-                  pointColor: '#8e8e8e',
-                  lineWidth: 0,
-                  fillOpacity: 100,
-                  stacking: { mode: StackingMode.Normal, group: 'A' },
-                },
-              },
-            },
-          ],
-        },
-      ],
-      visibleRange: undefined,
-    });
-  });
-
   it('returns null if passed empty array', () => {
     const panelData = createExplorePanelData({ logsFrames: [] });
     expect(decorateWithLogsResult()(panelData).logsResult).toBeNull();
@@ -432,5 +326,39 @@ describe('decorateWithLogsResult', () => {
     const { logs } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, logsFrames: [logs] });
     expect(decorateWithLogsResult()(panelData).logsResult).not.toBeNull();
+  });
+});
+
+describe('decorateWithCustomFrames', () => {
+  it('returns empty array if no custom frames', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([]);
+  });
+  it('returns data if we have custom frames', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const customFrame = toDataFrame({
+      name: 'custom-panel',
+      refId: 'A',
+      fields: [],
+      meta: { preferredVisualisationType: 'table', preferredVisualisationPluginId: 'someCustomPanelPlugin' },
+    });
+
+    const series = [table, logs, timeSeries, emptyTable, flameGraph, customFrame];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([customFrame]);
   });
 });

@@ -6,10 +6,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
+// this is now typed in rc-tooltip, but they don't export it :(
+// let's mirror the interface here. if there's any discrepancy, we'll get a type error
 interface RCTooltipRef {
-  // rc-tooltip's ref is essentially untyped, so we be cautious by saying the function is
-  // potentially undefined which, given rc's track record, seems likely :)
-  forcePopupAlign?: () => {};
+  forceAlign: () => {};
 }
 
 const HandleTooltip = (props: {
@@ -17,11 +17,11 @@ const HandleTooltip = (props: {
   children: React.ReactElement;
   visible: boolean;
   placement: 'top' | 'right';
-  tipFormatter?: (value: number) => React.ReactNode;
+  tipFormatter?: () => React.ReactNode;
 }) => {
   const { value, children, visible, placement, tipFormatter, ...restProps } = props;
 
-  const tooltipRef = useRef<RCTooltipRef>();
+  const tooltipRef = useRef<RCTooltipRef>(null);
   const rafRef = useRef<number | null>(null);
   const styles = useStyles2(tooltipStyles);
 
@@ -33,7 +33,7 @@ const HandleTooltip = (props: {
 
   function keepAlign() {
     rafRef.current = requestAnimationFrame(() => {
-      tooltipRef.current?.forcePopupAlign?.();
+      tooltipRef.current?.forceAlign();
     });
   }
 
@@ -71,6 +71,7 @@ const tooltipStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       opacity: 0.9,
       padding: 3,
+      zIndex: theme.zIndex.tooltip,
     }),
   };
 };

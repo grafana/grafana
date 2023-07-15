@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-multi",
+//      "type": "numeric-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "scalar"
 //      }
@@ -24,7 +28,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi",
+          "type": "numeric-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "scalar"
           }

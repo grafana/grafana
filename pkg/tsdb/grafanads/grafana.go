@@ -74,11 +74,11 @@ type Service struct {
 
 func DataSourceModel(orgId int64) *datasources.DataSource {
 	return &datasources.DataSource{
-		Id:             DatasourceID,
-		Uid:            DatasourceUID,
+		ID:             DatasourceID,
+		UID:            DatasourceUID,
 		Name:           DatasourceName,
 		Type:           "grafana",
-		OrgId:          orgId,
+		OrgID:          orgId,
 		JsonData:       simplejson.New(),
 		SecureJsonData: make(map[string][]byte),
 	}
@@ -165,7 +165,7 @@ func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) back
 func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
-	model := simplejson.New()
+	model := testdatasource.JSONModel{}
 	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
 
 	return response

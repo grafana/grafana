@@ -12,8 +12,8 @@ import { SaveDashboardForm } from './SaveDashboardForm';
 const prepareDashboardMock = (
   timeChanged: boolean,
   variableValuesChanged: boolean,
-  resetTimeSpy: any,
-  resetVarsSpy: any
+  resetTimeSpy: jest.Mock,
+  resetVarsSpy: jest.Mock
 ) => {
   const json = {
     title: 'name',
@@ -29,12 +29,13 @@ const prepareDashboardMock = (
     meta: {},
     ...json,
     getSaveModelClone: () => json,
-  };
+  } as unknown as DashboardModel;
 };
-const renderAndSubmitForm = async (dashboard: any, submitSpy: any) => {
+const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mock) => {
   render(
     <SaveDashboardForm
-      dashboard={dashboard as DashboardModel}
+      isLoading={false}
+      dashboard={dashboard}
       onCancel={() => {}}
       onSuccess={() => {}}
       onSubmit={async (jsonModel) => {
@@ -62,14 +63,15 @@ describe('SaveDashboardAsForm', () => {
     it('renders switches when variables or timerange', () => {
       render(
         <SaveDashboardForm
-          dashboard={prepareDashboardMock(true, true, jest.fn(), jest.fn()) as any}
+          isLoading={false}
+          dashboard={prepareDashboardMock(true, true, jest.fn(), jest.fn())}
           onCancel={() => {}}
           onSuccess={() => {}}
           onSubmit={async () => {
             return {};
           }}
           saveModel={{
-            clone: prepareDashboardMock(true, true, jest.fn(), jest.fn()) as any,
+            clone: prepareDashboardMock(true, true, jest.fn(), jest.fn()),
             diff: {},
             diffCount: 0,
             hasChanges: true,
@@ -99,7 +101,7 @@ describe('SaveDashboardAsForm', () => {
       const resetVarsSpy = jest.fn();
       const submitSpy = jest.fn();
 
-      await renderAndSubmitForm(prepareDashboardMock(false, false, resetTimeSpy, resetVarsSpy) as any, submitSpy);
+      await renderAndSubmitForm(prepareDashboardMock(false, false, resetTimeSpy, resetVarsSpy), submitSpy);
 
       expect(resetTimeSpy).not.toBeCalled();
       expect(resetVarsSpy).not.toBeCalled();
@@ -112,7 +114,7 @@ describe('SaveDashboardAsForm', () => {
         const resetTimeSpy = jest.fn();
         const resetVarsSpy = jest.fn();
         const submitSpy = jest.fn();
-        await renderAndSubmitForm(prepareDashboardMock(true, true, resetTimeSpy, resetVarsSpy) as any, submitSpy);
+        await renderAndSubmitForm(prepareDashboardMock(true, true, resetTimeSpy, resetVarsSpy), submitSpy);
 
         expect(resetTimeSpy).toBeCalledTimes(0);
         expect(resetVarsSpy).toBeCalledTimes(0);
@@ -124,6 +126,7 @@ describe('SaveDashboardAsForm', () => {
     it('renders saved message draft if it was filled before', () => {
       render(
         <SaveDashboardForm
+          isLoading={false}
           dashboard={createDashboardModelFixture()}
           onCancel={() => {}}
           onSuccess={() => {}}

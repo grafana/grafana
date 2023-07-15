@@ -36,7 +36,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
   create: async (map: Map, options: MapLayerOptions<CartoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => ({
     init: () => {
       const cfg = { ...defaultCartoConfig, ...options.config };
-      let style = cfg.theme as string;
+      let style: string | undefined = cfg.theme;
       if (!style || style === LayerTheme.Auto) {
         style = theme.isDark ? 'dark' : 'light';
       }

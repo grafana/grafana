@@ -51,9 +51,11 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
+			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:         cfg.SqlDatasourceMaxConnLifetimeDefault,
+			SecureDSProxy:           false,
+			AllowCleartextPasswords: false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -82,6 +84,16 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			protocol = "unix"
 		}
 
+		// register the secure socks proxy dialer context, if enabled
+		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
+			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
+			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, uniqueIdentifier)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",
 			characterEscape(dsInfo.User, ":"),
 			dsInfo.DecryptedSecureJSONData["password"],
@@ -89,6 +101,10 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			characterEscape(dsInfo.URL, ")"),
 			characterEscape(dsInfo.Database, "?"),
 		)
+
+		if dsInfo.JsonData.AllowCleartextPasswords {
+			cnnstr += "&allowCleartextPasswords=true"
+		}
 
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
@@ -125,14 +141,16 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		rowTransformer := mysqlQueryResultTransformer{}
+		rowTransformer := mysqlQueryResultTransformer{
+			userError: cfg.UserFacingDefaultError,
+		}
 
-		return sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+		return sqleng.NewQueryDataHandler(cfg, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
 	}
 }
 
-func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,7 +160,7 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 
 // CheckHealth pings the connected SQL database
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +178,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -168,6 +186,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 type mysqlQueryResultTransformer struct {
+	userError string
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
@@ -176,14 +195,12 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR &&
 			driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
 			logger.Error("Query error", "error", err)
-			return errQueryFailed
+			return fmt.Errorf(("query failed - %s"), t.userError)
 		}
 	}
 
 	return err
 }
-
-var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")
 
 func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
 	// For the MySQL driver , we have these possible data types:

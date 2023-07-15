@@ -14,7 +14,7 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
-interface Props {
+export interface Props {
   // The query configuration
   queries: DataQuery[];
   dsSettings: DataSourceInstanceSettings;
@@ -151,7 +151,7 @@ export class QueryEditorRows extends PureComponent<Props> {
         <Droppable droppableId="transformations-list" direction="vertical">
           {(provided) => {
             return (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
+              <div data-testid="query-editor-rows" ref={provided.innerRef} {...provided.droppableProps}>
                 {queries.map((query, index) => {
                   const dataSourceSettings = getDataSourceSettings(query, dsSettings);
                   const onChangeDataSourceSettings = dsSettings.meta.mixed

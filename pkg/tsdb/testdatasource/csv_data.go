@@ -2,11 +2,11 @@ package testdatasource
 
 import (
 	"context"
+	"embed"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -39,6 +39,14 @@ func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.Que
 			return nil, err
 		}
 
+		dropPercent := model.Get("dropPercent").MustFloat64(0)
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
@@ -68,6 +76,14 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 			return nil, err
 		}
 
+		dropPercent := model.Get("dropPercent").MustFloat64(0)
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
@@ -75,6 +91,9 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 
 	return resp, nil
 }
+
+//go:embed data/*.csv
+var embeddedCsvFiles embed.FS
 
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	validFileName := regexp.MustCompile(`^\w+\.csv$`)
@@ -84,11 +103,9 @@ func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	csvFilepath := filepath.Clean(filepath.Join("/", fileName))
-	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", csvFilepath)
+	filePath := filepath.Join("data", csvFilepath)
 
-	// Can ignore gosec G304 here, because we check the file pattern above
-	// nolint:gosec
-	fileReader, err := os.Open(filePath)
+	fileReader, err := embeddedCsvFiles.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed open file: %v", err)
 	}
@@ -144,6 +161,16 @@ func LoadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
 				timeField := toTimeField(field)
 				if timeField != nil {
 					field = timeField
+				}
+			}
+
+			// Check for labels in the name
+			idx := strings.Index(fieldName, "{")
+			if idx >= 0 {
+				labels := parseLabelsString(fieldName[idx:], fieldIndex) // _ := data.LabelsFromString(fieldName[idx:])
+				if len(labels) > 0 {
+					field.Labels = labels
+					fieldName = fieldName[:idx]
 				}
 			}
 

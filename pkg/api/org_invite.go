@@ -90,8 +90,8 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 		return hs.inviteExistingUserToOrg(c, usr, &inviteDto)
 	}
 
-	if setting.DisableLoginForm {
-		return response.Error(400, "Cannot invite when login is disabled.", nil)
+	if hs.Cfg.DisableLoginForm {
+		return response.Error(400, "Cannot invite external user when login is disabled.", nil)
 	}
 
 	cmd := tempuser.CreateTempUserCommand{}

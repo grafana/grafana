@@ -19,10 +19,10 @@ func TestAlertingUsageStats(t *testing.T) {
 	store := &AlertStoreMock{}
 	dsMock := &fd.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{
-			{Id: 1, Type: datasources.DS_INFLUXDB},
-			{Id: 2, Type: datasources.DS_GRAPHITE},
-			{Id: 3, Type: datasources.DS_PROMETHEUS},
-			{Id: 4, Type: datasources.DS_PROMETHEUS},
+			{ID: 1, Type: datasources.DS_INFLUXDB},
+			{ID: 2, Type: datasources.DS_GRAPHITE},
+			{ID: 3, Type: datasources.DS_PROMETHEUS},
+			{ID: 4, Type: datasources.DS_PROMETHEUS},
 		},
 	}
 	ae := &AlertEngine{
@@ -30,7 +30,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		datasourceService: dsMock,
 	}
 
-	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {
+	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) (res []*models.Alert, err error) {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec
@@ -42,13 +42,12 @@ func TestAlertingUsageStats(t *testing.T) {
 			return j
 		}
 
-		query.Result = []*models.Alert{
-			{Id: 1, Settings: createFake("testdata/settings/one_condition.json")},
-			{Id: 2, Settings: createFake("testdata/settings/two_conditions.json")},
-			{Id: 2, Settings: createFake("testdata/settings/three_conditions.json")},
-			{Id: 3, Settings: createFake("testdata/settings/empty.json")},
-		}
-		return nil
+		return []*models.Alert{
+			{ID: 1, Settings: createFake("testdata/settings/one_condition.json")},
+			{ID: 2, Settings: createFake("testdata/settings/two_conditions.json")},
+			{ID: 2, Settings: createFake("testdata/settings/three_conditions.json")},
+			{ID: 3, Settings: createFake("testdata/settings/empty.json")},
+		}, nil
 	}
 
 	result, err := ae.QueryUsageStats(context.Background())

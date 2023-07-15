@@ -34,8 +34,8 @@ type Service struct {
 	im         instancemgmt.InstanceManager
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSource
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -55,11 +55,12 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        0,
-			MaxIdleConns:        2,
-			ConnMaxLifetime:     14400,
+			MaxOpenConns:        cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:        cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:     cfg.SqlDatasourceMaxConnLifetimeDefault,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
+			SecureDSProxy:       false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -92,8 +93,17 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			logger.Debug("GetEngine", "connection", cnnstr)
 		}
 
+		driverName := "postgres"
+		// register a proxy driver if the secure socks proxy is enabled
+		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			driverName, err = createPostgresProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			if err != nil {
+				return "", nil
+			}
+		}
+
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "postgres",
+			DriverName:        driverName,
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
@@ -102,7 +112,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 
 		queryResultTransformer := postgresQueryResultTransformer{}
 
-		handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		handler, err := sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
@@ -198,7 +208,7 @@ func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err e
 
 // CheckHealth pings the connected SQL database
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDSInfo(req.PluginContext)
+	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}

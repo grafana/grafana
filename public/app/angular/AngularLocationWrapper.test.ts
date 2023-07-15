@@ -100,7 +100,7 @@ describe('AngularLocationWrapper', () => {
 
     it('should copy object', function () {
       locationService.push('/path/b');
-      const obj: Record<string, any> = { one: '1', two: true, three: null };
+      const obj: Record<string, unknown> = { one: '1', two: true, three: null };
       wrapper.search(obj);
       expect(obj).toEqual({ one: '1', two: true, three: null });
       obj.one = 'changed';

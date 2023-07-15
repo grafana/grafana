@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 import { AsyncState } from 'react-use/lib/useAsync';
 
@@ -52,7 +52,7 @@ export const ArrayOptions = () => {
   );
 };
 
-const meta: ComponentMeta<typeof SegmentAsync> = {
+const meta: Meta<typeof SegmentAsync> = {
   title: 'Data Source/Segment/SegmentAsync',
   component: SegmentAsync,
 };
@@ -204,9 +204,7 @@ export const HtmlAttributes = () => {
   );
 };
 
-export const Basic: ComponentStory<React.ComponentType<SegmentAsyncProps<string>>> = (
-  args: SegmentAsyncProps<string>
-) => {
+export const Basic: StoryFn<React.ComponentType<SegmentAsyncProps<string>>> = (args: SegmentAsyncProps<string>) => {
   const [value, setValue] = useState(args.value);
 
   const props: SegmentAsyncProps<string> = {

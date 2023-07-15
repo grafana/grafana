@@ -10,19 +10,12 @@ Unless stated otherwise, use the guidelines listed in the following articles:
 
 ## Linting and formatting
 
-To ensure consistency across the Go codebase, we require all code to pass a number of linter checks.
+To ensure consistency across the Go codebase, we require all code to
+pass a number of linter checks.
 
-We use the standard following linters:
-
-- [gofmt](https://golang.org/cmd/gofmt/)
-- [golint](https://github.com/golang/lint)
-- [go vet](https://golang.org/cmd/vet/)
-
-In addition to the standard linters, we also use:
-
-- [revive](https://revive.run/) with a [custom config](https://github.com/grafana/grafana/blob/main/conf/revive.toml)
-- [GolangCI-Lint](https://github.com/golangci/golangci-lint)
-- [gosec](https://github.com/securego/gosec)
+We use [GolangCI-Lint](https://github.com/golangci/golangci-lint) with a
+custom configuration [.golangci.toml](/.golangci.toml) to run these
+checks.
 
 To run all linters, use the `lint-go` Makefile target:
 
@@ -35,10 +28,6 @@ make lint-go
 We value clean and readable code, that is loosely coupled and covered by unit tests. This makes it easier to collaborate and maintain the code.
 
 Tests must use the standard library, `testing`. For assertions, prefer using [testify](https://github.com/stretchr/testify).
-
-The majority of our tests uses [GoConvey](http://goconvey.co/) but that's something we want to avoid going forward.
-
-In the `sqlstore` package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
 
 ### Integration Tests
 
@@ -55,7 +44,8 @@ func TestIntegrationFoo(t *testing.T) {
 }
 ```
 
-If you do not follow this convention, your integration test may be run twice or not run at all.
+> Warning
+> If you do not follow this convention, your integration test may be run twice or not run at all.
 
 ### Assertions
 
@@ -72,8 +62,7 @@ code, plus lets you run each test case in isolation when debugging. Don't use `t
 
 ### Cleanup
 
-Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resources in tests. It's a less fragile choice than `defer`, since it's independent of which
-function you call it in. It will always execute after the test is over in reverse call order (last `t.Cleanup` first, same as `defer`).
+Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resources in tests. It's a preferable to `defer`, as it can be called from helper functions. It will always execute after the test is over in reverse call order (last `t.Cleanup` first, same as `defer`).
 
 ### Mock
 
@@ -201,11 +190,14 @@ for context.
 
 If a column, or column combination, should be unique, add a corresponding uniqueness constraint through a migration.
 
+### Usage of XORM Session.Insert() and Session.InsertOne()
+
+The [Session.Insert()](https://pkg.go.dev/github.com/go-xorm/xorm#Session.Insert) and [Session.InsertOne()](https://pkg.go.dev/github.com/go-xorm/xorm#Session.InsertOne) are poorly documented and return the number of affected rows contrary to a common mistake that they return the newly introduced primary key. Therefore, contributors should be extra cautious when using them.
+
+The same applies for the respective [Engine.Insert()](https://pkg.go.dev/github.com/go-xorm/xorm#Engine.Insert) and [Engine.InsertOne()](https://pkg.go.dev/github.com/go-xorm/xorm#Engine.InsertOne)
+
 ## JSON
 
-The simplejson package is used a lot throughout the backend codebase, but it's legacy, so if at all possible
-avoid using it in new code. Use [json-iterator](https://github.com/json-iterator/go) instead, which is a more performant
-drop-in alternative to the standard [encoding/json](https://golang.org/pkg/encoding/json/) package. While encoding/json
-is a fine choice, profiling shows that json-iterator may be 3-4 times more efficient for encoding. We haven't profiled
-its parsing performance yet, but according to json-iterator's own benchmarks, it appears even more superior in this
-department.
+The simplejson package is used a lot throughout the backend codebase,
+but it's legacy, so if at all possible avoid using it in new code.
+Use [encoding/json](https://golang.org/pkg/encoding/json/) instead.

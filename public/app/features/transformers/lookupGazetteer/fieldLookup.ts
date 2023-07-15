@@ -1,7 +1,6 @@
 import { mergeMap, from } from 'rxjs';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   Field,
@@ -53,12 +52,12 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matc
 
       //if the field matches
       if (matcher(field, frame, frames)) {
-        const values = field.values.toArray();
+        const values = field.values;
         const sub: any[][] = [];
         for (const f of src) {
           const buffer = new Array(length);
           sub.push(buffer);
-          fields.push({ ...f, values: new ArrayVector(buffer) });
+          fields.push({ ...f, values: buffer });
         }
 
         // Add all values to the buffer
@@ -66,7 +65,7 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matc
           const found = gaz.find(values[v]);
           if (found?.index != null) {
             for (let i = 0; i < src.length; i++) {
-              sub[i][v] = src[i].values.get(found.index);
+              sub[i][v] = src[i].values[found.index];
             }
           }
         }

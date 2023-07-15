@@ -54,7 +54,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
         {...buttonProps}
         {...restProps}
       >
-        {value?.label || value?.value}
+        {value?.label || (value?.value != null ? String(value?.value) : null)}
       </ToolbarButton>
       {state.isOpen && (
         <div className={styles.menuWrapper}>
@@ -64,11 +64,11 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
                 tabIndex=-1 is needed here to support highlighting text within the menu when using FocusScope
                 see https://github.com/adobe/react-spectrum/issues/1604#issuecomment-781574668
               */}
-              <Menu tabIndex={-1} onClose={state.close} {...menuProps}>
+              <Menu tabIndex={-1} onClose={state.close} {...menuProps} autoFocus={!!menuProps.autoFocus}>
                 {options.map((item) => (
                   <MenuItem
                     key={`${item.value}`}
-                    label={(item.label || item.value) as string}
+                    label={item.label ?? String(item.value)}
                     onClick={() => onChangeInternal(item)}
                     active={item.value === value?.value}
                     ariaChecked={item.value === value?.value}

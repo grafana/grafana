@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -10,7 +10,7 @@ interface Props {
   readOnly?: boolean;
 }
 
-export const SubMenuItems: FunctionComponent<Props> = ({ variables, readOnly }) => {
+export const SubMenuItems = ({ variables, readOnly }: Props) => {
   const [visibleVariables, setVisibleVariables] = useState<VariableModel[]>([]);
 
   useEffect(() => {

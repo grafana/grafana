@@ -87,12 +87,14 @@ Code mode supports autocompletion of tables, columns, SQL keywords, standard SQL
 
 In **Builder mode**, you can build queries using a visual interface.
 
-### Select a dataset and table
+### Dataset and table selection
 
-In the **Dataset** dropdown, select the MS SQL database to query.
+In the **Dataset** dropdown, select the MSSQL database to query. Grafana populates the dropdown with all databases that the user can access.
+Once you select a database, Grafana populates the dropdown with all available tables.
 
-Grafana populates the dropdown with the databases that the configured user can access.
-When you select a dataset, Grafana populates the **Table** dropdown with available tables.
+**Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
+
+We don't include `tempdb`,`model`,`msdb`,`master` databases in the query editor dropdown.
 
 ### Select columns and aggregation functions (SELECT)
 
@@ -220,7 +222,7 @@ The resulting table panel:
 If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
 Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/data-frames#wide-format" >}}).
+A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}).
 Any column except time or of type string transforms into value fields in the data frame query result.
 Any string column transforms into field labels in the data frame query result.
 
@@ -236,12 +238,12 @@ To optionally customize the default series name formatting, refer to [Standard o
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time, '5m') as time,
+  $__timeGroupAlias(time_date_time, '5m'),
   min("value_double"),
   'min' as metric
 FROM test_data
 WHERE $__timeFilter(time_date_time)
-GROUP BY $__timeGroup(time_date_time, '5m')
+GROUP BY time
 ORDER BY 1
 ```
 
@@ -260,18 +262,18 @@ Data frame result:
 
 ### Time series query examples
 
-**Using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
+**Using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
-  $__timeGroup(createdAt, '5m', 0) as time,
+  $__timeGroupAlias(createdAt, '5m', 0),
   sum(value) as value,
   hostname
 FROM test_data
 WHERE
   $__timeFilter(createdAt)
 GROUP BY
-  $__timeGroup(createdAt, '5m', 0),
+  time,
   hostname
 ORDER BY 1
 ```
@@ -295,12 +297,12 @@ Data frame result:
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time, '5m'),
+  $__timeGroupAlias(time_date_time, '5m'),
   min(value_double) as min_value,
   max(value_double) as max_value
 FROM test_data
 WHERE $__timeFilter(time_date_time)
-GROUP BY $__timeGroup(time_date_time, '5m')
+GROUP BY time
 ORDER BY 1
 ```
 

@@ -22,14 +22,14 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
+Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
 
 ### Provision alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create alert rules in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule-export) export endpoints to download a provisioning file for your alert rules.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -66,7 +66,7 @@ groups:
         # <string, required> which query should be used for the condition
         condition: A
         # <list, required> list of query objects that should be executed on each
-        #                  evaluation - should be obtained trough the API
+        #                  evaluation - should be obtained through the API
         data:
           - refId: A
             datasourceUid: '__expr__'
@@ -154,6 +154,8 @@ contactPoints:
       - uid: first_uid
         # <string, required> type of the receiver
         type: prometheus-alertmanager
+        # <bool, optional> Disable the additional [Incident Resolved] follow-up alert, default = false
+        disableResolveMessage: false
         # <object, required> settings for the specific receiver type
         settings:
           url: http://test:9000
@@ -548,7 +550,8 @@ policies:
     repeat_interval: 4h
     # <list> Zero or more child routes
     # routes:
-    # ...
+    #   - Another recursively nested policy...
+    #     ...
 ```
 
 Here is an example of a configuration file for resetting notification policies.
@@ -630,6 +633,7 @@ muteTimes:
       - times:
           - start_time: '06:00'
             end_time: '23:59'
+            location: 'UTC'
         weekdays: ['monday:wednesday', 'saturday', 'sunday']
         months: ['1:3', 'may:august', 'december']
         years: ['2020:2022', '2030']
@@ -704,3 +708,11 @@ spec:
 ```
 
 This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment.
+
+{{% docs/reference %}}
+[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+
+[reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+[reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+{{% /docs/reference %}}

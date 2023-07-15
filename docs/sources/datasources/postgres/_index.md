@@ -22,7 +22,16 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 ## PostgreSQL settings
 
-To access PostgreSQL settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the PostgreSQL data source.
+To configure basic settings for the data source, complete the following steps:
+
+1.  Click **Connections** in the left-side menu.
+1.  Under Your connections, click **Data sources**.
+1.  Enter `PostgreSQL` in the search bar.
+1.  Select **PostgreSQL**.
+
+    The **Settings** tab of the data source is displayed.
+
+1.  Set the data source's basic configuration options:
 
 | Name                        | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,8 +44,9 @@ To access PostgreSQL settings, hover your mouse over the **Configuration** (gear
 | **SSL Mode**                | Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server. When SSL Mode is disabled, SSL Method and Auth Details would not be visible.                                                                                                                                                                                                                                |
 | **SSL Auth Details Method** | Determines whether the SSL Auth details will be configured as a file path or file content. Grafana v7.5+                                                                                                                                                                                                                                                                                                                |
 | **SSL Auth Details Value**  | File path or file content of SSL root certificate, client certificate and client key                                                                                                                                                                                                                                                                                                                                    |
-| **Max open**                | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                            |
-| **Max idle**                | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                             |
+| **Max open**                | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                  |
+| **Max idle**                | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                           |
+| **Auto (max idle)**         | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                  |
 | **Max lifetime**            | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).                                                                                                                                                                                                                                                                                                              |
 | **Version**                 | Determines which functions are available in the query builder (only available in Grafana 5.3+).                                                                                                                                                                                                                                                                                                                         |
 | **TimescaleDB**             | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro to display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+). For more information, see [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
@@ -78,7 +88,7 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 ## Query builder
 
-{{< figure src="/static/img/docs/v92/postgresql_query_builder.png" class="docs-image--no-shadow" caption="PostgreSQL query builder" >}}
+{{< figure src="/static/img/docs/screenshot-postgres-query-editor.png" class="docs-image--no-shadow" caption="PostgreSQL query builder" >}}
 
 The PostgreSQL query builder is available when editing a panel using a PostgreSQL data source. The built query can be run by pressing the `Run query` button in the top right corner of the editor.
 
@@ -86,10 +96,10 @@ The PostgreSQL query builder is available when editing a panel using a PostgreSQ
 
 The response from PostgreSQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
-### Dataset and Table selection
+### Dataset and table selection
 
-In the dataset dropdown, choose the PostgreSQL database to query. The dropdown is be populated with the databases that the user has access to.
-When the dataset is selected, the table dropdown is populated with the tables that are available.
+The dataset dropdown will be populated with the configured database to which the user has access.
+The table dropdown is populated with the tables that are available within that database.
 
 ### Columns and Aggregation functions (SELECT)
 
@@ -131,14 +141,17 @@ datasources:
     jsonData:
       database: grafana
       sslmode: 'disable' # disable/require/verify-ca/verify-full
-      maxOpenConns: 0 # Grafana v5.4+
-      maxIdleConns: 2 # Grafana v5.4+
+      maxOpenConns: 100 # Grafana v5.4+
+      maxIdleConns: 100 # Grafana v5.4+
+      maxIdleConnsAuto: true # Grafana v9.5.1+
       connMaxLifetime: 14400 # Grafana v5.4+
       postgresVersion: 903 # 903=9.3, 904=9.4, 905=9.5, 906=9.6, 1000=10
       timescaledb: false
 ```
 
-> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
+{{% admonition type="note" %}}
+In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
+{{% /admonition %}}
 
 #### Troubleshoot provisioning
 
@@ -214,7 +227,7 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
@@ -224,7 +237,7 @@ To optionally customize the default series name formatting, refer to [Standard o
 
 ```sql
 SELECT
-  $__timeGroup("time_date_time",'5m'),
+  $__timeGroupAlias("time_date_time",'5m'),
   min("value_double"),
   'min' as metric
 FROM test_data
@@ -246,11 +259,11 @@ Data frame result:
 +---------------------+-----------------+
 ```
 
-**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
+**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
-  $__timeGroup("createdAt",'5m',0),
+  $__timeGroupAlias("createdAt",'5m',0),
   sum(value) as value,
   hostname
 FROM test_data
@@ -279,7 +292,7 @@ Data frame result:
 
 ```sql
 SELECT
-  $__timeGroup("time_date_time",'5m'),
+  $__timeGroupAlias("time_date_time",'5m'),
   min("value_double") as "min_value",
   max("value_double") as "max_value"
 FROM test_data

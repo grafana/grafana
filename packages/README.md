@@ -36,20 +36,21 @@ Every commit to main that has changes within the `packages` directory is a subje
 
 > All of the steps below must be performed on a release branch, according to Grafana Release Guide.
 
-> Make sure you are logged in to npm in your terminal and that you are a part of Grafana org on npm.
+> You must be logged in to NPM as part of Grafana NPM org before attempting to publish to the npm registery.
 
-1. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
+1. Run `yarn packages:clean` script from the root directory. This will delete any previous builds of the packages.
+2. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
    - Make sure you confirm the version bump when prompted!
-2. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
-3. Run `yarn packages:pack` script to zip each package into `.tgz`. This is required for yarn berry to replace properties in the package.json files declared in `publishConfig`.
-4. Depending whether or not it's a prerelease:
+3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
+4. Run `yarn packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for yarn to replace properties in the package.json files declared in the `publishConfig` property.
+5. Depending on whether or not it's a prerelease:
 
-   - When releasing a prerelease run `packages:publishNext` to publish new versions.
-   - When releasing a stable version run `packages:publishLatest` to publish new versions.
-   - When releasing a test version run `packages:publishTest` to publish test versions.
+   - When releasing a prerelease run `./scripts/publish-npm-packages.sh --dist-tag 'next' --registry 'https://registry.npmjs.org/'` to publish new versions.
+   - When releasing a stable version run `./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'` to publish new versions.
+   - When releasing a test version run `./scripts/publish-npm-packages.sh --dist-tag 'test' --registry 'https://registry.npmjs.org/'` to publish test versions.
 
-5. Push version commit to the release branch.
+6. Revert any changes made by the `packages:prepare` script.
 
 ### Building individual packages
 
@@ -72,21 +73,21 @@ In this guide you will set up [Verdaccio](https://verdaccio.org/) registry local
 From your terminal:
 
 1. Navigate to `devenv/local-npm` directory.
-2. Run `docker-compose up`. This will start your local npm registry, available at http://localhost:4873/
-3. Run `npm login --registry=http://localhost:4873 --scope=@grafana` . This will allow you to publish any @grafana/\* package into the local registry.
-4. Run `npm config set @grafana:registry http://localhost:4873`. This will config your npm to install @grafana scoped packages from your local registry.
+2. Run `docker-compose up`. This will start your local npm registry, available at http://localhost:4873/. Note the verdaccio config allows
+3. To test `@grafana` packages published to your local npm registry uncomment `npmScopes` and `unsafeHttpWhitelist` properties in the `.yarnrc` file.
 
 #### Publishing packages to local npm registry
 
-You need to follow [manual packages release procedure](#manual-release). The only difference is you need to run `yarn packages:publishDev` task in order to publish to you local registry.
+You need to follow [manual packages release procedure](#manual-release). The only difference is the last command in order to publish to you local registry.
 
 From your terminal:
 
-1. Run `yarn packages:prepare`.
-2. Run `yarn packages:build`.
-3. Run `yarn packages:pack`.
-4. Run `yarn packages:publishDev`.
-5. Navigate to http://localhost:4873 and verify that version was published
+1. Run `yarn packages:clean`.
+2. Run `yarn packages:prepare`.
+3. Run `yarn packages:build`.
+4. Run `yarn packages:pack`.
+5. Run `./scripts/publish-npm-packages.sh`.
+6. Navigate to http://localhost:4873 and verify the version was published
 
 Locally published packages will be published under `dev` channel, so in your plugin package.json file you can use that channel. For example:
 

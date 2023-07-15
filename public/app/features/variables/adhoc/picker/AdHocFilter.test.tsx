@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { AdHocVariableFilter } from '../../types';
 
@@ -29,7 +29,7 @@ describe('AdHocFilter', () => {
     await selectEvent.select(selectEl, 'key3', { container: document.body });
 
     // Select value
-    await userEvent.click(screen.getByText('select value'));
+    await userEvent.click(screen.getByText('Select value'));
     // There are already some filters rendered
     const selectEl2 = screen.getAllByTestId('AdHocFilterValue-value-wrapper')[2];
     await selectEvent.select(selectEl2, 'val3', { container: document.body });
@@ -77,7 +77,7 @@ function setup() {
         },
       };
     },
-  } as any);
+  } as unknown as DataSourceSrv);
 
   const filters: AdHocVariableFilter[] = [
     {

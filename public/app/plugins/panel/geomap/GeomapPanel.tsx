@@ -25,18 +25,18 @@ import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
-import { ControlsOptions, PanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { ControlsOptions, Options, MapLayerState, MapViewConfig, TooltipMode } from './types';
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
-import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tootltip';
+import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
 import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
 
-type Props = PanelProps<PanelOptions>;
+type Props = PanelProps<Options>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
@@ -146,7 +146,7 @@ export class GeomapPanel extends Component<Props, State> {
    *
    * NOTE: changes to basemap and layers are handled independently
    */
-  optionsChanged(options: PanelOptions) {
+  optionsChanged(options: Options) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
       const [updatedSharedView, view] = this.initMapView(options.view, sharedView);

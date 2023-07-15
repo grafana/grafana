@@ -4,13 +4,14 @@ import { connect, ConnectedProps } from 'react-redux';
 import { TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
-import { Page } from 'app/core/components/PageNew/Page';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
+import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
-import { PreviewSettings } from './PreviewSettings';
 import { TimePickerSettings } from './TimePickerSettings';
 import { SettingsPageProps } from './types';
 
@@ -30,10 +31,11 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { uid: string; title: string }) => {
-    dashboard.meta.folderUid = folder.uid;
-    dashboard.meta.folderTitle = folder.title;
+  const onFolderChange = (newFolder: FolderChange) => {
+    dashboard.meta.folderUid = newFolder.uid;
+    dashboard.meta.folderTitle = newFolder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -105,16 +107,21 @@ export function GeneralSettingsUnconnected({
           <Field label="Tags">
             <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
+
           <Field label="Folder">
-            <FolderPicker
-              inputId="dashboard-folder-input"
-              initialTitle={dashboard.meta.folderTitle}
-              initialFolderUid={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              enableCreateNew={true}
-              dashboardId={dashboard.id}
-              skipInitialLoad={true}
-            />
+            {config.featureToggles.nestedFolderPicker ? (
+              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
+            ) : (
+              <FolderPicker
+                inputId="dashboard-folder-input"
+                initialTitle={dashboard.meta.folderTitle}
+                initialFolderUid={dashboard.meta.folderUid}
+                onChange={onFolderChange}
+                enableCreateNew={true}
+                dashboardId={dashboard.id}
+                skipInitialLoad={true}
+              />
+            )}
           </Field>
 
           <Field
@@ -124,10 +131,6 @@ export function GeneralSettingsUnconnected({
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
           </Field>
         </div>
-
-        {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
-          <PreviewSettings uid={dashboard.uid} />
-        )}
 
         <TimePickerSettings
           onTimeZoneChange={onTimeZoneChange}

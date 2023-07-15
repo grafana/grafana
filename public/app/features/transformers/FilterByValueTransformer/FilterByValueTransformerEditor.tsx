@@ -13,6 +13,7 @@ import {
   FieldType,
   ValueMatcherID,
   valueMatchers,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   FilterByValueFilter,
@@ -34,9 +35,7 @@ const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
   { label: 'Match any', value: FilterByValueMatch.any },
 ];
 
-export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = (
-  props
-) => {
+export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterByValueTransformerOptions>) => {
   const { input, options, onChange } = props;
   const styles = getEditorStyles();
   const fieldsInfo = useFieldsInfo(input);
@@ -141,6 +140,7 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   name: standardTransformers.filterByValueTransformer.name,
   description:
     'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
+  categories: new Set([TransformerCategory.Filter]),
 };
 
 const getEditorStyles = stylesFactory(() => ({

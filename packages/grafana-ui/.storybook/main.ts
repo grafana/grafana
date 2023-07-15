@@ -1,14 +1,16 @@
 import path from 'path';
-import type { StorybookConfig } from '@storybook/react/types';
+import type { StorybookConfig } from '@storybook/react-webpack5';
 // avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
 import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
 import { getIconSubDir } from '../src/components/Icon/utils';
 
-const stories = ['../src/**/*.story.@(tsx|mdx)'];
+// Internal stories should only be visible during development
+const storyGlob =
+  process.env.NODE_ENV === 'production'
+    ? '../src/components/**/!(*.internal).story.tsx'
+    : '../src/components/**/*.story.tsx';
 
-if (process.env.NODE_ENV !== 'production') {
-  stories.push('../src/**/*.story.internal.@(tsx|mdx)');
-}
+const stories = ['../src/Intro.mdx', storyGlob];
 
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
@@ -26,19 +28,9 @@ const mainConfig: StorybookConfig = {
   stories,
   addons: [
     {
-      // work around docs 6.5.x not resolving correctly with yarn PnP
-      name: path.dirname(require.resolve('@storybook/addon-docs/package.json')),
-      options: {
-        configureJSX: true,
-        babelOptions: {},
-      },
-    },
-    {
       name: '@storybook/addon-essentials',
       options: {
         backgrounds: false,
-        // work around docs 6.5.x not resolving correctly with yarn PnP
-        docs: false,
       },
     },
     '@storybook/addon-a11y',
@@ -62,31 +54,49 @@ const mainConfig: StorybookConfig = {
       name: 'storybook-addon-turbo-build',
       options: {
         optimizationLevel: 3,
+        // Target must match storybook 7 manager otherwise minimised docs error in production
+        esbuildMinifyOptions: {
+          target: 'chrome100',
+          minify: true,
+        },
       },
     },
   ],
-  core: {
-    builder: {
-      name: 'webpack5',
-      options: {
+  core: {},
+  docs: {
+    autodocs: true,
+  },
+  framework: {
+    name: '@storybook/react-webpack5',
+    options: {
+      fastRefresh: true,
+      builder: {
         fsCache: true,
       },
     },
   },
-  features: {
-    previewMdx2: true,
-  },
-  framework: '@storybook/react',
   logLevel: 'debug',
-  reactOptions: {
-    fastRefresh: true,
-  },
   staticDirs: [
-    { from: '../../../public/fonts', to: '/public/fonts' },
-    { from: '../../../public/img/grafana_text_logo-dark.svg', to: '/public/img/grafana_text_logo-dark.svg' },
-    { from: '../../../public/img/grafana_text_logo-light.svg', to: '/public/img/grafana_text_logo-light.svg' },
-    { from: '../../../public/img/fav32.png', to: '/public/img/fav32.png' },
-    { from: '../../../public/lib', to: '/public/lib' },
+    {
+      from: '../../../public/fonts',
+      to: '/public/fonts',
+    },
+    {
+      from: '../../../public/img/grafana_text_logo-dark.svg',
+      to: '/public/img/grafana_text_logo-dark.svg',
+    },
+    {
+      from: '../../../public/img/grafana_text_logo-light.svg',
+      to: '/public/img/grafana_text_logo-light.svg',
+    },
+    {
+      from: '../../../public/img/fav32.png',
+      to: '/public/img/fav32.png',
+    },
+    {
+      from: '../../../public/lib',
+      to: '/public/lib',
+    },
     ...iconPaths,
   ],
   typescript: {
@@ -119,5 +129,4 @@ const mainConfig: StorybookConfig = {
     return config;
   },
 };
-
 module.exports = mainConfig;

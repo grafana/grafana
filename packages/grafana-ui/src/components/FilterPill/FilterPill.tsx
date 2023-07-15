@@ -15,7 +15,7 @@ export interface FilterPillProps {
   icon?: IconName;
 }
 
-export const FilterPill: React.FC<FilterPillProps> = ({ label, selected, onClick, icon = 'check' }) => {
+export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterPillProps) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   return (
@@ -39,6 +39,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       height: 32px;
+      position: relative;
+      border: 1px solid ${theme.colors.background.secondary};
+      white-space: nowrap;
 
       &:hover {
         background: ${theme.colors.action.hover};
@@ -47,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     selected: css`
       color: ${theme.colors.text.primary};
-      background: ${theme.colors.action.selected};
+      border: 1px solid #ff780a;
 
       &:hover {
         background: ${theme.colors.action.focus};

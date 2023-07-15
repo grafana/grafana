@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/correlations/
+canonical: /docs/grafana/latest/developers/http_api/correlation/
 description: Grafana Correlations HTTP API
 keywords:
   - grafana
@@ -265,6 +266,12 @@ Status codes:
 `GET /api/datasources/correlations`
 
 Get all correlations.
+
+Query parameters:
+
+- **page** - Optional. Specify which page number to return. Use the limit parameter to specify the number of correlations per page. The default is page 1.
+- **limit** - Optional. Limits the number of returned correlations per page. The default is 100 correlations per page. The maximum limit is 1000 correlations in a page.
+- **sourceUID** - Optional. Specify a source datasource UID to filter by. This can be repeated to filter by multiple datasources.
 
 **Example request:**
 

@@ -3,11 +3,9 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
-import store from 'app/core/store';
 import { AccessControlAction, ServiceAccountDTO, ServiceAccountStateFilter, ThunkResult } from 'app/types';
 
 import { ServiceAccountToken } from '../components/CreateTokenModal';
-import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from '../constants';
 
 import {
   acOptionsLoaded,
@@ -16,9 +14,7 @@ import {
   serviceAccountsFetchBegin,
   serviceAccountsFetched,
   serviceAccountsFetchEnd,
-  apiKeysMigrationStatusLoaded,
   stateFilterChanged,
-  showApiKeysMigrationInfoLoaded,
 } from './reducers';
 
 const BASE_URL = `/api/serviceaccounts`;
@@ -32,15 +28,6 @@ export function fetchACOptions(): ThunkResult<void> {
       }
     } catch (error) {
       console.error(error);
-    }
-  };
-}
-
-export function getApiKeysMigrationStatus(): ThunkResult<void> {
-  return async (dispatch) => {
-    if (contextSrv.hasPermission(AccessControlAction.ServiceAccountsRead)) {
-      const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
-      dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
     }
   };
 }
@@ -136,19 +123,5 @@ export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(pageChanged(page));
     dispatch(fetchServiceAccounts());
-  };
-}
-
-export function getApiKeysMigrationInfo(): ThunkResult<void> {
-  return async (dispatch) => {
-    const showApiKeysMigrationInfo = store.getBool(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
-    dispatch(showApiKeysMigrationInfoLoaded(showApiKeysMigrationInfo));
-  };
-}
-
-export function closeApiKeysMigrationInfo(): ThunkResult<void> {
-  return async (dispatch) => {
-    store.set(API_KEYS_MIGRATION_INFO_STORAGE_KEY, false);
-    dispatch(getApiKeysMigrationInfo());
   };
 }

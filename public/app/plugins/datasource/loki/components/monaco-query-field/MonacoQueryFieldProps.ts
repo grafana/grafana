@@ -12,5 +12,7 @@ export type Props = {
   history: Array<HistoryItem<LokiQuery>>;
   onRunQuery: (value: string) => void;
   onBlur: (value: string) => void;
+  placeholder: string;
   datasource: LokiDatasource;
+  onQueryType?: (query: string) => void;
 };

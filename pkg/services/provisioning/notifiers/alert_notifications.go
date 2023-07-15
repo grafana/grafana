@@ -11,18 +11,18 @@ import (
 )
 
 type Manager interface {
-	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error
-	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
-	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error
+	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) (*models.AlertNotification, error)
+	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) (*models.AlertNotification, error)
+	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) (*models.AlertNotification, error)
 	DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error
-	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error
-	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
+	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) ([]*models.AlertNotification, error)
+	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) (*models.AlertNotificationState, error)
 	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
-	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
+	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) (*models.AlertNotification, error)
 	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
-	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
-	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
+	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) ([]*models.AlertNotification, error)
+	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) (*models.AlertNotification, error)
 }
 
 // Provision alert notifiers
@@ -80,14 +80,15 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 			notification.OrgID = 1
 		}
 
-		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
+		getNotification := &models.GetAlertNotificationsWithUidQuery{UID: notification.UID, OrgID: notification.OrgID}
 
-		if err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
+		res, err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, getNotification)
+		if err != nil {
 			return err
 		}
 
-		if getNotification.Result != nil {
-			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
+		if res != nil {
+			cmd := &models.DeleteAlertNotificationWithUidCommand{UID: res.UID, OrgID: getNotification.OrgID}
 			if err := dc.alertingManager.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
@@ -110,46 +111,47 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 			notification.OrgID = 1
 		}
 
-		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
-		err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, cmd)
+		cmd := &models.GetAlertNotificationsWithUidQuery{OrgID: notification.OrgID, UID: notification.UID}
+		res, err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
 		}
 
-		if cmd.Result == nil {
+		if res == nil {
 			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.UID)
 			insertCmd := &models.CreateAlertNotificationCommand{
-				Uid:                   notification.UID,
+				UID:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
 				SecureSettings:        notification.SecureSettings,
-				OrgId:                 notification.OrgID,
+				OrgID:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.alertingManager.CreateAlertNotificationCommand(ctx, insertCmd); err != nil {
+			_, err := dc.alertingManager.CreateAlertNotificationCommand(ctx, insertCmd)
+			if err != nil {
 				return err
 			}
 		} else {
 			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
 			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
-				Uid:                   notification.UID,
+				UID:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
 				SecureSettings:        notification.SecureSettings,
-				OrgId:                 notification.OrgID,
+				OrgID:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := dc.alertingManager.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
+			if _, err := dc.alertingManager.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
 				return err
 			}
 		}

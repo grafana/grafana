@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, HTMLAttributes, ReactNode } from 'react';
+import React, { HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -17,7 +17,7 @@ const getTabContentStyle = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const TabContent: FC<Props> = ({ children, className, ...restProps }) => {
+export const TabContent = ({ children, className, ...restProps }: Props) => {
   const theme = useTheme2();
   const styles = getTabContentStyle(theme);
 

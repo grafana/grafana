@@ -12,4 +12,6 @@ export const SQLTokenTypes: TokenTypes = {
   Number: 'number.sql',
   String: 'string.sql',
   Variable: 'variable.sql',
+  Comment: 'comment.sql',
+  Regexp: 'regexp.sql',
 };

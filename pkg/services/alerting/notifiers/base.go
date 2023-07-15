@@ -38,7 +38,7 @@ func NewNotifierBase(model *models.AlertNotification, notificationService notifi
 	}
 
 	return NotifierBase{
-		UID:                   model.Uid,
+		UID:                   model.UID,
 		Name:                  model.Name,
 		IsDefault:             model.IsDefault,
 		Type:                  model.Type,

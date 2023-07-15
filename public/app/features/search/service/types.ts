@@ -40,6 +40,9 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
+
+  // enterprise sends extra properties through for sorting (views, errors, etc)
+  [key: string]: unknown;
 }
 
 export interface LocationInfo {
@@ -77,4 +80,9 @@ export interface GrafanaSearcher {
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;
+}
+
+export interface NestedFolderDTO {
+  uid: string;
+  title: string;
 }

@@ -14,7 +14,7 @@
 
 import { TraceSpan } from '../types';
 
-import { _getTraceNameImpl as getTraceName } from './trace-viewer';
+import { getHeaderTags, _getTraceNameImpl as getTraceName } from './trace-viewer';
 
 describe('getTraceName', () => {
   const firstSpanId = 'firstSpanId';
@@ -221,6 +221,50 @@ describe('getTraceName', () => {
       ],
     },
   ];
+  const spansWithHeaderTags = [
+    {
+      spanID: firstSpanId,
+      traceID: currentTraceId,
+      startTime: t + 200,
+      process: {},
+      references: [],
+      tags: [],
+    },
+    {
+      spanID: secondSpanId,
+      traceID: currentTraceId,
+      startTime: t + 100,
+      process: {},
+      references: [],
+      tags: [
+        {
+          key: 'http.method',
+          value: 'POST',
+        },
+        {
+          key: 'http.status_code',
+          value: '200',
+        },
+      ],
+    },
+    {
+      spanID: thirdSpanId,
+      traceID: currentTraceId,
+      startTime: t,
+      process: {},
+      references: [],
+      tags: [
+        {
+          key: 'http.status_code',
+          value: '400',
+        },
+        {
+          key: 'http.url',
+          value: '/test:80',
+        },
+      ],
+    },
+  ];
 
   const fullTraceName = `${serviceName}: ${operationName}`;
 
@@ -242,5 +286,23 @@ describe('getTraceName', () => {
 
   it('returns an id of root span with no refs', () => {
     expect(getTraceName(spansWithOneRootWithNoRefs as unknown as TraceSpan[])).toEqual(fullTraceName);
+  });
+
+  it('returns span with header tags', () => {
+    expect(getHeaderTags(spansWithHeaderTags as unknown as TraceSpan[])).toEqual({
+      method: [
+        {
+          key: 'http.method',
+          value: 'POST',
+        },
+      ],
+      status: [
+        {
+          key: 'http.status_code',
+          value: '200',
+        },
+      ],
+      url: [],
+    });
   });
 });

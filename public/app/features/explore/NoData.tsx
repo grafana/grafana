@@ -20,7 +20,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: no-data-card;
     padding: ${theme.spacing(3)};
     background: ${theme.colors.background.primary};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.radius.default};
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -4,7 +4,6 @@ import {
   AuthSettings,
   BootData,
   BuildInfo,
-  createTheme,
   DataSourceInstanceSettings,
   FeatureToggles,
   GrafanaConfig,
@@ -14,22 +13,31 @@ import {
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
-  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
-  NewThemeOptions,
+  getThemeById,
 } from '@grafana/data';
 
 export interface AzureSettings {
   cloud?: string;
   managedIdentityEnabled: boolean;
+  userIdentityEnabled: boolean;
 }
+
+export type AppPluginConfig = {
+  id: string;
+  path: string;
+  version: string;
+  preload: boolean;
+  angularDetected?: boolean;
+};
 
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  apps: Record<string, AppPluginConfig> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
@@ -55,11 +63,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   queryHistoryEnabled = false;
   helpEnabled = false;
   profileEnabled = false;
+  newsFeedEnabled = true;
   ldapEnabled = false;
   jwtHeaderName = '';
   jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   azureAuthEnabled = false;
+  secureSocksDSProxyEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
@@ -73,12 +83,14 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  trustedTypesDefaultPolicyEnabled = false;
+  cspReportOnlyEnabled = false;
   liveEnabled = true;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {};
+  anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   dashboardPreviews: {
@@ -93,12 +105,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
-  sentry = {
-    enabled: false,
-    dsn: '',
-    customEndpoint: '',
-    sampleRate: 1,
-  };
   grafanaJavascriptAgent = {
     enabled: false,
     customEndpoint: '',
@@ -118,6 +124,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
     managedIdentityEnabled: false,
+    userIdentityEnabled: false,
   };
   caching = {
     enabled: false,
@@ -125,7 +132,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = { minInterval: '' };
+  unifiedAlerting = {
+    minInterval: '',
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
+  };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
@@ -144,12 +155,17 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
+  sqlConnectionLimits = {
+    maxOpenConns: 100,
+    maxIdleConns: 100,
+    connMaxLifetime: 14400,
+  };
 
   tokenExpirationDayLimit: undefined;
+  disableFrontendSandboxForPlugins: string[] = [];
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
-    this.bootData.user.lightTheme = getThemeMode(options) === 'light';
     this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
@@ -179,40 +195,19 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    overrideFeatureTogglesFromUrl(this);
+    if (this.buildInfo.env === 'development') {
+      overrideFeatureTogglesFromUrl(this);
+    }
+
+    if (this.featureToggles.disableAngular) {
+      this.angularSupportEnabled = false;
+    }
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
-    this.theme2 = createTheme(getThemeCustomizations(this));
-
+    this.theme2 = getThemeById(this.bootData.user.theme);
+    this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
-    // Special feature toggle that impact theme/component looks
-    this.theme2.flags.topnav = this.featureToggles.topnav;
   }
-}
-
-function getThemeMode(config: GrafanaBootConfig) {
-  let mode: 'light' | 'dark' = 'dark';
-  const themePref = config.bootData.user.theme;
-
-  if (themePref === 'light' || themePref === 'dark') {
-    mode = themePref;
-  } else if (themePref === 'system') {
-    const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
-    mode = mediaResult.matches ? 'dark' : 'light';
-  }
-
-  return mode;
-}
-
-function getThemeCustomizations(config: GrafanaBootConfig) {
-  // if/when we remove CurrentUserDTO.lightTheme, change this to use getThemeMode instead
-  const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
-
-  const themeOptions: NewThemeOptions = {
-    colors: { mode },
-  };
-
-  return themeOptions;
 }
 
 function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
@@ -223,10 +218,11 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
-      const toggleState = value === 'true';
-      if (toggleState !== config.featureToggles[key]) {
-        config.featureToggles[featureName] = toggleState;
+      const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
+      if (toggleState !== featureToggles[key]) {
+        featureToggles[featureName] = toggleState;
         console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
       }
     }

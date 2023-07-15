@@ -1,5 +1,6 @@
 import { of } from 'rxjs';
 
+import { EventBusExtended } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
@@ -115,17 +116,17 @@ function mockBackendSrv(data: string) {
       redirected: false,
       type: 'basic',
       url: 'http://localhost:3000/api/some-mock',
-      headers: {
+      headers: new Headers({
         method: 'GET',
         url: '/functions',
         // to work around Graphite returning invalid JSON
         responseType: 'text',
-      },
+      }),
     };
     return of(mockedResponse);
   });
 
-  const appEventsMock = {} as any;
+  const appEventsMock = {} as EventBusExtended;
 
   const user: User = {
     isSignedIn: props.isSignedIn,

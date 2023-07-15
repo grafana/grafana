@@ -105,6 +105,7 @@ function SelectInputParamEditor({
         placeholder={paramDef.placeholder}
         allowCustomValue={true}
         onChange={(value) => onChange(index, value.value!)}
+        width={paramDef.minWidth || 'auto'}
       />
       {paramDef.optional && (
         <Button

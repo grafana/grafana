@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ const helpOptions = [
   { value: 3, label: 'Public Slack', href: 'http://slack.grafana.com' },
 ];
 
-export const WelcomeBanner: FC = () => {
+export const WelcomeBanner = () => {
   const styles = useStyles2(getStyles);
 
   return (

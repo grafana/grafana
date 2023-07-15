@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 var (
@@ -14,9 +16,27 @@ var (
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
+	ErrInvalidTransformationType          = errors.New("invalid transformation type")
+	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
+	ErrTransformationRegexReqExp          = errors.New("regex transformations require expression")
+	ErrCorrelationsQuotaFailed            = errors.New("error getting correlations quota")
+	ErrCorrelationsQuotaReached           = errors.New("correlations quota reached")
+)
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "correlations"
+	QuotaTarget    quota.Target    = "correlations"
 )
 
 type CorrelationConfigType string
+
+type Transformation struct {
+	//Enum: regex,logfmt
+	Type       string `json:"type"`
+	Expression string `json:"expression,omitempty"`
+	Field      string `json:"field,omitempty"`
+	MapValue   string `json:"mapValue,omitempty"`
+}
 
 const (
 	ConfigTypeQuery CorrelationConfigType = "query"
@@ -29,6 +49,19 @@ func (t CorrelationConfigType) Validate() error {
 	return nil
 }
 
+func (t Transformations) Validate() error {
+	for _, v := range t {
+		if v.Type != "regex" && v.Type != "logfmt" {
+			return fmt.Errorf("%s: \"%s\"", ErrInvalidTransformationType, t)
+		} else if v.Type == "regex" && len(v.Expression) == 0 {
+			return fmt.Errorf("%s: \"%s\"", ErrTransformationRegexReqExp, t)
+		}
+	}
+	return nil
+}
+
+type Transformations []Transformation
+
 // swagger:model
 type CorrelationConfig struct {
 	// Field used to attach the correlation link
@@ -40,23 +73,30 @@ type CorrelationConfig struct {
 	Type CorrelationConfigType `json:"type" binding:"Required"`
 	// Target data query
 	// required:true
-	// example: { "expr": "job=app" }
+	// example: {"prop1":"value1","prop2":"value"}
 	Target map[string]interface{} `json:"target" binding:"Required"`
+	// Source data transformations
+	// required:false
+	// example: [{"type":"logfmt"}]
+	Transformations Transformations `json:"transformations,omitempty"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
+	transformations := c.Transformations
 	if target == nil {
 		target = map[string]interface{}{}
 	}
 	return json.Marshal(struct {
-		Type   CorrelationConfigType  `json:"type"`
-		Field  string                 `json:"field"`
-		Target map[string]interface{} `json:"target"`
+		Type            CorrelationConfigType  `json:"type"`
+		Field           string                 `json:"field"`
+		Target          map[string]interface{} `json:"target"`
+		Transformations Transformations        `json:"transformations,omitempty"`
 	}{
-		Type:   ConfigTypeQuery,
-		Field:  c.Field,
-		Target: target,
+		Type:            ConfigTypeQuery,
+		Field:           c.Field,
+		Target:          target,
+		Transformations: transformations,
 	})
 }
 
@@ -67,10 +107,10 @@ type Correlation struct {
 	// example: 50xhMlg9k
 	UID string `json:"uid" xorm:"pk 'uid'"`
 	// UID of the data source the correlation originates from
-	// example:d0oxYRg4z
+	// example: d0oxYRg4z
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
 	// UID of the data source the correlation points to
-	// example:PE1C5CBDA0504A6A3
+	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
@@ -80,6 +120,13 @@ type Correlation struct {
 	Description string `json:"description" xorm:"description"`
 	// Correlation Configuration
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
+}
+
+type GetCorrelationsResponseBody struct {
+	Correlations []Correlation `json:"correlations"`
+	TotalCount   int64         `json:"totalCount"`
+	Page         int64         `json:"page"`
+	Limit        int64         `json:"limit"`
 }
 
 // CreateCorrelationResponse is the response struct for CreateCorrelationCommand
@@ -98,7 +145,7 @@ type CreateCorrelationCommand struct {
 	OrgId             int64  `json:"-"`
 	SkipReadOnlyCheck bool   `json:"-"`
 	// Target data source UID to which the correlation is created. required if config.type = query
-	// example:PE1C5CBDA0504A6A3
+	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
 	// example: My label
@@ -116,6 +163,10 @@ func (c CreateCorrelationCommand) Validate() error {
 	}
 	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
 		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
+	}
+
+	if err := c.Config.Transformations.Validate(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -149,8 +200,11 @@ type CorrelationConfigUpdateDTO struct {
 	// Target type
 	Type *CorrelationConfigType `json:"type"`
 	// Target data query
-	// example: { "expr": "job=app" }
+	// example: {"prop1":"value1","prop2":"value"}
 	Target *map[string]interface{} `json:"target"`
+	// Source data transformations
+	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
+	Transformations []Transformation `json:"transformations"`
 }
 
 func (c CorrelationConfigUpdateDTO) Validate() error {
@@ -213,6 +267,21 @@ type GetCorrelationsBySourceUIDQuery struct {
 // GetCorrelationsQuery is the query to retrieve all correlations
 type GetCorrelationsQuery struct {
 	OrgId int64 `json:"-"`
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	Limit int64 `json:"limit"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// required:false
+	SourceUIDs []string `json:"sourceuid"`
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {

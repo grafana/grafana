@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -18,6 +19,7 @@ type RuleMeta struct {
 	NamespaceUID string
 	DashboardUID string
 	PanelID      int64
+	Condition    string
 }
 
 func NewRuleMeta(r *models.AlertRule, log log.Logger) RuleMeta {
@@ -42,5 +44,10 @@ func NewRuleMeta(r *models.AlertRule, log log.Logger) RuleMeta {
 		NamespaceUID: r.NamespaceUID,
 		DashboardUID: dashUID,
 		PanelID:      panelID,
+		Condition:    r.Condition,
 	}
+}
+
+func WithRuleData(ctx context.Context, rule RuleMeta) context.Context {
+	return models.WithRuleKey(ctx, models.AlertRuleKey{OrgID: rule.OrgID, UID: rule.UID})
 }

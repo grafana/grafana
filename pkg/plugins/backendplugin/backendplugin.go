@@ -2,7 +2,7 @@
 package backendplugin
 
 import (
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 // PluginFactoryFunc is a function type for creating a Plugin.

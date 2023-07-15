@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Subscription } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Tab, TabContent, TabsBar, toIconName, useForceUpdate, useStyles2 } from '@grafana/ui';
 import AlertTabIndex from 'app/features/alerting/AlertTabIndex';
 import { PanelAlertTab } from 'app/features/alerting/unified/PanelAlertTab';
@@ -22,9 +22,25 @@ interface PanelEditorTabsProps {
   onChangeTab: (tab: PanelEditorTab) => void;
 }
 
-export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, dashboard, tabs, onChangeTab }) => {
+export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab }: PanelEditorTabsProps) => {
   const forceUpdate = useForceUpdate();
   const styles = useStyles2(getStyles);
+
+  const instrumentedOnChangeTab = useCallback(
+    (tab: PanelEditorTab) => {
+      let eventName = 'panel_editor_tabs_changed';
+      if (config.featureToggles.transformationsRedesign) {
+        eventName = 'transformations_redesign_' + eventName;
+      }
+
+      if (!tab.active) {
+        reportInteraction(eventName, { tab_id: tab.id });
+      }
+
+      onChangeTab(tab);
+    },
+    [onChangeTab]
+  );
 
   useEffect(() => {
     const eventSubs = new Subscription();
@@ -44,14 +60,14 @@ export const PanelEditorTabs: FC<PanelEditorTabsProps> = React.memo(({ panel, da
       <TabsBar className={styles.tabBar} hideBorder>
         {tabs.map((tab) => {
           if (tab.id === PanelEditorTabId.Alert) {
-            return renderAlertTab(tab, panel, dashboard, onChangeTab);
+            return renderAlertTab(tab, panel, dashboard, instrumentedOnChangeTab);
           }
           return (
             <Tab
               key={tab.id}
               label={tab.text}
               active={tab.active}
-              onChangeTab={() => onChangeTab(tab)}
+              onChangeTab={() => instrumentedOnChangeTab(tab)}
               icon={toIconName(tab.icon)}
               counter={getCounter(panel, tab)}
             />
@@ -139,7 +155,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0;
       display: flex;
       flex-direction: column;
-      flex-grow: 1;
+      flex: 1;
       min-height: 0;
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};

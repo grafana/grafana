@@ -182,28 +182,26 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		store := evalCtx.Store.(*AlertStoreMock)
 
-		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *alertmodels.GetAlertNotificationsWithUidToSendQuery) error {
-			query.Result = []*alertmodels.AlertNotification{
+		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *alertmodels.GetAlertNotificationsWithUidToSendQuery) (res []*alertmodels.AlertNotification, err error) {
+			return []*alertmodels.AlertNotification{
 				{
-					Id:   1,
+					ID:   1,
 					Type: "test",
 					Settings: simplejson.NewFromAny(map[string]interface{}{
 						"uploadImage": uploadImage,
 					}),
 				},
-			}
-			return nil
+			}, nil
 		}
 
-		store.getOrCreateNotificationState = func(ctx context.Context, query *alertmodels.GetOrCreateNotificationStateQuery) error {
-			query.Result = &alertmodels.AlertNotificationState{
-				AlertId:                      evalCtx.Rule.ID,
+		store.getOrCreateNotificationState = func(ctx context.Context, query *alertmodels.GetOrCreateNotificationStateQuery) (res *alertmodels.AlertNotificationState, err error) {
+			return &alertmodels.AlertNotificationState{
+				AlertID:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
-				Id:                           1,
-				OrgId:                        evalCtx.Rule.OrgID,
+				ID:                           1,
+				OrgID:                        evalCtx.Rule.OrgID,
 				State:                        alertmodels.AlertNotificationStateUnknown,
-			}
-			return nil
+			}, nil
 		}
 
 		setting.AlertingNotificationTimeout = 30 * time.Second
@@ -284,7 +282,7 @@ func newTestNotifier(model *alertmodels.AlertNotification, _ GetDecryptedValueFn
 	}
 
 	return &testNotifier{
-		UID:                   model.Uid,
+		UID:                   model.UID,
 		Name:                  model.Name,
 		IsDefault:             model.IsDefault,
 		Type:                  model.Type,

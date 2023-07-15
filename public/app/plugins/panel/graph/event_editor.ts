@@ -35,7 +35,7 @@ export class EventEditorCtrl {
 
   canDelete(): boolean {
     if (contextSrv.accessControlEnabled()) {
-      if (this.event.source.type === 'dashboard') {
+      if (this.event.source?.type === 'dashboard') {
         return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.dashboard.canDelete;
       }
       return !!this.panelCtrl.dashboard.meta.annotationsPermissions?.organization.canDelete;

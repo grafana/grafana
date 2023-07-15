@@ -1,10 +1,57 @@
-import { TimeRange } from '../types/time';
+import { RawTimeRange, TimeRange } from '../types/time';
 
 import { timeRangeToRelative } from './rangeutil';
 
 import { dateTime, rangeUtil } from './index';
 
 describe('Range Utils', () => {
+  // These tests probably wrap the dateTimeParser tests to some extent
+  describe('convertRawToRange', () => {
+    const DEFAULT_DATE_VALUE = '1996-07-30 16:00:00'; // Default format YYYY-MM-DD HH:mm:ss
+    const DEFAULT_DATE_VALUE_FORMATTED = '1996-07-30T16:00:00-06:00';
+    const defaultRawTimeRange = {
+      from: DEFAULT_DATE_VALUE,
+      to: '1996-07-30 16:20:00',
+    };
+
+    it('should serialize the default format by default', () => {
+      const deserialized = rangeUtil.convertRawToRange(defaultRawTimeRange);
+      expect(deserialized.from.format()).toBe(DEFAULT_DATE_VALUE_FORMATTED);
+    });
+
+    it('should serialize using custom formats', () => {
+      const NON_DEFAULT_FORMAT = 'DD-MM-YYYY HH:mm:ss';
+      const nonDefaultRawTimeRange: RawTimeRange = {
+        from: '30-07-1996 16:00:00',
+        to: '30-07-1996 16:20:00',
+      };
+
+      const deserializedTimeRange = rangeUtil.convertRawToRange(
+        nonDefaultRawTimeRange,
+        undefined,
+        undefined,
+        NON_DEFAULT_FORMAT
+      );
+      expect(deserializedTimeRange.from.format()).toBe(DEFAULT_DATE_VALUE_FORMATTED);
+    });
+
+    it('should take timezone into account', () => {
+      const deserializedTimeRange = rangeUtil.convertRawToRange(defaultRawTimeRange, 'UTC');
+      expect(deserializedTimeRange.from.format()).toBe('1996-07-30T16:00:00Z');
+    });
+
+    it('should leave the raw part intact if it has calulactions', () => {
+      const timeRange = {
+        from: DEFAULT_DATE_VALUE,
+        to: 'now',
+      };
+
+      const deserialized = rangeUtil.convertRawToRange(timeRange);
+      expect(deserialized.raw).toStrictEqual(timeRange);
+      expect(deserialized.to.toString()).not.toBe(deserialized.raw.to);
+    });
+  });
+
   describe('relative time', () => {
     it('should identify absolute vs relative', () => {
       expect(

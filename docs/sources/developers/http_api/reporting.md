@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/reporting/
+canonical: /docs/grafana/latest/developers/http_api/reporting/
 description: Grafana Enterprise APIs
 keywords:
   - grafana
@@ -12,13 +13,13 @@ title: Reporting API
 
 # Reporting API
 
-This API allows you to interact programmatically with the [Reporting]({{< relref "../../dashboards/create-reports/" >}}) feature.
+This API allows you to interact programmatically with the [Reporting]({{< relref "/docs/grafana/latest/dashboards/create-reports" >}}) feature.
 
 > The Reporting API is not stabilized yet, it is still in active development and may change without prior notice.
 
-> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+> Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## List all reports
 
@@ -26,7 +27,7 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< relref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope                       |
 | ------------ | --------------------------- |
@@ -98,7 +99,7 @@ Content-Length: 1840
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
 ## Get a report
@@ -107,7 +108,7 @@ Content-Length: 1840
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< relref "#reporting-api" >}}) for an explanation.
 
 | Action       | Scope                                                      |
 | ------------ | ---------------------------------------------------------- |
@@ -182,7 +183,7 @@ Content-Length: 940
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -376,7 +377,7 @@ Content-Length: 28
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -418,7 +419,7 @@ Content-Length: 39
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **404** - Not found (report with this ID does not exist).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
 
@@ -472,7 +473,7 @@ Content-Length: 29
 
 - **200** – Report was sent.
 - **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **404** - Report not found.
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -524,7 +525,7 @@ Content-Length: 181
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Save reports branding settings
@@ -586,7 +587,7 @@ Content-Length: 35
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Send a test email
@@ -669,6 +670,6 @@ Content-Length: 29
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "/docs/grafana/latest/developers/http_api/auth" >}}).
 - **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details

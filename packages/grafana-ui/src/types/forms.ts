@@ -1,4 +1,4 @@
-import { UseFormReturn, FieldValues, FieldErrors } from 'react-hook-form';
+import { UseFormReturn, FieldValues, FieldErrors, FieldArrayMethodProps } from 'react-hook-form';
 export type { SubmitHandler as FormsOnSubmit, FieldErrors as FormFieldErrors } from 'react-hook-form';
 
 export type FormAPI<T extends FieldValues> = Omit<UseFormReturn<T>, 'trigger' | 'handleSubmit'> & {
@@ -9,7 +9,7 @@ type FieldArrayValue = Partial<FieldValues> | Array<Partial<FieldValues>>;
 
 export interface FieldArrayApi {
   fields: Array<Record<string, any>>;
-  append: (value: FieldArrayValue) => void;
+  append: (value: FieldArrayValue, options?: FieldArrayMethodProps) => void;
   prepend: (value: FieldArrayValue) => void;
   remove: (index?: number | number[]) => void;
   swap: (indexA: number, indexB: number) => void;

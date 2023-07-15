@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,7 +82,7 @@ func TestAbsFunc(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute("", tt.vars)
+				res, err := e.Execute("", tt.vars, tracing.NewFakeTracer())
 				tt.execErrIs(t, err)
 				tt.resultIs(t, tt.results, res)
 			}
@@ -152,7 +153,7 @@ func TestIsNumberFunc(t *testing.T) {
 			e, err := New(tt.expr)
 			require.NoError(t, err)
 			if e != nil {
-				res, err := e.Execute("", tt.vars)
+				res, err := e.Execute("", tt.vars, tracing.NewFakeTracer())
 				require.NoError(t, err)
 				require.Equal(t, tt.results, res)
 			}

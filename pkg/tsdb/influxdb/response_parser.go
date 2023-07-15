@@ -19,10 +19,20 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
-	resp := backend.NewQueryDataResponse()
+func (rp *ResponseParser) Parse(buf io.ReadCloser, statusCode int, queries []Query) *backend.QueryDataResponse {
+	return rp.parse(buf, statusCode, queries)
+}
 
+// parse is the same as Parse, but without the io.ReadCloser (we don't need to
+// close the buffer)
+func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []Query) *backend.QueryDataResponse {
+	resp := backend.NewQueryDataResponse()
 	response, jsonErr := parseJSON(buf)
+
+	if statusCode/100 != 2 {
+		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+	}
+
 	if jsonErr != nil {
 		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
 		return resp
@@ -44,17 +54,32 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.Que
 	return resp
 }
 
-func parseJSON(buf io.ReadCloser) (Response, error) {
+func parseJSON(buf io.Reader) (Response, error) {
 	var response Response
+
 	dec := json.NewDecoder(buf)
 	dec.UseNumber()
 
 	err := dec.Decode(&response)
+
 	return response, err
 }
 
 func transformRows(rows []Row, query Query) data.Frames {
-	frames := data.Frames{}
+	// pre-allocate frames - this can save many allocations
+	cols := 0
+	for _, row := range rows {
+		cols += len(row.Columns)
+	}
+	frames := make([]*data.Frame, 0, len(rows)+cols)
+
+	// frameName is pre-allocated. So we can reuse it, saving memory.
+	// It's sized for a reasonably-large name, but will grow if needed.
+	frameName := make([]byte, 0, 128)
+
+	retentionPolicyQuery := isRetentionPolicyQuery(query)
+	tagValuesQuery := isTagValuesQuery(query)
+
 	for _, row := range rows {
 		var hasTimeCol = false
 
@@ -65,78 +90,118 @@ func transformRows(rows []Row, query Query) data.Frames {
 		}
 
 		if !hasTimeCol {
-			var values []string
-
-			for _, valuePair := range row.Values {
-				if strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES")) {
-					if len(valuePair) >= 2 {
-						values = append(values, valuePair[1].(string))
-					}
-				} else {
-					if len(valuePair) >= 1 {
-						values = append(values, valuePair[0].(string))
-					}
-				}
-			}
-
-			field := data.NewField("value", nil, values)
-			frames = append(frames, data.NewFrame(row.Name, field))
+			newFrame := newFrameWithoutTimeField(row, retentionPolicyQuery, tagValuesQuery)
+			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
 				if column == "time" {
 					continue
 				}
-
-				var timeArray []time.Time
-				var floatArray []*float64
-				var stringArray []string
-				var boolArray []bool
-				valType := typeof(row.Values, colIndex)
-				name := formatFrameName(row, column, query)
-
-				for _, valuePair := range row.Values {
-					timestamp, timestampErr := parseTimestamp(valuePair[0])
-					// we only add this row if the timestamp is valid
-					if timestampErr == nil {
-						timeArray = append(timeArray, timestamp)
-						if valType == "string" {
-							value := valuePair[colIndex].(string)
-							stringArray = append(stringArray, value)
-						} else if valType == "json.Number" {
-							value := parseNumber(valuePair[colIndex])
-							floatArray = append(floatArray, value)
-						} else if valType == "bool" {
-							value := valuePair[colIndex].(bool)
-							boolArray = append(boolArray, value)
-						} else if valType == "null" {
-							floatArray = append(floatArray, nil)
-						}
-					}
-				}
-
-				timeField := data.NewField("time", nil, timeArray)
-				if valType == "string" {
-					valueField := data.NewField("value", row.Tags, stringArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				} else if valType == "json.Number" {
-					valueField := data.NewField("value", row.Tags, floatArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				} else if valType == "bool" {
-					valueField := data.NewField("value", row.Tags, boolArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				} else if valType == "null" {
-					valueField := data.NewField("value", row.Tags, floatArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				}
+				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
+				frames = append(frames, newFrame)
 			}
 		}
 	}
 
 	return frames
+}
+
+func newFrameWithTimeField(row Row, column string, colIndex int, query Query, frameName []byte) *data.Frame {
+	var timeArray []time.Time
+	var floatArray []*float64
+	var stringArray []*string
+	var boolArray []*bool
+	valType := typeof(row.Values, colIndex)
+
+	for _, valuePair := range row.Values {
+		timestamp, timestampErr := parseTimestamp(valuePair[0])
+		// we only add this row if the timestamp is valid
+		if timestampErr != nil {
+			continue
+		}
+
+		timeArray = append(timeArray, timestamp)
+		switch valType {
+		case "string":
+			value, ok := valuePair[colIndex].(string)
+			if ok {
+				stringArray = append(stringArray, &value)
+			} else {
+				stringArray = append(stringArray, nil)
+			}
+		case "json.Number":
+			value := parseNumber(valuePair[colIndex])
+			floatArray = append(floatArray, value)
+		case "bool":
+			value, ok := valuePair[colIndex].(bool)
+			if ok {
+				boolArray = append(boolArray, &value)
+			} else {
+				boolArray = append(boolArray, nil)
+			}
+		case "null":
+			floatArray = append(floatArray, nil)
+		}
+	}
+
+	timeField := data.NewField("Time", nil, timeArray)
+
+	var valueField *data.Field
+
+	switch valType {
+	case "string":
+		valueField = data.NewField("Value", row.Tags, stringArray)
+	case "json.Number":
+		valueField = data.NewField("Value", row.Tags, floatArray)
+	case "bool":
+		valueField = data.NewField("Value", row.Tags, boolArray)
+	case "null":
+		valueField = data.NewField("Value", row.Tags, floatArray)
+	}
+
+	name := string(formatFrameName(row, column, query, frameName[:]))
+	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+	return newDataFrame(name, query.RawQuery, timeField, valueField)
+}
+
+func newFrameWithoutTimeField(row Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+	var values []string
+
+	if retentionPolicyQuery {
+		values = make([]string, 1, len(row.Values))
+	} else {
+		values = make([]string, 0, len(row.Values))
+	}
+
+	for _, valuePair := range row.Values {
+		if tagValuesQuery {
+			if len(valuePair) >= 2 {
+				values = append(values, valuePair[1].(string))
+			}
+		} else if retentionPolicyQuery {
+			// We want to know whether the given retention policy is the default one or not.
+			// If it is default policy then we should add it to the beginning.
+			// The index 4 gives us if that policy is default or not.
+			// https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
+			// Only difference is v0.9. In that version we don't receive shardGroupDuration value.
+			// https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
+			// Since it is always the last value we will check that last value always.
+			if len(valuePair) >= 1 {
+				if valuePair[len(row.Columns)-1].(bool) {
+					values[0] = valuePair[0].(string)
+				} else {
+					values = append(values, valuePair[0].(string))
+				}
+			}
+		} else {
+			if len(valuePair) >= 1 {
+				values = append(values, valuePair[0].(string))
+			}
+		}
+	}
+
+	field := data.NewField("Value", nil, values)
+	return data.NewFrame(row.Name, field)
 }
 
 func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
@@ -148,9 +213,9 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 	return frame
 }
 
-func formatFrameName(row Row, column string, query Query) string {
+func formatFrameName(row Row, column string, query Query, frameName []byte) []byte {
 	if query.Alias == "" {
-		return buildFrameNameFromQuery(row, column)
+		return buildFrameNameFromQuery(row, column, frameName)
 	}
 	nameSegment := strings.Split(row.Name, ".")
 
@@ -185,21 +250,32 @@ func formatFrameName(row Row, column string, query Query) string {
 		return in
 	})
 
-	return string(result)
+	return result
 }
 
-func buildFrameNameFromQuery(row Row, column string) string {
-	tags := make([]string, 0, len(row.Tags))
-	for k, v := range row.Tags {
-		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
+func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
+	frameName = append(frameName, row.Name...)
+	frameName = append(frameName, '.')
+	frameName = append(frameName, column...)
+
+	if len(row.Tags) > 0 {
+		frameName = append(frameName, ' ', '{', ' ')
+		first := true
+		for k, v := range row.Tags {
+			if !first {
+				frameName = append(frameName, ' ')
+			} else {
+				first = false
+			}
+			frameName = append(frameName, k...)
+			frameName = append(frameName, ':', ' ')
+			frameName = append(frameName, v...)
+		}
+
+		frameName = append(frameName, ' ', '}')
 	}
 
-	tagText := ""
-	if len(tags) > 0 {
-		tagText = fmt.Sprintf(" { %s }", strings.Join(tags, " "))
-	}
-
-	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
+	return frameName
 }
 
 func parseTimestamp(value interface{}) (time.Time, error) {
@@ -240,15 +316,23 @@ func parseNumber(value interface{}) *float64 {
 
 	number, ok := value.(json.Number)
 	if !ok {
-		// in the current inmplementation, errors become nils
+		// in the current implementation, errors become nils
 		return nil
 	}
 
 	fvalue, err := number.Float64()
 	if err != nil {
-		// in the current inmplementation, errors become nils
+		// in the current implementation, errors become nils
 		return nil
 	}
 
 	return &fvalue
+}
+
+func isTagValuesQuery(query Query) bool {
+	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
+}
+
+func isRetentionPolicyQuery(query Query) bool {
+	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW RETENTION POLICIES"))
 }

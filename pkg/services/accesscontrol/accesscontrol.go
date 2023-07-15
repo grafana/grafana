@@ -38,6 +38,10 @@ type Service interface {
 	// DeclareFixedRoles allows the caller to declare, to the service, fixed roles and their
 	// assignments to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 	DeclareFixedRoles(registrations ...RoleRegistration) error
+	// SaveExternalServiceRole creates or updates an external service's role and assigns it to a given service account id.
+	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
+	// DeleteExternalServiceRole removes an external service's role and its assignment.
+	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	//IsDisabled returns if access control is enabled or not
 	IsDisabled() bool
 }
@@ -92,6 +96,8 @@ type PermissionsService interface {
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
 	MapActions(permission ResourcePermission) string
+	// DeleteResourcePermissions removes all permissions for a resource
+	DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error
 }
 
 type User struct {
@@ -100,12 +106,8 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-		if ac.IsDisabled() {
-			return fallback(c)
-		}
-
+func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+	return func(evaluator Evaluator) bool {
 		userCopy := *c.SignedInUser
 		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""
@@ -131,12 +133,8 @@ func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqConte
 	}
 }
 
-func HasAccess(ac AccessControl, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-		if ac.IsDisabled() {
-			return fallback(c)
-		}
-
+func HasAccess(ac AccessControl, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+	return func(evaluator Evaluator) bool {
 		hasAccess, err := ac.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
 		if err != nil {
 			c.Logger.Error("Error from access control system", "error", err)
@@ -155,21 +153,8 @@ var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
-// ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
-var ReqViewer = func(c *contextmodel.ReqContext) bool {
-	return c.OrgRole.Includes(org.RoleViewer)
-}
-
-var ReqOrgAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.OrgRole == org.RoleAdmin
-}
-
-var ReqOrgAdminOrEditor = func(c *contextmodel.ReqContext) bool {
-	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
-}
-
 // ReqHasRole generates a fallback to check whether the user has a role
-// Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
+// ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
 	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
 }
@@ -192,6 +177,7 @@ func GroupScopesByAction(permissions []Permission) map[string][]string {
 	return m
 }
 
+// Reduce will reduce a list of permissions to its minimal form, grouping scopes by action
 func Reduce(ps []Permission) map[string][]string {
 	reduced := make(map[string][]string)
 	scopesByAction := make(map[string]map[string]bool)
@@ -254,6 +240,110 @@ func Reduce(ps []Permission) map[string][]string {
 	}
 
 	return reduced
+}
+
+// intersectScopes computes the minimal list of scopes common to two slices.
+func intersectScopes(s1, s2 []string) []string {
+	if len(s1) == 0 || len(s2) == 0 {
+		return []string{}
+	}
+
+	// helpers
+	splitScopes := func(s []string) (map[string]bool, map[string]bool) {
+		scopes := make(map[string]bool)
+		wildcards := make(map[string]bool)
+		for _, s := range s {
+			if isWildcard(s) {
+				wildcards[s] = true
+			} else {
+				scopes[s] = true
+			}
+		}
+		return scopes, wildcards
+	}
+	includes := func(wildcardsSet map[string]bool, scope string) bool {
+		for wildcard := range wildcardsSet {
+			if wildcard == "*" || strings.HasPrefix(scope, wildcard[:len(wildcard)-1]) {
+				return true
+			}
+		}
+		return false
+	}
+
+	res := make([]string, 0)
+
+	// split input into scopes and wildcards
+	s1Scopes, s1Wildcards := splitScopes(s1)
+	s2Scopes, s2Wildcards := splitScopes(s2)
+
+	// intersect wildcards
+	wildcards := make(map[string]bool)
+	for s := range s1Wildcards {
+		// if s1 wildcard is included in s2 wildcards
+		// then it is included in the intersection
+		if includes(s2Wildcards, s) {
+			wildcards[s] = true
+			continue
+		}
+	}
+	for s := range s2Wildcards {
+		// if s2 wildcard is included in s1 wildcards
+		// then it is included in the intersection
+		if includes(s1Wildcards, s) {
+			wildcards[s] = true
+		}
+	}
+
+	// intersect scopes
+	scopes := make(map[string]bool)
+	for s := range s1Scopes {
+		// if s1 scope is included in s2 wilcards or s2 scopes
+		// then it is included in the intersection
+		if includes(s2Wildcards, s) || s2Scopes[s] {
+			scopes[s] = true
+		}
+	}
+	for s := range s2Scopes {
+		// if s2 scope is included in s1 wilcards
+		// then it is included in the intersection
+		if includes(s1Wildcards, s) {
+			scopes[s] = true
+		}
+	}
+
+	// merge wildcards and scopes
+	for w := range wildcards {
+		res = append(res, w)
+	}
+	for s := range scopes {
+		res = append(res, s)
+	}
+
+	return res
+}
+
+// Intersect returns the intersection of two slices of permissions, grouping scopes by action.
+func Intersect(p1, p2 []Permission) map[string][]string {
+	if len(p1) == 0 || len(p2) == 0 {
+		return map[string][]string{}
+	}
+
+	res := make(map[string][]string)
+	p1m := Reduce(p1)
+	p2m := Reduce(p2)
+
+	// Loop over the smallest map
+	if len(p1m) > len(p2m) {
+		p1m, p2m = p2m, p1m
+	}
+
+	for a1, s1 := range p1m {
+		if s2, ok := p2m[a1]; ok {
+			res[a1] = intersectScopes(s1, s2)
+		}
+	}
+
+	return res
 }
 
 func ValidateScope(scope string) bool {

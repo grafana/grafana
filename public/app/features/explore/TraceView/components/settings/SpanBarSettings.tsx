@@ -8,7 +8,9 @@ import {
   toOption,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, Input, Select, useStyles2 } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 export interface SpanBarOptions {
   type?: string;
@@ -31,12 +33,8 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Span bar label</h3>
-
-      <div className={styles.infoText}>Span bar label lets you add additional info to the span bar row.</div>
-
       <InlineFieldRow className={styles.row}>
-        <InlineField label="Label" labelWidth={26} grow>
+        <InlineField label="Label" labelWidth={26} tooltip="Default: duration" grow>
           <Select
             inputId="label"
             options={selectOptions}
@@ -50,13 +48,17 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
             placeholder="Duration"
             isClearable
             aria-label={'select-label-name'}
-            width={25}
+            width={40}
           />
         </InlineField>
       </InlineFieldRow>
       {options.jsonData.spanBar?.type === TAG && (
         <InlineFieldRow className={styles.row}>
-          <InlineField label="Tag key" labelWidth={26} tooltip="Tag key which will be used to get the tag value">
+          <InlineField
+            label="Tag key"
+            labelWidth={26}
+            tooltip="Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
+          >
             <Input
               type="text"
               placeholder="Enter tag key"
@@ -67,7 +69,7 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
                 })
               }
               value={options.jsonData.spanBar?.tag || ''}
-              width={25}
+              width={40}
             />
           </InlineField>
         </InlineFieldRow>
@@ -76,13 +78,29 @@ export default function SpanBarSettings({ options, onOptionsChange }: Props) {
   );
 }
 
+export const SpanBarSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSubSection
+      title="Span bar"
+      description={
+        <ConfigDescriptionLink
+          description="Add additional info next to the service and operation on a span bar row in the trace view."
+          suffix={`${options.type}/#span-bar`}
+          feature="the span bar"
+        />
+      }
+    >
+      <SpanBarSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSubSection>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
     label: infoText;
     padding-bottom: ${theme.spacing(2)};
     color: ${theme.colors.text.secondary};
   `,
-
   row: css`
     label: row;
     align-items: baseline;

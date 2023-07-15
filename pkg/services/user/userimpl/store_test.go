@@ -16,9 +16,98 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestIntegrationUserGet(t *testing.T) {
+	testCases := []struct {
+		name            string
+		wantErr         error
+		searchLogin     string
+		searchEmail     string
+		caseInsensitive bool
+	}{
+		{
+			name:            "user not found non exact - not case insensitive",
+			wantErr:         user.ErrUserNotFound,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: false,
+		},
+		{
+			name:            "user found exact - not case insensitive",
+			wantErr:         nil,
+			searchLogin:     "test",
+			searchEmail:     "test@email.com",
+			caseInsensitive: false,
+		},
+		{
+			name:            "user found non exact - case insensitive",
+			wantErr:         nil,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: true,
+		},
+		{
+			name:            "user found exact - case insensitive",
+			wantErr:         nil,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: true,
+		},
+		{
+			name:            "user not found - case insensitive",
+			wantErr:         user.ErrUserNotFound,
+			searchLogin:     "Test_login",
+			searchEmail:     "Test*@email.com",
+			caseInsensitive: true,
+		},
+	}
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ss := db.InitTestDB(t)
+	cfg := ss.Cfg
+	userStore := ProvideStore(ss, cfg)
+
+	_, errUser := userStore.Insert(context.Background(),
+		&user.User{
+			Email:   "test@email.com",
+			Name:    "test",
+			Login:   "test",
+			Created: time.Now(),
+			Updated: time.Now(),
+		},
+	)
+	require.NoError(t, errUser)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.caseInsensitive && db.IsTestDbMySQL() {
+				t.Skip("mysql is always case insensitive")
+			}
+			cfg.CaseInsensitiveLogin = tc.caseInsensitive
+			usr, err := userStore.Get(context.Background(),
+				&user.User{
+					Email: tc.searchEmail,
+					Login: tc.searchLogin,
+				},
+			)
+
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Nil(t, usr)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, usr)
+			}
+		})
+	}
+}
 
 func TestIntegrationUserDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -30,7 +119,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService)
+	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -497,7 +586,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		ss := db.InitTestDB(t)
 		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService)
+		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -808,7 +897,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	users := make([]user.User, 5)
 	for i := 0; i < 5; i++ {
 		cmd := fn(i)
-		user, err := svc.CreateUserForTests(context.Background(), cmd)
+		user, err := svc.Create(context.Background(), cmd)
 		require.Nil(t, err)
 		users[i] = *user
 	}
@@ -942,7 +1031,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService)
+	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	return orgService, usrSvc

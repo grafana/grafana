@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import {
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
@@ -57,8 +58,14 @@ export class MockDataSourceApi extends DataSourceApi {
     });
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
+  }
+
+  setupMixed(value: boolean) {
+    this.meta = this.meta || {};
+    this.meta.mixed = value;
+    return this;
   }
 }
 
@@ -93,7 +100,7 @@ export class MockObservableDataSourceApi extends DataSourceApi {
     });
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }

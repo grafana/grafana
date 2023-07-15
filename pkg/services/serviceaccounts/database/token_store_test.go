@@ -113,7 +113,7 @@ func TestStore_RevokeServiceAccountToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Revoke SAT
-	err = store.RevokeServiceAccountToken(context.Background(), sa.OrgID, sa.ID, newKey.Id)
+	err = store.RevokeServiceAccountToken(context.Background(), sa.OrgID, sa.ID, newKey.ID)
 	require.NoError(t, err)
 
 	// Verify against DB
@@ -153,14 +153,14 @@ func TestStore_DeleteServiceAccountToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Delete key from wrong service account
-	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID, sa.ID+2, newKey.Id)
+	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID, sa.ID+2, newKey.ID)
 	require.Error(t, err)
 
 	// Delete key from wrong org
-	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID+2, sa.ID, newKey.Id)
+	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID+2, sa.ID, newKey.ID)
 	require.Error(t, err)
 
-	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID, sa.ID, newKey.Id)
+	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID, sa.ID, newKey.ID)
 	require.NoError(t, err)
 
 	// Verify against DB

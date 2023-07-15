@@ -1,0 +1,65 @@
+---
+name: Saga contribution template
+description: Contribute to the design system.
+title: "Saga: "
+labels:
+  - area/grafana/ui, design-system 
+body:
+  - type: markdown
+    attributes:
+      value: |
+        By using this template, you help expand our component and pattern solutions within the design system and let others reuse your work! You can contribute bug or design defect fixes, component, and pattern enhancements, or even net-new components! This template brings visibility to the great work everyone already does and in turn helps reduce duplicate efforts.
+        Thank you!
+  - type: checkboxes
+    attributes:
+      label: What type of contribution is this?
+      description: null
+      options:
+        - label: Fix - bug, design defect, typo, documentation conciseness
+        - label: Unification - combining similar components/patterns into a single
+            solution
+        - label: Proposal - net-new component, additions, variants
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: Why is this needed?
+      description: Explain the use case and where it can be used.
+      placeholder: null
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Where is this or where can it be used?
+      description: Explain the current/future use case, be sure to include areas of impact
+      placeholder: null
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Deliverables
+      description: Add a checklist of deliverables here. You can later add links to
+        each deliverable.
+      value: |
+        - Figma mockup
+        - Storybook story
+        - …
+  - type: checkboxes
+    attributes:
+      label: Contribution guiding principles
+      description: Use this checklist of guiding principles to ensure your
+        contribution makes Grafana a better product
+      options:
+        - label: Universal - not specific to a single product feature; able to be used
+            product-wide
+        - label: Accessible - inclusive to all types of users and assistive tools
+        - label: Flexible - thoughtfully built and designed to solve various
+            configurations and situations
+        - label: Coherent - follows existing visual styling and patterns
+        - label: Defined - documented clearly and concisely for ease of understanding
+        - label: Distinct - solves a unique gap or problem that cannot be solved with
+            current solutions
+    validations:
+        required: false

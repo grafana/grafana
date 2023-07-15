@@ -118,11 +118,6 @@ function useAutocomplete(datasource: TempoDatasource) {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
-        const tags = datasource.languageProvider.getTags();
-
-        if (tags) {
-          providerRef.current.setTags(tags);
-        }
       } catch (error) {
         if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));

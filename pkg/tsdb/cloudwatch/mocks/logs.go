@@ -1,7 +1,10 @@
 package mocks
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/mock"
 )
@@ -46,4 +49,16 @@ func (f *MockFeatures) IsEnabled(feature string) bool {
 	args := f.Called(feature)
 
 	return args.Bool(0)
+}
+
+type MockLogEvents struct {
+	cloudwatchlogsiface.CloudWatchLogsAPI
+
+	mock.Mock
+}
+
+func (m *MockLogEvents) GetLogEventsWithContext(ctx aws.Context, input *cloudwatchlogs.GetLogEventsInput, option ...request.Option) (*cloudwatchlogs.GetLogEventsOutput, error) {
+	args := m.Called(ctx, input, option)
+
+	return args.Get(0).(*cloudwatchlogs.GetLogEventsOutput), args.Error(1)
 }

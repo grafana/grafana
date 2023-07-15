@@ -17,7 +17,7 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
     return (
       <Menu>
         {interpolatedLinks?.map((link, idx) => {
-          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} />;
+          return <Menu.Item key={idx} label={link.title} url={link.href} target={link.target} onClick={link.onClick} />;
         })}
       </Menu>
     );
@@ -47,6 +47,8 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuTrigger: css({
+      height: '100%',
+      background: 'inherit',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       cursor: 'context-menu',

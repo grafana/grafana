@@ -4,7 +4,7 @@ import { variableRegex } from 'app/features/variables/utils';
 
 import { REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import pluginJson from './plugin.json';
-import { ElasticsearchQuery } from './types';
+import { ElasticsearchAnnotationQuery, ElasticsearchQuery } from './types';
 
 type ElasticSearchOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -139,4 +139,17 @@ export function trackQuery(
       time_taken: Date.now() - startTime.getTime(),
     });
   }
+}
+
+export function trackAnnotationQuery(annotation: ElasticsearchAnnotationQuery): void {
+  reportInteraction('grafana_elasticsearch_annotation_query_executed', {
+    grafana_version: config.buildInfo.version,
+    has_target_query: !!annotation.target?.query,
+    has_query: !!annotation.query,
+    has_time_field: !!annotation.timeField,
+    has_time_end_field: !!annotation.timeEndField,
+    has_tags_field: !!annotation.tagsField,
+    has_text_field: !!annotation.textField,
+    has_index: !!annotation.index,
+  });
 }

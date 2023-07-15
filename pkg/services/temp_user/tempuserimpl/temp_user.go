@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
@@ -13,9 +14,10 @@ type Service struct {
 
 func ProvideService(
 	db db.DB,
+	cfg *setting.Cfg,
 ) tempuser.Service {
 	return &Service{
-		store: &xormStore{db: db},
+		store: &xormStore{db: db, cfg: cfg},
 	}
 }
 

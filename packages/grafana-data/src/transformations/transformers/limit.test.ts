@@ -3,7 +3,6 @@ import { DataTransformerConfig } from '@grafana/data';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
@@ -37,19 +36,19 @@ describe('Limit transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([3000, 4000, 5000]),
+          values: [3000, 4000, 5000],
           config: {},
         },
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'two']),
+          values: ['one', 'two', 'two'],
           config: {},
         },
         {
           name: 'values',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 2]),
+          values: [1, 2, 2],
           config: {},
         },
       ];
@@ -81,19 +80,19 @@ describe('Limit transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([3000, 4000, 5000, 6000, 7000, 8000]),
+          values: [3000, 4000, 5000, 6000, 7000, 8000],
           config: {},
         },
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'two', 'three', 'three', 'three']),
+          values: ['one', 'two', 'two', 'three', 'three', 'three'],
           config: {},
         },
         {
           name: 'values',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 2, 3, 3, 3]),
+          values: [1, 2, 2, 3, 3, 3],
           config: {},
         },
       ];

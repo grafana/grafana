@@ -11,7 +11,7 @@ import { getSegmentStyles } from './styles';
 
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
-export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface SegmentSyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
@@ -40,6 +40,7 @@ export function Segment<T>({
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -56,7 +57,7 @@ export function Segment<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }
