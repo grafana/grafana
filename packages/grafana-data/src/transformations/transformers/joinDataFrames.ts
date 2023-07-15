@@ -154,7 +154,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     if (joinFieldIdx === -1) {
       continue;
     } else if (allFields.length === 0) {
-      allFields.push(copyField(frame.fields[joinFieldIdx], frameIndex, joinFieldIdx, keepOriginIndices));
+      const copy = copyField(frame.fields[joinFieldIdx], frameIndex, joinFieldIdx, keepOriginIndices);
+      allFields.push(copy);
     }
 
     const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
