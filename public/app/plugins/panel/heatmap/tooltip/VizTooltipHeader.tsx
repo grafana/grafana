@@ -37,6 +37,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     flex: 1;
     gap: 4px;
-    //border-bottom: 1px solid ${theme.colors.border.medium};
+    padding-bottom: ${theme.spacing(1)};
   `,
 });

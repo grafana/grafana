@@ -10,8 +10,9 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from '../fields';
 
+import { VizTooltipContent } from './VizTooltipContent';
 import { VizTooltipHeader } from './VizTooltipHeader';
-import { ColorIndicator, getHoverCellColor, LabelValue } from './tooltipUtils';
+import { ColorIndicator, formatMilliseconds, getHoverCellColor, LabelValue, xDisp } from './tooltipUtils';
 
 interface Props {
   dataIdxs: Array<number | null>;
@@ -148,6 +149,28 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
     return null;
   };
 
+  const getContentLabelValue = (): LabelValue[] => {
+    let fromToInt = [
+      {
+        label: 'From',
+        value: xDisp(xBucketMin, xField)!,
+      },
+    ];
+
+    if (data.xLayout !== HeatmapCellLayout.unknown) {
+      fromToInt.push({ label: 'To', value: xDisp(xBucketMax, xField)! });
+
+      const interval = xField?.config.interval;
+
+      if (interval) {
+        const formattedString = formatMilliseconds(interval);
+        fromToInt.push({ label: 'Interval', value: formattedString });
+      }
+    }
+
+    return fromToInt;
+  };
+
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader
@@ -155,6 +178,7 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
         keyValuePairs={getLabelValue()}
         // customValueDisplay={getCustomValueDisplay()}
       />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} />
     </div>
   );
 };
@@ -163,7 +187,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     width: 280px;
     display: flex;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    flex-direction: column;
     padding: ${theme.spacing(1)};
   `,
 });

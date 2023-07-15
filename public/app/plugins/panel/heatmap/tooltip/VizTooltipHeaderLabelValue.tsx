@@ -41,7 +41,7 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: VizTooltipHeaderKe
     <>
       {keyValuePairs?.map((keyValuePair, i) => {
         return (
-          <HorizontalGroup justify="space-between" spacing="md" key={i}>
+          <HorizontalGroup justify="space-between" spacing="md" className={styles.hgContainer} key={i}>
             <div className={styles.label}>{keyValuePair.label}</div>
             <>
               <span
@@ -59,8 +59,10 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: VizTooltipHeaderKe
 
 // @TODO Update classes/add svgs?
 const getStyles = (theme: GrafanaTheme2) => ({
+  hgContainer: css`
+    flex-grow: 1;
+  `,
   colorIndicator: css`
-    display: flex;
     margin-right: ${theme.spacing(0.5)};
   `,
   label: css`
