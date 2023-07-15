@@ -82,6 +82,84 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
 }
 
 /**
+ * @internal
+ *
+ * checks if values of all joinBy fields match, then just cheaply glue the frames together
+ */
+export function cheapJoinDataFrames(options: JoinOptions) {
+  if (options.frames.length === 1) {
+    return options.frames[0];
+  }
+
+  const joinFieldMatcher = getJoinMatcher(options);
+
+  const joinFields = options.frames.map((frame) =>
+    frame.fields.find((field) => joinFieldMatcher(field, frame, options.frames))
+  );
+
+  if (joinFields.indexOf(undefined) === -1 && isLikelyAscendingVector(joinFields[0]!.values)) {
+    let same = true;
+    let vals0 = joinFields[0]!.values;
+
+    loop: for (let i = 1; i < joinFields.length; i++) {
+      let vals1 = joinFields[i]!.values;
+
+      if (vals1.length !== vals0.length) {
+        same = false;
+        break loop;
+      }
+
+      for (let j = 0; j < vals0.length; j++) {
+        if (vals1[j] !== vals0[j]) {
+          same = false;
+          break loop;
+        }
+      }
+    }
+
+    if (!same) {
+      return null;
+    }
+
+    let joinedFrame = {
+      length: vals0.length,
+      fields: [
+        { ...joinFields[0]! },
+        ...options.frames.flatMap((frame, frameIndex) =>
+          frame.fields
+            .map((field, fieldIndex) => {
+              if (field === joinFields[frameIndex]) {
+                return null;
+              }
+
+              let fieldCopy = {
+                ...field,
+              };
+
+              if (options.keepOriginIndices) {
+                fieldCopy.state = {
+                  ...fieldCopy.state,
+                  origin: {
+                    frameIndex,
+                    fieldIndex,
+                  },
+                };
+              }
+
+              return fieldCopy;
+            })
+            .filter((field) => field != null)
+        ),
+      ],
+    };
+
+    return joinedFrame as DataFrame;
+  }
+
+  return null;
+}
+
+/**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
@@ -90,11 +168,12 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     return;
   }
 
+  const joinFieldMatcher = getJoinMatcher(options);
+
   if (options.frames.length === 1) {
     let frame = options.frames[0];
     let frameCopy = frame;
 
-    const joinFieldMatcher = getJoinMatcher(options);
     let joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
 
     if (options.keepOriginIndices) {
@@ -148,72 +227,11 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     return frameCopy;
   }
 
-  const joinFieldMatcher = getJoinMatcher(options);
+  let joinedFrame = cheapJoinDataFrames(options);
 
-  // check if values of all joinBy fields match, then just cheaply glue them together
-  const joinFields = options.frames.map((frame) =>
-    frame.fields.find((field) => joinFieldMatcher(field, frame, options.frames))
-  );
-
-  if (joinFields.indexOf(undefined) === -1) {
-    if (isLikelyAscendingVector(joinFields[0]!.values)) {
-      let same = true;
-      let vals0 = joinFields[0]!.values.toArray();
-
-      for (let i = 1; i < joinFields.length; i++) {
-        let vals1 = joinFields[i]!.values.toArray();
-
-        if (vals1.length !== vals0.length) {
-          same = false;
-          break;
-        }
-
-        for (let j = 0; j < vals0.length; j++) {
-          if (vals1[j] !== vals0[j]) {
-            same = false;
-            break;
-          }
-        }
-
-        if (!same) {
-          break;
-        }
-      }
-
-      if (same) {
-        let joinedFrame = {
-          length: vals0.length,
-          fields: [
-            { ...joinFields[0]! },
-            ...options.frames.flatMap((frame, frameIndex) =>
-              frame.fields.map((field, fieldIndex) => {
-                if (field === joinFields[frameIndex]) {
-                  return null;
-                }
-
-                let fieldCopy = {
-                  ...field,
-                };
-
-                if (options.keepOriginIndices) {
-                  fieldCopy.state = {
-                    ...fieldCopy.state,
-                    origin: {
-                      frameIndex,
-                      fieldIndex,
-                    }
-                  };
-                }
-
-                return fieldCopy;
-              }).filter((field) => field != null)
-            ),
-          ],
-        };
-
-        return joinedFrame;
-      }
-    }
+  if (joinedFrame != null) {
+    console.log('did cheapJoin!');
+    return joinedFrame;
   }
 
   const nullModes: JoinNullMode[][] = [];

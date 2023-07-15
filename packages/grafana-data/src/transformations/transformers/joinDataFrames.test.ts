@@ -5,11 +5,77 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 
 import { calculateFieldTransformer } from './calculateField';
 import { JoinMode } from './joinByField';
-import { isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
+import { cheapJoinDataFrames, isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
     mockTransformationsRegistry([calculateFieldTransformer]);
+  });
+
+  describe('by first time field, pre-aligned frames', () => {
+    const series1 = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'A', type: FieldType.number, values: [1, 100] },
+      ],
+    });
+
+    const series2 = toDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'A', type: FieldType.number, values: [2, 200] },
+        { name: 'B', type: FieldType.number, values: [3, 300] },
+        { name: 'C', type: FieldType.string, values: ['first', 'second'] },
+      ],
+    });
+
+    it('should perform cheap outer join', () => {
+      const out = cheapJoinDataFrames({ frames: [series1, series2] })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values,
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "Time",
+            "values": [
+              1000,
+              2000,
+            ],
+          },
+          {
+            "name": "A",
+            "values": [
+              1,
+              100,
+            ],
+          },
+          {
+            "name": "A",
+            "values": [
+              2,
+              200,
+            ],
+          },
+          {
+            "name": "B",
+            "values": [
+              3,
+              300,
+            ],
+          },
+          {
+            "name": "C",
+            "values": [
+              "first",
+              "second",
+            ],
+          },
+        ]
+      `);
+    });
   });
 
   describe('by first time field', () => {
