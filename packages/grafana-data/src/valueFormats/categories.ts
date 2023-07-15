@@ -49,6 +49,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
       { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
       { name: 'Decibel', id: 'dB', fn: toFixedUnit('dB') },
+      { name: 'Candela (cd)', id: 'candela', fn: SIPrefix('cd') },
       { name: 'Hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
       { name: 'Hexadecimal', id: 'hex', fn: toHex },
       { name: 'Scientific notation', id: 'sci', fn: sci },
