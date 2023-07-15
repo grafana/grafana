@@ -89,10 +89,6 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
 export function canDoCheapOuterJoin(allData: number[][][]) {
   let vals0 = allData[0][0];
 
-  if (!isLikelyAscendingVector(vals0)) {
-    return false;
-  }
-
   for (let i = 1; i < allData.length; i++) {
     let vals1 = allData[i][0];
 
@@ -111,168 +107,128 @@ export function canDoCheapOuterJoin(allData: number[][][]) {
 }
 
 /**
+ * @internal
+ *
+ */
+function copyField(field: Field, frameIndex: number, fieldIndex: number, keepOriginIndices = false) {
+  const fieldCopy = { ...field };
+
+  if (keepOriginIndices) {
+    fieldCopy.state = {
+      ...field.state,
+      origin: {
+        frameIndex,
+        fieldIndex,
+      },
+    };
+  }
+
+  return fieldCopy;
+}
+
+/**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
 export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
-  if (!options.frames?.length) {
+  const { frames, mode = JoinMode.outer, keepOriginIndices = false } = options;
+
+  if (frames.length === 0) {
     return;
   }
 
   const joinFieldMatcher = getJoinMatcher(options);
 
-  if (options.frames.length === 1) {
-    let frame = options.frames[0];
-    let frameCopy = frame;
-
-    let joinIndex = frameCopy.fields.findIndex((f) => joinFieldMatcher(f, frameCopy, options.frames));
-
-    if (options.keepOriginIndices) {
-      frameCopy = {
-        ...frame,
-        fields: frame.fields.map((f, fieldIndex) => {
-          const copy = { ...f };
-          const origin = {
-            frameIndex: 0,
-            fieldIndex,
-          };
-          if (copy.state) {
-            copy.state.origin = origin;
-          } else {
-            copy.state = { origin };
-          }
-          return copy;
-        }),
-      };
-
-      // Make sure the join field is first
-      if (joinIndex > 0) {
-        const joinField = frameCopy.fields[joinIndex];
-        const fields = frameCopy.fields.filter((f, idx) => idx !== joinIndex);
-        fields.unshift(joinField);
-        frameCopy.fields = fields;
-        joinIndex = 0;
-      }
-    }
-
-    if (joinIndex >= 0) {
-      frameCopy = maybeSortFrame(frameCopy, joinIndex);
-    }
-
-    if (options.keep) {
-      let fields = frameCopy.fields.filter(
-        (f, fieldIdx) => fieldIdx === joinIndex || options.keep!(f, frameCopy, options.frames)
-      );
-
-      // mutate already copied frame
-      if (frame !== frameCopy) {
-        frameCopy.fields = fields;
-      } else {
-        frameCopy = {
-          ...frame,
-          fields,
-        };
-      }
-    }
-
-    return frameCopy;
-  }
-
   const nullModes: JoinNullMode[][] = [];
   const allData: number[][][] = [];
-  const originalFields: Field[] = [];
+  const allFields: Field[] = [];
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
-    const frame = options.frames[frameIndex];
+    const frame = frames[frameIndex];
 
     if (!frame || !frame.fields?.length) {
       continue; // skip the frame
     }
 
+    const joinField = frame.fields.find((field) => joinFieldMatcher(field, frame, frames));
+
+    if (joinField == null) {
+      continue; // skip the frame
+    }
+
     const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
-    let join: Field | undefined = undefined;
-    let fields: Field[] = [];
+    const fields: Field[] = [];
 
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
 
-      if (!join && joinFieldMatcher(field, frame, options.frames)) {
-        join = field;
+      if (field === joinField) {
+        if (allFields.length === 0) {
+          const fieldCopy = copyField(field, frameIndex, fieldIndex, keepOriginIndices);
+
+          // first join field
+          allFields.push(fieldCopy);
+        }
       } else {
-        if (options.keep && !options.keep(field, frame, options.frames)) {
+        if (options.keep && !options.keep(field, frame, frames)) {
           continue; // skip field
         }
+
+        const fieldCopy = copyField(field, frameIndex, fieldIndex, keepOriginIndices);
 
         // Support the standard graph span nulls field config
         let spanNulls = field.config.custom?.spanNulls;
         nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
-        let labels = field.labels ?? {};
-        let name = field.name;
         if (frame.name) {
           if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
-            name = frame.name;
+            fieldCopy.name = frame.name;
           } else {
-            labels = { ...labels, name: frame.name };
+            fieldCopy.labels = { ...field.labels, name: frame.name };
           }
         }
 
-        fields.push({
-          ...field,
-          name,
-          labels, // add the name label from frame
-        });
+        fields.push(fieldCopy);
       }
-
-      if (options.keepOriginIndices) {
-        field.state = {
-          ...field.state,
-          origin: {
-            frameIndex,
-            fieldIndex,
-          },
-        };
-      }
-    }
-
-    if (!join) {
-      continue; // skip the frame
-    }
-
-    if (originalFields.length === 0) {
-      originalFields.push(join); // first join field
     }
 
     nullModes.push(nullModesFrame);
-    const a: number[][] = [join.values]; //
+    const frameValues: number[][] = [joinField.values];
 
     for (const field of fields) {
-      a.push(field.values);
-      originalFields.push(field);
+      frameValues.push(field.values);
+      allFields.push(field);
       // clear field displayName state
       delete field.state?.displayName;
     }
 
-    allData.push(a);
+    allData.push(frameValues);
   }
 
   let joined: number[][];
+  let maybeSort = false;
 
-  if (options.mode !== JoinMode.inner && canDoCheapOuterJoin(allData)) {
+  if (frames.length === 1 || (mode === JoinMode.outer && canDoCheapOuterJoin(allData))) {
     joined = [allData[0][0], ...allData.flatMap((table) => table.slice(1))];
-    console.log('cheapJoin!');
+    maybeSort = true;
   } else {
     joined = join(allData, nullModes, options.mode);
   }
 
-  return {
+  let joinedFrame = {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
-    fields: originalFields.map((f, index) => ({
+    fields: allFields.map((f, index) => ({
       ...f,
       values: joined[index],
     })),
   };
+
+  if (maybeSort) {
+    return maybeSortFrame(joinedFrame, 0);
+  }
+
+  return joinedFrame;
 }
 
 //--------------------------------------------------------------------------------

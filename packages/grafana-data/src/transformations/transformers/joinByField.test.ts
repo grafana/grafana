@@ -1005,7 +1005,6 @@ describe('JOIN Transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "temperature",
               "type": "number",
               "values": [
@@ -1014,7 +1013,6 @@ describe('JOIN Transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "temperature",
               "type": "number",
               "values": [
