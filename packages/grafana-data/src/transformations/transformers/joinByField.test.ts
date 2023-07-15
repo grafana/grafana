@@ -47,7 +47,6 @@ describe('JOIN Transformer', () => {
               {
                 "config": {},
                 "name": "time",
-                "state": {},
                 "type": "time",
                 "values": [
                   1000,
@@ -64,7 +63,6 @@ describe('JOIN Transformer', () => {
                   "name": "even",
                 },
                 "name": "temperature",
-                "state": {},
                 "type": "number",
                 "values": [
                   undefined,
@@ -81,7 +79,6 @@ describe('JOIN Transformer', () => {
                   "name": "even",
                 },
                 "name": "humidity",
-                "state": {},
                 "type": "number",
                 "values": [
                   undefined,
@@ -98,7 +95,6 @@ describe('JOIN Transformer', () => {
                   "name": "odd",
                 },
                 "name": "temperature",
-                "state": {},
                 "type": "number",
                 "values": [
                   11.1,
@@ -115,7 +111,6 @@ describe('JOIN Transformer', () => {
                   "name": "odd",
                 },
                 "name": "humidity",
-                "state": {},
                 "type": "number",
                 "values": [
                   11000.1,
@@ -149,7 +144,6 @@ describe('JOIN Transformer', () => {
               {
                 "config": {},
                 "name": "temperature",
-                "state": {},
                 "type": "number",
                 "values": [
                   10.3,
@@ -189,7 +183,6 @@ describe('JOIN Transformer', () => {
                   "name": "even",
                 },
                 "name": "humidity",
-                "state": {},
                 "type": "number",
                 "values": [
                   10000.3,
@@ -229,7 +222,6 @@ describe('JOIN Transformer', () => {
                   "name": "odd",
                 },
                 "name": "humidity",
-                "state": {},
                 "type": "number",
                 "values": [
                   undefined,
@@ -288,7 +280,6 @@ describe('JOIN Transformer', () => {
                   "name": "even",
                 },
                 "name": "temperature",
-                "state": {},
                 "type": "number",
                 "values": [
                   undefined,
@@ -305,7 +296,6 @@ describe('JOIN Transformer', () => {
                   "name": "even",
                 },
                 "name": "humidity",
-                "state": {},
                 "type": "number",
                 "values": [
                   undefined,
@@ -322,7 +312,6 @@ describe('JOIN Transformer', () => {
                   "name": "odd",
                 },
                 "name": "temperature",
-                "state": {},
                 "type": "number",
                 "values": [
                   11.1,
@@ -339,7 +328,6 @@ describe('JOIN Transformer', () => {
                   "name": "odd",
                 },
                 "name": "humidity",
-                "state": {},
                 "type": "number",
                 "values": [
                   11000.1,
@@ -390,7 +378,6 @@ describe('JOIN Transformer', () => {
                 {
                   "config": {},
                   "name": "time",
-                  "state": {},
                   "type": "time",
                   "values": [
                     1000,
@@ -405,7 +392,6 @@ describe('JOIN Transformer', () => {
                     "name": "temperature",
                   },
                   "name": "temperature",
-                  "state": {},
                   "type": "number",
                   "values": [
                     1,
@@ -420,7 +406,6 @@ describe('JOIN Transformer', () => {
                     "name": "B",
                   },
                   "name": "temperature",
-                  "state": {},
                   "type": "number",
                   "values": [
                     2,
@@ -473,7 +458,6 @@ describe('JOIN Transformer', () => {
             {
               "config": {},
               "name": "time",
-              "state": {},
               "type": "time",
               "values": [
                 1,
@@ -487,7 +471,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10,
@@ -501,7 +484,6 @@ describe('JOIN Transformer', () => {
                 "name": "C",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 20,
@@ -544,7 +526,6 @@ describe('JOIN Transformer', () => {
             {
               "config": {},
               "name": "time",
-              "state": {},
               "type": "time",
               "values": [
                 1,
@@ -552,9 +533,7 @@ describe('JOIN Transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10,
@@ -562,9 +541,7 @@ describe('JOIN Transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 20,
@@ -612,7 +589,6 @@ describe('JOIN Transformer', () => {
             {
               "config": {},
               "name": "time",
-              "state": {},
               "type": "time",
               "values": [
                 3000,
@@ -625,7 +601,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10.3,
@@ -638,7 +613,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "humidity",
-              "state": {},
               "type": "number",
               "values": [
                 10000.3,
@@ -651,7 +625,6 @@ describe('JOIN Transformer', () => {
                 "name": "B",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10.3,
@@ -664,7 +637,6 @@ describe('JOIN Transformer', () => {
                 "name": "B",
               },
               "name": "humidity",
-              "state": {},
               "type": "number",
               "values": [
                 10000.3,
@@ -693,7 +665,6 @@ describe('JOIN Transformer', () => {
             {
               "config": {},
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10.3,
@@ -721,7 +692,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "humidity",
-              "state": {},
               "type": "number",
               "values": [
                 10000.3,
@@ -749,7 +719,6 @@ describe('JOIN Transformer', () => {
                 "name": "B",
               },
               "name": "humidity",
-              "state": {},
               "type": "number",
               "values": [
                 10000.3,
@@ -797,7 +766,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10.3,
@@ -810,7 +778,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "humidity",
-              "state": {},
               "type": "number",
               "values": [
                 10000.3,
@@ -823,7 +790,6 @@ describe('JOIN Transformer', () => {
                 "name": "B",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10.3,
@@ -836,7 +802,6 @@ describe('JOIN Transformer', () => {
                 "name": "B",
               },
               "name": "humidity",
-              "state": {},
               "type": "number",
               "values": [
                 10000.3,
@@ -883,7 +848,6 @@ describe('JOIN Transformer', () => {
                 {
                   "config": {},
                   "name": "time",
-                  "state": {},
                   "type": "time",
                   "values": [
                     1000,
@@ -898,7 +862,6 @@ describe('JOIN Transformer', () => {
                     "name": "temperature",
                   },
                   "name": "temperature",
-                  "state": {},
                   "type": "number",
                   "values": [
                     1,
@@ -913,7 +876,6 @@ describe('JOIN Transformer', () => {
                     "name": "B",
                   },
                   "name": "temperature",
-                  "state": {},
                   "type": "number",
                   "values": [
                     2,
@@ -967,7 +929,6 @@ describe('JOIN Transformer', () => {
             {
               "config": {},
               "name": "time",
-              "state": {},
               "type": "time",
               "values": [
                 1,
@@ -981,7 +942,6 @@ describe('JOIN Transformer', () => {
                 "name": "A",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10,
@@ -995,7 +955,6 @@ describe('JOIN Transformer', () => {
                 "name": "C",
               },
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 20,
@@ -1039,7 +998,6 @@ describe('JOIN Transformer', () => {
             {
               "config": {},
               "name": "time",
-              "state": {},
               "type": "time",
               "values": [
                 1,
@@ -1049,7 +1007,6 @@ describe('JOIN Transformer', () => {
               "config": {},
               "labels": {},
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 10,
@@ -1059,7 +1016,6 @@ describe('JOIN Transformer', () => {
               "config": {},
               "labels": {},
               "name": "temperature",
-              "state": {},
               "type": "number",
               "values": [
                 20,

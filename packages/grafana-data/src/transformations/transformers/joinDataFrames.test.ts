@@ -5,7 +5,7 @@ import { mockTransformationsRegistry } from '../../utils/tests/mockTransformatio
 
 import { calculateFieldTransformer } from './calculateField';
 import { JoinMode } from './joinByField';
-import { cheapJoinDataFrames, isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
+import { cheapOuterJoinDataFrames, isLikelyAscendingVector, joinDataFrames } from './joinDataFrames';
 
 describe('align frames', () => {
   beforeAll(() => {
@@ -30,7 +30,7 @@ describe('align frames', () => {
     });
 
     it('should perform cheap outer join', () => {
-      const out = cheapJoinDataFrames({ frames: [series1, series2] })!;
+      const out = cheapOuterJoinDataFrames({ frames: [series1, series2] })!;
       expect(
         out.fields.map((f) => ({
           name: f.name,

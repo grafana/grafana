@@ -86,18 +86,36 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
  *
  * checks if values of all joinBy fields match, then just cheaply glue the frames together
  */
-export function cheapJoinDataFrames(options: JoinOptions) {
+export function cheapOuterJoinDataFrames(options: JoinOptions) {
   if (options.frames.length === 1) {
     return options.frames[0];
   }
 
   const joinFieldMatcher = getJoinMatcher(options);
 
-  const joinFields = options.frames.map((frame) =>
-    frame.fields.find((field) => joinFieldMatcher(field, frame, options.frames))
-  );
+  const joinFields = options.frames.map((frame, frameIndex) => {
+    let fieldIndex = frame.fields.findIndex((field) => joinFieldMatcher(field, frame, options.frames));
 
-  if (joinFields.indexOf(undefined) === -1 && isLikelyAscendingVector(joinFields[0]!.values)) {
+    if (fieldIndex !== -1) {
+      let field = frame.fields[fieldIndex];
+
+      if (options.keepOriginIndices) {
+        field.state = {
+          ...field.state,
+          origin: {
+            frameIndex,
+            fieldIndex,
+          },
+        };
+      }
+
+      return field;
+    }
+
+    return null;
+  });
+
+  if (joinFields.indexOf(null) === -1 && isLikelyAscendingVector(joinFields[0]!.values)) {
     let same = true;
     let vals0 = joinFields[0]!.values;
 
@@ -135,6 +153,13 @@ export function cheapJoinDataFrames(options: JoinOptions) {
               let fieldCopy = {
                 ...field,
               };
+
+              if (frame.name) {
+                fieldCopy.labels = {
+                  ...fieldCopy.labels,
+                  name: frame.name,
+                };
+              }
 
               if (options.keepOriginIndices) {
                 fieldCopy.state = {
@@ -227,11 +252,13 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     return frameCopy;
   }
 
-  let joinedFrame = cheapJoinDataFrames(options);
+  if (options.mode === JoinMode.outer) {
+    let joinedFrame = cheapOuterJoinDataFrames(options);
 
-  if (joinedFrame != null) {
-    console.log('did cheapJoin!');
-    return joinedFrame;
+    if (joinedFrame != null) {
+      // console.log('did cheapJoin!');
+      return joinedFrame;
+    }
   }
 
   const nullModes: JoinNullMode[][] = [];
@@ -251,7 +278,6 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
 
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
-      field.state = field.state || {};
 
       if (!join && joinFieldMatcher(field, frame, options.frames)) {
         join = field;
@@ -282,9 +308,12 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
       }
 
       if (options.keepOriginIndices) {
-        field.state.origin = {
-          frameIndex,
-          fieldIndex,
+        field.state = {
+          ...field.state,
+          origin: {
+            frameIndex,
+            fieldIndex,
+          },
         };
       }
     }
