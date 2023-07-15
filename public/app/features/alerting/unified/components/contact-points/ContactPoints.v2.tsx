@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { SerializedError } from '@reduxjs/toolkit';
 import { uniqueId, upperFirst } from 'lodash';
 import React, { ReactNode } from 'react';
 
@@ -29,7 +30,8 @@ const ContactPoints = () => {
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
 
   if (error) {
-    return <Alert title="Failed to fetch contact points">{String(error)}</Alert>;
+    // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
+    return <Alert title="Failed to fetch contact points">{(error as SerializedError).message}</Alert>;
   }
 
   if (isLoading) {
