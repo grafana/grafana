@@ -56,7 +56,6 @@ describe('ensureColumns transformer', () => {
             {
               "config": {},
               "name": "TheTime",
-              "state": {},
               "type": "time",
               "values": [
                 1000,
@@ -65,9 +64,7 @@ describe('ensureColumns transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "A",
-              "state": {},
               "type": "number",
               "values": [
                 1,
@@ -76,9 +73,7 @@ describe('ensureColumns transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "B",
-              "state": {},
               "type": "number",
               "values": [
                 2,
@@ -87,9 +82,7 @@ describe('ensureColumns transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "C",
-              "state": {},
               "type": "number",
               "values": [
                 3,
@@ -98,9 +91,7 @@ describe('ensureColumns transformer', () => {
             },
             {
               "config": {},
-              "labels": {},
               "name": "D",
-              "state": {},
               "type": "string",
               "values": [
                 "first",
