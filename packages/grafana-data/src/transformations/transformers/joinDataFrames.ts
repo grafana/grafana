@@ -89,23 +89,25 @@ export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
 export function canDoCheapOuterJoin(allData: number[][][]) {
   let vals0 = allData[0][0];
 
-  if (isLikelyAscendingVector(vals0)) {
-    for (let i = 1; i < allData.length; i++) {
-      let vals1 = allData[i][0];
+  if (!isLikelyAscendingVector(vals0)) {
+    return false;
+  }
 
-      if (vals1.length !== vals0.length) {
-        return false;
-      }
+  for (let i = 1; i < allData.length; i++) {
+    let vals1 = allData[i][0];
 
-      for (let j = 0; j < vals0.length; j++) {
-        if (vals1[j] !== vals0[j]) {
-          return false;
-        }
-      }
+    if (vals1.length !== vals0.length) {
+      return false;
     }
 
-    return true;
+    for (let j = 0; j < vals0.length; j++) {
+      if (vals1[j] !== vals0[j]) {
+        return false;
+      }
+    }
   }
+
+  return true;
 }
 
 /**
