@@ -91,6 +91,7 @@ export function getNotificationsPermissions(rulesSourceName: string) {
     create: notificationsPermissions.create[sourceType],
     update: notificationsPermissions.update[sourceType],
     delete: notificationsPermissions.delete[sourceType],
+    provisioning: provisioningPermissions,
   };
 }
 
