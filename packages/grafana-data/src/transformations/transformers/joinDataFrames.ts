@@ -206,11 +206,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   }
 
   let joined: number[][];
-  let maybeSort = false;
+  let cheap = frames.length === 1 || (mode === JoinMode.outer && canDoCheapOuterJoin(allData));
 
-  if (frames.length === 1 || (mode === JoinMode.outer && canDoCheapOuterJoin(allData))) {
+  if (cheap) {
     joined = [allData[0][0], ...allData.flatMap((table) => table.slice(1))];
-    maybeSort = true;
   } else {
     joined = join(allData, nullModes, options.mode);
   }
@@ -224,7 +223,8 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     })),
   };
 
-  if (maybeSort) {
+  if (cheap) {
+    // console.log('cheap!');
     return maybeSortFrame(joinedFrame, 0);
   }
 
