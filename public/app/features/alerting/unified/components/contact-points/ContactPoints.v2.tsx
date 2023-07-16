@@ -34,6 +34,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 import { GlobalConfigAlert } from '../receivers/ReceiversAndTemplatesView';
+import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 
 import { MessageTemplates } from './MessageTemplates';
 import { useDeleteContactPointModal } from './Modals';
@@ -120,6 +121,7 @@ const ContactPoints = () => {
                         const contactPointKey = selectedAlertmanager + contactPoint.name;
                         const provisioned = isProvisioned(contactPoint);
                         const disabled = updateAlertmanagerState.isLoading;
+                        const policies = contactPoint.numberOfPolicies;
 
                         return (
                           <ContactPoint
@@ -129,6 +131,7 @@ const ContactPoints = () => {
                             onDelete={showDeleteModal}
                             receivers={contactPoint.grafana_managed_receiver_configs}
                             provisioned={provisioned}
+                            policies={policies}
                           />
                         );
                       })}
@@ -161,6 +164,7 @@ interface ContactPointProps {
   disabled?: boolean;
   provisioned?: boolean;
   receivers: ReceiverConfigWithStatus[];
+  policies?: number;
   onDelete: (name: string) => void;
 }
 
@@ -169,6 +173,7 @@ export const ContactPoint = ({
   disabled = false,
   provisioned = false,
   receivers,
+  policies = 0,
   onDelete,
 }: ContactPointProps) => {
   const styles = useStyles2(getStyles);
@@ -178,7 +183,7 @@ export const ContactPoint = ({
       <Stack direction="column" gap={0}>
         <ContactPointHeader
           name={name}
-          policies={[]}
+          policies={policies}
           provisioned={provisioned}
           disabled={disabled}
           onDelete={onDelete}
@@ -208,7 +213,7 @@ interface ContactPointHeaderProps {
   name: string;
   disabled?: boolean;
   provisioned?: boolean;
-  policies?: string[]; // some array of policies that refer to this contact point
+  policies?: number;
   onDelete: (name: string) => void;
 }
 
@@ -216,22 +221,20 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
 
-  const disableActions = disabled || provisioned;
-
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
           <Span variant="body">{name}</Span>
         </Stack>
-        {policies.length > 0 ? (
+        {policies > 0 ? (
           <MetaText>
             {/* TODO make this a link to the notification policies page with the filter applied */}
-            is used by <Strong>{policies.length}</Strong> notification policies
+            is used by <Strong>{policies}</Strong> notification policies
           </MetaText>
         ) : (
           // TODO implement the number of linked policies
-          <MetaText>is not used in any policy</MetaText>
+          <UnusedContactPointBadge />
         )}
         {provisioned && <ProvisioningBadge />}
         <Spacer />
@@ -255,53 +258,43 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             <LinkButton
               variant="secondary"
               size="sm"
-              icon="edit"
+              icon={provisioned ? 'document-info' : 'edit'}
               type="button"
-              disabled={disableActions}
+              disabled={disabled}
               aria-label="edit-action"
               data-testid="edit-action"
               href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
             >
-              Edit
+              {provisioned ? 'View' : 'Edit'}
             </LinkButton>
           </ConditionalWrap>
         </ConditionalWrap>
 
-        <ConditionalWrap
-          shouldWrap={provisioned}
-          wrap={(children) => (
-            <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
-              <span>{children}</span>
-            </Tooltip>
-          )}
+        <Dropdown
+          overlay={
+            <Menu>
+              {/* TODO we don't support exporting a single contact point yet */}
+              {/* <Menu.Item label="Export" icon="download-alt" /> */}
+              <Menu.Divider />
+              <Menu.Item
+                label="Delete"
+                icon="trash-alt"
+                destructive
+                disabled={disabled || provisioned}
+                onClick={() => onDelete(name)}
+              />
+            </Menu>
+          }
         >
-          <Dropdown
-            overlay={
-              <Menu>
-                {/* TODO we don't support exporting a single contact point yet */}
-                {/* <Menu.Item label="Export" icon="download-alt" /> */}
-                <Menu.Divider />
-                <Menu.Item
-                  label="Delete"
-                  icon="trash-alt"
-                  destructive
-                  disabled={disableActions}
-                  onClick={() => onDelete(name)}
-                />
-              </Menu>
-            }
-          >
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="ellipsis-h"
-              type="button"
-              aria-label="more-actions"
-              data-testid="more-actions"
-              disabled={disableActions}
-            />
-          </Dropdown>
-        </ConditionalWrap>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="ellipsis-h"
+            type="button"
+            aria-label="more-actions"
+            data-testid="more-actions"
+          />
+        </Dropdown>
       </Stack>
     </div>
   );

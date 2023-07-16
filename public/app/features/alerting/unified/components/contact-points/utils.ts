@@ -1,10 +1,11 @@
-import { split, trim } from 'lodash';
+import { countBy, split, trim } from 'lodash';
 import { ReactNode } from 'react';
 
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
+  Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierStatus, ReceiversStateDTO } from 'app/types';
 
@@ -69,6 +70,7 @@ export interface ReceiverConfigWithStatus extends GrafanaManagedReceiverConfig {
 }
 
 export interface ContactPointWithStatus extends GrafanaManagedContactPoint {
+  numberOfPolicies: number;
   grafana_managed_receiver_configs: ReceiverConfigWithStatus[];
 }
 
@@ -82,6 +84,8 @@ export function enhanceContactPointsWithStatus(
   status: ReceiversStateDTO[] = []
 ): ContactPointWithStatus[] {
   const contactPoints = result.alertmanager_config.receivers ?? [];
+  const usedContactPoints = getUsedContactPoints(result?.alertmanager_config?.route ?? {});
+  const usedContactPointsByName = countBy(usedContactPoints);
 
   return contactPoints.map((contactPoint) => {
     const receivers = extractReceivers(contactPoint);
@@ -89,10 +93,20 @@ export function enhanceContactPointsWithStatus(
 
     return {
       ...contactPoint,
+      numberOfPolicies: usedContactPointsByName[contactPoint.name] ?? 0,
       grafana_managed_receiver_configs: receivers.map((receiver, index) => ({
         ...receiver,
         [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
       })),
     };
   });
+}
+
+export function getUsedContactPoints(route: Route): string[] {
+  const childrenContactPoints = route.routes?.flatMap((route) => getUsedContactPoints(route)) ?? [];
+  if (route.receiver) {
+    return [route.receiver, ...childrenContactPoints];
+  }
+
+  return childrenContactPoints;
 }
