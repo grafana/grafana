@@ -148,6 +148,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 		cmd := &datasources.UpdateDataSourceCommand{
 			ID:    ds.ID,
 			OrgID: ds.OrgID,
+			Name:  "test-datasource-updated",
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)

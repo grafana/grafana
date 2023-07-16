@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -267,7 +268,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				return datasources.ErrDataSourceNameExists
 			}
 
-			if err != nil {
+			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 				return err
 			}
 		}
