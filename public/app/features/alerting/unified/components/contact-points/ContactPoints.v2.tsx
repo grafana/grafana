@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { SerializedError } from '@reduxjs/toolkit';
 import { uniqueId, upperFirst } from 'lodash';
 import React, { ReactNode, useState } from 'react';
 
@@ -6,7 +7,6 @@ import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Alert,
-  Badge,
   Button,
   Dropdown,
   Icon,
@@ -30,6 +30,7 @@ import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { MetaText } from '../MetaText';
+import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 import { GlobalConfigAlert } from '../receivers/ReceiversAndTemplatesView';
@@ -55,6 +56,11 @@ const ContactPoints = () => {
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showingMessageTemplates = activeTab === ActiveTab.MessageTemplates;
+
+  if (error) {
+    // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
+    return <Alert title="Failed to fetch contact points">{(error as SerializedError).message}</Alert>;
+  }
 
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
   const isVanillaAlertmanager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager!);
@@ -227,7 +233,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           // TODO implement the number of linked policies
           <MetaText>is not used in any policy</MetaText>
         )}
-        {provisioned && <Badge color="purple" text="Provisioned" />}
+        {provisioned && <ProvisioningBadge />}
         <Spacer />
         <ConditionalWrap
           shouldWrap={provisioned}

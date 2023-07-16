@@ -31,6 +31,25 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
       },
     ];
   }
+  return [];
+};
+
+export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
+  if (config.featureToggles.dashboardEmbed) {
+    return [
+      {
+        path: '/d-embed',
+        pageClass: 'dashboard-embed',
+        routeName: DashboardRoutes.Embedded,
+        component: SafeDynamicImport(
+          () =>
+            import(
+              /* webpackChunkName: "EmbeddedDashboardPage" */ '../../features/dashboard/containers/EmbeddedDashboardPage'
+            )
+        ),
+      },
+    ];
+  }
 
   return [];
 };

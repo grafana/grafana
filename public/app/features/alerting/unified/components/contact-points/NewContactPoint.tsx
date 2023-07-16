@@ -7,9 +7,9 @@ import { NewReceiverView } from '../receivers/NewReceiverView';
 
 const NewContactPoint = (_props: RouteChildrenProps) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
-  if (loading && !result) {
+  if (isLoading && !data) {
     return 'loading...';
   }
 
@@ -18,11 +18,11 @@ const NewContactPoint = (_props: RouteChildrenProps) => {
     return String(error);
   }
 
-  if (!result) {
+  if (!data) {
     return null;
   }
 
-  return <NewReceiverView config={result} alertManagerSourceName={selectedAlertmanager!} />;
+  return <NewReceiverView config={data} alertManagerSourceName={selectedAlertmanager!} />;
 };
 
 export default NewContactPoint;

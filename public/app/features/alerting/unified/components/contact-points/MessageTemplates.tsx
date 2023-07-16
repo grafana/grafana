@@ -8,14 +8,14 @@ import { TemplatesTable } from '../receivers/TemplatesTable';
 
 export const MessageTemplates = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
 
   if (error) {
     return <Alert title="Failed to fetch message templates">{String(error)}</Alert>;
   }
 
-  if (result) {
-    return <TemplatesTable config={result} alertManagerName={selectedAlertmanager!} />;
+  if (data) {
+    return <TemplatesTable config={data} alertManagerName={selectedAlertmanager!} />;
   }
 
   return null;

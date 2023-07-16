@@ -6,9 +6,9 @@ import { GlobalConfigForm } from '../receivers/GlobalConfigForm';
 
 const NewMessageTemplate = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
-  if (loading && !result) {
+  if (isLoading && !data) {
     return 'loading...';
   }
 
@@ -17,11 +17,11 @@ const NewMessageTemplate = () => {
     return String(error);
   }
 
-  if (!result) {
+  if (!data) {
     return null;
   }
 
-  return <GlobalConfigForm config={result} alertManagerSourceName={selectedAlertmanager!} />;
+  return <GlobalConfigForm config={data} alertManagerSourceName={selectedAlertmanager!} />;
 };
 
 export default NewMessageTemplate;

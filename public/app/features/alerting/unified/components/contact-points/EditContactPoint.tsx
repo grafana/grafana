@@ -11,14 +11,14 @@ type Props = RouteChildrenProps<{ name: string }>;
 
 const EditContactPoint = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
   const contactPointName = match?.params.name;
   if (!contactPointName) {
     return <EntityNotFound entity="Contact point" />;
   }
 
-  if (loading && !result) {
+  if (isLoading && !data) {
     return 'loading...';
   }
 
@@ -27,14 +27,14 @@ const EditContactPoint = ({ match }: Props) => {
     return String(error);
   }
 
-  if (!result) {
+  if (!data) {
     return null;
   }
 
   return (
     <EditReceiverView
       alertManagerSourceName={selectedAlertmanager!}
-      config={result}
+      config={data}
       receiverName={decodeURIComponent(contactPointName)}
     />
   );

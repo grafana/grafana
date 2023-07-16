@@ -51,7 +51,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	return
 }
 
-// defaultDetectors contains all the detectors to DetectAngular Angular plugins.
+// defaultDetectors contains all the detectors to detect Angular plugins.
 // They are executed in the specified order.
 var defaultDetectors = []angulardetector.AngularDetector{
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("PanelCtrl")},

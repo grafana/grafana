@@ -11,14 +11,14 @@ type Props = RouteChildrenProps<{ name: string }>;
 
 const EditMessageTemplate = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
   const name = match?.params.name;
   if (!name) {
     return <EntityNotFound entity="Message template" />;
   }
 
-  if (loading && !result) {
+  if (isLoading && !data) {
     return 'loading...';
   }
 
@@ -27,14 +27,14 @@ const EditMessageTemplate = ({ match }: Props) => {
     return String(error);
   }
 
-  if (!result) {
+  if (!data) {
     return null;
   }
 
   return (
     <EditTemplateView
       alertManagerSourceName={selectedAlertmanager!}
-      config={result}
+      config={data}
       templateName={decodeURIComponent(name)}
     />
   );

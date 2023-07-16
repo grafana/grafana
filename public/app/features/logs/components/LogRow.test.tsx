@@ -110,4 +110,14 @@ describe('LogRow', () => {
       expect(scrollIntoView).not.toHaveBeenCalled();
     });
   });
+
+  it('should render the menu cell on mouse over', async () => {
+    setup({ showContextToggle: jest.fn().mockReturnValue(true) });
+
+    expect(screen.queryByLabelText('Show context')).not.toBeInTheDocument();
+
+    await userEvent.hover(screen.getByText('test123'));
+
+    expect(screen.getByLabelText('Show context')).toBeInTheDocument();
+  });
 });

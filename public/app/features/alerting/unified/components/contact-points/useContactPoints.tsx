@@ -3,7 +3,7 @@
  * and (if available) it will also fetch the status from the Grafana Managed status endpoint
  */
 
-import produce from 'immer';
+import { produce } from 'immer';
 import { remove } from 'lodash';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -78,7 +78,6 @@ export function useDeleteContactPoint(selectedAlertmanager: string) {
       return updateAlertManager({
         selectedAlertmanager,
         config: newConfig,
-        showSuccessAlert: false,
       }).unwrap();
     });
   };

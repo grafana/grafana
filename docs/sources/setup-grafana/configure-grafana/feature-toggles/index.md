@@ -103,6 +103,7 @@ Experimental features might be changed or removed without prior notice.
 | `prometheusResourceBrowserCache`            | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`                  | Query InfluxDB InfluxQL without the proxy                                                                    |
 | `clientTokenRotation`                       | Replaces the current in-request token rotation so that the client initiates the rotation                     |
+| `lokiLogsDataplane`                         | Changes logs responses from Loki to be compliant with the dataplane specification.                           |
 | `disableSSEDataplane`                       | Disables dataplane specific processing in server side expressions.                                           |
 | `alertStateHistoryLokiSecondary`            | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations. |
 | `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                 |
@@ -112,16 +113,22 @@ Experimental features might be changed or removed without prior notice.
 | `extraThemes`                               | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`                  | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                         |
+| `dashboardEmbed`                            | Allow embedding dashboard for external use in Code editors                                                   |
 | `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
 | `cloudWatchLogsMonacoEditor`                | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
-| `flameGraphV2`                              | New version of flame graph with new features                                                                 |
 | `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                       |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
+| `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
+| `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
+| `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
+| `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                               |
+| `disableTraceQLStreaming`                   | Disables the option to stream the response of TraceQL queries of the Tempo data source                       |
+| `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 
 ## Development feature toggles
 

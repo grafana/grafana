@@ -124,7 +124,7 @@ export function mockApi(server: SetupServer) {
   };
 }
 
-// Creates a MSW server and sets up beforeAll and afterAll handlers for it
+// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
 export function setupMswServer() {
   const server = setupServer();
 

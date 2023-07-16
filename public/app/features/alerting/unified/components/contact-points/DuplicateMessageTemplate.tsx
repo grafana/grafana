@@ -11,14 +11,14 @@ type Props = RouteChildrenProps<{ name: string }>;
 
 const NewMessageTemplate = ({ match }: Props) => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
   const name = match?.params.name;
   if (!name) {
     return <EntityNotFound entity="Message template" />;
   }
 
-  if (loading && !result) {
+  if (isLoading && !data) {
     return 'loading...';
   }
 
@@ -27,11 +27,11 @@ const NewMessageTemplate = ({ match }: Props) => {
     return String(error);
   }
 
-  if (!result) {
+  if (!data) {
     return null;
   }
 
-  return <DuplicateTemplateView alertManagerSourceName={selectedAlertmanager!} config={result} templateName={name} />;
+  return <DuplicateTemplateView alertManagerSourceName={selectedAlertmanager!} config={data} templateName={name} />;
 };
 
 export default NewMessageTemplate;

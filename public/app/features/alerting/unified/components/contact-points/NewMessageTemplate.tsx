@@ -6,9 +6,9 @@ import { NewTemplateView } from '../receivers/NewTemplateView';
 
 const NewMessageTemplate = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { result, loading, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 
-  if (loading && !result) {
+  if (isLoading && !data) {
     return 'loading...';
   }
 
@@ -17,11 +17,11 @@ const NewMessageTemplate = () => {
     return String(error);
   }
 
-  if (!result) {
+  if (!data) {
     return null;
   }
 
-  return <NewTemplateView alertManagerSourceName={selectedAlertmanager!} config={result} />;
+  return <NewTemplateView alertManagerSourceName={selectedAlertmanager!} config={data} />;
 };
 
 export default NewMessageTemplate;
