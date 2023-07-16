@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
 import { uniqueId, upperFirst } from 'lodash';
+import pluralize from 'pluralize';
 import React, { ReactNode, useState } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -218,7 +219,7 @@ interface ContactPointHeaderProps {
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
+  const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
   const styles = useStyles2(getStyles);
 
   return (
@@ -230,7 +231,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         {policies > 0 ? (
           <MetaText>
             {/* TODO make this a link to the notification policies page with the filter applied */}
-            is used by <Strong>{policies}</Strong> notification policies
+            is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
           </MetaText>
         ) : (
           // TODO implement the number of linked policies
