@@ -4,6 +4,10 @@
       - "9090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    command: >
+      --enable-feature=remote-write-receiver
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
     volumes:
       - ./docker/blocks/self-instrumentation/prometheus.yaml:/etc/prometheus/prometheus.yml
   loki:
@@ -37,3 +41,5 @@
     ports:
       - "12345:12345"
       - "12347:12347"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
