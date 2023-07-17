@@ -27,7 +27,7 @@ function renderComponent(angularNoticeOverride?: Partial<AngularNotice>) {
   );
 }
 
-describe('PanelHeaderTitleItems', () => {
+describe('PanelHeaderTitleItems angular deprecation', () => {
   const iconSelector = 'angular-deprecation-icon';
   it('should render angular warning icon for angular plugins', () => {
     renderComponent();
