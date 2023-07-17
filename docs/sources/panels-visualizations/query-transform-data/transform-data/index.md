@@ -259,7 +259,7 @@ With this config:
 - Field: location
 - Lookup: USA States
 
-We will get this output:
+You'll get the following output:
 
 | Location  | ID  | Name     | Lng         | Lat       | Values |
 | --------- | --- | -------- | ----------- | --------- | ------ |
