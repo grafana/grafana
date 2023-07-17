@@ -24,10 +24,10 @@ export const ReceiversSection = ({
   addButtonTo,
   children,
   showButton = true,
-  exportLink = '',
+  exportLink,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
-  const showMore = !!exportLink;
+  const showMore = Boolean(exportLink);
   const newMenu = <Menu>{exportLink && <MenuItem url={exportLink} label="Export all" target="_blank" />}</Menu>;
   return (
     <Stack direction="column" gap={2}>

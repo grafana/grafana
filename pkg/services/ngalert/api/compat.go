@@ -234,7 +234,11 @@ func AlertingFileExportFromEmbeddedContactPoints(orgID int64, ecps []definitions
 			contactPoints = append(contactPoints, c)
 		}
 
-		c.Receivers = append(c.Receivers, ReceiverExportFromEmbeddedContactPoint(ecp))
+		recv, err := ReceiverExportFromEmbeddedContactPoint(ecp)
+		if err != nil {
+			return definitions.AlertingFileExport{}, err
+		}
+		c.Receivers = append(c.Receivers, recv)
 	}
 
 	for _, c := range contactPoints {
@@ -244,11 +248,15 @@ func AlertingFileExportFromEmbeddedContactPoints(orgID int64, ecps []definitions
 }
 
 // ReceiverExportFromEmbeddedContactPoint creates a definitions.ReceiverExport DTO from definitions.EmbeddedContactPoint.
-func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactPoint) definitions.ReceiverExport {
+func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactPoint) (definitions.ReceiverExport, error) {
+	raw, err := contact.Settings.MarshalJSON()
+	if err != nil {
+		return definitions.ReceiverExport{}, err
+	}
 	return definitions.ReceiverExport{
 		UID:                   contact.UID,
 		Type:                  contact.Type,
-		Settings:              contact.Settings,
+		Settings:              raw,
 		DisableResolveMessage: contact.DisableResolveMessage,
-	}
+	}, nil
 }

@@ -108,10 +108,10 @@ type ContactPointExport struct {
 
 // ReceiverExport is the provisioned file export of alerting.ReceiverV1.
 type ReceiverExport struct {
-	UID                   string           `json:"uid" yaml:"uid"`
-	Type                  string           `json:"type" yaml:"type"`
-	Settings              *simplejson.Json `json:"settings" yaml:"settings"`
-	DisableResolveMessage bool             `json:"disableResolveMessage" yaml:"disableResolveMessage"`
+	UID                   string     `json:"uid" yaml:"uid"`
+	Type                  string     `json:"type" yaml:"type"`
+	Settings              RawMessage `json:"settings" yaml:"settings"`
+	DisableResolveMessage bool       `json:"disableResolveMessage" yaml:"disableResolveMessage"`
 }
 
 const RedactedValue = "[REDACTED]"
