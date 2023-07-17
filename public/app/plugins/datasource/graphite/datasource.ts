@@ -84,10 +84,7 @@ export class GraphiteDatasource
   requestCounter = 100;
   private readonly metricMappings: GraphiteLokiMapping[];
 
-  constructor(
-    instanceSettings: any,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
-  ) {
+  constructor(instanceSettings: any, private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
     super(instanceSettings);
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;

@@ -50,13 +50,7 @@ export class Quadtree {
   o: Rect[];
   q: Quads | null;
 
-  constructor(
-    public x: number,
-    public y: number,
-    public w: number,
-    public h: number,
-    public l: number = 0
-  ) {
+  constructor(public x: number, public y: number, public w: number, public h: number, public l: number = 0) {
     this.o = [];
     this.q = null;
   }

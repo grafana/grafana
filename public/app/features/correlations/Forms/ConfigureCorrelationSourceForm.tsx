@@ -37,9 +37,9 @@ export const ConfigureCorrelationSourceForm = () => {
   return (
     <>
       <FieldSet
-        label={`Configure the data source that will link to ${getDatasourceSrv().getInstanceSettings(
-          correlation?.targetUID
-        )?.name} (Step 3 of 3)`}
+        label={`Configure the data source that will link to ${
+          getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name
+        } (Step 3 of 3)`}
       >
         <p>
           Define what data source will display the correlation, and what data will replace previously defined variables.

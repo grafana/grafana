@@ -118,58 +118,52 @@ const validVariableNames: Record<string, RegExp[]> = {
 };
 
 export const getPropsWithVariable = (variableId: string, parent: { key: string; value: any }, result: any) => {
-  const stringValues = Object.keys(parent.value).reduce(
-    (all, key) => {
-      const value = parent.value[key];
-      if (!value || typeof value !== 'string') {
-        return all;
+  const stringValues = Object.keys(parent.value).reduce((all, key) => {
+    const value = parent.value[key];
+    if (!value || typeof value !== 'string') {
+      return all;
+    }
+
+    const isValidName = validVariableNames[key]
+      ? validVariableNames[key].find((regex: RegExp) => regex.test(variableId))
+      : undefined;
+
+    let hasVariable = containsVariable(value, variableId);
+    if (key === 'repeat' && value === variableId) {
+      // repeat stores value without variable format
+      hasVariable = true;
+    }
+
+    if (!isValidName && hasVariable) {
+      all = {
+        ...all,
+        [key]: value,
+      };
+    }
+
+    return all;
+  }, {} as Record<string, any>);
+
+  const objectValues = Object.keys(parent.value).reduce((all, key) => {
+    const value = parent.value[key];
+    if (value && typeof value === 'object' && Object.keys(value).length) {
+      let id = value.title || value.name || value.id || key;
+      if (Array.isArray(parent.value) && parent.key === 'panels') {
+        id = `${id}[${value.id}]`;
       }
 
-      const isValidName = validVariableNames[key]
-        ? validVariableNames[key].find((regex: RegExp) => regex.test(variableId))
-        : undefined;
+      const newResult = getPropsWithVariable(variableId, { key, value }, {});
 
-      let hasVariable = containsVariable(value, variableId);
-      if (key === 'repeat' && value === variableId) {
-        // repeat stores value without variable format
-        hasVariable = true;
-      }
-
-      if (!isValidName && hasVariable) {
+      if (Object.keys(newResult).length) {
         all = {
           ...all,
-          [key]: value,
+          [id]: newResult,
         };
       }
+    }
 
-      return all;
-    },
-    {} as Record<string, any>
-  );
-
-  const objectValues = Object.keys(parent.value).reduce(
-    (all, key) => {
-      const value = parent.value[key];
-      if (value && typeof value === 'object' && Object.keys(value).length) {
-        let id = value.title || value.name || value.id || key;
-        if (Array.isArray(parent.value) && parent.key === 'panels') {
-          id = `${id}[${value.id}]`;
-        }
-
-        const newResult = getPropsWithVariable(variableId, { key, value }, {});
-
-        if (Object.keys(newResult).length) {
-          all = {
-            ...all,
-            [id]: newResult,
-          };
-        }
-      }
-
-      return all;
-    },
-    {} as Record<string, any>
-  );
+    return all;
+  }, {} as Record<string, any>);
 
   if (Object.keys(stringValues).length || Object.keys(objectValues).length) {
     result = {
