@@ -8,7 +8,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { DataSourcePicker } from 'app/features/connections/components/picker/DataSourcePicker';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';

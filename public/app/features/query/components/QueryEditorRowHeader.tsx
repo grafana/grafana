@@ -4,7 +4,7 @@ import React, { ReactNode, useState } from 'react';
 import { DataQuery, DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Input, FieldValidationMessage, useStyles2 } from '@grafana/ui';
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { DataSourcePicker } from 'app/features/connections/components/picker/DataSourcePicker';
 
 export interface Props<TQuery extends DataQuery = DataQuery> {
   query: TQuery;
