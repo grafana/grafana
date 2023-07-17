@@ -91,6 +91,11 @@ def secrets():
             "Secret",
         ),
         vault_secret(
+            "security_dest_bucket",
+            "infra/data/ci/grafana-release-eng/security-bucket",
+            "bucket",
+        ),
+        vault_secret(
             "static_asset_editions",
             "infra/data/ci/grafana-release-eng/artifact-publishing",
             "static_asset_editions",
