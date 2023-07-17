@@ -185,6 +185,11 @@ describe('Receivers', () => {
       return permissions.includes(action as AccessControlAction);
     });
 
+    // respond with "true" when asked if we are an administrator
+    mocks.contextSrv.hasRole.mockImplementation((role: string) => {
+      return role === 'Admin';
+    });
+
     mocks.contextSrv.hasAccess.mockImplementation(() => true);
   });
 
