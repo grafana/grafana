@@ -139,13 +139,12 @@ describe('Handles open/close splits and related events in UI and URL', () => {
     });
   });
 
-  // TODO: the following tests are using the compact format, we should use the current format instead
-  // and have a dedicated test ensuring the compact format is parsed correctly
   it('can close a panel from a split', async () => {
     const urlParams = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
-      right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
+      left: JSON.stringify({ datasource: 'loki', queries: [{ refId: 'A' }], range: { from: 'now-1h', to: 'now' } }),
+      right: JSON.stringify({ datasource: 'elastic', queries: [{ refId: 'A' }], range: { from: 'now-1h', to: 'now' } }),
     };
+
     const { location } = setupExplore({ urlParams });
     let closeButtons = await screen.findAllByLabelText(/Close split pane/i);
     await userEvent.click(closeButtons[1]);
@@ -162,8 +161,13 @@ describe('Handles open/close splits and related events in UI and URL', () => {
 
   it('handles opening split with split open func', async () => {
     const urlParams = {
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+      left: JSON.stringify({
+        datasource: 'loki',
+        queries: [{ refId: 'A' }, { expr: '{ label="value"}' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
     };
+
     const { datasources, store } = setupExplore({ urlParams });
     jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
     jest.mocked(datasources.elastic.query).mockReturnValue(makeLogsQueryResponse());
