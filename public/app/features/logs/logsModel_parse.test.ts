@@ -137,6 +137,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
       rows: [
         {
           dataFrame: frames[0],
+          rowId: 'id1',
           datasourceType: undefined,
           entry: 'line1',
           entryFieldIndex: 1,
@@ -164,6 +165,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         },
         {
           dataFrame: frames[1],
+          rowId: 'id2',
           datasourceType: undefined,
           entry: 'line2',
           entryFieldIndex: 1,
@@ -191,6 +193,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         },
         {
           dataFrame: frames[2],
+          rowId: 'id3',
           datasourceType: undefined,
           entry: 'line3',
           entryFieldIndex: 1,
@@ -290,6 +293,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
       rows: [
         {
           dataFrame: frames[0],
+          rowId: 'id1',
           datasourceType: undefined,
           entry: 'line1',
           entryFieldIndex: 2,
@@ -318,6 +322,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         },
         {
           dataFrame: frames[0],
+          rowId: 'id2',
           datasourceType: undefined,
           entry: 'line2',
           entryFieldIndex: 2,
@@ -346,6 +351,7 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
         },
         {
           dataFrame: frames[0],
+          rowId: 'id3',
           datasourceType: undefined,
           entry: 'line3',
           entryFieldIndex: 2,

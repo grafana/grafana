@@ -424,7 +424,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
 
-      rows.push({
+      const rowId = idField !== null ? idField.values[j] : undefined;
+
+      const row: LogRowModel = {
         entryFieldIndex: stringField.index,
         rowIndex: j,
         dataFrame: series,
@@ -444,7 +446,15 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
-      });
+      };
+
+      // we do not want to create a `rowId: undefined` field,
+      // so we only add it if it exists.
+      if (rowId !== undefined) {
+        row.rowId = rowId;
+      }
+
+      rows.push(row);
     }
   }
 
