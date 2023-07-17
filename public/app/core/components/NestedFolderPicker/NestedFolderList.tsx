@@ -15,6 +15,9 @@ import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
+const ID_PREFIX = 'folder-picker-item';
+
+export const getDOMId = (id: string) => `${ID_PREFIX}-${id ?? 'root'}`;
 
 interface NestedFolderListProps {
   items: DashboardsTreeItem[];
@@ -78,10 +81,11 @@ interface RowProps {
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
   const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect } = data;
-  const { item, isOpen, level } = items[index];
+  const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
   const children = items.filter((i) => i.parentUID === item.uid).map((i) => i.item.uid);
+  const posInSet = items.filter((i) => i.parentUID === parentUID).findIndex((i) => i.item.uid === item.uid) + 1;
 
   const styles = useStyles2(getStyles);
 
@@ -123,10 +127,12 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-expanded={isOpen}
       aria-selected={item.uid === selectedFolder}
       aria-labelledby={labelId}
-      aria-level={level}
+      aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
-      aria-owns={children.length > 0 ? children.join(' ') : undefined}
-      id={item.uid}
+      aria-owns={children.length > 0 ? children.map((child) => getDOMId(child)).join(' ') : undefined}
+      aria-setsize={children.length}
+      aria-posinset={posInSet}
+      id={getDOMId(item.uid)}
     >
       <div className={styles.rowBody}>
         <Indent level={level} />

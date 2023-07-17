@@ -16,7 +16,7 @@ import { getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
-import { NestedFolderList } from './NestedFolderList';
+import { getDOMId, NestedFolderList } from './NestedFolderList';
 import { FolderChange, FolderUID } from './types';
 
 async function fetchRootFolders() {
@@ -35,7 +35,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const [search, setSearch] = useState('');
   const [autoFocusButton, setAutoFocusButton] = useState(false);
-  const [focusedItemIndex, setFocusedItemIndex] = useState(0);
+  const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
@@ -136,7 +136,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       // ensure state is clean on opening the overlay
       if (value) {
         setSearch('');
-        setFocusedItemIndex(0);
+        setFocusedItemIndex(-1);
         setAutoFocusButton(true);
       }
       setOverlayOpen(value);
@@ -195,7 +195,9 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   }, [search, searchState.value]);
 
   useEffect(() => {
-    document.getElementById(tree[focusedItemIndex]?.item.uid)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    document
+      .getElementById(getDOMId(tree[focusedItemIndex]?.item.uid))
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [focusedItemIndex, tree]);
 
   let label = selectedFolder.data?.title;
@@ -237,10 +239,10 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         aria-autocomplete="list"
         aria-expanded
         aria-haspopup
-        aria-label="Use up and down arrows to navigate, left and right arrows to expand or collapse, enter to select, escape to cancel."
+        aria-label="Use 'Up' and 'Down' arrows to navigate. 'Left' and 'Right' arrows to collapse or expand a folder. 'Enter' to select a folder. 'Escape' to close the overlay."
         aria-controls={overlayId}
         aria-owns={overlayId}
-        aria-activedescendant={tree[focusedItemIndex]?.item.uid}
+        aria-activedescendant={getDOMId(tree[focusedItemIndex]?.item.uid)}
         role="combobox"
         suffix={<Icon name="search" />}
       />
