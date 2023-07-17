@@ -24,7 +24,7 @@ To view your provisioned resources in Grafana, complete the following steps.
 
 Provisioned resources are labeled **Provisioned**, so that it is clear that they were not created manually.
 
-# Edit API-provisioned alerting resources
+## Edit API-provisioned alerting resources
 
 To allow editing of API-provisioned resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
 
