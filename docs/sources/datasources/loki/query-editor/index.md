@@ -22,8 +22,8 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 The Loki query editor has two modes:
 
-- [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries
-- [Builder mode]({{< relref "#builder-mode" >}}), which provides a visual query designer
+- [Builder mode]({{< relref "#builder-mode" >}}), which provides a visual query designer.
+- [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries.
 
 To switch between the editor modes, select the corresponding **Builder** and **Code** tabs.
 
@@ -33,10 +33,8 @@ To run a query, select **Run queries** located at the top of the editor.
 To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
 {{% /admonition %}}
 
-Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations.
-
-Builder mode doesn't yet support some complex queries.
-When you switch from Code mode to Builder mode with such a query, the editor displays a popup that explains how you might lose parts of the query if you continue.
+Each mode is synchronized, so you can switch between them without losing your work, although there are some limitations. Builder mode doesn't support some complex queries.
+When you switch from Code mode to Builder mode with such a query, the editor displays a warning message that explains how you might lose parts of the query if you continue.
 You can then decide whether you still want to switch to Builder mode.
 
 You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
@@ -89,7 +87,7 @@ The autocompletion dropdown includes documentation for the suggested items where
 
 ## Builder mode
 
-Use Builder mode to visually construct queries, without needing to manually enter LogQL.
+Builder mode helps you build queries using a visual interface without needing to manually enter LogQL. This option is best for users who have limited or no previous experience working with Loki and LogQL.
 
 ### Use the Labels selector
 
