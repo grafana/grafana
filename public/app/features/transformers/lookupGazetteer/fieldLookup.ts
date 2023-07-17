@@ -61,7 +61,7 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
           fields.push({ ...gazetteerField, values: buffer });
         }
 
-        for (let valueIndex = 0; valueIndex < gazetteerFieldValuesBuffer.length; valueIndex++) {
+        for (let valueIndex = 0; valueIndex < gazetteer.count!; valueIndex++) {
           const foundValue = gazetteer.find(values[valueIndex]);
 
           if (foundValue?.index != null) {
