@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import produce from 'immer';
+import { produce } from 'immer';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 

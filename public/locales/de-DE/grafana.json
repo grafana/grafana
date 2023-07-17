@@ -61,6 +61,13 @@
       "manage-permissions": "",
       "move": ""
     },
+    "folder-picker": {
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
