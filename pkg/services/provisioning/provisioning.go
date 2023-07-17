@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -92,6 +93,7 @@ type ProvisioningService interface {
 	ProvisionAlerting(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
+	RunInitProvisioners(ctx context.Context) error
 }
 
 // Add a public constructor for overriding service to be able to instantiate OSS as fallback
