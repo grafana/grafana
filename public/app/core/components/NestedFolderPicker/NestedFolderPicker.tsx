@@ -35,6 +35,8 @@ interface NestedFolderPickerProps {
   onChange?: (folder: FolderChange) => void;
 }
 
+const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
+
 export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
@@ -129,30 +131,12 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         items: searchResults.items ?? [],
       };
 
-      const flatTree = createFlatTree(
-        undefined, // so far folder picker doesn't have a "folder view", so the top-level is always undefined
-        searchCollection,
-        childrenCollections,
-        {},
-        0,
-        false
-      );
-
-      return flatTree;
+      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS);
     }
 
-    let flatTree = createFlatTree(
-      undefined, // so far folder picker doesn't have a "folder view", so the top-level is always undefined
-      rootCollection,
-      childrenCollections,
-      searchResults ? {} : folderOpenState,
-      0,
-      false
-    );
+    let flatTree = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState, 0, EXCLUDED_KINDS);
 
-    // Mutate the items to increase each level to make way for the root Dashboards item
-    // We don't set the initial level in createFlatTree to 1 because that currently mucks up
-    // pagination placeholder logic
+    // Increase the level of each item to 'make way' for the fake root Dashboards item
     for (const item of flatTree) {
       item.level += 1;
     }

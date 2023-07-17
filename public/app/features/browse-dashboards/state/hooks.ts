@@ -5,7 +5,13 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState, useDispatch } from 'app/types';
 
 import { PAGE_SIZE } from '../api/services';
-import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
+import {
+  BrowseDashboardsState,
+  DashboardsTreeItem,
+  DashboardTreeSelection,
+  DashboardViewItemWithUIItems,
+  UIDashboardViewItem,
+} from '../types';
 
 import { fetchNextChildrenPage } from './actions';
 import { getPaginationPlaceholders } from './utils';
@@ -136,21 +142,25 @@ export function createFlatTree(
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
   level = 0,
-  insertEmptyFolderIndicator = true
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
+    if (excludeKinds.includes(item.kind)) {
+      return [];
+    }
+
     const mappedChildren = createFlatTree(
       item.uid,
       rootCollection,
       childrenByUID,
       openFolders,
       level + 1,
-      insertEmptyFolderIndicator
+      excludeKinds
     );
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder && insertEmptyFolderIndicator) {
+    if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
