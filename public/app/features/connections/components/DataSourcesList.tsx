@@ -10,9 +10,9 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
-import { constructDataSourceExploreUrl } from '../../datasources/utils';
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
 import { trackCreateDashboardClicked, trackExploreClicked, trackDataSourcesListViewed } from '../tracking';
+import { constructDataSourceExploreUrl } from '../utils';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 

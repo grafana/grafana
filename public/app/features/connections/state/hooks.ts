@@ -11,7 +11,7 @@ import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DataSourceRights } from '../../datasources/types';
-import { constructDataSourceExploreUrl } from '../../datasources/utils';
+import { constructDataSourceExploreUrl } from '../utils';
 
 import {
   initDataSourceSettings,

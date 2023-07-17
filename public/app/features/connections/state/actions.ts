@@ -19,8 +19,8 @@ import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types'
 
 import { DATASOURCES_ROUTES } from '../../datasources/constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../../datasources/tracking';
-import { findNewName, nameExits } from '../../datasources/utils';
 import * as api from '../api';
+import { findNewName, nameExits } from '../utils';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
