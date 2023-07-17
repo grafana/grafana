@@ -92,14 +92,15 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
 
   let parts: string[] = [];
   let frameNamesDiffer = false;
+  let frameNameIncr = 0;
 
   if (allFrames && allFrames.length > 1) {
-    for (let i = 1; i < allFrames.length; i++) {
-      const frame = allFrames[i];
-      if (frame.name !== allFrames[i - 1].name) {
-        frameNamesDiffer = true;
-        break;
-      }
+    frameNamesDiffer = new Set(allFrames.map((f) => f.name)).size === allFrames.length;
+
+    let sameNamedFrames = allFrames?.filter((fr) => fr.name === frame?.name);
+
+    if (sameNamedFrames.length > 1) {
+      frameNameIncr = sameNamedFrames.indexOf(frame!) + 1;
     }
   }
 
@@ -108,6 +109,9 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
 
   if (frameNamesDiffer && frame?.name) {
     parts.push(frame.name);
+    if (frameNameIncr > 0) {
+      parts.push('' + frameNameIncr);
+    }
     frameNameAdded = true;
   }
 
@@ -134,6 +138,9 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   if (frame && !frameNameAdded && !labelsAdded && field.name === TIME_SERIES_VALUE_FIELD_NAME) {
     if (frame.name && frame.name.length > 0) {
       parts.push(frame.name);
+      if (frameNameIncr > 0) {
+        parts.push('' + frameNameIncr);
+      }
       frameNameAdded = true;
     }
   }
