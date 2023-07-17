@@ -91,34 +91,39 @@ func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 
 // TODO: test with go test
 // Print owner(s) for a given dependency.
-// An example CLI command is `go run scripts/modowners/modowners.go owners -c go.mod -d github.com/Azure/go-autorest/autorest/adal`
+// An example CLI command to get a list of all owners in go.mod with a count of the number of dependencies they own is `go run scripts/modowners/modowners.go owners -a -c go.mod`
+// An example CLI command to get the owner for a specific dependency is `go run scripts/modowners/modowners.go owners -d cloud.google.com/go/storage@v1.30.1 go.mod`. You must use dependency@version, not cloud.google.com/go/storage v1.30.1.
 func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("owners", flag.ExitOnError)
+	allOwners := fs.Bool("a", false, "print all owners in specified file")
 	count := fs.Bool("c", false, "print count of dependencies per owner")
 	dep := fs.String("d", "", "name of dependency")
-	fmt.Println("args:", args)
 	fs.Parse(args)
-	fmt.Println("count", *count)
-	fmt.Println("dep", *dep)
-	fmt.Println("file path:", fs.Arg(0))
 	m, err := parseGoMod(fileSystem, fs.Arg(0))
 	if err != nil {
 		return err
 	}
 	owners := map[string]int{}
 	for _, mod := range m {
+		if len(*dep) > 0 && mod.Name == *dep {
+			for _, owner := range mod.Owners {
+				fmt.Print(owner)
+				break
+			}
+		}
 		if mod.Indirect == false {
 			for _, owner := range mod.Owners {
 				owners[owner]++
 			}
 		}
 	}
-	for owner, n := range owners {
-		// if user specified a dependency in the cli command, print owner (and count) that dependency
-		if *count {
-			fmt.Println(owner, n)
-		} else {
-			fmt.Println(owner)
+	if *allOwners {
+		for owner, n := range owners {
+			if *count {
+				fmt.Println(owner, n)
+			} else {
+				fmt.Println(owner)
+			}
 		}
 	}
 	return nil
