@@ -20,10 +20,7 @@ export abstract class CloudWatchRequest {
     AppNotificationTimeout.Error
   );
 
-  constructor(
-    public instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
-    templateSrv: TemplateSrv
-  ) {
+  constructor(public instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     this.templateSrv = templateSrv;
     this.ref = getDataSourceRef(instanceSettings);
   }

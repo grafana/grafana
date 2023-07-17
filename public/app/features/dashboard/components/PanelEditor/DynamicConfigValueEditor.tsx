@@ -53,29 +53,30 @@ export const DynamicConfigValueEditor = ({
   /* eslint-disable react/display-name */
   const renderLabel =
     (includeDescription = true, includeCounter = false) =>
-    (isExpanded = false) => (
-      <HorizontalGroup justify="space-between">
-        <Label
-          category={labelCategory}
-          description={includeDescription ? item.description : undefined}
-          htmlFor={componentId}
-        >
-          <Highlighter
-            textToHighlight={item.name}
-            searchWords={[searchQuery]}
-            highlightClassName={'search-fragment-highlight'}
-          />
-          {!isExpanded && includeCounter && item.getItemsCount && (
-            <Counter value={item.getItemsCount(property.value)} />
+    (isExpanded = false) =>
+      (
+        <HorizontalGroup justify="space-between">
+          <Label
+            category={labelCategory}
+            description={includeDescription ? item.description : undefined}
+            htmlFor={componentId}
+          >
+            <Highlighter
+              textToHighlight={item.name}
+              searchWords={[searchQuery]}
+              highlightClassName={'search-fragment-highlight'}
+            />
+            {!isExpanded && includeCounter && item.getItemsCount && (
+              <Counter value={item.getItemsCount(property.value)} />
+            )}
+          </Label>
+          {!isSystemOverride && (
+            <div>
+              <IconButton name="times" onClick={onRemove} tooltip="Remove label" />
+            </div>
           )}
-        </Label>
-        {!isSystemOverride && (
-          <div>
-            <IconButton name="times" onClick={onRemove} tooltip="Remove label" />
-          </div>
-        )}
-      </HorizontalGroup>
-    );
+        </HorizontalGroup>
+      );
   /* eslint-enable react/display-name */
 
   if (isCollapsible) {

@@ -63,10 +63,7 @@ function isInsideGoExpression(model: editor.ITextModel, position: Position) {
 }
 
 export class CompletionProvider {
-  constructor(
-    private readonly monaco: Monaco,
-    private readonly range: IRange
-  ) {}
+  constructor(private readonly monaco: Monaco, private readonly range: IRange) {}
 
   getSnippetsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
     return this.getCompletionsFromDefinitions(getSnippetsSuggestions(this.monaco));

@@ -42,11 +42,7 @@ coreModule.directive('diffDelta', delta);
 export class LinkJSONCtrl {
   static $inject = ['$scope', '$rootScope', '$anchorScroll'];
 
-  constructor(
-    private $scope: any,
-    private $rootScope: GrafanaRootScope,
-    private $anchorScroll: any
-  ) {}
+  constructor(private $scope: any, private $rootScope: GrafanaRootScope, private $anchorScroll: any) {}
 
   goToLine(line: number) {
     let unbind: () => void;

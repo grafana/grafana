@@ -181,9 +181,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: transparent;
     outline: 1px solid transparent;
 
-    transition:
-      background 150ms,
-      outline 150ms;
+    transition: background 150ms, outline 150ms;
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
   `,
 });

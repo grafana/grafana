@@ -13,10 +13,7 @@ interface HistoryRef {
 }
 
 export class CompletionDataProvider {
-  constructor(
-    private languageProvider: LanguageProvider,
-    private historyRef: HistoryRef = { current: [] }
-  ) {}
+  constructor(private languageProvider: LanguageProvider, private historyRef: HistoryRef = { current: [] }) {}
 
   private buildSelector(labels: Label[]): string {
     const allLabelTexts = labels.map(

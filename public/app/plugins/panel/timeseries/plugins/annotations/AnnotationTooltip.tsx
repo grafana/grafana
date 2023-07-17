@@ -82,7 +82,9 @@ export const AnnotationTooltip = ({
         {alertText}
         <>
           <HorizontalGroup spacing="xs" wrap>
-            {tags?.map((t, i) => <Tag name={t} key={`${t}-${i}`} />)}
+            {tags?.map((t, i) => (
+              <Tag name={t} key={`${t}-${i}`} />
+            ))}
           </HorizontalGroup>
         </>
       </div>

@@ -85,9 +85,11 @@ export function LabelFilters({
       {variableEditor ? (
         <InlineFieldRow>
           <div
-            className={cx(css`
-              display: flex;
-            `)}
+            className={cx(
+              css`
+                display: flex;
+              `
+            )}
           >
             <InlineLabel
               width={20}

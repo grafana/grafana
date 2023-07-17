@@ -17,9 +17,7 @@ const StoryContainer = ({ width, height, showBoundaries, children }: React.Props
     css`
       background-color: white;
       background-size: 30px 30px;
-      background-position:
-        0 0,
-        15px 15px;
+      background-position: 0 0, 15px 15px;
       background-image: linear-gradient(
           45deg,
           ${checkColor} 25%,

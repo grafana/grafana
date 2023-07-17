@@ -15,9 +15,7 @@ const getStyles = stylesFactory((duration: number, measurement: 'width' | 'heigh
       label: enterActive;
       ${measurement}: ${size}px;
       opacity: 1;
-      transition:
-        opacity ${duration}ms ease-out,
-        ${measurement} ${duration}ms ease-out;
+      transition: opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out;
     `,
     exit: css`
       label: exit;
@@ -28,9 +26,7 @@ const getStyles = stylesFactory((duration: number, measurement: 'width' | 'heigh
       label: exitActive;
       opacity: 0;
       ${measurement}: 0;
-      transition:
-        opacity ${duration}ms ease-out,
-        ${measurement} ${duration}ms ease-out;
+      transition: opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out;
     `,
   };
 });

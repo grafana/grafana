@@ -403,13 +403,14 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
   );
 };
 
-const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
-  display: flex;
-  align-items: center;
-  font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
-  font-weight: ${theme.typography.fontWeightMedium};
-  white-space: nowrap;
-`;
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
+  css`
+    display: flex;
+    align-items: center;
+    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    white-space: nowrap;
+  `;
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);

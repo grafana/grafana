@@ -52,4 +52,5 @@ export const renderComponentWithTheme = (component: React.ComponentType<any>, pr
 export const withTheme =
   (handleSassThemeChange: SassThemeChangeHandler): DecoratorFn =>
   // eslint-disable-next-line react/display-name
-  (story) => <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>;
+  (story) =>
+    <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>;
