@@ -6,8 +6,8 @@ import { ThunkResult, ThunkDispatch } from 'app/types';
 
 import { getMockDataSource } from '../../datasources/__mocks__';
 import { DATASOURCES_ROUTES } from '../../datasources/constants';
-import { trackDataSourceCreated, trackDataSourceTested } from '../../datasources/tracking';
 import * as api from '../api';
+import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';
 
 import {
@@ -36,7 +36,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: jest.fn().mockReturnValue({ reload: jest.fn() }),
   getBackendSrv: jest.fn().mockReturnValue({ get: jest.fn() }),
 }));
-jest.mock('../../datasources/tracking', () => ({
+jest.mock('../tracking', () => ({
   trackDataSourceCreated: jest.fn(),
   trackDataSourceTested: jest.fn(),
 }));
