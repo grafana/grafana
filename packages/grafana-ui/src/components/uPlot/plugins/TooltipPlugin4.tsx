@@ -279,14 +279,14 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
-    background: theme.colors.background.secondary,
     top: 0,
     left: 0,
     position: 'absolute',
     zIndex: 1,
-    borderRadius: '6px',
     padding: '8px',
     whiteSpace: 'pre',
+    borderRadius: '6px',
+    background: theme.colors.background.secondary,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
   }),
 });
