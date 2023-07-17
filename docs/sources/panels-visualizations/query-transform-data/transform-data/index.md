@@ -261,7 +261,7 @@ With this config:
 
 We will get this output:
 
-| location  | id  | name     | lng         | lat       | values |
+| Location  | ID  | Name     | Lng         | Lat       | Values |
 | --------- | --- | -------- | ----------- | --------- | ------ |
 | AL        | AL  | Alabama  | -80.891064  | 12.448457 | 0      |
 | AK        | AK  | Arkansas | -100.891064 | 24.448457 | 10     |
