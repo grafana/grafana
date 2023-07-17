@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
@@ -34,6 +34,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const styles = useStyles2(getStyles);
 
   const [search, setSearch] = useState('');
+  const [autoFocusButton, setAutoFocusButton] = useState(false);
+  const [focusedItemIndex, setFocusedItemIndex] = useState(0);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
@@ -123,6 +125,22 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     return result;
   }, [search, searchState.value, rootFoldersState.loading, rootFoldersState.value, folderOpenState, childrenForUID]);
 
+  const { getTooltipProps, setTooltipRef, setTriggerRef, visible, triggerRef } = usePopperTooltip({
+    visible: overlayOpen,
+    placement: 'bottom',
+    interactive: true,
+    offset: [0, 0],
+    trigger: 'click',
+    onVisibleChange: (value: boolean) => {
+      // ensure state is clean on opening the overlay
+      if (value) {
+        setSearch('');
+        setFocusedItemIndex(0);
+      }
+      setOverlayOpen(value);
+    },
+  });
+
   const handleSelectionChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
       if (onChange) {
@@ -131,30 +149,48 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
           title: item.title,
         });
       }
+      setAutoFocusButton(true);
       setOverlayOpen(false);
     },
     [onChange]
   );
 
-  const { getTooltipProps, setTooltipRef, setTriggerRef, visible, triggerRef } = usePopperTooltip({
-    visible: overlayOpen,
-    placement: 'bottom',
-    interactive: true,
-    offset: [0, 0],
-    trigger: 'click',
-    onVisibleChange: (value: boolean) => {
-      // ensure search state is clean on opening the overlay
-      if (value) {
-        setSearch('');
-      }
-      setOverlayOpen(value);
-    },
-  });
-
   const isLoading = rootFoldersState.loading || searchState.loading;
   const error = rootFoldersState.error || searchState.error;
 
   const tree = flatTree;
+
+  const handleKeyDown = useCallback(
+    (ev: React.KeyboardEvent<HTMLInputElement>) => {
+      // Expand/collapse folder on arrow keys
+      const foldersAreOpenable = !(search && searchState.value);
+      if (foldersAreOpenable && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) {
+        ev.preventDefault();
+        handleFolderClick(tree[focusedItemIndex].item.uid, ev.key === 'ArrowRight');
+      } else if (ev.key === 'ArrowUp' && focusedItemIndex > 0) {
+        ev.preventDefault();
+        const nextIndex = focusedItemIndex - 1;
+        setFocusedItemIndex(nextIndex);
+      } else if (ev.key === 'ArrowDown' && focusedItemIndex < tree.length - 1) {
+        ev.preventDefault();
+        const nextIndex = focusedItemIndex + 1;
+        setFocusedItemIndex(nextIndex);
+      } else if (ev.key === 'Enter') {
+        ev.preventDefault();
+        const item = tree[focusedItemIndex].item;
+        if (item.kind === 'folder') {
+          handleSelectionChange(ev, item);
+        }
+      } else if (ev.key === 'Tab') {
+        setOverlayOpen(false);
+      }
+    },
+    [focusedItemIndex, handleFolderClick, handleSelectionChange, search, searchState.value, tree]
+  );
+
+  useEffect(() => {
+    setFocusedItemIndex(0);
+  }, [search, searchState.value]);
 
   let label = selectedFolder.data?.title;
   if (value === '') {
@@ -164,6 +200,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   if (!visible) {
     return (
       <Button
+        autoFocus={autoFocusButton}
         className={styles.button}
         variant="secondary"
         icon={value !== undefined ? 'folder' : undefined}
@@ -188,6 +225,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         className={styles.search}
+        onKeyDown={handleKeyDown}
         onChange={(e) => setSearch(e.currentTarget.value)}
         role="combobox"
         suffix={<Icon name="search" />}
@@ -220,6 +258,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
             <NestedFolderList
               items={tree}
               selectedFolder={value}
+              focusedItemIndex={focusedItemIndex}
               onFolderClick={handleFolderClick}
               onSelectionChange={handleSelectionChange}
               foldersAreOpenable={!(search && searchState.value)}
