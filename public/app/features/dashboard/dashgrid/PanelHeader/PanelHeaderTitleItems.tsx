@@ -8,7 +8,7 @@ import { PanelLinks } from '../PanelLinks';
 
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
-interface AngularNotice {
+export interface AngularNotice {
   show: boolean;
   isAngularPanel: boolean;
   isAngularDatasource: boolean;
@@ -59,7 +59,7 @@ export function PanelHeaderTitleItems(props: Props) {
   } requires Angular (deprecated).`;
   const angularNoticeTooltip = (
     <Tooltip content={message}>
-      <PanelChrome.TitleItem className={styles.angularNotice}>
+      <PanelChrome.TitleItem className={styles.angularNotice} data-testid="angular-deprecation-icon">
         <Icon name="exclamation-triangle" size="md" />
       </PanelChrome.TitleItem>
     </Tooltip>
