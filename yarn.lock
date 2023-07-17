@@ -10210,6 +10210,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lucene@npm:^2":
+  version: 2.1.4
+  resolution: "@types/lucene@npm:2.1.4"
+  checksum: 418057a390752b36745428887ef527121740d54137a2b2da9f10388d2e9d1fe13d1d04b9b2605101bdd99a38ae357d1d5b08f6302f2eca7cead4e28f30ec964d
+  languageName: node
+  linkType: hard
+
 "@types/marked@npm:4.0.8, @types/marked@npm:^4":
   version: 4.0.8
   resolution: "@types/marked@npm:4.0.8"
@@ -19351,6 +19358,7 @@ __metadata:
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.191
     "@types/logfmt": ^1.2.3
+    "@types/lucene": ^2
     "@types/marked": ^4
     "@types/mousetrap": 1.6.11
     "@types/node": 18.16.16
@@ -19479,6 +19487,7 @@ __metadata:
     logfmt: ^1.3.2
     lru-cache: 10.0.0
     lru-memoize: ^1.1.0
+    lucene: ^2.1.1
     marked: ^4.3.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.7.2
@@ -23264,6 +23273,13 @@ __metadata:
   version: 1.1.0
   resolution: "lru-memoize@npm:1.1.0"
   checksum: cc0c8f8427ae08da572bdcf3a904764024f6b396dd744d223c6448407fcf1546705f178f8887f0b4f20d9fda3c3a383b63c83f98a578a76e3bfb744d69e9125a
+  languageName: node
+  linkType: hard
+
+"lucene@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "lucene@npm:2.1.1"
+  checksum: 29bbbddfc0b31b3b5f24b2ee19bc134bb5ca9db0f948b7506df96215e2c24631ed7031cc31a0dddc71024c640ce6eb05c92722bf57bf0e6a4f387ca796cc8df7
   languageName: node
   linkType: hard
 
