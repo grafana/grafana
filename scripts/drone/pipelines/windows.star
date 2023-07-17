@@ -10,10 +10,12 @@ load(
     "scripts/drone/steps/lib.star",
     "get_windows_steps",
     "windows_clone_step",
-    "windows_go_image",
-    "windows_init_enterprise_steps",
     "windows_test_backend_step",
     "windows_wire_install_step",
+)
+load(
+    "scripts/drone/utils/windows_images.star",
+    "windows_images",
 )
 
 def windows_test_backend(trigger, edition, ver_mode):
@@ -31,23 +33,19 @@ def windows_test_backend(trigger, edition, ver_mode):
         windows_clone_step(),
     ]
 
-    if edition == "enterprise":
-        steps.extend(windows_init_enterprise_steps(ver_mode))
-    else:
-        steps.extend([{
-            "name": "windows-init",
-            "image": windows_go_image,
-            "depends_on": ["clone"],
-            "commands": [],
-        }])
+    steps.extend([{
+        "name": "windows-init",
+        "image": windows_images["windows_go_image"],
+        "depends_on": ["clone"],
+        "commands": [],
+    }])
 
     steps.extend([
         windows_wire_install_step(edition),
         windows_test_backend_step(),
     ])
     pl = pipeline(
-        name = "{}-{}-test-backend-windows".format(ver_mode, edition),
-        edition = edition,
+        name = "{}-test-backend-windows".format(ver_mode),
         trigger = trigger,
         steps = steps,
         depends_on = [],
@@ -59,25 +57,23 @@ def windows_test_backend(trigger, edition, ver_mode):
     }
     return pl
 
-def windows(trigger, edition, ver_mode):
+def windows(trigger, ver_mode):
     """Generates the pipeline used for building Grafana on Windows.
 
     Args:
       trigger: a Drone trigger for the pipeline.
-      edition: controls whether enterprise code is included in the pipeline steps.
       ver_mode: controls whether a pre-release or actual release pipeline is generated.
         Also indirectly controls which version of enterprise code is used.
 
     Returns:
       Drone pipeline.
     """
-    environment = {"EDITION": edition}
+    environment = {"EDITION": "oss"}
 
     return pipeline(
         name = "main-windows",
-        edition = edition,
         trigger = dict(trigger, repo = ["grafana/grafana"]),
-        steps = get_windows_steps(edition, ver_mode),
+        steps = get_windows_steps(ver_mode),
         depends_on = [
             "main-test-frontend",
             "main-test-backend",

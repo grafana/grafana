@@ -167,6 +167,10 @@ const Option = (props: React.PropsWithChildren<OptionProps>) => {
       aria-label="Select option"
       title={data.title}
       onClick={onClickMultiOption}
+      onKeyDown={onClickMultiOption}
+      role="checkbox"
+      aria-checked={isSelected}
+      tabIndex={0}
     >
       <div className={styles.optionBody}>
         <Checkbox value={isSelected} label={data.label ? `${data.label} - (${data.count})` : ''} />
@@ -261,7 +265,12 @@ const Filter = (
         loadOptions={loadOptions}
         isLoading={loading}
         onOpenMenu={loadOptions}
-        onChange={(e: Array<SelectableValue<string>>) => setSelected(e)}
+        onChange={(e: Array<SelectableValue<string>>) => {
+          setSelected(e);
+          if (e.length === 0) {
+            onFieldChange('filters', item, selected, onChange);
+          }
+        }}
         width={35}
         defaultOptions={values}
         isClearable
@@ -270,7 +279,7 @@ const Filter = (
         onCloseMenu={() => onFieldChange('filters', item, selected, onChange)}
         hideSelectedOptions={false}
       />
-      <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
+      <AccessoryButton aria-label="Remove filter" icon="times" variant="secondary" onClick={onDelete} type="button" />
     </HorizontalGroup>
   );
 };

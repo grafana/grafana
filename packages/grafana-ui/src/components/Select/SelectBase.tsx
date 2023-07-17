@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -21,7 +22,7 @@ import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, SelectBaseProps } from './types';
+import { ActionMeta, InputActionMeta, SelectBaseProps } from './types';
 import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
@@ -87,7 +88,7 @@ const CustomControl = (props: any) => {
   );
 };
 
-export function SelectBase<T>({
+export function SelectBase<T, Rest = {}>({
   allowCustomValue = false,
   allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
@@ -124,18 +125,20 @@ export function SelectBase<T>({
   menuPlacement = 'auto',
   menuPosition,
   menuShouldPortal = true,
-  noOptionsMessage = 'No options found',
+  noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
   onBlur,
   onChange,
   onCloseMenu,
   onCreateOption,
   onInputChange,
   onKeyDown,
+  onMenuScrollToBottom,
+  onMenuScrollToTop,
   onOpenMenu,
   onFocus,
   openMenuOnFocus = false,
   options = [],
-  placeholder = 'Choose',
+  placeholder = t('grafana-ui.select.placeholder', 'Choose'),
   prefix,
   renderControl,
   showAllSelectedWhenOpen = true,
@@ -146,13 +149,15 @@ export function SelectBase<T>({
   isValidNewOption,
   formatOptionLabel,
   hideSelectedOptions,
-}: SelectBaseProps<T>) {
+  ...rest
+}: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
+  const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
@@ -215,14 +220,16 @@ export function SelectBase<T>({
     autoFocus,
     backspaceRemovesValue,
     blurInputOnSelect,
-    captureMenuScroll: false,
+    captureMenuScroll: onMenuScrollToBottom || onMenuScrollToTop,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
     // So only close if none of the parents are the select menu itself
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
-    filterOption,
+    // react-select always tries to filter the options even at first menu open, which is a problem for performance
+    // in large lists. So we set it to not try to filter the options if there is no input value.
+    filterOption: hasInputValue ? filterOption : null,
     getOptionLabel,
     getOptionValue,
     hideSelectedOptions,
@@ -248,10 +255,15 @@ export function SelectBase<T>({
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
-    onInputChange,
+    onInputChange: (val: string, actionMeta: InputActionMeta) => {
+      setHasInputValue(!!val);
+      onInputChange?.(val, actionMeta);
+    },
     onKeyDown,
     onMenuClose: onCloseMenu,
     onMenuOpen: onOpenMenu,
+    onMenuScrollToBottom: onMenuScrollToBottom,
+    onMenuScrollToTop: onMenuScrollToTop,
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
@@ -353,7 +365,7 @@ export function SelectBase<T>({
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
-            return <SingleValue {...props} disabled={disabled} />;
+            return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
@@ -365,6 +377,7 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
+        {...rest}
       />
     </>
   );

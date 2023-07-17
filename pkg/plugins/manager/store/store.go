@@ -96,8 +96,10 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 
 // availablePlugins returns all non-decommissioned plugins from the registry sorted by alphabetic order on `plugin.ID`
 func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-	for _, p := range s.pluginRegistry.Plugins(ctx) {
+	ps := s.pluginRegistry.Plugins(ctx)
+
+	res := make([]*plugins.Plugin, 0, len(ps))
+	for _, p := range ps {
 		if !p.IsDecommissioned() {
 			res = append(res, p)
 		}

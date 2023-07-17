@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useId, useMemo } from 'react';
-import { useAsync } from 'react-use';
+import React, { useEffect, useId, useMemo } from 'react';
 
-import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
 import InfluxDatasource from '../../../../../datasource';
@@ -25,7 +23,11 @@ import {
 } from '../../../../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT } from '../../../constants';
+import { useRetentionPolicies } from '../hooks/useRetentionPolicies';
+import { filterTags } from '../utils/filterTags';
 import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../utils/partListUtils';
+import { withTemplateVariableOptions } from '../utils/withTemplateVariableOptions';
+import { wrapPure, wrapRegex } from '../utils/wrapper';
 
 import { FormatAsSection } from './FormatAsSection';
 import { FromSection } from './FromSection';
@@ -41,43 +43,6 @@ type Props = {
   datasource: InfluxDatasource;
 };
 
-function wrapRegex(v: TypedVariableModel): string {
-  return `/^$${v.name}$/`;
-}
-
-function wrapPure(v: TypedVariableModel): string {
-  return `$${v.name}`;
-}
-
-function getTemplateVariableOptions(wrapper: (v: TypedVariableModel) => string) {
-  return (
-    getTemplateSrv()
-      .getVariables()
-      // we make them regex-params, i'm not 100% sure why.
-      // probably because this way multi-value variables work ok too.
-      .map(wrapper)
-  );
-}
-
-// helper function to make it easy to call this from the widget-render-code
-function withTemplateVariableOptions(
-  optionsPromise: Promise<string[]>,
-  wrapper: (v: TypedVariableModel) => string,
-  filter?: string
-): Promise<string[]> {
-  let templateVariableOptions = getTemplateVariableOptions(wrapper);
-  if (filter) {
-    templateVariableOptions = templateVariableOptions.filter((tvo) => tvo.indexOf(filter) > -1);
-  }
-  return optionsPromise.then((options) => [...templateVariableOptions, ...options]);
-}
-
-// it is possible to add fields into the `InfluxQueryTag` structures, and they do work,
-// but in some cases, when we do metadata queries, we have to remove them from the queries.
-function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQueryTag[] {
-  return parts.filter((t) => t.key.endsWith('::tag') || allTagKeys.has(t.key + '::tag'));
-}
-
 export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const uniqueId = useId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
@@ -87,9 +52,17 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
+  const { retentionPolicies } = useRetentionPolicies(datasource);
 
-  const policyData = useAsync(() => getAllPolicies(datasource), [datasource]);
-  const retentionPolicies = !!policyData.error ? [] : policyData.value ?? [];
+  useEffect(() => {
+    if (!policy) {
+      props.onChange({
+        ...query,
+        policy: retentionPolicies[0],
+      });
+      props.onRunQuery();
+    }
+  }, [policy, props, query, retentionPolicies]);
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(datasource, [], measurement, policy)).map(
@@ -158,7 +131,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
     <div>
       <SegmentSection label="FROM" fill={true}>
         <FromSection
-          policy={policy ?? retentionPolicies[0]}
+          policy={policy}
           measurement={measurement}
           getPolicyOptions={() =>
             withTemplateVariableOptions(

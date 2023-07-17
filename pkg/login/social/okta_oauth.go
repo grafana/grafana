@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,7 +47,7 @@ func (claims *OktaClaims) extractEmail() string {
 	return claims.Email
 }
 
-func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialOkta) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, fmt.Errorf("no id_token found")
@@ -68,7 +69,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	}
 
 	var data OktaUserInfoJson
-	err = s.extractAPI(&data, client)
+	err = s.extractAPI(ctx, &data, client)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +83,11 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	var isGrafanaAdmin *bool
 	if !s.skipOrgRoleSync {
 		var grafanaAdmin bool
-		role, grafanaAdmin = s.extractRoleAndAdmin(data.rawJSON, groups, true)
-		if s.roleAttributeStrict && !role.IsValid() {
-			return nil, &InvalidBasicRoleError{idP: "Okta", assignedRole: string(role)}
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(data.rawJSON, groups)
+		if err != nil {
+			return nil, err
 		}
+
 		if s.allowAssignGrafanaAdmin {
 			isGrafanaAdmin = &grafanaAdmin
 		}
@@ -105,8 +107,8 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 	}, nil
 }
 
-func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) error {
-	rawUserInfoResponse, err := s.httpGet(client, s.apiUrl)
+func (s *SocialOkta) extractAPI(ctx context.Context, data *OktaUserInfoJson, client *http.Client) error {
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
 		return fmt.Errorf("error getting user info response: %w", err)

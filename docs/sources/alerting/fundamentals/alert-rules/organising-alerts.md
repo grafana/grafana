@@ -5,7 +5,7 @@ keywords:
   - alerting
   - organization
 title: Organising alert rules
-weight: 104
+weight: 105
 ---
 
 ## Namespaces and groups

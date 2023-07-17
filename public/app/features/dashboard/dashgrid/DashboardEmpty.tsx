@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { H1, H3, P } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
@@ -17,7 +18,7 @@ export interface Props {
   canCreate: boolean;
 }
 
-export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
+const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
@@ -44,7 +45,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           <Button
             size="lg"
             icon="plus"
-            aria-label="Add new panel"
+            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
             onClick={() => {
               const id = onCreateNewPanel(dashboard, initialDatasource);
               reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
@@ -57,6 +58,32 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </Button>
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
+          {config.featureToggles.vizAndWidgetSplit && (
+            <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
+              <div className={styles.headerSmall}>
+                <H3 textAlignment="center" weight="medium">
+                  <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
+                </H3>
+              </div>
+              <div className={styles.bodySmall}>
+                <P textAlignment="center" color="secondary">
+                  <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
+                </P>
+              </div>
+              <Button
+                icon="plus"
+                fill="outline"
+                data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
+                onClick={() => {
+                  reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_widget' });
+                  locationService.partial({ addWidget: true });
+                }}
+                disabled={!canCreate}
+              >
+                <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
+              </Button>
+            </div>
+          )}
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
             <div className={styles.headerSmall}>
               <H3 textAlignment="center" weight="medium">
@@ -73,7 +100,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
-              aria-label="Add new row"
+              data-testid={selectors.pages.AddDashboard.itemButton('Create new row button')}
               onClick={() => {
                 reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
                 onCreateNewRow(dashboard);
@@ -99,7 +126,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
-              aria-label="Add new panel from panel library"
+              data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
               onClick={() => {
                 reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
                 onAddLibraryPanel(dashboard);
@@ -114,6 +141,8 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     </div>
   );
 };
+
+export default DashboardEmpty;
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -145,22 +174,30 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing.gridSize * 4,
     }),
     others: css({
+      width: '100%',
       label: 'others-wrapper',
       alignItems: 'stretch',
       flexDirection: 'row',
       gap: theme.spacing.gridSize * 4,
 
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
         flexDirection: 'column',
       },
+    }),
+    widgetContainer: css({
+      label: 'widget-container',
+      padding: theme.spacing.gridSize * 3,
+      flex: 1,
     }),
     rowContainer: css({
       label: 'row-container',
       padding: theme.spacing.gridSize * 3,
+      flex: 1,
     }),
     libraryContainer: css({
       label: 'library-container',
       padding: theme.spacing.gridSize * 3,
+      flex: 1,
     }),
     headerBig: css({
       marginBottom: theme.spacing.gridSize * 2,

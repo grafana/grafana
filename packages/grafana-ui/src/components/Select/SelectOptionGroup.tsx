@@ -22,26 +22,26 @@ interface State {
 
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    header: css`
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      justify-items: center;
-      cursor: pointer;
-      padding: 7px 10px;
-      width: 100%;
-      border-bottom: 1px solid ${theme.colors.background.secondary};
+    header: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      justifyItems: 'center',
+      cursor: 'pointer',
+      padding: '7px 10px',
+      width: '100%',
+      borderBottom: `1px solid ${theme.colors.background.secondary}`,
 
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
-    `,
-    label: css`
-      flex-grow: 1;
-    `,
-    icon: css`
-      padding-right: 2px;
-    `,
+      '&:hover': {
+        color: theme.colors.text.maxContrast,
+      },
+    }),
+    label: css({
+      flexGrow: 1,
+    }),
+    icon: css({
+      paddingRight: '2px',
+    }),
   };
 });
 
@@ -81,6 +81,8 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
 
     return (
       <div>
+        {/* TODO: fix keyboard a11y */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
         <div className={styles.header} onClick={this.onToggleChildren}>
           <span className={styles.label}>{label}</span>
           <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />{' '}

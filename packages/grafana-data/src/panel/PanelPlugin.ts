@@ -23,6 +23,7 @@ import { createFieldConfigRegistry } from './registryFactories';
 export type StandardOptionConfig = {
   defaultValue?: any;
   settings?: any;
+  hideFromDefaults?: boolean;
 };
 
 /** @beta */
@@ -93,7 +94,7 @@ export type PanelOptionsSupplier<TOptions> = (
 
 export class PanelPlugin<
   TOptions = any,
-  TFieldConfigOptions extends object = any
+  TFieldConfigOptions extends object = any,
 > extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {

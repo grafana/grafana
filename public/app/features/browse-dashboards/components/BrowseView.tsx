@@ -1,20 +1,21 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback } from 'react';
 
-import { Spinner } from '@grafana/ui';
+import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
-import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/services';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
-  fetchNextChildrenPage,
   setFolderOpenState,
   setItemSelectionState,
   useChildrenByParentUIDState,
   setAllSelection,
   useBrowseLoadingStatus,
+  useLoadNextChildrenPage,
+  fetchNextChildrenPage,
 } from '../state';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
@@ -44,10 +45,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     },
     [dispatch]
   );
-
-  useEffect(() => {
-    dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-  }, [handleFolderClick, dispatch, folderUID]);
 
   const handleItemSelectionChange = useCallback(
     (item: DashboardViewItem, isSelected: boolean) => {
@@ -114,25 +111,25 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [flatTree]
   );
 
-  const handleLoadMore = useLoadNextChildrenPage(folderUID);
-
-  if (status === 'pending') {
-    return <Spinner />;
-  }
+  const handleLoadMore = useLoadNextChildrenPage();
 
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
       <div style={{ width }}>
-        <EmptyListCTA
-          title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
-          buttonIcon="plus"
-          buttonTitle="Create Dashboard"
-          buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-          proTip={folderUID && 'Add/move dashboards to your folder at ->'}
-          proTipLink={folderUID && 'dashboards'}
-          proTipLinkTitle={folderUID && 'Browse dashboards'}
-          proTipTarget=""
-        />
+        {canSelect ? (
+          <EmptyListCTA
+            title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
+            buttonIcon="plus"
+            buttonTitle="Create Dashboard"
+            buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+            proTip={folderUID && 'Add/move dashboards to your folder at ->'}
+            proTipLink={folderUID && 'dashboards'}
+            proTipLinkTitle={folderUID && 'Browse dashboards'}
+            proTipTarget=""
+          />
+        ) : (
+          <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
+        )}
       </div>
     );
   }
@@ -145,7 +142,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID }))}
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
@@ -171,24 +168,4 @@ function hasSelectedDescendants(
 
     return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
   });
-}
-
-function useLoadNextChildrenPage(folderUID: string | undefined) {
-  const dispatch = useDispatch();
-  const requestInFlightRef = useRef(false);
-
-  const handleLoadMore = useCallback(() => {
-    if (requestInFlightRef.current) {
-      return Promise.resolve();
-    }
-
-    requestInFlightRef.current = true;
-
-    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-    promise.finally(() => (requestInFlightRef.current = false));
-
-    return promise;
-  }, [dispatch, folderUID]);
-
-  return handleLoadMore;
 }
