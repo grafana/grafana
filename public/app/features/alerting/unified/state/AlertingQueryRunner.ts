@@ -35,7 +35,10 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor(private backendSrv = getBackendSrv(), private dataSourceSrv = getDataSourceSrv()) {
+  constructor(
+    private backendSrv = getBackendSrv(),
+    private dataSourceSrv = getDataSourceSrv()
+  ) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }

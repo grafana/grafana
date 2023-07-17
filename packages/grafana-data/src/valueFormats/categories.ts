@@ -80,6 +80,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Square Meters (m²)', id: 'areaM2', fn: toFixedUnit('m²') },
       { name: 'Square Feet (ft²)', id: 'areaF2', fn: toFixedUnit('ft²') },
       { name: 'Square Miles (mi²)', id: 'areaMI2', fn: toFixedUnit('mi²') },
+      { name: 'Acres (ac)', id: 'acres', fn: toFixedUnit('ac') },
+      { name: 'Hectares (ha)', id: 'hectares', fn: toFixedUnit('ha') },
     ],
   },
   {
@@ -236,6 +238,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Kilovolt (kV)', id: 'kvolt', fn: SIPrefix('V', 1) },
       { name: 'Millivolt (mV)', id: 'mvolt', fn: SIPrefix('V', -1) },
       { name: 'Decibel-milliwatt (dBm)', id: 'dBm', fn: SIPrefix('dBm') },
+      { name: 'Milliohm (mΩ)', id: 'mohm', fn: SIPrefix('Ω', -1) },
       { name: 'Ohm (Ω)', id: 'ohm', fn: SIPrefix('Ω') },
       { name: 'Kiloohm (kΩ)', id: 'kohm', fn: SIPrefix('Ω', 1) },
       { name: 'Megaohm (MΩ)', id: 'Mohm', fn: SIPrefix('Ω', 2) },
@@ -341,6 +344,9 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'Revolutions per minute (rpm)', id: 'rotrpm', fn: toFixedUnit('rpm') },
       { name: 'Hertz (Hz)', id: 'rothz', fn: SIPrefix('Hz') },
+      { name: 'Kilohertz (kHz)', id: 'rotkhz', fn: SIPrefix('kHz', 3) },
+      { name: 'Megahertz (MHz)', id: 'rotmhz', fn: SIPrefix('MHz', 4) },
+      { name: 'Gigahertz (GHz)', id: 'rotghz', fn: SIPrefix('GHz', 5) },
       { name: 'Radians per second (rad/s)', id: 'rotrads', fn: toFixedUnit('rad/s') },
       { name: 'Degrees per second (°/s)', id: 'rotdegs', fn: toFixedUnit('°/s') },
     ],

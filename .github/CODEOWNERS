@@ -99,6 +99,7 @@
 /pkg/server/ @grafana/backend-platform
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/grafana-authnz-team
+/pkg/services/certgenerator @grafana/grafana-app-platform-squad
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/backend-platform
@@ -108,6 +109,7 @@
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
+/pkg/services/grafana-apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
 /pkg/services/licensing/ @grafana/backend-platform
@@ -590,6 +592,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
+/.github/workflows/auto-milestone.yml @grafana/grafana-delivery
 /.github/workflows/backport.yml @grafana/grafana-delivery
 /.github/workflows/bump-version.yml @grafana/grafana-delivery
 /.github/workflows/close-milestone.yml @grafana/grafana-delivery

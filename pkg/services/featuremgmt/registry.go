@@ -42,12 +42,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "prometheusAzureOverrideAudience",
-			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			Stage:       FeatureStagePublicPreview,
@@ -660,6 +654,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "grafanaAPIServer",
+			Description:  "Enable Kubernetes API Server for Grafana resources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
 		},
 	}
 )
