@@ -9,8 +9,9 @@ import (
 	"log"
 	"strings"
 
-	"golang.org/x/mod/modfile"
 	"os"
+
+	"golang.org/x/mod/modfile"
 )
 
 type Module struct {
@@ -90,11 +91,16 @@ func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 
 // TODO: test with go test
 // Print owner(s) for a given dependency.
-// An example CLI command is `go run scripts/modowners/modowners.go owners -c go.mod github.com/Azure/go-autorest/autorest`
+// An example CLI command is `go run scripts/modowners/modowners.go owners -c go.mod -d github.com/Azure/go-autorest/autorest/adal`
 func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("owners", flag.ExitOnError)
 	count := fs.Bool("c", false, "print count of dependencies per owner")
+	dep := fs.String("d", "", "name of dependency")
+	fmt.Println("args:", args)
 	fs.Parse(args)
+	fmt.Println("count", *count)
+	fmt.Println("dep", *dep)
+	fmt.Println("file path:", fs.Arg(0))
 	m, err := parseGoMod(fileSystem, fs.Arg(0))
 	if err != nil {
 		return err
@@ -108,6 +114,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 		}
 	}
 	for owner, n := range owners {
+		// if user specified a dependency in the cli command, print owner (and count) that dependency
 		if *count {
 			fmt.Println(owner, n)
 		} else {
@@ -119,6 +126,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 
 // Print dependencies for a given owner. Can specify one or more owners.
 // Example CLI command `go run scripts/modowners/modowners.go modules -m go.mod -o @as-code,@delivery`
+// TODO: probably can remove -m from above example
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies")
