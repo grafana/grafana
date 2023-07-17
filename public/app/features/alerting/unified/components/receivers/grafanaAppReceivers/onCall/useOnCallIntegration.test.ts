@@ -3,6 +3,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { onCallPluginMetaMock } from 'app/features/alerting/unified/mocks';
+import { option } from 'app/features/alerting/unified/utils/notifier-types';
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { ReceiverTypes } from './onCall';
 import {
@@ -14,14 +16,21 @@ import {
 
 const server = setupMswServer();
 
-beforeEach(() => {
-  server.resetHandlers();
-});
-
 describe('useOnCallIntegration', () => {
-  test('extendOnCalReceivers should add new settings to the oncall receiver', async () => {
+  afterEach(() => {
+    server.resetHandlers();
+    clearPluginSettingsCache();
+  });
+
+  it('extendOnCalReceivers should add new settings to the oncall receiver', async () => {
     mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-    mockApi(server).oncall.getOnCallIntegrations([]);
+    mockApi(server).oncall.getOnCallIntegrations([
+      (ib) =>
+        ib
+          .withVerbalName('grafana-integration')
+          .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
+          .withIntegrationUrl('https://oncall-endpoint.example.com'),
+    ]);
 
     const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
 
@@ -52,7 +61,37 @@ describe('useOnCallIntegration', () => {
     expect(receiverConfig.settings['url']).toBe('https://oncall-endpoint.example.com');
   });
 
-  test('createOnCallIntegrations should provide integration name and url validators', async () => {
+  it('extendOnCalReceivers should not add new settings to the oncall receiver if OnCall is disabled', async () => {
+    mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: false });
+    mockApi(server).oncall.getOnCallIntegrations([]);
+
+    const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+
+    await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
+
+    const { extendOnCalReceivers } = result.current;
+
+    const receiver = extendOnCalReceivers({
+      name: 'OnCall Conctact point',
+      grafana_managed_receiver_configs: [
+        {
+          name: 'Oncall-integration',
+          type: ReceiverTypes.OnCall,
+          settings: {
+            url: 'https://oncall-endpoint.example.com',
+          },
+          disableResolveMessage: false,
+        },
+      ],
+    });
+
+    const receiverConfig = receiver.grafana_managed_receiver_configs![0];
+
+    expect(receiverConfig.settings[OnCallIntegrationSetting.IntegrationType]).toBeUndefined();
+    expect(receiverConfig.settings[OnCallIntegrationSetting.IntegrationName]).toBeUndefined();
+  });
+
+  it('createOnCallIntegrations should provide integration name and url validators', async () => {
     mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
     mockApi(server).oncall.getOnCallIntegrations([
       (ib) =>
@@ -92,8 +131,7 @@ describe('useOnCallIntegration', () => {
     );
   });
 
-  // write a test checking if extendOnCallNotifierFeatures adds the correct notifier features
-  test('extendOnCallNotifierFeatures should add integration type and name options and swap url to a select option', async () => {
+  it('extendOnCallNotifierFeatures should add integration type and name options and swap url to a select option', async () => {
     mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
     mockApi(server).oncall.getOnCallIntegrations([
       (ib) =>
@@ -117,7 +155,7 @@ describe('useOnCallIntegration', () => {
     const notifier = extendOnCallNotifierFeatures({
       name: 'Grafana OnCall',
       type: 'oncall',
-      options: [],
+      options: [option('url', 'Grafana OnCall', 'Grafana OnCall', { element: 'input' })],
       description: '',
       heading: '',
     });
@@ -135,5 +173,27 @@ describe('useOnCallIntegration', () => {
       label: 'grafana-integration',
       value: 'https://oncall.com/grafana-integration',
     });
+  });
+
+  it('extendConCallNotifierFeatures should not extend notifier if OnCall is disabled', async () => {
+    mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: false, name: 'Co to ma byc' });
+    mockApi(server).oncall.getOnCallIntegrations([]);
+
+    const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+
+    await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
+
+    const { extendOnCallNotifierFeatures } = result.current;
+
+    const notifier = extendOnCallNotifierFeatures({
+      name: 'Grafana OnCall',
+      type: 'oncall',
+      options: [option('url', 'Grafana OnCall', 'Grafana OnCall', { element: 'input' })],
+      description: '',
+      heading: '',
+    });
+
+    expect(notifier.options).toHaveLength(1);
+    expect(notifier.options[0].propertyName).toBe('url');
   });
 });
