@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, PanelPlugin } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Alert, useStyles2 } from '@grafana/ui';
 
 export interface Props {
@@ -20,6 +21,11 @@ export function AngularPanelPluginWarning({ plugin }: Props) {
             <li>
               <a
                 href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
+                onClick={() => {
+                  reportInteraction('angular_deprecation_docs_clicked', {
+                    pluginId: plugin.meta.id,
+                  });
+                }}
                 className="external-link"
                 target="_blank"
                 rel="noreferrer"

@@ -79,6 +79,7 @@ export function PluginDetailsPage({
             <PluginDetailsAngularDeprecation
               className={styles.alert}
               angularSupportEnabled={config?.angularSupportEnabled}
+              pluginId={plugin.id}
             />
           )}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />

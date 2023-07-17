@@ -1,10 +1,14 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
+
+const angularPluginId = 'angular';
 
 jest.mock('../state/hooks', () => ({
   __esModule: true,
@@ -13,7 +17,7 @@ jest.mock('../state/hooks', () => ({
     return {
       description: 'The test plugin',
       downloads: 5,
-      id: 'test-plugin',
+      id,
       info: {
         logos: { small: '', large: '' },
       },
@@ -30,10 +34,25 @@ jest.mock('../state/hooks', () => ({
       isEnterprise: false,
       isDisabled: false,
       isPublished: true,
-      angularDetected: id === 'angular',
+      angularDetected: id === angularPluginId,
     };
   }),
 }));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+function renderPage(pluginId: string) {
+  return act(async () =>
+    render(
+      <TestProvider>
+        <PluginDetailsPage pluginId={pluginId} />
+      </TestProvider>
+    )
+  );
+}
 
 describe('PluginDetailsAngularDeprecation', () => {
   afterAll(() => {
@@ -41,24 +60,22 @@ describe('PluginDetailsAngularDeprecation', () => {
   });
 
   it('renders the component for angular plugins', async () => {
-    await act(async () =>
-      render(
-        <TestProvider>
-          <PluginDetailsPage pluginId="angular" />
-        </TestProvider>
-      )
-    );
+    await renderPage(angularPluginId);
     expect(screen.getByText(/angular plugin/i)).toBeVisible();
   });
 
   it('does not render the component for non-angular plugins', async () => {
-    await act(async () =>
-      render(
-        <TestProvider>
-          <PluginDetailsPage pluginId="not-angular" />
-        </TestProvider>
-      )
-    );
+    await renderPage('not-angular');
     expect(screen.queryByText(/angular plugin/i)).toBeNull();
+  });
+
+  it('reports interaction when clicking on the link', async () => {
+    await renderPage(angularPluginId);
+    const c = 'Read more on Angular deprecation.';
+    await waitFor(() => expect(screen.getByText(c)).toBeInTheDocument());
+    await userEvent.click(screen.getByText(c));
+    expect(reportInteraction).toHaveBeenCalledWith('angular_deprecation_docs_clicked', {
+      pluginId: angularPluginId,
+    });
   });
 });

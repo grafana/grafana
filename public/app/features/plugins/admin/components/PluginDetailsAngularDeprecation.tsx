@@ -1,10 +1,12 @@
 import React from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 type Props = {
   className?: string;
   angularSupportEnabled?: boolean;
+  pluginId?: string;
 };
 
 function deprecationMessage(angularSupportEnabled?: boolean): string {
@@ -23,6 +25,7 @@ function deprecationMessage(angularSupportEnabled?: boolean): string {
 export function PluginDetailsAngularDeprecation({
   className,
   angularSupportEnabled,
+  pluginId,
 }: Props): React.ReactElement | null {
   return (
     <Alert severity="warning" title="Angular plugin" className={className}>
@@ -32,8 +35,13 @@ export function PluginDetailsAngularDeprecation({
         className="external-link"
         target="_blank"
         rel="noreferrer"
+        onClick={() => {
+          reportInteraction('angular_deprecation_docs_clicked', {
+            pluginId,
+          });
+        }}
       >
-        Read more about Angular support deprecation.
+        Read more on Angular deprecation.
       </a>
     </Alert>
   );
