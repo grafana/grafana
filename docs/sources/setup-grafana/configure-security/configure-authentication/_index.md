@@ -33,7 +33,7 @@ The following table shows all supported authentication providers and the feature
 
 ## Grafana Auth
 
-Grafana OSS and Grafana Enterprise, of course has a built in user authentication system with password authentication enabled 
+Grafana OSS and Grafana Enterprise, has a built-in user authentication system with password authentication enabled 
 by default. For Grafana Cloud, the default authentication system uses your `grafana.com` account for authentication.  
 
 You can disable authentication by enabling anonymous access (not available on Grafana Cloud). 
