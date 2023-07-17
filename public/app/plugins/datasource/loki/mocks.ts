@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
-import { getMockDataSource } from '../../../features/datasources/__mocks__';
+import { getMockDataSource } from '../../../features/connections/__mocks__';
 
 import { LokiDatasource } from './datasource';
 import { LokiOptions } from './types';

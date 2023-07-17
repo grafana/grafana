@@ -4,8 +4,8 @@ import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@
 import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
-import { getMockDataSource } from '../../datasources/__mocks__';
 import { DATASOURCES_ROUTES } from '../../datasources/constants';
+import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';

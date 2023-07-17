@@ -1,6 +1,6 @@
 import { DataSourceSettings } from '@grafana/data';
 
-import { getMockDataSource } from '../../../../features/datasources/__mocks__';
+import { getMockDataSource } from '../../../../features/connections/__mocks__';
 import { PromOptions } from '../types';
 
 export function createDefaultConfigOptions(): DataSourceSettings<PromOptions> {

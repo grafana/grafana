@@ -1,5 +1,5 @@
 import { DataSourceSettings } from '@grafana/data';
-import { getMockDataSource } from 'app/features/datasources/__mocks__';
+import { getMockDataSource } from 'app/features/connections/__mocks__';
 
 import { ElasticsearchOptions } from '../types';
 
