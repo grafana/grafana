@@ -4,7 +4,7 @@ import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } fro
 import { TestingStatus } from '@grafana/runtime';
 import { DataSourcesState, DataSourceSettingsState } from 'app/types';
 
-import { GenericDataSourcePlugin } from '../../datasources/types';
+import { GenericDataSourcePlugin } from '../types';
 
 import { DataSourceTypesLoadedPayload } from './actions';
 

@@ -30,7 +30,7 @@ import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
 
-import { GenericDataSourcePlugin } from '../datasources/types';
+import { GenericDataSourcePlugin } from '../connections/types';
 
 import builtInPlugins from './built_in_plugins';
 import { PLUGIN_CDN_URL_KEY } from './constants';

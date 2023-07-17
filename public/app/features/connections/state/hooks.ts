@@ -10,7 +10,7 @@ import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { DataSourceRights } from '../../datasources/types';
+import { DataSourceRights } from '../types';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import {
