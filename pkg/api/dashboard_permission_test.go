@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -48,11 +49,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		)
 		require.NoError(t, err)
 		hs := &HTTPServer{
-			Cfg:              settings,
-			SQLStore:         mockSQLStore,
-			Features:         features,
-			DashboardService: dashboardService,
-			AccessControl:    accesscontrolmock.New().WithDisabled(),
+			Cfg:                         settings,
+			SQLStore:                    mockSQLStore,
+			Features:                    features,
+			DashboardService:            dashboardService,
+			AccessControl:               accesscontrolmock.New(),
+			dashboardPermissionsService: dashboardPermissions,
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {
@@ -74,7 +76,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				},
 			}
 
-			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
@@ -125,6 +126,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				},
 			}
 
+			dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
@@ -315,11 +317,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 			assert.Len(t, cmd.Items, 3)
 
-			var numOfItems []*dashboards.DashboardACL
-			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				items := args.Get(2).([]*dashboards.DashboardACL)
-				numOfItems = items
-			}).Return(nil).Once()
+			dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
 				desc:         "When calling POST on",
 				url:          "/api/dashboards/id/1/permissions",
@@ -328,7 +326,6 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				fn: func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					assert.Len(t, numOfItems, 4)
 				},
 			}, hs)
 		})

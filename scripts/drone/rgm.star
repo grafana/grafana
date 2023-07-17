@@ -5,6 +5,10 @@ rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following ev
 """
 
 load(
+    "scripts/drone/steps/lib.star",
+    "get_windows_steps",
+)
+load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
@@ -26,26 +30,18 @@ rgm_env_secrets = {
     "DESTINATION": from_secret(rgm_destination),
     "GITHUB_TOKEN": from_secret(rgm_github_token),
     "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
+    "GPG_PRIVATE_KEY": from_secret("packages_gpg_private_key"),
+    "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
+    "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
 }
 
 def rgm_build(script = "drone_publish_main.sh"):
-    clone_step = {
-        "name": "clone-rgm",
-        "image": "alpine/git",
-        "commands": [
-            "git clone https://github.com/grafana/grafana-build.git rgm",
-        ],
-        "failure": "ignore",
-    }
-
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "golang:1.20.3-alpine",
+        "image": "grafana/grafana-build:main",
         "commands": [
-            # the docker program is a requirement for running dagger programs
-            "apk update && apk add docker bash",
             "export GRAFANA_DIR=$$(pwd)",
-            "cd rgm && ./scripts/{}".format(script),
+            "cd /src && ./scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
@@ -55,7 +51,6 @@ def rgm_build(script = "drone_publish_main.sh"):
     }
 
     return [
-        clone_step,
         rgm_build_step,
     ]
 
@@ -79,7 +74,6 @@ def rgm_main():
 
     return pipeline(
         name = "rgm-main-prerelease",
-        edition = "all",
         trigger = trigger,
         steps = rgm_build(),
         depends_on = ["main-test-backend", "main-test-frontend"],
@@ -104,20 +98,33 @@ tag_trigger = {
 def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
-        edition = "all",
         trigger = tag_trigger,
         steps = rgm_build(script = "drone_publish_tag.sh"),
         depends_on = [],
+    )
+
+def rgm_windows():
+    return pipeline(
+        name = "rgm-tag-prerelease-windows",
+        trigger = tag_trigger,
+        steps = get_windows_steps(
+            ver_mode = "release",
+            bucket = "grafana-prerelease-dev",
+        ),
+        depends_on = ["rgm-tag-prerelease"],
+        platform = "windows",
+        environment = {"EDITION": "oss"},
     )
 
 def rgm():
     return [
         rgm_main(),
         rgm_tag(),
+        rgm_windows(),
         verify_release_pipeline(
             name = "rgm-tag-verify-prerelease-assets",
             trigger = tag_trigger,
-            depends_on = ["rgm-tag-prerelease"],
+            depends_on = ["rgm-tag-prerelease", "rgm-tag-prerelease-windows"],
             bucket = "grafana-prerelease-dev",
         ),
     ]

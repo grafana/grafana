@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -84,7 +85,7 @@ type testContext struct {
 
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
-		signedIn := tc.user != nil
+		signedIn := tc.user != nil && !tc.user.IsAnonymous
 		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
@@ -133,7 +134,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginFakes.FakePluginStore{
 		PluginList: []plugins.PluginDTO{
 			{
 				JSONData: plugins.JSONData{

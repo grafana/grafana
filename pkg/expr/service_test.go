@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,7 +32,7 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{
+	pCtxProvider := plugincontext.ProvideService(nil, &fakes.FakePluginStore{
 		PluginList: []plugins.PluginDTO{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
@@ -62,7 +63,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			RefID:      "B",
-			DataSource: DataSourceModel(),
+			DataSource: dataSourceModel(),
 			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
 		},
 	}
@@ -123,4 +124,9 @@ func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataReq
 		Frames: me.Frames,
 	}
 	return resp, nil
+}
+
+func dataSourceModel() *datasources.DataSource {
+	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
+	return d
 }

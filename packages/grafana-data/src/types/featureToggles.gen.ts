@@ -23,14 +23,12 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
-  lokiLive?: boolean;
+  lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  exploreMixedDatasource?: boolean;
   newTraceViewHeader?: boolean;
   correlations?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -56,6 +54,7 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
   emptyDashboardPage?: boolean;
@@ -77,6 +76,7 @@ export interface FeatureToggles {
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
+  lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
   disableSSEDataplane?: boolean;
   alertStateHistoryLokiSecondary?: boolean;
@@ -90,8 +90,6 @@ export interface FeatureToggles {
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  authenticationConfigUI?: boolean;
-  pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
@@ -99,6 +97,21 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
+  dashboardEmbed?: boolean;
+  frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
+  exploreScrollableLogsContainer?: boolean;
+  recordedQueriesMulti?: boolean;
+  pluginsDynamicAngularDetectionPatterns?: boolean;
+  alertingLokiRangeToInstant?: boolean;
+  elasticToggleableFilters?: boolean;
+  vizAndWidgetSplit?: boolean;
+  prometheusIncrementalQueryInstrumentation?: boolean;
+  logsExploreTableVisualisation?: boolean;
+  awsDatasourcesTempCredentials?: boolean;
+  transformationsRedesign?: boolean;
+  mlExpressions?: boolean;
+  disableTraceQLStreaming?: boolean;
+  grafanaAPIServer?: boolean;
 }

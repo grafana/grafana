@@ -8,7 +8,8 @@ keywords:
   - documentation
   - oauth
 title: Configure GitLab OAuth2 authentication
-weight: 700
+menuTitle: GitLab OAuth2
+weight: 1000
 ---
 
 # Configure GitLab OAuth2 authentication
@@ -32,16 +33,18 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select `read_api` as the scope and submit the form. Note that if you're
-not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select `read_user` instead of `read_api` as
-the scope, thus giving a more restricted access to your GitLab API.
+Finally, select `openid`, `email` and `profile` as the scopes and submit the form.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
 section.
 
 ## Enable GitLab in Grafana
+
+In this example, we'll assume you use the public `gitlab.com` instance, but you
+can use your own instance of GitLab instead by replacing `auth_url`, `token_url` with the URL of your instance.
+
+You can find these URLs in the `well known` configuration file of your GitLab instance, for example `https://gitlab.com/.well-known/openid-configuration`.
 
 Add the following to your Grafana configuration file to enable GitLab
 authentication:
@@ -53,10 +56,9 @@ allow_sign_up = true
 auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = read_api
+scopes = openid email profile
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
-api_url = https://gitlab.com/api/v4
 allowed_groups =
 role_attribute_path =
 role_attribute_strict = false
@@ -72,10 +74,6 @@ You may have to set the `root_url` option of `[server]` for the callback URL to 
 correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana backend for your changes to take effect.
-
-If you use your own instance of GitLab instead of `gitlab.com`, adjust
-`auth_url`, `token_url` and `api_url` accordingly by replacing the `gitlab.com`
-hostname with your own.
 
 With `allow_sign_up` set to `false`, only existing users will be able to login
 using their GitLab account, but with `allow_sign_up` set to `true`, _any_ user
@@ -105,6 +103,10 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
 By default, GitLab provides a refresh token.
+
+Refresh token fetching and access token expiration check is enabled by default for the GitLab provider since Grafana v10.1.0 if the `accessTokenExpirationCheck` feature toggle is enabled. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### allowed_groups
 
@@ -145,10 +147,9 @@ allow_sign_up = true
 auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = read_api
+scopes = openid email profile
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
-api_url = https://gitlab.com/api/v4
 allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true

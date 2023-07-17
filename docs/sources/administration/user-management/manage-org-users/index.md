@@ -89,6 +89,7 @@ If you have [server administrator]({{< relref "../../roles-and-permissions/#graf
    > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
 
 1. Navigate to **Administration > Users**.
+1. Click **Organization users**.
 1. Click **Invite**.
 1. Enter the following information:
 

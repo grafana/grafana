@@ -424,7 +424,7 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-caching" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}).
 
 ### type
 
@@ -677,17 +677,15 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 ### angular_support_enabled
 
 This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
-all plugins and core features that depend on angular support will stop working.
+all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
-Current core features that will stop working:
+The core features that depend on angular are:
 
-- Heatmap panel
 - Old graph panel
 - Old table panel
-- Postgres, MySQL and MSSQL data source query editors
 - Legacy alerting edit rule UI
 
-Before we disable angular support by default we plan to migrate these remaining areas to React.
+These features each have supported alternatives, and we recommend using them.
 
 ### csrf_trusted_origins
 
@@ -700,6 +698,11 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 ### csrf_always_check
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
+### disable_frontend_sandbox_for_plugins
+
+Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
+option for plugins that are known to have problems running inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -824,7 +827,9 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
+If set to `detect`, the default UI language will be determined by browser preference.
+The default is `en-US`.
 
 ### home_page
 
@@ -1249,6 +1254,10 @@ Options are "debug", "info", "warn", "error", and "critical". Default is `info`.
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
+### user_facing_default_error
+
+Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
+
 <hr>
 
 ## [log.console]
@@ -1662,6 +1671,14 @@ Enable or disable the Profile section. Default is `enabled`.
 
 Enables the news feed section. Default is `true`
 
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1669,6 +1686,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 
@@ -2033,6 +2052,14 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
+### public_key_retrieval_disabled
+
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
+
+### public_key_retrieval_on_startup
+
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
 <hr>
 
 ## [live]
@@ -2298,3 +2325,12 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+
+## [navigation.app_sections]
+
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+
+## [navigation.app_standalone_pages]
+
+Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
+Format: <pageUrl> = <sectionId> <sortWeight>

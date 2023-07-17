@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -226,8 +227,9 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate string
-	AngularSupportEnabled bool
+	CSPReportOnlyTemplate            string
+	AngularSupportEnabled            bool
+	DisableFrontendSandboxForPlugins []string
 
 	TempDataLifetime time.Duration
 
@@ -241,6 +243,7 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
+	PluginSkipPublicKeyDownload      bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -300,8 +303,9 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
-	OAuthAutoLogin    bool
-	OAuthCookieMaxAge int
+	OAuthAutoLogin                bool
+	OAuthCookieMaxAge             int
+	OAuthAllowInsecureEmailLookup bool
 
 	// JWT Auth
 	JWTAuthEnabled                 bool
@@ -535,6 +539,9 @@ type Cfg struct {
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+
+	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
+	UserFacingDefaultError string
 
 	// DatabaseInstrumentQueries is used to decide if database queries
 	// should be instrumented with metrics, logs and traces.
@@ -1223,6 +1230,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
 
+	logSection := iniFile.Section("log")
+	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
+
 	return nil
 }
 
@@ -1400,6 +1410,12 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
+	disableFrontendSandboxForPlugins := security.Key("frontend_sandbox_disable_for_plugins").MustString("")
+	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
+	}
+
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
 		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")
 	}
@@ -1470,13 +1486,14 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
 	cfg.LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
-
 	const defaultMaxInactiveLifetime = "7d"
 	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", defaultMaxInactiveLifetime)
 	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
 	if err != nil {
 		return err
 	}
+
+	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
 
 	const defaultMaxLifetime = "30d"
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", defaultMaxLifetime)
@@ -1629,7 +1646,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
+		string(roletype.RoleViewer), []string{
+			string(roletype.RoleViewer),
+			string(roletype.RoleEditor),
+			string(roletype.RoleAdmin)})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)

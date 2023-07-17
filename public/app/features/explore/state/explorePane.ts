@@ -11,16 +11,24 @@ import {
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
 import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getRange,
+  getDatasourceUIDs,
+} from './utils';
 // Types
 
 //
@@ -32,7 +40,7 @@ import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, 
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export interface ChangeSizePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
@@ -41,12 +49,12 @@ export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeS
  * Tracks the state of explore panels that gets synced with the url.
  */
 interface ChangePanelsState {
-  exploreId: ExploreId;
+  exploreId: string;
   panelsState: ExplorePanelsState;
 }
 const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
 export function changePanelState(
-  exploreId: ExploreId,
+  exploreId: string,
   panel: PreferredVisualisationType,
   panelState: ExplorePanelsState[PreferredVisualisationType]
 ): ThunkResult<void> {
@@ -73,7 +81,7 @@ export function changePanelState(
  * Call this only on components for with the Explore state has not been initialized.
  */
 interface InitializeExplorePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   queries: DataQuery[];
   range: TimeRange;
   history: HistoryItem[];
@@ -82,24 +90,31 @@ interface InitializeExplorePayload {
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
 export interface SetUrlReplacedPayload {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
+
+export interface SaveCorrelationsPayload {
+  exploreId: string;
+  correlations: CorrelationData[];
+}
+export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
 
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
-export function changeSize(exploreId: ExploreId, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
+export function changeSize(exploreId: string, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
   return changeSizeAction({ exploreId, width });
 }
 
-interface InitializeExploreOptions {
-  exploreId: ExploreId;
+export interface InitializeExploreOptions {
+  exploreId: string;
   datasource: DataSourceRef | string | undefined;
   queries: DataQuery[];
   range: RawTimeRange;
   panelsState?: ExplorePanelsState;
+  position?: number;
 }
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -140,6 +155,10 @@ export const initializeExplore = createAsyncThunk(
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
+      const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
+      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
+
       dispatch(runQueries({ exploreId }));
     }
 
@@ -188,6 +207,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, panelsState };
   }
 
+  if (saveCorrelationsAction.match(action)) {
+    return {
+      ...state,
+      correlations: action.payload.correlations,
+    };
+  }
+
   if (initializeExploreAction.match(action)) {
     const { queries, range, datasourceInstance, history } = action.payload;
 
@@ -201,6 +227,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       history,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
+      correlations: [],
     };
   }
 

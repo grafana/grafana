@@ -51,6 +51,9 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 	})
 	require.NoError(t, err)
 
+	err = caCertFile.Close()
+	require.NoError(t, err)
+
 	// generate test client cert & key
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
@@ -78,6 +81,10 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 		Bytes: certBytes,
 	})
 	require.NoError(t, err)
+
+	err = certFile.Close()
+	require.NoError(t, err)
+
 	clientKey := filepath.Join(tempDir, "client.key")
 	// nolint:gosec
 	// The gosec G304 warning can be ignored because all values come from the test
@@ -87,6 +94,9 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
 	})
+	require.NoError(t, err)
+
+	err = keyFile.Close()
 	require.NoError(t, err)
 
 	settings := &sdkproxy.ClientCfg{

@@ -18,9 +18,17 @@ function isVisibleBarField(f: Field) {
   );
 }
 
+export function getRefField(frame: DataFrame, refFieldName?: string | null) {
+  return frame.fields.find((field) => {
+    // note: getFieldDisplayName() would require full DF[]
+    return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
+  });
+}
+
 // will mutate the DataFrame's fields' values
-function applySpanNullsThresholds(frame: DataFrame) {
-  let refField = frame.fields.find((field) => field.type === FieldType.time); // this doesnt need to be time, just any numeric/asc join field
+function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null) {
+  const refField = getRefField(frame, refFieldName);
+
   let refValues = refField?.values as any[];
 
   for (let i = 0; i < frame.fields.length; i++) {
@@ -43,12 +51,22 @@ function applySpanNullsThresholds(frame: DataFrame) {
 }
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
+  let xField: Field;
+  loop: for (let frame of frames) {
+    for (let field of frame.fields) {
+      if (dimFields.x(field, frame, frames)) {
+        xField = field;
+        break loop;
+      }
+    }
+  }
+
   // apply null insertions at interval
   frames = frames.map((frame) => {
-    if (!frame.fields[0].state?.nullThresholdApplied) {
+    if (!xField?.state?.nullThresholdApplied) {
       return applyNullInsertThreshold({
         frame,
-        refFieldName: null,
+        refFieldName: xField.name,
         refFieldPseudoMin: timeRange?.from.valueOf(),
         refFieldPseudoMax: timeRange?.to.valueOf(),
       });
@@ -84,7 +102,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
         return;
       }
 
-      const xVals = frame.fields[0].values;
+      const xVals = xField.values;
 
       for (let i = 0; i < xVals.length; i++) {
         if (i > 0) {
@@ -102,7 +120,7 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
   });
 
   if (alignedFrame) {
-    alignedFrame = applySpanNullsThresholds(alignedFrame);
+    alignedFrame = applySpanNullsThresholds(alignedFrame, xField!.name);
 
     // append 2 null vals at minXDelta to bar series
     if (minXDelta !== Infinity) {

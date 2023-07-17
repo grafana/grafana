@@ -13,10 +13,10 @@ import { TableCellProps, TableFieldOptions } from './types';
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
-  const txt = css`
-    cursor: pointer;
-    font-family: monospace;
-  `;
+  const txt = css({
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+  });
 
   let value = cell.value;
   let displayValue = value;

@@ -62,7 +62,7 @@ export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | strin
 
 interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
   metricFindQuery(query: any, options?: any): Promise<MetricFindValue[]>;
   variables: undefined;
@@ -70,7 +70,7 @@ interface DataSourceWithLegacyVariableSupport<
 
 interface DataSourceWithStandardVariableSupport<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     getType(): VariableSupportType;
@@ -81,7 +81,7 @@ interface DataSourceWithStandardVariableSupport<
 
 interface DataSourceWithCustomVariableSupport<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     getType(): VariableSupportType;
@@ -92,7 +92,7 @@ interface DataSourceWithCustomVariableSupport<
 
 interface DataSourceWithDatasourceVariableSupport<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
     getType(): VariableSupportType;
@@ -105,7 +105,7 @@ interface DataSourceWithDatasourceVariableSupport<
  * */
 export const hasLegacyVariableSupport = <
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithLegacyVariableSupport<TQuery, TOptions> => {
@@ -114,7 +114,7 @@ export const hasLegacyVariableSupport = <
 
 export const hasStandardVariableSupport = <
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithStandardVariableSupport<TQuery, TOptions> => {
@@ -132,7 +132,7 @@ export const hasStandardVariableSupport = <
 
 export const hasCustomVariableSupport = <
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithCustomVariableSupport<TQuery, TOptions> => {
@@ -155,7 +155,7 @@ export const hasCustomVariableSupport = <
 
 export const hasDatasourceVariableSupport = <
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithDatasourceVariableSupport<TQuery, TOptions> => {
@@ -168,7 +168,7 @@ export const hasDatasourceVariableSupport = <
 
 export function isLegacyQueryEditor<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>
@@ -182,7 +182,7 @@ export function isLegacyQueryEditor<
 
 export function isQueryEditor<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 >(
   component: VariableQueryEditorType,
   datasource: DataSourceApi<TQuery, TOptions>

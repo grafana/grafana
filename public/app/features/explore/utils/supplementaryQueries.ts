@@ -15,9 +15,10 @@ import {
   LogsVolumeType,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { makeDataFramesForLogs } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types';
+
+import { makeDataFramesForLogs } from '../../logs/logsModel';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,
@@ -58,7 +59,7 @@ const createFallbackLogVolumeProvider = (
   datasourceName: string
 ): Observable<DataQueryResponse> => {
   return new Observable<DataQueryResponse>((observer) => {
-    explorePanelData.subscribe((exploreData) => {
+    return explorePanelData.subscribe((exploreData) => {
       if (
         exploreData.logsResult &&
         exploreData.logsResult.rows &&

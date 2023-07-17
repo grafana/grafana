@@ -17,7 +17,7 @@ export function FeedbackLink({ feedbackUrl }: Props) {
       <a
         href={feedbackUrl}
         className={styles.link}
-        title="The Metrics Modal is new, please let us know how we can improve it"
+        title="The metrics explorer is new, please let us know how we can improve it"
         target="_blank"
         rel="noreferrer noopener"
       >
