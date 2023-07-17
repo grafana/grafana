@@ -264,8 +264,8 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
       return new Date();
     });
 
-    const onChangeDate = useCallback((date: Date | Date[]) => {
-      if (!Array.isArray(date)) {
+    const onChangeDate = useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>((date) => {
+      if (date && !Array.isArray(date)) {
         setInternalDate((prevState) => {
           // If we don't use time from prevState
           // the time will be reset to 00:00:00
