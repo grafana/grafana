@@ -80,6 +80,8 @@ export function PluginDetailsPage({
               className={styles.alert}
               angularSupportEnabled={config?.angularSupportEnabled}
               pluginId={plugin.id}
+              pluginType={plugin.type}
+              showPluginDetailsLink={false}
             />
           )}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />

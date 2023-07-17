@@ -1,16 +1,35 @@
 import React from 'react';
 
+import { PluginType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 type Props = {
   className?: string;
-  angularSupportEnabled?: boolean;
+
   pluginId?: string;
+  pluginType?: PluginType;
+
+  angularSupportEnabled?: boolean;
+  showPluginDetailsLink?: boolean;
 };
 
-function deprecationMessage(angularSupportEnabled?: boolean): string {
-  const msg = 'This plugin uses a deprecated, legacy platform based on AngularJS and ';
+function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean): string {
+  let pluginTypeString: string;
+  switch (pluginType) {
+    case PluginType.app:
+      pluginTypeString = 'app plugin';
+      break;
+    case PluginType.panel:
+      pluginTypeString = 'panel plugin';
+      break;
+    case PluginType.datasource:
+      pluginTypeString = 'data source plugin';
+      break;
+    default:
+      pluginTypeString = 'plugin';
+  }
+  let msg = `This ${pluginTypeString} uses a deprecated, legacy platform based on AngularJS and `;
   if (angularSupportEnabled === undefined) {
     return msg + ' may be incompatible depending on your Grafana configuration.';
   }
@@ -22,27 +41,37 @@ function deprecationMessage(angularSupportEnabled?: boolean): string {
 
 // An Alert showing information about Angular deprecation notice.
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
-export function PluginDetailsAngularDeprecation({
-  className,
-  angularSupportEnabled,
-  pluginId,
-}: Props): React.ReactElement | null {
+export function PluginDetailsAngularDeprecation(props: Props): React.ReactElement | null {
+  const { className, angularSupportEnabled, pluginId, pluginType, showPluginDetailsLink } = props;
   return (
     <Alert severity="warning" title="Angular plugin" className={className}>
-      <p>{deprecationMessage(angularSupportEnabled)}</p>
-      <a
-        href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
-        className="external-link"
-        target="_blank"
-        rel="noreferrer"
-        onClick={() => {
-          reportInteraction('angular_deprecation_docs_clicked', {
-            pluginId,
-          });
-        }}
-      >
-        Read more on Angular deprecation.
-      </a>
+      <p>{deprecationMessage(pluginType, angularSupportEnabled)}</p>
+      <div className="markdown-html">
+        <ul>
+          <li>
+            <a
+              href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
+              className="external-link"
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => {
+                reportInteraction('angular_deprecation_docs_clicked', {
+                  pluginId,
+                });
+              }}
+            >
+              Read our deprecation notice and migration advice.
+            </a>
+          </li>
+          {showPluginDetailsLink && pluginId ? (
+            <li>
+              <a href={`plugins/${encodeURIComponent(pluginId)}`} className="external-link">
+                View plugin details
+              </a>
+            </li>
+          ) : null}
+        </ul>
+      </div>
     </Alert>
   );
 }

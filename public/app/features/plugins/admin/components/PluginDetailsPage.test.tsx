@@ -1,10 +1,8 @@
-import { render, screen, act, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
 
@@ -54,7 +52,7 @@ function renderPage(pluginId: string) {
   );
 }
 
-describe('PluginDetailsAngularDeprecation', () => {
+describe('PluginDetailsPage Angular deprecation', () => {
   afterAll(() => {
     jest.resetAllMocks();
   });
@@ -67,15 +65,5 @@ describe('PluginDetailsAngularDeprecation', () => {
   it('does not render the component for non-angular plugins', async () => {
     await renderPage('not-angular');
     expect(screen.queryByText(/angular plugin/i)).toBeNull();
-  });
-
-  it('reports interaction when clicking on the link', async () => {
-    await renderPage(angularPluginId);
-    const c = 'Read more on Angular deprecation.';
-    await waitFor(() => expect(screen.getByText(c)).toBeInTheDocument());
-    await userEvent.click(screen.getByText(c));
-    expect(reportInteraction).toHaveBeenCalledWith('angular_deprecation_docs_clicked', {
-      pluginId: angularPluginId,
-    });
   });
 });
