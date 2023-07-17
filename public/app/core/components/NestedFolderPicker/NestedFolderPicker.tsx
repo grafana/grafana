@@ -136,6 +136,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       if (value) {
         setSearch('');
         setFocusedItemIndex(0);
+        setAutoFocusButton(true);
       }
       setOverlayOpen(value);
     },
@@ -149,7 +150,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
           title: item.title,
         });
       }
-      setAutoFocusButton(true);
       setOverlayOpen(false);
     },
     [onChange]
