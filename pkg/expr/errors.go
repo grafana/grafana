@@ -19,20 +19,6 @@ func MakeReadError(refID string, err error) error {
 	})
 }
 
-// type QueryError struct {
-// 	RefID         string
-// 	DatasourceUID string
-// 	Err           error
-// }
-
-// func (e QueryError) Error() string {
-// 	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
-// }
-
-// func (e QueryError) Unwrap() error {
-// 	return e.Err
-// }
-
 var QueryError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.dataQueryError").
 	MustTemplate(
