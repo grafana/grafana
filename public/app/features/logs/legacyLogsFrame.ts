@@ -52,7 +52,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
   // but only if the labelsField is used.
   const [labelsField, getL] = makeLabelsGetter(cache, bodyField, frame);
 
-  const unusedFields = cache.fields.filter(
+  const extraFields = cache.fields.filter(
     (_, i) =>
       i !== timeField.index &&
       i !== bodyField.index &&
@@ -70,6 +70,6 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
     idField,
     getAttributes: getL,
     getAttributesAsLabels: getL,
-    unusedFields,
+    extraFields,
   };
 }

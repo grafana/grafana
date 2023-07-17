@@ -64,7 +64,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
       { counter: '38141', label: 'val2', level: 'warning', nested: `{"a":"1","b":["2","3"]}` },
       { counter: '38143', label: 'val2', level: 'info', nested: `{"a":"11","b":["12","13"]}` },
     ]);
-    expect(result?.unusedFields).toStrictEqual([]);
+    expect(result?.extraFields).toStrictEqual([]);
   });
 
   it('should parse old Loki-style (grafana8.x) frames ( multi-frame, but here we only parse a single frame )', () => {
@@ -93,7 +93,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
       { counter: '34543', lable: 'val3', level: 'info' },
       { counter: '34543', lable: 'val3', level: 'info' },
     ]);
-    expect(result?.unusedFields).toStrictEqual([]);
+    expect(result?.extraFields).toStrictEqual([]);
   });
 
   it('should parse a Loki-style frame (single-frame, labels-in-json)', () => {
@@ -131,7 +131,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
       { counter: '38141', label: 'val2', level: 'warning' },
       { counter: '38143', label: 'val2', level: 'info' },
     ]);
-    expect(result?.unusedFields).toStrictEqual([]);
+    expect(result?.extraFields).toStrictEqual([]);
   });
 
   it('should parse elastic-style frame (has level-field, no labels parsed, with extra unused fields)', () => {
@@ -163,7 +163,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.timeNanosecondField).toBeNull();
     expect(result!.getAttributesAsLabels()).toBeNull();
     expect(result!.getAttributes()).toBeNull();
-    expect(result?.unusedFields.map((f) => f.name)).toStrictEqual(['_source', 'hostname']);
+    expect(result?.extraFields.map((f) => f.name)).toStrictEqual(['_source', 'hostname']);
   });
 
   it('should parse a minimal old-style frame (only two fields, time and line)', () => {
@@ -184,7 +184,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.timeNanosecondField).toBeNull();
     expect(result!.getAttributesAsLabels()).toBeNull();
     expect(result!.getAttributes()).toBeNull();
-    expect(result?.unusedFields).toStrictEqual([]);
+    expect(result?.extraFields).toStrictEqual([]);
   });
 });
 
