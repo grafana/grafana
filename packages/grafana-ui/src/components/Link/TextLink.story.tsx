@@ -46,14 +46,14 @@ export const Example: StoryFn = (args) => {
       <StoryExample name="This is a 'inline + external' link with the default behaviour">
         <Text element="p">
           To get started with a forever free Grafana Cloud account, sign up at &#160;
-          <TextLink href="https://grafana.com/" external {...args}>
+          <TextLink href="https://grafana.com/" {...args} inline>
             grafana.com
           </TextLink>
           .
         </Text>
       </StoryExample>
       <StoryExample name="This is a 'standalone + external' link with the default behaviour">
-        <TextLink href="https://grafana.com/docs/grafana/latest/" inline={false} external {...args}>
+        <TextLink href="https://grafana.com/docs/grafana/latest/" {...args}>
           Learn how in the docs
         </TextLink>
       </StoryExample>
