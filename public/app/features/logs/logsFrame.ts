@@ -14,8 +14,9 @@ export type LogsFrame = {
   timeNanosecondField: FieldWithIndex | null;
   severityField: FieldWithIndex | null;
   idField: FieldWithIndex | null;
-  attributes: Attributes[] | null;
+  getAttributes: () => Attributes[] | null; // may be slow, so we only do it when asked for it explicitly
   getAttributesAsLabels: () => Labels[] | null; // temporarily exists to make the labels=>attributes migration simpler
+  extraFields: FieldWithIndex[];
 };
 
 function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldWithIndex | undefined {
@@ -60,14 +61,24 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
 
   const attributes = attributesField === null ? null : attributesField.values;
 
+  const extraFields = cache.fields.filter(
+    (_, i) =>
+      i !== timestampField.index &&
+      i !== bodyField.index &&
+      i !== severityField?.index &&
+      i !== idField?.index &&
+      i !== attributesField?.index
+  );
+
   return {
     timeField: timestampField,
     bodyField,
     severityField,
     idField,
-    attributes,
+    getAttributes: () => attributes,
     timeNanosecondField: null,
     getAttributesAsLabels: () => (attributes !== null ? attributes.map(attributesToLabels) : null),
+    extraFields,
   };
   return null;
 }

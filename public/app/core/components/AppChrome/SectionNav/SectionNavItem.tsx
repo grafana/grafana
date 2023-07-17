@@ -56,9 +56,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
-      {children?.map((child, index) => (
-        <SectionNavItem item={child} key={index} />
-      ))}
+      {children?.map((child, index) => <SectionNavItem item={child} key={index} />)}
     </>
   );
 }

@@ -4,7 +4,7 @@ import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -135,7 +135,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
-            mixed={config.featureToggles.exploreMixedDatasource === true}
+            mixed
             onChange={onChangeDatasource}
             current={datasourceInstance?.getRef()}
             hideTextValue={showSmallDataSourcePicker}

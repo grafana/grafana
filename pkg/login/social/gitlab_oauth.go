@@ -175,9 +175,9 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 
 	if !s.skipOrgRoleSync {
 		var grafanaAdmin bool
-		role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, idData.Groups, true)
-		if s.roleAttributeStrict && !role.IsValid() {
-			return nil, &InvalidBasicRoleError{idP: "Gitlab", assignedRole: string(role)}
+		role, grafanaAdmin, err := s.extractRoleAndAdmin(response.Body, idData.Groups)
+		if err != nil {
+			return nil, err
 		}
 
 		if s.allowAssignGrafanaAdmin {
@@ -227,9 +227,9 @@ func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client
 	}
 
 	if !s.skipOrgRoleSync {
-		role, grafanaAdmin := s.extractRoleAndAdmin(rawJSON, data.Groups, true)
-		if s.roleAttributeStrict && !role.IsValid() {
-			return nil, &InvalidBasicRoleError{idP: "Gitlab", assignedRole: string(role)}
+		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(rawJSON, data.Groups)
+		if errRole != nil {
+			return nil, errRole
 		}
 
 		if s.allowAssignGrafanaAdmin {

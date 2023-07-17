@@ -15,6 +15,7 @@ interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   styles: LogRowStyles;
+  mouseIsOver: boolean;
 }
 
 export const LogRowMenuCell = React.memo(
@@ -28,6 +29,7 @@ export const LogRowMenuCell = React.memo(
     row,
     showContextToggle,
     styles,
+    mouseIsOver,
   }: Props) => {
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
@@ -42,79 +44,77 @@ export const LogRowMenuCell = React.memo(
     );
     const getLogText = useCallback(() => logText, [logText]);
     return (
-      <>
-        {pinned && (
-          // TODO: fix keyboard a11y
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <span className={`log-row-menu log-row-menu-visible ${styles.rowMenu}`} onClick={onLogRowClick}>
-            <IconButton
-              className={styles.unPinButton}
-              size="md"
-              name="gf-pin"
-              onClick={() => onUnpinLine && onUnpinLine(row)}
-              tooltip="Unpin line"
-              tooltipPlacement="top"
-              aria-label="Unpin line"
-            />
-          </span>
-        )}
-        {/* TODO: fix keyboard a11y */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <span className={`log-row-menu ${styles.rowMenu} ${styles.hidden}`} onClick={onLogRowClick}>
-          {shouldShowContextToggle && (
-            <IconButton
-              size="md"
-              name="gf-show-context"
-              onClick={onShowContextClick}
-              tooltip="Show context"
-              tooltipPlacement="top"
-              aria-label="Show context"
-            />
-          )}
-          <ClipboardButton
-            className={styles.copyLogButton}
-            icon="copy"
-            variant="secondary"
-            fill="text"
+      // TODO: fix keyboard a11y
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick}>
+        {pinned && !mouseIsOver && (
+          <IconButton
+            className={styles.unPinButton}
             size="md"
-            getText={getLogText}
-            tooltip="Copy to clipboard"
+            name="gf-pin"
+            onClick={() => onUnpinLine && onUnpinLine(row)}
+            tooltip="Unpin line"
             tooltipPlacement="top"
+            aria-label="Unpin line"
           />
-          {pinned && onUnpinLine && (
-            <IconButton
-              className={styles.unPinButton}
+        )}
+        {mouseIsOver && (
+          <>
+            {shouldShowContextToggle && (
+              <IconButton
+                size="md"
+                name="gf-show-context"
+                onClick={onShowContextClick}
+                tooltip="Show context"
+                tooltipPlacement="top"
+                aria-label="Show context"
+              />
+            )}
+            <ClipboardButton
+              className={styles.copyLogButton}
+              icon="copy"
+              variant="secondary"
+              fill="text"
               size="md"
-              name="gf-pin"
-              onClick={() => onUnpinLine && onUnpinLine(row)}
-              tooltip="Unpin line"
+              getText={getLogText}
+              tooltip="Copy to clipboard"
               tooltipPlacement="top"
-              aria-label="Unpin line"
             />
-          )}
-          {!pinned && onPinLine && (
-            <IconButton
-              className={styles.unPinButton}
-              size="md"
-              name="gf-pin"
-              onClick={() => onPinLine && onPinLine(row)}
-              tooltip="Pin line"
-              tooltipPlacement="top"
-              aria-label="Pin line"
-            />
-          )}
-          {onPermalinkClick && row.uid && (
-            <IconButton
-              tooltip="Copy shortlink"
-              aria-label="Copy shortlink"
-              tooltipPlacement="top"
-              size="md"
-              name="share-alt"
-              onClick={() => onPermalinkClick(row)}
-            />
-          )}
-        </span>
-      </>
+            {pinned && onUnpinLine && (
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="gf-pin"
+                onClick={() => onUnpinLine && onUnpinLine(row)}
+                tooltip="Unpin line"
+                tooltipPlacement="top"
+                aria-label="Unpin line"
+              />
+            )}
+            {!pinned && onPinLine && (
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="gf-pin"
+                onClick={() => onPinLine && onPinLine(row)}
+                tooltip="Pin line"
+                tooltipPlacement="top"
+                aria-label="Pin line"
+              />
+            )}
+            {onPermalinkClick && row.rowId !== undefined && row.uid && (
+              <IconButton
+                tooltip="Copy shortlink"
+                aria-label="Copy shortlink"
+                tooltipPlacement="top"
+                size="md"
+                name="share-alt"
+                onClick={() => onPermalinkClick(row)}
+              />
+            )}
+          </>
+        )}
+      </span>
     );
   }
 );
