@@ -4203,7 +4203,7 @@ __metadata:
     rc-tooltip: 6.0.1
     react: 18.2.0
     react-beautiful-dnd: 13.1.1
-    react-calendar: 4.0.0
+    react-calendar: 4.3.0
     react-colorful: 5.6.1
     react-custom-scrollbars-2: 4.5.0
     react-dom: 18.2.0
@@ -10164,6 +10164,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash.memoize@npm:^4.1.7":
+  version: 4.1.7
+  resolution: "@types/lodash.memoize@npm:4.1.7"
+  dependencies:
+    "@types/lodash": "*"
+  checksum: 85f128b6606ab0545c11194208cf844536f981859221dff0032b1043dd4e02ee5aa1b96020d1e02a24db31be7493f2e9ff45836d2e3c35cf973fc6488f129eed
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:*":
+  version: 4.14.195
+  resolution: "@types/lodash@npm:4.14.195"
+  checksum: 39b75ca635b3fa943d17d3d3aabc750babe4c8212485a4df166fe0516e39288e14b0c60afc6e21913cc0e5a84734633c71e617e2bd14eaa1cf51b8d7799c432e
+  languageName: node
+  linkType: hard
+
 "@types/lodash@npm:4.14.191":
   version: 4.14.191
   resolution: "@types/lodash@npm:4.14.191"
@@ -11770,10 +11786,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wojtekmaj/date-utils@npm:^1.0.2":
-  version: 1.0.3
-  resolution: "@wojtekmaj/date-utils@npm:1.0.3"
-  checksum: 70b7152160529295319ead97e070f85a50c0eab7973b5845e3a58eab9b0c999023975d2739b5e2a059d27b108ce7cdbf14da99737d6fa3e3822d4dafb76b06f0
+"@wojtekmaj/date-utils@npm:^1.1.3":
+  version: 1.4.1
+  resolution: "@wojtekmaj/date-utils@npm:1.4.1"
+  checksum: e1def2f26e2b2e781152b9f2b847f849abfb4ad90d2fddb77dc418ec4c8753dc29775d52205bc47952a71e47abf53bcb6df6306707486b3aa3b69ef9c359d8d6
   languageName: node
   linkType: hard
 
@@ -18839,12 +18855,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-user-locale@npm:^1.2.0":
-  version: 1.4.0
-  resolution: "get-user-locale@npm:1.4.0"
+"get-user-locale@npm:^2.2.1":
+  version: 2.3.0
+  resolution: "get-user-locale@npm:2.3.0"
   dependencies:
-    lodash.once: ^4.1.1
-  checksum: d27a6cf7b1aacdec1786c6877511efc956eb17810e10c55a408753af38f13b5d854f3a0033320f94a6046e95d3c0fc2248c950aeecfc181353599facd344b7e4
+    "@types/lodash.memoize": ^4.1.7
+    lodash.memoize: ^4.1.1
+  checksum: 8a815e7528d1a75d85b25573ecd66890b126cdc6759f06354dd0b59371d88618aad5a4955ccab5c1267a9ca6a6e46b9362e9bad2639ad5949d3e90542a480791
   languageName: node
   linkType: hard
 
@@ -23077,7 +23094,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.memoize@npm:4.x, lodash.memoize@npm:^4.1.2":
+"lodash.memoize@npm:4.x, lodash.memoize@npm:^4.1.1, lodash.memoize@npm:^4.1.2":
   version: 4.1.2
   resolution: "lodash.memoize@npm:4.1.2"
   checksum: 9ff3942feeccffa4f1fafa88d32f0d24fdc62fd15ded5a74a5f950ff5f0c6f61916157246744c620173dddf38d37095a92327d5fd3861e2063e736a5c207d089
@@ -27325,18 +27342,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:4.0.0":
-  version: 4.0.0
-  resolution: "react-calendar@npm:4.0.0"
+"react-calendar@npm:4.3.0":
+  version: 4.3.0
+  resolution: "react-calendar@npm:4.3.0"
   dependencies:
-    "@wojtekmaj/date-utils": ^1.0.2
+    "@types/react": "*"
+    "@wojtekmaj/date-utils": ^1.1.3
     clsx: ^1.2.1
-    get-user-locale: ^1.2.0
+    get-user-locale: ^2.2.1
     prop-types: ^15.6.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: a470ea1eab914cda9f76245060e15129a220c30f2942a28c20b3cb999fd994d0c0fadae849184ba123b3b78541fbb3301c5ac0c44e0bd2ab156bfba8cc587593
+  checksum: 0abfb0e6c6c8ea6d5d10a9073db1861b9d6c746905573a1ba576d77e260c4cf4d90cc45a7eccb3166e8ccdad71df787cd629ae2d0b2839409db7e25c76f8cd32
   languageName: node
   linkType: hard
 
