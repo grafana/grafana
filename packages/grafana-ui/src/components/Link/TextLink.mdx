@@ -1,4 +1,4 @@
-import { Props, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
+import { Meta, Props, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
 import { TextLink } from './TextLink';
 import { Basic } from './TextLink.story.tsx';
 
@@ -82,24 +82,22 @@ The following is the default behaviour and so, it will be applied according to i
 
 ### <a name="inline-behaviour"/>**Inline**:<br/>
 
-- _Initial appearence_: Blue and underlined at first. <br/>
-- _On hover_: blue and not underlined
-  <Preview>
-    <TextLink href="https://google.es" external inline>
-      This an inline link example
-    </TextLink>
-  </Preview>
+<Preview>
+  <TextLink href="https://google.es" external inline>
+    This an inline link example
+  </TextLink>
+</Preview>
+- _Initial appearence_: Blue and underlined at first. <br />- _On hover_: blue and not underlined
 
 ### <a name="standalone-behaviour"/>**Standalone**:
 
-- _Initial appearence_: Blue and not underlined at first.
-- _On hover_: blue and underlined
-  <Preview>
-    <TextLink href="https://google.es" inline={false} external>
-      This an standalone link example
-    </TextLink>
-  </Preview>
-  Through the color prop the user will be able to change this value, but the rest will be kept.{' '}
+<Preview>
+  <TextLink href="https://google.es" inline={false} external>
+    This an standalone link example
+  </TextLink>
+</Preview>
+- _Initial appearence_: Blue and not underlined at first. - _On hover_: blue and underlined Through the color prop the user
+will be able to change this value, but the rest will be kept.{' '}
 
 _Example_: A user renders an external and standalone _text link_ setting the color value to 'primary'.
 The text link will be 'white' in dark theme or 'black' in light theme, as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
