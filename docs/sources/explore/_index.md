@@ -75,7 +75,7 @@ where:
 
 - `org_id` is the organization ID
 - `schema_version` is the schema version, currently only `1` is supported
-- `panes` is a url-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the follwing schema:
+- `panes` is a url-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the following schema:
 
 ```ts
 {
