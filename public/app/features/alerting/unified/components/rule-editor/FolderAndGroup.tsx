@@ -243,6 +243,7 @@ export function FolderAndGroup({
             icon="plus"
             fill="outline"
             variant="secondary"
+            disabled={!folder}
           >
             New evaluation group
           </Button>
@@ -287,13 +288,14 @@ function FolderCreationModal({
     <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
       <div className={styles.modalTitle}>Create a new folder to store your rule</div>
 
-      <>
+      <form onSubmit={onSubmit}>
         <Field
           label={<Label htmlFor="folder">Folder name</Label>}
           error={"The folder name can't contain slashes"}
           invalid={error}
         >
           <Input
+            autoFocus={true}
             id="folderName"
             placeholder="Enter a name"
             value={title}
@@ -306,11 +308,11 @@ function FolderCreationModal({
           <Button variant="secondary" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" disabled={!title || error} onClick={onSubmit}>
+          <Button type="submit" disabled={!title || error}>
             Create
           </Button>
         </Modal.ButtonRow>
-      </>
+      </form>
     </Modal>
   );
 }
@@ -362,48 +364,50 @@ function EvaluationGroupCreationModal({
       <div className={styles.modalTitle}>Create a new evaluation group to use for this alert rule.</div>
 
       <FormProvider {...formAPI}>
-        <Field
-          label={<Label htmlFor={'group'}>Evaluation group name</Label>}
-          error={formState.errors.group?.message}
-          invalid={!!formState.errors.group}
-        >
-          <Input
-            className={styles.formInput}
-            id={'group'}
-            placeholder="Enter a name"
-            {...register('group', { required: { value: true, message: 'Required.' } })}
-          />
-        </Field>
+        <form onSubmit={handleSubmit(() => onSubmit())}>
+          <Field
+            label={<Label htmlFor={'group'}>Evaluation group name</Label>}
+            error={formState.errors.group?.message}
+            invalid={!!formState.errors.group}
+          >
+            <Input
+              className={styles.formInput}
+              autoFocus={true}
+              id={'group'}
+              placeholder="Enter a name"
+              {...register('group', { required: { value: true, message: 'Required.' } })}
+            />
+          </Field>
 
-        <Field
-          error={formState.errors.evaluateEvery?.message}
-          invalid={!!formState.errors.evaluateEvery}
-          label={
-            <Label
-              htmlFor={evaluateEveryId}
-              description="How often is the rule evaluated. Applies to every rule within the group."
-            >
-              Evaluation interval
-            </Label>
-          }
-        >
-          <Input
-            className={styles.formInput}
-            id={evaluateEveryId}
-            placeholder="e.g. 5m"
-            {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
-          />
-        </Field>
+          <Field
+            error={formState.errors.evaluateEvery?.message}
+            invalid={!!formState.errors.evaluateEvery}
+            label={
+              <Label
+                htmlFor={evaluateEveryId}
+                description="How often is the rule evaluated. Applies to every rule within the group."
+              >
+                Evaluation interval
+              </Label>
+            }
+          >
+            <Input
+              className={styles.formInput}
+              id={evaluateEveryId}
+              placeholder="e.g. 5m"
+              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+            />
+          </Field>
+          <Modal.ButtonRow>
+            <Button variant="secondary" type="button" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!formState.isValid}>
+              Create
+            </Button>
+          </Modal.ButtonRow>
+        </form>
       </FormProvider>
-
-      <Modal.ButtonRow>
-        <Button variant="secondary" type="button" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="button" disabled={!formState.isValid} onClick={handleSubmit(() => onSubmit())}>
-          Create
-        </Button>
-      </Modal.ButtonRow>
     </Modal>
   );
 }

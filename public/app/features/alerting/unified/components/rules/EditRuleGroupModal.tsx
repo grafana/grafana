@@ -277,6 +277,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               error={errors.groupName?.message}
             >
               <Input
+                autoFocus={true}
                 id="groupName"
                 readOnly={intervalEditOnly}
                 {...register('groupName', {
