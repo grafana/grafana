@@ -289,6 +289,44 @@ describe('updateQueries', () => {
     expect(updated.length).toEqual(1);
   });
 
+  it('will not preserve query when switch from mixed with a ds variable query to the same datasource (non-variable)', async () => {
+    templateSrv.init([
+      {
+        current: {
+          text: 'Azure Monitor',
+          value: 'ds-uid',
+        },
+        name: 'ds',
+        type: 'datasource',
+        id: 'ds',
+      },
+    ]);
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: '$ds',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    expect(updated.length).toEqual(1);
+  });
+
   it('should update query refs when switching from mixed to a datasource where queries exist for new datasource', async () => {
     const updated = await updateQueries(
       newUidDS,

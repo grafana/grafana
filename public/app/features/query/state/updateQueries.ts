@@ -1,6 +1,7 @@
-import { CoreApp, DataQuery, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
+import { CoreApp, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataQuery } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 
 export async function updateQueries(
@@ -33,13 +34,21 @@ export async function updateQueries(
       if (currentDS) {
         const templateSrv = getTemplateSrv();
         const reducedQueries: DataQuery[] = [];
-        const nextUid = templateSrv.replace(nextDS.uid);
+        let nextUid = nextDS.uid;
+        const nextIsTemplate = templateSrv.containsTemplate(nextDSUidOrVariableExpression);
+        if (nextIsTemplate) {
+          nextUid = templateSrv.replace(nextDS.uid);
+        }
         // Queries will only be preserved if the datasource UID of the query matches the UID
         // of the next chosen datasource
         const nextDsQueries = queries.reduce((reduced, currentQuery) => {
           if (currentQuery.datasource) {
-            const currUid = templateSrv.replace(currentQuery.datasource.uid);
-            if (currUid === nextUid) {
+            let currUid = currentQuery.datasource.uid;
+            const currIsTemplate = templateSrv.containsTemplate(currUid);
+            if (currIsTemplate) {
+              currUid = templateSrv.replace(currentQuery.datasource.uid);
+            }
+            if (currUid === nextUid && currIsTemplate === nextIsTemplate) {
               currentQuery.refId = getNextRefIdChar(reduced);
               return reduced.concat([currentQuery]);
             }
