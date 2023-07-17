@@ -75,7 +75,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     :focus {
       outline: none !important;
-      box-shadow: 0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main};
+      box-shadow:
+        0 0 0 1px ${theme.colors.background.canvas},
+        0 0 0 3px ${theme.colors.primary.main};
     }
   `,
   label: css`

@@ -2,6 +2,7 @@ package extensions
 
 import (
 	_ "cloud.google.com/go/kms/apiv1"
+	_ "cloud.google.com/go/kms/apiv1/kmspb"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	_ "github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys"
 	_ "github.com/Azure/azure-sdk-for-go/services/keyvault/v7.1/keyvault"
@@ -25,7 +26,6 @@ import (
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/vectordotdev/go-datemath"
 	_ "golang.org/x/time/rate"
-	_ "google.golang.org/genproto/googleapis/cloud/kms/v1"
 )
 
 var IsEnterprise bool = false
