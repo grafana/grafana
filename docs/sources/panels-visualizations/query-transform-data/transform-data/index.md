@@ -244,7 +244,7 @@ Use this transformation on a field value to look up additional fields from an ex
 
 This transformation currently supports spatial data.
 
-For example, if we have this data:
+For example, if you have this data:
 
 | location  | values |
 | --------- | ------ |
