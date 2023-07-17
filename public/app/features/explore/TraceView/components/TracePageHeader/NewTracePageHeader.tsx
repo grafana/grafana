@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import React, { memo, useEffect, useMemo } from 'react';
 
-import { CoreApp, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -30,7 +30,6 @@ import { formatDuration } from '../utils/date';
 
 import TracePageActions from './Actions/TracePageActions';
 import { SpanFilters } from './SpanFilters/SpanFilters';
-import { timestamp, getStyles } from './TracePageHeader';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -66,7 +65,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
     datasourceType,
     setHeaderHeight,
   } = props;
-  const styles = { ...useStyles2(getStyles), ...useStyles2(getNewStyles) };
+  const styles = useStyles2(getNewStyles);
 
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
@@ -82,6 +81,20 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
   if (!trace) {
     return null;
   }
+
+  const timestamp = (trace: Trace, timeZone: TimeZone) => {
+    // Convert date from micro to milli seconds
+    const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
+    const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
+    return match ? (
+      <span className={styles.TracePageHeaderOverviewItemValue}>
+        {match[1]}
+        <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
+      </span>
+    ) : (
+      dateStr
+    );
+  };
 
   const title = (
     <h1 className={cx(styles.title)}>
@@ -109,7 +122,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
       </div>
 
       <div className={styles.subtitle}>
-        <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
+        <span className={styles.timestamp}>{timestamp(trace, timeZone)}</span>
         <span className={styles.tagMeta}>
           {method && method.length > 0 && (
             <Tooltip content={'http.method'} interactive={true}>
@@ -153,6 +166,36 @@ NewTracePageHeader.displayName = 'NewTracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {
+    TracePageHeaderBack: css`
+      label: TracePageHeaderBack;
+      align-items: center;
+      align-self: stretch;
+      background-color: #fafafa;
+      border-bottom: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+      color: inherit;
+      display: flex;
+      font-size: 1.4rem;
+      padding: 0 1rem;
+      margin-bottom: -1px;
+      &:hover {
+        background-color: #f0f0f0;
+        border-color: #ccc;
+      }
+    `,
+    TracePageHeaderOverviewItemValueDetail: cx(
+      css`
+        label: TracePageHeaderOverviewItemValueDetail;
+        color: #aaa;
+      `,
+      'trace-item-value-detail'
+    ),
+    TracePageHeaderOverviewItemValue: css`
+      label: TracePageHeaderOverviewItemValue;
+      &:hover > .trace-item-value-detail {
+        color: unset;
+      }
+    `,
     header: css`
       label: TracePageHeader;
       background-color: ${theme.colors.background.primary};

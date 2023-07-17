@@ -39,7 +39,6 @@ let props = {
   findMatchesIDs: null,
   registerAccessors: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),
-  setTrace: jest.fn(),
   spanNameColumnWidth: 0.5,
   trace,
   uiFind: 'uiFind',
@@ -96,13 +95,5 @@ describe('<VirtualizedTraceViewImpl>', () => {
         name: /Scroll to top/i,
       })
     ).toBeInTheDocument();
-  });
-
-  it('sets the trace for global state.traceTimeline', () => {
-    const traceID = 'some-other-id';
-    const _trace = { ...trace, traceID };
-    props = { ...props, trace: _trace };
-    render(<VirtualizedTraceView {...props} />);
-    expect(jest.mocked(props.setTrace).mock.calls).toEqual([[_trace, props.uiFind]]);
   });
 });

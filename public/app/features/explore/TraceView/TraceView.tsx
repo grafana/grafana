@@ -15,7 +15,7 @@ import {
   PanelData,
   SplitOpen,
 } from '@grafana/data';
-import { config, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -27,14 +27,7 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { changePanelState } from '../state/explorePane';
 
-import {
-  SpanBarOptionsData,
-  Trace,
-  TracePageHeader,
-  NewTracePageHeader,
-  TraceTimelineViewer,
-  TTraceTimeline,
-} from './components';
+import { SpanBarOptionsData, Trace, NewTracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -66,9 +59,6 @@ type Props = {
   scrollElement?: Element;
   scrollElementClass?: string;
   traceProp: Trace;
-  spanFindMatches?: Set<string>;
-  search: string;
-  focusedSpanIdForSearch: string;
   queryResponse: PanelData;
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
@@ -76,7 +66,7 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
-  const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
+  const { traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
 
   const {
     detailStates,
@@ -154,43 +144,31 @@ export function TraceView(props: Props) {
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
-          {config.featureToggles.newTraceViewHeader ? (
-            <>
-              <NewTracePageHeader
-                trace={traceProp}
-                data={props.dataFrames[0]}
-                timeZone={timeZone}
-                search={newTraceViewHeaderSearch}
-                setSearch={setNewTraceViewHeaderSearch}
-                showSpanFilters={showSpanFilters}
-                setShowSpanFilters={setShowSpanFilters}
-                showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-                setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-                setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
-                spanFilterMatches={spanFilterMatches}
-                datasourceType={datasourceType}
-                setHeaderHeight={setHeaderHeight}
-                app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
-              />
-              <SpanGraph
-                trace={traceProp}
-                viewRange={viewRange}
-                updateNextViewRangeTime={updateNextViewRangeTime}
-                updateViewRangeTime={updateViewRangeTime}
-              />
-            </>
-          ) : (
-            <TracePageHeader
-              trace={traceProp}
-              updateNextViewRangeTime={updateNextViewRangeTime}
-              updateViewRangeTime={updateViewRangeTime}
-              viewRange={viewRange}
-              timeZone={timeZone}
-            />
-          )}
+          <NewTracePageHeader
+            trace={traceProp}
+            data={props.dataFrames[0]}
+            timeZone={timeZone}
+            search={newTraceViewHeaderSearch}
+            setSearch={setNewTraceViewHeaderSearch}
+            showSpanFilters={showSpanFilters}
+            setShowSpanFilters={setShowSpanFilters}
+            showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+            setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+            setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
+            spanFilterMatches={spanFilterMatches}
+            datasourceType={datasourceType}
+            setHeaderHeight={setHeaderHeight}
+            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+          />
+          <SpanGraph
+            trace={traceProp}
+            viewRange={viewRange}
+            updateNextViewRangeTime={updateNextViewRangeTime}
+            updateViewRangeTime={updateViewRangeTime}
+          />
           <TraceTimelineViewer
             registerAccessors={noop}
-            findMatchesIDs={config.featureToggles.newTraceViewHeader ? spanFilterMatches : spanFindMatches}
+            findMatchesIDs={spanFilterMatches}
             trace={traceProp}
             datasourceType={datasourceType}
             spanBarOptions={spanBarOptions?.spanBar}
@@ -214,19 +192,13 @@ export function TraceView(props: Props) {
             detailProcessToggle={detailProcessToggle}
             detailTagsToggle={detailTagsToggle}
             detailToggle={toggleDetail}
-            setTrace={noop}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
             linksGetter={() => []}
-            uiFind={props.search}
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={
-              config.featureToggles.newTraceViewHeader
-                ? newTraceViewHeaderFocusedSpanIdForSearch
-                : props.focusedSpanIdForSearch!
-            }
+            focusedSpanIdForSearch={newTraceViewHeaderFocusedSpanIdForSearch}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}
