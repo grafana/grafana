@@ -183,10 +183,19 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
 
           histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
 
-          histCtx.fillStyle = '#ffffff80';
+          // create gradient
+          const lGradient1 = histCtx.createLinearGradient(0, 0, 0, 150);
+          lGradient1.addColorStop(0.5, '#2E3036');
+          lGradient1.addColorStop(1, '#2E303600');
+
+          histCtx.fillStyle = lGradient1;
           histCtx.fill(pRest);
 
-          histCtx.fillStyle = '#ff000080';
+          const lGradient2 = histCtx.createLinearGradient(0, 0, 0, 150);
+          lGradient2.addColorStop(0, '#5794F2');
+          lGradient2.addColorStop(1, '#2E303600');
+
+          histCtx.fillStyle = lGradient2;
           histCtx.fill(pHov);
         }
       }
