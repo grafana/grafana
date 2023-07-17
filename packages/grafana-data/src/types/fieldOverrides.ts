@@ -2,7 +2,17 @@ import { ComponentType } from 'react';
 
 import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { GrafanaTheme2 } from '../themes';
-import { MatcherConfig, FieldConfig, Field, DataFrame, TimeZone } from '../types';
+import {
+  MatcherConfig,
+  FieldConfig,
+  Field,
+  DataFrame,
+  TimeZone,
+  ScopedVars,
+  ValueLinkConfig,
+  LinkModel,
+  DataLink,
+} from '../types';
 
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { OptionEditorConfig } from './options';
@@ -112,6 +122,18 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
   shouldApply: (field: Field) => boolean;
 }
 
+export type InternalLinkSupplierOptions = {
+  frame: DataFrame;
+  field: Field;
+  fieldScopedVars: ScopedVars;
+  replaceVariables: InterpolateFunction;
+  timeZone?: TimeZone;
+  config: ValueLinkConfig;
+  link: DataLink;
+};
+
+export type InternalDataLinkSupplier = (options: InternalLinkSupplierOptions) => LinkModel<Field> | undefined;
+
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
@@ -119,6 +141,7 @@ export interface ApplyFieldOverrideOptions {
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
+  internalDataLinkSupplier?: InternalDataLinkSupplier;
 }
 
 export enum FieldConfigProperty {

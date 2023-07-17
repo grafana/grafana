@@ -25,6 +25,7 @@ import {
   FieldConfigSource,
   FieldOverrideContext,
   FieldType,
+  InternalDataLinkSupplier,
   InterpolateFunction,
   LinkModel,
   NumericRange,
@@ -203,7 +204,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field,
         field.state!.scopedVars,
         context.replaceVariables,
-        options.timeZone
+        options.timeZone,
+        options.internalDataLinkSupplier
       );
     }
 
@@ -358,20 +360,37 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
+const defaultInternalDataLinkSupplier: InternalDataLinkSupplier = (options) => {
+  // For internal links at the moment only destination is Explore.
+  const { link, fieldScopedVars, field, replaceVariables } = options;
+  if (!link.internal) {
+    return undefined;
+  }
+  return mapInternalLinkToExplore({
+    link,
+    internalLink: link.internal,
+    scopedVars: fieldScopedVars,
+    field,
+    range: link.internal.range ?? ({} as any),
+    replaceVariables,
+  });
+};
+
 export const getLinksSupplier =
   (
     frame: DataFrame,
     field: Field,
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
-    timeZone?: TimeZone
+    timeZone?: TimeZone,
+    internalDataLinkSupplier?: InternalDataLinkSupplier
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
 
-    return field.config.links.map((link: DataLink) => {
+    const linkModels = field.config.links.map((link: DataLink) => {
       const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
       const dataLinkScopedVars = {
         ...fieldScopedVars,
@@ -393,7 +412,7 @@ export const getLinksSupplier =
           href: link.url,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
-          onClick: (evt, origin) => {
+          onClick: (evt: MouseEvent, origin: Field) => {
             link.onClick!({
               origin: origin ?? field,
               e: evt,
@@ -405,14 +424,13 @@ export const getLinksSupplier =
       }
 
       if (link.internal) {
-        // For internal links at the moment only destination is Explore.
-        return mapInternalLinkToExplore({
-          link,
-          internalLink: link.internal,
-          scopedVars: dataLinkScopedVars,
+        return (internalDataLinkSupplier || defaultInternalDataLinkSupplier)({
+          frame,
           field,
-          range: link.internal.range ?? ({} as any),
+          fieldScopedVars,
           replaceVariables,
+          config,
+          link,
         });
       }
       let href = link.onBuildUrl
@@ -436,6 +454,8 @@ export const getLinksSupplier =
       };
       return info;
     });
+
+    return linkModels.filter((link): link is LinkModel => !!link);
   };
 
 /**
@@ -478,7 +498,8 @@ export function useFieldOverrides(
   data: PanelData | undefined,
   timeZone: string,
   theme: GrafanaTheme2,
-  replace: InterpolateFunction
+  replace: InterpolateFunction,
+  internalDataLinkSupplier?: InternalDataLinkSupplier
 ): PanelData | undefined {
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const structureRev = useRef(0);
@@ -510,9 +531,10 @@ export function useFieldOverrides(
         replaceVariables: replace,
         theme,
         timeZone,
+        internalDataLinkSupplier,
       }),
     };
-  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace]);
+  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace, internalDataLinkSupplier]);
 }
 
 /**

@@ -9,6 +9,7 @@ import {
   SplitOpen,
   CoreApp,
   DataFrame,
+  InternalDataLinkSupplier,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
@@ -89,6 +90,12 @@ export interface PanelContext {
    * in a the Promise resolving to a false value.
    */
   onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
+
+  /**
+   * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
+   * @internal
+   */
+  internalDataLinkSupplier?: InternalDataLinkSupplier;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

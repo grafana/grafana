@@ -31,8 +31,15 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
-    usePanelContext();
+  const {
+    sync,
+    canAddAnnotations,
+    onThresholdsChange,
+    canEditThresholds,
+    showThresholds,
+    onSplitOpen,
+    internalDataLinkSupplier,
+  } = usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
@@ -80,7 +87,13 @@ export const TimeSeriesPanel = ({
     >
       {(config, alignedDataFrame) => {
         if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
-          alignedDataFrame = regenerateLinksSupplier(alignedDataFrame, frames, replaceVariables, timeZone);
+          alignedDataFrame = regenerateLinksSupplier(
+            alignedDataFrame,
+            frames,
+            replaceVariables,
+            timeZone,
+            internalDataLinkSupplier
+          );
         }
 
         return (

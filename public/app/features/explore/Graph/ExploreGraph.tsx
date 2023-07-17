@@ -42,6 +42,7 @@ import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panel
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { useExploreInternalDataLinkSupplier } from '../hooks/useExploreDataLinksSupplier';
 
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
@@ -126,6 +127,8 @@ export function ExploreGraph({
     return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
   }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
 
+  const internalDataLinkSupplier = useExploreInternalDataLinkSupplier(splitOpenFn, timeRange);
+
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
       fieldConfig: styledFieldConfig,
@@ -134,8 +137,9 @@ export function ExploreGraph({
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
+      internalDataLinkSupplier,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, internalDataLinkSupplier]);
 
   const structureRev = useStructureRev(dataWithConfig);
 
@@ -159,6 +163,7 @@ export function ExploreGraph({
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
+    internalDataLinkSupplier,
   };
 
   const panelOptions: TimeSeriesOptions = useMemo(
