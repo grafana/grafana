@@ -227,7 +227,7 @@ You could prepare the data to be used by a [Time series panel]({{< relref "../..
 - Replace all fields: true
 - Keep time: true
 
-This will output:
+This will generate the following output:
 
 | Timestamp           | my_value |
 | ------------------- | -------- |
