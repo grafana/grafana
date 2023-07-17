@@ -10,7 +10,6 @@ lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,f
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,preview,@grafana/backend-platform,false,false,false,false
 storage,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
-exploreMixedDatasource,GA,@grafana/explore-squad,false,false,false,true
 newTraceViewHeader,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 correlations,preview,@grafana/explore-squad,false,false,false,false
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false,false

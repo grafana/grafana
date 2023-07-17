@@ -51,10 +51,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagExploreMixedDatasource
-	// Enable mixed datasource in Explore
-	FlagExploreMixedDatasource = "exploreMixedDatasource"
-
 	// FlagNewTraceViewHeader
 	// Shows the new trace view header
 	FlagNewTraceViewHeader = "newTraceViewHeader"
