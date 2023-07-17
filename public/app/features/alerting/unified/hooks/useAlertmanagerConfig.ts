@@ -1,26 +1,23 @@
-import { useEffect } from 'react';
+import { SerializedError } from '@reduxjs/toolkit';
 
-import { useDispatch } from 'app/types';
+import { alertmanagerApi } from '../api/alertmanagerApi';
 
-import { fetchAlertManagerConfigAction } from '../state/actions';
-import { initialAsyncRequestState } from '../utils/redux';
+type Options = {
+  refetchOnFocus: boolean;
+  refetchOnReconnect: boolean;
+};
 
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
+// TODO refactor this so we can just call "alertmanagerApi.endpoints.getAlertmanagerConfiguration" everywhere
+// and remove this hook since it adds little value
+export function useAlertmanagerConfig(amSourceName?: string, options?: Options) {
+  const fetchConfig = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(amSourceName ?? '', {
+    ...options,
+    skip: !amSourceName,
+  });
 
-export function useAlertmanagerConfig(amSourceName?: string) {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    if (amSourceName) {
-      dispatch(fetchAlertManagerConfigAction(amSourceName));
-    }
-  }, [amSourceName, dispatch]);
-
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const { result, loading, error } = (amSourceName && amConfigs[amSourceName]) || initialAsyncRequestState;
-
-  const config = result?.alertmanager_config;
-
-  return { result, config, loading, error };
+  return {
+    ...fetchConfig,
+    // TODO refactor to get rid of this type assertion
+    error: fetchConfig.error as SerializedError,
+  };
 }
