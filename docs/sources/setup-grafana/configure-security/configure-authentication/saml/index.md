@@ -8,10 +8,14 @@ aliases:
   - ../../../enterprise/saml/enable-saml/
   - ../../../enterprise/saml/set-up-saml-with-okta/
   - ../../../enterprise/saml/troubleshoot-saml/
-description: Learn how to configure SAML authentication in Grafana.
-menuTitle: Configure SAML authentication
-title: Configure SAML authentication in Grafana
-weight: 1100
+description: Learn how to configure SAML authentication in Grafana's configuration file.
+menuTitle: SAML
+labels:
+  products:
+    - cloud
+    - enterprise
+title: Configure SAML authentication using the configuration file
+weight: 500
 ---
 
 # Configure SAML authentication in Grafana

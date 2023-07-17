@@ -9,7 +9,8 @@ keywords:
   - documentation
   - proxy
 title: Configure auth proxy authentication
-weight: 1300
+menuTitle: Auth proxy
+weight: 1500
 ---
 
 # Configure auth proxy authentication
