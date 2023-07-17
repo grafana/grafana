@@ -298,7 +298,7 @@ async function removeQueriesWithInvalidDatasource(queries: DataQuery[]) {
 
 /**
  * Returns the datasource that an explore pane should be using.
- * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed and `allowMixed` is false.
+ * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed.
  * Otherwise the datasource will be extracetd from the the first query specifying a valid datasource.
  *
  * If there's no datasource in the queries, the last used datasource will be used.
@@ -322,7 +322,7 @@ async function getPaneDatasource(
     } catch (_) {}
   }
 
-  // TODO: if queries have multiple datasources and allowMixed is true, we should return mixed datasource
+  // TODO: if queries have multiple datasources we should return mixed datasource
   // Else we try to find a datasource in the queries, returning the first one that exists
   const queriesWithDS = queries.filter((q) => q.datasource);
   for (const query of queriesWithDS) {

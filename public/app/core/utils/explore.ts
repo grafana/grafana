@@ -74,7 +74,6 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     .map((t) => omit(t, 'legendFormat'))
     .filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
   let url: string | undefined;
-  // if the mixed datasource is not enabled for explore, choose only one datasource
 
   if (exploreDatasource) {
     const range = timeSrv.timeRangeForUrl();
