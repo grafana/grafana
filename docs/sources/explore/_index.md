@@ -59,6 +59,46 @@ In split view, timepickers for both panels can be linked (if you change one, the
 
 To close the newly created query, click on the Close Split button.
 
+## Share Explore URLs
+
+When using Explore, the URL in the browser address bar is updated as you make changes to the queries. This allows you to share the URLs with others or bookmark them for later use.
+
+### Generating Explore URLs from external tools
+
+Explore URLs have a defined structure, you can build an URL from external tools and open it in Grafana. The URL structure is:
+
+```
+http://<grafana_url>/explore?panes=<panes>&schemaVersion=<schema_version>&orgId=<org_id>
+```
+
+where:
+
+- `org_id` is the organization ID
+- `schema_version` is the schema version, currently only `1` is supported
+- `panes` is a url-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the follwing schema:
+
+```ts
+{
+  datasource: string; // the datasource UID, or `-- Mixed --` for mixed datasources
+  queries: {
+    // the queries for this pane
+    refId: string; // an alphanumeric identifier for this query, must be unique within the pane, i.e. "A", "B", "C", etc.
+    datasource: {
+      uid: string; // the datasource UID ie: "AD7864H6422"
+      type: string; // the datasource type-id, i.e: "loki"
+    }
+    // ... any other datasource-specific query parameters
+  }
+  [];
+  range: {
+    from: string | number; // the start time, in milliseconds since epoch
+    to: string | number; // the end time, in milliseconds since epoch
+  }
+}
+```
+
+> **Note**: the `from` and `to` also accepts relative ranges defined in [Time units and relative ranges](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/?pg=blog&plcmt=body-txt#time-units-and-relative-ranges)
+
 ## Share shortened link
 
 {{% admonition type="note" %}}
