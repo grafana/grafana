@@ -301,6 +301,6 @@ export const hasQueryModificationSupport = <TQuery extends DataQuery>(
  */
 export const hasQueryAnalysisSupport = <TQuery extends DataQuery>(
   datasource: unknown
-): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
+): datasource is DataSourceWithQueryAnalysisSupport<TQuery> => {
   return datasource !== null && typeof datasource === 'object' && 'analyzeQuery' in datasource;
 };
