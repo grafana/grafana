@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
@@ -41,6 +41,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
   const rootFoldersState = useAsync(fetchRootFolders);
   const selectedFolder = useGetFolderQuery(value || skipToken);
+  const overlayId = useId();
 
   const searchState = useAsync(async () => {
     if (!search) {
@@ -193,6 +194,10 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     setFocusedItemIndex(0);
   }, [search, searchState.value]);
 
+  useEffect(() => {
+    document.getElementById(tree[focusedItemIndex]?.item.uid)?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [focusedItemIndex, tree]);
+
   let label = selectedFolder.data?.title;
   if (value === '') {
     label = 'Dashboards';
@@ -206,6 +211,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         variant="secondary"
         icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
+        aria-label={label ? `Select folder: ${label} currently selected` : undefined}
       >
         {selectedFolder.isLoading ? (
           <Skeleton width={100} />
@@ -228,11 +234,19 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         className={styles.search}
         onKeyDown={handleKeyDown}
         onChange={(e) => setSearch(e.currentTarget.value)}
+        aria-autocomplete="list"
+        aria-expanded
+        aria-haspopup
+        aria-label="Use up and down arrows to navigate, left and right arrows to expand or collapse, enter to select, escape to cancel."
+        aria-controls={overlayId}
+        aria-owns={overlayId}
+        aria-activedescendant={tree[focusedItemIndex]?.item.uid}
         role="combobox"
         suffix={<Icon name="search" />}
       />
       <fieldset
         ref={setTooltipRef}
+        id={overlayId}
         {...getTooltipProps({
           className: styles.tableWrapper,
           style: {

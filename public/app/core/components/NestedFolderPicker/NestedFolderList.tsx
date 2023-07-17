@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useId, useMemo, useRef } from 'react';
+import React, { useCallback, useId, useMemo, useRef } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -48,7 +48,7 @@ export function NestedFolderList({
   );
 
   return (
-    <div className={styles.table}>
+    <div className={styles.table} role="tree">
       {items.length > 0 ? (
         <List
           height={ROW_HEIGHT * Math.min(6.5, items.length)}
@@ -80,15 +80,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect } = data;
   const { item, isOpen, level } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
+  const labelId = useId();
+  const children = items.filter((i) => i.parentUID === item.uid).map((i) => i.item.uid);
 
-  const id = useId() + `-uid-${item.uid}`;
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    if (index === focusedItemIndex) {
-      rowRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
-  }, [focusedItemIndex, rowRef, index]);
 
   const handleExpand = useCallback(
     (ev: React.MouseEvent<HTMLButtonElement>) => {
@@ -123,10 +118,15 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         [styles.rowFocused]: index === focusedItemIndex,
         [styles.rowSelected]: item.uid === selectedFolder,
       })}
-      role="treeitem"
-      aria-selected={item.uid === selectedFolder}
       tabIndex={-1}
       onClick={handleSelect}
+      aria-expanded={isOpen}
+      aria-selected={item.uid === selectedFolder}
+      aria-labelledby={labelId}
+      aria-level={level}
+      role="treeitem"
+      aria-owns={children.length > 0 ? children.join(' ') : undefined}
+      id={item.uid}
     >
       <div className={styles.rowBody}>
         <Indent level={level} />
@@ -143,7 +143,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <span className={styles.folderButtonSpacer} />
         )}
 
-        <label className={styles.label}>
+        <label className={styles.label} id={labelId}>
           <Text as="span" truncate>
             {item.title}
           </Text>
