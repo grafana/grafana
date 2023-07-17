@@ -497,7 +497,10 @@ function useGetColumns(
       id: 'actions',
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
-        <Authorize actions={[permissions.update, permissions.delete]}>
+        <Authorize
+          actions={[permissions.update, permissions.delete, permissions.provisioning.read]}
+          fallback={isOrgAdmin()}
+        >
           <div className={tableStyles.actionsCell}>
             {!isVanillaAM && !provisioned && (
               <UpdateActions
