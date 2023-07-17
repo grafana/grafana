@@ -43,7 +43,7 @@ In this documentation you can find:
 ### **Dont's**
 
 - When its purpose is to trigger an action, please use a Button or IconButton component
-- When it still redirects the user but it is not surrounded by text - for example, being in a row with more buttons -, please use the LinkButton component.
+- When it still redirects the user but you need it to have a button appearence, please use the LinkButton component.
 - When the link is just comprised by an icon use IconButton component.
 
   <br />
@@ -82,7 +82,7 @@ The following is the default behaviour and so, it will be applied according to i
 
 ### <a name="standalone-behaviour"/>**Standalone**:
 
-- _Initial appearence_: ‘Primary’ color and not underlined at first.
+- _Initial appearence_: Blue and not underlined at first.
 - _On hover_: blue and underlined
   <Preview>
     <TextLink href="https://google.es" inline={false} external>
@@ -91,17 +91,17 @@ The following is the default behaviour and so, it will be applied according to i
   </Preview>
   Through the color prop the user will be able to change this value, but the rest will be kept.{' '}
 
-_Example_: A user renders an external and standalone _text link_ seting the color value to 'disabled'.
-The text link will be 'grey', as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
+_Example_: A user renders an external and standalone _text link_ setting the color value to 'primary'.
+The text link will be 'white' in dark theme or 'black' in light theme, as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
 
 <Preview>
-  <TextLink href="https://google.es" color="disabled" inline={false} external>
+  <TextLink href="https://google.es" color="primary" inline={false} external>
     This an external standalone link example
   </TextLink>
 </Preview>
 
 ```jsx
-<TextLink href="https://google.es" color="disabled" inline={false} external>
+<TextLink href="https://google.es" color="primary" inline={false} external>
   This an external standalone link example
 </TextLink>
 ```
