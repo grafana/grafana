@@ -32,19 +32,29 @@ In this documentation you can find:
 
 <br />
 
-### **Do's**
+### **When to use**
 
 - To redirect the user to another page, external or internal
 - When redirecting the user through a link in a word or phrase within a paragraph.
 - When redirecting the user through a link in a word or phrase, not within a paragraph but surrounded by other blocks of text.
 
-<br />
-
-### **Dont's**
+### **When not to use**
 
 - When its purpose is to trigger an action, please use a Button or IconButton component
-- When it still redirects the user but you need it to have a button appearence, please use the LinkButton component.
+- When it still redirects the user but it is not surrounded by text - for example, being in a row with more buttons -, please use the LinkButton component.
 - When the link is just comprised by an icon use IconButton component.
+
+### **Do’s**
+
+- Use the default styles as the first and main option as they are though to be accessible and consistent.
+- Use the external icon (the default one) when the TextLink goes to an external page as its meaning is broadly known.
+- In case the default icon does not fit, please use one of the icons of our [library](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
+
+### **Don’ts**
+
+- Do not use ‘primary’ color in a standalone link unless it is a special use case such as the ‘Dashboard list’, menu items or similar.
+- Do not override any styles in any way. Instead, ask the Design System team for an improvement of this component.
+- Do not attempt to add a new icon. You should fulfil a contribution path to first add the icon to our Design System and then use it in this component.
 
   <br />
   <br />
