@@ -68,9 +68,7 @@ Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.
 
 You can also specify the SSL/TLS configuration used by the client.
 
-- Set `tls_client_cert` to the path of the certificate.
-- Set `tls_client_key` to the path containing the key.
-- Set `tls_client_ca` to the path containing a trusted certificate authority list.
+## Steps
 
 `tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
@@ -79,16 +77,16 @@ Available values are `AutoDetect`, `InParams` and `InHeader`. By default, `AutoD
 
 Set `empty_scopes` to true to use an empty scope during authentication. By default, Grafana uses `user:email` as scope.
 
-### Email address
+For the callback URL to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
 
 Grafana determines a user's email address by querying the OAuth provider until it finds an e-mail address:
 
-1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
-1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
-   **Note**: Only available in Grafana v6.4+.
-1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
-1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
-1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
+| Field                        | Description                                                                                                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `client_id`, `client_secret` | These values must match the client ID and client secret from your OAuth2 app.                                                                                                                     |
+| `auth_url`                   | The authorization endpoint of your OAuth2 provider.                                                                                                                                               |
+| `api_url`                    | The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo). |
+| `enabled`                    | Enables generic OAuth2 authentication. Set this value to `true`.                                                                                                                                  |
 
 ### Groups / Teams
 
@@ -377,7 +375,8 @@ Example:
 role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || contains(info.roles[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
-## Team synchronization
+By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
 > Available in Grafana Enterprise v8.1 and later versions.
 
