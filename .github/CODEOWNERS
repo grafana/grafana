@@ -571,6 +571,7 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
+/.github/workflows/auto-milestone.yml @grafana/grafana-delivery
 /.github/workflows/backport.yml @grafana/grafana-delivery
 /.github/workflows/bump-version.yml @grafana/grafana-delivery
 /.github/workflows/close-milestone.yml @grafana/grafana-delivery
