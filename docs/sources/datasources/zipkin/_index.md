@@ -268,11 +268,6 @@ If the file has multiple traces, Grafana visualizes its first trace.
 
 ## Span Filters
 
-{{% admonition type="note" %}}
-This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
-
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
 Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
