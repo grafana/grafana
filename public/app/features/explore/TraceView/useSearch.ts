@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { filterSpansNewTraceViewHeader, TraceSpan } from './components';
+import { filterSpans, TraceSpan } from './components';
 
 export interface SearchProps {
   serviceName?: string;
@@ -44,7 +44,7 @@ export const defaultFilters = {
 export function useSearch(spans?: TraceSpan[]) {
   const [search, setSearch] = useState<SearchProps>(defaultFilters);
   const spanFilterMatches: Set<string> | undefined = useMemo(() => {
-    return spans && filterSpansNewTraceViewHeader(search, spans);
+    return spans && filterSpans(search, spans);
   }, [search, spans]);
 
   return { search, setSearch, spanFilterMatches };

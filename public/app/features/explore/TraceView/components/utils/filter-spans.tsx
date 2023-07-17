@@ -20,7 +20,7 @@ import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export function filterSpansNewTraceViewHeader(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
