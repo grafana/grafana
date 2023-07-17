@@ -146,7 +146,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 
 	old, err := g.GetACL()
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
+		return response.Error(http.StatusInternalServerError, "Error while checking folder permissions", err)
 	}
 	if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgID, folder.UID, true, items, old); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create permission", err)
