@@ -14,7 +14,7 @@ import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
-import { useDatasource } from '../../hooks';
+import { useDatasource } from '../../../connections/hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';

@@ -3,7 +3,7 @@ import React from 'react';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceRef } from '@grafana/schema';
 
-import { useDatasources } from '../../hooks';
+import { useDatasources } from '../../../connections/hooks';
 
 import { DataSourceCard } from './DataSourceCard';
 import { isDataSourceMatch } from './utils';

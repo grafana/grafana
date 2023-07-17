@@ -6,7 +6,7 @@ import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafa
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../../connections/hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
