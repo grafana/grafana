@@ -2,7 +2,8 @@ package modules
 
 const (
 	// All includes all modules necessary for Grafana to run as a standalone application.
-	All                string = "all"
+	All string = "all"
+	// BackgroundServices includes all Grafana services that run in the background
 	BackgroundServices string = "background-services"
 	// CertGenerator generates certificates for grafana-apiserver
 	CertGenerator string = "cert-generator"
