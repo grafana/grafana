@@ -82,6 +82,10 @@ Grafana uses a refresh token to obtain a new access token without requiring the 
 
 By default, Grafana includes the `access_type=offline` parameter in the authorization request to request a refresh token.
 
+Refresh token fetching and access token expiration check is enabled by default for the Google provider since Grafana v10.1.0 if the `accessTokenExpirationCheck` feature toggle is enabled. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+
 ### Configure automatic login
 
 Set `auto_login` option to true to attempt login automatically, skipping the login screen.

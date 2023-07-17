@@ -212,10 +212,9 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 
 	if !s.skipOrgRoleSync {
 		var grafanaAdmin bool
-		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, teams, true)
-
-		if s.roleAttributeStrict && !role.IsValid() {
-			return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
+		if err != nil {
+			return nil, err
 		}
 
 		if s.allowAssignGrafanaAdmin {

@@ -374,6 +374,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onPermalinkClick = async (row: LogRowModel) => {
+    // this is an extra check, to be sure that we are not
+    // creating permalinks for logs without an id-field.
+    // normally it should never happen, because we do not
+    // display the permalink button in such cases.
+    if (row.rowId === undefined) {
+      return;
+    }
+
     // get explore state, add log-row-id and make timerange absolute
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
