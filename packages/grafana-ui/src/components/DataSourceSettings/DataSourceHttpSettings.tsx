@@ -128,9 +128,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     dataSourceConfig.url
   );
 
-  const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
-  `;
+  const notValidStyle = css({
+    boxShadow: `inset 0 0px 5px ${theme.v1.palette.red}`,
+  });
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 

@@ -71,13 +71,16 @@ export const binaryScalarDefs = [
   },
 ];
 
-export const binaryScalarOperatorToOperatorName = binaryScalarDefs.reduce((acc, def) => {
-  acc[def.sign] = {
-    id: def.id,
-    comparison: def.comparison,
-  };
-  return acc;
-}, {} as Record<string, { id: string; comparison?: boolean }>);
+export const binaryScalarOperatorToOperatorName = binaryScalarDefs.reduce(
+  (acc, def) => {
+    acc[def.sign] = {
+      id: def.id,
+      comparison: def.comparison,
+    };
+    return acc;
+  },
+  {} as Record<string, { id: string; comparison?: boolean }>
+);
 
 // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
 // both the operator and the operand in a single input

@@ -10,6 +10,8 @@ keywords:
   - packages
 description: How to package a plugin
 weight: 100
+aliases:
+  - ../package-a-plugin/
 ---
 
 # Package a plugin

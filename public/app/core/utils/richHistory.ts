@@ -8,7 +8,6 @@ import { createErrorNotification, createWarningNotification } from 'app/core/cop
 import { dispatch } from 'app/store/store';
 import { RichHistoryQuery } from 'app/types/explore';
 
-import { config } from '../config';
 import {
   RichHistoryResults,
   RichHistoryServiceError,
@@ -218,7 +217,7 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  */
 export function createDatasourcesList() {
   return getDataSourceSrv()
-    .getList({ mixed: config.featureToggles.exploreMixedDatasource === true })
+    .getList({ mixed: true })
     .map((dsSettings) => {
       return {
         name: dsSettings.name,

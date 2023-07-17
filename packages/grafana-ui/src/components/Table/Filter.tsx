@@ -48,12 +48,12 @@ export const Filter = ({ column, field, tableStyles }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  filterIconEnabled: css`
-    label: filterIconEnabled;
-    color: ${theme.colors.primary.text};
-  `,
-  filterIconDisabled: css`
-    label: filterIconDisabled;
-    color: ${theme.colors.text.disabled};
-  `,
+  filterIconEnabled: css({
+    label: 'filterIconEnabled',
+    color: theme.colors.primary.text,
+  }),
+  filterIconDisabled: css({
+    label: 'filterIconDisabled',
+    color: theme.colors.text.disabled,
+  }),
 });

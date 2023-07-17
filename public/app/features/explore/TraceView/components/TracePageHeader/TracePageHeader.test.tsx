@@ -24,7 +24,7 @@ export const trace = {
   spans: [
     {
       traceID: '164afda25df92413',
-      spanID: '164afda25df92413',
+      spanID: '264afda25df92413',
       operationName: 'HTTP Client',
       serviceName: 'serviceA',
       subsidiarilyReferencedBy: [],
@@ -33,7 +33,7 @@ export const trace = {
       logs: [],
       references: [],
       tags: [],
-      processID: '164afda25df92413',
+      processID: '264afda25df92413',
       flags: 0,
       process: {
         serviceName: 'lb',
@@ -47,7 +47,7 @@ export const trace = {
     },
     {
       traceID: '164afda25df92413',
-      spanID: '164afda25df92413',
+      spanID: '364afda25df92413',
       operationName: 'HTTP Client',
       serviceName: 'serviceB',
       subsidiarilyReferencedBy: [],
@@ -72,7 +72,7 @@ export const trace = {
           value: `200`,
         },
       ],
-      processID: '164afda25df92413',
+      processID: '364afda25df92413',
       flags: 0,
       process: {
         serviceName: 'lb',
@@ -84,10 +84,62 @@ export const trace = {
       childSpanCount: 0,
       warnings: [],
     },
+    {
+      traceID: '164afda25df92413',
+      spanID: '464afda25df92413',
+      operationName: 'HTTP Server',
+      serviceName: 'serviceC',
+      subsidiarilyReferencedBy: [],
+      startTime: 1675602037286989,
+      duration: 5685,
+      logs: [],
+      references: [],
+      tags: [
+        {
+          key: 'http.url',
+          type: 'String',
+          value: `/v2/gamma/792edh2w897y2huehd2h89`,
+        },
+        {
+          key: 'http.method',
+          type: 'String',
+          value: `POST`,
+        },
+        {
+          key: 'http.status_code',
+          type: 'String',
+          value: `200`,
+        },
+      ],
+      processID: '464afda25df92413',
+      flags: 0,
+      process: {
+        serviceName: 'db',
+        tags: [],
+      },
+      relativeStartTime: 0,
+      depth: 0,
+      hasChildren: false,
+      childSpanCount: 0,
+      warnings: [],
+    },
   ],
   traceID: '8bb35a31-eb64-512d-aaed-ddd61887bb2b',
   traceName: 'serviceA: GET',
-  processes: {},
+  processes: {
+    '264afda25df92413': {
+      serviceName: 'serviceA',
+      tags: [],
+    },
+    '364afda25df92413': {
+      serviceName: 'serviceB',
+      tags: [],
+    },
+    '464afda25df92413': {
+      serviceName: 'serviceC',
+      tags: [],
+    },
+  },
   duration: 2355515,
   startTime: 1675605056289000,
   endTime: 1675605058644515,

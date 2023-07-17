@@ -136,13 +136,13 @@ describe('TraceViewContainer', () => {
   it('can select next/prev results', async () => {
     config.featureToggles.newTraceViewHeader = true;
     renderTraceViewContainer();
-    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters' });
+    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters 3 spans Prev Next' });
     await user.click(spanFiltersButton);
 
     const nextResultButton = screen.getByRole('button', { name: 'Next result button' });
     const prevResultButton = screen.getByRole('button', { name: 'Prev result button' });
-    expect((nextResultButton as HTMLButtonElement)['disabled']).toBe(true);
-    expect((prevResultButton as HTMLButtonElement)['disabled']).toBe(true);
+    expect(nextResultButton.getAttribute('tabindex')).toBe('-1');
+    expect(prevResultButton.getAttribute('tabindex')).toBe('-1');
 
     await user.click(screen.getByLabelText('Select tag key'));
     const tagOption = screen.getByText('component');
@@ -161,8 +161,8 @@ describe('TraceViewContainer', () => {
       ).toContain('rowMatchingFilter');
     });
 
-    expect((nextResultButton as HTMLButtonElement)['disabled']).toBe(false);
-    expect((prevResultButton as HTMLButtonElement)['disabled']).toBe(false);
+    expect(nextResultButton.getAttribute('tabindex')).toBe('0');
+    expect(prevResultButton.getAttribute('tabindex')).toBe('0');
     await user.click(nextResultButton);
     await waitFor(() => {
       expect(
@@ -186,7 +186,7 @@ describe('TraceViewContainer', () => {
   it('show matches only works as expected', async () => {
     config.featureToggles.newTraceViewHeader = true;
     renderTraceViewContainer();
-    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters' });
+    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters 3 spans Prev Next' });
     await user.click(spanFiltersButton);
 
     await user.click(screen.getByLabelText('Select tag key'));
