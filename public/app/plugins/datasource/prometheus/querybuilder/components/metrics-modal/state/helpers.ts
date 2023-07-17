@@ -200,10 +200,10 @@ export async function getBackendSearchMetrics(
   const queryString = metricText !== '' ? regexifyLabelValuesQueryString(metricText) : '';
 
   const labelsParams = labels.map((label) => {
-    return `,${label.label}="${label.value}"`;
+    return `,${label.label}${label.op}"${label.value}"`;
   });
 
-  const params = `label_values({__name__=~".+${queryString}"${labels ? labelsParams.join() : ''}},__name__)`;
+  const params = `label_values({__name__=~".+${queryString}"${labels ? labelsParams.join('') : ''}},__name__)`;
 
   const results = datasource.metricFindQuery(params);
 

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { SelectableValue } from '@grafana/data';
 
+import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
 import { HaystackDictionary, MetricsData } from '../types';
 
@@ -31,6 +32,7 @@ export const stateSlice = createSlice({
     buildLabels: (state, action: PayloadAction<MetricsLabelsData>) => {
       state.isLoading = action.payload.isLoading;
       state.labelNames = action.payload.labelNames;
+      state.labelNamesStale = false;
     },
     buildMetrics: (state, action: PayloadAction<MetricsModalMetadata>) => {
       state.isLoading = action.payload.isLoading;
@@ -52,6 +54,14 @@ export const stateSlice = createSlice({
     setLabelValues: (state, action: PayloadAction<MetricsLabelValuesData>) => {
       state.isLoading = action.payload.isLoading;
       state.labelValues[action.payload.labelName] = action.payload.labelValues;
+
+      if (action.payload.clearStale) {
+        // If we are updating a label value
+        const staleLabelIndex = state.staleLabelValues.findIndex((labelName) => labelName === action.payload.labelName);
+        if (staleLabelIndex !== -1) {
+          state.staleLabelValues.splice(staleLabelIndex, 1);
+        }
+      }
     },
     setQuery: (state, action: PayloadAction<{ query: PromVisualQuery; refreshMetrics?: boolean }>) => {
       state.query = { ...state.query, ...action.payload.query };
@@ -104,6 +114,7 @@ export const stateSlice = createSlice({
         }
       }
       state.metricsStale = true;
+      state.labelNamesStale = true;
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -164,7 +175,22 @@ export const stateSlice = createSlice({
  * @returns
  */
 export function initialState(query: PromVisualQuery): MetricsModalState {
+  /**
+   * Get the initial label values from the query
+   * @param labels
+   */
+  const getInitialLabelValues = (labels: QueryBuilderLabelFilter[]): Record<LabelName, LabelValue[]> => {
+    let labelValues: Record<LabelName, LabelValue[]> = {};
+    labels.forEach((label) => {
+      labelValues[label.label] = [...(labelValues[label.label] ?? []), ...label.value.split('|')];
+    });
+
+    return labelValues;
+  };
+
   console.log('initial state');
+
+  const initialLabelValues = getInitialLabelValues(query.labels);
   return {
     isLoading: true,
     metrics: [],
@@ -187,14 +213,14 @@ export function initialState(query: PromVisualQuery): MetricsModalState {
     disableTextWrap: query?.disableTextWrap ?? false,
     showAdditionalSettings: false,
     labelSearchQuery: '',
-    labelNames: [],
-    labelValues: {},
-    metricsStale: false,
+    labelNames: query.labels.map((label) => label.label),
+    labelValues: getInitialLabelValues(query.labels),
+    metricsStale: !!query.metric, // need to query on initial load if metric is defined
     labelNamesStale: false,
     query: query,
     initialQuery: query,
     initialMetrics: [],
-    staleLabelValues: [],
+    staleLabelValues: Object.keys(initialLabelValues),
   };
 }
 
@@ -262,7 +288,8 @@ export interface MetricsModalState {
   /** mark when the metrics are stale @todo remove? */
   metricsStale: boolean;
   labelNamesStale: boolean;
-  staleLabelValues: LabelValue[];
+  // Need to clean this up, but when label values are stale, we need to requery them by label name
+  staleLabelValues: LabelName[];
   /** The pending query changes */
   query: PromVisualQuery;
   /** The initial query state, needed for reset */
@@ -291,6 +318,7 @@ export type MetricsLabelValuesData = {
   isLoading: boolean;
   labelName: string;
   labelValues: string[];
+  clearStale: boolean;
 };
 
 // for updating the settings in the PromQuery model

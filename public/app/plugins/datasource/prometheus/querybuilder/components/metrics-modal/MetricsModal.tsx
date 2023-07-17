@@ -7,6 +7,7 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Checkbox, CollapsableSection, Input, Modal, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
+import { promQueryModeller } from '../../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
@@ -114,15 +115,35 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   useEffect(() => {
     if (state.labelNamesStale) {
-      getLabelNames(state.query.metric, datasource);
+      const expr = promQueryModeller.renderLabels(state.query.labels);
+      console.log('getLabelNames', state.query.metric + expr);
+      dispatch(setIsLoading(true));
+      getLabelNames(state.query.metric + expr, datasource).then((data) => {
+        dispatch(
+          buildLabels({
+            isLoading: false,
+            labelNames: data,
+          })
+        );
+      });
     }
-
     // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.labelNamesStale]);
 
+  /**
+   * For all of the stale labels, fetch their values from the datasource in sequence
+   * @todo, parallel is faster, but could folks ddos their prometheus instance?
+   */
+  async function fetchLabelsInSequence() {
+    for (let i = 0; i < state.staleLabelValues.length; i++) {
+      await fetchValuesForLabelName(state.staleLabelValues[i]);
+    }
+  }
+
   useEffect(() => {
-    if (state.staleLabelValues.length) {
+    if (state.staleLabelValues.length > 0) {
+      fetchLabelsInSequence();
     }
     // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,6 +186,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
   const fetchMetrics = useCallback(
     async (metricText: string) => {
       console.log('metricText', metricText);
+      console.log('state.query.labels', state.query.labels);
       const metrics = await getBackendSearchMetrics(metricText, state.query.labels, datasource);
       console.log('metrics', metrics);
       dispatch(
@@ -175,8 +197,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
           metricsStale: false,
         })
       );
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [datasource, state.query.labels, state.query.metric]
   );
 
@@ -202,7 +224,11 @@ export const MetricsModal = (props: MetricsModalProps) => {
   }
 
   async function getLabelValues(labelName: string): Promise<string[]> {
-    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, state.query.metric);
+    const expr = promQueryModeller.renderLabels(state.query.labels);
+    console.log('current expr', state.query.metric);
+    console.log('pending expr', expr);
+    console.log('state.query.metric + expr', state.query.metric + expr);
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, state.query.metric + expr);
   }
 
   function metricsSearchCallback(query: string, fullMetaSearchVal: boolean) {
@@ -228,6 +254,42 @@ export const MetricsModal = (props: MetricsModalProps) => {
       ...state.query,
     });
     onClose();
+  };
+
+  const setLabelValueSelected = async (labelName: string, labelValue: string, selected: boolean) => {
+    dispatch(
+      setSelectedLabelValue({
+        labelName: labelName,
+        labelValue: labelValue,
+        checked: selected,
+      })
+    );
+  };
+
+  const fetchValuesForLabelName = async (labelName: string) => {
+    dispatch(setIsLoading(true));
+    getLabelValues(labelName).then((values) => {
+      dispatch(
+        setLabelValues({
+          isLoading: false,
+          labelName: labelName,
+          labelValues: values,
+          clearStale: true,
+        })
+      );
+    });
+  };
+
+  const isLabelValueSelected = (label: QueryBuilderLabelFilter, labelValue: string) => {
+    if (label.op === '=') {
+      return label.value === labelValue;
+    }
+    if (label.op === '=~') {
+      return label.value.split('|').some((value) => value === labelValue);
+    }
+    // @todo need to impelemnt for all operators
+    console.warn('Non-implemented label operator', label.op);
+    return label.value === labelValue;
   };
 
   /* Settings switches */
@@ -334,51 +396,36 @@ export const MetricsModal = (props: MetricsModalProps) => {
           </div>
           <div className={styles.labelsWrapper}>
             <div className={styles.labelsTitle}>Label name</div>
-            {state.labelNames.map((labelName, index) => (
-              <CollapsableSection
-                key={'label_names_' + labelName}
-                label={<LabelNameLabel labelName={labelName} />}
-                onToggle={(isOpen: boolean) => {
-                  if (isOpen) {
-                    dispatch(setIsLoading(true));
-                    getLabelValues(labelName).then((values) => {
-                      dispatch(
-                        setLabelValues({
-                          isLoading: false,
-                          labelName: labelName,
-                          labelValues: values,
-                        })
-                      );
-                    });
-                  }
-                }}
-                isOpen={false}
-              >
-                {state.labelValues[labelName]?.map((labelValue) => (
-                  <LabelNameValue
-                    key={'label_values_' + labelValue}
-                    onChange={(e) => {
-                      const checked = e.currentTarget.checked;
-                      dispatch(
-                        setSelectedLabelValue({
-                          labelName: labelName,
-                          labelValue: labelValue,
-                          checked: checked,
-                        })
-                      );
-                    }}
-                    labelName={labelName}
-                    labelValue={labelValue}
-                    checked={
-                      state.query.labels.some(
-                        (label: QueryBuilderLabelFilter) =>
-                          label.label === labelName && (label.value.includes(labelValue) || label.value === labelValue)
-                      ) ?? false
+            {state.labelNames
+              .filter((label) => label !== '__name__')
+              .map((labelName, index) => (
+                <CollapsableSection
+                  key={'label_names_' + labelName}
+                  label={<LabelNameLabel labelName={labelName} />}
+                  onToggle={(isOpen: boolean) => {
+                    if (isOpen) {
+                      fetchValuesForLabelName(labelName);
                     }
-                  />
-                ))}
-              </CollapsableSection>
-            ))}
+                  }}
+                  isOpen={query.labels.some((label) => label.label === labelName) ?? false}
+                >
+                  {state.labelValues[labelName]?.map((labelValue) => (
+                    <LabelNameValue
+                      key={'label_values_' + labelValue}
+                      onChange={(e) => {
+                        setLabelValueSelected(labelName, labelValue, e.currentTarget.checked);
+                      }}
+                      labelName={labelName}
+                      labelValue={labelValue}
+                      checked={
+                        state.query.labels.some((label: QueryBuilderLabelFilter) =>
+                          isLabelValueSelected(label, labelValue)
+                        ) ?? false
+                      }
+                    />
+                  ))}
+                </CollapsableSection>
+              ))}
           </div>
         </div>
         <div className={styles.submitQueryButton}>
