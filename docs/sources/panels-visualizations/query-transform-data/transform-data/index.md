@@ -218,7 +218,7 @@ Consider the following data set:
 | 1636678680000000000 | {"value": 5}  |
 | 1636678620000000000 | {"value": 12} |
 
-You could prepare the data to be used by a [Time series panel]({{< relref "../../visualizations/time-series" >}}) with this config:
+You could prepare the data to be used by a [Time series panel]({{< relref "../../visualizations/time-series" >}}) with this configuration:
 
 - Source: json_data
 - Format: JSON
