@@ -14,7 +14,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 menuTitle: Reporting
 title: Create and manage reports
 weight: 85

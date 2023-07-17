@@ -7,7 +7,6 @@ aliases:
 description: Legacy alerting
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Legacy alerting

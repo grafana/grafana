@@ -16,7 +16,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 title: Assess dashboard usage
 weight: 200
 ---
