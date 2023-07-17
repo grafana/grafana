@@ -17,10 +17,10 @@ import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
-import * as api from '../../datasources/api';
 import { DATASOURCES_ROUTES } from '../../datasources/constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../../datasources/tracking';
 import { findNewName, nameExits } from '../../datasources/utils';
+import * as api from '../api';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';

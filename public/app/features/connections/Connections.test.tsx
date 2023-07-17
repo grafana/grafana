@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import * as api from 'app/features/datasources/api';
+import * as api from 'app/features/connections/api';
 import { configureStore } from 'app/store/configureStore';
 
 import { getPluginsStateMock } from '../plugins/admin/__mocks__';
@@ -14,7 +14,7 @@ import { navIndex, getMockDataSources } from './__mocks__';
 import { ROUTE_BASE_ID, ROUTES } from './constants';
 
 jest.mock('app/core/services/context_srv');
-jest.mock('app/features/datasources/api');
+jest.mock('app/features/connections/api');
 
 const renderPage = (
   path = `/${ROUTE_BASE_ID}`,

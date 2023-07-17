@@ -5,15 +5,15 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { LayoutModes } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { getDataSources } from '../../datasources/api';
 import { navIndex, getMockDataSources } from '../__mocks__';
+import { getDataSources } from '../api';
 import { initialState } from '../state';
 
 import { DataSourcesListPage } from './DataSourcesListPage';
 
 jest.mock('app/core/services/context_srv');
-jest.mock('../../datasources/api', () => ({
-  ...jest.requireActual('../../datasources/api'),
+jest.mock('../api', () => ({
+  ...jest.requireActual('../api'),
   getDataSources: jest.fn().mockResolvedValue([]),
 }));
 

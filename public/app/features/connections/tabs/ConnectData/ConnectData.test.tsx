@@ -11,7 +11,7 @@ import { AccessControlAction } from 'app/types';
 
 import { AddNewConnection } from './ConnectData';
 
-jest.mock('app/features/datasources/api');
+jest.mock('../../api');
 
 const renderPage = (plugins: CatalogPlugin[] = []): RenderResult => {
   // @ts-ignore

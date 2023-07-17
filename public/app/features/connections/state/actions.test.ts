@@ -5,10 +5,10 @@ import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
 import { getMockDataSource } from '../../datasources/__mocks__';
-import * as api from '../../datasources/api';
 import { DATASOURCES_ROUTES } from '../../datasources/constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../../datasources/tracking';
 import { GenericDataSourcePlugin } from '../../datasources/types';
+import * as api from '../api';
 
 import {
   InitDataSourceSettingDependencies,

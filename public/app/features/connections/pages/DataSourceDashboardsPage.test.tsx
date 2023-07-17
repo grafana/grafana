@@ -8,13 +8,13 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { setAngularLoader } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
-import * as api from '../../datasources/api';
 import { navIndex, getMockDataSource } from '../__mocks__';
+import * as api from '../api';
 import { initialState as dataSourcesInitialState } from '../state';
 
 import { DataSourceDashboardsPage } from './DataSourceDashboardsPage';
 
-jest.mock('../../datasources/api');
+jest.mock('../api');
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasPermission: () => true,
