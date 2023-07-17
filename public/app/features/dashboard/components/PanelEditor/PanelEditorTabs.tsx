@@ -70,9 +70,7 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab.id === PanelEditorTabId.Query && (
-          <PanelEditorQueries panel={panel} queries={panel.targets} dashboardUid={dashboard.uid} />
-        )}
+        {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} queries={panel.targets} />}
         {activeTab.id === PanelEditorTabId.Alert && <AlertTabIndex panel={panel} dashboard={dashboard} />}
         {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
       </TabContent>

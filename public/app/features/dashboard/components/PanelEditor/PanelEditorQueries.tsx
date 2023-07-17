@@ -2,57 +2,30 @@ import React, { PureComponent } from 'react';
 
 import { DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { PanelModel } from '../../state';
+import { getLastUsedDatasourceFromStorage, updateDatasourceUidLastUsedDatasource } from '../../utils/dashboard';
 
 interface Props {
   /** Current panel */
   panel: PanelModel;
   /** Added here to make component re-render when queries change from outside */
   queries: DataQuery[];
-  dashboardUid?: string;
 }
-
-const PANEL_EDIT_LAST_USED_DATASOURCE = 'grafana.dashboards.panelEdit.lastUsedDatasource';
-
-type LastUsedDatasource =
-  | {
-      dashboardUid: string;
-      datasourceUid: string;
-    }
-  | undefined;
 
 export class PanelEditorQueries extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
   }
-  getLastUsedDatasource = () => {
-    const lastUsedDatasource: LastUsedDatasource = store.getObject(PANEL_EDIT_LAST_USED_DATASOURCE);
-    return lastUsedDatasource;
-  };
 
   updateLastUsedDatasource = (datasource: QueryGroupDataSource) => {
-    if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
-      const lastUsedDatasource: LastUsedDatasource = store.getObject(PANEL_EDIT_LAST_USED_DATASOURCE);
-
-      if (lastUsedDatasource?.dashboardUid === this.props.dashboardUid) {
-        if (lastUsedDatasource?.datasourceUid !== datasource.uid) {
-          store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, {
-            dashboardUid: this.props.dashboardUid,
-            datasourceUid: datasource.uid,
-          });
-        }
-      }
-    } else {
-      store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, {
-        dashboardUid: this.props.dashboardUid,
-        datasourceUid: datasource.uid,
-      });
+    if (!datasource.uid) {
+      return;
     }
+    updateDatasourceUidLastUsedDatasource(datasource.uid);
   };
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
@@ -90,16 +63,11 @@ export class PanelEditorQueries extends PureComponent<Props> {
     if (!panel.datasource) {
       let ds;
       // check if we have last used datasource from local storage
-      if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
-        const lastUsedDatasource = this.getLastUsedDatasource();
-        // do we have a last used datasource for this dashboard
-        if (lastUsedDatasource?.dashboardUid === this.props.dashboardUid) {
-          if (lastUsedDatasource?.datasourceUid !== null) {
-            // get datasource from uid
-            ds = getDatasourceSrv().getInstanceSettings(lastUsedDatasource?.datasourceUid);
-            // if the datasource uid is not found, load default datasource
-          }
-        }
+      const lastUsedDatasource = getLastUsedDatasourceFromStorage();
+      // do we have a last used datasource for this dashboard
+      if (lastUsedDatasource?.datasourceUid !== null) {
+        // get datasource from uid
+        ds = getDatasourceSrv().getInstanceSettings(lastUsedDatasource?.datasourceUid);
       }
       // else load default datasource
       if (!ds) {
