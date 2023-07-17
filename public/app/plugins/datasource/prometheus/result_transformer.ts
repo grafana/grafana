@@ -673,10 +673,13 @@ export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
   try {
-    // fail if not integer. might happen with bad queries
-    le1 = parseSampleValue(s1.name ?? s1.fields[1].name);
-    le2 = parseSampleValue(s2.name ?? s2.fields[1].name);
+    // the state.displayName conditions are here because we also use this sorting util fn
+    // in panels where isHeatmapResult was false but we still want to sort numerically-named
+    // fields after the full unique displayName is cached in field state
+    le1 = parseSampleValue(s1.fields[1].state?.displayName ?? s1.name ?? s1.fields[1].name);
+    le2 = parseSampleValue(s2.fields[1].state?.displayName ?? s2.name ?? s2.fields[1].name);
   } catch (err) {
+    // fail if not integer. might happen with bad queries
     console.error(err);
     return 0;
   }

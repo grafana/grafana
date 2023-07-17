@@ -20,11 +20,13 @@ import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/src/components/Button';
 
 import { SearchProps } from '../../../useSearch';
+import { Trace } from '../../types';
 import { convertTimeFilter } from '../../utils/filter-spans';
 
 import NextPrevResult from './NextPrevResult';
 
 export type TracePageSearchBarProps = {
+  trace: Trace;
   search: SearchProps;
   spanFilterMatches: Set<string> | undefined;
   showSpanFilterMatchesOnly: boolean;
@@ -33,13 +35,13 @@ export type TracePageSearchBarProps = {
   setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
-  totalSpans: number;
   clear: () => void;
   showSpanFilters: boolean;
 };
 
 export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
   const {
+    trace,
     search,
     spanFilterMatches,
     showSpanFilterMatchesOnly,
@@ -48,7 +50,6 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     setFocusedSpanIndexForSearch,
     setFocusedSpanIdForSearch,
     datasourceType,
-    totalSpans,
     clear,
     showSpanFilters,
   } = props;
@@ -100,12 +101,12 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
           </div>
           <div className={styles.nextPrevResult}>
             <NextPrevResult
+              trace={trace}
               spanFilterMatches={spanFilterMatches}
               setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
               focusedSpanIndexForSearch={focusedSpanIndexForSearch}
               setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
               datasourceType={datasourceType}
-              totalSpans={totalSpans}
               showSpanFilters={showSpanFilters}
             />
           </div>

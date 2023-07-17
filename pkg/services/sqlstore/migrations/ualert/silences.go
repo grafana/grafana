@@ -26,43 +26,6 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
-func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
-	if da.State != "paused" {
-		return nil
-	}
-
-	uid, err := uuid.NewRandom()
-	if err != nil {
-		return errors.New("failed to create uuid for silence")
-	}
-
-	n, v := getLabelForSilenceMatching(rule.UID)
-	s := &pb.MeshSilence{
-		Silence: &pb.Silence{
-			Id: uid.String(),
-			Matchers: []*pb.Matcher{
-				{
-					Type:    pb.Matcher_EQUAL,
-					Name:    n,
-					Pattern: v,
-				},
-			},
-			StartsAt:  time.Now(),
-			EndsAt:    time.Now().Add(365 * 20 * time.Hour), // 1 year.
-			CreatedBy: "Grafana Migration",
-			Comment:   "Created during auto migration to unified alerting",
-		},
-		ExpiresAt: time.Now().Add(365 * 20 * time.Hour), // 1 year.
-	}
-
-	_, ok := m.silences[da.OrgId]
-	if !ok {
-		m.silences[da.OrgId] = make([]*pb.MeshSilence, 0)
-	}
-	m.silences[da.OrgId] = append(m.silences[da.OrgId], s)
-	return nil
-}
-
 func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
 	if da.ParsedSettings.ExecutionErrorState != "keep_state" {
 		return nil

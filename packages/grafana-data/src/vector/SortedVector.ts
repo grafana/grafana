@@ -9,7 +9,10 @@ import { vectorToArray } from './vectorToArray';
  * @deprecated use a simple Arrays
  */
 export class SortedVector<T = any> extends FunctionalVector<T> {
-  constructor(private source: Vector<T>, private order: number[]) {
+  constructor(
+    private source: Vector<T>,
+    private order: number[]
+  ) {
     super();
     return makeArrayIndexableVector(this);
   }

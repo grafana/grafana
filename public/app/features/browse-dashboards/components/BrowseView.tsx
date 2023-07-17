@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 
+import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
@@ -115,16 +116,20 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
       <div style={{ width }}>
-        <EmptyListCTA
-          title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
-          buttonIcon="plus"
-          buttonTitle="Create Dashboard"
-          buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-          proTip={folderUID && 'Add/move dashboards to your folder at ->'}
-          proTipLink={folderUID && 'dashboards'}
-          proTipLinkTitle={folderUID && 'Browse dashboards'}
-          proTipTarget=""
-        />
+        {canSelect ? (
+          <EmptyListCTA
+            title={folderUID ? "This folder doesn't have any dashboards yet" : 'No dashboards yet. Create your first!'}
+            buttonIcon="plus"
+            buttonTitle="Create Dashboard"
+            buttonLink={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+            proTip={folderUID && 'Add/move dashboards to your folder at ->'}
+            proTipLink={folderUID && 'dashboards'}
+            proTipLinkTitle={folderUID && 'Browse dashboards'}
+            proTipTarget=""
+          />
+        ) : (
+          <CallToActionCard callToActionElement={<span>This folder is empty</span>} />
+        )}
       </div>
     );
   }
