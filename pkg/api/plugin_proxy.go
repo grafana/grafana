@@ -14,9 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
-	var once sync.Once
-	var pluginProxyTransport *http.Transport
+var (
+	once                 sync.Once
+	pluginProxyTransport *http.Transport
+)
+
+func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 	once.Do(func() {
 		pluginProxyTransport = &http.Transport{
 			TLSClientConfig: &tls.Config{
