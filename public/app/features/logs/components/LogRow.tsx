@@ -239,6 +239,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
+              mouseIsOver={this.state.mouseIsOver}
             />
           ) : (
             <LogRowMessage
