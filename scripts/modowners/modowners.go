@@ -107,7 +107,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	for _, mod := range m {
 		if len(*dep) > 0 && mod.Name == *dep {
 			for _, owner := range mod.Owners {
-				fmt.Print(owner)
+				logger.Println(owner)
 				break
 			}
 		}
@@ -120,9 +120,9 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	if *allOwners {
 		for owner, n := range owners {
 			if *count {
-				fmt.Println(owner, n)
+				logger.Println(owner, n)
 			} else {
-				fmt.Println(owner)
+				logger.Println(owner)
 			}
 		}
 	}
@@ -130,8 +130,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 }
 
 // Print dependencies for a given owner. Can specify one or more owners.
-// Example CLI command `go run scripts/modowners/modowners.go modules -m go.mod -o @as-code,@delivery`
-// TODO: probably can remove -m from above example
+// Example CLI command to list all dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/grafana-authnz-team`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies")
