@@ -248,6 +248,9 @@ datasources:
       - targetUID: gdev-zipkin
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
+      - targetUID: gdev-tempo
+        label: "Tempo traces"
+        description: "Related traces stored in Tempo"
       - targetUID: gdev-prometheus
         label: "Logs to metrics"
         description: "Related metrics stored in Prometheus"
@@ -267,6 +270,10 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           url: "$${__value.raw}"
           datasourceUid: gdev-zipkin
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-tempo
 
   - name: gdev-jaeger
     type: jaeger

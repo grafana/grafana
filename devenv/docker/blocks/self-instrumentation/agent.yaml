@@ -1,0 +1,40 @@
+logs:
+  positions_directory: /tmp/loki-pos
+  configs:
+    - name: default
+      scrape_configs: []
+      clients:
+        - url: http://host.docker.internal:3100/loki/api/v1/push
+traces:
+  configs:
+    - name: default
+      remote_write:
+        - endpoint: http://host.docker.internal:3200
+          insecure: true
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+            http:
+              cors:
+                allowed_origins:
+                  - "*"
+integrations:
+  app_agent_receiver_configs:
+    - autoscrape:
+        enable: false
+      instance: "frontend"
+      logs_instance: "default"
+      traces_instance: "default"
+      server:
+        host: 0.0.0.0
+        port: 12347
+        cors_allowed_origins:
+          - "*"
+      logs_labels: # labels to add to loki log record
+        app: frontend # static value
+        kind: # value will be taken from log items. exception, log, measurement, etc
+      logs_send_timeout: 5000
+      sourcemaps:
+        download: true # will download source file, extract source map location,
+        # download source map and use it to transform stack trace locations
