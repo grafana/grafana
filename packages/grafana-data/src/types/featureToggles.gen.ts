@@ -30,7 +30,6 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   exploreMixedDatasource?: boolean;
-  newTraceViewHeader?: boolean;
   correlations?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;

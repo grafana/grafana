@@ -55,10 +55,6 @@ const (
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagNewTraceViewHeader
-	// Shows the new trace view header
-	FlagNewTraceViewHeader = "newTraceViewHeader"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"

@@ -79,7 +79,6 @@ Experimental features might be changed or removed without prior notice.
 | `queryOverLive`                             | Use Grafana Live WebSocket to execute backend queries                                                        |
 | `lokiExperimentalStreaming`                 | Support new streaming approach for loki (prototype, needs special loki build)                                |
 | `storage`                                   | Configurable storage for dashboards, datasources, and resources                                              |
-| `newTraceViewHeader`                        | Shows the new trace view header                                                                              |
 | `datasourceQueryMultiStatus`                | Introduce HTTP 207 Multi Status for api/ds/query                                                             |
 | `traceToMetrics`                            | Enable trace to metrics links                                                                                |
 | `prometheusWideSeries`                      | Enable wide series responses in the Prometheus datasource                                                    |
