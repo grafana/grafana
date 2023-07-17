@@ -18,26 +18,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
 	logger = log.New("expr")
 )
 
-type QueryError struct {
-	RefID         string
-	DatasourceUID string
-	Err           error
-}
+// type QueryError struct {
+// 	RefID         string
+// 	DatasourceUID string
+// 	Err           error
+// }
 
-func (e QueryError) Error() string {
-	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
-}
+// func (e QueryError) Error() string {
+// 	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
+// }
 
-func (e QueryError) Unwrap() error {
-	return e.Err
-}
+// func (e QueryError) Unwrap() error {
+// 	return e.Err
+// }
 
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
@@ -252,20 +251,12 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
-		return mathexp.Results{}, QueryError{
-			RefID:         dn.refID,
-			DatasourceUID: dn.datasource.UID,
-			Err:           err,
-		}
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
 	dataFrames, err := getResponseFrame(resp, dn.refID)
 	if err != nil {
-		return mathexp.Results{}, QueryError{
-			RefID:         dn.refID,
-			DatasourceUID: dn.datasource.UID,
-			Err:           err,
-		}
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
 	var result mathexp.Results
@@ -290,8 +281,6 @@ func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frame
 	}
 	return response.Frames, nil
 }
-
-var ReadErrorTemplate = errutil.NewBase(errutil.StatusBadRequest, "sse.readData").MustTemplate("[{{ .Public.refId }}] got error: {{ .Error }}", errutil.WithPublic("failed to read data from from query {{ .Public.refId }}"))
 
 func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasourceType string, s *Service, logger log.Logger) (string, mathexp.Results, error) {
 	if len(frames) == 0 {

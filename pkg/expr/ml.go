@@ -111,10 +111,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	})
 
 	if err != nil {
-		return result, QueryError{
-			RefID: m.refID,
-			Err:   err,
-		}
+		return result, MakeQueryError(m.refID, "ml", err)
 	}
 
 	// data is not guaranteed to be specified. In this case simulate NoData scenario
@@ -124,11 +121,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 
 	dataFrames, err := getResponseFrame(data, m.refID)
 	if err != nil {
-		return mathexp.Results{}, QueryError{
-			RefID:         m.refID,
-			DatasourceUID: mlPluginID,
-			Err:           err,
-		}
+		return mathexp.Results{}, MakeQueryError(m.refID, "ml", err)
 	}
 
 	// process the response the same way DSNode does. Use plugin ID as data source type. Semantically, they are the same.
