@@ -459,7 +459,7 @@ Use this transformation to generate a histogram based on the input data.
 
 **Original data**
 
-Serie 1:
+Series 1:
 
 | A   | B   | C   |
 | --- | --- | --- |
