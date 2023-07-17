@@ -206,6 +206,7 @@ export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
+export { TextLink } from './Link/TextLink';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
