@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { filterSpansNewTraceViewHeader, filterSpans, TraceSpan } from './components';
+import { filterSpansNewTraceViewHeader, TraceSpan } from './components';
 
 export interface SearchProps {
   serviceName?: string;
@@ -48,14 +48,4 @@ export function useSearchNewTraceViewHeader(spans?: TraceSpan[]) {
   }, [newTraceViewHeaderSearch, spans]);
 
   return { newTraceViewHeaderSearch, setNewTraceViewHeaderSearch, spanFilterMatches };
-}
-
-// legacy code that will be removed when the newTraceViewHeader feature flag is removed
-export function useSearch(spans?: TraceSpan[]) {
-  const [search, setSearch] = useState('');
-  const spanFindMatches: Set<string> | undefined = useMemo(() => {
-    return search && spans ? filterSpans(search, spans) : undefined;
-  }, [search, spans]);
-
-  return { search, setSearch, spanFindMatches };
 }
