@@ -4,6 +4,7 @@ import {
   parseDuration,
   isValidDuration,
   isValidGoDuration,
+  durationToMilliseconds,
 } from './durationutil';
 
 describe('Duration util', () => {
@@ -64,6 +65,17 @@ describe('Duration util', () => {
     it('invalid float number duration string returns false', () => {
       const durationString = '3.h -4.0m 0.s 2.ms -0.us 5.ns';
       expect(isValidGoDuration(durationString)).toEqual(false);
+    });
+  });
+
+  describe('durationToMilliseconds', () => {
+    it('converts a duration to milliseconds', () => {
+      const duration = { hours: 1, minutes: 30, seconds: 45 };
+
+      const now = new Date('2023-07-12');
+      const result = addDurationToDate(now, duration).getTime() - now.getTime();
+
+      expect(result).toEqual(durationToMilliseconds(duration));
     });
   });
 });
