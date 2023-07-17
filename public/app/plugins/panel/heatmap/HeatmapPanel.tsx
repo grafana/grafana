@@ -210,6 +210,7 @@ export const HeatmapPanel = ({
                       data={info}
                       isPinned={isPinned}
                       onClose={dismiss}
+                      showHistogram={options.tooltip.yHistogram}
                     />
                   );
                 }}

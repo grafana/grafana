@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactElement, useEffect, useRef } from 'react';
 
 import { formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema/dist/esm/common/common.gen';
@@ -18,6 +18,7 @@ interface Props {
   dataIdxs: Array<number | null>;
   seriesIdx: number | null | undefined;
   data: HeatmapData;
+  showHistogram?: boolean;
   isPinned: boolean;
   onClose: () => void;
 }
@@ -30,7 +31,7 @@ export const HeatmapTooltip = (props: Props) => {
 
   return <HeatmapTooltipHover {...props} />;
 };
-const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: Props) => {
+const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
   const styles = useStyles2(getStyles);
 
   const index = dataIdxs[1]!;
@@ -103,6 +104,97 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
 
   const count = countVals?.[index];
 
+  // @TODO Add data links
+  // const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
+  // const links: Array<LinkModel<Field>> = [];
+  // const linkLookup = new Set<string>();
+  //
+  // for (const field of visibleFields ?? []) {
+  //   // TODO: Currently always undefined? (getLinks)
+  //   if (field.getLinks) {
+  //     const v = field.values[index];
+  //     const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+  //
+  //     field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {
+  //       const key = `${link.title}/${link.href}`;
+  //       if (!linkLookup.has(key)) {
+  //         links.push(link);
+  //         linkLookup.add(key);
+  //       }
+  //     });
+  //   }
+  // }
+
+  let can = useRef<HTMLCanvasElement>(null);
+
+  let histCssWidth = 264;
+  let histCssHeight = 77;
+  let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
+  let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
+
+  useEffect(
+    () => {
+      if (showHistogram) {
+        let histCtx = can.current?.getContext('2d');
+
+        if (histCtx && xVals && yVals && countVals) {
+          let fromIdx = index;
+
+          while (xVals[fromIdx--] === xVals[index]) {}
+
+          fromIdx++;
+
+          let toIdx = fromIdx + data.yBucketCount!;
+
+          let maxCount = 0;
+
+          let i = fromIdx;
+          while (i < toIdx) {
+            let c = countVals[i];
+            maxCount = Math.max(maxCount, c);
+            i++;
+          }
+
+          let pHov = new Path2D();
+          let pRest = new Path2D();
+
+          i = fromIdx;
+          let j = 0;
+          while (i < toIdx) {
+            let c = countVals[i];
+
+            if (c > 0) {
+              let pctY = c / maxCount;
+              let pctX = j / (data.yBucketCount! + 1);
+
+              let p = i === index ? pHov : pRest;
+
+              p.rect(
+                Math.round(histCanWidth * pctX),
+                Math.round(histCanHeight * (1 - pctY)),
+                Math.round(histCanWidth / data.yBucketCount!),
+                Math.round(histCanHeight * pctY)
+              );
+            }
+
+            i++;
+            j++;
+          }
+
+          histCtx.clearRect(0, 0, histCanWidth, histCanHeight);
+
+          histCtx.fillStyle = '#ffffff80';
+          histCtx.fill(pRest);
+
+          histCtx.fillStyle = '#ff000080';
+          histCtx.fill(pHov);
+        }
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [index]
+  );
+
   const { cellColor, colorPalette } = getHoverCellColor(data, index);
 
   const getLabelValue = (): LabelValue[] => {
@@ -171,6 +263,21 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
     return fromToInt;
   };
 
+  const getCustomContent = (): ReactElement | null => {
+    if (showHistogram) {
+      return (
+        <canvas
+          width={histCanWidth}
+          height={histCanHeight}
+          ref={can}
+          style={{ width: histCanWidth + 'px', height: histCanHeight + 'px' }}
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader
@@ -178,7 +285,7 @@ const HeatmapTooltipHover = ({ dataIdxs, seriesIdx, isPinned, data, onClose }: P
         keyValuePairs={getLabelValue()}
         // customValueDisplay={getCustomValueDisplay()}
       />
-      <VizTooltipContent contentLabelValue={getContentLabelValue()} />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
     </div>
   );
 };

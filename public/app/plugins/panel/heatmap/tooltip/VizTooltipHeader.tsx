@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -11,7 +11,7 @@ import { LabelValue } from './tooltipUtils';
 interface VizTooltipHeaderProps {
   headerLabel: LabelValue;
   keyValuePairs?: LabelValue[];
-  customValueDisplay?: JSX.Element;
+  customValueDisplay?: ReactElement;
 }
 export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay }: VizTooltipHeaderProps) => {
   const styles = useStyles2(getStyles);
