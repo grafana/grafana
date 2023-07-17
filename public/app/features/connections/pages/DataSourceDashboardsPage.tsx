@@ -13,7 +13,7 @@ export function DataSourceDashboardsPage() {
   const nav = useDataSourceSettingsNav(uid, pageId);
 
   return (
-    <Page navId="connections-your-connections-datasources" pageNav={nav.main}>
+    <Page navId="connections-datasources" pageNav={nav.main}>
       <Page.Contents>
         <DataSourceDashboards uid={uid} />
       </Page.Contents>
