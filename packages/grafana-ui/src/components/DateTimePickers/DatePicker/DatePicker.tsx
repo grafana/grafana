@@ -51,8 +51,8 @@ const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
       maxDate={maxDate}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
-      onChange={(ev: Date | Date[]) => {
-        if (!Array.isArray(ev)) {
+      onChange={(ev) => {
+        if (ev && !Array.isArray(ev)) {
           onChange(ev);
         }
       }}
