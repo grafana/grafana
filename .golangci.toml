@@ -23,6 +23,15 @@ deny = [
   {pkg = "github.com/gofrs/uuid", desc = "Use github.com/google/uuid instead, which we already depend on."},
 ]
 
+[linters-settings.depguard.rules.coreplugins]
+deny = [
+  {pkg = "github.com/grafana/grafana/pkg/", desc = "Core plugins are not allowed to depend on Grafana core packages"},
+]
+files = [
+  "**/pkg/tsdb/testdatasource/*",
+  "**/pkg/tsdb/testdatasource/**/*",
+]
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
