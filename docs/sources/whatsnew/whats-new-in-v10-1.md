@@ -39,6 +39,7 @@ You can now choose whether to set a threshold above which values in the data sho
 To learn more, refer to our [disconnect values documentation]({{< relref "../panels-visualizations/visualizations/time-series/#disconnect-values" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
+
 ## Authentication: Configure refresh token handling separately for OAuth providers
 
 <!-- Mihaly Gyongyosi -->
