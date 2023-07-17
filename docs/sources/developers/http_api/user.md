@@ -16,6 +16,10 @@ title: User HTTP API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
+> Note: The server administrator role does not exist in Grafana Cloud.
+
+For user and team management in Grafana Cloud, refer to [RBAC HTTP API]({{< relref "/docs/grafana/latest/developers/http_api/access_control" >}})
+
 ## Search Users
 
 `GET /api/users?perpage=10&page=1`
@@ -37,7 +41,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. Requires basic authentication and that the authenticated user is a Grafana Admin.
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -94,7 +98,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be URL encoded e.g. `query=Jane%20Doe`.
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -153,7 +157,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -208,7 +212,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -261,7 +265,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 }
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -293,7 +297,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -332,7 +336,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
+Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Response**:
 
@@ -437,7 +441,7 @@ curl -X PUT -H "Content-Type: application/json" -d '{
 
 `POST /api/users/:userId/using/:organizationId`
 
-Switch user context to the given organization. Requires basic authentication and that the authenticated user is a Grafana Admin.
+Switch user context to the given organization. Requires basic authentication and that the authenticated user is a Grafana Server Admin.
 
 **Example Request**:
 
