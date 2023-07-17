@@ -1,4 +1,8 @@
-import { omitEmptyValues } from './receiver-form';
+import { NotifierDTO } from 'app/types';
+
+import { GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
+
+import { formValuesToGrafanaReceiver, omitEmptyValues } from './receiver-form';
 
 describe('Receiver form utils', () => {
   describe('omitEmptyStringValues', () => {
@@ -40,5 +44,48 @@ describe('Receiver form utils', () => {
 
       expect(omitEmptyValues(original)).toEqual(expected);
     });
+  });
+});
+
+describe('formValuesToGrafanaReceiver', () => {
+  it('should migrate regular settings to secure settings if the field is defined as secure', () => {
+    const formValues: ReceiverFormValues<GrafanaChannelValues> = {
+      name: 'my-receiver',
+      items: [
+        {
+          __id: '1',
+          secureSettings: {},
+          secureFields: {},
+          type: 'discord',
+          settings: {
+            url: 'https://foo.bar/',
+          },
+          disableResolveMessage: false,
+        },
+      ],
+    };
+
+    const channelMap = {
+      '1': {
+        uid: 'abc123',
+        secureSettings: {},
+        secureFields: {},
+        type: 'discord',
+        settings: {
+          url: 'https://foo.bar/',
+        },
+        disableResolveMessage: false,
+      },
+    };
+
+    const notifiers = [
+      {
+        type: 'discord',
+        options: [{ propertyName: 'url', secure: true }],
+      },
+    ] as NotifierDTO[];
+
+    // @ts-expect-error
+    expect(formValuesToGrafanaReceiver(formValues, channelMap, {}, notifiers)).toMatchSnapshot();
   });
 });
