@@ -390,14 +390,14 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
-			return response.Error(409, err.Error(), err)
+			return response.Error(http.StatusConflict, err.Error(), err)
 		}
 
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to add datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to add datasource: "+err.Error(), err)
 		}
 
-		return response.Error(500, "Failed to add datasource", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to add datasource", err)
 	}
 
 	// Clear permission cache for the user who's created the data source, so that new permissions are fetched for their next call
@@ -512,14 +512,19 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 
 	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNameExists) {
+			return response.Error(http.StatusConflict, "Failed to update datasource: "+err.Error(), err)
+		}
+
 		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
-			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
+			return response.Error(http.StatusConflict, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
 
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to update datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to update datasource: "+err.Error(), err)
 		}
-		return response.Error(500, "Failed to update datasource", err)
+
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 
 	query := datasources.GetDataSourceQuery{
