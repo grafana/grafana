@@ -460,7 +460,7 @@ func (hs *HTTPServer) stop(failureReason error) error {
 	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
 		return fmt.Errorf("failed to shutdown server: %w", err)
 	}
-	return failureReason
+	return nil
 }
 
 func (hs *HTTPServer) getListener() (net.Listener, error) {
