@@ -26,7 +26,7 @@ Provisioned resources are labeled **Provisioned**, so that it is clear that they
 
 ## Edit API-provisioned alerting resources
 
-To allow editing of API-provisioned resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
+To enable editing of API-provisioned resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
 
 - `POST /api/v1/provisioning/alert-rules`
 - `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` (calling this endpoint will change provenance for all alert rules within the alert group)

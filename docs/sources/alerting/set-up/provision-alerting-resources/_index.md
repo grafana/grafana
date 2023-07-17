@@ -30,7 +30,7 @@ There are three options to choose from:
 
 Currently, provisioning for Grafana Alerting supports alert rules, contact points, notification policies, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
 
-In Grafana, the entire notification policy tree is considered a single, large resource. To add new specific policies, add them as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree - the entire tree must be defined in a single place.
+In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
 
 **Useful Links:**
 
