@@ -17,7 +17,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -115,7 +115,10 @@ export function createSpanLinkFactory({
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
+const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace'].map((k) => ({
+  key: k,
+  value: k.includes('.') ? k.replace('.', '_') : undefined,
+}));
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -480,7 +483,7 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
  */
 function getFormattedTags(
   span: TraceSpan,
-  tags: Array<{ key: string; value?: string }>,
+  tags: TraceToLogsTag[],
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
 ) {
   // In order, try to use mapped tags -> tags -> default tags
@@ -540,11 +543,7 @@ function getTimeRangeFromSpan(
 }
 
 // Interpolates span attributes into trace to metric query, or returns default query
-function buildMetricsQuery(
-  query: TraceToMetricQuery,
-  tags: Array<{ key: string; value?: string }> = [],
-  span: TraceSpan
-): string {
+function buildMetricsQuery(query: TraceToMetricQuery, tags: TraceToLogsTag[] = [], span: TraceSpan): string {
   if (!query.query) {
     return `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
   }
