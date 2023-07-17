@@ -34,7 +34,7 @@ import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
-import { useSearchNewTraceViewHeader } from './useSearch';
+import { useSearch } from './useSearch';
 import { useViewRange } from './useViewRange';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -84,9 +84,7 @@ export function TraceView(props: Props) {
   const { removeHoverIndentGuideId, addHoverIndentGuideId, hoverIndentGuideIds } = useHoverIndentGuide();
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
-  const { newTraceViewHeaderSearch, setNewTraceViewHeaderSearch, spanFilterMatches } = useSearchNewTraceViewHeader(
-    traceProp?.spans
-  );
+  const { search, setSearch, spanFilterMatches } = useSearch(traceProp?.spans);
   const [newTraceViewHeaderFocusedSpanIdForSearch, setNewTraceViewHeaderFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
@@ -148,8 +146,8 @@ export function TraceView(props: Props) {
             trace={traceProp}
             data={props.dataFrames[0]}
             timeZone={timeZone}
-            search={newTraceViewHeaderSearch}
-            setSearch={setNewTraceViewHeaderSearch}
+            search={search}
+            setSearch={setSearch}
             showSpanFilters={showSpanFilters}
             setShowSpanFilters={setShowSpanFilters}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
