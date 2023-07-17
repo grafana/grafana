@@ -83,7 +83,9 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export {
-  TableCellDisplayMode,
+  type TableCustomCellOptions,
+  type CustomCellRendererProps,
+  type TableFieldOptions,
   type TableSortByFieldState,
   type TableFooterCalc,
   type AdHocFilterItem,
@@ -254,6 +256,7 @@ export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
+export { Divider } from './Divider/Divider';
 
 const LegacyForms = {
   SecretFormField,

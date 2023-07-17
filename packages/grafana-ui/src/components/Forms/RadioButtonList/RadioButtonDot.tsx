@@ -66,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       width: 6px;
       height: 6px;
       background-color: ${theme.colors.text.disabled};
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       display: inline-block;
       position: absolute;
       top: 4px;
@@ -75,7 +75,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     :focus {
       outline: none !important;
-      box-shadow: 0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main};
+      box-shadow:
+        0 0 0 1px ${theme.colors.background.canvas},
+        0 0 0 3px ${theme.colors.primary.main};
     }
   `,
   label: css`

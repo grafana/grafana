@@ -39,7 +39,6 @@ def docs_pipelines(ver_mode, trigger):
 
     return pipeline(
         name = "{}-docs".format(ver_mode),
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,

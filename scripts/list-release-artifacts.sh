@@ -49,8 +49,6 @@ gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/gr
 gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION}.linux-amd64-musl.tar.gz.sha256
 gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2_${ERSION_DEB}_amd64.deb
 gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2_${ERSION_DEB}_amd64.deb.sha256
-gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION_DEB}-1.x86_64.rpm
-gs://${BUCKET}/artifacts/downloads-enterprise2/${VERSION}/enterprise2/release/grafana-enterprise2-${ERSION_DEB}-1.x86_64.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/enterprise/release/grafana-enterprise-${ERSION_DEB}-1.aarch64.rpm
 gs://${BUCKET}/artifacts/downloads/${VERSION}/enterprise/release/grafana-enterprise-${ERSION_DEB}-1.aarch64.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/enterprise/release/grafana-enterprise-${ERSION_DEB}-1.armhfp.rpm
@@ -91,12 +89,6 @@ gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise-${ERSION}-armv7.img
 gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise-${ERSION}-ubuntu-amd64.img
 gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise-${ERSION}-ubuntu-arm64.img
 gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise-${ERSION}-ubuntu-armv7.img
-gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise2-${ERSION}-amd64.img
-gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise2-${ERSION}-arm64.img
-gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise2-${ERSION}-armv7.img
-gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise2-${ERSION}-ubuntu-amd64.img
-gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise2-${ERSION}-ubuntu-arm64.img
-gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-enterprise2-${ERSION}-ubuntu-armv7.img
 gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-oss-${ERSION}-amd64.img
 gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-oss-${ERSION}-arm64.img
 gs://${BUCKET}/artifacts/docker/${ERSION}/grafana-oss-${ERSION}-armv7.img

@@ -26,6 +26,7 @@ import {
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -55,7 +56,9 @@ const renderAdminPage = (alertManagerSourceName?: string) => {
 
   return render(
     <TestProvider>
-      <AlertmanagerConfig />
+      <AlertmanagerProvider accessType="instance">
+        <AlertmanagerConfig />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };
@@ -129,7 +132,7 @@ describe('Admin config', () => {
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
     expect(mocks.api.updateAlertManagerConfig.mock.lastCall).toMatchSnapshot();
 
-    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2));
   });
 
   it('Read-only when using Prometheus Alertmanager', async () => {

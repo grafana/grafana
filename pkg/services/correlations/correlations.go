@@ -94,7 +94,7 @@ func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd
 	return s.getCorrelationsBySourceUID(ctx, cmd)
 }
 
-func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
+func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
 	return s.getCorrelations(ctx, cmd)
 }
 

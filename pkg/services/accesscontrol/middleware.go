@@ -179,19 +179,16 @@ type userCache interface {
 func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
 	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
-			// using a copy of the user not to modify the signedInUser, yet perform the permission evaluation in another org
+			// We need to copy the user here because we're going to mutate it
 			userCopy := *(c.SignedInUser)
-			orgID, err := getTargetOrg(c)
+			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
 				deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
 				return
 			}
-			if orgID == GlobalOrgID {
-				userCopy.OrgID = orgID
-				userCopy.OrgName = ""
-				userCopy.OrgRole = ""
-			} else {
-				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: orgID}
+
+			if targetOrgID != GlobalOrgID && userCopy.Permissions[targetOrgID] == nil {
+				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
 				queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
@@ -207,12 +204,20 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 				}
+
+				// guard against nil map
+				if userCopy.Permissions == nil {
+					userCopy.Permissions = make(map[int64]map[string][]string)
+				}
 				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
 
-			// Set the sign-ed in user permissions in that org
+			// guard against nil map
+			if c.SignedInUser.Permissions == nil {
+				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+			}
 			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
 		}
 	}
@@ -239,10 +244,6 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 
 func LoadPermissionsMiddleware(service Service) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		if service.IsDisabled() {
-			return
-		}
-
 		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
 			Options{ReloadCache: false})
 		if err != nil {

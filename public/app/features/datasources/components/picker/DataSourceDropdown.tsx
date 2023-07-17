@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
@@ -32,14 +32,15 @@ const INTERACTION_ITEM = {
 };
 
 export interface DataSourceDropdownProps {
-  onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
-  current?: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
+  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
+  current?: DataSourceInstanceSettings | string | DataSourceRef | null;
   recentlyUsed?: string[];
   hideTextValue?: boolean;
   width?: number;
   inputId?: string;
   noDefault?: boolean;
   disabled?: boolean;
+  placeholder?: string;
 
   // DS filters
   tracing?: boolean;
@@ -52,6 +53,8 @@ export interface DataSourceDropdownProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
+  uploadFile?: boolean;
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
 }
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
@@ -63,6 +66,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     inputId,
     noDefault = false,
     disabled = false,
+    placeholder = 'Select data source',
     ...restProps
   } = props;
 
@@ -161,7 +165,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           data-testid={selectors.components.DataSourcePicker.inputV2}
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
-          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue)}
+          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
           onClick={openDropdown}
           onFocus={() => {
             setInputHasFocus(true);
@@ -183,6 +187,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
       {isOpen ? (
         <Portal>
           <div {...underlayProps} />
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             ref={ref}
             {...overlayProps}
@@ -194,10 +200,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             <PickerContent
               keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
-              onChange={(
-                ds: DataSourceInstanceSettings<DataSourceJsonData>,
-                defaultQueries?: DataQuery[] | GrafanaQuery[]
-              ) => {
+              onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 onClose();
                 onChange(ds, defaultQueries);
               }}
@@ -246,9 +249,9 @@ export interface PickerContentProps extends DataSourceDropdownProps {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, uploadFile } = props;
   const changeCallback = useCallback(
-    (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+    (ds: DataSourceInstanceSettings) => {
       onChange(ds);
       reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
     },
@@ -272,7 +275,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           className={styles.dataSourceList}
           current={current}
           onChange={changeCallback}
-          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
+          filter={(ds) => (filter ? filter?.(ds) : true) && matchDataSourceWithSearch(ds, filterTerm)}
           onClickEmptyStateCTA={() =>
             reportInteraction(INTERACTION_EVENT_NAME, {
               item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
@@ -291,9 +294,19 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 onClose();
                 showModal(DataSourceModal, {
                   reportedInteractionFrom: 'ds_picker',
+                  tracing: props.tracing,
                   dashboard: props.dashboard,
                   mixed: props.mixed,
-                  current,
+                  metrics: props.metrics,
+                  type: props.type,
+                  annotations: props.annotations,
+                  variables: props.variables,
+                  alerting: props.alerting,
+                  pluginId: props.pluginId,
+                  logs: props.logs,
+                  filter: props.filter,
+                  uploadFile: props.uploadFile,
+                  current: props.current,
                   onDismiss: hideModal,
                   onChange: (ds, defaultQueries) => {
                     onChange(ds, defaultQueries);
@@ -308,7 +321,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
-        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+        {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
           <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
             Add csv or spreadsheet
           </Button>
@@ -324,7 +337,6 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,

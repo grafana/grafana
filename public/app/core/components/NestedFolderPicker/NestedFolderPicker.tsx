@@ -1,10 +1,19 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
-import { LoadingBar } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans, t } from 'app/core/internationalization';
+import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
 import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
+import { getGrafanaSearcher } from 'app/features/search/service';
+import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { NestedFolderList } from './NestedFolderList';
@@ -15,18 +24,37 @@ async function fetchRootFolders() {
 }
 
 interface NestedFolderPickerProps {
-  value?: FolderUID | undefined;
+  value?: FolderUID;
   // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
   // vs removing selection (if possible?)
-  onChange?: (folderUID: FolderChange) => void;
+  onChange?: (folder: FolderChange) => void;
 }
 
 export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps) {
-  // const [search, setSearch] = useState('');
+  const styles = useStyles2(getStyles);
 
+  const [search, setSearch] = useState('');
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
-  const state = useAsync(fetchRootFolders);
+  const rootFoldersState = useAsync(fetchRootFolders);
+  const selectedFolder = useGetFolderQuery(value || skipToken);
+
+  const searchState = useAsync(async () => {
+    if (!search) {
+      return undefined;
+    }
+    const searcher = getGrafanaSearcher();
+    const queryResponse = await searcher.search({
+      query: search,
+      kind: ['folder'],
+      limit: 100,
+    });
+
+    const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
+
+    return { ...queryResponse, items };
+  }, [search]);
 
   const handleFolderClick = useCallback(async (uid: string, newOpenState: boolean) => {
     setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
@@ -38,65 +66,196 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   }, []);
 
   const flatTree = useMemo(() => {
-    const rootCollection: DashboardViewItemCollection = {
-      isFullyLoaded: !state.loading,
-      lastKindHasMoreItems: false,
-      lastFetchedKind: 'folder',
-      lastFetchedPage: 1,
-      items: state.value ?? [],
-    };
+    const searchResults = search && searchState.value;
+    const rootCollection: DashboardViewItemCollection = searchResults
+      ? {
+          isFullyLoaded: searchResults.items.length === searchResults.totalRows,
+          lastKindHasMoreItems: false, // not relevent for search
+          lastFetchedKind: 'folder', // not relevent for search
+          lastFetchedPage: 1, // not relevent for search
+          items: searchResults.items ?? [],
+        }
+      : {
+          isFullyLoaded: !rootFoldersState.loading,
+          lastKindHasMoreItems: false,
+          lastFetchedKind: 'folder',
+          lastFetchedPage: 1,
+          items: rootFoldersState.value ?? [],
+        };
 
     const childrenCollections: Record<string, DashboardViewItemCollection | undefined> = {};
 
-    for (const parentUID in childrenForUID) {
-      const children = childrenForUID[parentUID];
-      childrenCollections[parentUID] = {
-        isFullyLoaded: !!children,
-        lastKindHasMoreItems: false,
-        lastFetchedKind: 'folder',
-        lastFetchedPage: 1,
-        items: children,
-      };
+    if (!searchResults) {
+      // We don't expand folders when searching
+      for (const parentUID in childrenForUID) {
+        const children = childrenForUID[parentUID];
+        childrenCollections[parentUID] = {
+          isFullyLoaded: !!children,
+          lastKindHasMoreItems: false,
+          lastFetchedKind: 'folder',
+          lastFetchedPage: 1,
+          items: children,
+        };
+      }
     }
 
-    const result = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState, 0, false);
-    result.unshift({
-      isOpen: false,
-      level: 0,
-      item: {
-        kind: 'folder',
-        title: 'Dashboards',
-        uid: '',
-      },
-    });
+    const result = createFlatTree(
+      undefined,
+      rootCollection,
+      childrenCollections,
+      searchResults ? {} : folderOpenState,
+      searchResults ? 0 : 1,
+      false
+    );
+
+    if (!searchResults) {
+      result.unshift({
+        isOpen: true,
+        level: 0,
+        item: {
+          kind: 'folder',
+          title: 'Dashboards',
+          uid: '',
+        },
+      });
+    }
 
     return result;
-  }, [childrenForUID, folderOpenState, state.loading, state.value]);
+  }, [search, searchState.value, rootFoldersState.loading, rootFoldersState.value, folderOpenState, childrenForUID]);
 
   const handleSelectionChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
-      console.log('selected', item);
       if (onChange) {
-        onChange({ title: item.title, uid: item.uid });
+        onChange({
+          uid: item.uid,
+          title: item.title,
+        });
       }
+      setOverlayOpen(false);
     },
     [onChange]
   );
 
-  return (
-    <fieldset>
-      {/* <FilterInput placeholder="Search folder" value={search} escapeRegex={false} onChange={(val) => setSearch(val)} /> */}
+  const { getTooltipProps, setTooltipRef, setTriggerRef, visible, triggerRef } = usePopperTooltip({
+    visible: overlayOpen,
+    placement: 'bottom',
+    interactive: true,
+    offset: [0, 0],
+    trigger: 'click',
+    onVisibleChange: (value: boolean) => {
+      // ensure search state is clean on opening the overlay
+      if (value) {
+        setSearch('');
+      }
+      setOverlayOpen(value);
+    },
+  });
 
-      {state.loading && <LoadingBar width={300} />}
-      {state.error && <p>{state.error.message}</p>}
-      {state.value && (
-        <NestedFolderList
-          items={flatTree}
-          selectedFolder={value}
-          onFolderClick={handleFolderClick}
-          onSelectionChange={handleSelectionChange}
-        />
-      )}
-    </fieldset>
+  const isLoading = rootFoldersState.loading || searchState.loading;
+  const error = rootFoldersState.error || searchState.error;
+
+  const tree = flatTree;
+
+  let label = selectedFolder.data?.title;
+  if (value === '') {
+    label = 'Dashboards';
+  }
+
+  if (!visible) {
+    return (
+      <Button
+        className={styles.button}
+        variant="secondary"
+        icon={value !== undefined ? 'folder' : undefined}
+        ref={setTriggerRef}
+      >
+        {selectedFolder.isLoading ? (
+          <Skeleton width={100} />
+        ) : (
+          <Text as="span" truncate>
+            {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
+          </Text>
+        )}
+      </Button>
+    );
+  }
+
+  return (
+    <>
+      <Input
+        ref={setTriggerRef}
+        autoFocus
+        placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
+        value={search}
+        className={styles.search}
+        onChange={(e) => setSearch(e.currentTarget.value)}
+        role="combobox"
+        suffix={<Icon name="search" />}
+      />
+      <fieldset
+        ref={setTooltipRef}
+        {...getTooltipProps({
+          className: styles.tableWrapper,
+          style: {
+            width: triggerRef?.clientWidth,
+          },
+        })}
+      >
+        {error ? (
+          <Alert
+            className={styles.error}
+            severity="warning"
+            title={t('browse-dashboards.folder-picker.error-title', 'Error loading folders')}
+          >
+            {error.message || error.toString?.() || t('browse-dashboards.folder-picker.unknown-error', 'Unknown error')}
+          </Alert>
+        ) : (
+          <div>
+            {isLoading && (
+              <div className={styles.loader}>
+                <LoadingBar width={600} />
+              </div>
+            )}
+
+            <NestedFolderList
+              items={tree}
+              selectedFolder={value}
+              onFolderClick={handleFolderClick}
+              onSelectionChange={handleSelectionChange}
+              foldersAreOpenable={!(search && searchState.value)}
+            />
+          </div>
+        )}
+      </fieldset>
+    </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    button: css({
+      maxWidth: '100%',
+    }),
+    error: css({
+      marginBottom: 0,
+    }),
+    tableWrapper: css({
+      boxShadow: theme.shadows.z3,
+      position: 'relative',
+      zIndex: theme.zIndex.portal,
+    }),
+    loader: css({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: theme.zIndex.portal + 1,
+      overflow: 'hidden', // loading bar overflows its container, so we need to clip it
+    }),
+    search: css({
+      input: {
+        cursor: 'default',
+      },
+    }),
+  };
+};

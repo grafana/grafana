@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -36,6 +36,37 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
+jest.mock('./components/rule-editor/util', () => {
+  const originalModule = jest.requireActual('./components/rule-editor/util');
+  return {
+    ...originalModule,
+    getThresholdsForQueries: jest.fn(() => ({})),
+  };
+});
+
+const dataSources = {
+  default: mockDataSource(
+    {
+      type: 'prometheus',
+      name: 'Prom',
+      isDefault: true,
+    },
+    { alerting: true }
+  ),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    getInstanceSettings: () => dataSources.default,
+    get: () => dataSources.default,
+  })),
+}));
+
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
+
 jest.spyOn(config, 'getAllDataSources');
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
@@ -69,17 +100,6 @@ describe('RuleEditor cloud', () => {
   disableRBAC();
 
   it('can create a new cloud alert', async () => {
-    const dataSources = {
-      default: mockDataSource(
-        {
-          type: 'prometheus',
-          name: 'Prom',
-          isDefault: true,
-        },
-        { alerting: true }
-      ),
-    };
-
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
@@ -114,7 +134,18 @@ describe('RuleEditor cloud', () => {
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
-    await userEvent.click(await ui.buttons.lotexAlert.find());
+    const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
+    expect(removeExpressionsButtons).toHaveLength(2);
+
+    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    expect(switchToCloudButton).toBeInTheDocument();
+
+    await userEvent.click(switchToCloudButton);
+
+    //expressions are removed after switching to data-source managed
+    expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
+
+    expect(screen.getByTestId('datasource-picker')).toBeInTheDocument();
 
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));

@@ -42,7 +42,10 @@ const svgSizes: {
 };
 
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
-  ({ href, color, external = false, inline = true, variant = 'body', weight, icon, children, ...rest }, ref) => {
+  (
+    { href, color = 'link', external = false, inline = true, variant = 'body', weight, icon, children, ...rest },
+    ref
+  ) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 
     const theme = useTheme2();
@@ -72,13 +75,6 @@ export const getLinkStyles = (
   weight?: TextLinkProps['weight'],
   color?: TextLinkProps['color']
 ) => {
-  const getLinkColor = (color: TextLinkProps['color'], inline: boolean) => {
-    if (color) {
-      return theme.colors.text[color];
-    }
-    return inline ? theme.colors.text.link : theme.colors.text.primary;
-  };
-
   return css([
     variant && {
       ...theme.typography[variant],
@@ -86,11 +82,14 @@ export const getLinkStyles = (
     weight && {
       fontWeight: customWeight(weight, theme),
     },
+    color && {
+      color: theme.colors.text[color],
+    },
     {
       alignItems: 'center',
       gap: '0.25em',
-      color: getLinkColor(color, inline),
       display: 'inline-flex',
+      textDecoration: 'none',
       '&:hover': {
         textDecoration: 'underline',
         color: theme.colors.text.link,

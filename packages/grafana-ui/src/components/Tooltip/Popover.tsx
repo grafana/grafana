@@ -23,7 +23,7 @@ const transitionStyles: { [key: string]: object } = {
 
 export type RenderPopperArrowFn = (props: { arrowProps: PopperArrowProps; placement: string }) => JSX.Element;
 
-interface Props extends React.HTMLAttributes<HTMLDivElement> {
+interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   show: boolean;
   placement?: Placement;
   content: PopoverContent;
@@ -66,6 +66,8 @@ class Popover extends PureComponent<Props> {
                 >
                   {({ ref, style, placement, arrowProps, update }) => {
                     return (
+                      // TODO: fix keyboard a11y
+                      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                       <div
                         onMouseEnter={onMouseEnter}
                         onMouseLeave={onMouseLeave}
