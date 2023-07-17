@@ -254,7 +254,7 @@ For example, if you have this data:
 | Arkansas  | 1      |
 | Somewhere | 5      |
 
-With this config:
+With this configuration:
 
 - Field: location
 - Lookup: USA States
