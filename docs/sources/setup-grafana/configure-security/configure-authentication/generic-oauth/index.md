@@ -414,4 +414,3 @@ To set up generic OAuth2 authentication with OneLogin, follow these steps:
    team_ids =
    allowed_organizations =
    ```
-   
