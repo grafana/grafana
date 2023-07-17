@@ -1012,4 +1012,77 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
 
     expect(logSeriesToLogsModel(frames)).toStrictEqual(expected);
   });
+
+  it('should not add rowId when id field does not exist)', () => {
+    const frames: DataFrame[] = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            config: {},
+            values: [1686142519756, 1686142520411],
+            nanos: [641000, 0],
+          },
+          {
+            name: 'Line',
+            type: FieldType.string,
+            config: {},
+            values: ['line1', 'line2'],
+          },
+        ],
+        length: 2,
+      },
+    ];
+
+    const expected = {
+      hasUniqueLabels: false,
+      meta: [],
+      rows: [
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line1',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line1',
+          rowIndex: 0,
+          searchWords: [],
+          timeEpochMs: 1686142519756,
+          timeEpochNs: '1686142519756641000',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00',
+          timeLocal: '2023-06-07 06:55:19',
+          timeUtc: '2023-06-07 12:55:19',
+          uid: 'A_0',
+          uniqueLabels: {},
+        },
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line2',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line2',
+          rowIndex: 1,
+          searchWords: [],
+          timeEpochMs: 1686142520411,
+          timeEpochNs: '1686142520411000000',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:20-06:00',
+          timeLocal: '2023-06-07 06:55:20',
+          timeUtc: '2023-06-07 12:55:20',
+          uid: 'A_1',
+          uniqueLabels: {},
+        },
+      ],
+    };
+
+    expect(logSeriesToLogsModel(frames)).toStrictEqual(expected);
+  });
 });
