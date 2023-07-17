@@ -15,10 +15,7 @@ export function AngularPanelPluginWarning({ plugin }: Props) {
     <div className={styles.wrapper}>
       <Alert title="Angular panel plugin" severity="warning">
         <div className="markdown-html">
-          <p>
-            The selected panel plugin depends on Angular, which is deprecated and will stop working in future releases
-            of Grafana.
-          </p>
+          <p>The selected panel plugin is using deprecated plugin APIs.</p>
           <ul>
             <li>
               <a
@@ -27,7 +24,7 @@ export function AngularPanelPluginWarning({ plugin }: Props) {
                 target="_blank"
                 rel="noreferrer"
               >
-                Read our deprecation notice and migration advice.
+                Read more on Angular deprecation
               </a>
             </li>
             <li>
