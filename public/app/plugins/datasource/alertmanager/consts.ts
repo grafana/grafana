@@ -3,6 +3,7 @@ export const receiverTypeNames: Record<string, string> = {
   pushover: 'Pushover',
   slack: 'Slack',
   opsgenie: 'OpsGenie',
+  jsm: 'Jira Service Management',
   webhook: 'Webhook',
   victorops: 'VictorOps',
   wechat: 'WeChat',
