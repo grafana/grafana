@@ -246,7 +246,7 @@ This transformation currently supports spatial data.
 
 For example, if you have this data:
 
-| location  | values |
+| Location  | Values |
 | --------- | ------ |
 | AL        | 0      |
 | AK        | 10     |
