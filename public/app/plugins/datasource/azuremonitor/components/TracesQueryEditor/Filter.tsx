@@ -168,7 +168,7 @@ const Option = (props: React.PropsWithChildren<OptionProps>) => {
       title={data.title}
       onClick={onClickMultiOption}
       onKeyDown={onClickMultiOption}
-      role={'checkbox'}
+      role="checkbox"
       aria-checked={isSelected}
       tabIndex={0}
     >
