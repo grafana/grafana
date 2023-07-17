@@ -39,19 +39,19 @@ describe('FlameGraphTopTableContainer', () => {
     expect(rows).toHaveLength(16);
 
     const columnHeaders = screen.getAllByRole('columnheader');
-    expect(columnHeaders).toHaveLength(3);
-    expect(columnHeaders[0].textContent).toEqual('Symbol');
-    expect(columnHeaders[1].textContent).toEqual('Self');
-    expect(columnHeaders[2].textContent).toEqual('Total');
+    expect(columnHeaders).toHaveLength(4);
+    expect(columnHeaders[1].textContent).toEqual('Symbol');
+    expect(columnHeaders[2].textContent).toEqual('Self');
+    expect(columnHeaders[3].textContent).toEqual('Total');
 
     const cells = screen.getAllByRole('cell');
-    expect(cells).toHaveLength(45); // 16 rows
-    expect(cells[0].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
-    expect(cells[1].textContent).toEqual('31.7 K');
-    expect(cells[2].textContent).toEqual('31.7 Bil');
-    expect(cells[24].textContent).toEqual('test/pkg/create.(*create).initServer.func2.1');
-    expect(cells[25].textContent).toEqual('5.58 K');
-    expect(cells[26].textContent).toEqual('5.58 Bil');
+    expect(cells).toHaveLength(60); // 16 rows
+    expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
+    expect(cells[2].textContent).toEqual('31.7 K');
+    expect(cells[3].textContent).toEqual('31.7 Bil');
+    expect(cells[25].textContent).toEqual('net/http.(*conn).serve');
+    expect(cells[26].textContent).toEqual('5.63 K');
+    expect(cells[27].textContent).toEqual('5.63 Bil');
   });
 
   it('should render search and sandwich buttons', async () => {
