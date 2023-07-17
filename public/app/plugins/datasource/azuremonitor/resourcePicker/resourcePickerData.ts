@@ -1,7 +1,7 @@
 import { uniq } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
 import { logsResourceTypes, resourceTypeDisplayNames } from '../azureMetadata';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
@@ -359,6 +359,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   private async fetchAllNamespaces() {
     const subscriptions = await this.getSubscriptions();
+    reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
     let supportedMetricNamespaces: string[] = [];
     for await (const subscription of subscriptions) {
       const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
