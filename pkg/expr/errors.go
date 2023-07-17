@@ -2,18 +2,20 @@ package expr
 
 import "github.com/grafana/grafana/pkg/util/errutil"
 
-func MakeReadError(refID string, err error) error {
+func MakeConversionError(refID string, err error) error {
 	return errutil.NewBase(
 		errutil.StatusBadRequest,
 		"sse.readDataError",
 	).MustTemplate(
 		"[{{ .Public.refId }}] got error: {{ .Error }}",
 		errutil.WithPublic(
-			"failed to read data from from query {{ .Public.refId }}",
+			"failed to read data from from query {{ .Public.refId }}: {{ .Public.error }}",
 		),
 	).Build(errutil.TemplateData{
+		// Conversion errors should only have meta information in errors
 		Public: map[string]interface{}{
 			"refId": refID,
+			"error": err.Error(),
 		},
 		Error: err,
 	})

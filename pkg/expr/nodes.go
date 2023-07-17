@@ -247,6 +247,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	var result mathexp.Results
 	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+	if err != nil {
+		err = MakeConversionError(dn.refID, err)
+	}
 	return result, err
 }
 
@@ -323,8 +326,7 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 		var series []mathexp.Series
 		series, err := WideToMany(frame)
 		if err != nil {
-			//return "", mathexp.Results{}, err
-			return "", mathexp.Results{}, MakeReadError(frame.RefID, err)
+			return "", mathexp.Results{}, err
 		}
 		for _, ser := range series {
 			vals = append(vals, ser)
@@ -448,7 +450,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type != data.TimeSeriesTypeWide {
-		return nil, fmt.Errorf("input data must be a wide series but got type %s (input refid)", tsSchema.Type)
+		return nil, fmt.Errorf("input data must be a wide series but got type %s", tsSchema.Type)
 	}
 
 	if len(tsSchema.ValueIndices) == 1 {
