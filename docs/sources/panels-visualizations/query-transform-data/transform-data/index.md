@@ -229,7 +229,7 @@ You could prepare the data to be used by a [Time series panel]({{< relref "../..
 
 This will output:
 
-| timestamp           | my_value |
+| Timestamp           | my_value |
 | ------------------- | -------- |
 | 1636678740000000000 | 1        |
 | 1636678680000000000 | 5        |
