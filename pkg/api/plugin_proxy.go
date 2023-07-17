@@ -19,7 +19,7 @@ var (
 	pluginProxyTransport *http.Transport
 )
 
-func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
+func (hs *HTTPServer) ProxyPluginRequest(c *models.ReqContext) {
 	once.Do(func() {
 		pluginProxyTransport = &http.Transport{
 			TLSClientConfig: &tls.Config{
