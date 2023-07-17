@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { RefObject, useMemo } from 'react';
 
 import { DataFrame, SplitOpen, PanelData, GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { StoreState, useSelector } from 'app/types';
 
@@ -30,7 +29,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     flex: 1 1 0;
-    padding: ${config.featureToggles.newTraceViewHeader ? 0 : theme.spacing(theme.components.panel.padding)};
+    padding: theme.spacing(theme.components.panel.padding)};
   `,
 });
 
