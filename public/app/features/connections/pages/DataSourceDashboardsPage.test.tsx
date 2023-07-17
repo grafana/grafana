@@ -9,8 +9,8 @@ import { setAngularLoader } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../../datasources/api';
-import { initialState as dataSourcesInitialState } from '../../datasources/state';
 import { navIndex, getMockDataSource } from '../__mocks__';
+import { initialState as dataSourcesInitialState } from '../state';
 
 import { DataSourceDashboardsPage } from './DataSourceDashboardsPage';
 

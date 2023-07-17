@@ -13,7 +13,7 @@ import {
   getFilteredDataSourcePlugins,
   setDataSourceTypeSearchQuery,
   useDataSourcesRoutes,
-} from '../../datasources/state';
+} from '../state';
 
 import { DataSourceCategories } from './DataSourceCategories';
 import { DataSourceTypeCardList } from './DataSourceTypeCardList';

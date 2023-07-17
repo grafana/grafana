@@ -3,8 +3,8 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 import { PluginMeta, PluginMetaInfo, PluginType, LayoutModes } from '@grafana/data';
 import { DataSourceSettingsState, DataSourcesState } from 'app/types';
 
-import { getMockDataSource, getMockDataSources } from '../__mocks__';
-import { GenericDataSourcePlugin } from '../types';
+import { getMockDataSource, getMockDataSources } from '../../datasources/__mocks__';
+import { GenericDataSourcePlugin } from '../../datasources/types';
 
 import {
   dataSourceLoaded,

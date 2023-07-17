@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
-import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state';
+import { useDataSourcesRoutes, addDataSource } from 'app/features/connections/state';
 import { useDispatch } from 'app/types';
 
 import { isDataSourceEditor } from '../../permissions';

@@ -5,8 +5,8 @@ import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
-import { useDataSource } from '../../datasources/state';
 import { constructDataSourceExploreUrl } from '../../datasources/utils';
+import { useDataSource } from '../state';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
 
 interface Props {

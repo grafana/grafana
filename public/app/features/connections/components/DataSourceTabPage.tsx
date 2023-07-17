@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
 
-import { useDataSourceSettingsNav } from '../../datasources/state';
+import { useDataSourceSettingsNav } from '../state';
 
 import { DataSourceTitle } from './DataSourceTitle';
 import { EditDataSource } from './EditDataSource';

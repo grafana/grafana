@@ -10,8 +10,8 @@ import { setAngularLoader, config, setPluginExtensionGetter } from '@grafana/run
 import { configureStore } from 'app/store/configureStore';
 
 import * as api from '../../datasources/api';
-import { initialState } from '../../datasources/state';
 import { navIndex, getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
+import { initialState } from '../state';
 
 import { EditDataSourcePage } from './EditDataSourcePage';
 

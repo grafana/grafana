@@ -6,8 +6,8 @@ import { LayoutModes } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDataSources } from '../../datasources/api';
-import { initialState } from '../../datasources/state';
 import { navIndex, getMockDataSources } from '../__mocks__';
+import { initialState } from '../state';
 
 import { DataSourcesListPage } from './DataSourcesListPage';
 

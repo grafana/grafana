@@ -1,10 +1,8 @@
 import { useLocation, useParams } from 'react-router-dom';
 
-import {
-  useDataSource,
-  useDataSourceSettingsNav as useDataSourceSettingsNavOriginal,
-} from 'app/features/datasources/state/hooks';
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
+
+import { useDataSource, useDataSourceSettingsNav as useDataSourceSettingsNavOriginal } from '../state/hooks';
 
 // We are extending the original useDataSourceSettingsNav in the following ways:
 // - changing the URL of the nav items to point to Connections

@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { loadDataSources } from 'app/features/datasources/state/actions';
+import { loadDataSources } from 'app/features/connections/state/actions';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 

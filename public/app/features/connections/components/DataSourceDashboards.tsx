@@ -5,7 +5,7 @@ import { importDashboard, removeDashboard } from 'app/features/dashboard/state/a
 import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
 import { PluginDashboard, StoreState, useDispatch, useSelector } from 'app/types';
 
-import { useLoadDataSource } from '../../datasources/state';
+import { useLoadDataSource } from '../state';
 
 import DashboardTable from './DashboardsTable';
 

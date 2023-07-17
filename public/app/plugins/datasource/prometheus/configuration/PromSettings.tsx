@@ -12,7 +12,7 @@ import { getBackendSrv } from '@grafana/runtime/src';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
 import config from '../../../../core/config';
-import { useUpdateDatasource } from '../../../../features/datasources/state';
+import { useUpdateDatasource } from '../../../../features/connections/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { defaultPrometheusQueryOverlapWindow } from '../querycache/QueryCache';

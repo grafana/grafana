@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/core';
 import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types';
 
-import { GenericDataSourcePlugin } from '../types';
+import { GenericDataSourcePlugin } from '../../datasources/types';
 
 const loadingDSType = 'Loading';
 

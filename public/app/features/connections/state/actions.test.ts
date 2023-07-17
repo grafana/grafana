@@ -4,11 +4,11 @@ import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@
 import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
-import { getMockDataSource } from '../__mocks__';
-import * as api from '../api';
-import { DATASOURCES_ROUTES } from '../constants';
-import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
-import { GenericDataSourcePlugin } from '../types';
+import { getMockDataSource } from '../../datasources/__mocks__';
+import * as api from '../../datasources/api';
+import { DATASOURCES_ROUTES } from '../../datasources/constants';
+import { trackDataSourceCreated, trackDataSourceTested } from '../../datasources/tracking';
+import { GenericDataSourcePlugin } from '../../datasources/types';
 
 import {
   InitDataSourceSettingDependencies,
@@ -36,7 +36,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: jest.fn().mockReturnValue({ reload: jest.fn() }),
   getBackendSrv: jest.fn().mockReturnValue({ get: jest.fn() }),
 }));
-jest.mock('../tracking', () => ({
+jest.mock('../../datasources/tracking', () => ({
   trackDataSourceCreated: jest.fn(),
   trackDataSourceTested: jest.fn(),
 }));
