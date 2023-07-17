@@ -21,7 +21,11 @@ When possible, we recommend that you test the Grafana upgrade process in a test 
 
 ## Back up the Grafana database
 
-Although Grafana automatically upgrades the database on startup, we recommend that you back up your Grafana database so that you can roll back to a previous version, if required.
+We recommend regularly backing up and testing backups of your Grafana database. The frequency depends on how often your Grafana data changes and the impact of losing this data. 
+
+If you have dynamically changing data such as user accounts, dashboards or alert rules, we recommend backing up often enough to capture these changes, such as weekly, daily or hourly. If you make changes infrequently however, backups after each are sufficient.
+
+Although Grafana automatically upgrades the database on startup, we recommend that you back up your Grafana database before upgrading so that you can roll back to a previous version, if required.
 
 ### SQLite
 
