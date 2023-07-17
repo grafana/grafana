@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -44,7 +43,7 @@ func main() {
 	var compok []kindsys.Composable
 
 	kindRegistry, err := NewKindRegistry()
-	defer os.Remove(kindRegistry.zipDir)
+	defer kindRegistry.cleanUp()
 	if err != nil {
 		die(err)
 	}
@@ -302,27 +301,19 @@ func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
 }
 
-func contains(array []string, value string) bool {
-	for _, v := range array {
-		if v == value {
-			return true
-		}
-	}
-
-	return false
-}
-
 type kindRegistry struct {
-	zipDir string
+	zipDir  string
+	zipFile *zip.ReadCloser
 }
 
+// NewKindRegistry downloads the archive of the kind-registry GH repository and open it
 func NewKindRegistry() (*kindRegistry, error) {
 	ctx := context.Background()
 	tc := oauth2.NewClient(ctx, nil)
 	client := github.NewClient(tc)
 
 	// Create a temporary file to store the downloaded archive
-	file, err := ioutil.TempFile("", "*.zip")
+	file, err := os.CreateTemp("", "*.zip")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary file: %w", err)
 	}
@@ -348,9 +339,34 @@ func NewKindRegistry() (*kindRegistry, error) {
 		return nil, fmt.Errorf("failed to save archive: %w", err)
 	}
 
+	// Open the zip file for reading
+	zipDir := file.Name()
+	zipFile, err := zip.OpenReader(zipDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open zip file %s: %w", zipDir, err)
+	}
+
 	return &kindRegistry{
-		zipDir: file.Name(),
+		zipDir:  zipDir,
+		zipFile: zipFile,
 	}, nil
+}
+
+// cleanUp removes the archive from the temporary files and closes the zip reader
+func (registry *kindRegistry) cleanUp() {
+	if registry.zipDir != "" {
+		err := os.Remove(registry.zipDir)
+		if err != nil {
+			fmt.Fprint(os.Stderr, fmt.Errorf("failed to remove zip archive: %w", err))
+		}
+	}
+
+	if registry.zipFile != nil {
+		err := registry.zipFile.Close()
+		if err != nil {
+			fmt.Fprint(os.Stderr, fmt.Errorf("failed to close zip file reader: %w", err))
+		}
+	}
 }
 
 // findLatestDir get the latest version directory published in the kind registry
@@ -359,14 +375,7 @@ func (registry *kindRegistry) findLatestDir() (string, error) {
 	latestVersion := []uint64{0, 0, 0}
 	latestDir := ""
 
-	// Open the zip file for reading
-	zipFile, err := zip.OpenReader(registry.zipDir)
-	if err != nil {
-		return "", fmt.Errorf("failed to open zip file %s: %w", registry.zipDir, err)
-	}
-	defer zipFile.Close()
-
-	for _, file := range zipFile.File {
+	for _, file := range registry.zipFile.File {
 		if !file.FileInfo().IsDir() {
 			continue
 		}
@@ -396,25 +405,17 @@ func (registry *kindRegistry) getPublishedKind(name string, category string, lat
 		return "", nil
 	}
 
-	// Open the zip file for reading
-	zipFile, err := zip.OpenReader(registry.zipDir)
-	if err != nil {
-		return "", fmt.Errorf("failed to open zip file: %w", err)
-	}
-	defer zipFile.Close()
-
 	kindPath := filepath.Join(
 		registry.zipDir,
 		fmt.Sprintf("grafana/%s/%s/%s.cue", latestRegistryDir, category, name),
 	)
-
-	file, err := zipFile.Open(kindPath)
+	file, err := registry.zipFile.Open(kindPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return "", fmt.Errorf("failed to read file: %w", err)
 	}
