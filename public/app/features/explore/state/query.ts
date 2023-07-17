@@ -258,7 +258,7 @@ export function addQueryRow(exploreId: string, index: number): ThunkResult<void>
     // if it's not mixed, send it as an override. generateEmptyQuery doesn't have access to state
     if (queries.length === 0) {
       const rootDatasource = getState().explore.panes[exploreId]!.datasourceInstance;
-      if (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed) {
+      if (!rootDatasource?.meta.mixed) {
         datasourceOverride = rootDatasource;
       }
     }

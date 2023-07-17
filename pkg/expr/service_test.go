@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,7 +32,7 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{
+	pCtxProvider := plugincontext.ProvideService(nil, &fakes.FakePluginStore{
 		PluginList: []plugins.PluginDTO{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
