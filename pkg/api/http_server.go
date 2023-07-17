@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
@@ -104,6 +105,8 @@ import (
 )
 
 type HTTPServer struct {
+	// services.NamedService is embedded so we can inherit AddListener, without
+	// implementing the service interface.
 	services.NamedService
 
 	log              log.Logger
@@ -456,8 +459,12 @@ func (hs *HTTPServer) running(ctx context.Context) error {
 	return nil
 }
 
-func (hs *HTTPServer) stop(failureReason error) error {
-	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+func (hs *HTTPServer) stop(_ error) error {
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := hs.httpSrv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("failed to shutdown server: %w", err)
 	}
 	return nil
