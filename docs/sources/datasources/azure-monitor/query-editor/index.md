@@ -141,10 +141,11 @@ The Azure documentation includes resources to help you learn KQL:
 - [Tutorial: Use Kusto queries in Azure Monitor](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial?pivots=azuremonitor)
 - [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet)
 
-> **Implicit dashboard time range usage:** As of Grafana v9.4.12 and v10.0, all Azure Monitor Logs queries
-> will use the specified dashboard or Explore time range by default.
-> Any query making use of a time range explicitly specified in the query body will have their query
-> executed against the intersection of the two time ranges. For more details on this change, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters).
+> **Time-range:** The time-range that will be used for the query can be modified via the time-range switch. Selecting `Query` will only make use of time-ranges specified within the query.
+> Specifying `Intersection` will make use of the intersection between the time-ranges within the query and the Grafana time-range.
+> If there are no time-ranges specified within the query, the Grafana time-range will be used.
+> For more details on this change, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters).
+> Note: v9.4.12, v10.0, and v10.0.1 do not have this switch and will implicitly use the intersection of the Grafana and query time-ranges.
 
 This example query returns a virtual machine's CPU performance, averaged over 5ms time grains:
 

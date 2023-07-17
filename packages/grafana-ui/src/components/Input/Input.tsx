@@ -100,35 +100,33 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
 
   return {
     // Wraps inputWrapper and addons
-    wrapper: cx(
-      css`
-        label: input-wrapper;
-        display: flex;
-        width: ${width ? `${theme.spacing(width)}` : '100%'};
-        height: ${theme.spacing(theme.components.height.md)};
-        border-radius: ${theme.shape.borderRadius()};
-        &:hover {
-          > .prefix,
-          .suffix,
-          .input {
-            border-color: ${invalid ? theme.colors.error.border : theme.colors.primary.border};
-          }
-
-          // only show number buttons on hover
-          input[type='number'] {
-            -moz-appearance: number-input;
-            -webkit-appearance: number-input;
-            appearance: textfield;
-          }
-
-          input[type='number']::-webkit-inner-spin-button,
-          input[type='number']::-webkit-outer-spin-button {
-            -webkit-appearance: inner-spin-button !important;
-            opacity: 1;
-          }
+    wrapper: cx(css`
+      label: input-wrapper;
+      display: flex;
+      width: ${width ? `${theme.spacing(width)}` : '100%'};
+      height: ${theme.spacing(theme.components.height.md)};
+      border-radius: ${theme.shape.borderRadius()};
+      &:hover {
+        > .prefix,
+        .suffix,
+        .input {
+          border-color: ${invalid ? theme.colors.error.border : theme.colors.primary.border};
         }
-      `
-    ),
+
+        // only show number buttons on hover
+        input[type='number'] {
+          -moz-appearance: number-input;
+          -webkit-appearance: number-input;
+          appearance: textfield;
+        }
+
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+          -webkit-appearance: inner-spin-button !important;
+          opacity: 1;
+        }
+      }
+    `),
     // Wraps input and prefix/suffix
     inputWrapper: css`
       label: input-inputWrapper;
