@@ -447,8 +447,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       };
 
       if (idField !== null) {
-        // we do not want to create a `rowId: undefined` field,
-        // so we only add it if it exists.
         row.rowId = idField.values[j];
       }
 
