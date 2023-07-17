@@ -147,8 +147,9 @@ func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 		// If there are owner flags or modfile's dependency has an owner to compare
 		// Else if -i is present and current dependency is indirect
 		if len(*owner) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
-			logger.Println(mod.Name)
-		} else if *indirect || !mod.Indirect {
+			if *indirect && !mod.Indirect {
+				logger.Println(mod.Name)
+			}
 			logger.Println(mod.Name)
 		}
 	}
