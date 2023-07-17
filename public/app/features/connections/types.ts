@@ -8,11 +8,4 @@ export type DataSourceRights = {
   hasDeleteRights: boolean;
 };
 
-export type DataSourcesRoutes = {
-  New: string;
-  Edit: string;
-  List: string;
-  Dashboards: string;
-};
-
 export type DataSourceTestStatus = 'success' | 'warning' | 'error';

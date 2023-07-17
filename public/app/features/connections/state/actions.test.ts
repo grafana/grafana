@@ -4,9 +4,9 @@ import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@
 import { FetchError } from '@grafana/runtime';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
-import { DATASOURCES_ROUTES } from '../../datasources/constants';
 import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
+import { ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';
 
@@ -72,7 +72,7 @@ const failDataSourceTest = async (error: object) => {
   };
   const dispatchedActions = await thunkTester(state)
     .givenThunk(testDataSource)
-    .whenThunkIsDispatched('Azure Monitor', DATASOURCES_ROUTES.Edit, dependencies);
+    .whenThunkIsDispatched('Azure Monitor', ROUTES.DataSourcesEdit, dependencies);
 
   return dispatchedActions;
 };
@@ -235,7 +235,7 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('CloudWatch', DATASOURCES_ROUTES.Edit, dependencies);
+        .whenThunkIsDispatched('CloudWatch', ROUTES.DataSourcesEdit, dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceSucceeded(state.testingStatus)]);
       expect(trackDataSourceTested).toHaveBeenCalledWith({
@@ -243,7 +243,7 @@ describe('testDataSource', () => {
         datasource_uid: 'CW1234',
         grafana_version: '1.0',
         success: true,
-        path: '/datasources/edit/CloudWatch',
+        path: '/connections/datasources/edit/CloudWatch',
       });
     });
 
@@ -272,7 +272,7 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await thunkTester(state)
         .givenThunk(testDataSource)
-        .whenThunkIsDispatched('Azure Monitor', DATASOURCES_ROUTES.Edit, dependencies);
+        .whenThunkIsDispatched('Azure Monitor', ROUTES.DataSourcesEdit, dependencies);
 
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
       expect(trackDataSourceTested).toHaveBeenCalledWith({
@@ -280,7 +280,7 @@ describe('testDataSource', () => {
         datasource_uid: 'azM0nit0R',
         grafana_version: '1.0',
         success: false,
-        path: '/datasources/edit/Azure Monitor',
+        path: '/connections/datasources/edit/Azure Monitor',
       });
     });
 
@@ -361,7 +361,7 @@ describe('addDataSource', () => {
       plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
-      path: DATASOURCES_ROUTES.Edit.replace(':uid', 'azure23'),
+      path: ROUTES.DataSourcesEdit.replace(':uid', 'azure23'),
     });
   });
 });

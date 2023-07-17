@@ -10,7 +10,8 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
-import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
+import { ROUTES } from '../constants';
+import { getDataSources, getDataSourcesCount, useLoadDataSources } from '../state';
 import { trackCreateDashboardClicked, trackExploreClicked, trackDataSourcesListViewed } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -55,7 +56,6 @@ export function DataSourcesListView({
   hasExploreRights,
 }: ViewProps) {
   const styles = useStyles2(getStyles);
-  const dataSourcesRoutes = useDataSourcesRoutes();
   const location = useLocation();
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export function DataSourcesListView({
         buttonDisabled={!hasCreateRights}
         title="No data sources defined"
         buttonIcon="database"
-        buttonLink={dataSourcesRoutes.New}
+        buttonLink={ROUTES.DataSourcesNew}
         buttonTitle="Add data source"
         proTip="You can also define data sources through configuration files."
         proTipLink="http://docs.grafana.org/administration/provisioning/?utm_source=grafana_ds_list#data-sources"
@@ -93,7 +93,7 @@ export function DataSourcesListView({
       {/* List */}
       <ul className={styles.list}>
         {dataSources.map((dataSource) => {
-          const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
+          const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
           return (
             <li key={dataSource.uid}>
               <Card href={hasWriteRights ? dsLink : undefined}>

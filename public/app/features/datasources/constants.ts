@@ -1,8 +1,13 @@
-import { DataSourcesRoutes } from '../connections/types';
+type DataSourcesRoutes = {
+  New: string;
+  Edit: string;
+  List: string;
+  Dashboards: string;
+};
 
 /**
  * Default routes for data sources pages.
- * (Links to the pages can be overriden for this feature by using `DataSourcesRoutesContext`)
+ * These are outdated routes, only used for redirection now.
  */
 export const DATASOURCES_ROUTES: DataSourcesRoutes = {
   List: '/datasources',

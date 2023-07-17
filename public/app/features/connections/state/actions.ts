@@ -17,7 +17,6 @@ import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
 import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
 
-import { DATASOURCES_ROUTES } from '../../datasources/constants';
 import * as api from '../api';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { findNewName, nameExits } from '../utils';
@@ -120,7 +119,7 @@ export const initDataSourceSettings = (
 
 export const testDataSource = (
   dataSourceName: string,
-  editRoute = DATASOURCES_ROUTES.Edit,
+  editRoute = CONNECTIONS_ROUTES.DataSourcesEdit,
   dependencies: TestDataSourceDependencies = {
     getDatasourceSrv,
     getBackendSrv,
@@ -218,7 +217,7 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
 
 export function addDataSource(
   plugin: DataSourcePluginMeta,
-  editRoute = DATASOURCES_ROUTES.Edit
+  editRoute = CONNECTIONS_ROUTES.DataSourcesEdit
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     // update the list of datasources first.
