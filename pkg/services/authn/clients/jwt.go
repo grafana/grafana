@@ -66,9 +66,9 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	id := &authn.Identity{
-		AuthModule: login.JWTModule,
-		AuthID:     sub,
-		OrgRoles:   map[int64]org.RoleType{},
+		AuthenticatedBy: login.JWTModule,
+		AuthID:          sub,
+		OrgRoles:        map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			FetchSyncedUser: true,
