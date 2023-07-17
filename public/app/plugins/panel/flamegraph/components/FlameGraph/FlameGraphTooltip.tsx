@@ -36,8 +36,6 @@ const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
     </div>
   );
 
-  // Even if we don't show tooltip we need this div so the ref is consistently attached. Would need some refactor in
-  // FlameGraph.tsx to make it work without it.
   return (
     <Portal>
       <VizTooltipContainer position={position} offset={{ x: 15, y: 0 }}>
