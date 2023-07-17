@@ -69,32 +69,18 @@ To navigate Loki and build a query:
 
 {{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
 
-- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select a editor mode.
-
-## Code mode
-
-In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
-It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
-
-For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
-
-### Use autocompletion
-
-Code mode's autocompletion feature works automatically while typing.
-
-The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like labels.
-The autocompletion dropdown includes documentation for the suggested items where available.
+- **Builder/Code** - Click the corresponding **Builder** or **Code** tab on the toolbar to select an editor mode.
 
 ## Builder mode
 
 Builder mode helps you build queries using a visual interface without needing to manually enter LogQL. This option is best for users who have limited or no previous experience working with Loki and LogQL.
 
-### Use the Labels selector
+### Label filters
 
 Select labels and their values from the dropdown list.
 When you select a label, Grafana retrieves available values from the server.
 
-Use the `+` button to add a label and the `x` button to remove a label.
+Use the `+` button to add a label and the `x` button to remove a label. You can add multiple labels.
 
 ### Operations
 
@@ -117,9 +103,35 @@ Some operations make sense only when used in a specific order.
 If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
 To re-order operations manually, drag the operation box by its name and drop it into the desired place.
 
-#### Hints
+### Hints
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
+
+## Code mode
+
+In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
+It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
+
+For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
+
+### Use autocompletion
+
+Code mode's autocompletion feature works automatically while typing.
+
+The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like labels.
+The autocompletion dropdown includes documentation for the suggested items where available.
+
+## Options
+
+The following options are the same for both **Builder** and **Code** mode:
+
+- **Legend** - Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.
+
+- **Type** - Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.
+
+- **Line limit** -Defines the upper limit for the number of log lines returned by a query. The default is `1000`
+
+- **Resolution** Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better.
 
 ## Create a log query
 
@@ -205,16 +217,6 @@ Available in Grafana v6.3 and higher.
 You can use LogQL to wrap a log query with functions that create metrics from your logs.
 
 For more information about metric queries, refer to the [Loki metric queries documentation](/docs/loki/latest/logql/metric_queries/).
-
-## Configure query settings
-
-| Name           | Description                                                                                                                                                                                                                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                              |
-| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                             |
-| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                                           |
-| **Step**       | Sets the step parameter of Loki metrics queries. The default value equals to the value of `$__interval` variable, which is calculated using the time range and the width of the graph (the number of pixels).                                                                              |
-| **Resolution** | Deprecated. Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
 
 ## Apply annotations
 
