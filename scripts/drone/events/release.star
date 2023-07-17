@@ -18,13 +18,11 @@ load(
     "get_windows_steps",
     "grafana_server_step",
     "identify_runner_step",
-    "memcached_integration_tests_step",
     "mysql_integration_tests_step",
     "package_step",
     "postgres_integration_tests_step",
     "publish_grafanacom_step",
     "publish_linux_packages_step",
-    "redis_integration_tests_step",
     "store_storybook_step",
     "trigger_oss",
     "upload_cdn_step",
@@ -404,10 +402,6 @@ def integration_test_pipelines():
     oss_integration_test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-    ]
-    enterprise_integration_test_steps = oss_integration_test_steps + [
-        redis_integration_tests_step(),
-        memcached_integration_tests_step(),
     ]
 
     pipelines.append(pipeline(
