@@ -58,7 +58,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     return { ...queryResponse, items };
   }, [search]);
 
-  const handleFolderClick = useCallback(async (uid: string, newOpenState: boolean) => {
+  const handleFolderExpand = useCallback(async (uid: string, newOpenState: boolean) => {
     setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
     if (newOpenState) {
@@ -141,8 +141,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     },
   });
 
-  const handleSelectionChange = useCallback(
-    (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
+  const handleFolderSelect = useCallback(
+    (item: DashboardViewItem) => {
       if (onChange) {
         onChange({
           uid: item.uid,
@@ -166,7 +166,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       const foldersAreOpenable = !(search && searchState.value);
       if (foldersAreOpenable && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) {
         ev.preventDefault();
-        handleFolderClick(tree[focusedItemIndex].item.uid, ev.key === 'ArrowRight');
+        handleFolderExpand(tree[focusedItemIndex].item.uid, ev.key === 'ArrowRight');
       } else if (ev.key === 'ArrowUp' && focusedItemIndex > 0) {
         ev.preventDefault();
         const nextIndex = focusedItemIndex - 1;
@@ -179,13 +179,14 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         ev.preventDefault();
         const item = tree[focusedItemIndex].item;
         if (item.kind === 'folder') {
-          handleSelectionChange(ev, item);
+          handleFolderSelect(item);
         }
-      } else if (ev.key === 'Tab') {
+      } else if (ev.key === 'Tab' || ev.key === 'Escape') {
+        ev.stopPropagation();
         setOverlayOpen(false);
       }
     },
-    [focusedItemIndex, handleFolderClick, handleSelectionChange, search, searchState.value, tree]
+    [focusedItemIndex, handleFolderExpand, handleFolderSelect, search, searchState.value, tree]
   );
 
   useEffect(() => {
@@ -259,8 +260,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
               items={tree}
               selectedFolder={value}
               focusedItemIndex={focusedItemIndex}
-              onFolderClick={handleFolderClick}
-              onSelectionChange={handleSelectionChange}
+              onFolderExpand={handleFolderExpand}
+              onFolderSelect={handleFolderSelect}
               foldersAreOpenable={!(search && searchState.value)}
             />
           </div>

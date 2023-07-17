@@ -21,8 +21,8 @@ interface NestedFolderListProps {
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
   selectedFolder: FolderUID | undefined;
-  onFolderClick: (uid: string, newOpenState: boolean) => void;
-  onSelectionChange: (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => void;
+  onFolderExpand: (uid: string, newOpenState: boolean) => void;
+  onFolderSelect: (item: DashboardViewItem) => void;
 }
 
 export function NestedFolderList({
@@ -30,8 +30,8 @@ export function NestedFolderList({
   focusedItemIndex,
   foldersAreOpenable,
   selectedFolder,
-  onFolderClick,
-  onSelectionChange,
+  onFolderExpand,
+  onFolderSelect,
 }: NestedFolderListProps) {
   const styles = useStyles2(getStyles);
 
@@ -41,10 +41,10 @@ export function NestedFolderList({
       focusedItemIndex,
       foldersAreOpenable,
       selectedFolder,
-      onFolderClick,
-      onSelectionChange,
+      onFolderExpand,
+      onFolderSelect,
     }),
-    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderClick, onSelectionChange]
+    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect]
   );
 
   return (
@@ -77,7 +77,7 @@ interface RowProps {
 }
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
-  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderClick, onSelectionChange } = data;
+  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect } = data;
   const { item, isOpen, level } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
 
@@ -90,23 +90,20 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     }
   }, [focusedItemIndex, rowRef, index]);
 
-  const handleClick = useCallback(
+  const handleExpand = useCallback(
     (ev: React.MouseEvent<HTMLButtonElement>) => {
       ev.preventDefault();
       ev.stopPropagation();
-      onFolderClick(item.uid, !isOpen);
+      onFolderExpand(item.uid, !isOpen);
     },
-    [item.uid, isOpen, onFolderClick]
+    [item.uid, isOpen, onFolderExpand]
   );
 
-  const handleRadioChange = useCallback(
-    (ev: React.MouseEvent<HTMLDivElement>) => {
-      if (item.kind === 'folder') {
-        onSelectionChange(ev, item);
-      }
-    },
-    [item, onSelectionChange]
-  );
+  const handleSelect = useCallback(() => {
+    if (item.kind === 'folder') {
+      onFolderSelect(item);
+    }
+  }, [item, onFolderSelect]);
 
   if (item.kind !== 'folder') {
     return process.env.NODE_ENV !== 'production' ? (
@@ -129,14 +126,14 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       role="treeitem"
       aria-selected={item.uid === selectedFolder}
       tabIndex={-1}
-      onClick={handleRadioChange}
+      onClick={handleSelect}
     >
       <div className={styles.rowBody}>
         <Indent level={level} />
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}
-            onMouseDown={handleClick}
+            onMouseDown={handleExpand}
             // tabIndex not needed here because we handle keyboard navigation at the input level
             tabIndex={-1}
             aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
