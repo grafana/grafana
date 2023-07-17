@@ -6,8 +6,6 @@ import { PluginSignatureStatus } from '@grafana/data';
 
 import { PluginDetailsPage } from './PluginDetailsPage';
 
-const angularPluginId = 'angular';
-
 jest.mock('../state/hooks', () => ({
   __esModule: true,
   ...jest.requireActual('../state/hooks'),
@@ -15,7 +13,7 @@ jest.mock('../state/hooks', () => ({
     return {
       description: 'The test plugin',
       downloads: 5,
-      id,
+      id: 'test-plugin',
       info: {
         logos: { small: '', large: '' },
       },
@@ -32,25 +30,10 @@ jest.mock('../state/hooks', () => ({
       isEnterprise: false,
       isDisabled: false,
       isPublished: true,
-      angularDetected: id === angularPluginId,
+      angularDetected: id === 'angular',
     };
   }),
 }));
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  reportInteraction: jest.fn(),
-}));
-
-function renderPage(pluginId: string) {
-  return act(async () =>
-    render(
-      <TestProvider>
-        <PluginDetailsPage pluginId={pluginId} />
-      </TestProvider>
-    )
-  );
-}
 
 describe('PluginDetailsPage Angular deprecation', () => {
   afterAll(() => {
@@ -58,12 +41,24 @@ describe('PluginDetailsPage Angular deprecation', () => {
   });
 
   it('renders the component for angular plugins', async () => {
-    await renderPage(angularPluginId);
+    await act(async () =>
+      render(
+        <TestProvider>
+          <PluginDetailsPage pluginId="angular" />
+        </TestProvider>
+      )
+    );
     expect(screen.getByText(/angular plugin/i)).toBeVisible();
   });
 
   it('does not render the component for non-angular plugins', async () => {
-    await renderPage('not-angular');
+    await act(async () =>
+      render(
+        <TestProvider>
+          <PluginDetailsPage pluginId="not-angular" />
+        </TestProvider>
+      )
+    );
     expect(screen.queryByText(/angular plugin/i)).toBeNull();
   });
 });
