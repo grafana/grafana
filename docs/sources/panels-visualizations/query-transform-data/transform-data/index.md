@@ -212,7 +212,7 @@ Use this transformation to select one source of data and extract content from it
 
 Consider the following data set:
 
-| timestamp           | json_data     |
+| Timestamp           | json_data     |
 | ------------------- | ------------- |
 | 1636678740000000000 | {"value": 1}  |
 | 1636678680000000000 | {"value": 5}  |
