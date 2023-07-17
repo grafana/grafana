@@ -59,7 +59,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 ## List of supported notifiers
 
 | Name                                          | Type                      | Supports images    | Supports alert rule tags |
-| --------------------------------------------- | ------------------------- | ------------------ | ------------------------ |
+|-----------------------------------------------|---------------------------| ------------------ | ------------------------ |
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
 | [Discord](#discord)                           | `discord`                 | yes                | no                       |
 | [Email](#email)                               | `email`                   | yes                | no                       |
@@ -69,6 +69,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Line                                          | `line`                    | yes, external only | no                       |
 | Microsoft Teams                               | `teams`                   | yes, external only | no                       |
 | [Opsgenie](#opsgenie)                         | `opsgenie`                | yes, external only | yes                      |
+| [Jira Service Management](#jsm)               | `jsm`                     | yes, external only | yes                      |
 | [Pagerduty](#pagerduty)                       | `pagerduty`               | yes, external only | yes                      |
 | Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                      |
 | [Pushover](#pushover)                         | `pushover`                | yes                | no                       |
@@ -134,6 +135,21 @@ To setup Opsgenie you will need an API Key and the Alert API Url. These can be o
 
 {{% admonition type="note" %}}
 When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Opsgenie then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
+{{% /admonition %}}
+
+### Jira Service Management
+
+To setup Jira Service Management you will need an API Key and the Alert API Url. These can be obtained by configuring a new Grafana Integration.
+
+| Setting                   | Description                                                                                                                                                                                                                              |
+| ------------------------- |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Alert API URL             | The API URL for your Opsgenie instance. This will normally be either `https://api.atlassian.com/jsm/ops/integration/v2/alerts`.                                                                                                          |
+| API Key                   | The API Key as provided by Jira Service Management for your configured Grafana integration.                                                                                                                                                             |
+| Override priority         | Configures the alert priority using the `og_priority` tag. The `og_priority` tag must have one of the following values: `P1`, `P2`, `P3`, `P4`, or `P5`. Default is `False`.                                                             |
+| Send notification tags as | Specify how you would like [Notification Tags]({{< relref "./create-alerts#notifications" >}}) delivered to Jira Service Management. They can be delivered as `Tags`, `Extra Properties` or both. Default is Tags. See note below for more information. |
+
+{{% admonition type="note" %}}
+When notification tags are sent as `Tags` they are concatenated into a string with a `key:value` format. If you prefer to receive the notifications tags as key/values under Extra Properties in Jira Service Management then change the `Send notification tags as` to either `Extra Properties` or `Tags & Extra Properties`.
 {{% /admonition %}}
 
 ### PagerDuty

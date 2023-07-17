@@ -87,6 +87,7 @@ export type Receiver = {
   pushover_configs?: any[];
   slack_configs?: any[];
   opsgenie_configs?: any[];
+  jsm_configs?: any[];
   webhook_configs?: WebhookConfig[];
   victorops_configs?: any[];
   wechat_configs?: any[];
@@ -144,6 +145,8 @@ export type AlertmanagerConfig = {
     pagerduty_url?: string;
     opsgenie_api_key?: string;
     opsgenie_api_url?: string;
+    jsm_api_key?: string;
+    jsm_api_url?: string;
     wechat_api_url?: string;
     wechat_api_secret?: string;
     wechat_api_corp_id?: string;

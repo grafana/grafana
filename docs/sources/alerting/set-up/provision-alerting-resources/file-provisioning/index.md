@@ -310,6 +310,28 @@ settings:
   sendTagsAs: both
 ```
 
+##### Jira Service Management
+
+```yaml
+type: jsm
+settings:
+  # <string, required>
+  apiKey: xxx
+  # <string, required>
+  apiUrl: https://api.atlassian.com/jsm/ops/integration/v2/alerts
+  # <string>
+  message: |
+    {{ template "default.title" . }}
+  # <string>
+  description: some descriptive description
+  # <bool>
+  autoClose: false
+  # <bool>
+  overridePriority: false
+  # <string> options: tags, details, both
+  sendTagsAs: both
+```
+
 ##### PagerDuty
 
 ```yaml

@@ -627,6 +627,16 @@ Secure settings is supported since Grafana v7.2.
 | overridePriority |                |
 | sendTagsAs       |                |
 
+#### Alert notification `jsm`
+
+| Name             | Secure setting |
+| ---------------- | -------------- |
+| apiKey           | yes            |
+| apiUrl           |                |
+| autoClose        |                |
+| overridePriority |                |
+| sendTagsAs       |                |
+
 #### Alert notification `telegram`
 
 | Name        | Secure setting |

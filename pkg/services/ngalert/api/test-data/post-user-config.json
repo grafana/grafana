@@ -162,6 +162,18 @@
                         }
                     },
                     {
+                      "name": "a jsm receiver",
+                      "type": "jsm",
+                      "isDefault": false,
+                      "sendReminder": false,
+                      "disableResolveMessage": false,
+                      "frequency": "5m",
+                      "settings": "settings",
+                      "secureSettings": {
+                        "apiKey": "<apiKey>"
+                      }
+                    },
+                    {
                         "name": "a pagerduty receiver",
                         "type": "pagerduty",
                         "isDefault": false,

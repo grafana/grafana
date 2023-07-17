@@ -3,6 +3,7 @@ package channels_config
 import (
 	"os"
 
+	alertingJsm "github.com/grafana/alerting/receivers/jsm"
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
@@ -1196,6 +1197,76 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 						},
 					},
 					Description:  "Send the common annotations to Opsgenie as either Extra Properties, Tags or both",
+					PropertyName: "sendTagsAs",
+				},
+			},
+		},
+		{
+			Type:        "jsm",
+			Name:        "Jira Service Management",
+			Description: "Sends notifications to Jira Service Management",
+			Heading:     "Jira Service Management settings",
+			Options: []NotifierOption{
+				{
+					Label:        "API Key",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "JSM API Key",
+					PropertyName: "apiKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Alert API URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "https://api.atlassian.com/jsm/ops/integration/v2/alerts",
+					PropertyName: "apiUrl",
+					Required:     true,
+				},
+				{
+					Label:        "Message",
+					Description:  "Alert text limited to 130 characters.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Description",
+					Description:  "A description of the incident.",
+					Element:      ElementTypeTextArea,
+					PropertyName: "description",
+				},
+				{
+					Label:        "Auto close incidents",
+					Element:      ElementTypeCheckbox,
+					Description:  "Automatically close alerts in Jira Service Management once the alert goes back to ok.",
+					PropertyName: "autoClose",
+				}, {
+					Label:        "Override priority",
+					Element:      ElementTypeCheckbox,
+					Description:  "Allow the alert priority to be set using the og_priority annotation",
+					PropertyName: "overridePriority",
+				},
+				{
+					Label:   "Send notification tags as",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: alertingJsm.SendTags,
+							Label: "Tags",
+						},
+						{
+							Value: alertingJsm.SendDetails,
+							Label: "Extra Properties",
+						},
+						{
+							Value: alertingJsm.SendBoth,
+							Label: "Tags & Extra Properties",
+						},
+					},
+					Description:  "Send the common annotations to Jira Service Management as either Extra Properties, Tags or both",
 					PropertyName: "sendTagsAs",
 				},
 			},

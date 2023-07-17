@@ -3611,6 +3611,7 @@
               " kafka",
               " line",
               " opsgenie",
+              " jsm",
               " pagerduty",
               " pushover",
               " sensugo",
@@ -3760,6 +3761,9 @@
           },
           "opsgenie_configs": {
             "$ref": "#/components/schemas/OpsGenieConfig"
+          },
+          "jsm_configs": {
+            "$ref": "#/components/schemas/JsmConfig"
           },
           "pagerduty_configs": {
             "$ref": "#/components/schemas/PagerdutyConfig"
@@ -4255,6 +4259,12 @@
             },
             "type": "array"
           },
+          "jsm_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JsmConfig"
+            },
+            "type": "array"
+          },
           "pagerduty_configs": {
             "items": {
               "$ref": "#/components/schemas/PagerdutyConfig"
@@ -4578,6 +4588,15 @@
             "type": "string"
           },
           "opsgenie_api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "jsm_api_key": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "jsm_api_key_file": {
+            "type": "string"
+          },
+          "jsm_api_url": {
             "$ref": "#/components/schemas/URL"
           },
           "pagerduty_url": {
@@ -5753,6 +5772,85 @@
         },
         "type": "object"
       },
+      "JsmConfig": {
+        "properties": {
+          "actions": {
+            "type": "string"
+          },
+          "api_key": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "api_key_file": {
+            "type": "string"
+          },
+          "api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "description": {
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "message": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "responders": {
+            "items": {
+              "$ref": "#/components/schemas/JsmConfigResponder"
+            },
+            "type": "array"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "string"
+          },
+          "update_alerts": {
+            "type": "boolean"
+          }
+        },
+        "title": "JsmConfig configures notifications via Jira Service Management.",
+        "type": "object"
+      },
+      "JsmConfigResponder": {
+        "properties": {
+          "id": {
+            "description": "One of those 3 should be filled.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "description": "team, user, escalation, schedule etc.",
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "OrgDTO": {
         "properties": {
           "id": {
@@ -6296,6 +6394,12 @@
           "opsgenie_configs": {
             "items": {
               "$ref": "#/components/schemas/OpsGenieConfig"
+            },
+            "type": "array"
+          },
+          "jsm_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JsmConfig"
             },
             "type": "array"
           },
@@ -6990,6 +7094,12 @@
           "opsgenie_configs": {
             "items": {
               "$ref": "#/components/schemas/OpsGenieConfig"
+            },
+            "type": "array"
+          },
+          "jsm_configs": {
+            "items": {
+              "$ref": "#/components/schemas/JsmConfig"
             },
             "type": "array"
           },

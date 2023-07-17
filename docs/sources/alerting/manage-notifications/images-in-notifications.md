@@ -84,7 +84,7 @@ We recommended that `max_concurrent_screenshots` is less than or equal to `concu
 Grafana supports a wide range of contact points with varied support for images in notifications. The table below shows the list of all contact points supported in Grafana and their support for uploading screenshots to the receiving service and referencing screenshots that have been uploaded to a cloud storage service.
 
 | Name                    | Upload from disk                                           | Reference from cloud storage                             |
-| ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+|-------------------------| ---------------------------------------------------------- | -------------------------------------------------------- |
 | DingDing                | No                                                         | No                                                       |
 | Discord                 | Yes (Maximum of 10 per notification)                       | Yes (Maximum of 10 per notification)                     |
 | Email                   | Yes (Embedded in the email)                                | Yes                                                      |
@@ -93,6 +93,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | Line                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |
 | Opsgenie                | No                                                         | Yes                                                      |
+| Jira Service Management | No                                                         | Yes                                                      |
 | Pagerduty               | No                                                         | Yes                                                      |
 | Prometheus Alertmanager | No                                                         | No                                                       |
 | Pushover                | Yes (Maximum of 1 per notification)                        | No                                                       |

@@ -1195,6 +1195,9 @@ func (r *GettableApiReceiver) UnmarshalJSON(b []byte) error {
 		if len(r.OpsGenieConfigs) > 0 {
 			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
 		}
+		if len(r.JsmConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager JsmConfigs & Grafana receivers together")
+		}
 		if len(r.WechatConfigs) > 0 {
 			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")
 		}
@@ -1256,6 +1259,9 @@ func (r *PostableApiReceiver) UnmarshalJSON(b []byte) error {
 		}
 		if len(r.OpsGenieConfigs) > 0 {
 			return fmt.Errorf("cannot have both Alertmanager OpsGenieConfigs & Grafana receivers together")
+		}
+		if len(r.JsmConfigs) > 0 {
+			return fmt.Errorf("cannot have both Alertmanager JsmConfigs & Grafana receivers together")
 		}
 		if len(r.WechatConfigs) > 0 {
 			return fmt.Errorf("cannot have both Alertmanager WechatConfigs & Grafana receivers together")

@@ -188,6 +188,7 @@ type ExtendedReceiver struct {
 	SlackConfigs     config.SlackConfig      `yaml:"slack_configs,omitempty" json:"slack_configs,omitempty"`
 	WebhookConfigs   config.WebhookConfig    `yaml:"webhook_configs,omitempty" json:"webhook_configs,omitempty"`
 	OpsGenieConfigs  config.OpsGenieConfig   `yaml:"opsgenie_configs,omitempty" json:"opsgenie_configs,omitempty"`
+	JsmConfigs       config.JsmConfig        `yaml:"jsm_configs,omitempty" json:"jsm_configs,omitempty"`
 	WechatConfigs    config.WechatConfig     `yaml:"wechat_configs,omitempty" json:"wechat_configs,omitempty"`
 	PushoverConfigs  config.PushoverConfig   `yaml:"pushover_configs,omitempty" json:"pushover_configs,omitempty"`
 	VictorOpsConfigs config.VictorOpsConfig  `yaml:"victorops_configs,omitempty" json:"victorops_configs,omitempty"`

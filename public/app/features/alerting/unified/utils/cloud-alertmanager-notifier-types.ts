@@ -296,6 +296,45 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
     ],
   },
   {
+    name: 'Jira Service Management',
+    description: 'Send notifications to Jira Service Management',
+    type: 'jsm',
+    info: '',
+    heading: 'Jira Service Management settings',
+    options: [
+      option('api_key', 'API key', 'The API key to use when talking to the Jira Service Management API.'),
+      option('api_url', 'API URL', 'The host to send Jira Service Management API requests to.'),
+      option('message', 'Message', 'Alert text limited to 130 characters.'),
+      option('description', 'Description', 'A description of the incident.', {
+        placeholder: '{{ template "jsm.default.description" . }}',
+      }),
+      option('source', 'Source', 'A backlink to the sender of the notification.', {
+        placeholder: '{{ template "jsm.default.source" . }}',
+      }),
+      option(
+        'details',
+        'Details',
+        'A set of arbitrary key/value pairs that provide further detail about the incident.',
+        {
+          element: 'key_value_map',
+        }
+      ),
+      option('tags', 'Tags', 'Comma separated list of tags attached to the notifications.'),
+      option('note', 'Note', 'Additional alert note.'),
+      option('priority', 'Priority', 'Priority level of alert. Possible values are P1, P2, P3, P4, and P5.'),
+      option('responders', 'Responders', 'List of responders responsible for notifications.', {
+        element: 'subform_array',
+        subformOptions: [
+          option('type', 'Type', '"team", "user", "escalation" or schedule".', { required: true }),
+          option('id', 'ID', 'Exactly one of these fields should be defined.'),
+          option('name', 'Name', 'Exactly one of these fields should be defined.'),
+          option('username', 'Username', 'Exactly one of these fields should be defined.'),
+        ],
+      }),
+      httpConfigOption,
+    ],
+  },
+  {
     name: 'VictorOps',
     description: 'Send notifications to VictorOps',
     type: 'victorops',
@@ -550,6 +589,8 @@ export const globalConfigOptions: NotificationChannelOption[] = [
   option('pagerduty_url', 'PagerDuty URL', 'https://events.pagerduty.com/v2/enqueue'),
   option('opsgenie_api_key', 'OpsGenie API key', ''),
   option('opsgenie_api_url', 'OpsGenie API URL', '', { placeholder: 'https://api.opsgenie.com/' }),
+  option('jsm_api_key', 'JSM API key', ''),
+  option('jsm_api_url', 'JSM API URL', '', { placeholder: 'https://api.atlassian.com/jsm/ops/integration/v2/alerts' }),
   option('wechat_api_url', 'WeChat API URL', '', { placeholder: 'https://qyapi.weixin.qq.com/cgi-bin/' }),
   option('wechat_api_secret', 'WeChat API secret', ''),
   option('wechat_api_corp_id', 'WeChat API corp id', ''),

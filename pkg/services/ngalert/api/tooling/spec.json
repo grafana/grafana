@@ -3489,6 +3489,7 @@
             " kafka",
             " line",
             " opsgenie",
+            " jsm",
             " pagerduty",
             " pushover",
             " sensugo",
@@ -3598,6 +3599,9 @@
         },
         "opsgenie_configs": {
           "$ref": "#/definitions/OpsGenieConfig"
+        },
+        "jsm_configs": {
+          "$ref": "#/definitions/JsmConfig"
         },
         "pagerduty_configs": {
           "$ref": "#/definitions/PagerdutyConfig"
@@ -3965,6 +3969,12 @@
             "$ref": "#/definitions/OpsGenieConfig"
           }
         },
+        "jsm_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
         "pagerduty_configs": {
           "type": "array",
           "items": {
@@ -4288,6 +4298,15 @@
           "type": "string"
         },
         "opsgenie_api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "jsm_api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "jsm_api_key_file": {
+          "type": "string"
+        },
+        "jsm_api_url": {
           "$ref": "#/definitions/URL"
         },
         "pagerduty_url": {
@@ -4809,6 +4828,85 @@
         }
       }
     },
+    "JsmConfig": {
+      "type": "object",
+      "title": "JsmConfig configures notifications via Jira Service Management.",
+      "properties": {
+        "actions": {
+          "type": "string"
+        },
+        "api_key": {
+          "$ref": "#/definitions/Secret"
+        },
+        "api_key_file": {
+          "type": "string"
+        },
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "description": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "entity": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "message": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "responders": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JsmConfigResponder"
+          }
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "string"
+        },
+        "update_alerts": {
+          "type": "boolean"
+        }
+      }
+    },
+    "JsmConfigResponder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "One of those 3 should be filled.",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "description": "team, user, escalation, schedule etc.",
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
     "PagerdutyConfig": {
       "type": "object",
       "title": "PagerdutyConfig configures notifications via PagerDuty.",
@@ -4991,6 +5089,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
+        "jsm_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JsmConfig"
           }
         },
         "pagerduty_configs": {
@@ -5563,6 +5667,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/OpsGenieConfig"
+          }
+        },
+        "jsm_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JsmConfig"
           }
         },
         "pagerduty_configs": {
