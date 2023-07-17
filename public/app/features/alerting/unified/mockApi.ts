@@ -19,7 +19,7 @@ import { NotifierDTO } from '../../../types';
 
 import { CreateIntegrationDTO, OnCallIntegration } from './api/onCallApi';
 
-class AlertmanagerConfigBuilder {
+export class AlertmanagerConfigBuilder {
   private alertmanagerConfig: AlertmanagerConfig = { receivers: [] };
 
   addReceivers(configure: (builder: AlertmanagerReceiverBuilder) => void): AlertmanagerConfigBuilder {
@@ -108,6 +108,35 @@ class AlertmanagerReceiverBuilder {
   }
 }
 
+export class OnCallIntegrationBuilder {
+  private onCallIntegration: OnCallIntegration = {
+    id: uniqueId('oncall-integration-mock-'),
+    integration: '',
+    integration_url: '',
+    verbal_name: '',
+    connected_escalations_chains_count: 0,
+  };
+
+  withIntegration(integration: string): OnCallIntegrationBuilder {
+    this.onCallIntegration.integration = integration;
+    return this;
+  }
+
+  withIntegrationUrl(integrationUrl: string): OnCallIntegrationBuilder {
+    this.onCallIntegration.integration_url = integrationUrl;
+    return this;
+  }
+
+  withVerbalName(verbalName: string): OnCallIntegrationBuilder {
+    this.onCallIntegration.verbal_name = verbalName;
+    return this;
+  }
+
+  build() {
+    return this.onCallIntegration;
+  }
+}
+
 export function mockApi(server: SetupServer) {
   return {
     getAlertmanagerConfig: (amName: string, configure: (builder: AlertmanagerConfigBuilder) => void) => {
@@ -143,10 +172,16 @@ export function mockApi(server: SetupServer) {
     },
 
     oncall: {
-      getOnCallIntegrations: (response: OnCallIntegration[]) => {
+      getOnCallIntegrations: (builders: Array<(builder: OnCallIntegrationBuilder) => void>) => {
+        const integrations = builders.map((builder) => {
+          const integrationBuilder = new OnCallIntegrationBuilder();
+          builder(integrationBuilder);
+          return integrationBuilder.build();
+        });
+
         server.use(
           rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, (_, res, ctx) =>
-            res(ctx.status(200), ctx.json<OnCallIntegration[]>(response))
+            res(ctx.status(200), ctx.json<OnCallIntegration[]>(integrations))
           )
         );
       },

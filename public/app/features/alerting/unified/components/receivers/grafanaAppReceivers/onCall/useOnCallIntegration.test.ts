@@ -5,7 +5,12 @@ import { mockApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { onCallPluginMetaMock } from 'app/features/alerting/unified/mocks';
 
 import { ReceiverTypes } from './onCall';
-import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
+import {
+  GRAFANA_ONCALL_INTEGRATION_TYPE,
+  OnCallIntegrationSetting,
+  OnCallIntegrationType,
+  useOnCallIntegration,
+} from './useOnCallIntegration';
 
 const server = setupMswServer();
 
@@ -47,48 +52,88 @@ describe('useOnCallIntegration', () => {
     expect(receiverConfig.settings['url']).toBe('https://oncall-endpoint.example.com');
   });
 
-  test('createOnCallIntegrations should create a new oncall integration for each new contact point integration', async () => {
+  test('createOnCallIntegrations should provide integration name and url validators', async () => {
     mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-    mockApi(server).oncall.getOnCallIntegrations([]);
+    mockApi(server).oncall.getOnCallIntegrations([
+      (ib) =>
+        ib
+          .withVerbalName('grafana-integration')
+          .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
+          .withIntegrationUrl('https://oncall.com/grafana-integration'),
+      (ib) =>
+        ib
+          .withVerbalName('alertmanager-integration')
+          .withIntegration('Alertmanager')
+          .withIntegrationUrl('https://oncall.com/alertmanager-integration'),
+    ]);
     mockApi(server).oncall.createIntegraion();
+
+    const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
+
+    // await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(true));
+    await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
+
+    const { onCallFormValidators } = result.current;
+
+    expect(onCallFormValidators.integration_name('grafana-integration')).toBe(
+      'Integration of this name already exists in OnCall'
+    );
+    expect(onCallFormValidators.integration_name('alertmanager-integration')).toBe(
+      'Integration of this name already exists in OnCall'
+    );
+
+    // ULR validator should check if the provided URL already exists
+    expect(onCallFormValidators.url('https://oncall.com/grafana-integration')).toBe(true);
+
+    // URL validator should check only among integrations of "grafana_alerting" type
+    // So the following URL is invalid because it already exists but has different integration type
+    expect(onCallFormValidators.url('https://oncall.com/alertmanager-integration')).toBe(
+      'Selection of existing OnCall integration is required'
+    );
+  });
+
+  // write a test checking if extendOnCallNotifierFeatures adds the correct notifier features
+  test('extendOnCallNotifierFeatures should add integration type and name options and swap url to a select option', async () => {
+    mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+    mockApi(server).oncall.getOnCallIntegrations([
+      (ib) =>
+        ib
+          .withVerbalName('grafana-integration')
+          .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
+          .withIntegrationUrl('https://oncall.com/grafana-integration'),
+      (ib) =>
+        ib
+          .withVerbalName('alertmanager-integration')
+          .withIntegration('Alertmanager')
+          .withIntegrationUrl('https://oncall.com/alertmanager-integration'),
+    ]);
 
     const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
 
     await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
-    const { createOnCallIntegrations } = result.current;
+    const { extendOnCallNotifierFeatures } = result.current;
 
-    const receiver = await createOnCallIntegrations({
-      name: 'OnCall Conctact point',
-      grafana_managed_receiver_configs: [
-        {
-          name: 'oncall-test-1',
-          type: ReceiverTypes.OnCall,
-          settings: {
-            [OnCallIntegrationSetting.IntegrationType]: OnCallIntegrationType.NewIntegration,
-            [OnCallIntegrationSetting.IntegrationName]: 'oncall-test-1',
-          },
-          disableResolveMessage: false,
-        },
-        {
-          name: 'oncall-test-2',
-          type: ReceiverTypes.OnCall,
-          settings: {
-            [OnCallIntegrationSetting.IntegrationType]: OnCallIntegrationType.NewIntegration,
-            [OnCallIntegrationSetting.IntegrationName]: 'oncall-test-2',
-          },
-          disableResolveMessage: false,
-        },
-      ],
+    const notifier = extendOnCallNotifierFeatures({
+      name: 'Grafana OnCall',
+      type: 'oncall',
+      options: [],
+      description: '',
+      heading: '',
     });
 
-    await waitFor(() => expect(result.current.onCallFormValidators.integration_name('oncall-test-1')).not.toBe(true));
+    expect(notifier.options).toHaveLength(3);
+    expect(notifier.options[0].propertyName).toBe(OnCallIntegrationSetting.IntegrationType);
+    expect(notifier.options[1].propertyName).toBe(OnCallIntegrationSetting.IntegrationName);
+    expect(notifier.options[2].propertyName).toBe('url');
 
-    expect(receiver.grafana_managed_receiver_configs?.length).toBe(2);
+    expect(notifier.options[0].element).toBe('radio');
+    expect(notifier.options[2].element).toBe('select');
 
-    receiver.grafana_managed_receiver_configs?.forEach((config) => {
-      expect(config.settings['url']).toMatch(/https:\/\/oncall-endpoint\.example\.com\/oncall-integration-\d+/);
-      expect(config.settings[OnCallIntegrationSetting.IntegrationName]).toBeUndefined();
+    expect(notifier.options[2].selectOptions).toHaveLength(1);
+    expect(notifier.options[2].selectOptions![0]).toMatchObject({
+      label: 'grafana-integration',
+      value: 'https://oncall.com/grafana-integration',
     });
   });
 });

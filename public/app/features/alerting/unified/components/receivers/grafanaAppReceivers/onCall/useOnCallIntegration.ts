@@ -12,7 +12,7 @@ import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 import { ReceiverTypes } from './onCall';
 
 // TODO This value needs to be changed to grafana_alerting when the OnCall team introduces the necessary changes
-const GRAFANA_INTEGRATION_TYPE = 'grafana';
+export const GRAFANA_ONCALL_INTEGRATION_TYPE = 'grafana';
 
 export enum OnCallIntegrationType {
   NewIntegration = 'new_oncall_integration',
@@ -41,14 +41,16 @@ export function useOnCallIntegration() {
     isError: isIntegrationsQueryError,
   } = useGetOnCallIntegrationsQuery(undefined, { skip: !isOnCallEnabled });
 
-  const grafanaOnCallIntegrations = useMemo(() => {
-    return onCallIntegrations.filter((i) => i.integration === GRAFANA_INTEGRATION_TYPE);
-  }, [onCallIntegrations]);
-
   const onCallFormValidators = useMemo(() => {
+    // URL should be one of exsiting OnCall integrations of "grafana_alerting" type
+    const grafanaOnCallIntegrations = onCallIntegrations.filter(
+      (i) => i.integration === GRAFANA_ONCALL_INTEGRATION_TYPE
+    );
+
     return {
       integration_name: (value: string) => {
-        return grafanaOnCallIntegrations.map((i) => i.verbal_name).includes(value)
+        // The name needs to be unique among all OnCall integrations
+        return onCallIntegrations.map((i) => i.verbal_name).includes(value)
           ? 'Integration of this name already exists in OnCall'
           : true;
       },
@@ -62,7 +64,7 @@ export function useOnCallIntegration() {
           : 'Selection of existing OnCall integration is required';
       },
     };
-  }, [grafanaOnCallIntegrations, isOnCallEnabled]);
+  }, [onCallIntegrations, isOnCallEnabled]);
 
   const extendOnCalReceivers = useCallback(
     (receiver: Receiver): Receiver => {
@@ -94,7 +96,7 @@ export function useOnCallIntegration() {
 
       const createNewOnCallIntegrationJobs = newOnCallIntegrations.map(async (c) => {
         const newIntegration = await createIntegrationMutation({
-          integration: GRAFANA_INTEGRATION_TYPE,
+          integration: GRAFANA_ONCALL_INTEGRATION_TYPE,
           verbal_name: c.settings[OnCallIntegrationSetting.IntegrationName],
         }).unwrap();
 
@@ -150,11 +152,13 @@ export function useOnCallIntegration() {
             element: 'select',
             required: true,
             showWhen: { field: 'integration_type', is: 'existing_oncall_integration' },
-            selectOptions: onCallIntegrations.map((i) => ({
-              label: i.verbal_name,
-              description: i.integration_url,
-              value: i.integration_url,
-            })),
+            selectOptions: onCallIntegrations
+              .filter((i) => i.integration === GRAFANA_ONCALL_INTEGRATION_TYPE)
+              .map((i) => ({
+                label: i.verbal_name,
+                description: i.integration_url,
+                value: i.integration_url,
+              })),
           })
         );
 
