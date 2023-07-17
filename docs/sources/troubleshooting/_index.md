@@ -51,6 +51,14 @@ sudo yum install freetype*
 sudo yum install urw-fonts
 ```
 
+## Error when creating grafana stack 
+
+After creating a Grafana Stack and receiving an email to advise "Your Grafana stack is active!" an error "Can't get there from here." is posted when trying to access the provided Stack hyperlink. 
+
+This may be a timing issue. Please refresh the page and try waiting a short time for the system to sync. 
+If this error still occurs please try deleting and recreating the stack. 
+If the error still occurs please open a Support Ticket via the Support Portal. 
+
 ## More help
 
 Check out the [Grafana Community](https://community.grafana.com/) for more troubleshooting help (you must be logged in to post or comment).
