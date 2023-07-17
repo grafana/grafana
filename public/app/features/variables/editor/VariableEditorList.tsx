@@ -51,40 +51,42 @@ export function VariableEditorList({
 
         {variables.length > 0 && (
           <Stack direction="column" gap={4}>
-            <table
-              className="filter-table filter-table--hover"
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
-              role="grid"
-            >
-              <thead>
-                <tr>
-                  <th>Variable</th>
-                  <th>Definition</th>
-                  <th colSpan={5} />
-                </tr>
-              </thead>
-              <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="variables-list" direction="vertical">
-                  {(provided) => (
-                    <tbody ref={provided.innerRef} {...provided.droppableProps}>
-                      {variables.map((variable, index) => (
-                        <VariableEditorListRow
-                          index={index}
-                          key={`${variable.name}-${index}`}
-                          variable={variable}
-                          usageTree={usages}
-                          usagesNetwork={usagesNetwork}
-                          onDelete={onDelete}
-                          onDuplicate={onDuplicate}
-                          onEdit={onEdit}
-                        />
-                      ))}
-                      {provided.placeholder}
-                    </tbody>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            </table>
+            <div style={{ overflow: 'scroll', width: '100%' }}>
+              <table
+                className="filter-table filter-table--hover"
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
+                role="grid"
+              >
+                <thead>
+                  <tr>
+                    <th>Variable</th>
+                    <th>Definition</th>
+                    <th colSpan={5} />
+                  </tr>
+                </thead>
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="variables-list" direction="vertical">
+                    {(provided) => (
+                      <tbody ref={provided.innerRef} {...provided.droppableProps}>
+                        {variables.map((variable, index) => (
+                          <VariableEditorListRow
+                            index={index}
+                            key={`${variable.name}-${index}`}
+                            variable={variable}
+                            usageTree={usages}
+                            usagesNetwork={usagesNetwork}
+                            onDelete={onDelete}
+                            onDuplicate={onDuplicate}
+                            onEdit={onEdit}
+                          />
+                        ))}
+                        {provided.placeholder}
+                      </tbody>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              </table>
+            </div>
             <Stack>
               <VariablesDependenciesButton variables={variables} />
               <Button
