@@ -1721,11 +1721,8 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 				{
 					eval.Result{
-						Instance: data.Labels{"instance_label": "test"},
-						Error: expr.QueryError{
-							RefID: "A",
-							Err:   errors.New("this is an error"),
-						},
+						Instance:           data.Labels{"instance_label": "test"},
+						Error:              expr.MakeQueryError("A", "", errors.New("this is an error")),
 						State:              eval.Error,
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
@@ -1749,10 +1746,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Error,
-					Error: expr.QueryError{
-						RefID: "A",
-						Err:   errors.New("this is an error"),
-					},
+					Error:  expr.MakeQueryError("A", "", errors.New("this is an error")),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1769,7 +1763,7 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "Error": "failed to execute query A: this is an error"},
+					Annotations:        map[string]string{"annotation": "test", "Error": "[sse.dataQueryError] failed to execute query [A]: this is an error"},
 				},
 			},
 		},
@@ -1801,11 +1795,8 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 				{
 					eval.Result{
-						Instance: data.Labels{"instance_label": "test"},
-						Error: expr.QueryError{
-							RefID: "A",
-							Err:   errors.New("this is an error"),
-						},
+						Instance:           data.Labels{"instance_label": "test"},
+						Error:              expr.MakeQueryError("A", "", errors.New("this is an error")),
 						State:              eval.Error,
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
@@ -1877,11 +1868,8 @@ func TestProcessEvalResults(t *testing.T) {
 				},
 				{
 					eval.Result{
-						Instance: data.Labels{"instance_label": "test"},
-						Error: expr.QueryError{
-							RefID: "A",
-							Err:   errors.New("this is an error"),
-						},
+						Instance:           data.Labels{"instance_label": "test"},
+						Error:              expr.MakeQueryError("A", "", errors.New("this is an error")),
 						State:              eval.Error,
 						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
 						EvaluationDuration: evaluationDuration,
