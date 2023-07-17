@@ -53,6 +53,8 @@ Filter query history in Query history and Starred tab by data source name:
 1. Click the **Filter queries for specific data source(s)** field.
 1. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
+> **Note:** Queries ran using the Mixed data source will appear only when filtering for Mixed and not when filtering by their individual data sources.
+
 In **Query history** tab it is also possible to filter queries by date using the slider:
 
 - Use vertical slider to filter queries by date.

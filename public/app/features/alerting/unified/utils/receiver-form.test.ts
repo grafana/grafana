@@ -2,7 +2,7 @@ import { NotifierDTO } from 'app/types';
 
 import { GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
 
-import { formValuesToGrafanaReceiver, omitEmptyValues } from './receiver-form';
+import { formValuesToGrafanaReceiver, omitEmptyValues, omitEmptyUnlessExisting } from './receiver-form';
 
 describe('Receiver form utils', () => {
   describe('omitEmptyStringValues', () => {
@@ -43,6 +43,28 @@ describe('Receiver form utils', () => {
       };
 
       expect(omitEmptyValues(original)).toEqual(expected);
+    });
+  });
+  describe('omitEmptyUnlessExisting', () => {
+    it('should omit empty strings if no entry in existing', () => {
+      const existing = {
+        five_keep: true,
+      };
+      const original = {
+        one: 'two',
+        two_remove: '',
+        three: 0,
+        four_remove: null,
+        five_keep: '',
+      };
+
+      const expected = {
+        one: 'two',
+        three: 0,
+        five_keep: '',
+      };
+
+      expect(omitEmptyUnlessExisting(original, existing)).toEqual(expected);
     });
   });
 });

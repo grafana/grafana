@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/setting"
@@ -53,7 +52,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := ProvideService(&config.Cfg{}, statickey.New())
+		s := ProvideService(statickey.New())
 		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
@@ -70,7 +69,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 
 	t.Run("invalid manifest", func(t *testing.T) {
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		s := ProvideService(&config.Cfg{}, statickey.New())
+		s := ProvideService(statickey.New())
 		_, err := s.readPluginManifest(context.Background(), []byte(modified))
 		require.Error(t, err)
 	})
@@ -108,7 +107,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := ProvideService(&config.Cfg{}, statickey.New())
+		s := ProvideService(statickey.New())
 		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
@@ -162,7 +161,7 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			s := ProvideService(&config.Cfg{}, statickey.New())
+			s := ProvideService(statickey.New())
 			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
@@ -190,7 +189,7 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		s := ProvideService(&config.Cfg{}, statickey.New())
+		s := ProvideService(statickey.New())
 		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -254,7 +253,7 @@ func TestCalculate(t *testing.T) {
 				toSlash = tc.platform.toSlashFunc()
 				fromSlash = tc.platform.fromSlashFunc()
 
-				s := ProvideService(&config.Cfg{}, statickey.New())
+				s := ProvideService(statickey.New())
 				pfs, err := tc.fsFactory()
 				require.NoError(t, err)
 				pfs, err = newPathSeparatorOverrideFS(string(tc.platform.separator), pfs)
@@ -722,7 +721,7 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			s := ProvideService(&config.Cfg{}, statickey.New())
+			s := ProvideService(statickey.New())
 			err := s.validateManifest(context.Background(), *tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})
@@ -818,7 +817,7 @@ pHo=
 }
 
 func Test_VerifyRevokedKey(t *testing.T) {
-	s := ProvideService(&config.Cfg{}, &revokedKeyProvider{})
+	s := ProvideService(&revokedKeyProvider{})
 	m := createV2Manifest(t)
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512

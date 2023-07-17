@@ -1,4 +1,4 @@
-import { isArray, omit, pick } from 'lodash';
+import { isArray, omit, pick, isNil, omitBy } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
@@ -231,7 +231,7 @@ export function formChannelValuesToGrafanaChannelConfig(
       ...(existing && existing.type === values.type ? existing.settings ?? {} : {}),
       ...(values.settings ?? {}),
     }),
-    secureSettings: values.secureSettings ?? {},
+    secureSettings: omitEmptyUnlessExisting(values.secureSettings, existing?.secureFields),
     type: values.type,
     name,
     disableResolveMessage:
@@ -259,6 +259,9 @@ export function formChannelValuesToGrafanaChannelConfig(
   return channel;
 }
 
+// null, undefined and '' are deemed unacceptable
+const isUnacceptableValue = (value: unknown) => isNil(value) || value === '';
+
 // will remove properties that have empty ('', null, undefined) object properties.
 // traverses nested objects and arrays as well. in place, mutates the object.
 // this is needed because form will submit empty string for not filled in fields,
@@ -269,7 +272,7 @@ export function omitEmptyValues<T>(obj: T): T {
     obj.forEach(omitEmptyValues);
   } else if (typeof obj === 'object' && obj !== null) {
     Object.entries(obj).forEach(([key, value]) => {
-      if (value === '' || value === null || value === undefined) {
+      if (isUnacceptableValue(value)) {
         delete (obj as any)[key];
       } else {
         omitEmptyValues(value);
@@ -277,4 +280,10 @@ export function omitEmptyValues<T>(obj: T): T {
     });
   }
   return obj;
+}
+
+// Will remove empty ('', null, undefined) object properties unless they were previously defined.
+// existing is a map of property names that were previously defined.
+export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
+  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
 }

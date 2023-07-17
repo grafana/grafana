@@ -218,7 +218,7 @@ export type AlertmanagerAlert = {
   receivers: [
     {
       name: string;
-    }
+    },
   ];
   fingerprint: string;
   status: {

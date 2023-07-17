@@ -1,45 +1,28 @@
 package angularinspector
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	pAngularDetector "github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 )
 
 type Service struct {
 	angularinspector.Inspector
 }
 
-// newDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
-//  1. Try to get the Angular detectors from GCOM
-//  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
-func newDynamicInspector(cfg *config.Cfg) (angularinspector.Inspector, error) {
-	dynamicProvider, err := pAngularDetector.NewGCOMDetectorsProvider(cfg.GrafanaComURL)
-	if err != nil {
-		return nil, fmt.Errorf("NewGCOMDetectorsProvider: %w", err)
-	}
-	return &angularinspector.PatternsListInspector{
-		DetectorsProvider: angulardetector.SequenceDetectorsProvider{
-			dynamicProvider,
-			angularinspector.NewDefaultStaticDetectorsProvider(),
-		},
-	}, nil
-}
-
-func ProvideService(cfg *config.Cfg) (*Service, error) {
-	var underlying angularinspector.Inspector
+func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
+	var detectorsProvider angulardetector.DetectorsProvider
 	var err error
+	static := angularinspector.NewDefaultStaticDetectorsProvider()
 	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
-		underlying, err = newDynamicInspector(cfg)
+		detectorsProvider = angulardetector.SequenceDetectorsProvider{dynamic, static}
 	} else {
-		underlying, err = angularinspector.NewStaticInspector()
+		detectorsProvider = static
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &Service{underlying}, nil
+	return &Service{Inspector: &angularinspector.PatternsListInspector{DetectorsProvider: detectorsProvider}}, nil
 }
