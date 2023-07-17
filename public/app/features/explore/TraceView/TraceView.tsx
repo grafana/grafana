@@ -85,10 +85,10 @@ export function TraceView(props: Props) {
   const { viewRange, updateViewRangeTime, updateNextViewRangeTime } = useViewRange();
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const { search, setSearch, spanFilterMatches } = useSearch(traceProp?.spans);
-  const [newTraceViewHeaderFocusedSpanIdForSearch, setNewTraceViewHeaderFocusedSpanIdForSearch] = useState('');
+  const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const [headerHeight, setHeaderHeight] = useState(100);
 
   const styles = useStyles2(getStyles);
 
@@ -152,7 +152,7 @@ export function TraceView(props: Props) {
             setShowSpanFilters={setShowSpanFilters}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
-            setFocusedSpanIdForSearch={setNewTraceViewHeaderFocusedSpanIdForSearch}
+            setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             spanFilterMatches={spanFilterMatches}
             datasourceType={datasourceType}
             setHeaderHeight={setHeaderHeight}
@@ -196,7 +196,7 @@ export function TraceView(props: Props) {
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={newTraceViewHeaderFocusedSpanIdForSearch}
+            focusedSpanIdForSearch={focusedSpanIdForSearch}
             showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
             createFocusSpanLink={createFocusSpanLink}
             topOfViewRef={topOfViewRef}

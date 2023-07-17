@@ -201,6 +201,7 @@ const memoizedGetClipping = memoizeOne(getClipping, isEqual);
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
+  hasScrolledToSpan = false;
 
   componentDidMount() {
     this.scrollToSpan(this.props.headerHeight, this.props.focusedSpanId);
@@ -218,11 +219,21 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors, headerHeight } = prevProps;
-    const { registerAccessors: nextRegisterAccessors, focusedSpanId, focusedSpanIdForSearch } = this.props;
+    const { registerAccessors } = prevProps;
+    const {
+      registerAccessors: nextRegisterAccessors,
+      headerHeight,
+      focusedSpanId,
+      focusedSpanIdForSearch,
+    } = this.props;
 
     if (this.listView && registerAccessors !== nextRegisterAccessors) {
       nextRegisterAccessors(this.getAccessors());
+    }
+
+    if (!this.hasScrolledToSpan) {
+      this.scrollToSpan(headerHeight, focusedSpanId);
+      this.hasScrolledToSpan = true;
     }
 
     if (focusedSpanId !== prevProps.focusedSpanId) {
