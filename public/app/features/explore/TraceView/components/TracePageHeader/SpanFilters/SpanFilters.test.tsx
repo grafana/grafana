@@ -43,11 +43,11 @@ const trace: Trace = {
 
 describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
-  const SpanFiltersWithProps = () => {
+  const SpanFiltersWithProps = ({ showFilters = true }) => {
     const [search, setSearch] = useState(defaultFilters);
     const props = {
       trace: trace,
-      showSpanFilters: true,
+      showSpanFilters: showFilters,
       setShowSpanFilters: jest.fn(),
       showSpanFilterMatchesOnly: false,
       setShowSpanFilterMatchesOnly: jest.fn(),
@@ -83,10 +83,10 @@ describe('SpanFilters', () => {
     const serviceValue = screen.getByLabelText('Select service name');
     const spanOperator = screen.getByLabelText('Select span name operator');
     const spanValue = screen.getByLabelText('Select span name');
-    const fromOperator = screen.getByLabelText('Select from operator');
-    const fromValue = screen.getByLabelText('Select from value');
-    const toOperator = screen.getByLabelText('Select to operator');
-    const toValue = screen.getByLabelText('Select to value');
+    const fromOperator = screen.getByLabelText('Select min span operator');
+    const fromValue = screen.getByLabelText('Select min span duration');
+    const toOperator = screen.getByLabelText('Select max span operator');
+    const toValue = screen.getByLabelText('Select max span duration');
     const tagKey = screen.getByLabelText('Select tag key');
     const tagOperator = screen.getByLabelText('Select tag operator');
     const tagValue = screen.getByLabelText('Select tag value');
@@ -216,6 +216,12 @@ describe('SpanFilters', () => {
     expect(screen.queryByText('Span0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagValue0')).not.toBeInTheDocument();
+  });
+
+  it('renders buttons when span filters is collapsed', async () => {
+    render(<SpanFiltersWithProps showFilters={false} />);
+    expect(screen.queryByRole('button', { name: 'Next result button' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Prev result button' })).toBeInTheDocument();
   });
 });
 

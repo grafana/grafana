@@ -1,5 +1,5 @@
 {
-  "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "_comment": "Ŧĥįş ƒįľę įş ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş. Ēđįŧ ŧĥįş ŧő čĥäŉģę pľūřäľş äŉđ őŧĥęř pĥřäşęş ƒőř ŧĥę ŮĨ.",
   "access-control": {
     "add-permission": {
       "role-label": "Ŗőľę",
@@ -39,6 +39,18 @@
       "moving": "Mővįŉģ...",
       "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
+    "counts": {
+      "alertRule__one": "{{count}} äľęřŧ řūľę",
+      "alertRule__other": "{{count}} äľęřŧ řūľęş",
+      "dashboard__one": "{{count}} đäşĥþőäřđ",
+      "dashboard__other": "{{count}} đäşĥþőäřđş",
+      "folder__one": "{{count}} ƒőľđęř",
+      "folder__other": "{{count}} ƒőľđęřş",
+      "libraryPanel__one": "{{count}} ľįþřäřy päŉęľ",
+      "libraryPanel__other": "{{count}} ľįþřäřy päŉęľş",
+      "total__one": "{{count}} įŧęm",
+      "total__other": "{{count}} įŧęmş"
+    },
     "dashboards-tree": {
       "name-column": "Ńämę",
       "tags-column": "Ŧäģş"
@@ -48,6 +60,13 @@
       "folder-actions": "Főľđęř äčŧįőŉş",
       "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
       "move": "Mővę"
+    },
+    "folder-picker": {
+      "button-label": "Ŝęľęčŧ ƒőľđęř",
+      "empty-message": "Ńő ƒőľđęřş ƒőūŉđ",
+      "error-title": "Ēřřőř ľőäđįŉģ ƒőľđęřş",
+      "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
+      "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
     },
     "manage-folder-nav": {
       "alert-rules": "Åľęřŧ řūľęş",
@@ -108,7 +127,8 @@
       "import": "Ĩmpőřŧ ƒřőm ľįþřäřy",
       "paste-panel": "Päşŧę päŉęľ",
       "row": "Ŗőŵ",
-      "visualization": "Vįşūäľįžäŧįőŉ"
+      "visualization": "Vįşūäľįžäŧįőŉ",
+      "widget": "Ŵįđģęŧ"
     },
     "empty": {
       "add-import-body": "Ĩmpőřŧ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
@@ -119,7 +139,10 @@
       "add-row-header": "Åđđ ä řőŵ",
       "add-visualization-body": "Ŝęľęčŧ ä đäŧä şőūřčę äŉđ ŧĥęŉ qūęřy äŉđ vįşūäľįžę yőūř đäŧä ŵįŧĥ čĥäřŧş, şŧäŧş äŉđ ŧäþľęş őř čřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş.",
       "add-visualization-button": "Åđđ vįşūäľįžäŧįőŉ",
-      "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ"
+      "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ",
+      "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
+      "add-widget-button": "Åđđ ŵįđģęŧ",
+      "add-widget-header": "Åđđ ä ŵįđģęŧ"
     },
     "inspect": {
       "data-tab": "Đäŧä",

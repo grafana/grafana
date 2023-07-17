@@ -66,11 +66,3 @@ Available in Grafana 7.3 and later versions.
 {{% /admonition %}}
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
-
-## Available feature toggles
-
-### exploreMixedDatasource
-
-Enabled by default, allows users in Explore to have different data sources for different queries. If compatible, results will be combined.
-
-Learn more about how to use [Mixed data source]({{< relref "../datasources/#special-data-sources" >}}).

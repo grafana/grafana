@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -39,6 +39,13 @@
       "moving": "",
       "new-folder-name-required-phrase": ""
     },
+    "counts": {
+      "alertRule__other": "",
+      "dashboard__other": "",
+      "folder__other": "",
+      "libraryPanel__other": "",
+      "total__other": ""
+    },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
@@ -48,6 +55,13 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "folder-picker": {
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
     },
     "manage-folder-nav": {
       "alert-rules": "",
@@ -108,7 +122,8 @@
       "import": "从库导入",
       "paste-panel": "粘贴面板",
       "row": "行",
-      "visualization": "可视化"
+      "visualization": "可视化",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "导入与其他仪表板共享的可视化。",
@@ -119,7 +134,10 @@
       "add-row-header": "添加一行",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
-      "add-visualization-header": "通过添加可视化开始您的新仪表板"
+      "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "数据",

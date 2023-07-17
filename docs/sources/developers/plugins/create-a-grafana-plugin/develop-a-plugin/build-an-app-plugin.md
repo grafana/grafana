@@ -22,7 +22,7 @@ Data source and panel plugins will show up like normal plugins. The app pages wi
 ### Prerequisites
 
 - Grafana 7.0
-- NodeJS 12.x
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 
@@ -194,9 +194,9 @@ If you want to let users know that your app requires an existing plugin, you can
   "plugins": [
     {
       "type": "panel",
-      "name": "Worldmap Panel",
-      "id": "grafana-worldmap-panel",
-      "version": "^0.3.2"
+      "name": "Clock Panel",
+      "id": "grafana-clock-panel",
+      "version": "^2.1.3"
     }
   ]
 }

@@ -45,16 +45,18 @@ export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: D
 }
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {
-  return useCallback(
-    (value: Date | Date[]) => {
+  return useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>(
+    (value) => {
       if (!Array.isArray(value)) {
         return console.error('onCalendarChange: should be run in selectRange={true}');
       }
 
-      const from = dateTimeParse(dateInfo(value[0]), { timeZone });
-      const to = dateTimeParse(dateInfo(value[1]), { timeZone });
+      if (value[0] && value[1]) {
+        const from = dateTimeParse(dateInfo(value[0]), { timeZone });
+        const to = dateTimeParse(dateInfo(value[1]), { timeZone });
 
-      onChange(from, to);
+        onChange(from, to);
+      }
     },
     [onChange, timeZone]
   );

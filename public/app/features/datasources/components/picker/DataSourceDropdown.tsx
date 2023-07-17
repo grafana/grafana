@@ -337,7 +337,6 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
