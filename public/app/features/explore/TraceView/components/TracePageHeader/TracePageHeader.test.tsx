@@ -19,7 +19,7 @@ import { MutableDataFrame } from '@grafana/data';
 
 import { defaultFilters } from '../../useSearch';
 
-import { NewTracePageHeader } from './NewTracePageHeader';
+import { TracePageHeader } from './TracePageHeader';
 
 const setup = () => {
   const defaultProps = {
@@ -38,10 +38,10 @@ const setup = () => {
     data: new MutableDataFrame(),
   };
 
-  return render(<NewTracePageHeader {...defaultProps} />);
+  return render(<TracePageHeader {...defaultProps} />);
 };
 
-describe('NewTracePageHeader test', () => {
+describe('TracePageHeader test', () => {
   it('should render the new trace header', () => {
     setup();
 

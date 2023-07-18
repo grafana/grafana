@@ -1,5 +1,5 @@
 export { default as TraceTimelineViewer } from './TraceTimelineViewer';
-export { NewTracePageHeader } from './TracePageHeader';
+export { TracePageHeader } from './TracePageHeader';
 export { default as SpanBarSettings } from './settings/SpanBarSettings';
 export * from './types';
 export * from './TraceTimelineViewer/types';

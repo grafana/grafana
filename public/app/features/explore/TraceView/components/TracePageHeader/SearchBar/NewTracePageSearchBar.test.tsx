@@ -16,7 +16,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { defaultFilters } from '../../../useSearch';
-import { trace } from '../NewTracePageHeader.test';
+import { trace } from '../TracePageHeader.test';
 
 import NewTracePageSearchBar from './NewTracePageSearchBar';
 

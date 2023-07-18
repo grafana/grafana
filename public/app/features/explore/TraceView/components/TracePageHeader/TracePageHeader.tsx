@@ -48,7 +48,7 @@ export type TracePageHeaderProps = {
   setHeaderHeight: (height: number) => void;
 };
 
-export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
+export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const {
     trace,
     data,
@@ -162,7 +162,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
   );
 });
 
-NewTracePageHeader.displayName = 'NewTracePageHeader';
+TracePageHeader.displayName = 'TracePageHeader';
 
 const getNewStyles = (theme: GrafanaTheme2) => {
   return {

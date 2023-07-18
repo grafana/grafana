@@ -27,7 +27,7 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { changePanelState } from '../state/explorePane';
 
-import { SpanBarOptionsData, Trace, NewTracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -142,7 +142,7 @@ export function TraceView(props: Props) {
     <>
       {props.dataFrames?.length && traceProp ? (
         <>
-          <NewTracePageHeader
+          <TracePageHeader
             trace={traceProp}
             data={props.dataFrames[0]}
             timeZone={timeZone}
