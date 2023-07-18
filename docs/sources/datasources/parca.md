@@ -8,6 +8,11 @@ keywords:
   - parca
   - guide
   - profiling
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Parca
 weight: 1110
 ---

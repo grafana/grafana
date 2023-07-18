@@ -9,8 +9,12 @@ keywords:
   - documentation
   - docker
   - docker compose
-title: Configure a Grafana Docker image
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure a Docker image
+title: Configure a Grafana Docker image
 weight: 1800
 ---
 

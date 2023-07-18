@@ -7,8 +7,13 @@ keywords:
   - data source
   - transform
   - query
-title: Grafana dashboards overview
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Dashboard overview
+title: Grafana dashboards overview
 weight: 390
 ---
 

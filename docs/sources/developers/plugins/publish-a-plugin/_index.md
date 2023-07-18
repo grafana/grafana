@@ -1,13 +1,17 @@
 ---
-title: Publish or sign a plugin
-menuTitle: Publish a plugin
+description: An index to documentation related to plugin publishing and signing.
 keywords:
   - grafana
   - plugins
   - plugin
   - publish
   - publishing
-description: An index to documentation related to plugin publishing and signing.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Publish a plugin
+title: Publish or sign a plugin
 weight: 400
 ---
 

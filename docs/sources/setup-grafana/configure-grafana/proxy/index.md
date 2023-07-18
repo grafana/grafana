@@ -4,8 +4,12 @@ keywords:
   - proxy
   - guide
   - Grafana
-title: Configure a data source connection proxy
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure data source proxy
+title: Configure a data source connection proxy
 weight: 1110
 ---
 

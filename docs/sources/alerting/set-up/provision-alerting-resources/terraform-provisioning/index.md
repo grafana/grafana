@@ -8,6 +8,10 @@ keywords:
   - alerting resources
   - provisioning
   - Terraform
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create and manage alerting resources using Terraform
 weight: 200
 ---

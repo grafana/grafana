@@ -8,6 +8,11 @@ keywords:
   - alerting
   - performance
   - limitations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Performance considerations and limitations
 weight: 600
 ---

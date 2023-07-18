@@ -10,6 +10,11 @@ keywords:
   - guide
   - state
   - health
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: View the state and health of alert rules
 weight: 420
 ---

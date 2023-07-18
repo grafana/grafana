@@ -5,6 +5,11 @@ keywords:
   - alerting
   - images
   - notifications
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Use images in notifications
 weight: 405
 ---

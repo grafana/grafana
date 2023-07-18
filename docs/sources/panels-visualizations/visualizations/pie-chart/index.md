@@ -5,6 +5,11 @@ aliases:
 keywords:
   - grafana
   - pie chart
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Pie chart
 weight: 850
 ---

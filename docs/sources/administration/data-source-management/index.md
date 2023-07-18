@@ -7,6 +7,10 @@ aliases:
   - ../features/datasources/add-a-data-source/
   - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+labels:
+  products:
+    - enterprise
+    - oss
 title: Data source management
 weight: 100
 ---

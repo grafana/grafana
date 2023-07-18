@@ -5,6 +5,10 @@ aliases:
   - unified-alerting/difference-old-new/
   - alerting/migrating-alerts/
 description: Upgrade Grafana alerts
+labels:
+  products:
+    - enterprise
+    - oss
 title: Upgrade Alerting
 weight: 150
 ---
