@@ -4243,6 +4243,12 @@ kind: secret
 name: packages_secret_access_key
 ---
 get:
+  name: bucket
+  path: infra/data/ci/grafana-release-eng/security-bucket
+kind: secret
+name: security_dest_bucket
+---
+get:
   name: static_asset_editions
   path: infra/data/ci/grafana-release-eng/artifact-publishing
 kind: secret
@@ -4309,6 +4315,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 92ae00adb7d96151c13a9820b45fc78bd5a703c41930f899706ea9e50ed6366b
+hmac: 60bd1da8c514fc63ef7dfeb0e50fc3745f308f73fbd1c90128bf1d1787c5c2a4
 
 ...
