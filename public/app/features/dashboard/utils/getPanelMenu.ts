@@ -251,13 +251,18 @@ export function getPanelMenu(
     });
   }
 
-  menu.push({
-    type: 'submenu',
-    text: t('panel.header-menu.export', `Export`),
-    iconClassName: 'download-alt',
-    shortcut: 't', // if multiple letters, overlaps with > symbol
-    subMenu: exportMenu,
-  });
+  const featureToggleEnabled = true;
+
+  if (featureToggleEnabled) {
+    // PLACEHOLDER FEATURE TOGGLE THING
+    menu.push({
+      type: 'submenu',
+      text: t('panel.header-menu.export', `Export`),
+      iconClassName: 'download-alt',
+      shortcut: 't', // if multiple letters, overlaps with > symbol
+      subMenu: exportMenu,
+    });
+  }
 
   if (
     contextSrv.hasAccessToExplore() &&

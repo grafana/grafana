@@ -113,4 +113,5 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
+  panelExport?: boolean;
 }

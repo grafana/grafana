@@ -126,6 +126,7 @@ Experimental features might be changed or removed without prior notice.
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
 | `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
+| `panelExport`                               | Enables an Export feature in the panel menu allowing for quick downloading of panel contents                 |
 
 ## Development feature toggles
 

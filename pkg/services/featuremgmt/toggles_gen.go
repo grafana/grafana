@@ -386,4 +386,8 @@ const (
 	// FlagTransformationsRedesign
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagPanelExport
+	// Enables an Export feature in the panel menu allowing for quick downloading of panel contents
+	FlagPanelExport = "panelExport"
 )
