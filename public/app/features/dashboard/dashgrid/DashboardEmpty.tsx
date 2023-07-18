@@ -4,9 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, LinkButton, useStyles2 } from '@grafana/ui';
 import { H1, H3, P } from '@grafana/ui/src/unstable';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
+import { ROUTES } from 'app/features/connections/constants';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
@@ -18,10 +20,142 @@ export interface Props {
   canCreate: boolean;
 }
 
+export interface NoDataEmptyProps {
+  canCreate: boolean;
+}
+
+function NoDataEmpty({ canCreate }: NoDataEmptyProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.centeredContent}>
+      <div className={cx(styles.centeredContent, styles.wrapper)}>
+        <div
+          className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}
+          style={{ width: '100%' }}
+        >
+          <div className={styles.headerBig}>
+            <H1 textAlignment="center" weight="medium">
+              <Trans i18nKey="dashboard.empty.connect-data-header">Connect data</Trans>
+            </H1>
+          </div>
+          <div className={styles.bodyBig}>
+            <P textAlignment="center" color="secondary">
+              <Trans i18nKey="dashboard.empty.connect-data-body">
+                Before you can build a dashboard you need to connect data.
+              </Trans>
+            </P>
+          </div>
+          <Button
+            size="lg"
+            icon="plus"
+            data-testid={selectors.pages.EmptyDashboardConnectData.itemButton('Connect data button')}
+            onClick={() => {
+              reportInteraction('dashboards_emptydashboard_clicked', { item: 'connect_data' });
+              locationService.push(ROUTES.AddNewConnection);
+            }}
+            disabled={!canCreate}
+          >
+            <Trans i18nKey="dashboard.empty.connect-data-button">Connect data</Trans>
+          </Button>
+        </div>
+        <div className={cx(styles.centeredContent, styles.others)}>
+          <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
+            <div className={styles.headerSmall}>
+              <H3 textAlignment="center" weight="medium">
+                <Trans i18nKey="dashboard.empty.quick-start-a-dashboard-header">Quick start a dashboard</Trans>
+              </H3>
+            </div>
+            <div className={styles.bodySmall}>
+              <P textAlignment="center" color="secondary">
+                <Trans i18nKey="dashboard.empty.quick-start-a-dashboard-body">
+                  Simplest & fastest way to try out Grafana Cloud with your data
+                </Trans>
+              </P>
+            </div>
+            <Button
+              fill="outline"
+              data-testid={selectors.pages.AddDashboard.itemButton('Quick start a dashboard button')}
+              onClick={() => {
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'quickstart_a_dashboard' });
+                locationService.partial({ quickstart: true });
+              }}
+            >
+              <Trans i18nKey="dashboard.empty.quick-start-a-dashboard">Quick start a dashboard</Trans>
+            </Button>
+          </div>
+          <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
+            <div className={styles.headerSmall}>
+              <H3 textAlignment="center" weight="medium">
+                <Trans i18nKey="dashboard.empty.dashboard-demos-header">Dashboard demos</Trans>
+              </H3>
+            </div>
+            <div className={styles.bodySmall}>
+              <P textAlignment="center" color="secondary">
+                <Trans i18nKey="dashboard.empty.dashboard-demos-body">
+                  Try Grafana dashboards capabilities on our demo page.
+                </Trans>
+              </P>
+            </div>
+            <LinkButton
+              icon="external-link-alt"
+              fill="text"
+              data-testid={selectors.pages.AddDashboard.itemButton('Dashboard demos button')}
+              onClick={() => {
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'dashboard_demos' });
+              }}
+              href="https://play.grafana.org/dashboards"
+            >
+              <Trans i18nKey="dashboard.empty.see-dashboard-demos">Go to Grafana demo page</Trans>
+            </LinkButton>
+          </div>
+          <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
+            <div className={styles.headerSmall}>
+              <H3 textAlignment="center" weight="medium">
+                <Trans i18nKey="dashboard.empty.continue-to-dashboard-header">Continue to dashboard</Trans>
+              </H3>
+            </div>
+            <div className={styles.bodySmall}>
+              <P textAlignment="center" color="secondary">
+                <Trans i18nKey="dashboard.empty.continue-to-dashboard-body">
+                  Build a dashboard using csv or the Grafana DB.
+                </Trans>
+              </P>
+            </div>
+            <Button
+              variant="secondary"
+              data-testid={selectors.pages.AddDashboard.itemButton('Build a dashboard button')}
+              onClick={() => {
+                reportInteraction('dashboards_emptydashboard_clicked', { item: 'build_a_dashboard' });
+                locationService.partial({ buildDashboardWithoutData: true });
+              }}
+              disabled={!canCreate}
+            >
+              <Trans i18nKey="dashboard.empty.continue-to-dashboard-button">Continue to dashboard</Trans>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// TODO: Check when there is no data connected
+/* function hasNoDataConnected(datasources: DataSourceInstanceSettings[]){
+  const configuredConnections = datasources.filter((datasource: DataSourceInstanceSettings) => !datasource.readOnly);
+  return configuredConnections.length === 0;
+} */
+
 const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+  const [queryParams] = useQueryParams();
+  const buildDashboardWithoutConnectingData = !!queryParams.buildDashboardWithoutData;
+
+  if (!buildDashboardWithoutConnectingData) {
+    return <NoDataEmpty canCreate={canCreate} />;
+  }
 
   return (
     <div className={styles.centeredContent}>

@@ -47,6 +47,14 @@ export const Pages = {
     addNewRow: 'Add new row',
     addNewPanelLibrary: 'Add new panel from panel library',
   },
+  EmptyDashboardConnectData: {
+    url: '/dashboard/new',
+    itemButton: (title: string) => `data-testid ${title}`,
+    connectData: 'Connect data',
+    quickStartADashboard: 'Quick start a dashboard',
+    dashboardDemo: 'Dashboard demo',
+    continueToDashboard: 'Continue to dashboard',
+  },
   Dashboard: {
     url: (uid: string) => `/d/${uid}`,
     DashNav: {
