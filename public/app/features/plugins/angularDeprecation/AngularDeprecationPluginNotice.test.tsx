@@ -5,7 +5,7 @@ import React from 'react';
 import { PluginType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { PluginDetailsAngularDeprecation } from './AngularDeprecationPluginNotice';
+import { AngularDeprecationPluginNotice } from './AngularDeprecationPluginNotice';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -42,7 +42,7 @@ describe('AngularDeprecationPluginNotice', () => {
     ];
     tests.forEach((test) => {
       it(`displays the correct plugin type for ${test.name}`, () => {
-        render(<PluginDetailsAngularDeprecation pluginId="test-id" pluginType={test.pluginType} />);
+        render(<AngularDeprecationPluginNotice pluginId="test-id" pluginType={test.pluginType} />);
         expect(screen.getByText(test.expected)).toBeInTheDocument();
       });
     });
@@ -69,7 +69,7 @@ describe('AngularDeprecationPluginNotice', () => {
     tests.forEach((test) => {
       it(`displays the correct angular configuration for ${test.name}`, () => {
         render(
-          <PluginDetailsAngularDeprecation pluginId="test-id" angularSupportEnabled={test.angularSupportEnabled} />
+          <AngularDeprecationPluginNotice pluginId="test-id" angularSupportEnabled={test.angularSupportEnabled} />
         );
         expect(screen.getByText(test.expected)).toBeInTheDocument();
       });
@@ -77,19 +77,19 @@ describe('AngularDeprecationPluginNotice', () => {
   });
 
   it('displays the plugin details link if showPluginDetailsLink is true', () => {
-    render(<PluginDetailsAngularDeprecation pluginId="test-id" showPluginDetailsLink={true} />);
+    render(<AngularDeprecationPluginNotice pluginId="test-id" showPluginDetailsLink={true} />);
     const detailsLink = screen.getByText(/view plugin details/i);
     expect(detailsLink).toBeInTheDocument();
     expect(detailsLink).toHaveAttribute('href', 'plugins/test-id');
   });
 
   it('does not display the plugin details link if showPluginDetailsLink is false', () => {
-    render(<PluginDetailsAngularDeprecation pluginId="test-id" showPluginDetailsLink={false} />);
+    render(<AngularDeprecationPluginNotice pluginId="test-id" showPluginDetailsLink={false} />);
     expect(screen.queryByText(/view plugin details/i)).not.toBeInTheDocument();
   });
 
   it('reports interaction when clicking on the link', async () => {
-    render(<PluginDetailsAngularDeprecation pluginId="test-id" />);
+    render(<AngularDeprecationPluginNotice pluginId="test-id" />);
     const c = 'Read our deprecation notice and migration advice.';
     expect(screen.getByText(c)).toBeInTheDocument();
     await userEvent.click(screen.getByText(c));

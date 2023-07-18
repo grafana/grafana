@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { PluginDetailsAngularDeprecation } from 'app/features/plugins/angularDeprecation/PluginDetailsAngularDeprecation';
+import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
@@ -103,7 +103,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
         {panel.isAngularPlugin() && (
-          <PluginDetailsAngularDeprecation
+          <AngularDeprecationPluginNotice
             className={styles.angularDeprecationWrapper}
             showPluginDetailsLink={true}
             pluginId={plugin.meta.id}
