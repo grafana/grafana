@@ -116,7 +116,7 @@ function FolderGroupAndEvaluationInterval({
 
   return (
     <div>
-      <FolderAndGroup groupfoldersForGrafana={groupfoldersForGrafana} />
+      <FolderAndGroup groupfoldersForGrafana={groupfoldersForGrafana.result} />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}

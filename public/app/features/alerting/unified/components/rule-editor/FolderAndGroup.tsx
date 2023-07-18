@@ -17,7 +17,6 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { AsyncRequestState } from '../../utils/redux';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
@@ -70,11 +69,7 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
   return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
-export function FolderAndGroup({
-  groupfoldersForGrafana,
-}: {
-  groupfoldersForGrafana: AsyncRequestState<RulerRulesConfigDTO | null>;
-}) {
+export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGrafana?: RulerRulesConfigDTO | null }) {
   const {
     formState: { errors },
     watch,
@@ -324,7 +319,7 @@ function EvaluationGroupCreationModal({
 }: {
   onClose: () => void;
   onCreate: (group: string, evaluationInterval: string) => void;
-  groupfoldersForGrafana: AsyncRequestState<RulerRulesConfigDTO | null>;
+  groupfoldersForGrafana?: RulerRulesConfigDTO | null;
 }): React.ReactElement {
   const styles = useStyles2(getStyles);
   const onSubmit = () => {
@@ -337,9 +332,7 @@ function EvaluationGroupCreationModal({
   const [groupName, folderName] = watch(['group', 'folder.title']);
 
   const groupRules =
-    (groupfoldersForGrafana.result &&
-      groupfoldersForGrafana.result[folderName]?.find((g) => g.name === groupName)?.rules) ??
-    [];
+    (groupfoldersForGrafana && groupfoldersForGrafana[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];
 
   const onCancel = () => {
     onClose();
