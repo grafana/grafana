@@ -214,6 +214,7 @@ export const HeatmapPanel = ({
                       isPinned={isPinned}
                       dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
+                      showColorScale={options.tooltip.showColorScale}
                       canAnnotate={enableAnnotationCreation}
                       panelData={data}
                     />

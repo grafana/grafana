@@ -11,7 +11,7 @@ import { LabelValue } from './tooltipUtils';
 interface VizTooltipHeaderProps {
   headerLabel: LabelValue;
   keyValuePairs?: LabelValue[];
-  customValueDisplay?: ReactElement;
+  customValueDisplay?: ReactElement | null;
 }
 export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDisplay }: VizTooltipHeaderProps) => {
   const styles = useStyles2(getStyles);

@@ -147,7 +147,6 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
     position: absolute;
     margin-top: -14px;
     padding: 3px 15px;
-    background: ${theme.colors.background.primary};
     transform: translateX(-50%);
   `,
   followerContainer: css`

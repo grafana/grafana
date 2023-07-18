@@ -27,6 +27,7 @@ interface Props {
   seriesIdx: number | null | undefined;
   data: HeatmapData;
   showHistogram?: boolean;
+  showColorScale?: boolean;
   isPinned: boolean;
   dismiss: () => void;
   canAnnotate: boolean;
@@ -41,7 +42,15 @@ export const HeatmapTooltip = (props: Props) => {
 
   return <HeatmapTooltipHover {...props} />;
 };
-const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram, isPinned, canAnnotate, panelData }: Props) => {
+const HeatmapTooltipHover = ({
+  dataIdxs,
+  data,
+  showHistogram,
+  isPinned,
+  canAnnotate,
+  panelData,
+  showColorScale = false,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const index = dataIdxs[1]!;
@@ -266,8 +275,8 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram, isPinned, canAnnot
   };
 
   // Color scale
-  const getCustomValueDisplay = () => {
-    if (colorPalette) {
+  const getCustomValueDisplay = (): ReactElement | null => {
+    if (colorPalette && showColorScale) {
       return (
         <ColorScale
           colorPalette={colorPalette}
@@ -324,7 +333,7 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram, isPinned, canAnnot
       <VizTooltipHeader
         headerLabel={getHeaderLabel()}
         keyValuePairs={getLabelValue()}
-        // customValueDisplay={getCustomValueDisplay()}
+        customValueDisplay={getCustomValueDisplay()}
       />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
       {isPinned && <VizTooltipFooter />}
