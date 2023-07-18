@@ -3,6 +3,7 @@ aliases:
   - ../../contact-points/message-templating/
   - ../../message-templating/
   - ../../unified-alerting/message-templating/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/message-templating/
 description: Notification templating
 keywords:
   - grafana
@@ -10,6 +11,11 @@ keywords:
   - guide
   - contact point
   - templating
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Notification templating
 weight: 415
 ---

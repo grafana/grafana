@@ -155,57 +155,59 @@ export default CustomScrollbar;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    customScrollbar: css`
+    customScrollbar: css({
       // Fix for Firefox. For some reason sometimes .view container gets a height of its content, but in order to
       // make scroll working it should fit outer container size (scroll appears only when inner container size is
       // greater than outer one).
-      display: flex;
-      flex-grow: 1;
-      .scrollbar-view {
-        display: flex;
-        flex-grow: 1;
-        flex-direction: column;
-      }
-      .track-vertical {
-        border-radius: ${theme.shape.borderRadius(2)};
-        width: ${theme.spacing(1)} !important;
-        right: 0px;
-        bottom: ${theme.spacing(0.25)};
-        top: ${theme.spacing(0.25)};
-      }
-      .track-horizontal {
-        border-radius: ${theme.shape.borderRadius(2)};
-        height: ${theme.spacing(1)} !important;
-        right: ${theme.spacing(0.25)};
-        bottom: ${theme.spacing(0.25)};
-        left: ${theme.spacing(0.25)};
-      }
-      .thumb-vertical {
-        background: ${theme.colors.action.focus};
-        border-radius: ${theme.shape.borderRadius(2)};
-        opacity: 0;
-      }
-      .thumb-horizontal {
-        background: ${theme.colors.action.focus};
-        border-radius: ${theme.shape.borderRadius(2)};
-        opacity: 0;
-      }
-      &:hover {
-        .thumb-vertical,
-        .thumb-horizontal {
-          opacity: 1;
-          transition: opacity 0.3s ease-in-out;
-        }
-      }
-    `,
+      display: 'flex',
+      flexGrow: 1,
+      '.scrollbar-view': {
+        display: 'flex',
+        flexGrow: 1,
+        flexDirection: 'column',
+      },
+      '.track-vertical': {
+        borderRadius: theme.shape.borderRadius(2),
+        width: `${theme.spacing(1)} !important`,
+        right: 0,
+        bottom: theme.spacing(0.25),
+        top: theme.spacing(0.25),
+      },
+      '.track-horizontal': {
+        borderRadius: theme.shape.borderRadius(2),
+        height: `${theme.spacing(1)} !important`,
+        right: theme.spacing(0.25),
+        bottom: theme.spacing(0.25),
+        left: theme.spacing(0.25),
+      },
+      '.thumb-vertical': {
+        background: theme.colors.action.focus,
+        borderRadius: theme.shape.borderRadius(2),
+        opacity: 0,
+      },
+      '.thumb-horizontal': {
+        background: theme.colors.action.focus,
+        borderRadius: theme.shape.borderRadius(2),
+        opacity: 0,
+      },
+      '&:hover': {
+        '.thumb-vertical, .thumb-horizontal': {
+          opacity: 1,
+          transition: 'opacity 0.3s ease-in-out',
+        },
+      },
+    }),
     // override the scroll container position so that the scroll indicators
     // are positioned at the top and bottom correctly.
     // react-custom-scrollbars doesn't provide any way for us to hook in nicely,
     // so we have to override with !important. feelsbad.
-    scrollbarWithScrollIndicators: css`
-      .scrollbar-view {
-        position: static !important;
-      }
-    `,
+    scrollbarWithScrollIndicators: css({
+      '.scrollbar-view': {
+        // Need type assertion here due to the use of !important
+        // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        position: 'static !important' as 'static',
+      },
+    }),
   };
 };

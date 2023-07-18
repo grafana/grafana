@@ -24,6 +24,11 @@ keywords:
   - reporting
   - export
   - pdf
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Sharing
 title: Share dashboards and panels
 weight: 85

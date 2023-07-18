@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../configure-alertmanager/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/
 description: Configure Alertmanager
 keywords:
   - grafana
@@ -8,6 +9,10 @@ keywords:
   - set up
   - configure
   - external Alertmanager
+labels:
+  products:
+    - enterprise
+    - oss
 title: Add an external Alertmanager
 weight: 200
 ---

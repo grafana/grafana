@@ -357,6 +357,7 @@ lerna.json @grafana/frontend-ops
 /public/app/core/ @grafana/grafana-frontend-platform
 /public/app/core/components/TimePicker/ @grafana/grafana-frontend-platform
 /public/app/core/components/Layers/ @grafana/dataviz-squad
+/public/app/core/components/TraceToLogs @grafana/observability-traces-and-profiling
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/grafana-authnz-team
 /public/app/features/auth-config/ @grafana/grafana-authnz-team
@@ -632,7 +633,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/grafana-as-code
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
-/.github/workflows/ephemeral-instances.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
 
 
 # Generated files not requiring owner approval

@@ -2,11 +2,16 @@
 aliases:
   - meta-monitoring/
   - alerting/meta-monitoring/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/meta-monitoring/
 description: Meta monitoring
 keywords:
   - grafana
   - alerting
   - meta-monitoring
+labels:
+  products:
+    - enterprise
+    - oss
 title: Meta monitoring
 weight: 500
 ---

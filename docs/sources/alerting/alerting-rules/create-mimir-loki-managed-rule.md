@@ -3,6 +3,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
 description: Create Grafana Mimir or Loki managed alerting rule
 keywords:
   - grafana
@@ -10,6 +11,11 @@ keywords:
   - guide
   - rules
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create Grafana Mimir or Loki managed alert rules
 weight: 400
 ---

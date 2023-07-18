@@ -4,6 +4,10 @@ aliases:
   - ../../../enterprise/access-control/usage-scenarios/
 description: Plan your RBAC rollout strategy before you begin assigning roles to users
   and teams.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Plan your RBAC rollout strategy
 title: Plan your Grafana RBAC rollout strategy
 weight: 20

@@ -13,10 +13,10 @@ function pseudoizeJsonReplacer(key, value) {
   return value;
 }
 
-fs.readFile('./public/locales/en-US/grafana.json').then((enJson) => {
+fs.readFile('./public/locales/en-US/grafana.json').then(async (enJson) => {
   const enMessages = JSON.parse(enJson);
   // Add newline to make prettier happy
-  const pseudoJson = prettier.format(JSON.stringify(enMessages, pseudoizeJsonReplacer, 2), {
+  const pseudoJson = await prettier.format(JSON.stringify(enMessages, pseudoizeJsonReplacer, 2), {
     parser: 'json',
   });
 

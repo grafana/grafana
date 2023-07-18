@@ -113,7 +113,5 @@ export const VizTooltipContainer = ({
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    ${getTooltipContainerStyles(theme)}
-  `,
+  wrapper: css(getTooltipContainerStyles(theme)),
 });

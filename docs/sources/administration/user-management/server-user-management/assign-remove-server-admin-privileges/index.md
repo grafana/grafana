@@ -3,6 +3,10 @@ aliases:
   - ../../manage-users-and-permissions/manage-server-users/assign-remove-server-admin-privileges/
 description: Describes how to assign and remove Grafana administrator privileges from
   a server user.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Assign or remove Grafana server administrator privileges
 weight: 20
 ---

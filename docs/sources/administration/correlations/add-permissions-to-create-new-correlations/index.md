@@ -1,6 +1,10 @@
 ---
-title: Add permissions to create new correlations
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Add permissions
+title: Add permissions to create new correlations
 weight: 30
 ---
 
