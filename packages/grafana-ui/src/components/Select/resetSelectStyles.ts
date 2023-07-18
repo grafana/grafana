@@ -47,12 +47,16 @@ export function useCustomSelectStyles(theme: GrafanaTheme2, width: number | stri
   return useMemo(() => {
     return {
       ...resetSelectStyles(theme),
-      menuPortal: (base: any) => {
+      menuPortal: ({ left, top, bottom, position }: any) => {
+        console.log('menuPortal', { top, bottom, position, left });
+        // debugger;
         // Would like to correct top position when menu is placed bottom, but have props are not sent to this style function.
         // Only state is. https://github.com/JedWatson/react-select/blob/master/packages/react-select/src/components/Menu.tsx#L605
         return {
-          ...base,
-          zIndex: theme.zIndex.portal,
+          top,
+          position,
+          minWidth: '100%',
+          zIndex: theme.zIndex.dropdown,
         };
       },
       //These are required for the menu positioning to function
