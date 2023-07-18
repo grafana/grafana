@@ -102,9 +102,6 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
             buttonIcon="plus-circle"
             buttonLink={getProviderUrl(firstAvailableProvider)}
             buttonTitle={`Configure ${firstAvailableProvider.type}`}
-            description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
-              Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.
-              No changes will be written into .ini file.`}
             onClick={onCTAClick}
           />
         )}
