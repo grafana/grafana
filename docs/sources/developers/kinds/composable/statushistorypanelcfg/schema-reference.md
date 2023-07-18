@@ -1,20 +1,24 @@
 ---
 keywords:
-  - grafana
-  - schema
+- grafana
+- schema
+labels:
+  products:
+  - enterprise
+  - oss
 title: StatusHistoryPanelCfg kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## StatusHistoryPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property      | Type                   | Required | Default | Description |
-|---------------|------------------------|----------|---------|-------------|
+| ------------- | ---------------------- | -------- | ------- | ----------- |
 | `FieldConfig` | [object](#fieldconfig) | **Yes**  |         |             |
 | `Options`     | [object](#options)     | **Yes**  |         |             |
 
@@ -23,9 +27,9 @@ title: StatusHistoryPanelCfg kind
 It extends [HideableFieldConfig](#hideablefieldconfig).
 
 | Property      | Type                                  | Required | Default | Description                                                                  |
-|---------------|---------------------------------------|----------|---------|------------------------------------------------------------------------------|
+| ------------- | ------------------------------------- | -------- | ------- | ---------------------------------------------------------------------------- |
 | `fillOpacity` | integer                               | No       | `70`    | Constraint: `>=0 & <=100`.                                                   |
-| `hideFrom`    | [HideSeriesConfig](#hideseriesconfig) | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs |
+| `hideFrom`    | [HideSeriesConfig](#hideseriesconfig) | No       |         | _(Inherited from [HideableFieldConfig](#hideablefieldconfig))_<br/>TODO docs |
 | `lineWidth`   | integer                               | No       | `1`     | Constraint: `>=0 & <=10`.                                                    |
 
 ### HideSeriesConfig
@@ -33,7 +37,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig).
 TODO docs
 
 | Property  | Type    | Required | Default | Description |
-|-----------|---------|----------|---------|-------------|
+| --------- | ------- | -------- | ------- | ----------- |
 | `legend`  | boolean | **Yes**  |         |             |
 | `tooltip` | boolean | **Yes**  |         |             |
 | `viz`     | boolean | **Yes**  |         |             |
@@ -43,7 +47,7 @@ TODO docs
 TODO docs
 
 | Property   | Type                                  | Required | Default | Description |
-|------------|---------------------------------------|----------|---------|-------------|
+| ---------- | ------------------------------------- | -------- | ------- | ----------- |
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
 ### Options
@@ -51,20 +55,20 @@ TODO docs
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
 
 | Property    | Type                                    | Required | Default | Description                                                                |
-|-------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------------|
-| `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
+| ----------- | --------------------------------------- | -------- | ------- | -------------------------------------------------------------------------- |
+| `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | _(Inherited from [OptionsWithLegend](#optionswithlegend))_<br/>TODO docs   |
 | `rowHeight` | number                                  | **Yes**  | `0.9`   | Set the height of the rows<br/>Constraint: `>=0 & <=1`.                    |
 | `showValue` | string                                  | **Yes**  |         | Show values on the columns                                                 |
-| `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | _(Inherited from [OptionsWithTooltip](#optionswithtooltip))_<br/>TODO docs |
 | `colWidth`  | number                                  | No       | `0.9`   | Controls the column width                                                  |
-| `timezone`  | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))*           |
+| `timezone`  | string[]                                | No       |         | _(Inherited from [OptionsWithTimezones](#optionswithtimezones))_           |
 
 ### OptionsWithLegend
 
 TODO docs
 
 | Property | Type                                  | Required | Default | Description |
-|----------|---------------------------------------|----------|---------|-------------|
+| -------- | ------------------------------------- | -------- | ------- | ----------- |
 | `legend` | [VizLegendOptions](#vizlegendoptions) | **Yes**  |         | TODO docs   |
 
 ### VizLegendOptions
@@ -72,7 +76,7 @@ TODO docs
 TODO docs
 
 | Property      | Type     | Required | Default | Description                                                                                                                             |
-|---------------|----------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| ------------- | -------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `calcs`       | string[] | **Yes**  |         |                                                                                                                                         |
 | `displayMode` | string   | **Yes**  |         | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
 | `placement`   | string   | **Yes**  |         | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
@@ -88,7 +92,7 @@ TODO docs
 TODO docs
 
 | Property   | Type     | Required | Default | Description |
-|------------|----------|----------|---------|-------------|
+| ---------- | -------- | -------- | ------- | ----------- |
 | `timezone` | string[] | No       |         |             |
 
 ### OptionsWithTooltip
@@ -96,7 +100,7 @@ TODO docs
 TODO docs
 
 | Property  | Type                                    | Required | Default | Description |
-|-----------|-----------------------------------------|----------|---------|-------------|
+| --------- | --------------------------------------- | -------- | ------- | ----------- |
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs   |
 
 ### VizTooltipOptions
@@ -104,8 +108,6 @@ TODO docs
 TODO docs
 
 | Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------- |
 | `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
 | `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
-
-

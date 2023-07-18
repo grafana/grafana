@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - dashboard
+labels:
+  products:
+    - enterprise
+    - oss
 title: Dashboard HTTP API
 ---
 

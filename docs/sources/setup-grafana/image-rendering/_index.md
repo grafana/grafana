@@ -8,6 +8,10 @@ keywords:
   - image
   - rendering
   - plugin
+labels:
+  products:
+    - enterprise
+    - oss
 title: Set up image rendering
 weight: 1000
 ---

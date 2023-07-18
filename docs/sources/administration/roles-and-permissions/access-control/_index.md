@@ -6,6 +6,10 @@ aliases:
 description: Role-based access control (RBAC) provides a standardized way of granting,
   changing, and revoking access so that users can view and modify Grafana resources,
   such as users and reports.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Role-based access control (RBAC)
 title: Grafana Role-based access control (RBAC)
 weight: 120

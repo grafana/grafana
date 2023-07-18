@@ -2,8 +2,9 @@ package registry
 
 import (
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
+
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
@@ -22,6 +23,7 @@ func ProvideRegistry(
 	apiServer grafanaapiserver.Service,
 	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 	certGenerator certgenerator.ServiceInterface,
+	httpServer *api.HTTPServer,
 ) *registry {
 	return newRegistry(
 		log.New("modules.registry"),
@@ -29,6 +31,7 @@ func ProvideRegistry(
 		apiServer,
 		backgroundServiceRunner,
 		certGenerator,
+		httpServer,
 	)
 }
 

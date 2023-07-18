@@ -146,58 +146,51 @@ export const ConfirmButton = withTheme2(UnThemedConfirmButton);
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    buttonContainer: css`
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-    `,
-    buttonDisabled: css`
-      text-decoration: none;
-      color: ${theme.colors.text.primary};
-      opacity: 0.65;
-      pointer-events: none;
-    `,
-    buttonShow: css`
-      opacity: 1;
-      transition: opacity 0.1s ease;
-      z-index: 2;
-    `,
-    buttonHide: css`
-      opacity: 0;
-      transition:
-        opacity 0.1s ease,
-        visibility 0 0.1s;
-      visibility: hidden;
-      z-index: 0;
-    `,
-    confirmButton: css`
-      align-items: flex-start;
-      background: ${theme.colors.background.primary};
-      display: flex;
-      position: absolute;
-      pointer-events: none;
-    `,
-    confirmButtonShow: css`
-      z-index: 1;
-      opacity: 1;
-      transition:
-        opacity 0.08s ease-out,
-        transform 0.1s ease-out;
-      transform: translateX(0);
-      pointer-events: all;
-    `,
-    confirmButtonHide: css`
-      opacity: 0;
-      visibility: hidden;
-      transition:
-        opacity 0.12s ease-in,
-        transform 0.14s ease-in,
-        visibility 0s 0.12s;
-      transform: translateX(100px);
-    `,
-    disabled: css`
-      cursor: not-allowed;
-    `,
+    buttonContainer: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    }),
+    buttonDisabled: css({
+      textDecoration: 'none',
+      color: theme.colors.text.primary,
+      opacity: 0.65,
+      pointerEvents: 'none',
+    }),
+    buttonShow: css({
+      opacity: 1,
+      transition: 'opacity 0.1s ease',
+      zIndex: 2,
+    }),
+    buttonHide: css({
+      opacity: 0,
+      transition: 'opacity 0.1s ease, visibility 0 0.1s',
+      visibility: 'hidden',
+      zIndex: 0,
+    }),
+    confirmButton: css({
+      alignItems: 'flex-start',
+      background: theme.colors.background.primary,
+      display: 'flex',
+      position: 'absolute',
+      pointerEvents: 'none',
+    }),
+    confirmButtonShow: css({
+      zIndex: 1,
+      opacity: 1,
+      transition: 'opacity 0.08s ease-out, transform 0.1s ease-out',
+      transform: 'translateX(0)',
+      pointerEvents: 'all',
+    }),
+    confirmButtonHide: css({
+      opacity: 0,
+      visibility: 'hidden',
+      transition: 'opacity 0.12s ease-in, transform 0.14s ease-in, visibility 0s 0.12s',
+      transform: 'translateX(100px)',
+    }),
+    disabled: css({
+      cursor: 'not-allowed',
+    }),
   };
 });
 
