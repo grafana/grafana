@@ -2,7 +2,6 @@ package eval
 
 import (
 	"context"
-	"github.com/grafana/grafana/pkg/util"
 	"strconv"
 	"testing"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func BenchmarkEvaluate(b *testing.B) {
