@@ -97,7 +97,7 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-1. To enable the `Refresh Token`, grant type in the `General Settings` section of the Okta application.
+1. Under the `General Settings` section of the Okta application, enable the `Refresh Token` under the `Grant Type` section.
 1. Extend the `scopes` in `[auth.okta]` with `offline_access`.
 
 ### Configure role mapping
