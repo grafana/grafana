@@ -100,7 +100,7 @@ You now have a new data source instance of your plugin that is ready to use in a
 
 #### Grafana doesn't load my plugin
 
-Ensure that Grafana has been started in development mode. If you are running Grafana from source, you'll need to include the add the following line to your `conf/custom.ini` file (if you don't have one already, go ahead and create this file before proceeding):
+Ensure that Grafana has been started in development mode. If you are running Grafana from source, you'll need to add the following line to your `conf/custom.ini` file (if you don't have one already, go ahead and create this file before proceeding):
 
 ```ini
 app_mode = development
