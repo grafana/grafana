@@ -5,6 +5,7 @@ aliases:
   - ../alert-groups/filter-alerts/
   - ../alert-groups/view-alert-grouping/
   - ../unified-alerting/alert-groups/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
 description: Alert groups
 keywords:
   - grafana

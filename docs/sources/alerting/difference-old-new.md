@@ -1,6 +1,7 @@
 ---
 aliases:
   - unified-alerting/difference-old-new/
+canonical: https://grafana.com/docs/grafana/latest/alerting/difference-old-new/
 description: What's New with Grafana alerts
 draft: true
 keywords:
