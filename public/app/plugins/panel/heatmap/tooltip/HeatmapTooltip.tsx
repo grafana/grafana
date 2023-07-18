@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useEffect, useRef } from 'react';
+import React, { ReactElement, useEffect, useRef, useState } from 'react';
 
-import { formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import { DataFrameType, formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
+import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from '../fields';
@@ -210,6 +210,18 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
     [index]
   );
 
+  const [isSparse] = useState(
+    () => data.heatmap?.meta?.type === DataFrameType.HeatmapCells && !isHeatmapCellsDense(data.heatmap)
+  );
+
+  if (isSparse) {
+    return (
+      <div>
+        <DataHoverView data={data.heatmap} rowIndex={index} />
+      </div>
+    );
+  }
+
   const { cellColor, colorPalette } = getHoverCellColor(data, index);
 
   const getLabelValue = (): LabelValue[] => {
@@ -309,7 +321,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     width: 280px;
     display: flex;
-    flex-wrap: wrap;
     flex-direction: column;
     padding: ${theme.spacing(1)};
   `,
