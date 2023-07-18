@@ -23,7 +23,7 @@ import {
   toTimeTicks,
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
-import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
+import { binaryPrefix, currency, SIPrefix, metricPrefix } from './symbolFormatters';
 import {
   locale,
   scaledUnits,
@@ -300,11 +300,12 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Length',
     formats: [
-      { name: 'millimeter (mm)', id: 'lengthmm', fn: SIPrefix('m', -1) },
+      { name: 'millimeter', id: 'lengthmm', fn: metricPrefix('m', -2) },
+      { name: 'cantimeter', id: 'lengthcm', fn: metricPrefix('m', -1) },
+      { name: 'meter', id: 'lengthm', fn: metricPrefix('m') },
+      { name: 'kilometer', id: 'lengthkm', fn: metricPrefix('m', 1) },
       { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
-      { name: 'meter (m)', id: 'lengthm', fn: SIPrefix('m') },
-      { name: 'kilometer (km)', id: 'lengthkm', fn: SIPrefix('m', 1) },
       { name: 'mile (mi)', id: 'lengthmi', fn: toFixedUnit('mi') },
     ],
   },

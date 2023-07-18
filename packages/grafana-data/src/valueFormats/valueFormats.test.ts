@@ -69,8 +69,16 @@ describe('valueFormats', () => {
     ${'dateTimeAsUS'}     | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'07/02/2010 12:00:00 am'}
     ${'dateTimeAsSystem'} | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
     ${'dtdurationms'}     | ${undefined} | ${100000}                                   | ${'1 minute'}
+    ${'lengthcm'}         | ${undefined} | ${102}                                      | ${'1.02 m'}
+    ${'lengthcm'}         | ${undefined} | ${15}                                       | ${'15 cm'}
+    ${'lengthcm'}         | ${undefined} | ${0.94}                                     | ${'9.40 mm'}
+    ${'lengthmm'}         | ${undefined} | ${25}                                       | ${'25 mm'}
+    ${'lengthmm'}         | ${undefined} | ${400}                                      | ${'400 mm'}
+    ${'lengthmm'}         | ${undefined} | ${1250}                                     | ${'1.25 m'}
+    ${'lengthm'}          | ${undefined} | ${0.45}                                     | ${'450 mm'}
+    ${'lengthm'}          | ${undefined} | ${1250}                                     | ${'1.25 km'}
   `(
-    'With format=$format decimals=$decimals and value=$value then result shoudl be = $expected',
+    'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {
       const result = getValueFormat(format)(value, decimals, undefined, undefined);
       const full = formattedValueToString(result);

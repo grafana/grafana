@@ -154,6 +154,32 @@ export function scaledUnits(factor: number, extArray: string[], offset = 0): Val
   };
 }
 
+export function scaledMetricUnits(units: string[], offset = 0): ValueFormatter {
+  return (size: number, decimals?: DecimalCount) => {
+    if (size === null || size === undefined) {
+      return { text: '' };
+    }
+
+    if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
+      return { text: size.toLocaleString() };
+    }
+
+    let factor = 1000;
+    // calculate scale factors for cantimeters
+    if (units.includes(' cm')) {
+      factor = size < 1 ? 10 : size > 100 ? 100 : 1000;
+    }
+
+    const siIndex = size === 0 ? 0 : Math.floor(logb(factor, Math.abs(size)));
+    const suffix = units[clamp(offset + siIndex, 0, units.length - 1)];
+
+    return {
+      text: toFixed(size / factor ** clamp(siIndex, -offset, units.length - offset - 1), decimals),
+      suffix,
+    };
+  };
+}
+
 export function locale(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
