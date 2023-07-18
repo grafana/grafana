@@ -355,7 +355,7 @@ Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
 Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-[Project repository](https://github.com/linksmart/grafana-sensorthings-datasource) was archived on April 4th, 2022 and is no longer maintained.
+[Project repository](https://github.com/linksmart/grafana-sensorthings-datasource) was archived on April 4th, 2022, and is no longer maintained.
 {{% /admonition %}}
 
 ### [Monasca](https://grafana.com/grafana/plugins/monasca-datasource/)
