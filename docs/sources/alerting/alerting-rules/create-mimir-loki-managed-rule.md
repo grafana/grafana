@@ -10,6 +10,11 @@ keywords:
   - guide
   - rules
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create Grafana Mimir or Loki managed alert rules
 weight: 400
 ---

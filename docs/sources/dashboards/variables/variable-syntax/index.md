@@ -10,6 +10,11 @@ keywords:
   - guide
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Variable syntax
 weight: 300
 ---

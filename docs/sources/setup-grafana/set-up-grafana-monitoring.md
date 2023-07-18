@@ -8,6 +8,10 @@ keywords:
   - grafana
   - jaeger
   - tracing
+labels:
+  products:
+    - enterprise
+    - oss
 title: Set up Grafana monitoring
 weight: 800
 ---

@@ -8,6 +8,11 @@ keywords:
   - heatmap
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Heatmap
 weight: 600
 ---

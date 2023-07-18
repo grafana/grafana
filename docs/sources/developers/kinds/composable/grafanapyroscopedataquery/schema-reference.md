@@ -1,20 +1,24 @@
 ---
 keywords:
-  - grafana
-  - schema
+- grafana
+- schema
+labels:
+  products:
+  - enterprise
+  - oss
 title: GrafanaPyroscopeDataQuery kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## GrafanaPyroscopeDataQuery
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property        | Type     | Required | Default | Description                                                                                                                                                                                                                                             |
-|-----------------|----------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --------------- | -------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `groupBy`       | string[] | **Yes**  |         | Allows to group the results.                                                                                                                                                                                                                            |
 | `labelSelector` | string   | **Yes**  | `{}`    | Specifies the query label selectors.                                                                                                                                                                                                                    |
 | `profileTypeId` | string   | **Yes**  |         | Specifies the type of profile to query.                                                                                                                                                                                                                 |
@@ -23,5 +27,3 @@ title: GrafanaPyroscopeDataQuery kind
 | `hide`          | boolean  | No       |         | true if query is disabled (ie should not be returned to the dashboard)<br/>Note this does not always imply that the query should not be executed since<br/>the results from a hidden query may be used as the input to other queries (SSE etc)          |
 | `maxNodes`      | integer  | No       |         | Sets the maximum number of nodes in the flamegraph.                                                                                                                                                                                                     |
 | `queryType`     | string   | No       |         | Specify the query flavor<br/>TODO make this required and give it a default                                                                                                                                                                              |
-
-
