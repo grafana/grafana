@@ -16,7 +16,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.39"
+grabpl_version = "v3.0.40"
 
 trigger_oss = {
     "repo": [
@@ -1189,11 +1189,12 @@ def windows_clone_step():
         ],
     }
 
-def get_windows_steps(ver_mode):
+def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     """Generate the list of Windows steps.
 
     Args:
       ver_mode: used to differentiate steps for different version modes.
+      bucket: used to override prerelease bucket.
 
     Returns:
       List of Drone steps.
@@ -1223,13 +1224,13 @@ def get_windows_steps(ver_mode):
         "release",
         "release-branch",
     ):
-        bucket = "%PRERELEASE_BUCKET%/artifacts/downloads"
+        gcp_bucket = "{}/artifacts/downloads".format(bucket)
         if ver_mode == "release":
             ver_part = "${DRONE_TAG}"
             dir = "release"
         else:
             dir = "main"
-            bucket = "grafana-downloads"
+            gcp_bucket = "grafana-downloads"
             build_no = "DRONE_BUILD_NUMBER"
             ver_part = "--build-id $$env:{}".format(build_no)
         installer_commands = [
@@ -1243,9 +1244,11 @@ def get_windows_steps(ver_mode):
         ]
 
         if ver_mode in ("release",):
+            version = "${DRONE_TAG:1}"
             installer_commands.extend(
                 [
-                    ".\\grabpl.exe windows-installer --edition oss {}".format(
+                    ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
+                        "gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version),
                         ver_part,
                     ),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
@@ -1254,9 +1257,9 @@ def get_windows_steps(ver_mode):
             if ver_mode == "main":
                 installer_commands.extend(
                     [
-                        "gsutil cp $$fname gs://{}/oss/{}/".format(bucket, dir),
+                        "gsutil cp $$fname gs://{}/oss/{}/".format(gcp_bucket, dir),
                         'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
-                            bucket,
+                            gcp_bucket,
                             dir,
                         ),
                     ],
@@ -1265,12 +1268,12 @@ def get_windows_steps(ver_mode):
                 installer_commands.extend(
                     [
                         "gsutil cp $$fname gs://{}/{}/oss/{}/".format(
-                            bucket,
+                            gcp_bucket,
                             ver_part,
                             dir,
                         ),
                         'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(
-                            bucket,
+                            gcp_bucket,
                             ver_part,
                             dir,
                         ),
