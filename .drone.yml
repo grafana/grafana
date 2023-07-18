@@ -3575,7 +3575,7 @@ steps:
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/ci-wix:0.1.1
-  name: build-windows-installer-enterprise
+  name: build-windows-installer
 trigger:
   event:
     exclude:
@@ -4977,6 +4977,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: bcae13f54351e846f1380a35799c595a600eb50f48d23ec6fed89010798f8933
+hmac: 2b9ab833ca08138be50f544a85a840983ec6a494dd21abb9aae20f2be31f412b
 
 ...

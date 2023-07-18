@@ -1362,7 +1362,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss")
                 )
         steps.append(
             {
-                "name": "build-windows-installer{}".format(sfx),
+                "name": "build-windows-installer",
                 "image": windows_images["wix_image"],
                 "depends_on": [
                     "windows-init",
