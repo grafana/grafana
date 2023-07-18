@@ -18,10 +18,10 @@ import React from 'react';
 import { defaultFilters } from '../../../useSearch';
 import { trace } from '../TracePageHeader.test';
 
-import NewTracePageSearchBar from './NewTracePageSearchBar';
+import TracePageSearchBar from './TracePageSearchBar';
 
-describe('<NewTracePageSearchBar>', () => {
-  const NewTracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
+describe('<TracePageSearchBar>', () => {
+  const TracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
     const searchBarProps = {
       trace: trace,
       search: defaultFilters,
@@ -37,22 +37,22 @@ describe('<NewTracePageSearchBar>', () => {
       showSpanFilters: true,
     };
 
-    return <NewTracePageSearchBar {...searchBarProps} />;
+    return <TracePageSearchBar {...searchBarProps} />;
   };
 
   it('should render', () => {
-    expect(() => render(<NewTracePageSearchBarWithProps matches={[]} />)).not.toThrow();
+    expect(() => render(<TracePageSearchBarWithProps matches={[]} />)).not.toThrow();
   });
 
   it('renders clear filter button', () => {
-    render(<NewTracePageSearchBarWithProps matches={[]} />);
+    render(<TracePageSearchBarWithProps matches={[]} />);
     const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
     expect(clearFiltersButton).toBeInTheDocument();
     expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
   });
 
   it('renders show span filter matches only switch', async () => {
-    render(<NewTracePageSearchBarWithProps matches={[]} />);
+    render(<TracePageSearchBarWithProps matches={[]} />);
     const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
     expect(matchesSwitch).toBeInTheDocument();
   });

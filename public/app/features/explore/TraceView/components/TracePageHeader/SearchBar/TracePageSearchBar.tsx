@@ -39,7 +39,7 @@ export type TracePageSearchBarProps = {
   showSpanFilters: boolean;
 };
 
-export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProps) {
+export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
   const {
     trace,
     search,
