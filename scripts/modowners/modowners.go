@@ -89,10 +89,9 @@ func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	return nil
 }
 
-// TODO: test with go test
 // Print owner(s) for a given dependency.
 // An example CLI command to get a list of all owners in go.mod with a count of the number of dependencies they own is `go run scripts/modowners/modowners.go owners -a -c go.mod`
-// An example CLI command to get the owner for a specific dependency is `go run scripts/modowners/modowners.go owners -d cloud.google.com/go/storage@v1.30.1 go.mod`. You must use dependency@version, not cloud.google.com/go/storage v1.30.1.
+// An example CLI command to get the owner for a specific dependency is `go run scripts/modowners/modowners.go owners -d cloud.google.com/go/storage@v1.30.1 go.mod`. You must use `dependency@version`, not `dependency version`.
 func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("owners", flag.ExitOnError)
 	allOwners := fs.Bool("a", false, "print all owners in specified file")
@@ -130,7 +129,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 }
 
 // Print dependencies for a given owner. Can specify one or more owners.
-// Example CLI command to list all dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -i -o @grafana/grafana-delivery,@grafana/grafana-authnz-team`
+// Example CLI command to list all direct dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/grafana-authnz-team go.mod`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies")
@@ -143,8 +142,6 @@ func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 
 	ownerFlags := strings.Split(*owner, ",")
 	for _, mod := range m {
-		// If there are owner flags or modfile's dependency has an owner to compare
-		// Else if -i is present and current dependency is indirect
 		if len(*owner) == 0 || hasCommonElement(mod.Owners, ownerFlags) {
 			if *indirect || !mod.Indirect {
 				logger.Println(mod.Name)
