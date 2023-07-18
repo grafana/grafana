@@ -163,28 +163,44 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const handleKeyDown = useCallback(
     (ev: React.KeyboardEvent<HTMLInputElement>) => {
-      // Expand/collapse folder on arrow keys
       const foldersAreOpenable = !(search && searchState.value);
-      if (foldersAreOpenable && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) {
-        ev.preventDefault();
-        handleFolderExpand(tree[focusedItemIndex].item.uid, ev.key === 'ArrowRight');
-      } else if (ev.key === 'ArrowUp' && focusedItemIndex > 0) {
-        ev.preventDefault();
-        const nextIndex = focusedItemIndex - 1;
-        setFocusedItemIndex(nextIndex);
-      } else if (ev.key === 'ArrowDown' && focusedItemIndex < tree.length - 1) {
-        ev.preventDefault();
-        const nextIndex = focusedItemIndex + 1;
-        setFocusedItemIndex(nextIndex);
-      } else if (ev.key === 'Enter') {
-        ev.preventDefault();
-        const item = tree[focusedItemIndex].item;
-        if (item.kind === 'folder') {
-          handleFolderSelect(item);
-        }
-      } else if (ev.key === 'Tab' || ev.key === 'Escape') {
-        ev.stopPropagation();
-        setOverlayOpen(false);
+      switch (ev.key) {
+        // Expand/collapse folder on right/left arrow keys
+        case 'ArrowRight':
+        case 'ArrowLeft':
+          if (foldersAreOpenable) {
+            ev.preventDefault();
+            handleFolderExpand(tree[focusedItemIndex].item.uid, ev.key === 'ArrowRight');
+          }
+          break;
+        case 'ArrowUp':
+          if (focusedItemIndex > 0) {
+            ev.preventDefault();
+            setFocusedItemIndex(focusedItemIndex - 1);
+          }
+          break;
+        case 'ArrowDown':
+          if (focusedItemIndex < tree.length - 1) {
+            ev.preventDefault();
+            setFocusedItemIndex(focusedItemIndex + 1);
+          }
+          break;
+        case 'Enter':
+          ev.preventDefault();
+          const item = tree[focusedItemIndex].item;
+          if (item.kind === 'folder') {
+            handleFolderSelect(item);
+          }
+          break;
+        case 'Tab':
+          ev.stopPropagation();
+          setOverlayOpen(false);
+          break;
+        case 'Escape':
+          ev.stopPropagation();
+          ev.preventDefault();
+          setOverlayOpen(false);
+          break;
       }
     },
     [focusedItemIndex, handleFolderExpand, handleFolderSelect, search, searchState.value, tree]
