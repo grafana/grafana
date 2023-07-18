@@ -4,6 +4,11 @@ keywords:
   - grafana
   - alerting
   - rule types
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert rule types
 weight: 102
 ---

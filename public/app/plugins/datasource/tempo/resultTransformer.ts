@@ -578,6 +578,7 @@ export function createTableFrameFromTraceQlQuery(
   instanceSettings: DataSourceInstanceSettings
 ): DataFrame[] {
   const frame = createDataFrame({
+    name: 'Traces',
     fields: [
       {
         name: 'traceID',
@@ -821,17 +822,17 @@ function transformSpanToTraceData(span: Span, spanSet: Spanset, traceID: string)
   });
 
   span.attributes?.forEach((attr) => {
-    if (attr.value.boolValue) {
-      data[attr.key] = attr.value.boolValue;
+    if (attr.value.boolValue || attr.value.Value?.bool_value) {
+      data[attr.key] = attr.value.boolValue || attr.value.Value?.bool_value;
     }
-    if (attr.value.doubleValue) {
-      data[attr.key] = attr.value.doubleValue;
+    if (attr.value.doubleValue || attr.value.Value?.double_value) {
+      data[attr.key] = attr.value.doubleValue || attr.value.Value?.double_value;
     }
-    if (attr.value.intValue) {
-      data[attr.key] = attr.value.intValue;
+    if (attr.value.intValue || attr.value.Value?.int_value) {
+      data[attr.key] = attr.value.intValue || attr.value.Value?.int_value;
     }
-    if (attr.value.stringValue) {
-      data[attr.key] = attr.value.stringValue;
+    if (attr.value.stringValue || attr.value.Value?.string_value) {
+      data[attr.key] = attr.value.stringValue || attr.value.Value?.string_value;
     }
   });
 

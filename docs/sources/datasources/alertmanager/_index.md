@@ -9,6 +9,11 @@ keywords:
   - alertmanager
   - guide
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Alertmanager
 title: Alertmanager data source
 weight: 150

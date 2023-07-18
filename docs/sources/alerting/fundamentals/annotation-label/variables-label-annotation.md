@@ -6,6 +6,11 @@ keywords:
   - templating
   - labels
   - annotations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Templating labels and annotations
 weight: 117
 ---
@@ -164,7 +169,7 @@ https://example.com/grafana
 
 ### graphLink
 
-The `graphLink` function returns the path to the graphical view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
+The `graphLink` function returns the path to the graphical view in [Explore][explore] for the given expression and data source.
 
 #### Example
 
@@ -276,7 +281,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ### tableLink
 
-The `tableLink` function returns the path to the tabular view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
+The `tableLink` function returns the path to the tabular view in [Explore][explore] for the given expression and data source.
 
 #### Example
 
@@ -343,3 +348,8 @@ The `reReplaceAll` function replaces text matching the regular expression.
 ```
 example.com:8080
 ```
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+{{% /docs/reference %}}

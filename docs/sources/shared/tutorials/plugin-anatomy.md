@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugin Anatomy
 ---
 
@@ -14,7 +18,7 @@ While certain plugin types can have specific configuration options, let's look a
 
 - `type` tells Grafana what type of plugin to expect. Grafana supports three types of plugins: `panel`, `datasource`, and `app`.
 - `name` is what users will see in the list of plugins. If you're creating a data source, this is typically the name of the database it connects to, such as Prometheus, PostgreSQL, or Stackdriver.
-- `id` uniquely identifies your plugin, and should start with your Grafana username, to avoid clashing with other plugins. [Sign up for a Grafana account](/signup/) to claim your username.
+- `id` uniquely identifies your plugin, and should start with your Grafana username, to avoid clashing with other plugins. [Sign up for a Grafana account](https://grafana.com/signup/) to claim your username.
 
 To see all the available configuration settings for the `plugin.json`, refer to the [plugin.json Schema](/docs/grafana/latest/plugins/developing/plugin.json/).
 

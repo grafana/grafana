@@ -2,6 +2,11 @@
 aliases:
   - ../features/dashboard/dashboards/
   - dashboard-manage/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Public dashboards
 weight: 8
 ---
@@ -156,7 +161,7 @@ Learn more about the kind of information provided in the [dashboard insights doc
 
 ## Supported data sources
 
-Public dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `package.json`. However, this can't always be
+Public dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `plugin.json`. However, this can't always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work, but have not been confirmed as compatible.
 
 ### Confirmed:

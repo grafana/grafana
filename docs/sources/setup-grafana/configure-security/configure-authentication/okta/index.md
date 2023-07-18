@@ -2,8 +2,13 @@
 aliases:
   - ../../../auth/okta/
 description: Grafana Okta OAuth Guide
-title: Configure Okta OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Okta OAuth2
+title: Configure Okta OAuth2 authentication
 weight: 1400
 ---
 
@@ -75,7 +80,10 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
 1. To enable the `Refresh Token`, grant type in the `General Settings` section.
-1. Extend the `scopes` in `[auth.okta]` with `offline_access`.
+1. Extend the `scopes` in `[auth.okta]` with `offline_access` for Grafana versions between v9.3 and v10.0.x.
+1. Set `use_refresh_token` in `[auth.okta]` to `true` for Grafana versions v10.1.0 and later.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### Configure allowed groups and domains
 
@@ -122,7 +130,7 @@ then the user is assigned the role specified by
 [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 {{% /admonition %}}
 
-Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth#jmespath-examples" >}}).
+Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [Role mapping examples]({{< relref "../generic-oauth#role-mapping-examples" >}}) with JMESPath.
 
 #### Map server administrator privileges
 

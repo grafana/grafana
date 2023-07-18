@@ -280,12 +280,13 @@ export const Table = memo((props: Props) => {
               columnIndex={index}
               columnCount={row.cells.length}
               timeRange={timeRange}
+              frame={data}
             />
           ))}
         </div>
       );
     },
-    [rows, enablePagination, prepareRow, tableStyles, renderSubTables, page, onCellFilterAdded, timeRange]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTables, timeRange, data]
   );
 
   const onNavigate = useCallback(

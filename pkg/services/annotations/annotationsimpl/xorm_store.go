@@ -143,7 +143,13 @@ func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotati
 }
 
 func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item) error {
-	return r.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	return r.db.InTransaction(ctx, func(ctx context.Context) error {
+		return r.update(ctx, item)
+	})
+}
+
+func (r *xormRepositoryImpl) update(ctx context.Context, item *annotations.Item) error {
+	return r.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var (
 			isExist bool
 			err     error

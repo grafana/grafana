@@ -34,26 +34,27 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getTableHeight() {
-    const { tableResult } = this.props;
+  getMainFrames(frames: DataFrame[] | null) {
+    return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
+  }
 
-    if (!tableResult || tableResult.length === 0) {
+  getTableHeight(rowCount: number, hasSubFrames = true) {
+    if (rowCount === 0) {
       return 200;
     }
-
-    // tries to estimate table height
-    return Math.min(600, Math.max(tableResult[0].length * 36, 300) + 40 + 46);
+    // tries to estimate table height, with a min of 300 and a max of 600
+    // if there are multiple tables, there is no min
+    return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
   }
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
-    const height = this.getTableHeight();
 
-    let dataFrame: DataFrame | null = null;
+    let dataFrames = tableResult;
 
-    if (tableResult?.length) {
-      dataFrame = applyFieldOverrides({
-        data: tableResult,
+    if (dataFrames?.length) {
+      dataFrames = applyFieldOverrides({
+        data: dataFrames,
         timeZone,
         theme: config.theme2,
         replaceVariables: (v: string) => v,
@@ -61,46 +62,67 @@ export class TableContainer extends PureComponent<Props> {
           defaults: {},
           overrides: [],
         },
-      })[0];
+      });
       // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
       // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
       // differently and sidestep this getLinks API on a dataframe
-      for (const field of dataFrame.fields) {
-        field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore({
-            field,
-            rowIndex: config.valueRowIndex!,
-            splitOpenFn,
-            range,
-            dataFrame: dataFrame!,
-          });
-        };
+      for (const frame of dataFrames) {
+        for (const field of frame.fields) {
+          field.getLinks = (config: ValueLinkConfig) => {
+            return getFieldLinksForExplore({
+              field,
+              rowIndex: config.valueRowIndex!,
+              splitOpenFn,
+              range,
+              dataFrame: frame!,
+            });
+          };
+        }
       }
     }
 
+    // move dataframes to be grouped by table, with optional sub-tables for a row
+    const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
+    const mainFrames = this.getMainFrames(dataFrames).filter(
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
+    );
+
+    mainFrames?.forEach((frame) => {
+      const subFrames =
+        dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) ||
+        undefined;
+      tableData.push({ main: frame, sub: subFrames });
+    });
+
     return (
-      <PanelChrome
-        title="Table"
-        width={width}
-        height={height}
-        loadingState={loading ? LoadingState.Loading : undefined}
-      >
-        {(innerWidth, innerHeight) => (
-          <>
-            {dataFrame?.length ? (
-              <Table
-                ariaLabel={ariaLabel}
-                data={dataFrame}
-                width={innerWidth}
-                height={innerHeight}
-                onCellFilterAdded={onCellFilterAdded}
-              />
-            ) : (
-              <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
-            )}
-          </>
+      <>
+        {tableData.length === 0 && (
+          <PanelChrome title={'Table'} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+          </PanelChrome>
         )}
-      </PanelChrome>
+        {tableData.length > 0 &&
+          tableData.map((data, i) => (
+            <PanelChrome
+              key={data.main.refId || `table-${i}`}
+              title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
+              width={width}
+              height={this.getTableHeight(data.main.length, (data.sub?.length || 0) > 0)}
+              loadingState={loading ? LoadingState.Loading : undefined}
+            >
+              {(innerWidth, innerHeight) => (
+                <Table
+                  ariaLabel={ariaLabel}
+                  data={data.main}
+                  subData={data.sub}
+                  width={innerWidth}
+                  height={innerHeight}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              )}
+            </PanelChrome>
+          ))}
+      </>
     );
   }
 }

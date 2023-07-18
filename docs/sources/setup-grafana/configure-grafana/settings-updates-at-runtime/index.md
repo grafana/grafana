@@ -6,6 +6,10 @@ keywords:
   - grafana
   - runtime
   - settings
+labels:
+  products:
+    - enterprise
+    - oss
 title: Settings updates at runtime
 weight: 500
 ---

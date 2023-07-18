@@ -6,6 +6,10 @@ keywords:
   - angular
   - deprecation
   - migration
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugins using AngularJS
 ---
 
@@ -78,10 +82,6 @@ Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
 Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 
 > **Note:** Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
-
-### [Kentik Connect Pro](https://grafana.com/grafana/plugins/kentik-connect-app/)
-
-Latest Version: 1.6.2 | Signature: Commercial | Last Updated: 2023
 
 ### [Moogsoft AIOps](https://grafana.com/grafana/plugins/moogsoft-aiops-app)
 
