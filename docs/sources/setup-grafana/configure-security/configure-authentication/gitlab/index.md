@@ -30,13 +30,14 @@ To follow this guide:
 To configure GitLab authentication with Grafana, follow these steps:
 
 1. Create an OAuth application in GitLab.
-1. Set the redirect URI to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/gitlab`.
 
-   Ensure that the Redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/gitlab`.
+   1. Set the redirect URI to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/gitlab`.
 
-   For the Redirect URI to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
+      Ensure that the Redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/gitlab`.
 
-1. Set the OAuth2 scopes to `openid`, `email` and `profile`.
+      For the Redirect URI to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
+
+   1. Set the OAuth2 scopes to `openid`, `email` and `profile`.
 
 1. Refer to the following table to update field values located in the `[auth.gitlab]` section of the Grafana configuration file:
 
@@ -151,7 +152,7 @@ All other users are granted the `Viewer` role.
 role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
 ```
 
-### Map server administrator role
+#### Map server administrator role
 
 In this example, the user with email `admin@company.com` has been granted the `Admin` organization role as well as the Grafana server admin role.
 All other users are granted the `Viewer` role.
