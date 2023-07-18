@@ -208,7 +208,9 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 			continue
 		case <-ctx.Done():
 			// Root server context was cancelled so cancel polling and leave.
+			ps.mutex.Lock()
 			ps.cancelPolling()
+			ps.mutex.Unlock()
 			return nil
 		}
 	}
