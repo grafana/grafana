@@ -299,9 +299,14 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
 };
 
 export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
-  reportInteraction('grafana_loki_format_query_clicked', {});
+  const isInvalid = isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars));
 
-  if (isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars))) {
+  reportInteraction('grafana_loki_format_query_clicked', {
+    is_invalid: isInvalid,
+    query_type: isLogsQuery(query) ? 'logs' : 'metric',
+  });
+
+  if (isInvalid) {
     return query;
   }
 
