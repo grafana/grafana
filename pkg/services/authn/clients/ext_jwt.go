@@ -219,7 +219,6 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 }
 
 func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
-	key := s.signingKeys.GetServerPublicKey()
 	if s.cfg.ExtendedJWTPublicKeyURL != "" {
 		s.log.Debug("Fetching key", "url", s.cfg.ExtendedJWTPublicKeyURL)
 		// TODO eventually cache result
@@ -236,9 +235,9 @@ func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
 		if errParse != nil {
 			return nil, fmt.Errorf("could not read key returned by '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errParse)
 		}
-		key = remoteKey
+		return remoteKey, nil
 	}
-	return key, nil
+	return s.signingKeys.GetServerPublicKey(), nil
 }
 
 func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {
