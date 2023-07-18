@@ -13,6 +13,8 @@ import {
   ScopedVars,
   TimeRange,
   CoreApp,
+  getSearchFilterScopedVar,
+  SearchFilterOptions,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -27,7 +29,6 @@ import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
-import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
