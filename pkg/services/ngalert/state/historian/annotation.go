@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,12 +25,11 @@ import (
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
 type AnnotationBackend struct {
-	annotations AnnotationStore
-	dashboards  *dashboardResolver
-	rules       RuleStore
-	clock       clock.Clock
-	metrics     *metrics.Historian
-	log         log.Logger
+	store   AnnotationStore
+	rules   RuleStore
+	clock   clock.Clock
+	metrics *metrics.Historian
+	log     log.Logger
 }
 
 type RuleStore interface {
@@ -40,18 +38,17 @@ type RuleStore interface {
 
 type AnnotationStore interface {
 	Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
-	SaveMany(ctx context.Context, items []annotations.Item) error
+	Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
 }
 
-func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
+func NewAnnotationBackend(annotations AnnotationStore, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
 	logger := log.New("ngalert.state.historian", "backend", "annotations")
 	return &AnnotationBackend{
-		annotations: annotations,
-		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
-		rules:       rules,
-		clock:       clock.New(),
-		metrics:     metrics,
-		log:         logger,
+		store:   annotations,
+		rules:   rules,
+		clock:   clock.New(),
+		metrics: metrics,
+		log:     logger,
 	}
 }
 
@@ -83,7 +80,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 		defer close(errCh)
 		logger := h.log.FromContext(ctx)
 
-		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
+		errCh <- h.store.Save(ctx, panel, annotations, rule.OrgID, logger)
 	}(writeCtx)
 	return errCh
 }
@@ -118,7 +115,7 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 		To:           query.To.Unix(),
 		SignedInUser: query.SignedInUser,
 	}
-	items, err := h.annotations.Find(ctx, &q)
+	items, err := h.store.Find(ctx, &q)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query annotations for state history: %w", err)
 	}
@@ -196,34 +193,6 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 		items = append(items, item)
 	}
 	return items
-}
-
-func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
-	if panel != nil {
-		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
-		if err != nil {
-			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
-			dashID = 0
-		}
-
-		for i := range annotations {
-			annotations[i].DashboardID = dashID
-			annotations[i].PanelID = panel.panelID
-		}
-	}
-
-	org := fmt.Sprint(orgID)
-	h.metrics.WritesTotal.WithLabelValues(org, "annotations").Inc()
-	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
-	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
-		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailed.WithLabelValues(org, "annotations").Inc()
-		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
-		return fmt.Errorf("error saving alert annotation batch: %w", err)
-	}
-
-	logger.Debug("Done saving alert annotation batch")
-	return nil
 }
 
 func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
