@@ -2,10 +2,6 @@
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
-labels:
-  products:
-    - enterprise
-    - oss
 title: Configure feature toggles
 weight: 150
 ---
