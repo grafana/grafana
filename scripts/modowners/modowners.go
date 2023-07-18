@@ -84,7 +84,7 @@ func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 		}
 	}
 	if fail {
-		return errors.New("modfile is invalid")
+		return errors.New("one or more newly added dependencies do not have an assigned owner. please assign a team as an owner.")
 	}
 	return nil
 }
