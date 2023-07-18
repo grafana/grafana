@@ -386,4 +386,8 @@ const (
 	// FlagTransformationsRedesign
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagLogsActiveLabelsUI
+	// Based on the current query show the active labels in log details
+	FlagLogsActiveLabelsUI = "logsActiveLabelsUI"
 )
