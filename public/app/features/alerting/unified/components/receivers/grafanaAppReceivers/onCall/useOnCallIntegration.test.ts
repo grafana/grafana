@@ -63,7 +63,6 @@ describe('useOnCallIntegration', () => {
 
   it('extendOnCalReceivers should not add new settings to the oncall receiver if OnCall is disabled', async () => {
     mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: false });
-    mockApi(server).oncall.getOnCallIntegrations([]);
 
     const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
 
