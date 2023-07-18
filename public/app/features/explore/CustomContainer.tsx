@@ -1,10 +1,12 @@
 import React from 'react';
 
-import { AbsoluteTimeRange, DataFrame, dateTime, LoadingState } from '@grafana/data';
+import { AbsoluteTimeRange, DataFrame, dateTime, EventBus, LoadingState, SplitOpen } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { PanelChrome } from '@grafana/ui';
+import { PanelChrome, PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import { getPanelPluginMeta } from '../plugins/importPanelPlugin';
+
+import { useExploreInternalDataLinkSupplier } from './hooks/useExploreDataLinksSupplier';
 
 export interface Props {
   width: number;
@@ -14,9 +16,21 @@ export interface Props {
   frames: DataFrame[];
   absoluteRange: AbsoluteTimeRange;
   state: LoadingState;
+  splitOpenFn: SplitOpen;
+  eventBus: EventBus;
 }
 
-export function CustomContainer({ width, height, timeZone, state, pluginId, frames, absoluteRange }: Props) {
+export function CustomContainer({
+  width,
+  height,
+  timeZone,
+  state,
+  pluginId,
+  frames,
+  absoluteRange,
+  splitOpenFn,
+  eventBus,
+}: Props) {
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
@@ -28,18 +42,27 @@ export function CustomContainer({ width, height, timeZone, state, pluginId, fram
 
   const plugin = getPanelPluginMeta(pluginId);
 
+  const internalDataLinkSupplier = useExploreInternalDataLinkSupplier(splitOpenFn, timeRange);
+
+  const panelContext: PanelContext = {
+    internalDataLinkSupplier,
+    eventBus,
+  };
+
   return (
-    <PanelChrome title={plugin.name} width={width} height={height} loadingState={state}>
-      {(innerWidth, innerHeight) => (
-        <PanelRenderer
-          data={{ series: frames, state: state, timeRange }}
-          pluginId={pluginId}
-          title=""
-          width={innerWidth}
-          height={innerHeight}
-          timeZone={timeZone}
-        />
-      )}
-    </PanelChrome>
+    <PanelContextProvider value={panelContext}>
+      <PanelChrome title={plugin.name} width={width} height={height} loadingState={state}>
+        {(innerWidth, innerHeight) => (
+          <PanelRenderer
+            data={{ series: frames, state: state, timeRange }}
+            pluginId={pluginId}
+            title=""
+            width={innerWidth}
+            height={innerHeight}
+            timeZone={timeZone}
+          />
+        )}
+      </PanelChrome>
+    </PanelContextProvider>
   );
 }
