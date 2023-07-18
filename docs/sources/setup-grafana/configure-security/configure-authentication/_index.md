@@ -99,7 +99,10 @@ org_role = Viewer
 
 If you change your organization name in the Grafana UI, this setting needs to be updated to match the new name.
 
-> Please Note: Anonymous authentication is not supported in Grafana Cloud.
+{{% admonition type="note" %}}
+Anonymous authentication is not supported in Grafana Cloud.
+{{% /admonition %}}
+
 
 ### Basic authentication
 
