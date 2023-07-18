@@ -120,6 +120,22 @@ To connect the Prometheus data source to Amazon Managed Service for Prometheus u
 
 If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).
 
+## Azure authentication settings
+
+The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication](docs/grafana/latest/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
+
+In Grafana Enterprise, update the .ini configuration file: [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/). Depending on your setup, the .ini file is located [here](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location).
+Add the following setting in the **[auth]** section :
+
+```bash
+[auth]
+azure_auth_enabled = true
+```
+
+{{% admonition type="note" %}}
+If you are using Azure authentication settings do not enable `Forward OAuth identity`. Both use the same HTTP authorization headers. Azure settings will get overwritten by the Oauth token.
+{{% /admonition %}}
+
 ## Exemplars
 
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars]({{< relref "../../fundamentals/exemplars/" >}}) in Prometheus documentation for detailed information on how they work.
