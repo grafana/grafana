@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
@@ -104,9 +104,14 @@ export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
-export function useLoadNextChildrenPage(loadDashboards = true) {
+export function useLoadNextChildrenPage(
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
+) {
   const dispatch = useDispatch();
   const requestInFlightRef = useRef(false);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoizedExcludeKinds = useMemo(() => excludeKinds, excludeKinds);
 
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
@@ -116,12 +121,14 @@ export function useLoadNextChildrenPage(loadDashboards = true) {
 
       requestInFlightRef.current = true;
 
-      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, loadDashboards, pageSize: PAGE_SIZE }));
+      const promise = dispatch(
+        fetchNextChildrenPage({ parentUID: folderUID, excludeKinds: memoizedExcludeKinds, pageSize: PAGE_SIZE })
+      );
       promise.finally(() => (requestInFlightRef.current = false));
 
       return promise;
     },
-    [dispatch, loadDashboards]
+    [dispatch, memoizedExcludeKinds]
   );
 
   return handleLoadMore;

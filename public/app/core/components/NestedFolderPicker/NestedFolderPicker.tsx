@@ -70,7 +70,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
       if (newOpenState) {
-        dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, loadDashboards: false }));
+        dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, excludeKinds: EXCLUDED_KINDS }));
       }
     },
     [dispatch]
@@ -107,7 +107,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     },
   });
 
-  const baseHandleLoadMore = useLoadNextChildrenPage(false);
+  const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
       if (search) {

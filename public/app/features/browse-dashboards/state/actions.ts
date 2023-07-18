@@ -3,12 +3,15 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 import { createAsyncThunk } from 'app/types';
 
 import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
+import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
 
 import { findItem } from './utils';
 
 interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
-  loadDashboards?: boolean;
+
+  // Allow UI items to be excluded (they're always excluded) for convenience for callers
+  excludeKinds?: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']>;
   pageSize: number;
 }
 
@@ -88,9 +91,12 @@ export const refetchChildren = createAsyncThunk(
 export const fetchNextChildrenPage = createAsyncThunk(
   'browseDashboards/fetchNextChildrenPage',
   async (
-    { parentUID, loadDashboards, pageSize }: FetchNextChildrenPageArgs,
+    { parentUID, excludeKinds = [], pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
+    // TODO: invert prop to `includeKinds`, but also support not loading folders
+    const loadDashboards = !excludeKinds.includes('dashboard');
+
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     const state = thunkAPI.getState().browseDashboards;
