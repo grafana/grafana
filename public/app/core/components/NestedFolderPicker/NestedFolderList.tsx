@@ -5,7 +5,6 @@ import { FixedSizeList as List } from 'react-window';
 import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
 import { IconButton, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
@@ -102,6 +101,8 @@ interface RowProps {
   data: VirtualData;
 }
 
+const SKELETON_WIDTHS = [100, 200, 130, 160, 150];
+
 function Row({ index, style: virtualStyles, data }: RowProps) {
   const { items, foldersAreOpenable, selectedFolder, onFolderClick, onSelectionChange } = data;
   const { item, isOpen, level } = items[index];
@@ -141,7 +142,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     return (
       <span style={virtualStyles} className={styles.row}>
         <Indent level={level} />
-        <SkeletonGroup index={index} />
+        <Skeleton width={SKELETON_WIDTHS[index % SKELETON_WIDTHS.length]} />
       </span>
     );
   }
@@ -270,29 +271,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-// TODO: If we like this, move this out... somewhere
-const SKELETON_COUNTS = [
-  // Each array is a set of percentages that the width is divided into for each 'word'
-  [1],
-  [0.3, 0.7],
-  [0.5, 0.5],
-  [0.7, 0.3],
-  [0.3, 0.2, 0.5],
-];
-
-const SKELETON_WIDTHS = [100, 150, 200];
-
-function SkeletonGroup({ index }: { index: number }) {
-  const count = SKELETON_COUNTS[index % SKELETON_COUNTS.length];
-  const size = SKELETON_WIDTHS[index % SKELETON_WIDTHS.length];
-
-  return (
-    <Stack gap={1}>
-      {count.map((percent, index) => {
-        const width = size * percent;
-        return <Skeleton key={index} width={width} />;
-      })}
-    </Stack>
-  );
-}
