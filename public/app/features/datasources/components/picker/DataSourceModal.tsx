@@ -167,6 +167,7 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
+            className={styles.dataSourceList}
             onChange={onChangeDataSource}
             current={current}
             onClickEmptyStateCTA={() =>
@@ -265,6 +266,10 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
         overflow-y: auto;
       }
     `,
+    dataSourceList: css`
+      flex: 1 1;
+      height: 100%;
+    }`,
     rightColumn: css`
       display: flex;
       flex-direction: column;
