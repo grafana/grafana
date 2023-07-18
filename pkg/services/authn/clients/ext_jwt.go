@@ -14,6 +14,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -74,10 +75,16 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	}
 
 	// user:id:18
-	userID, err := strconv.ParseInt(strings.TrimPrefix(claims.Subject, fmt.Sprintf("%s:id:", authn.NamespaceUser)), 10, 64)
-	if err != nil {
-		s.log.Error("Failed to parse sub", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to parse sub: %w", err)
+	parts := strings.Split(claims.Subject, ":")
+	if len(parts) != 3 {
+		s.log.Error("Odd subject found. It should be of three parts", "subject", claims.Subject)
+		return nil, errJWTInvalid.Errorf("sub is not composed of three parts: '%s", claims.Subject)
+	}
+	namespace := parts[0]
+	id, errParse := strconv.ParseInt(parts[2], 10, 64)
+	if errParse != nil {
+		s.log.Error("Could not parse ID", "subject", claims.Subject)
+		return nil, errJWTInvalid.Errorf("could not parse id; %w", errParse)
 	}
 
 	// FIXME: support multiple organizations
@@ -87,24 +94,32 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: defaultOrgID, UserID: userID})
-	if err != nil {
-		s.log.Error("Failed to get user", "error", err)
-		return nil, errJWTInvalid.Errorf("Failed to get user: %w", err)
-	}
-
-	if signedInUser.Permissions == nil {
-		signedInUser.Permissions = make(map[int64]map[string][]string)
-	}
-
 	if len(claims.Entitlements) == 0 {
 		s.log.Error("Entitlements claim is missing")
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	}
 
-	signedInUser.Permissions[s.getDefaultOrgID()] = claims.Entitlements
+	identity := authn.Identity{
+		OrgID:           defaultOrgID,
+		OrgCount:        1,
+		OrgName:         "",                            // TODO
+		OrgRoles:        map[int64]roletype.RoleType{}, // TODO
+		ID:              authn.NamespacedID(namespace, id),
+		Login:           claims.Login,
+		Name:            namespace,
+		Email:           claims.Email,
+		IsGrafanaAdmin:  new(bool),
+		AuthenticatedBy: login.ExtendedJWTModule,
+		LastSeenAt:      time.Now(),
+		Teams:           []int64{},  // TODO
+		Groups:          []string{}, // TODO
+		ClientParams:    authn.ClientParams{SyncPermissions: false},
+		Permissions: map[int64]map[string][]string{
+			defaultOrgID: claims.Entitlements,
+		},
+	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}, login.ExtendedJWTModule), nil
+	return &identity, nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
@@ -245,9 +260,10 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims Extended
 		return fmt.Errorf("missing 'client_id' claim")
 	}
 
-	if _, err := s.oauthServer.GetExternalService(ctx, claims.ClientID); err != nil {
-		return fmt.Errorf("invalid 'client_id' claim: %s", claims.ClientID)
-	}
+	// With MESA, we trust the client ID is legit
+	// if _, err := s.oauthServer.GetExternalService(ctx, claims.ClientID); err != nil {
+	// 	return fmt.Errorf("invalid 'client_id' claim: %s", claims.ClientID)
+	// }
 
 	return nil
 }
