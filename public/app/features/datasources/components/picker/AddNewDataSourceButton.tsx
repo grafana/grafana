@@ -23,11 +23,11 @@ export function AddNewDataSourceButton({ variant, onClick }: AddNewDataSourceBut
       variant={variant || 'primary'}
       href={newDataSourceURL}
       disabled={!hasCreateRights}
-      tooltip={!hasCreateRights ? 'You do not have permission to configure new data sources' : undefined}
+      tooltip={!hasCreateRights ? 'You do not have permission to add a new connection' : undefined}
       onClick={onClick}
       target="_blank"
     >
-      Configure a new data source
+      Connect data
     </LinkButton>
   );
 }

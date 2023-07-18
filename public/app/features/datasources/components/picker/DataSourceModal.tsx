@@ -211,7 +211,7 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.newDSSection}>
-          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
+          <span className={styles.newDSDescription}>Open a new tab and configure a new connection</span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {
