@@ -116,7 +116,10 @@ To disable basic auth:
 enabled = false
 ```
 
-> Please Note: Basic authentication (or Local Grafana Authentication) is not supported in Grafana Cloud.
+{{% admonition type="note" %}}
+Basic authentication (or local Grafana authentication) is not supported in Grafana Cloud.
+{{% /admonition %}}
+
 
 ### Disable login form
 
