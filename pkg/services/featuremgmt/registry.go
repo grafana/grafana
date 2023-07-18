@@ -654,5 +654,13 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAppPlatformSquad,
 		},
+		{
+			Name:            "featureToggleAdminPage",
+			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
 	}
 )
