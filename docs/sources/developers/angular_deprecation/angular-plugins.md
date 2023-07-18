@@ -7,7 +7,10 @@ keywords:
   - deprecation
   - migration
 title: Plugins using AngularJS
+description: An annotated list of Grafana plugins using AngularJS.
 ---
+
+# Plugins using AngularJS
 
 The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_deprecation" >}}) and support for it will be removed in a future release.
 
