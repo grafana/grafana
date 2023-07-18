@@ -22,6 +22,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -1278,6 +1279,10 @@ export class DashboardModel implements TimeModel {
   private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
     this.templateVariableValueUpdated();
     this.startRefresh(event.payload);
+  }
+
+  hasAngularPlugins(): boolean {
+    return this.panels.some((panel) => panel.isAngularPlugin() || isAngularDatasourcePlugin(panel.datasource?.uid));
   }
 }
 
