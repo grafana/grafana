@@ -12,11 +12,11 @@ export interface LabelProps extends React.HTMLAttributes<HTMLLegendElement> {
 
 export const getLegendStyles = (theme: GrafanaTheme2) => {
   return {
-    legend: css`
-      font-size: ${theme.typography.h3.fontSize};
-      font-weight: ${theme.typography.fontWeightRegular};
-      margin: 0 0 ${theme.spacing(2)} 0;
-    `,
+    legend: css({
+      fontSize: theme.typography.h3.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+      margin: theme.spacing(0, 0, 2, 0),
+    }),
   };
 };
 

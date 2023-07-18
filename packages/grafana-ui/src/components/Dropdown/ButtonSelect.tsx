@@ -91,15 +91,15 @@ export const ButtonSelect = React.memo(ButtonSelectComponent) as typeof ButtonSe
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      position: relative;
-      display: inline-flex;
-    `,
-    menuWrapper: css`
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
-      top: ${theme.spacing(4)};
-      right: 0;
-    `,
+    wrapper: css({
+      position: 'relative',
+      display: 'inline-flex',
+    }),
+    menuWrapper: css({
+      position: 'absolute',
+      zIndex: theme.zIndex.dropdown,
+      top: theme.spacing(4),
+      right: 0,
+    }),
   };
 };
