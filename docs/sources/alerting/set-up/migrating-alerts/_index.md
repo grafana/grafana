@@ -4,6 +4,7 @@ aliases:
   - unified-alerting/
   - unified-alerting/difference-old-new/
   - alerting/migrating-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/
 description: Upgrade Grafana alerts
 labels:
   products:

@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/
 description: Introduction to alert rule evaluation
 keywords:
   - grafana
