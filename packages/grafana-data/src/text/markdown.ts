@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import { mangle } from 'marked-mangle';
 
 import { sanitizeTextPanelContent } from './sanitize';
 
@@ -20,6 +21,7 @@ const markdownOptions = {
 
 export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
+    marked.use(mangle());
     marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }

@@ -3754,6 +3754,7 @@ __metadata:
     history: 4.10.1
     lodash: 4.17.21
     marked: 5.1.1
+    marked-mangle: 1.1.0
     moment: 2.29.4
     moment-timezone: 0.5.41
     ol: 7.4.0
@@ -10194,7 +10195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:5.0.1, @types/marked@npm:^5.0.0":
+"@types/marked@npm:5.0.1":
   version: 5.0.1
   resolution: "@types/marked@npm:5.0.1"
   checksum: 84323058e0a5127aeb67d709e1dcb0cc0024b190c337ca68813fcd1f271e7c7351ed14ea83e5e21a7a264fb87ba8767c0a98fb26d05a06181a7edd49299ef437
@@ -19334,7 +19335,7 @@ __metadata:
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.191
     "@types/logfmt": ^1.2.3
-    "@types/marked": ^5.0.0
+    "@types/marked": 5.0.1
     "@types/mousetrap": 1.6.11
     "@types/node": 18.16.16
     "@types/node-forge": ^1
@@ -19462,7 +19463,8 @@ __metadata:
     logfmt: ^1.3.2
     lru-cache: 10.0.0
     lru-memoize: ^1.1.0
-    marked: ^5.0.0
+    marked: 5.1.1
+    marked-mangle: 1.1.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.7.2
     moment: 2.29.4
@@ -23394,7 +23396,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:5.1.1, marked@npm:^5.0.0":
+"marked-mangle@npm:1.1.0":
+  version: 1.1.0
+  resolution: "marked-mangle@npm:1.1.0"
+  peerDependencies:
+    marked: ^4 || ^5
+  checksum: 3897cb6b0ed580e9be029bf78f8b3b22534ca3e0c061fd9e45d0f256263c01f9667122d68235c767583c7109347bd1cc823dca5f428b95460123ba4b212cdb11
+  languageName: node
+  linkType: hard
+
+"marked@npm:5.1.1":
   version: 5.1.1
   resolution: "marked@npm:5.1.1"
   bin:
