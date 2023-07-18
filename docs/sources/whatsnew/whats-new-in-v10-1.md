@@ -50,7 +50,7 @@ _Available in public preview in all editions of Grafana._
 
 With Grafana v9.3, we introduced a feature toggle called `accessTokenExpirationCheck`. It improves the security of Grafana by checking the expiration of the access token and automatically refreshing the expired access token when the user is logged in using one of the OAuth providers.
 
-With the current release, we introduce a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh the access tokens when it expires. Besides, to further improve the security and provide secure defaults we enabled `use_refresh_token` by default for providers that either support refresh tokens by default or fetching refresh tokens is controlled by the client. It is enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
+With the current release, we introduce a new configuration option for each OAuth provider called `use_refresh_token` that allows you to configure whether the particular OAuth integration should use refresh tokens to automatically refresh the access tokens when it expires. In addition, to further improve the security and provide secure defaults, `use_refresh_token` is enabled by default for providers that support either refreshing tokens automatically or client-controlled fetching of refresh tokens. It is enabled by default for the following OAuth providers: `AzureAD`, `GitLab`, `Google`.
 
 For more information on how to set up refresh token handling, please refer to [the documentation of the particular OAuth provider.]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
 
