@@ -127,8 +127,8 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
 
   let can = useRef<HTMLCanvasElement>(null);
 
-  let histCssWidth = 264;
-  let histCssHeight = 77;
+  let histCssWidth = 132;
+  let histCssHeight = 32;
   let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
   let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
 
