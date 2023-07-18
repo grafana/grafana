@@ -17,10 +17,10 @@ const (
 
 // dependencyMap defines Module Targets => Dependencies
 var dependencyMap = map[string][]string{
-	BackgroundServices: {},
+	BackgroundServices: {Provisioning, HTTPServer},
 
 	CertGenerator:    {},
 	GrafanaAPIServer: {CertGenerator},
 
-	All: {BackgroundServices, Provisioning, HTTPServer},
+	All: {Provisioning, HTTPServer, BackgroundServices},
 }
