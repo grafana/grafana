@@ -1,6 +1,4 @@
 ---
-title: Enable annotations
-menuTitle: Enable annotations
 aliases:
   - ../../../plugins/add-support-for-annotations/
 description: Add support for annotations in your plugin.
@@ -9,6 +7,12 @@ keywords:
   - plugins
   - plugin
   - annotations
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Enable annotations
+title: Enable annotations
 weight: 100
 ---
 

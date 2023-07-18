@@ -4,6 +4,10 @@ aliases:
   - ../../enterprise/team-sync/
 description: Learn how to use Team Sync to synchronize between your authentication
   provider teams and Grafana teams.
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Configure Team Sync
 weight: 1000
 ---
@@ -28,7 +32,7 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 - [GitHub OAuth]({{< relref "./configure-authentication/github#configure-team-synchronization" >}})
 - [GitLab OAuth]({{< relref "./configure-authentication/gitlab#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "./configure-authentication/enhanced-ldap#ldap-group-synchronization-for-teams" >}})
-- [Okta]({{< relref "./configure-authentication/okta#team-sync-enterprise-only" >}})
+- [Okta]({{< relref "./configure-authentication/okta#configure-team-synchronization-enterprise-only" >}})
 - [SAML]({{< relref "./configure-authentication/saml#configure-team-sync" >}})
 
 ## Synchronize a Grafana team with an external group

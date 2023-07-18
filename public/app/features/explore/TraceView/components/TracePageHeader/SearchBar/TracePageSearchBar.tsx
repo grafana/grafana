@@ -33,13 +33,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       top: 0;
       right: 0;
-      z-index: ${theme.zIndex.navbarFixed};
-      background: ${theme.colors.background.primary};
-      margin-bottom: -48px;
       padding: 8px;
       margin-right: 2px;
-      border-radius: ${theme.shape.radius.default};
-      box-shadow: ${theme.shadows.z2};
     `,
     TracePageSearchBarBar: css`
       label: TracePageSearchBarBar;
@@ -55,16 +50,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     TracePageSearchBarBtn: css`
       label: TracePageSearchBarBtn;
-      transition: 0.2s;
       margin-left: 8px;
-    `,
-    TracePageSearchBarBtnDisabled: css`
-      label: TracePageSearchBarBtnDisabled;
-      opacity: 0.5;
-    `,
-    TracePageSearchBarLocateBtn: css`
-      label: TracePageSearchBarLocateBtn;
-      padding: 1px 8px 4px;
     `,
   };
 };
@@ -101,7 +87,6 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
     </span>
   ) : null;
 
-  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
   const SearchBarInputProps = {
     className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
     name: 'search',
@@ -182,7 +167,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
           {navigable && (
             <>
               <Button
-                className={btnClass}
+                className={styles.TracePageSearchBarBtn}
                 variant="secondary"
                 disabled={!searchValue}
                 type="button"
@@ -191,7 +176,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
                 onClick={nextResult}
               />
               <Button
-                className={btnClass}
+                className={styles.TracePageSearchBarBtn}
                 variant="secondary"
                 disabled={!searchValue}
                 type="button"

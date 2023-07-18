@@ -1,9 +1,15 @@
 ---
-menuTitle: Introduction
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/
 description: Intro to the key concepts in Alerting and how it works
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Introduction
 title: Introduction to Alerting
 weight: 105
 ---

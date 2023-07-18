@@ -74,6 +74,8 @@ interface PrepConfigOpts {
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   sync?: () => DashboardCursorSync;
+  // Identifies the shared key for uPlot cursor sync
+  eventsScope?: string;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -93,6 +95,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     yAxisConfig,
     ySizeDivisor,
     sync,
+    eventsScope = '__global_',
   } = opts;
 
   const xScaleKey = 'x';
@@ -606,7 +609,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   /*
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       scales: [xScaleKey, yScaleKey],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {

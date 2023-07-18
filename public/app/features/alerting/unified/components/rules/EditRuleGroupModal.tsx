@@ -20,7 +20,6 @@ import { initialAsyncRequestState } from '../../utils/redux';
 import { AlertInfo, getAlertInfo, isRecordingRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration, safeParseDurationstr } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { InfoIcon } from '../InfoIcon';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
@@ -160,6 +159,7 @@ export interface ModalProps {
   onClose: (saved?: boolean) => void;
   intervalEditOnly?: boolean;
   folderUrl?: string;
+  hideFolder?: boolean;
 }
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
@@ -234,54 +234,50 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
       <FormProvider {...formAPI}>
         <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
           <>
-            <Field
-              label={
-                <Label
-                  htmlFor="namespaceName"
-                  description={
-                    !isGrafanaManagedGroup &&
-                    'Change the current namespace name. Moving groups between namespaces is not supported'
-                  }
-                >
-                  {nameSpaceLabel}
-                </Label>
-              }
-              invalid={!!errors.namespaceName}
-              error={errors.namespaceName?.message}
-            >
-              <Stack gap={1} direction="row">
-                <Input
-                  id="namespaceName"
-                  readOnly={intervalEditOnly || isGrafanaManagedGroup}
-                  {...register('namespaceName', {
-                    required: 'Namespace name is required.',
-                  })}
-                  className={styles.formInput}
-                />
-                {isGrafanaManagedGroup && props.folderUrl && (
-                  <LinkButton
-                    href={props.folderUrl}
-                    title="Go to folder"
-                    variant="secondary"
-                    icon="folder-open"
-                    target="_blank"
+            {!props.hideFolder && (
+              <Field
+                label={
+                  <Label
+                    htmlFor="namespaceName"
+                    description={
+                      !isGrafanaManagedGroup &&
+                      'Change the current namespace name. Moving groups between namespaces is not supported'
+                    }
+                  >
+                    {nameSpaceLabel}
+                  </Label>
+                }
+                invalid={!!errors.namespaceName}
+                error={errors.namespaceName?.message}
+              >
+                <Stack gap={1} direction="row">
+                  <Input
+                    id="namespaceName"
+                    readOnly={intervalEditOnly || isGrafanaManagedGroup}
+                    {...register('namespaceName', {
+                      required: 'Namespace name is required.',
+                    })}
+                    className={styles.formInput}
                   />
-                )}
-              </Stack>
-            </Field>
+                  {isGrafanaManagedGroup && props.folderUrl && (
+                    <LinkButton
+                      href={props.folderUrl}
+                      title="Go to folder"
+                      variant="secondary"
+                      icon="folder-open"
+                      target="_blank"
+                    />
+                  )}
+                </Stack>
+              </Field>
+            )}
             <Field
-              label={
-                <Label
-                  htmlFor="groupName"
-                  description={`Evaluation group name needs to be unique within a ${nameSpaceLabel.toLocaleLowerCase()}`}
-                >
-                  Evaluation group name
-                </Label>
-              }
+              label={<Label htmlFor="groupName">Evaluation group name</Label>}
               invalid={!!errors.groupName}
               error={errors.groupName?.message}
             >
               <Input
+                autoFocus={true}
                 id="groupName"
                 readOnly={intervalEditOnly}
                 {...register('groupName', {
@@ -293,12 +289,9 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               label={
                 <Label
                   htmlFor="groupInterval"
-                  description="Evaluation interval should be smaller or equal to 'For' values for existing rules in this group."
+                  description="How often is the rule evaluated. Applies to every rule within the group."
                 >
-                  <Stack gap={0.5}>
-                    Rule group evaluation interval
-                    <InfoIcon text={'How frequently to evaluate rules.'} />
-                  </Stack>
+                  <Stack gap={0.5}>Evaluation interval</Stack>
                 </Label>
               }
               invalid={!!errors.groupInterval}
@@ -314,6 +307,18 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             {checkEvaluationIntervalGlobalLimit(watch('groupInterval')).exceedsLimit && (
               <EvaluationIntervalLimitExceeded />
             )}
+
+            {!hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
+            {hasSomeNoRecordingRules && (
+              <>
+                <div>List of rules that belong to this group</div>
+                <div className={styles.evalRequiredLabel}>
+                  #Eval column represents the number of evaluations needed before alert starts firing.
+                </div>
+                <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
+              </>
+            )}
+
             <div className={styles.modalButtons}>
               <Modal.ButtonRow>
                 <Button
@@ -330,20 +335,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   disabled={!isDirty || loading}
                   onClick={handleSubmit((values) => onSubmit(values), onInvalid)}
                 >
-                  {loading ? 'Saving...' : 'Save evaluation interval'}
+                  {loading ? 'Saving...' : 'Save'}
                 </Button>
               </Modal.ButtonRow>
             </div>
-            {!hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
-            {hasSomeNoRecordingRules && (
-              <>
-                <div>List of rules that belong to this group</div>
-                <div className={styles.evalRequiredLabel}>
-                  #Eval column represents the number of evaluations needed before alert starts firing.
-                </div>
-                <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
-              </>
-            )}
           </>
         </form>
       </FormProvider>

@@ -4,6 +4,10 @@ aliases:
   - ../guides/gettingstarted/
   - getting-started-prometheus/
 description: Learn how to build your first Prometheus dashboard in Grafana.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Get started with Grafana and Prometheus
 weight: 300
 ---

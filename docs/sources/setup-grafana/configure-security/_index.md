@@ -3,6 +3,10 @@ aliases:
   - ../administration/security/
   - ../installation/security/
 description: Learn how to make Grafana secure.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure security
 weight: 600
 ---

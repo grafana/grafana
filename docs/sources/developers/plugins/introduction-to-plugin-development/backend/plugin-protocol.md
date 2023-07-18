@@ -1,7 +1,8 @@
 ---
-title: Plugin protocol
 aliases:
   - ../../plugins/backend/plugin-protocol/
+description: Learn about the Grafana wire protocol used for communication between
+  the Grafana server and backend plugins.
 keywords:
   - grafana
   - plugins
@@ -9,7 +10,11 @@ keywords:
   - plugin
   - backend-plugins
   - documentation
-description: Learn about the Grafana wire protocol used for communication between the Grafana server and backend plugins.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Plugin protocol
 ---
 
 # Plugin protocol
