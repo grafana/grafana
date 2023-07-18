@@ -298,10 +298,12 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and
 				// Datasource UID as labels
-				var queryError = expr.MakeQueryError("", "", nil).(errutil.Error)
-				if errors.As(state.Error, &queryError) {
+				var utilError errutil.Error
+				//var queryError errutil.Error
+				if errors.As(state.Error, &utilError) && errors.Is(state.Error, expr.QueryError) {
+					// TODO I think we may want conversion error from SSE to trigger this as well
 					for _, next := range rule.Data {
-						if next.RefID == queryError.PublicPayload["refId"].(string) {
+						if next.RefID == utilError.PublicPayload["refId"].(string) {
 							state.Labels["ref_id"] = next.RefID
 							state.Labels["datasource_uid"] = next.DatasourceUID
 							break

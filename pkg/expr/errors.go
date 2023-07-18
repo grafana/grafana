@@ -1,6 +1,8 @@
 package expr
 
-import "github.com/grafana/grafana/pkg/util/errutil"
+import (
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
 
 func MakeConversionError(refID string, err error) error {
 	return errutil.NewBase(
@@ -22,20 +24,20 @@ func MakeConversionError(refID string, err error) error {
 }
 
 var QueryError = errutil.NewBase(
-	errutil.StatusBadRequest, "sse.dataQueryError").
-	MustTemplate(
-		"failed to execute query [{{ .Public.refId }}]: {{ .Error }}",
-		errutil.WithPublic(
-			"failed to execute query [{{ .Public.refId }}]",
-		),
-	)
+	errutil.StatusBadRequest, "sse.dataQueryError").MustTemplate(
+	"failed to execute query [{{ .Public.refId }}]: {{ .Error }}",
+	errutil.WithPublic(
+		"failed to execute query [{{ .Public.refId }}]",
+	))
 
 func MakeQueryError(refID, datasourceUID string, err error) error {
-	return QueryError.Build(errutil.TemplateData{
+	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":         refID,
 			"datasourceUID": datasourceUID,
 		},
 		Error: err,
-	})
+	}
+
+	return QueryError.Build(data)
 }
