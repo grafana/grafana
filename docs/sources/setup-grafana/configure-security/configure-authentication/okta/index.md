@@ -29,7 +29,7 @@ To follow this guide:
 
 To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integration, follow these steps:
 
-1. [Create SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [create OCID app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) at the Okta applications section.
+1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OCID app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) at the Okta applications section.
 
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
 
@@ -47,13 +47,13 @@ To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integr
    | `api_url`                    | The user information endpoint of your Okta OAuth2 provider. `https://<tenant-id>.okta.com/oauth2/v1/userinfo` |
    | `enabled`                    | Enables Okta OAuth2 authentication. Set this value to `true`.                                                 |
 
-   Review the list of other Okta OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
+1. Review the list of other Okta OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them as necessary.
 
 1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
-   a. Enable `accessTokenExpirationCheck` feature toggle.
+   a. Enable the `accessTokenExpirationCheck` feature toggle.
 
-   b. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
+   b. Extend the `scopes` field of `[auth.okta]` section in Grafana configuration file with the refresh token scope used by your OAuth2 provider.
 
    c. Enable the refresh token on the provider if required.
 
@@ -112,7 +112,7 @@ If no valid role is found, the user is assigned the role specified by [the `auto
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 This setting denies user access if no role or an invalid role is returned.
 
-Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/main/#add-a-custom-claim-to-a-token) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth/index.md#role-mapping-examples" >}}).
+To learn about adding custom claims to the user info in Okta, refer to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/main/#add-a-custom-claim-to-a-token). Refer to the generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth/index.md#role-mapping-examples" >}}).
 
 ### Configure team synchronization (Enterprise only)
 
@@ -125,4 +125,4 @@ the correct teams.
 
 Okta groups can be referenced by group names, like `Admins` or `Editors`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+To learn more about Team Sync, refer to [Confgure Team Sync]({{< relref "../../configure-team-sync" >}}).
