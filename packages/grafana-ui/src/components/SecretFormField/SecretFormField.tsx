@@ -23,14 +23,14 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
 
 const getSecretFormFieldStyles = () => {
   return {
-    noRadiusInput: css`
-      border-bottom-right-radius: 0 !important;
-      border-top-right-radius: 0 !important;
-    `,
-    noRadiusButton: css`
-      border-bottom-left-radius: 0 !important;
-      border-top-left-radius: 0 !important;
-    `,
+    noRadiusInput: css({
+      borderBottomRightRadius: '0 !important',
+      borderTopRightRadius: '0 !important',
+    }),
+    noRadiusButton: css({
+      borderBottomLeftRadius: '0 !important',
+      borderTopLeftRadius: '0 !important',
+    }),
   };
 };
 /**

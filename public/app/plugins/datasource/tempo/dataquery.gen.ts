@@ -44,6 +44,10 @@ export interface TempoQuery extends common.DataQuery {
    * Query traces by span name
    */
   spanName?: string;
+  /**
+   * Use the streaming API to get partial results as they are available
+   */
+  streaming?: boolean;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
@@ -53,7 +57,17 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 /**
  * search = Loki search, nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+/**
+ * The state of the TraceQL streaming search query
+ */
+export enum SearchStreamingState {
+  Done = 'done',
+  Error = 'error',
+  Pending = 'pending',
+  Streaming = 'streaming',
+}
 
 /**
  * static fields are pre-set in the UI, dynamic fields are added by the user

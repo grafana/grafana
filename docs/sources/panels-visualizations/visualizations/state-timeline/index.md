@@ -8,6 +8,11 @@ keywords:
   - docs
   - state timeline
   - panel
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: State timeline
 weight: 900
 ---
@@ -45,6 +50,10 @@ Controls line width of state regions.
 ### Fill opacity
 
 Controls the opacity of state regions.
+
+{{< docs/shared "visualizations/connect-null-values.md" >}}
+
+{{< docs/shared "visualizations/disconnect-values.md" >}}
 
 ## Value mappings
 

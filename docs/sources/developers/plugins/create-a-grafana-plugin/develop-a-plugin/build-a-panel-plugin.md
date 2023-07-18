@@ -1,7 +1,5 @@
 ---
-title: Build a panel plugin
 description: Learn how to create a custom visualization for your dashboards.
-weight: 100
 keywords:
   - grafana
   - plugins
@@ -10,6 +8,12 @@ keywords:
   - custom visualization
   - dashboard
   - dashboards
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a panel plugin
+weight: 100
 ---
 
 ## Introduction
@@ -23,7 +27,7 @@ For more information about panels, refer to the documentation on [Panels](/docs/
 ### Prerequisites
 
 - Grafana >=7.0
-- NodeJS >=14
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 

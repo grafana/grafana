@@ -10,6 +10,11 @@ keywords:
   - guide
   - profiling
   - pyroscope
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Grafana Pyroscope
 weight: 1150
 ---

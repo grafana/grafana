@@ -4,6 +4,11 @@ aliases:
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/namespaces-and-groups/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/namespaces-and-groups/
 description: Namespaces and rule groups
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Namespaces and rule groups
 weight: 400
 ---

@@ -1,5 +1,9 @@
 ---
 draft: true
+labels:
+  products:
+    - enterprise
+    - oss
 title: Legacy Grafana alerts
 weight: 114
 ---

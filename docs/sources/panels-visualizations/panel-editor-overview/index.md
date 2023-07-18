@@ -17,6 +17,11 @@ keywords:
   - dynamic
   - rows
   - add
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Panel editor overview
 title: Panel editor overview
 weight: 1

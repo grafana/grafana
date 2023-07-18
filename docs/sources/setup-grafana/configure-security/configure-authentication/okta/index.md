@@ -1,15 +1,14 @@
 ---
 aliases:
   - ../../../auth/okta/
-description: Configure Okta OAuth2 authentication
-keywords:
-  - grafana
-  - configuration
-  - documentation
-  - oauth
-  - okta
-title: Configure Okta OAuth2 authentication
+description: Grafana Okta OAuth Guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Okta OAuth2
+title: Configure Okta OAuth2 authentication
 weight: 1400
 ---
 
@@ -97,8 +96,10 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-1. Under the `General Settings` section of the Okta application, enable the `Refresh Token` under the `Grant Type` section.
+1. To enable the `Refresh Token`, grant type in the `General Settings` section.
 1. Extend the `scopes` in `[auth.okta]` with `offline_access`.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ### Configure role mapping
 

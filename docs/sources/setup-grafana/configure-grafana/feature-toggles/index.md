@@ -2,6 +2,10 @@
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure feature toggles
 weight: 150
 ---
@@ -23,7 +27,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`                      | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
 | `featureHighlights`                              | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
-| `exploreMixedDatasource`                         | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`                         | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `topnav`                                         | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
@@ -49,7 +52,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `trimDefaults`                       | Use cue schema to remove values that will be applied automatically                                                                                                                           |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
-| `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
 | `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
@@ -103,6 +105,7 @@ Experimental features might be changed or removed without prior notice.
 | `prometheusResourceBrowserCache`            | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`                  | Query InfluxDB InfluxQL without the proxy                                                                    |
 | `clientTokenRotation`                       | Replaces the current in-request token rotation so that the client initiates the rotation                     |
+| `lokiLogsDataplane`                         | Changes logs responses from Loki to be compliant with the dataplane specification.                           |
 | `disableSSEDataplane`                       | Disables dataplane specific processing in server side expressions.                                           |
 | `alertStateHistoryLokiSecondary`            | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations. |
 | `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                 |
@@ -119,11 +122,15 @@ Experimental features might be changed or removed without prior notice.
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
-| `flameGraphV2`                              | New version of flame graph with new features                                                                 |
 | `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                       |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
+| `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
+| `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
+| `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                               |
+| `disableTraceQLStreaming`                   | Disables the option to stream the response of TraceQL queries of the Tempo data source                       |
+| `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 
 ## Development feature toggles
 
