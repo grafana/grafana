@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PluginType } from '@grafana/data';
 import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
+import { AngularPluginBadge } from 'app/features/plugins/angularDeprecation/AngularPluginBadge';
 
 import { CatalogPlugin } from '../types';
 
@@ -21,7 +21,7 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
         <PluginEnterpriseBadge plugin={plugin} />
         {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
         {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
-        {plugin.angularDetected && <PluginAngularBadge />}
+        {plugin.angularDetected && <AngularPluginBadge />}
       </HorizontalGroup>
     );
   }
@@ -32,7 +32,7 @@ export function PluginListItemBadges({ plugin }: PluginBadgeType) {
       {plugin.isDisabled && <PluginDisabledBadge error={plugin.error} />}
       {plugin.isInstalled && <PluginInstalledBadge />}
       {hasUpdate && <PluginUpdateAvailableBadge plugin={plugin} />}
-      {plugin.angularDetected && <PluginAngularBadge />}
+      {plugin.angularDetected && <AngularPluginBadge />}
     </HorizontalGroup>
   );
 }

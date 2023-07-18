@@ -8,7 +8,7 @@ import { LinkButton, Card, Tag, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/core';
-import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
+import { AngularPluginBadge } from 'app/features/plugins/angularDeprecation/AngularPluginBadge';
 import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
@@ -108,7 +108,7 @@ export function DataSourcesListView({
                     dataSource.typeName,
                     dataSource.url,
                     dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-                    isAngularDatasourcePlugin(dataSource.uid) && <PluginAngularBadge key="angular-badge" />,
+                    isAngularDatasourcePlugin(dataSource.uid) && <AngularPluginBadge key="angular-badge" />,
                   ]}
                 </Card.Meta>
                 <Card.Tags>

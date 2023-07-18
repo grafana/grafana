@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Badge } from '@grafana/ui';
 
-export function PluginAngularBadge(): React.ReactElement {
+export function AngularPluginBadge(): React.ReactElement {
   return (
     <Badge
       icon="exclamation-triangle"

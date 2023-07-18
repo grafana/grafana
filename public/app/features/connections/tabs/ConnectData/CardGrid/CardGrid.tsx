@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
+import { AngularPluginBadge } from 'app/features/plugins/angularDeprecation/AngularPluginBadge';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
@@ -84,7 +84,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
 
           {item.angularDetected ? (
             <Card.Meta className={styles.meta}>
-              <PluginAngularBadge />
+              <AngularPluginBadge />
             </Card.Meta>
           ) : null}
         </Card>

@@ -4,7 +4,7 @@ import React from 'react';
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
+import { AngularPluginBadge } from 'app/features/plugins/angularDeprecation/AngularPluginBadge';
 
 export type Props = {
   dataSourcePlugin: DataSourcePluginMeta;
@@ -40,7 +40,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
       {!isPhantom && (
         <Card.Meta className={styles.meta}>
           <PluginSignatureBadge status={dataSourcePlugin.signature} />
-          {dataSourcePlugin.angularDetected && <PluginAngularBadge />}
+          {dataSourcePlugin.angularDetected && <AngularPluginBadge />}
         </Card.Meta>
       )}
 
