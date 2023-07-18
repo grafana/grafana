@@ -35,7 +35,7 @@ interface State {
   uploadModalOpen: boolean;
 }
 
-const DEFAULT_QUERY_TYPE: TempoQueryType = config.featureToggles.traceqlSearch ? 'traceqlSearch' : 'traceql';
+const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceqlSearch';
 
 class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
   constructor(props: Props) {
@@ -88,17 +88,10 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     const graphDatasourceUid = datasource.serviceMap?.datasourceUid;
 
     let queryTypeOptions: Array<SelectableValue<TempoQueryType>> = [
+      { value: 'traceqlSearch', label: 'Search' },
       { value: 'traceql', label: 'TraceQL' },
       { value: 'serviceMap', label: 'Service Graph' },
     ];
-
-    if (config.featureToggles.traceqlSearch) {
-      queryTypeOptions.unshift({ value: 'traceqlSearch', label: 'Search' });
-    }
-
-    if (!config.featureToggles.traceqlSearch && !datasource?.search?.hide) {
-      queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
-    }
 
     if (logsDatasourceUid) {
       if (datasource?.search?.hide) {
