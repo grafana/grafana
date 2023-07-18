@@ -8,6 +8,11 @@ keywords:
   - zipkin
   - tracing
   - querying
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Zipkin
 title: Zipkin data source
 weight: 1600
@@ -191,7 +196,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
       nodeGraph:
         enabled: true
       traceQuery:

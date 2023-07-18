@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - user
+labels:
+  products:
+    - enterprise
+    - oss
 title: User HTTP API
 ---
 

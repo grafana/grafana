@@ -1,5 +1,4 @@
 ---
-title: Work with error handling
 aliases:
   - ../../plugins/error-handling/
 description: How to handle errors in plugins.
@@ -9,6 +8,11 @@ keywords:
   - plugin
   - errors
   - error handling
+labels:
+  products:
+    - enterprise
+    - oss
+title: Work with error handling
 ---
 
 # Work with error handling

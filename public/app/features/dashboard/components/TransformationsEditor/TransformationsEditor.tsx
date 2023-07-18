@@ -348,7 +348,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
     return (
       <>
-        {noTransforms && (
+        {noTransforms && !config.featureToggles.transformationsRedesign && (
           <Container grow={1}>
             <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
               {(isDismissed, onDismiss) => {
