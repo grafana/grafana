@@ -74,7 +74,7 @@ describe('NestedFolderPicker', () => {
     expect(await screen.findByRole('button', { name: 'Select folder' })).toBeInTheDocument();
   });
 
-  it('renders a button with the correct labeld when a folder is selected', async () => {
+  it('renders a button with the correct label when a folder is selected', async () => {
     render(<NestedFolderPicker onChange={mockOnChange} value="folderA" />);
     expect(
       await screen.findByRole('button', { name: `Select folder: ${folderA.item.title} currently selected` })
