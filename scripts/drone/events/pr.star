@@ -130,6 +130,7 @@ def pr_pipelines():
                 ],
             ),
             prefix = ver_mode,
+            ver_mode = ver_mode,
         ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
