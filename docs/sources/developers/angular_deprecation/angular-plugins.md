@@ -347,7 +347,7 @@ Unmaintained since 2017 - [source](https://github.com/neuralfraud/grafana-prtg/w
 Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-[Project repository](https://github.com/linksmart/grafana-hds-datasource) was archived on April 4th, 2022 and is no longer maintained.
+[Project repository](https://github.com/linksmart/grafana-hds-datasource) was archived on April 4th, 2022, and is no longer maintained.
 {{% /admonition %}}
 
 ### [LinkSmart SensorThings](https://grafana.com/grafana/plugins/linksmart-sensorthings-datasource/)
