@@ -2,8 +2,8 @@ package frontend
 
 import (
 	"fmt"
-	"github.com/blang/semver/v4"
 
+	"github.com/blang/semver/v4"
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
 )
