@@ -83,11 +83,11 @@ Consider the need for machine-to-machine [M2M](https://en.wikipedia.org/wiki/Mac
 
 Consider the following scenarios:
 
-**IoT devices monitoring**: Sensors and actuators might feed information into Grafana in an automatic way. Consider the security implications of a shared security access for all the devices or an individual access to each of them.
+**Schedule reports**: Generate reports periodically from Grafana through the reporting API and have them delivered to different communications channels like email, instant messaging, or keep them in a shared storage.
 
-**Network monitoring**: Having distributed systems architecture performance reported back to Grafana can provide insight into bottlenecks and trigger alerts that should be resolved promptly.
+**Define alerts**: Define alert rules to be triggered when a specific condition is met. Route alert notifications to different teams according to your organization's needs.
 
-**Stocks**: Keeping track of the stocks changes overtime can be automated with by an automated agent feeding information into Grafana. Thus, keeping track of the changes overtime.
+**Provisioning file**: Provisioning files can be used to automate the creation of dashboards, data sources, and other resources.
 
 These are just a few examples of how Grafana can be used in M2M scenarios. The platform is highly flexible and can be used in a variety of other M2M applications, making it a powerful tool for organizations looking to gain insights into their systems and devices.
 
@@ -124,13 +124,17 @@ You can create multiple tokens for the same service account. You might want to d
 - Multiple applications use the same permissions, but you want to audit or manage their actions separately.
 - You need to rotate or replace a compromised token.
 
+{{% admonition type="note" %}}
+In Grafana's audit logs it will still show up as the same service account.
+{{% /admonition %}}
+
 Service account access tokens inherit permissions from the service account.
 
 ### API keys
 
 > **Note:** If you use Grafana v8.5 or newer, you should use service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts]({{< relref ".#service-accounts" >}}).
 
-You can use Grafana API keys to interact with data sources via HTTP APIs. API keys can have a well-defined and limited scope to resources with the help of [Roles]({{< relref "../roles-and-permissions" >}}).
+You can use Grafana API keys to interact with data sources via HTTP APIs.
 
 ## How to work with roles?
 
@@ -161,7 +165,7 @@ Dashboard, folder, and data source permissions can be set through the UI or APIs
 ### Role-based access control
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../../introduction/grafana-cloud" >}}).
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 If you feel that the basic organization and server administrator roles are too limiting, it may be beneficial to employ RBAC.
