@@ -10,6 +10,11 @@ keywords:
   - bar chart
   - panel
   - barchart
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Histogram
 weight: 605
 ---

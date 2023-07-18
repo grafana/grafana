@@ -8,6 +8,11 @@ keywords:
   - tempo
   - guide
   - tracing
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Tempo
 title: Tempo data source
 weight: 1400

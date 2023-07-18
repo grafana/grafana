@@ -12,6 +12,10 @@ keywords:
   - add
   - remove
   - users
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage your Grafana Enterprise license in AWS Marketplace
 weight: 400
 ---

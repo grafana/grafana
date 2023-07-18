@@ -3,6 +3,11 @@ aliases:
   - ../../data-sources/influxdb/query-editor/
   - influxdb-flux/
 description: Guide for Flux in Grafana
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Flux support in Grafana
 weight: 200
 ---

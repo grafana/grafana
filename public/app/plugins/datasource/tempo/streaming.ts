@@ -37,6 +37,7 @@ export function doTempoChannelStream(
 
   return defer(() => getLiveStreamKey()).pipe(
     mergeMap((key) => {
+      const requestTime = performance.now();
       return getGrafanaLiveSrv()
         .getStream<MutableDataFrame>({
           scope: LiveChannelScope.DataSource,
@@ -53,6 +54,8 @@ export function doTempoChannelStream(
         .pipe(
           map((evt) => {
             if ('message' in evt && evt?.message) {
+              const currentTime = performance.now();
+              const elapsedTime = currentTime - requestTime;
               // Schema should be [traces, metrics, state, error]
               const traces = evt.message.data.values[0][0];
               const metrics = evt.message.data.values[1][0];
@@ -71,7 +74,7 @@ export function doTempoChannelStream(
               }
 
               frames = [
-                metricsDataFrame(metrics, frameState),
+                metricsDataFrame(metrics, frameState, elapsedTime),
                 ...createTableFrameFromTraceQlQuery(traces, instanceSettings),
               ];
             }
@@ -85,7 +88,7 @@ export function doTempoChannelStream(
   );
 }
 
-function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState) {
+function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState, elapsedTime: number) {
   const progressThresholds: ThresholdsConfig = {
     steps: [
       {
@@ -111,6 +114,15 @@ function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState) {
         values: [capitalize(state.toString())],
         config: {
           displayNameFromDS: 'State',
+        },
+      },
+      {
+        name: 'elapsedTime',
+        type: FieldType.number,
+        values: [elapsedTime],
+        config: {
+          unit: 'ms',
+          displayNameFromDS: 'Elapsed Time',
         },
       },
       {
@@ -144,7 +156,7 @@ function metricsDataFrame(metrics: SearchMetrics, state: SearchStreamingState) {
           state === SearchStreamingState.Done ? 100 : ((metrics.completedJobs || 0) / (metrics.totalJobs || 1)) * 100,
         ],
         config: {
-          displayNameFromDS: 'Total Jobs',
+          displayNameFromDS: 'Progress',
           unit: 'percent',
           min: 0,
           max: 100,

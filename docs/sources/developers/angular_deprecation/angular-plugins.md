@@ -6,6 +6,10 @@ keywords:
   - angular
   - deprecation
   - migration
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugins using AngularJS
 ---
 

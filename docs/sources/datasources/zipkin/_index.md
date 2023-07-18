@@ -8,6 +8,11 @@ keywords:
   - zipkin
   - tracing
   - querying
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Zipkin
 title: Zipkin data source
 weight: 1600
