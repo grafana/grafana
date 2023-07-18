@@ -281,7 +281,7 @@ Latest Version: 1.0.6 | Signature: Grafana | Last Updated: 2021
 Latest Version: 3.0.2 | Signature: Grafana | Last Updated: 2021
 
 {{% admonition type="warning" %}}
-[Project repository](https://github.com/grafana/kairosdb-datasource) was archived on August 30th, 2021 and is no longer maintained.
+[Project repository](https://github.com/grafana/kairosdb-datasource) was archived on August 30th, 2021, and is no longer maintained.
 {{% /admonition %}}
 
 ### [SimpleJson](https://grafana.com/grafana/plugins/grafana-simple-json-datasource/)
