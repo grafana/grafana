@@ -34,5 +34,4 @@ jobs:
           labels: 'area/alerting,type/docs,no-backport,no-changelog'
           team-reviewers: 'grafana/alerting-backend-product'
           draft: false
-          signoff: true
 
