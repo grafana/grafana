@@ -95,3 +95,4 @@ transformationsRedesign,experimental,@grafana/observability-metrics,false,false,
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 disableTraceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
+featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
