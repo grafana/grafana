@@ -17,6 +17,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+import { ExploreItemState } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -352,7 +353,7 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
 const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
   relativeTimeRange: RelativeTimeRange,
-  scopedVars: ScopedVars | {},
+  scopedVars?: ScopedVars | {},
   panelDataSourceRef?: DataSourceRef,
   maxDataPoints?: number,
   minInterval?: string
@@ -405,6 +406,34 @@ const dataQueriesToGrafanaQueries = async (
     }
   }
   return result;
+};
+
+export const exploreToRuleFormValues = async (
+  exploreContext: ExploreItemState,
+  name: string
+): Promise<Partial<RuleFormValues>> => {
+  const timerange = rangeUtil.timeRangeToRelative(exploreContext.range);
+
+  const queries = await dataQueriesToGrafanaQueries(exploreContext.queries ?? [], timerange, {});
+
+  // add reduce and threshold expression
+  const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+  queries.push(reduceExpression);
+
+  const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
+    reduceExpression.refId,
+    getNextRefIdChar(queries)
+  );
+
+  queries.push(thresholdExpression);
+
+  return {
+    name: name,
+    type: RuleFormType.grafana,
+    queries,
+    condition: queries[queries.length - 1].refId,
+    annotations: [],
+  };
 };
 
 export const panelToRuleFormValues = async (
