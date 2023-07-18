@@ -131,7 +131,7 @@ function initLastUsedDatasourceLocalStorage(dashUid: string | undefined) {
 // Function that updates local storage with new dashboard uid and keeps existing datasource
 export function updateDashboardUidLastUsedDatasource(dashUid: string) {
   // Check if user has any datasource uid in local storage
-  const lastUsedDatasoruce = getLastUsedDatasourceFromStorage();
+  const lastUsedDatasource = getLastUsedDatasourceFromStorage();
   // set new local storage with new dashboard uid and existing datasource
   const datasourceUid = lastUsedDatasoruce?.datasourceUid ?? '';
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashUid, datasourceUid: datasourceUid });
