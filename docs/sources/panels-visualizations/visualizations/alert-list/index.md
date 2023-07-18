@@ -10,6 +10,11 @@ keywords:
   - documentation
   - panel
   - alertlist
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert list
 weight: 100
 ---

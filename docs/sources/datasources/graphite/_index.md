@@ -7,6 +7,11 @@ keywords:
   - grafana
   - graphite
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Graphite
 title: Graphite data source
 weight: 600
