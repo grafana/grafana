@@ -189,6 +189,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * Used by Logs details.
    */
   isFilterLabelActive = async (key: string, value: string) => {
+    if (!config.featureToggles.logsActiveLabelsUI) {
+      return false;
+    }
     if (this.props.queries.length === 0) {
       return false;
     }
