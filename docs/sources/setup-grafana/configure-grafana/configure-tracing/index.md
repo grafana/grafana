@@ -2,9 +2,13 @@
 aliases:
   - ../../troubleshooting/diagnostics/
   - ../enable-diagnostics/
+description: Learn how to configure tracing so that you can troubleshoot Grafana.
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure tracing
 title: Configure tracing to troubleshoot Grafana
-description: Learn how to configure tracing so that you can troubleshoot Grafana.
 weight: 200
 ---
 

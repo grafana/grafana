@@ -1,7 +1,7 @@
 ---
-title: Use extensions to add links to app plugins
 aliases:
   - ../../../plugins/extend-the-grafana-ui-with-links/
+description: Learn how to add links to the Grafana user interface from an app plugin
 keywords:
   - grafana
   - plugins
@@ -9,7 +9,11 @@ keywords:
   - links
   - extensions
   - app plugins
-description: Learn how to add links to the Grafana user interface from an app plugin
+labels:
+  products:
+    - enterprise
+    - oss
+title: Use extensions to add links to app plugins
 weight: 760
 ---
 

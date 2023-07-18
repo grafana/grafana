@@ -12,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type SocialGithub struct {
@@ -32,8 +33,14 @@ type GithubTeam struct {
 }
 
 var (
-	ErrMissingTeamMembership         = Error{"user not a member of one of the required teams"}
-	ErrMissingOrganizationMembership = Error{"user not a member of one of the required organizations"}
+	ErrMissingTeamMembership = errutil.NewBase(errutil.StatusUnauthorized,
+		"auth.missing_team",
+		errutil.WithPublicMessage(
+			"User is not a member of one of the required teams. Please contact identity provider administrator."))
+	ErrMissingOrganizationMembership = errutil.NewBase(errutil.StatusUnauthorized,
+		"auth.missing_organization",
+		errutil.WithPublicMessage(
+			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
 func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {
@@ -243,11 +250,13 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs?per_page=100")
 
 	if !s.IsTeamMember(ctx, client) {
-		return nil, ErrMissingTeamMembership
+		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)
 	}
 
 	if !s.IsOrganizationMember(ctx, client, organizationsUrl) {
-		return nil, ErrMissingOrganizationMembership
+		return nil, ErrMissingOrganizationMembership.Errorf(
+			"User is not a member of any of the allowed organizations: %v",
+			s.allowedOrganizations)
 	}
 
 	if userInfo.Email == "" {

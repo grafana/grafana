@@ -6,6 +6,11 @@ keywords:
   - grafana
   - google
   - authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Authentication
 weight: 5
 ---

@@ -71,108 +71,99 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
   // the class that react-calendar uses is '--hasActive' by itself (without being part of a '--range')
   const hasActiveSelector = `.react-calendar__tile--hasActive:not(.react-calendar__tile--range)`;
   return {
-    title: css`
-      color: ${theme.colors.text.primary};
-      background-color: ${theme.colors.background.primary};
-      font-size: ${theme.typography.size.md};
-      border: 1px solid transparent;
+    title: css({
+      color: theme.colors.text.primary,
+      backgroundColor: theme.colors.background.primary,
+      fontSize: theme.typography.size.md,
+      border: '1px solid transparent',
 
-      &:hover {
-        position: relative;
-      }
+      '&:hover': {
+        position: 'relative',
+      },
 
-      &:disabled {
-        color: ${theme.colors.action.disabledText};
-      }
-    `,
-    body: css`
-      z-index: ${theme.zIndex.modal};
-      background-color: ${theme.colors.background.primary};
-      width: 268px;
+      '&:disabled': {
+        color: theme.colors.action.disabledText,
+      },
+    }),
+    body: css({
+      zIndex: theme.zIndex.modal,
+      backgroundColor: theme.colors.background.primary,
+      width: '268px',
 
-      .react-calendar__navigation {
-        display: flex;
-      }
+      '.react-calendar__navigation': {
+        display: 'flex',
+      },
 
-      .react-calendar__navigation__label,
-      .react-calendar__navigation__arrow,
-      .react-calendar__navigation {
-        padding-top: 4px;
-        background-color: inherit;
-        color: ${theme.colors.text.primary};
-        border: 0;
-        font-weight: ${theme.typography.fontWeightMedium};
-      }
+      '.react-calendar__navigation__label, .react-calendar__navigation__arrow, .react-calendar__navigation': {
+        paddingTop: '4px',
+        backgroundColor: 'inherit',
+        color: theme.colors.text.primary,
+        border: 0,
+        fontWeight: theme.typography.fontWeightMedium,
+      },
 
-      .react-calendar__month-view__weekdays {
-        background-color: inherit;
-        text-align: center;
-        color: ${theme.colors.primary.text};
+      '.react-calendar__month-view__weekdays': {
+        backgroundColor: 'inherit',
+        textAlign: 'center',
+        color: theme.colors.primary.text,
 
-        abbr {
-          border: 0;
-          text-decoration: none;
-          cursor: default;
-          display: block;
-          padding: 4px 0 4px 0;
-        }
-      }
+        abbr: {
+          border: 0,
+          textDecoration: 'none',
+          cursor: 'default',
+          display: 'block',
+          padding: '4px 0 4px 0',
+        },
+      },
 
-      .react-calendar__month-view__days {
-        background-color: inherit;
-      }
+      '.react-calendar__month-view__days': {
+        backgroundColor: 'inherit',
+      },
 
-      .react-calendar__tile,
-      .react-calendar__tile--now {
-        margin-bottom: 4px;
-        background-color: inherit;
-        height: 26px;
-      }
+      '.react-calendar__tile, .react-calendar__tile--now': {
+        marginBottom: '4px',
+        backgroundColor: 'inherit',
+        height: '26px',
+      },
 
-      .react-calendar__navigation__label,
-      .react-calendar__navigation > button:focus,
-      .time-picker-calendar-tile:focus {
-        outline: 0;
-      }
+      '.react-calendar__navigation__label, .react-calendar__navigation > button:focus, .time-picker-calendar-tile:focus':
+        {
+          outline: 0,
+        },
 
-      ${hasActiveSelector},
-      .react-calendar__tile--active,
-      .react-calendar__tile--active:hover {
-        color: ${theme.colors.primary.contrastText};
-        font-weight: ${theme.typography.fontWeightMedium};
-        background: ${theme.colors.primary.main};
-        box-shadow: none;
-        border: 0px;
-      }
+      [`${hasActiveSelector}, .react-calendar__tile--active, .react-calendar__tile--active:hover`]: {
+        color: theme.colors.primary.contrastText,
+        fontWeight: theme.typography.fontWeightMedium,
+        background: theme.colors.primary.main,
+        boxShadow: 'none',
+        border: '0px',
+      },
 
-      .react-calendar__tile--rangeEnd,
-      .react-calendar__tile--rangeStart {
-        padding: 0;
-        border: 0px;
-        color: ${theme.colors.primary.contrastText};
-        font-weight: ${theme.typography.fontWeightMedium};
-        background: ${theme.colors.primary.main};
+      '.react-calendar__tile--rangeEnd, .react-calendar__tile--rangeStart': {
+        padding: 0,
+        border: '0px',
+        color: theme.colors.primary.contrastText,
+        fontWeight: theme.typography.fontWeightMedium,
+        background: theme.colors.primary.main,
 
-        abbr {
-          background-color: ${theme.colors.primary.main};
-          border-radius: 100px;
-          display: block;
-          padding-top: 2px;
-          height: 26px;
-        }
-      }
+        abbr: {
+          backgroundColor: theme.colors.primary.main,
+          borderRadius: '100px',
+          display: 'block',
+          paddingTop: '2px',
+          height: '26px',
+        },
+      },
 
-      ${hasActiveSelector},
-      .react-calendar__tile--rangeStart {
-        border-top-left-radius: 20px;
-        border-bottom-left-radius: 20px;
-      }
+      [`${hasActiveSelector}, .react-calendar__tile--rangeStart`]: {
+        borderTopLeftRadius: '20px',
+        borderBottomLeftRadius: '20px',
+      },
 
-      ${hasActiveSelector},
-      .react-calendar__tile--rangeEnd {
-        border-top-right-radius: 20px;
-        border-bottom-right-radius: 20px;
-      }
-    `,
+      [`${hasActiveSelector}, .react-calendar__tile--rangeEnd`]: {
+        borderTopRightRadius: '20px',
+        borderBottomRightRadius: '20px',
+      },
+    }),
   };
 };

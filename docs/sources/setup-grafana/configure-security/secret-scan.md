@@ -2,11 +2,10 @@
 description: Detect and revoke leaked Grafana service account tokens
 labels:
   products:
-    - cloud
     - enterprise
     - oss
-title: Configure Grafana secret scanning and notifications
 menuTitle: Configure secret scanning
+title: Configure Grafana secret scanning and notifications
 weight: 1000
 ---
 

@@ -5,8 +5,12 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v8.3
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v8.3
+title: Upgrade to Grafana v8.3
 weight: 2600
 ---
 

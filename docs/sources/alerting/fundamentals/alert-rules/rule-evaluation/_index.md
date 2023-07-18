@@ -1,11 +1,16 @@
 ---
-title: Alert rule evaluation
 description: Introduction to alert rule evaluation
-weight: 106
 keywords:
   - grafana
   - alerting
   - evaluation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Alert rule evaluation
+weight: 106
 ---
 
 # Alert rule evaluation

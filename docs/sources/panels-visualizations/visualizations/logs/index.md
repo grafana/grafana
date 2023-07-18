@@ -10,6 +10,11 @@ keywords:
   - documentation
   - panels
   - logs panel
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Logs panel
 weight: 700
 ---

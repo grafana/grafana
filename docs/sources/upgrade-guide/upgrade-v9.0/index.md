@@ -5,8 +5,12 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v9.0
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v9.0
+title: Upgrade to Grafana v9.0
 weight: 2300
 ---
 

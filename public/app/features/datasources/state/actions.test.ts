@@ -50,7 +50,7 @@ const getBackendSrvMock = () =>
       }),
     }),
     withNoBackendCache: jest.fn().mockImplementationOnce((cb) => cb()),
-  } as any);
+  }) as any;
 
 const failDataSourceTest = async (error: object) => {
   const dependencies: TestDataSourceDependencies = {
@@ -61,7 +61,7 @@ const failDataSourceTest = async (error: object) => {
             throw error;
           }),
         }),
-      } as any),
+      }) as any,
     getBackendSrv: getBackendSrvMock,
   };
   const state = {
@@ -223,7 +223,7 @@ describe('testDataSource', () => {
               type: 'cloudwatch',
               uid: 'CW1234',
             }),
-          } as any),
+          }) as any,
         getBackendSrv: getBackendSrvMock,
       };
       const state = {
@@ -258,7 +258,7 @@ describe('testDataSource', () => {
               type: 'azure-monitor',
               uid: 'azM0nit0R',
             }),
-          } as any),
+          }) as any,
         getBackendSrv: getBackendSrvMock,
       };
       const result = {

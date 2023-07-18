@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, CoreApp, GrafanaTheme2 } from '@grafana/data';
@@ -54,11 +54,11 @@ const FlameGraphContainer = (props: Props) => {
     }
   }, [selectedView, setSelectedView, containerWidth]);
 
-  function resetFocus() {
+  const resetFocus = useCallback(() => {
     setFocusedItemData(undefined);
     setRangeMin(0);
     setRangeMax(1);
-  }
+  }, [setFocusedItemData, setRangeMax, setRangeMin]);
 
   function resetSandwich() {
     setSandwichItem(undefined);
@@ -67,7 +67,23 @@ const FlameGraphContainer = (props: Props) => {
   useEffect(() => {
     resetFocus();
     resetSandwich();
-  }, [props.data]);
+  }, [props.data, resetFocus]);
+
+  const onSymbolClick = useCallback(
+    (symbol: string) => {
+      if (search === symbol) {
+        setSearch('');
+      } else {
+        reportInteraction('grafana_flamegraph_table_item_selected', {
+          app: props.app,
+          grafana_version: config.buildInfo.version,
+        });
+        setSearch(symbol);
+        resetFocus();
+      }
+    },
+    [setSearch, resetFocus, props.app, search]
+  );
 
   return (
     <>
@@ -96,18 +112,12 @@ const FlameGraphContainer = (props: Props) => {
               <FlameGraphTopTableContainer
                 data={dataContainer}
                 app={props.app}
-                onSymbolClick={(symbol) => {
-                  if (search === symbol) {
-                    setSearch('');
-                  } else {
-                    reportInteraction('grafana_flamegraph_table_item_selected', {
-                      app: props.app,
-                      grafana_version: config.buildInfo.version,
-                    });
-                    setSearch(symbol);
-                  }
-                }}
+                onSymbolClick={onSymbolClick}
                 height={selectedView === SelectedView.TopTable ? 600 : undefined}
+                search={search}
+                sandwichItem={sandwichItem}
+                onSandwich={setSandwichItem}
+                onSearch={setSearch}
               />
             )}
 

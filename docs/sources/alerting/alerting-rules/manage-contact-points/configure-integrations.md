@@ -9,6 +9,11 @@ keywords:
   - notifications
   - integrations
   - contact points
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure integrations
 weight: 100
 ---
