@@ -232,7 +232,6 @@ func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
 		if errReadBody != nil {
 			return nil, fmt.Errorf("could not read response from '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errReadBody)
 		}
-		s.log.Debug("Key response body", "body", string(body))
 		remoteKey, errParse := utils.ParsePublicKeyPem(body)
 		if errParse != nil {
 			return nil, fmt.Errorf("could not read key returned by '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errParse)
