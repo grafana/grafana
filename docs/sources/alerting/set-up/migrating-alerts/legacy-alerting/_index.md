@@ -4,6 +4,7 @@ aliases:
   - /docs/grafana-cloud/how-do-i/alerts/
   - /docs/grafana-cloud/legacy-alerting/
   - alerting/migrating-alerts/legacy-alerting/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting/
 description: Legacy alerting
 labels:
   products:
