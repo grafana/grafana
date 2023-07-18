@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
 description: Reference for templating notifications
 keywords:
   - grafana

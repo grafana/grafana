@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/
 description: Data sources in Grafana Alerting
 labels:
   products:
