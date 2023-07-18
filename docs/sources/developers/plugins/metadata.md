@@ -1,13 +1,17 @@
 ---
 aliases:
   - ../../plugins/developing/plugin.json/
+description: Reference for the plugin.json metadata file.
 keywords:
   - grafana
   - plugins
   - documentation
-description: Reference for the plugin.json metadata file.
-title: plugin.json
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Reference (plugin.json)
+title: plugin.json
 weight: 700
 ---
 

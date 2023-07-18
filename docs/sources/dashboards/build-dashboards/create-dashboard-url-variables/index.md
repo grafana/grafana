@@ -8,6 +8,11 @@ keywords:
   - documentation
   - variables
   - dashboards
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Dashboard URL variables
 weight: 250
 ---

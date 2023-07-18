@@ -1,12 +1,17 @@
 ---
-title: Queries and conditions
 description: Introduction to queries and conditions
-weight: 103
 keywords:
   - grafana
   - alerting
   - queries
   - conditions
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Queries and conditions
+weight: 103
 ---
 
 # Queries and conditions

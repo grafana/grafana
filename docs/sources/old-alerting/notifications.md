@@ -8,6 +8,10 @@ keywords:
   - alerting
   - guide
   - notifications
+labels:
+  products:
+    - enterprise
+    - oss
 title: Alert notifications
 weight: 100
 ---

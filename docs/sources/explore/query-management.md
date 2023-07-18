@@ -3,6 +3,11 @@ keywords:
   - explore
   - loki
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Query management
 weight: 10
 ---

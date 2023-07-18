@@ -3,8 +3,13 @@ aliases:
   - ../../../auth/ldap/
   - ../../../installation/ldap/
 description: Grafana LDAP Authentication Guide
-title: Configure LDAP authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: LDAP
+title: Configure LDAP authentication
 weight: 300
 ---
 

@@ -8,6 +8,10 @@ description: This page contains information about service accounts in Grafana
 keywords:
   - API keys
   - Service accounts
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Service accounts
 title: Service accounts
 weight: 800
