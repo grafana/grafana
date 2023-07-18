@@ -623,12 +623,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return this.plugin?.meta.angularDetected ?? false;
   }
 
-  isAngularDatasourcePlugin(): boolean {
-    return Object.entries(config.datasources).some(([_, ds]) => {
-      return ds.uid === this.datasource?.uid && ds.angularDetected;
-    });
-  }
-
   destroy() {
     this.events.removeAllListeners();
 

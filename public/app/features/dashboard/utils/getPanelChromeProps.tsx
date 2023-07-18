@@ -5,6 +5,7 @@ import { config, getTemplateSrv, locationService, reportInteraction } from '@gra
 import { PanelPadding } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
 
 import { PanelHeaderTitleItems } from '../dashgrid/PanelHeader/PanelHeaderTitleItems';
 import { DashboardModel, PanelModel } from '../state';
@@ -83,7 +84,7 @@ export function getPanelChromeProps(props: CommonProps) {
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
   const alertState = props.data.alertState?.state;
 
-  const isAngularDatasource = props.panel.isAngularDatasourcePlugin();
+  const isAngularDatasource = isAngularDatasourcePlugin(props.panel.datasource?.uid);
   const isAngularPanel = props.panel.isAngularPlugin();
   const showAngularNotice =
     (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);

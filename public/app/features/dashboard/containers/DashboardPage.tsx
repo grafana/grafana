@@ -16,6 +16,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
@@ -361,7 +362,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     let hasAngularPlugins = false;
     if (config.featureToggles.angularDeprecationUI) {
       hasAngularPlugins = dashboard.panels.some(
-        (panel) => panel.isAngularPlugin() || panel.isAngularDatasourcePlugin()
+        (panel) => panel.isAngularPlugin() || isAngularDatasourcePlugin(panel.datasource?.uid)
       );
     }
 
