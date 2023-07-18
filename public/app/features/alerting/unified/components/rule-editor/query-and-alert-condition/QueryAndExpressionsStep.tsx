@@ -439,7 +439,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           />
           {/* Expression Queries */}
           <H5>Expressions</H5>
-          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}
