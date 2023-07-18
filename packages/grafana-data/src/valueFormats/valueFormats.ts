@@ -165,7 +165,7 @@ export function scaledMetricUnits(units: string[], offset = 0): ValueFormatter {
     }
 
     let factor = 1000;
-    // calculate scale factors for cantimeters
+    // calculate scale factors for centimeters
     if (units.includes(' cm')) {
       factor = size < 1 ? 10 : size > 100 ? 100 : 1000;
     }

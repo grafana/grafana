@@ -301,7 +301,7 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Length',
     formats: [
       { name: 'millimeter', id: 'lengthmm', fn: metricPrefix('m', -2) },
-      { name: 'cantimeter', id: 'lengthcm', fn: metricPrefix('m', -1) },
+      { name: 'centimeter', id: 'lengthcm', fn: metricPrefix('m', -1) },
       { name: 'meter', id: 'lengthm', fn: metricPrefix('m') },
       { name: 'kilometer', id: 'lengthkm', fn: metricPrefix('m', 1) },
       { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },

@@ -49,7 +49,7 @@ export function SIPrefix(unit: string, offset = 0): ValueFormatter {
 export function metricPrefix(unit: string, offset = 0): ValueFormatter {
   let prefixes = ['m', 'c', '', 'k'];
 
-  // exclude cantimeters from prefixes
+  // exclude centimeters from prefixes
   if (offset !== -1) {
     prefixes = prefixes.filter((p) => p !== 'c');
     offset += offset < 0 ? 1 : 0;
