@@ -102,8 +102,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
               <Card.Heading>Default policy</Card.Heading>
               <Card.Description>
                 All alert instances are handled by the default policy if no other matching policies are found. To view
-                and edit the default policy, go to <Link href="/alerting/routes">Notification Policies</Link> or contact
-                your admin in case you are using non-Grafana alert management.
+                and edit the default policy, go to <Link href="/alerting/routes">Notification Policies</Link>
+                &nbsp;or contact your Admin if you are using provisioning.
               </Card.Description>
             </Card>
           )}
