@@ -2,16 +2,11 @@ import React from 'react';
 
 import { PluginType } from '@grafana/data';
 import { HorizontalGroup, PluginSignatureBadge } from '@grafana/ui';
+import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
 
 import { CatalogPlugin } from '../types';
 
-import {
-  PluginEnterpriseBadge,
-  PluginDisabledBadge,
-  PluginInstalledBadge,
-  PluginUpdateAvailableBadge,
-  PluginAngularBadge,
-} from './Badges';
+import { PluginEnterpriseBadge, PluginDisabledBadge, PluginInstalledBadge, PluginUpdateAvailableBadge } from './Badges';
 
 type PluginBadgeType = {
   plugin: CatalogPlugin;

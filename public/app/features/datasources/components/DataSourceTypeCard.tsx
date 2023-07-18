@@ -4,7 +4,7 @@ import React from 'react';
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, LinkButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
+import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
 
 export type Props = {
   dataSourcePlugin: DataSourcePluginMeta;

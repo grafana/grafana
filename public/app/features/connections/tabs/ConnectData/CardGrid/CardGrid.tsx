@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
-import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
+import { PluginAngularBadge } from 'app/features/plugins/angularDeprecation/PluginAngularBadge';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
