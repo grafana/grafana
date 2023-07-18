@@ -289,7 +289,10 @@ export const RestoreBackupModal: FC<RestoreBackupModalProps> = ({
                     name="serviceType"
                     label={Messages.serviceSelection}
                     fullWidth
-                    disabled={values.vendor !== DATABASE_LABELS[Databases.mysql]}
+                    disabled={
+                      values.vendor !== DATABASE_LABELS[Databases.mysql] &&
+                      values.vendor !== DATABASE_LABELS[Databases.mongodb]
+                    }
                   />
                   <TextInputField disabled name="vendor" label={Messages.vendor} />
 
