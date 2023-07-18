@@ -102,8 +102,8 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	identity := authn.Identity{
 		OrgID:           defaultOrgID,
 		OrgCount:        1,
-		OrgName:         "",                            // TODO
-		OrgRoles:        map[int64]roletype.RoleType{}, // TODO
+		OrgName:         "",                                                           // TODO
+		OrgRoles:        map[int64]roletype.RoleType{defaultOrgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
 		ID:              authn.NamespacedID(namespace, id),
 		Login:           claims.Login,
 		Name:            namespace,
