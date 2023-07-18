@@ -27,6 +27,9 @@ export const stateSlice = createSlice({
       state.isLoading = action.payload.isLoading;
       if (action.payload.metricsStale !== undefined) {
         state.metricsStale = action.payload.metricsStale;
+        if (action.payload.metricsStale) {
+          state.numberOfSeriesForQuery = undefined;
+        }
       }
     },
     buildLabels: (state, action: PayloadAction<MetricsLabelsData>) => {
@@ -50,6 +53,7 @@ export const stateSlice = createSlice({
       state.query.metric = '';
       state.query.labels = [];
       state.metricsStale = true;
+      state.numberOfSeriesForQuery = undefined;
     },
     setLabelValues: (state, action: PayloadAction<MetricsLabelValuesData>) => {
       state.isLoading = action.payload.isLoading;
@@ -67,6 +71,12 @@ export const stateSlice = createSlice({
       state.query = { ...state.query, ...action.payload.query };
       if (action.payload.refreshMetrics) {
         state.metricsStale = true;
+        state.numberOfSeriesForQuery = undefined;
+      }
+    },
+    setValidatedState: (state, action: PayloadAction<{ isValid: boolean; validMetrics?: number }>) => {
+      if (action.payload.isValid && action.payload.validMetrics !== undefined) {
+        state.numberOfSeriesForQuery = action.payload.validMetrics;
       }
     },
     setSelectedLabelValue: (
@@ -115,6 +125,7 @@ export const stateSlice = createSlice({
       }
       state.metricsStale = true;
       state.labelNamesStale = true;
+      state.numberOfSeriesForQuery = undefined;
     },
     setIsLoading: (state, action: PayloadAction<boolean>) => {
       state.isLoading = action.payload;
@@ -221,6 +232,7 @@ export function initialState(query: PromVisualQuery): MetricsModalState {
     initialQuery: query,
     initialMetrics: [],
     staleLabelValues: Object.keys(initialLabelValues),
+    numberOfSeriesForQuery: undefined,
   };
 }
 
@@ -294,6 +306,7 @@ export interface MetricsModalState {
   query: PromVisualQuery;
   /** The initial query state, needed for reset */
   initialQuery: PromVisualQuery;
+  numberOfSeriesForQuery?: number;
 }
 
 /**

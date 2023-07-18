@@ -59,6 +59,7 @@ const {
   setSelectedLabelValue,
   clear,
   setQuery,
+  setValidatedState,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -77,6 +78,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
     dispatch(setQuery({ query: state.initialQuery }));
     onChangeParent(state.initialQuery);
   };
+
+  const labelsString = promQueryModeller.renderLabels(state.query.labels);
+  const expression = `${state.query.metric}${labelsString}`;
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -248,6 +252,31 @@ export const MetricsModal = (props: MetricsModalProps) => {
     }
   }
 
+  const validateQuery = async () => {
+    // this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
+
+    datasource.languageProvider
+      .getSeriesValues('__name__', expression)
+      .then((result) => {
+        dispatch(
+          setValidatedState({
+            isValid: true,
+            validMetrics: Object.keys(result).length,
+          })
+        );
+      })
+      .catch((err) => {
+        console.warn('failed to validate query', err);
+        setValidatedState({
+          isValid: false,
+          validMetrics: undefined,
+        });
+
+        // let the panel show error?
+        throw err;
+      });
+  };
+
   const submitQuery = () => {
     onChangeParent({
       ...query,
@@ -345,6 +374,60 @@ export const MetricsModal = (props: MetricsModalProps) => {
     >
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.wrapper}>
+        {/* LABELS */}
+        <div className={styles.modalLabelsWrapper}>
+          <div className={styles.inputWrapper}>
+            <div className={cx(styles.inputItem, styles.inputItemFirst)}>
+              <Input
+                autoFocus={true}
+                data-testid={testIds.searchMetric}
+                placeholder={placeholders.browse}
+                value={state.labelSearchQuery}
+                onInput={(e) => {
+                  const value = e.currentTarget.value ?? '';
+                  dispatch(setLabelSearchQuery(value));
+                  metricsSearchCallback(value, state.fullMetaSearch);
+                }}
+              />
+            </div>
+          </div>
+          <div className={styles.labelsWrapper}>
+            <div className={styles.labelsTitle}>Label name</div>
+            {state.labelNames
+              .filter((label) => label !== '__name__')
+              .map((labelName, index) => (
+                <CollapsableSection
+                  className={styles.labelNamesCollapsableSection}
+                  key={'label_names_' + labelName}
+                  label={<LabelNameLabel labelName={labelName} />}
+                  onToggle={(isOpen: boolean) => {
+                    if (isOpen) {
+                      fetchValuesForLabelName(labelName);
+                    }
+                  }}
+                  isOpen={query.labels.some((label) => label.label === labelName) ?? false}
+                >
+                  {state.labelValues[labelName]?.map((labelValue) => (
+                    <LabelNameValue
+                      key={'label_values_' + labelValue}
+                      onChange={(e) => {
+                        setLabelValueSelected(labelName, labelValue, e.currentTarget.checked);
+                      }}
+                      labelName={labelName}
+                      labelValue={labelValue}
+                      checked={
+                        state.query.labels.some((label: QueryBuilderLabelFilter) =>
+                          isLabelValueSelected(label, labelValue)
+                        ) ?? false
+                      }
+                    />
+                  ))}
+                </CollapsableSection>
+              ))}
+          </div>
+        </div>
+
+        {/* METRICS */}
         <div className={styles.modalMetricsWrapper}>
           <MetricsWrapper
             state={state}
@@ -378,59 +461,31 @@ export const MetricsModal = (props: MetricsModalProps) => {
             clearQuery={() => dispatch(clear())}
           />
         </div>
-        <div className={styles.modalLabelsWrapper}>
-          <div className={styles.inputWrapper}>
-            <div className={cx(styles.inputItem, styles.inputItemFirst)}>
-              <Input
-                autoFocus={true}
-                data-testid={testIds.searchMetric}
-                placeholder={placeholders.browse}
-                value={state.labelSearchQuery}
-                onInput={(e) => {
-                  const value = e.currentTarget.value ?? '';
-                  dispatch(setLabelSearchQuery(value));
-                  metricsSearchCallback(value, state.fullMetaSearch);
-                }}
-              />
-            </div>
-          </div>
-          <div className={styles.labelsWrapper}>
-            <div className={styles.labelsTitle}>Label name</div>
-            {state.labelNames
-              .filter((label) => label !== '__name__')
-              .map((labelName, index) => (
-                <CollapsableSection
-                  key={'label_names_' + labelName}
-                  label={<LabelNameLabel labelName={labelName} />}
-                  onToggle={(isOpen: boolean) => {
-                    if (isOpen) {
-                      fetchValuesForLabelName(labelName);
-                    }
-                  }}
-                  isOpen={query.labels.some((label) => label.label === labelName) ?? false}
-                >
-                  {state.labelValues[labelName]?.map((labelValue) => (
-                    <LabelNameValue
-                      key={'label_values_' + labelValue}
-                      onChange={(e) => {
-                        setLabelValueSelected(labelName, labelValue, e.currentTarget.checked);
-                      }}
-                      labelName={labelName}
-                      labelValue={labelValue}
-                      checked={
-                        state.query.labels.some((label: QueryBuilderLabelFilter) =>
-                          isLabelValueSelected(label, labelValue)
-                        ) ?? false
-                      }
-                    />
-                  ))}
-                </CollapsableSection>
-              ))}
-          </div>
-        </div>
-        <div className={styles.submitQueryButton}>
-          <Button onClick={submitQuery}>Use query</Button>
-        </div>
+      </div>
+
+      <div className={styles.exprPreviewWrap}>
+        <span className={styles.exprPreview}>
+          <span className={styles.exprPreviewTitle}>RESULT</span>
+          <span className={styles.exprPreviewText}>{expression}</span>
+        </span>
+        <span className={styles.exprButtons}>
+          <Button onClick={() => dispatch(clear())} type={'button'} variant={'destructive'}>
+            Clear
+          </Button>
+          <Button onClick={() => validateQuery()} type={'button'} variant={'secondary'}>
+            Validate
+          </Button>
+        </span>
+      </div>
+
+      <div className={styles.selectorValidMessage}>
+        {state.numberOfSeriesForQuery !== undefined
+          ? `Selector is valid (${state.numberOfSeriesForQuery} series found)`
+          : ''}
+      </div>
+
+      <div className={styles.submitQueryButton}>
+        <Button onClick={submitQuery}>Use query</Button>
       </div>
     </Modal>
   );
@@ -445,7 +500,9 @@ export const LabelNameLabel = (props: { labelName: string }) => {
 
 export const getLabelNameLabelStyles = (theme: GrafanaTheme2) => {
   return {
-    labelName: css``,
+    labelName: css`
+      padding: 5px 8px;
+    `,
   };
 };
 
@@ -467,7 +524,9 @@ export const LabelNameValue = (props: {
 
 export const getLabelValueLabelStyles = (theme: GrafanaTheme2) => {
   return {
-    labelName: css``,
+    labelName: css`
+      padding: 5px 8px 5px 32px;
+    `,
   };
 };
 

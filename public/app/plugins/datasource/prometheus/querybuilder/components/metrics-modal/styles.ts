@@ -15,8 +15,17 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         width: 60%;
       }
     `,
-    labelsWrapper: css``,
-    labelsTitle: css``,
+    labelsWrapper: css`
+      display: flex;
+      flex-direction: column;
+      max-height: 80vh;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    `,
+    labelsTitle: css`
+      padding: 5px 8px 5px 32px;
+      border-bottom: 1px solid var(${theme.colors.border.weak});
+    `,
     inputWrapper: css`
       display: flex;
       flex-direction: row;
@@ -24,15 +33,60 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     wrapper: css`
       display: flex;
-      flex-direction: column-reverse;
+      flex-direction: column;
       justify-content: space-between;
+      flex-wrap: nowrap;
       @media only screen and (min-width: 768px) {
         flex-direction: row;
       }
     `,
-    modalMetricsWrapper: css``,
-    submitQueryButton: css``,
-    modalLabelsWrapper: css``,
+    modalMetricsWrapper: css`
+      width: 100%;
+      @media only screen and (min-width: 768px) {
+      }
+    `,
+    exprButtons: css`
+      display: flex;
+      gap: 4px;
+    `,
+    exprPreview: css`
+      display: flex;
+      align-items: center;
+      align-content: center;
+      align-self: stretch;
+    `,
+    exprPreviewTitle: css`
+      color: ${theme.colors.text.secondary};
+      margin-right: 8px;
+    `,
+    exprPreviewText: css`
+      font-family: ${theme.typography.fontFamilyMonospace};
+      color: ${theme.colors.text.primary};
+    `,
+    exprPreviewWrap: css`
+      display: flex;
+      padding: 8px 12px;
+      align-items: center;
+      align-content: center;
+      align-self: stretch;
+      flex-wrap: nowrap;
+      gap: 8px;
+
+      // border-radius in theme?
+      border-radius: 4px;
+      border: 1px solid ${theme.colors.border.weak};
+    `,
+    selectorValidMessage: css``,
+    submitQueryButton: css`
+      gap: 4px;
+    `,
+    modalLabelsWrapper: css`
+      width: 100%;
+      @media only screen and (min-width: 768px) {
+        max-width: 250px;
+        width: 40%;
+      }
+    `,
     inputItemFirst: css`
       flex-basis: 40%;
       padding-right: 16px;
@@ -115,5 +169,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: flex;
     `,
     labelName: css``,
+    labelNamesCollapsableSection: css`
+      margin-bottom: 8px;
+      padding: 0;
+    `,
   };
 };

@@ -98,7 +98,7 @@ export const MetricsWrapper = (props: {
         </div>
       </div>
       <div className={styles.resultsData}>
-        {props.query.metric && <i className={styles.currentlySelected}>Currently selected: {props.query.metric}</i>}
+        {/*{props.query.metric && <i className={styles.currentlySelected}>Currently selected: {props.query.metric}</i>}*/}
         {props.query.labels.length > 0 && (
           <div className={styles.resultsDataFiltered}>
             <Icon name="info-circle" size="sm" />
@@ -140,9 +140,6 @@ export const MetricsWrapper = (props: {
             type="number"
             onInput={props.onChangePageNumber}
           />
-        </div>
-        <div>
-          <Button onClick={props.clearQuery}>Clear</Button>
         </div>
       </div>
     </>

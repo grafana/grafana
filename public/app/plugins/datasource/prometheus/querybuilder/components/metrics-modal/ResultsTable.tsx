@@ -136,6 +136,7 @@ export function ResultsTable(props: ResultsTableProps) {
     <table className={styles.table}>
       <thead className={styles.stickyHeader}>
         <tr>
+          <th className={styles.selectButtonWidth}> </th>
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>Name</th>
           {state.hasMetadata && (
             <>
@@ -143,7 +144,6 @@ export function ResultsTable(props: ResultsTableProps) {
               <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>Description</th>
             </>
           )}
-          <th className={styles.selectButtonWidth}> </th>
         </tr>
       </thead>
       <tbody>
@@ -152,6 +152,16 @@ export function ResultsTable(props: ResultsTableProps) {
             metrics.map((metric: MetricData, idx: number) => {
               return (
                 <tr key={metric?.value ?? idx} className={styles.row}>
+                  <td>
+                    <Button
+                      size="xs"
+                      variant={`${metric?.value === query.metric ? 'success' : 'secondary'}`}
+                      onClick={() => selectMetric(metric?.value !== query.metric ? metric : { ...metric, value: '' })}
+                      className={styles.centerButton}
+                    >
+                      Select
+                    </Button>
+                  </td>
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
@@ -161,16 +171,6 @@ export function ResultsTable(props: ResultsTableProps) {
                     />
                   </td>
                   {state.hasMetadata && metaRows(metric)}
-                  <td>
-                    <Button
-                      size="md"
-                      variant={`${metric?.value === query.metric ? 'success' : 'secondary'}`}
-                      onClick={() => selectMetric(metric?.value !== query.metric ? metric : { ...metric, value: '' })}
-                      className={styles.centerButton}
-                    >
-                      Select
-                    </Button>
-                  </td>
                 </tr>
               );
             })}
@@ -241,6 +241,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       margin-left: 4px;
     `,
     centerButton: css`
+      //transform: scale(0.75);
       display: block;
       margin: auto;
       border: none;
