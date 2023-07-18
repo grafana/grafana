@@ -57,14 +57,19 @@ type PanelKey struct {
 	panelID int64
 }
 
+func NewPanelKey(orgID int64, dashUID string, panelID int64) PanelKey {
+	return PanelKey{
+		orgID:   orgID,
+		dashUID: dashUID,
+		panelID: panelID,
+	}
+}
+
 // PanelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
 func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *PanelKey {
 	if rule.DashboardUID != "" {
-		return &PanelKey{
-			orgID:   rule.OrgID,
-			dashUID: rule.DashboardUID,
-			panelID: rule.PanelID,
-		}
+		key := NewPanelKey(rule.OrgID, rule.DashboardUID, rule.PanelID)
+		return &key
 	}
 	return nil
 }

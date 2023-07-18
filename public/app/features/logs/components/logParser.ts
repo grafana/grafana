@@ -92,6 +92,11 @@ export function shouldRemoveField(
   shouldRemoveLine = true,
   shouldRemoveTime = true
 ) {
+  // field that has empty value (we want to keep 0 or empty string)
+  if (field.values[row.rowIndex] == null) {
+    return true;
+  }
+
   // hidden field, remove
   if (field.config.custom?.hidden) {
     return true;
@@ -101,12 +106,6 @@ export function shouldRemoveField(
   if ((field.config.links ?? []).length > 0) {
     return false;
   }
-
-  // field that has empty value (we want to keep 0 or empty string)
-  if (field.values[row.rowIndex] == null) {
-    return true;
-  }
-
   // the remaining checks use knowledge of how we parse logs-dataframes
 
   // Remove field if it is:

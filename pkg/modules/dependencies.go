@@ -11,14 +11,16 @@ const (
 	GrafanaAPIServer string = "grafana-apiserver"
 	// HTTPServer is the HTTP server for Grafana
 	HTTPServer string = "http-server"
+	// Provisioning sets up Grafana with preconfigured datasources, dashboards, etc.
+	Provisioning string = "provisioning"
 )
 
 // dependencyMap defines Module Targets => Dependencies
 var dependencyMap = map[string][]string{
-	BackgroundServices: {},
+	BackgroundServices: {Provisioning, HTTPServer},
 
 	CertGenerator:    {},
 	GrafanaAPIServer: {CertGenerator},
 
-	All: {BackgroundServices, HTTPServer},
+	All: {Provisioning, HTTPServer, BackgroundServices},
 }
