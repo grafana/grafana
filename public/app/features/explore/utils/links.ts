@@ -65,6 +65,11 @@ export const exploreInternalLinkSupplierFactory = (
       return undefined;
     }
 
+    /**
+     * Even though getFieldLinksForExplore can produce internal and external links we re-use the logic for creating
+     * internal links only. Eventually code from getFieldLinksForExplore can be moved here and getFieldLinksForExplore
+     * can be removed (once all Explore panels start using field.getLinks).
+     */
     const links = getFieldLinksForExplore({
       field,
       rowIndex,
