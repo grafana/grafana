@@ -1,13 +1,17 @@
 ---
-title: Build a data source plugin
 description: Create a plugin to add support for your own data sources.
-weight: 300
 keywords:
   - grafana
   - plugins
   - plugin
   - data source
   - datasource
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a data source plugin
+weight: 300
 ---
 
 ## Introduction
@@ -25,7 +29,7 @@ In this tutorial, you'll:
 ### Prerequisites
 
 - Grafana >=7.0
-- NodeJS >=14
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 

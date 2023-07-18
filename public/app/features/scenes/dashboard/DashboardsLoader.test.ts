@@ -1,6 +1,9 @@
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config, locationService } from '@grafana/runtime';
 import {
   CustomVariable,
   DataSourceVariable,
+  getUrlSyncManager,
   QueryVariable,
   SceneDataTransformer,
   SceneGridItem,
@@ -10,7 +13,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
-import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -24,6 +26,7 @@ import {
   DashboardLoader,
 } from './DashboardsLoader';
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
+import { setupLoadDashboardMock } from './test-utils';
 
 describe('DashboardLoader', () => {
   describe('when fetching/loading a dashboard', () => {
@@ -31,75 +34,71 @@ describe('DashboardLoader', () => {
       new DashboardLoader({});
     });
 
-    it('should load the dashboard from the cache if it exists', () => {
-      const loader = new DashboardLoader({});
-      const dashboard = new DashboardScene({
-        title: 'cached',
-        uid: 'fake-uid',
-        body: new SceneGridLayout({ children: [] }),
-      });
-      // @ts-expect-error
-      loader.cache['fake-uid'] = dashboard;
-      loader.load('fake-uid');
-      expect(loader.state.dashboard).toBe(dashboard);
-      expect(loader.state.isLoading).toBe(undefined);
-    });
-
     it('should call dashboard loader server if the dashboard is not cached', async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
 
       expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+
+      // should use cache second time
+      await loader.loadAndInit('fake-dash');
+      expect(loadDashboardMock.mock.calls.length).toBe(1);
     });
 
     it("should error when the dashboard doesn't exist", async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: undefined, meta: undefined });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      setupLoadDashboardMock({ dashboard: undefined, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
-      // @ts-expect-error - private
-      expect(loader.cache['fake-dash']).toBeUndefined();
       expect(loader.state.loadError).toBe('Error: Dashboard not found');
     });
 
     it('should initialize the dashboard scene with the loaded dashboard', async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
 
       expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
       expect(loader.state.loadError).toBe(undefined);
       expect(loader.state.isLoading).toBe(false);
-      // It updates the cache
-      // @ts-expect-error - private
-      expect(loader.cache['fake-dash']).toBeDefined();
     });
 
     it('should use DashboardScene creator to initialize the scene', async () => {
-      const loadDashboardMock = jest.fn().mockResolvedValue({ dashboard: { uid: 'fake-dash' }, meta: {} });
-      setDashboardLoaderSrv({
-        loadDashboard: loadDashboardMock,
-      } as unknown as DashboardLoaderSrv);
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardLoader({});
-      await loader.load('fake-dash');
+      await loader.loadAndInit('fake-dash');
+
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    it('should initialize url sync', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      locationService.partial({ from: 'now-5m', to: 'now' });
+
+      const loader = new DashboardLoader({});
+      await loader.loadAndInit('fake-dash');
+      const dash = loader.state.dashboard;
+
+      expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
+
+      getUrlSyncManager().cleanUp(dash!);
+
+      // try loading again (and hitting cache)
+      locationService.partial({ from: 'now-10m', to: 'now' });
+
+      await loader.loadAndInit('fake-dash');
+      const dash2 = loader.state.dashboard;
+
+      expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
     });
   });
 
@@ -324,10 +323,11 @@ describe('DashboardLoader', () => {
         transparent: true,
       };
 
-      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
+      const vizPanel = gridItem.state.body as VizPanel;
 
-      expect((vizPanelSceneObject.state.body as VizPanel)?.state.displayMode).toEqual('transparent');
-      expect((vizPanelSceneObject.state.body as VizPanel)?.state.hoverHeader).toEqual(true);
+      expect(vizPanel.state.displayMode).toEqual('transparent');
+      expect(vizPanel.state.hoverHeader).toEqual(true);
     });
 
     it('should handle a dashboard query data source', () => {
@@ -343,6 +343,25 @@ describe('DashboardLoader', () => {
       const vizPanel = createVizPanelFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
 
       expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+    });
+
+    it('should not set SceneQueryRunner for plugins with skipDataQuery', () => {
+      const panel = {
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        targets: [{ refId: 'A' }],
+      };
+
+      config.panels['text-plugin-34'] = getPanelPlugin({
+        skipDataQuery: true,
+      }).meta;
+
+      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
+      const vizPanel = gridItem.state.body as VizPanel;
+
+      expect(vizPanel.state.$data).toBeUndefined();
     });
   });
 

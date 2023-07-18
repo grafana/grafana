@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -20,8 +22,9 @@ import (
 
 func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
-		desc     string
-		identity *authn.Identity
+		desc      string
+		identity  *authn.Identity
+		oauthInfo *social.OAuthInfo
 
 		expectedHasEntryToken *login.UserAuth
 		expectHasEntryCalled  bool
@@ -84,6 +87,13 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectRevokeTokenCalled:           true,
 			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
 			expectedErr:                       errExpiredAccessToken,
+		}, {
+			desc:                        "should skip sync when use_refresh_token is disabled",
+			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.GitLabAuthModule},
+			expectHasEntryCalled:        true,
+			expectTryRefreshTokenCalled: false,
+			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
+			oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
 		},
 	}
 
@@ -118,11 +128,22 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 				},
 			}
 
+			if tt.oauthInfo == nil {
+				tt.oauthInfo = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+			}
+
+			socialService := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthInfo,
+			}
+
 			sync := &OAuthTokenSync{
 				log:            log.NewNopLogger(),
 				cache:          localcache.New(0, 0),
 				service:        service,
 				sessionService: sessionService,
+				socialService:  socialService,
 			}
 
 			err := sync.SyncOauthTokenHook(context.Background(), tt.identity, nil)

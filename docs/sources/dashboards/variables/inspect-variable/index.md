@@ -9,6 +9,11 @@ keywords:
   - guide
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Inspect variables
 weight: 200
 ---

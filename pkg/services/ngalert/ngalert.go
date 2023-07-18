@@ -420,7 +420,8 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewMultipleBackend(primary, secondaries...), nil
 	}
 	if backend == historian.BackendTypeAnnotations {
-		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
+		store := historian.NewAnnotationStore(ar, ds, met)
+		return historian.NewAnnotationBackend(store, rs, met), nil
 	}
 	if backend == historian.BackendTypeLoki {
 		lcfg, err := historian.NewLokiConfig(cfg)

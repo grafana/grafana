@@ -7,8 +7,13 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure generic OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Generic OAuth2
+title: Configure generic OAuth2 authentication
 weight: 700
 ---
 
@@ -37,7 +42,7 @@ To follow this guide:
 - Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
-## Integrate an OAuth2 provider with Grafana
+## Steps
 
 To integrate your OAuth2 provider with Grafana using our generic OAuth2 authentication, follow these steps:
 
@@ -46,7 +51,7 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
    Ensure that the callback URL is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/generic_oauth`.
 
-   For the callback URL to be correct, it might be necessary to set the `root_url` option to `[server]`, for example, if you are serving Grafana behind a proxy.
+   For the callback URL to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
 
 1. Refer to the following table to update field values located in the `[auth.generic_oauth]` section of the Grafana configuration file:
 
@@ -54,9 +59,7 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
    | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your OAuth2 app.                                                                                                                     |
    | `auth_url`                   | The authorization endpoint of your OAuth2 provider.                                                                                                                                               |
-   | `token_url`                  | The token endpoint of your OAuth2 provider.                                                                                                                                                       |
    | `api_url`                    | The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo). |
-   | `token_url`                  | The token endpoint of your OAuth2 provider.                                                                                                                                                       |
    | `enabled`                    | Enables generic OAuth2 authentication. Set this value to `true`.                                                                                                                                  |
 
    Review the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
@@ -67,7 +70,9 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
    b. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
 
-   c. Enable the refresh token on the provider if required.
+   c. Set `use_refresh_token` to `true` in `[auth.generic_oauth]` section in Grafana configuration file.
+
+   d. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
@@ -115,6 +120,7 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                 |
 | `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                 |
 | `use_pkce`                   | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
+| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
 
 ### Configure login
 
@@ -171,10 +177,12 @@ When a user logs in using an OAuth2 provider, Grafana verifies that the access t
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To configure generic OAuth2 to use a refresh token, perform one or both of the following steps, if required:
+To configure generic OAuth2 to use a refresh token, set `use_refresh_token` configuration option to `true` and perform one or both of the following steps, if required:
 
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ## Configure role mapping
 
@@ -272,6 +280,7 @@ allow_assign_grafana_admin = true
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
 By using Team Sync, you can link your OAuth2 groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
 Generic OAuth2 groups can be referenced by group ID, such as `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 For information on configuring OAuth2 groups with Grafana using the `groups_attribute_path` configuration option, refer to [configuration options]({{< relref "#configuration-options" >}}).
@@ -337,6 +346,7 @@ To set up generic OAuth2 authentication with Auth0, follow these steps:
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
    use_pkce = true
+   use_refresh_token = true
    ```
 
 ### Set up OAuth2 with Bitbucket
@@ -369,6 +379,7 @@ To set up generic OAuth2 authentication with Bitbucket, follow these steps:
    team_ids_attribute_path = values[*].workspace.slug
    team_ids =
    allowed_organizations =
+   use_refresh_token = true
    ```
 
 By default, a refresh token is included in the response for the **Authorization Code Grant**.

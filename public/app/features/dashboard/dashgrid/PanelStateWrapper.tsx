@@ -99,6 +99,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
+        eventsScope: '__global_',
         eventBus,
         app: this.getPanelContextApp(),
         sync: this.getSync,

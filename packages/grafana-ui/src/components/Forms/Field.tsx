@@ -42,30 +42,30 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
 
 export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    field: css`
-      display: flex;
-      flex-direction: column;
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    fieldHorizontal: css`
-      flex-direction: row;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    `,
-    fieldValidationWrapper: css`
-      margin-top: ${theme.spacing(0.5)};
-    `,
-    fieldValidationWrapperHorizontal: css`
-      flex: 1 1 100%;
-    `,
-    validationMessageHorizontalOverflow: css`
-      width: 0;
-      overflow-x: visible;
+    field: css({
+      display: 'flex',
+      flexDirection: 'column',
+      marginBottom: theme.spacing(2),
+    }),
+    fieldHorizontal: css({
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+    }),
+    fieldValidationWrapper: css({
+      marginTop: theme.spacing(0.5),
+    }),
+    fieldValidationWrapperHorizontal: css({
+      flex: '1 1 100%',
+    }),
+    validationMessageHorizontalOverflow: css({
+      width: 0,
+      overflowX: 'visible',
 
-      & > * {
-        white-space: nowrap;
-      }
-    `,
+      '& > *': {
+        whiteSpace: 'nowrap',
+      },
+    }),
   };
 });
 
