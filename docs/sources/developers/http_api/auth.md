@@ -10,6 +10,10 @@ keywords:
   - documentation
   - api
   - authentication
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Authentication HTTP API '
 ---
 

@@ -5,6 +5,11 @@ aliases:
   - ../unified-alerting/fundamentals/alertmanager/
   - alerting/manage-notifications/alertmanager/
 description: Intro to the different Alertmanagers
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alertmanager
 weight: 103
 ---

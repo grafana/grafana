@@ -35,6 +35,11 @@ keywords:
   - nested
   - chained
   - linked
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Manage variables
 title: Add and manage variables
 weight: 100

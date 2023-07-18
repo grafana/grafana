@@ -1,12 +1,16 @@
 ---
-title: Introduction to Grafana plugin development
-menuTitle: Introduction to plugin development
+description: Conceptual topics for Grafana plugin development.
 keywords:
   - grafana
   - plugins
   - plugin
   - documentation
-description: Conceptual topics for Grafana plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Introduction to plugin development
+title: Introduction to Grafana plugin development
 weight: 100
 ---
 

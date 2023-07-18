@@ -11,6 +11,11 @@ keywords:
   - grafana
   - cloudwatch
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Amazon CloudWatch
 title: Amazon CloudWatch data source
 weight: 200

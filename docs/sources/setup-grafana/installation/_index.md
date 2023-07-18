@@ -7,6 +7,10 @@ aliases:
   - /docs/grafana/v2.1/installation/install/
   - ./installation/rpm/
 description: Installation guide for Grafana
+labels:
+  products:
+    - enterprise
+    - oss
 title: Install Grafana
 weight: 100
 ---

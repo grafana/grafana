@@ -1,6 +1,11 @@
 ---
 _build:
   list: false
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: undefined
 ---
 

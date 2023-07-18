@@ -8,6 +8,10 @@ keywords:
   - set up
   - configure
   - external Alertmanager
+labels:
+  products:
+    - enterprise
+    - oss
 title: Add an external Alertmanager
 weight: 200
 ---

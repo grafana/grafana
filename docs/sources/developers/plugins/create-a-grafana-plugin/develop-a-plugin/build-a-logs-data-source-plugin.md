@@ -1,8 +1,7 @@
 ---
-title: Build a logs data source plugin
-description: How to build a logs data source plugin.
 aliases:
   - ../../../plugins/build-a-logs-data-source-plugin/
+description: How to build a logs data source plugin.
 keywords:
   - grafana
   - plugins
@@ -10,6 +9,11 @@ keywords:
   - logs
   - logs data source
   - datasource
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a logs data source plugin
 weight: 500
 ---
 

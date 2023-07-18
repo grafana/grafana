@@ -10,6 +10,10 @@ keywords:
   - api
   - correlations
   - Glue
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Correlations HTTP API '
 ---
 
