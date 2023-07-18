@@ -59,15 +59,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     return { ...queryResponse, items };
   }, [search]);
 
-  const handleFolderExpand = useCallback(async (uid: string, newOpenState: boolean) => {
-    setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
-
-    if (newOpenState) {
-      const folders = await listFolders(uid, undefined, 1, PAGE_SIZE);
-      setChildrenForUID((old) => ({ ...old, [uid]: folders }));
-    }
-  }, []);
-
   const flatTree = useMemo(() => {
     const searchResults = search && searchState.value;
     const rootCollection: DashboardViewItemCollection = searchResults
@@ -142,6 +133,15 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       setOverlayOpen(value);
     },
   });
+
+  const handleFolderExpand = useCallback(async (uid: string, newOpenState: boolean) => {
+    setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
+
+    if (newOpenState) {
+      const folders = await listFolders(uid, undefined, 1, PAGE_SIZE);
+      setChildrenForUID((old) => ({ ...old, [uid]: folders }));
+    }
+  }, []);
 
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
