@@ -302,10 +302,11 @@ type NumberValueCapture struct {
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
-	// eval captures for the '__value_string__' annotation and the Value property of the API response.
-	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
-	captureVal := func(refID string, labels data.Labels, value *float64) {
-		captures = append(captures, NumberValueCapture{
+	// captures contains the values of all instant queries and expressions for each dimension
+	captures := make(map[data.Fingerprint][]NumberValueCapture, len(execResp.Responses))
+	captureFn := func(refID string, labels data.Labels, value *float64) {
+		fp := labels.Fingerprint()
+		captures[fp] = append(captures[fp], NumberValueCapture{
 			Var:    refID,
 			Value:  value,
 			Labels: labels.Copy(),
@@ -357,7 +358,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureVal(frame.RefID, frame.Fields[0].Labels, v)
+			captureFn(frame.RefID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {
@@ -379,13 +380,28 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 		if len(frame.Fields) == 1 {
 			theseLabels := frame.Fields[0].Labels
-			for _, cap := range captures {
-				// matching labels are equal labels, or when one set of labels includes the labels of the other.
-				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) || cap.Labels.Contains(theseLabels) {
-					if frame.Meta.Custom == nil {
-						frame.Meta.Custom = []NumberValueCapture{}
+			fp := theseLabels.Fingerprint()
+
+			// First look for a capture whose labels are an exact match
+			if groupedCaps, ok := captures[fp]; ok {
+				if frame.Meta.Custom == nil {
+					frame.Meta.Custom = []NumberValueCapture{}
+				}
+				frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), groupedCaps...)
+			} else {
+				// If no exact match was found, look for captures whose labels are either subsets
+				// or supersets
+				for _, groupedCaps := range captures {
+					if len(groupedCaps) > 0 {
+						firstCap := groupedCaps[0]
+						// matching labels are equal labels, or when one set of labels includes the labels of the other.
+						if theseLabels.Equals(firstCap.Labels) || theseLabels.Contains(firstCap.Labels) || firstCap.Labels.Contains(theseLabels) {
+							if frame.Meta.Custom == nil {
+								frame.Meta.Custom = []NumberValueCapture{}
+							}
+							frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), groupedCaps...)
+						}
 					}
-					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), cap)
 				}
 			}
 		}
