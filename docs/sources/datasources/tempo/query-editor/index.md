@@ -7,6 +7,11 @@ keywords:
   - tempo
   - traces
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Tempo query editor
 weight: 300

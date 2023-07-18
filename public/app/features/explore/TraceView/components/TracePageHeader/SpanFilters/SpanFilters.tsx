@@ -277,12 +277,12 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       {!showSpanFilters && (
         <div className={styles.nextPrevResult}>
           <NextPrevResult
+            trace={trace}
             spanFilterMatches={spanFilterMatches}
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             focusedSpanIndexForSearch={focusedSpanIndexForSearch}
             setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
             datasourceType={datasourceType}
-            totalSpans={trace.spans.length}
             showSpanFilters={showSpanFilters}
           />
         </div>
@@ -448,7 +448,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
 
         <NewTracePageSearchBar
-          totalSpans={trace.spans.length}
+          trace={trace}
           search={search}
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}

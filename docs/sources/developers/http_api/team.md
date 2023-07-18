@@ -11,6 +11,10 @@ keywords:
   - team
   - teams
   - group
+labels:
+  products:
+    - enterprise
+    - oss
 title: Team HTTP API
 ---
 

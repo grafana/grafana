@@ -5,9 +5,20 @@ const (
 	All string = "all"
 	// BackgroundServices includes all Grafana services that run in the background
 	BackgroundServices string = "background-services"
+	// CertGenerator generates certificates for grafana-apiserver
+	CertGenerator string = "cert-generator"
+	// GrafanaAPIServer is the Kubertenes API server for Grafana Resources
+	GrafanaAPIServer string = "grafana-apiserver"
+	// HTTPServer is the HTTP server for Grafana
+	HTTPServer string = "http-server"
 )
 
 // dependencyMap defines Module Targets => Dependencies
 var dependencyMap = map[string][]string{
-	All: {BackgroundServices},
+	BackgroundServices: {},
+
+	CertGenerator:    {},
+	GrafanaAPIServer: {CertGenerator},
+
+	All: {BackgroundServices, HTTPServer},
 }

@@ -83,7 +83,9 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export {
-  TableCellDisplayMode,
+  type TableCustomCellOptions,
+  type CustomCellRendererProps,
+  type TableFieldOptions,
   type TableSortByFieldState,
   type TableFooterCalc,
   type AdHocFilterItem,
@@ -204,6 +206,7 @@ export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
+export { TextLink } from './Link/TextLink';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';

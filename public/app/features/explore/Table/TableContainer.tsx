@@ -38,13 +38,13 @@ export class TableContainer extends PureComponent<Props> {
     return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
   }
 
-  getTableHeight(rowCount: number, isSingleTable = true) {
+  getTableHeight(rowCount: number, hasSubFrames = true) {
     if (rowCount === 0) {
       return 200;
     }
     // tries to estimate table height, with a min of 300 and a max of 600
     // if there are multiple tables, there is no min
-    return Math.min(600, Math.max(rowCount * 36, isSingleTable ? 300 : 0) + 40 + 46);
+    return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
   }
 
   render() {
@@ -107,7 +107,7 @@ export class TableContainer extends PureComponent<Props> {
               key={data.main.refId || `table-${i}`}
               title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
               width={width}
-              height={this.getTableHeight(data.main.length, tableData.length === 1)}
+              height={this.getTableHeight(data.main.length, (data.sub?.length || 0) > 0)}
               loadingState={loading ? LoadingState.Loading : undefined}
             >
               {(innerWidth, innerHeight) => (

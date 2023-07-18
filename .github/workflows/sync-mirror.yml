@@ -3,9 +3,8 @@
 name: Sync to mirror
 run-name: sync-to-mirror-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request_target:
-    types:
-      - closed
+  workflow_dispatch:
+  push:
     branches:
       - "main"
       - "v*.*.*"
@@ -15,10 +14,10 @@ on:
 jobs:
   trigger_downstream_patch_mirror:
     concurrency: patch-mirror-${{ github.ref }}
-    if: github.event.pull_request.merged == true
     uses: grafana/security-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
+    if: github.repository == 'grafana/grafana'
     with:
-      ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
+      ref: "${{ github.ref_name }}" # this is the target branch name, Ex: "main"
       src_repo: "${{ github.repository }}"
       dest_repo: "${{ github.repository }}-security-mirror"
       patch_repo: "${{ github.repository }}-security-patches"

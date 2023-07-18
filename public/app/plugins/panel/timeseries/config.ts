@@ -42,7 +42,9 @@ export const defaultGraphConfig: GraphFieldConfig = {
 
 const categoryStyles = ['Graph styles'];
 
-export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
+export type NullEditorSettings = { isTime: boolean };
+
+export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -143,7 +145,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           process: identityOverrideProcessor,
           shouldApply: (field) => field.type === FieldType.number,
         })
-        .addCustomEditor<void, boolean>({
+        .addCustomEditor<NullEditorSettings, boolean>({
           id: 'spanNulls',
           path: 'spanNulls',
           name: 'Connect null values',
@@ -154,8 +156,9 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
           shouldApply: (field) => field.type !== FieldType.time,
           process: identityOverrideProcessor,
+          settings: { isTime },
         })
-        .addCustomEditor<void, boolean>({
+        .addCustomEditor<NullEditorSettings, boolean>({
           id: 'insertNulls',
           path: 'insertNulls',
           name: 'Disconnect values',
@@ -166,6 +169,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
           shouldApply: (field) => field.type !== FieldType.time,
           process: identityOverrideProcessor,
+          settings: { isTime },
         })
         .addRadio({
           path: 'showPoints',

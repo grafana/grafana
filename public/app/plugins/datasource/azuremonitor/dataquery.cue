@@ -115,6 +115,8 @@ composableKinds: DataQuery: {
 					resultFormat?: #ResultFormat
 					// Array of resource URIs to be queried.
 					resources?: [...string]
+					// If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+					intersectTime?: bool
 					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
 					workspace?: string
 

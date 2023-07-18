@@ -346,110 +346,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       );
     }
 
-    const Picker = () => (
-      <>
-        {config.featureToggles.transformationsRedesign && (
-          <>
-            {!noTransforms && (
-              <Button
-                variant="secondary"
-                fill="text"
-                icon="angle-left"
-                onClick={() => {
-                  this.setState({ showPicker: false });
-                }}
-              >
-                Go back to&nbsp;<i>Transformations in use</i>
-              </Button>
-            )}
-            <div className={styles.pickerInformationLine}>
-              <a href={getDocsLink(DocsId.Transformations)} className="external-link" target="_blank" rel="noreferrer">
-                <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
-                <Icon name="external-link-alt" />
-              </a>
-              &nbsp;allow you to manipulate your data before a visualization is applied.
-            </div>
-          </>
-        )}
-        <VerticalGroup>
-          {!config.featureToggles.transformationsRedesign && (
-            <Input
-              data-testid={selectors.components.Transforms.searchInput}
-              value={search ?? ''}
-              autoFocus={!noTransforms}
-              placeholder="Search for transformation"
-              onChange={this.onSearchChange}
-              onKeyDown={this.onSearchKeyDown}
-              suffix={suffix}
-            />
-          )}
-
-          {!config.featureToggles.transformationsRedesign &&
-            xforms.map((t) => {
-              return (
-                <TransformationCard
-                  key={t.name}
-                  transform={t}
-                  onClick={() => {
-                    this.onTransformationAdd({ value: t.id });
-                  }}
-                />
-              );
-            })}
-
-          {config.featureToggles.transformationsRedesign && (
-            <div className={styles.searchWrapper}>
-              <Input
-                data-testid={selectors.components.Transforms.searchInput}
-                className={styles.searchInput}
-                value={search ?? ''}
-                autoFocus={!noTransforms}
-                placeholder="Search for transformation"
-                onChange={this.onSearchChange}
-                onKeyDown={this.onSearchKeyDown}
-                suffix={suffix}
-              />
-              <div className={styles.showImages}>
-                <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
-                <Switch
-                  value={this.state.showIllustrations}
-                  onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
-                />
-              </div>
-            </div>
-          )}
-
-          {config.featureToggles.transformationsRedesign && (
-            <div className={styles.filterWrapper}>
-              {filterCategoriesLabels.map(([slug, label]) => {
-                return (
-                  <FilterPill
-                    key={slug}
-                    onClick={() => this.setState({ selectedFilter: slug })}
-                    label={label}
-                    selected={this.state.selectedFilter === slug}
-                  />
-                );
-              })}
-            </div>
-          )}
-
-          {config.featureToggles.transformationsRedesign && (
-            <TransformationsGrid
-              showIllustrations={this.state.showIllustrations}
-              transformations={xforms}
-              onClick={(id) => {
-                this.onTransformationAdd({ value: id });
-              }}
-            />
-          )}
-        </VerticalGroup>
-      </>
-    );
-
     return (
       <>
-        {noTransforms && (
+        {noTransforms && !config.featureToggles.transformationsRedesign && (
           <Container grow={1}>
             <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
               {(isDismissed, onDismiss) => {
@@ -487,7 +386,109 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           </Container>
         )}
         {showPicker ? (
-          <Picker />
+          <>
+            {config.featureToggles.transformationsRedesign && (
+              <>
+                {!noTransforms && (
+                  <Button
+                    variant="secondary"
+                    fill="text"
+                    icon="angle-left"
+                    onClick={() => {
+                      this.setState({ showPicker: false });
+                    }}
+                  >
+                    Go back to&nbsp;<i>Transformations in use</i>
+                  </Button>
+                )}
+                <div className={styles.pickerInformationLine}>
+                  <a
+                    href={getDocsLink(DocsId.Transformations)}
+                    className="external-link"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
+                    <Icon name="external-link-alt" />
+                  </a>
+                  &nbsp;allow you to manipulate your data before a visualization is applied.
+                </div>
+              </>
+            )}
+            <VerticalGroup>
+              {!config.featureToggles.transformationsRedesign && (
+                <Input
+                  data-testid={selectors.components.Transforms.searchInput}
+                  value={search ?? ''}
+                  autoFocus={!noTransforms}
+                  placeholder="Search for transformation"
+                  onChange={this.onSearchChange}
+                  onKeyDown={this.onSearchKeyDown}
+                  suffix={suffix}
+                />
+              )}
+
+              {!config.featureToggles.transformationsRedesign &&
+                xforms.map((t) => {
+                  return (
+                    <TransformationCard
+                      key={t.name}
+                      transform={t}
+                      onClick={() => {
+                        this.onTransformationAdd({ value: t.id });
+                      }}
+                    />
+                  );
+                })}
+
+              {config.featureToggles.transformationsRedesign && (
+                <div className={styles.searchWrapper}>
+                  <Input
+                    data-testid={selectors.components.Transforms.searchInput}
+                    className={styles.searchInput}
+                    value={search ?? ''}
+                    autoFocus={!noTransforms}
+                    placeholder="Search for transformation"
+                    onChange={this.onSearchChange}
+                    onKeyDown={this.onSearchKeyDown}
+                    suffix={suffix}
+                  />
+                  <div className={styles.showImages}>
+                    <span className={styles.illustationSwitchLabel}>Show images</span>{' '}
+                    <Switch
+                      value={this.state.showIllustrations}
+                      onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {config.featureToggles.transformationsRedesign && (
+                <div className={styles.filterWrapper}>
+                  {filterCategoriesLabels.map(([slug, label]) => {
+                    return (
+                      <FilterPill
+                        key={slug}
+                        onClick={() => this.setState({ selectedFilter: slug })}
+                        label={label}
+                        selected={this.state.selectedFilter === slug}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
+              {config.featureToggles.transformationsRedesign && (
+                <TransformationsGrid
+                  showIllustrations={this.state.showIllustrations}
+                  transformations={xforms}
+                  onClick={(id) => {
+                    this.onTransformationAdd({ value: id });
+                  }}
+                />
+              )}
+            </VerticalGroup>
+          </>
         ) : (
           <Button
             icon="plus"

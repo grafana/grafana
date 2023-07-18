@@ -5,8 +5,13 @@ keywords:
   - troubleshooting
   - support
   - bundles
-title: Send a support bundle to Grafana Labs support
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menutitle: Send a support bundle to support
+title: Send a support bundle to Grafana Labs support
 weight: 200
 ---
 

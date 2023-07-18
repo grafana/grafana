@@ -156,7 +156,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     header: css`
       label: TracePageHeader;
       background-color: ${theme.colors.background.primary};
-      padding: 0.5em 0 0 0;
       position: sticky;
       top: 0;
       z-index: 5;

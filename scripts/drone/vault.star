@@ -91,21 +91,6 @@ def secrets():
             "Secret",
         ),
         vault_secret(
-            "aws_region",
-            "secret/data/common/aws-marketplace",
-            "aws_region",
-        ),
-        vault_secret(
-            "aws_access_key_id",
-            "secret/data/common/aws-marketplace",
-            "aws_access_key_id",
-        ),
-        vault_secret(
-            "aws_secret_access_key",
-            "secret/data/common/aws-marketplace",
-            "aws_secret_access_key",
-        ),
-        vault_secret(
             "static_asset_editions",
             "infra/data/ci/grafana-release-eng/artifact-publishing",
             "static_asset_editions",

@@ -1,5 +1,6 @@
 import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 
+import { DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
@@ -107,7 +108,7 @@ export function patchObjectAsLiveTarget(obj: unknown) {
     !(obj instanceof Function) &&
     // conditions for allowed objects
     // react class components
-    isReactClassComponent(obj)
+    (isReactClassComponent(obj) || obj instanceof DataSourceApi)
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   }
