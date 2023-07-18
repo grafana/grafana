@@ -55,6 +55,9 @@ export interface LogRowModel {
   // the same as rows final index when rendered.
   rowIndex: number;
 
+  // The value of the the dataframe's id field, if it exists
+  rowId?: string;
+
   // Full DataFrame from which we parsed this log.
   // TODO: refactor this so we do not need to pass whole dataframes in addition to also parsed data.
   dataFrame: DataFrame;

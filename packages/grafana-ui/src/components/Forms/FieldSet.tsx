@@ -27,12 +27,12 @@ export const FieldSet = ({ label, children, className, ...rest }: Props) => {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing(4)};
+    wrapper: css({
+      marginBottom: theme.spacing(4),
 
-      &:last-child {
-        margin-bottom: 0;
-      }
-    `,
+      '&:last-child': {
+        marginBottom: 0,
+      },
+    }),
   };
 });

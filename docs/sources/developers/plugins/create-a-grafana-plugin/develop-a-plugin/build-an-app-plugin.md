@@ -1,7 +1,5 @@
 ---
-title: Build an app plugin
 description: Learn at how to create an app for Grafana.
-weight: 700
 draft: true
 keywords:
   - grafana
@@ -9,6 +7,12 @@ keywords:
   - plugin
   - app
   - app plugin
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build an app plugin
+weight: 700
 ---
 
 ## Introduction
@@ -194,9 +198,9 @@ If you want to let users know that your app requires an existing plugin, you can
   "plugins": [
     {
       "type": "panel",
-      "name": "Worldmap Panel",
-      "id": "grafana-worldmap-panel",
-      "version": "^0.3.2"
+      "name": "Clock Panel",
+      "id": "grafana-clock-panel",
+      "version": "^2.1.3"
     }
   ]
 }

@@ -1,12 +1,19 @@
 ---
-title: Provision dashboards and data sources
-summary: Treat your configuration as code.
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Treat your configuration as code.
 id: provision-dashboards-and-data-sources
-categories: ['administration']
-tags: ['intermediate']
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+labels:
+  products:
+    - enterprise
+    - oss
+summary: Treat your configuration as code.
+tags:
+  - intermediate
+title: Provision dashboards and data sources
 weight: 40
 ---
 

@@ -66,9 +66,9 @@ export function SegmentInput({
     );
   }
 
-  const inputWidthStyle = css`
-    width: ${Math.max(inputWidth + 20, 32)}px;
-  `;
+  const inputWidthStyle = css({
+    width: `${Math.max(inputWidth + 20, 32)}px`,
+  });
 
   return (
     <input

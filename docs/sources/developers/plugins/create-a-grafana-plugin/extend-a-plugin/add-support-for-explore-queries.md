@@ -1,5 +1,4 @@
 ---
-title: Add features to Explore queries
 aliases:
   - ../../../plugins/add-support-for-explore-queries/
 description: Add features to Explore queries.
@@ -10,6 +9,11 @@ keywords:
   - queries
   - explore queries
   - explore
+labels:
+  products:
+    - enterprise
+    - oss
+title: Add features to Explore queries
 weight: 400
 ---
 

@@ -3,6 +3,10 @@ aliases:
   - ../../../enterprise/vault/
 description: Learn how to integrate Grafana with Hashicorp Vault so that you can use
   secrets for configuration and provisioning.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Integrate Grafana with Hashicorp Vault
 weight: 500
 ---

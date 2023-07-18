@@ -1,5 +1,9 @@
 ---
 headless: true
+labels:
+  products:
+    - enterprise
+    - oss
 ---
 
 [//]: # 'This file documents the Search query type for the Tempo data source.'

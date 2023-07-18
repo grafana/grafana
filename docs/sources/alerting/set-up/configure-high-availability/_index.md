@@ -9,6 +9,10 @@ keywords:
   - tutorials
   - ha
   - high availability
+labels:
+  products:
+    - enterprise
+    - oss
 title: Enable alerting high availability
 weight: 400
 ---
