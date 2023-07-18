@@ -5,14 +5,14 @@ import React from 'react';
 import { PluginType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { PluginDetailsAngularDeprecation } from './PluginDetailsAngularDeprecation';
+import { PluginDetailsAngularDeprecation } from './AngularDeprecationPluginNotice';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
 }));
 
-describe('PluginDetailsAngularDeprecation', () => {
+describe('AngularDeprecationPluginNotice', () => {
   afterAll(() => {
     jest.resetAllMocks();
   });

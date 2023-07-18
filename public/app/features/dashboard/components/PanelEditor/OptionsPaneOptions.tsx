@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
-import { PluginDetailsAngularDeprecation } from 'app/features/plugins/admin/components/PluginDetailsAngularDeprecation';
+import { PluginDetailsAngularDeprecation } from 'app/features/plugins/angularDeprecation/PluginDetailsAngularDeprecation';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 

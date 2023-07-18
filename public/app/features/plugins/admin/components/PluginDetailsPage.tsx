@@ -9,8 +9,8 @@ import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
+import { PluginDetailsAngularDeprecation } from '../../angularDeprecation/AngularDeprecationPluginNotice';
 import { Loader } from '../components/Loader';
-import { PluginDetailsAngularDeprecation } from '../components/PluginDetailsAngularDeprecation';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
