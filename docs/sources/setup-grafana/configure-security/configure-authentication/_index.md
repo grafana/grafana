@@ -124,7 +124,10 @@ Hide the Grafana login form using the below configuration settings.
 disable_login_form = true
 ```
 
-> Please Note: For Grafana Cloud users, this option can only be configured under specific circumstances, e.g. when enabling LDAP Authentication, please contact Grafana Support for further assistance.
+{{% admonition type="note" %}}
+For Grafana Cloud users, this option can only be configured under specific circumstances, such as enabling LDAP authentication. Please contact Grafana Support for further assistance.
+{{% /admonition %}}
+
 
 ### Automatic OAuth login
 
