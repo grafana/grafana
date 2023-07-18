@@ -132,6 +132,12 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
   let histCanWidth = Math.round(histCssWidth * devicePixelRatio);
   let histCanHeight = Math.round(histCssHeight * devicePixelRatio);
 
+  const minCanWidth = 264;
+  const minCanHeight = 64;
+
+  histCanWidth = histCanWidth < minCanWidth ? minCanWidth : histCanWidth;
+  histCanHeight = histCanHeight < minCanHeight ? minCanHeight : histCanHeight;
+
   useEffect(
     () => {
       if (showHistogram) {
