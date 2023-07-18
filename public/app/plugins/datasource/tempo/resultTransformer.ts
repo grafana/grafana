@@ -632,11 +632,11 @@ export function createTableFrameFromTraceQlQuery(
       preferredVisualisationType: 'table',
     },
   });
-  frame.length = data.length;
 
   if (!data?.length) {
     return [frame];
   }
+  frame.length = data.length;
 
   data
     // Show the most recent traces
@@ -807,17 +807,17 @@ function transformSpanToTraceData(span: Span, spanSet: Spanset, traceID: string)
   };
 
   spanSet.attributes?.forEach((attr) => {
-    if (attr.value.boolValue) {
-      data[attr.key] = attr.value.boolValue;
+    if (attr.value.boolValue || attr.value.Value?.bool_value) {
+      data[attr.key] = attr.value.boolValue || attr.value.Value?.bool_value;
     }
-    if (attr.value.doubleValue) {
-      data[attr.key] = attr.value.doubleValue;
+    if (attr.value.doubleValue || attr.value.Value?.double_value) {
+      data[attr.key] = attr.value.doubleValue || attr.value.Value?.double_value;
     }
-    if (attr.value.intValue) {
-      data[attr.key] = attr.value.intValue;
+    if (attr.value.intValue || attr.value.Value?.int_value) {
+      data[attr.key] = attr.value.intValue || attr.value.Value?.int_value;
     }
-    if (attr.value.stringValue) {
-      data[attr.key] = attr.value.stringValue;
+    if (attr.value.stringValue || attr.value.Value?.string_value) {
+      data[attr.key] = attr.value.stringValue || attr.value.Value?.string_value;
     }
   });
 
