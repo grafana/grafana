@@ -26,6 +26,7 @@ type Props = DispatchProps & ConnectedProps<typeof connector>;
 export function ExploreQueryInspector(props: Props) {
   const { loading, width, onClose, queryResponse, timeZone } = props;
   const dataFrames = queryResponse?.series || [];
+  console.log('DF', dataFrames);
   let errors = queryResponse?.errors;
   if (!errors?.length && queryResponse?.error) {
     errors = [queryResponse.error];

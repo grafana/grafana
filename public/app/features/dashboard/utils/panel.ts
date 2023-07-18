@@ -1,10 +1,11 @@
 import { isString as _isString } from 'lodash';
 
-import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel } from '@grafana/data';
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, PanelData } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
+import { exportStartup, ExportType } from 'app/core/services/PanelExporterService';
 import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -12,7 +13,6 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
-import { CanvasPanel } from 'app/plugins/panel/canvas/CanvasPanel';
 import { dispatch } from 'app/store/store';
 
 import { PanelExportEvent, ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
@@ -70,11 +70,17 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   );
 };
 
-export const exportPanel = (htmlElement: HTMLCanvasElement | null, panel: PanelModel, exportType: String) => {
+export const exportPanel = (
+  htmlElement: HTMLCanvasElement | null,
+  panel: PanelModel,
+  format: ExportType,
+  parentHtml: HTMLElement | null,
+  data?: PanelData | null
+) => {
   // add exportType?
   console.log('panel', panel);
   console.log('htmlEl', htmlElement);
-  console.log('exportType', exportType);
+  console.log('exportType', format);
 
   if (!htmlElement) {
     console.log('AAAAAAAA, no HTML element');
@@ -82,9 +88,10 @@ export const exportPanel = (htmlElement: HTMLCanvasElement | null, panel: PanelM
     return;
   }
 
-  appEvents.publish(
-    new PanelExportEvent({ panel, htmlElement, exportType }) // exportType not in ExportPanelPayload
-  );
+  exportStartup(new PanelExportEvent({ panel, data, htmlElement, format, parentHtml }));
+  /*appEvents.publish(
+    new PanelExportEvent({ panel, htmlElement, format }) // exportType not in ExportPanelPayload
+  );*/
 };
 
 export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {

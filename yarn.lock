@@ -9773,6 +9773,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/dom-to-image@npm:^2":
+  version: 2.6.4
+  resolution: "@types/dom-to-image@npm:2.6.4"
+  checksum: ddc8d74b944909040a6e6d9ca2feb246b50dc8c3ad908a90634fb6e46e4c438b47aa0a5df4994bd19c1d6f110eb90a15146d1c1a7b8762ab9d050f70e6de4050
+  languageName: node
+  linkType: hard
+
 "@types/dompurify@npm:^2":
   version: 2.4.0
   resolution: "@types/dompurify@npm:2.4.0"
@@ -16086,6 +16093,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dom-to-image@npm:^2.6.0":
+  version: 2.6.0
+  resolution: "dom-to-image@npm:2.6.0"
+  checksum: 0d1f450b776d36f3ec982783d2a3898baaa3697f135ed0a9c70085db6bc5ac6def02f5ed7affc6acb92ef4fb3248905fabec915fed541994383d317260f784a2
+  languageName: node
+  linkType: hard
+
 "domelementtype@npm:^2.0.1, domelementtype@npm:^2.2.0":
   version: 2.2.0
   resolution: "domelementtype@npm:2.2.0"
@@ -19218,6 +19232,7 @@ __metadata:
     "@types/d3-force": ^3.0.0
     "@types/d3-scale-chromatic": 3.0.0
     "@types/debounce-promise": 3.1.6
+    "@types/dom-to-image": ^2
     "@types/eslint": 8.44.0
     "@types/file-saver": 2.0.5
     "@types/glob": ^8.0.0
@@ -19306,6 +19321,7 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.30.0
     debounce-promise: 3.1.2
+    dom-to-image: ^2.6.0
     emotion: 11.0.0
     esbuild: 0.18.6
     esbuild-loader: 3.0.1

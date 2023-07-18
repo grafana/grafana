@@ -1,5 +1,6 @@
-import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
+import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory, PanelData } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
+import { ExportType } from 'app/core/services/PanelExporterService';
 import { PanelModel } from 'app/features/dashboard/state';
 
 /**
@@ -31,7 +32,9 @@ export interface ShowModalReactPayload {
 export interface ExportPanelPayload {
   panel: PanelModel;
   htmlElement: HTMLCanvasElement; // from HTMLElement
-  exportType: String; // todo: change from String;
+  format: ExportType;
+  data?: PanelData | null;
+  parentHtml: HTMLElement | null;
 }
 
 export interface ShowConfirmModalPayload {

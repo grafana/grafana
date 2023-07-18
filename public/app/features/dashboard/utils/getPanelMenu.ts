@@ -1,4 +1,4 @@
-import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
+import { PanelData, PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
 import {
   isPluginExtensionLink,
   AngularComponent,
@@ -10,6 +10,7 @@ import {
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
+import { ExportType } from 'app/core/services/PanelExporterService';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -36,7 +37,8 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  angularComponent?: AngularComponent | null
+  angularComponent?: AngularComponent | null,
+  data?: PanelData | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -61,26 +63,29 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
 
-  const onExportPanel = (event: React.MouseEvent<HTMLElement> & { target: HTMLElement }) => {
+  //=================
+
+  const onExportPanel = (event: React.MouseEvent, exportType: ExportType) => {
     console.log('e', event);
     event.preventDefault();
-    //todo avoid as   DONE? (or maybe causes problems elsewhere)
-    const exportHtmlElement: HTMLElement = event.target;
-    console.log('html', exportHtmlElement);
-    // reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
-    exportPanel(exportHtmlElement.closest('[id="reactRoot"]')?.querySelector('canvas')!, panel, 'PNG'); // Just slecting the first one right now
+    //todo avoid as   DONE? (or maybe causes problems elsewhere) // NOW UNDONE
+    const exportHtmlElement: HTMLElement = event.target as HTMLElement;
+
+    reportInteraction('dashboards_panelheader_menu', {
+      item: 'createExportPanel',
+      exportType: exportType ?? ExportType.jpeg,
+    });
+    console.log('ee', document.getElementById('pageContent')); // we may need to add ID to find individual panels?
+    exportPanel(
+      exportHtmlElement.closest('[id="reactRoot"]')?.querySelector('canvas')!,
+      panel,
+      exportType ?? ExportType.jpeg,
+      document.getElementById('pageContent') as HTMLElement,
+      data
+    );
   };
 
-  /*const onExportPanel = (tab?: ExportTab) => {
-    locationService.partial({
-      inspect: panel.id,
-      inspectTab: tab,
-    });
-
-    reportInteraction('grafana_panel_menu_export', {
-      tab: tab ?? ExportTab.Data,
-    });
-  }; */
+  //=================
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -165,7 +170,7 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  const subMenuEnable = false;
+  const subMenuEnable = true;
 
   const exportMenu: PanelMenuItem[] = [];
   let exportImageMenu = exportMenu;
@@ -182,48 +187,52 @@ export function getPanelMenu(
   exportImageMenu.push({
     text: `PNG`,
     iconClassName: 'camera',
-    onClick: onExportPanel,
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.png),
   });
 
   exportImageMenu.push({
-    text: `JPG`,
+    text: `JPEG`,
     iconClassName: 'camera',
-    onClick: onExportPanel,
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.jpeg),
   });
 
   exportImageMenu.push({
     text: `BMP`,
     iconClassName: 'camera',
-    onClick: onExportPanel,
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.bmp),
   });
 
-  exportImageMenu.push({
-    type: 'divider',
-    text: '',
-  });
+  if (!subMenuEnable) {
+    exportImageMenu.push({
+      type: 'divider',
+      text: '',
+    });
+  }
 
   exportDataMenu.push({
     text: `CSV`,
     iconClassName: 'book',
-    onClick: () => onInspectPanel(InspectTab.Data), // plhold
+    onClick: (e: React.MouseEvent) => {
+      onExportPanel(e, ExportType.csv);
+    },
   });
 
   exportDataMenu.push({
     text: `Excel`,
     iconClassName: 'book',
-    onClick: () => onInspectPanel(InspectTab.Data), // plhold
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.xls),
   });
 
   exportDataMenu.push({
     text: `Numbers`,
     iconClassName: 'book',
-    onClick: () => onInspectPanel(InspectTab.Data), // plhold
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.numbers),
   });
 
   exportDataMenu.push({
     text: `JSON`,
     iconClassName: 'book',
-    onClick: () => onInspectPanel(InspectTab.JSON), // plhold
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.json),
   });
 
   console.log('2', exportImageMenu);
@@ -246,7 +255,6 @@ export function getPanelMenu(
     type: 'submenu',
     text: t('panel.header-menu.export', `Export`),
     iconClassName: 'download-alt',
-    onClick: onExportPanel,
     shortcut: 't', // if multiple letters, overlaps with > symbol
     subMenu: exportMenu,
   });
