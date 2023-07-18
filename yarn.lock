@@ -19594,6 +19594,9 @@ __metadata:
     whatwg-fetch: 3.6.2
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     yargs: ^17.5.1
+  dependenciesMeta:
+    prettier@3.0.0:
+      unplugged: true
   languageName: unknown
   linkType: soft
 
