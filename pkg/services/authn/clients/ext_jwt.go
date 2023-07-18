@@ -2,7 +2,9 @@ package clients
 
 import (
 	"context"
+	"crypto"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -171,8 +174,13 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 		return nil, fmt.Errorf("invalid algorithm: %s. Accepted algorithms: %s", parsedHeader.Algorithm, strings.Join(acceptedSigningMethods, ", "))
 	}
 
+	key, errGetKey := s.signingPublicKey()
+	if errGetKey != nil {
+		return nil, errGetKey
+	}
+
 	var claims ExtendedJWTClaims
-	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims)
+	err = parsedToken.Claims(key, &claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify the signature: %w", err)
 	}
@@ -208,6 +216,30 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	return &claims, nil
+}
+
+func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
+	key := s.signingKeys.GetServerPublicKey()
+	if s.cfg.ExtendedJWTPublicKeyURL != "" {
+		s.log.Debug("Fetching key", "url", s.cfg.ExtendedJWTPublicKeyURL)
+		// TODO eventually cache result
+		resp, errGetKey := http.Get(s.cfg.ExtendedJWTPublicKeyURL)
+		if errGetKey != nil {
+			return nil, fmt.Errorf("could not fetch remote key at '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errGetKey)
+		}
+		defer resp.Body.Close()
+		body, errReadBody := io.ReadAll(resp.Body)
+		if errReadBody != nil {
+			return nil, fmt.Errorf("could not read response from '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errReadBody)
+		}
+		s.log.Debug("Key response body", "body", string(body))
+		remoteKey, errParse := utils.ParsePublicKeyPem(body)
+		if errParse != nil {
+			return nil, fmt.Errorf("could not read key returned by '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errParse)
+		}
+		key = remoteKey
+	}
+	return key, nil
 }
 
 func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {

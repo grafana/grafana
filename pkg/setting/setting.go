@@ -328,6 +328,7 @@ type Cfg struct {
 	ExtendedJWTAuthEnabled    bool
 	ExtendedJWTExpectIssuer   string
 	ExtendedJWTExpectAudience string
+	ExtendedJWTPublicKeyURL   string
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -1596,6 +1597,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
 	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
 	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
+	cfg.ExtendedJWTPublicKeyURL = authExtendedJWT.Key("public_key_url").MustString("")
 
 	// Auth Proxy
 	authProxy := iniFile.Section("auth.proxy")
