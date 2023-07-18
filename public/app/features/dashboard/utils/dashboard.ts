@@ -97,7 +97,7 @@ export function initLocalStorageDashboard(uid: string | undefined) {
   initLocalStoragePanelEdit(uid);
 }
 
-export function initLocalStoragePanelEdit(dashUid: string | undefined) {
+function initLocalStoragePanelEdit(dashUid: string | undefined) {
   // Implement logic to handle last used datasource in panel edit page
   initLastUsedDatasourceLocalStorage(dashUid);
 }
@@ -112,7 +112,6 @@ type LastUsedDatasource =
 const PANEL_EDIT_LAST_USED_DATASOURCE = 'grafana.dashboards.panelEdit.lastUsedDatasource';
 
 function initLastUsedDatasourceLocalStorage(dashUid: string | undefined) {
-  const PANEL_EDIT_LAST_USED_DATASOURCE = 'grafana.dashboards.panelEdit.lastUsedDatasource';
   // Check if user has any local storage associated with this dashboard
   if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
     const lastUsedDatasource: LastUsedDatasource = store.getObject(PANEL_EDIT_LAST_USED_DATASOURCE);
@@ -133,7 +132,7 @@ export function updateDashboardUidLastUsedDatasource(dashUid: string) {
   // Check if user has any datasource uid in local storage
   const lastUsedDatasource = getLastUsedDatasourceFromStorage();
   // set new local storage with new dashboard uid and existing datasource
-  const datasourceUid = lastUsedDatasoruce?.datasourceUid ?? '';
+  const datasourceUid = lastUsedDatasource?.datasourceUid ?? '';
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashUid, datasourceUid: datasourceUid });
 }
 
