@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, xor } from 'lodash';
+import { cloneDeep } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -25,7 +25,7 @@ import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { errorFromSeries, refIdExists } from '../util';
+import { errorFromSeries, refIdExists, findRenamedDataQueryReferences } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
@@ -163,13 +163,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       dispatch(updateExpressionTimeRange());
 
       // check if we need to rewire expressions (and which ones)
-      const updatedDataQueries = updatedQueries.map((query) => query.refId);
-      const previousDataQueries = queries
-        .filter((query) => !isExpressionQuery(query.model))
-        .map((query) => query.refId);
-
-      // this code assumes not more than 1 query refId has changed per "onChangeQueries"
-      const [oldRefId, newRefId] = xor(previousDataQueries, updatedDataQueries);
+      const [oldRefId, newRefId] = findRenamedDataQueryReferences(queries, updatedQueries);
       if (oldRefId && newRefId) {
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
