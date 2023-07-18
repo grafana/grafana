@@ -303,8 +303,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [dispatch]
   );
 
-  // we need to keep track of the previous expressions to be able to restore them when switching back to grafana managed
+  // we need to keep track of the previous expressions and condition reference to be able to restore them when switching back to grafana managed
   const [prevExpressions, setPrevExpressions] = useState<AlertQuery[]>([]);
+  const [prevCondition, setPrevCondition] = useState<string | null>(null);
 
   const restoreExpressionsInQueries = useCallback(() => {
     addExpressionsInQueries(prevExpressions);
@@ -314,14 +315,26 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
-      setPrevExpressions.length > 0 && restoreExpressionsInQueries();
+      prevExpressions.length > 0 && restoreExpressionsInQueries();
+      prevCondition && setValue('condition', prevCondition);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
       setPrevExpressions(expressions);
       removeExpressionsInQueries();
+      setPrevCondition(condition);
     }
-  }, [getValues, setValue, queries, removeExpressionsInQueries, restoreExpressionsInQueries, setPrevExpressions]);
+  }, [
+    getValues,
+    setValue,
+    queries,
+    removeExpressionsInQueries,
+    restoreExpressionsInQueries,
+    setPrevExpressions,
+    prevExpressions,
+    prevCondition,
+    condition,
+  ]);
 
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">

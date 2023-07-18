@@ -1,7 +1,7 @@
 ---
-title: Work with cross-plugin links
 aliases:
   - ../../../plugins/cross-plugin-linking/
+description: Learn how to add plugin links to a Grafana app plugin.
 keywords:
   - grafana
   - plugins
@@ -10,7 +10,11 @@ keywords:
   - cross-plugin links
   - extensions
   - extensions api
-description: Learn how to add plugin links to a Grafana app plugin.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Work with cross-plugin links
 weight: 800
 ---
 

@@ -11,6 +11,11 @@ keywords:
   - contact point
   - notification channel
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Contact points
 weight: 106
 ---

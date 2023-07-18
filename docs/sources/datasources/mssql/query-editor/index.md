@@ -10,6 +10,11 @@ keywords:
   - guide
   - Azure SQL Database
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Microsoft SQL Server query editor
 weight: 300

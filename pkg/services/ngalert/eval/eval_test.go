@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -358,7 +359,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 func TestValidate(t *testing.T) {
 	type services struct {
 		cache        *fakes.FakeCacheService
-		pluginsStore *plugins.FakePluginStore
+		pluginsStore *pluginFakes.FakePluginStore
 	}
 
 	testCases := []struct {
@@ -529,7 +530,7 @@ func TestValidate(t *testing.T) {
 
 		t.Run(testCase.name, func(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
-			store := &plugins.FakePluginStore{}
+			store := &pluginFakes.FakePluginStore{}
 			condition := testCase.condition(services{
 				cache:        cacheService,
 				pluginsStore: store,

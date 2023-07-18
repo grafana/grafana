@@ -1,5 +1,4 @@
 ---
-title: Build a streaming data source plugin
 aliases:
   - ../../../plugins/build-a-streaming-data-source-plugin/
 description: How to build a streaming data source plugin.
@@ -10,6 +9,11 @@ keywords:
   - streaming
   - streaming data source
   - datasource
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a streaming data source plugin
 weight: 600
 ---
 

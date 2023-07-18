@@ -16,14 +16,14 @@ const EmptySearchResult = ({ children }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      border-left: 3px solid ${theme.colors.info.main};
-      background-color: ${theme.colors.background.secondary};
-      padding: ${theme.spacing(2)};
-      min-width: 350px;
-      border-radius: ${theme.shape.radius.default};
-      margin-bottom: ${theme.spacing(4)};
-    `,
+    container: css({
+      borderLeft: `3px solid ${theme.colors.info.main}`,
+      backgroundColor: `${theme.colors.background.secondary}`,
+      padding: theme.spacing(2),
+      minWidth: '350px',
+      borderRadius: theme.shape.radius.default,
+      marginBottom: theme.spacing(4),
+    }),
   };
 };
 export { EmptySearchResult };

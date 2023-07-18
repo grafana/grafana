@@ -5,6 +5,10 @@ rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following ev
 """
 
 load(
+    "scripts/drone/steps/lib.star",
+    "get_windows_steps",
+)
+load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
@@ -99,14 +103,28 @@ def rgm_tag():
         depends_on = [],
     )
 
+def rgm_windows():
+    return pipeline(
+        name = "rgm-tag-prerelease-windows",
+        trigger = tag_trigger,
+        steps = get_windows_steps(
+            ver_mode = "release",
+            bucket = "grafana-prerelease-dev",
+        ),
+        depends_on = ["rgm-tag-prerelease"],
+        platform = "windows",
+        environment = {"EDITION": "oss"},
+    )
+
 def rgm():
     return [
         rgm_main(),
         rgm_tag(),
+        rgm_windows(),
         verify_release_pipeline(
             name = "rgm-tag-verify-prerelease-assets",
             trigger = tag_trigger,
-            depends_on = ["rgm-tag-prerelease"],
+            depends_on = ["rgm-tag-prerelease", "rgm-tag-prerelease-windows"],
             bucket = "grafana-prerelease-dev",
         ),
     ]

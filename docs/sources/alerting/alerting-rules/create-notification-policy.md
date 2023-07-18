@@ -10,6 +10,11 @@ keywords:
   - guide
   - notification policies
   - routes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure notification policies
 weight: 420
 ---
