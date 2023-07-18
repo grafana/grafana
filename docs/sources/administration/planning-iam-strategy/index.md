@@ -20,7 +20,7 @@ Integrating with an IAM provider provides the following benefits:
 
 - **User management**: By providing Grafana access to your current user management system, you eliminate the overhead of replicating user information and instead have centralized user management for users' roles and permissions to Grafana resources.
 
-- **Security**: many IAM solutions provide advanced security features such as multi-factor authentication, RBAC, and audit trails, which can help to improve the security of your Grafana installation.
+- **Security**: Many IAM solutions provide advanced security features such as multi-factor authentication, RBAC, and audit trails, which can help to improve the security of your Grafana installation.
 
 - **SSO**: Properly setting up Grafana with your current IAM solution enables users to access Grafana with the same credentials they use for other applications.
 
@@ -89,7 +89,7 @@ Consider the following scenarios:
 
 **Provisioning file**: Provisioning files can be used to automate the creation of dashboards, data sources, and other resources.
 
-These are just a few examples of how Grafana can be used in M2M scenarios. The platform is highly flexible and can be used in a variety of other M2M applications, making it a powerful tool for organizations looking to gain insights into their systems and devices.
+These are just a few examples of how Grafana can be used in M2M scenarios. The platform is highly flexible and can be used in various M2M applications, making it a powerful tool for organizations seeking insights into their systems and devices.
 
 ### Service accounts
 
