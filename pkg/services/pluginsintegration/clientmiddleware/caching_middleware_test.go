@@ -91,6 +91,54 @@ func TestCachingMiddleware(t *testing.T) {
 			// Since it was a miss, the middleware called the update func
 			assert.True(t, updateCacheCalled)
 		})
+
+		t.Run("with async queries", func(t *testing.T) {
+			t.Run("If shoudCacheQuery returns true update cache function is called", func(t *testing.T) {
+				origShouldCacheQuery := shouldCacheQuery
+				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool { return true }
+
+				t.Cleanup(func() {
+					updateCacheCalled = false
+					shouldCacheQuery = origShouldCacheQuery
+					cs.Reset()
+				})
+
+				cs.ReturnHit = false
+				cs.ReturnQueryResponse = dataResponse
+
+				resp, err := cdt.Decorator.QueryData(req.Context(), qdr)
+				assert.NoError(t, err)
+				// Cache service is called once
+				cs.AssertCalls(t, "HandleQueryRequest", 1)
+				// Equals nil (returned by the decorator test)
+				assert.Nil(t, resp)
+				// Since it was a miss, the middleware called the update func
+				assert.True(t, updateCacheCalled)
+			})
+
+			t.Run("If shoudCacheQuery returns false update cache function is not called", func(t *testing.T) {
+				origShouldCacheQuery := shouldCacheQuery
+				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool { return false }
+
+				t.Cleanup(func() {
+					updateCacheCalled = false
+					shouldCacheQuery = origShouldCacheQuery
+					cs.Reset()
+				})
+
+				cs.ReturnHit = false
+				cs.ReturnQueryResponse = dataResponse
+
+				resp, err := cdt.Decorator.QueryData(req.Context(), qdr)
+				assert.NoError(t, err)
+				// Cache service is called once
+				cs.AssertCalls(t, "HandleQueryRequest", 1)
+				// Equals nil (returned by the decorator test)
+				assert.Nil(t, resp)
+				// Since it was a miss, the middleware called the update func
+				assert.False(t, updateCacheCalled)
+			})
+		})
 	})
 
 	t.Run("When CallResource is called", func(t *testing.T) {

@@ -13,6 +13,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+var shouldCacheQuery = awsds.ShouldCacheQuery
+
 // NewCachingMiddleware creates a new plugins.ClientMiddleware that will
 // attempt to read and write query results to the cache
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
@@ -76,12 +78,12 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// Cache miss; do the actual queries
 	resp, err := m.next.QueryData(ctx, req)
 
-	// Check if an async query is still running, if it is don't cache it
-	shouldCache := awsds.ShouldCacheQuery(resp)
-
 	// Update the query cache with the result for this metrics request
-	if shouldCache && err == nil && cr.UpdateCacheFn != nil {
-		cr.UpdateCacheFn(ctx, resp)
+	if err == nil && cr.UpdateCacheFn != nil {
+		// Check if it is a still running async query, if it is don't cache it
+		if shouldCacheQuery(resp) {
+			cr.UpdateCacheFn(ctx, resp)
+		}
 	}
 
 	return resp, err
