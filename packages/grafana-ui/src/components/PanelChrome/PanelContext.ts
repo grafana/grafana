@@ -2,13 +2,14 @@ import React from 'react';
 
 import {
   EventBusSrv,
-  EventBus,
+  EventBusWithFiltering,
   DashboardCursorSync,
   AnnotationEventUIModel,
   ThresholdsConfig,
   SplitOpen,
   CoreApp,
   DataFrame,
+  ScopedEventBus,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
@@ -19,7 +20,7 @@ import { SeriesVisibilityChangeMode } from '.';
 export interface PanelContext {
   /** Identifier for the events scope */
   eventsScope: string;
-  eventBus: EventBus;
+  eventBus: EventBusWithFiltering;
 
   /** Dashboard panels sync */
   sync?: () => DashboardCursorSync;
@@ -95,7 +96,7 @@ export interface PanelContext {
 
 export const PanelContextRoot = React.createContext<PanelContext>({
   eventsScope: 'global',
-  eventBus: new EventBusSrv(),
+  eventBus: new ScopedEventBus(new EventBusSrv()),
 });
 
 /**

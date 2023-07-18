@@ -16,7 +16,6 @@ describe('when fill below to option is used', () => {
       getStream: jest.fn(),
       subscribe: jest.fn(),
       removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
     };
     renderers = [];
 

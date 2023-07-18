@@ -11,6 +11,7 @@ import {
   DataFrame,
   EventFilterOptions,
   FieldConfigSource,
+  ScopedEventBus,
   getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
@@ -86,13 +87,13 @@ export interface State {
 export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
-  private eventFilter: EventFilterOptions = { onlyLocal: true };
+  private eventFilter: EventFilterOptions = { onlyLocal: false, allowLocal: false };
 
   constructor(props: Props) {
     super(props);
 
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
-    const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
+    const eventBus = new ScopedEventBus(props.dashboard.events);
 
     this.state = {
       isFirstLoad: true,
@@ -496,7 +497,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Update the event filter (dashboard settings may have changed)
     // Yes this is called ever render for a function that is triggered on every mouse move
-    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
+    // this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
     return (
       <>

@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import {
   DataFrame,
-  EventBus,
+  EventBusWithFiltering,
   AbsoluteTimeRange,
   TimeZone,
   SplitOpen,
@@ -23,7 +23,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   height: number;
   data: DataFrame[];
   annotations?: DataFrame[];
-  eventBus: EventBus;
+  eventBus: EventBusWithFiltering;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onChangeTime: (absoluteRange: AbsoluteTimeRange) => void;

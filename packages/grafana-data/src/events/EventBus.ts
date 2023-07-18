@@ -11,6 +11,7 @@ import {
   BusEvent,
   AppEvent,
   EventFilterOptions,
+  EventBusWithFiltering,
 } from './types';
 
 /**
@@ -46,10 +47,6 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
         this.subscribers.delete(handler);
       };
     });
-  }
-
-  newScopedBus(key: string, filter?: EventFilterOptions): EventBus {
-    return new ScopedEventBus([key], this, filter);
   }
 
   /**
@@ -106,33 +103,32 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 }
 
 /**
- * Wraps EventBus and adds a source to help with identifying if a subscriber should react to the event or not.
+ * Proxy to EventBus that adds a source to help with identifying if a subscriber should react to the event or not.
  */
-class ScopedEventBus implements EventBus {
-  // will be mutated by panel runners
-  filterConfig: EventFilterOptions;
-
-  // The path is not yet exposed, but can be used to indicate nested groups and support faster filtering
+export class ScopedEventBus implements EventBusWithFiltering {
   constructor(
-    public path: string[],
     private eventBus: EventBus,
-    filter?: EventFilterOptions
-  ) {
-    this.filterConfig = filter ?? { onlyLocal: false };
-  }
+    private _filterConfig: EventFilterOptions = { onlyLocal: false, allowLocal: false }
+  ) {}
 
   publish<T extends BusEvent>(event: T): void {
     if (!event.origin) {
-      (event as any).origin = this;
+      // @ts-ignore
+      event.origin = this;
     }
     this.eventBus.publish(event);
   }
 
   filter = (event: BusEvent) => {
-    if (this.filterConfig.onlyLocal) {
-      return event.origin === this;
+    if (this._filterConfig.onlyLocal && (event as any).origin === this) {
+      return true;
     }
-    return true;
+
+    if (this._filterConfig.allowLocal && (event as any).origin === this) {
+      return true;
+    }
+
+    return (event as any).origin !== this;
   };
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
@@ -148,10 +144,12 @@ class ScopedEventBus implements EventBus {
     this.eventBus.removeAllListeners();
   }
 
-  /**
-   * Creates a nested event bus structure
-   */
-  newScopedBus(key: string, filter: EventFilterOptions): EventBus {
-    return new ScopedEventBus([...this.path, key], this, filter);
+  setFilterConfig(config: Partial<EventFilterOptions>): void {
+    this._filterConfig = { ...this._filterConfig, ...config };
+  }
+
+  // getter for filterConfig
+  get filterConfig(): EventFilterOptions {
+    return this._filterConfig;
   }
 }

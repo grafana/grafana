@@ -18,6 +18,7 @@ import {
   ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
+  ScopedEventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
@@ -154,7 +155,7 @@ export function ExploreGraph({
 
   const panelContext: PanelContext = {
     eventsScope: 'explore',
-    eventBus,
+    eventBus: new ScopedEventBus(eventBus),
     sync: () => DashboardCursorSync.Crosshair,
     onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {

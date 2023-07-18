@@ -40,6 +40,10 @@ interface Props extends PanelProps<Options> {}
  */
 export function PieChartPanel(props: Props) {
   const { data, timeZone, fieldConfig, replaceVariables, width, height, options, id } = props;
+  const { eventBus } = usePanelContext();
+
+  // Enable subscribing to own events, for i.e. legend highlighting support
+  eventBus.setFilterConfig({ allowLocal: true });
 
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();

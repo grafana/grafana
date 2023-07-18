@@ -13,8 +13,10 @@ import {
   QueryFixAction,
   RawTimeRange,
   EventBus,
+  EventBusWithFiltering,
   SplitOpenOptions,
   SupplementaryQueryType,
+  ScopedEventBus,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -142,16 +144,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   absoluteTimeUnsubsciber: Unsubscribable | undefined;
   topOfViewRef = createRef<HTMLDivElement>();
-  graphEventBus: EventBus;
-  logsEventBus: EventBus;
+  graphEventBus: EventBusWithFiltering;
+  logsEventBus: EventBusWithFiltering;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       openDrawer: undefined,
     };
-    this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
-    this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
+    this.graphEventBus = new ScopedEventBus(props.eventBus);
+    this.logsEventBus = new ScopedEventBus(props.eventBus);
   }
 
   componentDidMount() {

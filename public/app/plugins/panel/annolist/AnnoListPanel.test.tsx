@@ -70,7 +70,6 @@ async function setupTestContext({
         }) as any,
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
-      newScopedBus: jest.fn(),
     },
     fieldConfig: {} as unknown as FieldConfigSource,
     height: 400,

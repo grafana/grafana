@@ -4,10 +4,10 @@ import { Unsubscribable, Observable } from 'rxjs';
  * @alpha
  * internal interface
  */
-export interface BusEvent {
+export interface BusEvent<T = EventBus> {
   readonly type: string;
   readonly payload?: any;
-  readonly origin?: EventBus;
+  readonly origin?: T;
 }
 
 /**
@@ -60,6 +60,7 @@ export interface BusEventHandler<T extends BusEvent> {
  */
 export interface EventFilterOptions {
   onlyLocal: boolean;
+  allowLocal: boolean;
 }
 
 /**
@@ -88,13 +89,11 @@ export interface EventBus {
    * Remove all event subscriptions
    */
   removeAllListeners(): void;
+}
 
-  /**
-   * Returns a new bus scoped that knows where it exists in a heiarchy
-   *
-   * @internal -- This is included for internal use only should not be used directly
-   */
-  newScopedBus(key: string, filter: EventFilterOptions): EventBus;
+export interface EventBusWithFiltering<T extends EventFilterOptions = EventFilterOptions> extends EventBus {
+  readonly filterConfig: T;
+  setFilterConfig(config: Partial<T>): void;
 }
 
 /**

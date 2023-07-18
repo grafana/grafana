@@ -30,6 +30,7 @@ import {
   serializeStateToUrlParam,
   urlUtil,
   TimeRange,
+  ScopedEventBus,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -164,7 +165,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props);
-    this.logsVolumeEventBus = props.eventBus.newScopedBus('logsvolume', { onlyLocal: false });
+    this.logsVolumeEventBus = new ScopedEventBus(props.eventBus);
   }
 
   componentWillUnmount() {

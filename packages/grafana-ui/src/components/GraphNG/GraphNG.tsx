@@ -178,9 +178,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         .pipe(throttleTime(50))
         .subscribe({
           next: (evt) => {
-            if (eventBus === evt.origin) {
-              return;
-            }
             this.handleCursorUpdate(evt);
           },
         })
