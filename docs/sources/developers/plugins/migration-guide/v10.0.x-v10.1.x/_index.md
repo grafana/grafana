@@ -6,8 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana 10.0.x to 10.1.x
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: v10.0.x to v10.1.x
+title: Migrate plugins from Grafana 10.0.x to 10.1.x
 weight: 1900
 ---
 

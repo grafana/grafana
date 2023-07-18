@@ -4,6 +4,10 @@ aliases:
   - ../manage-users/create-or-remove-team/
   - ../manage-users/manage-teams/
   - manage-users-and-permissions/manage-teams/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Team management
 weight: 400
 ---

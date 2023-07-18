@@ -105,14 +105,14 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedGrafanaAdmin: nilPointer,
 		},
 		{ // Case that's going to change with Grafana 10
-			Name:              "No fallback to default org role (will change in Grafana 10)",
-			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
+			Name:              "No fallback to default org role",
+			Cfg:               conf{AutoAssignOrgRole: org.RoleAdmin},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "",
+			ExpectedRole:      "Admin",
 		},
 		{
 			Name:              "Strict mode prevents fallback to default",
@@ -120,25 +120,25 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
-			ExpectedError:     &InvalidBasicRoleError{idP: "Gitlab"},
+			ExpectedError:     errRoleAttributeStrictViolation,
 		},
-		{ // Edge case, no match, no strict mode and no fallback => User has an empty role
-			Name:              "Fallback with no default will create a user with an empty role",
+		{ // Edge case, no match, no strict mode and no fallback => User has the Viewer role (hard coded)
+			Name:              "Fallback with no default will create a user with a default role",
 			Cfg:               conf{},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "",
+			ExpectedRole:      "Viewer",
 		},
-		{ // Edge case, no attribute path with strict mode => User has an empty role
+		{ // Edge case, no attribute path with strict mode => Error
 			Name:              "Strict mode with no attribute path",
 			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.RoleViewer},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{editorGroup}, ",") + "]",
 			RoleAttributePath: "",
-			ExpectedError:     &InvalidBasicRoleError{idP: "Gitlab"},
+			ExpectedError:     errRoleAttributePathNotSet,
 		},
 	}
 
@@ -167,7 +167,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			provider.apiUrl = ts.URL + apiURI
 			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
 			if test.ExpectedError != nil {
-				require.Equal(t, err, test.ExpectedError)
+				require.ErrorIs(t, err, test.ExpectedError)
 				return
 			}
 
@@ -246,7 +246,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				Name:           "John Doe",
 				Groups:         []string{"admins", "editors", "viewers"},
 				EmailVerified:  true,
-				Role:           "",
+				Role:           "Viewer",
 				IsGrafanaAdmin: nil,
 			},
 		},
@@ -313,7 +313,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				Name:           "John Doe",
 				Groups:         []string{"admins"},
 				EmailVerified:  true,
-				Role:           "",
+				Role:           "Viewer",
 				IsGrafanaAdmin: nil,
 			},
 		},

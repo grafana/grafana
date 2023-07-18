@@ -10,6 +10,10 @@ keywords:
   - documentation
   - api
   - overview
+labels:
+  products:
+    - enterprise
+    - oss
 title: HTTP API
 weight: 100
 ---

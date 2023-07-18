@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
 description: Create Grafana managed alert rule
 keywords:
   - grafana
@@ -8,6 +9,11 @@ keywords:
   - guide
   - rules
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create Grafana-managed alert rules
 weight: 400
 ---

@@ -10,6 +10,11 @@ keywords:
   - metrics
   - logs
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300

@@ -4,6 +4,10 @@ aliases:
   - ../../manage-users-and-permissions/manage-server-users/add-user-to-org/
 description: Describes how a Grafana server administrator can add or remove users
   in an organization
+labels:
+  products:
+    - enterprise
+    - oss
 title: Add or remove a user in an organization
 weight: 30
 ---
