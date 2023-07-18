@@ -143,16 +143,16 @@ You can use Grafana API keys to interact with data sources via HTTP APIs.
 
 ## How to work with roles?
 
-Grafana utilizes roles to control the access of users and service accounts to specific resources and determine their authorized actions.
+Grafana roles control the access of users and service accounts to specific resources and determine their authorized actions.
 
 You can assign roles through the user interface or APIs, establish them through Terraform, or synchronize them automatically via an external IAM provider.
 
 ### What are roles?
 
 Within an organization, Grafana has established three primary roles - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams.
-To be a member of any organization, every user must be assigned one specific role.
+To be a member of any organization, every user must be assigned a role.
 
-In addition, Grafana offers a server administrator role that grants access to and enables interaction with resources that affect the entire instance, including organizations, users, and server-wide settings.
+In addition, Grafana provides a server administrator role that grants access to and enables interaction with resources that affect the entire instance, including organizations, users, and server-wide settings.
 This particular role can only be accessed by users of self-hosted Grafana instances. It is a significant role intended for the administrators of the Grafana instance.
 
 ### What are permissions?
@@ -173,7 +173,7 @@ Dashboard, folder, and data source permissions can be set through the UI or APIs
 Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-If you feel that the basic organization and server administrator roles are too limiting, it may be beneficial to employ RBAC.
+If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ role-based access control (RBAC).
 RBAC is a flexible approach to managing user access to Grafana resources, including users, data sources, and reports. It enables easy granting, changing, and revoking of read and write access for users.
 
 RBAC comes with pre-defined roles, such as data source writer, which allows updating, reading, or querying all data sources.
@@ -181,7 +181,7 @@ You can assign these roles to users, teams, and service accounts.
 
 In addition, RBAC empowers you to generate personalized roles and modify permissions authorized by the standard Grafana roles.
 
-## User synchronization between Grafana and Identity Providers
+## User synchronization between Grafana and identity providers
 
 When connecting Grafana to an identity provider, it's important to think beyond just the initial authentication setup. You should also think about the maintenance of user bases and roles. Using Grafana's team and role synchronization features ensures that updates you make to a user in your identity provider will be reflected in their role assignment and team memberships in Grafana.
 
@@ -201,7 +201,7 @@ Team synchronization occurs only when a user logs in. However, if you are using 
 
 ### Organization sync
 
-Organization sync is the process of binding all the users from an organization in Grafana. This delegates the role of managing users to the identity provider. This way, there's no need to manage user access from Grafana since the identity provider will be queried whenever a new user tries to log in.
+Organization sync is the process of binding all the users from an organization in Grafana. This delegates the role of managing users to the identity provider. This way, there's no need to manage user access from Grafana because the identity provider will be queried whenever a new user tries to log in.
 
 With organization sync, users from identity provider groups can be assigned to corresponding Grafana organizations. This functionality is similar to role sync but with the added benefit of specifying the organization that a user belongs to for a particular identity provider group. Please note that this feature is only available for self-hosted Grafana instances, as Cloud Grafana instances have a single organization limit.
 
