@@ -78,7 +78,7 @@ func TestModules(t *testing.T) {
 	)
 	`)}}
 
-	err := modules(filesystem, logger, []string{"go.mod"}) // NOTE: pass various flags, these are cmd line arguments
+	err := modules(filesystem, logger, []string{"go.mod"})
 	if err != nil {
 		t.Error(err, buf.String())
 	}
