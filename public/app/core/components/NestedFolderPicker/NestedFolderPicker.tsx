@@ -239,7 +239,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         aria-autocomplete="list"
         aria-expanded
         aria-haspopup
-        aria-label="Use 'Up' and 'Down' arrows to navigate. 'Left' and 'Right' arrows to collapse or expand a folder. 'Enter' to select a folder. 'Escape' to close the overlay."
         aria-controls={overlayId}
         aria-owns={overlayId}
         aria-activedescendant={getDOMId(tree[focusedItemIndex]?.item.uid)}
