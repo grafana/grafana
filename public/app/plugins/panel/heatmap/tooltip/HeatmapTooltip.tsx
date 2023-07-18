@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 import React, { ReactElement, useEffect, useRef, useState } from 'react';
 
-import { DataFrameType, formattedValueToString, getFieldDisplayName, GrafanaTheme2 } from '@grafana/data';
+import {
+  DataFrameType,
+  formattedValueToString,
+  getFieldDisplayName,
+  GrafanaTheme2,
+  outerJoinDataFrames,
+  PanelData,
+} from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
@@ -11,6 +18,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 import { HeatmapData } from '../fields';
 
 import { VizTooltipContent } from './VizTooltipContent';
+import { VizTooltipFooter } from './VizTooltipFooter';
 import { VizTooltipHeader } from './VizTooltipHeader';
 import { ColorIndicator, formatMilliseconds, getHoverCellColor, LabelValue, xDisp } from './tooltipUtils';
 
@@ -20,7 +28,9 @@ interface Props {
   data: HeatmapData;
   showHistogram?: boolean;
   isPinned: boolean;
-  onClose: () => void;
+  dismiss: () => void;
+  canAnnotate: boolean;
+  panelData: PanelData;
 }
 
 export const HeatmapTooltip = (props: Props) => {
@@ -31,7 +41,7 @@ export const HeatmapTooltip = (props: Props) => {
 
   return <HeatmapTooltipHover {...props} />;
 };
-const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
+const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram, isPinned, canAnnotate, panelData }: Props) => {
   const styles = useStyles2(getStyles);
 
   const index = dataIdxs[1]!;
@@ -222,6 +232,10 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
     );
   }
 
+  if (canAnnotate) {
+    const alignedDataFrame = outerJoinDataFrames({ frames: panelData.series });
+  }
+
   const { cellColor, colorPalette } = getHoverCellColor(data, index);
 
   const getLabelValue = (): LabelValue[] => {
@@ -313,6 +327,7 @@ const HeatmapTooltipHover = ({ dataIdxs, data, showHistogram }: Props) => {
         // customValueDisplay={getCustomValueDisplay()}
       />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
+      {isPinned && <VizTooltipFooter />}
     </div>
   );
 };

@@ -18,6 +18,8 @@ import {
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+
 import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
@@ -43,7 +45,9 @@ export const HeatmapPanel = ({
 }: HeatmapPanelProps) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { sync } = usePanelContext();
+  const { sync, canAddAnnotations } = usePanelContext();
+
+  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
@@ -139,7 +143,6 @@ export const HeatmapPanel = ({
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
-      palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
@@ -209,13 +212,49 @@ export const HeatmapPanel = ({
                       seriesIdx={seriesIdx}
                       data={info}
                       isPinned={isPinned}
-                      onClose={dismiss}
+                      dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
+                      canAnnotate={enableAnnotationCreation}
+                      panelData={data}
                     />
                   );
                 }}
               />
             )}
+            {data.annotations && (
+              <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
+            )}
+            {/*{enableAnnotationCreation && (*/}
+            {/*  <AnnotationEditorPlugin data={alignedDataFrame!} timeZone={timeZone} config={builder}>*/}
+            {/*    {({ startAnnotating }) => {*/}
+            {/*      return (*/}
+            {/*        <ContextMenuPlugin*/}
+            {/*          data={alignedDataFrame!}*/}
+            {/*          config={builder}*/}
+            {/*          timeZone={timeZone}*/}
+            {/*          replaceVariables={replaceVariables}*/}
+            {/*          defaultItems={[*/}
+            {/*            {*/}
+            {/*              items: [*/}
+            {/*                {*/}
+            {/*                  label: 'Add annotation',*/}
+            {/*                  ariaLabel: 'Add annotation',*/}
+            {/*                  icon: 'comment-alt',*/}
+            {/*                  onClick: (e, p) => {*/}
+            {/*                    if (!p) {*/}
+            {/*                      return;*/}
+            {/*                    }*/}
+            {/*                    startAnnotating({ coords: p.coords });*/}
+            {/*                  },*/}
+            {/*                },*/}
+            {/*              ],*/}
+            {/*            },*/}
+            {/*          ]}*/}
+            {/*        />*/}
+            {/*      );*/}
+            {/*    }}*/}
+            {/*  </AnnotationEditorPlugin>*/}
+            {/*)}*/}
           </UPlotChart>
         )}
       </VizLayout>
