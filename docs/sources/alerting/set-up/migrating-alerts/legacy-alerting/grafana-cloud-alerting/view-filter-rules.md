@@ -3,7 +3,13 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/view-filter-rules/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/view-filter-alerts/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/view-filter-rules/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting/grafana-cloud-alerting/view-filter-rules/
 description: View and filter alert rules
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: View and filter alert rules
 weight: 300
 ---
@@ -37,6 +43,11 @@ You can control which alerts you see and in what order they appear several ways.
 
 ## View alert in Explore
 
-Click **View in Explore** or click the `expr` link to open the `expr` in [Explore](/docs/grafana/latest/explore/).
+Click **View in Explore** or click the `expr` link to open the `expr` in [Explore][explore].
 
 > **Note:** Only users with Admin or Editor roles in an organization can use the Explore feature unless the viewers can edit.
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/-> /docs/grafana/<GRAFANA VERSION>/explore"
+{{% /docs/reference %}}

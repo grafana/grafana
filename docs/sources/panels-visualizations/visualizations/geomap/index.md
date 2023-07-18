@@ -27,6 +27,11 @@ keywords:
   - Geomap
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Geomap
 weight: 600
 ---
@@ -361,6 +366,13 @@ The Route layer renders data points as a route.
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
 
+To enable the Route layer, set `enable_alpha` to `true` in your configuration file:
+
+```
+[panels]
+enable_alpha = true
+```
+
 ### Options
 
 - **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
@@ -381,6 +393,13 @@ The Route layer renders data points as a route.
 The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
+
+To enable the Photos layer, set `enable_alpha` to `true` in your configuration file:
+
+```
+[panels]
+enable_alpha = true
+```
 
 ### Options
 

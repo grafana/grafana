@@ -155,6 +155,12 @@ describe('filterSpans', () => {
 
   // Durations
   it('should return spans whose duration match a filter', () => {
+    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2ns' }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
+    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2us' }, spans)).toEqual(
+      new Set([spanID0, spanID2])
+    );
     expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2ms' }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
@@ -190,7 +196,7 @@ describe('filterSpans', () => {
     ).toEqual(new Set([spanID0]));
   });
 
-  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion or traceState match a filter', () => {
+  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion, traceState, or id match a filter', () => {
     expect(
       filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind' }] }, spans)
     ).toEqual(new Set([spanID0, spanID2]));
@@ -296,6 +302,21 @@ describe('filterSpans', () => {
           ...defaultFilters,
           tags: [{ ...defaultTagFilter, key: 'trace.state', operator: '!=', value: 'traceState0' }],
         },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id', value: 'span-id-0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'id', operator: '!=', value: 'span-id-0' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));

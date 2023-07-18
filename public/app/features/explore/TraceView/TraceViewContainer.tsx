@@ -6,7 +6,7 @@ import { PanelChrome } from '@grafana/ui/src/components/PanelChrome/PanelChrome'
 import { StoreState, useSelector } from 'app/types';
 
 import { TraceView } from './TraceView';
-import TracePageSearchBar from './components/TracePageHeader/TracePageSearchBar';
+import TracePageSearchBar from './components/TracePageHeader/SearchBar/TracePageSearchBar';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { useSearch } from './useSearch';
 import { transformDataFrames } from './utils/transform';

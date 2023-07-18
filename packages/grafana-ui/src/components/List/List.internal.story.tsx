@@ -44,19 +44,19 @@ const getItem = (inline = false) => {
   const customRenderer = (item: ReturnType<typeof generateListItems>[0], index: number) => (
     <div
       className={cx([
-        css`
-          color: white;
-          font-weight: bold;
-          background: ${tinycolor.fromRatio({ h: index / 26, s: 1, v: 1 }).toHexString()};
-          padding: 10px;
-        `,
+        css({
+          color: 'white',
+          fontWeight: 'bold',
+          background: tinycolor.fromRatio({ h: index / 26, s: 1, v: 1 }).toHexString(),
+          padding: '10px',
+        }),
         inline
-          ? css`
-              margin-right: 20px;
-            `
-          : css`
-              margin-bottom: 20px;
-            `,
+          ? css({
+              marginRight: '20px',
+            })
+          : css({
+              marginBottom: '20px',
+            }),
       ])}
     >
       {item.name}

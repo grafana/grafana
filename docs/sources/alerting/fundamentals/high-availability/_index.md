@@ -2,6 +2,7 @@
 aliases:
   - ../high-availability/
   - ../unified-alerting/high-availability/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/high-availability/
 description: High availability
 keywords:
   - grafana
@@ -9,6 +10,11 @@ keywords:
   - tutorials
   - ha
   - high availability
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alerting high availability
 weight: 430
 ---
@@ -32,4 +38,9 @@ The notification logs and silences are persisted in the database periodically an
 
 ## Useful links
 
-[Configure alerting high availability]({{< relref "../../set-up/configure-high-availability" >}})
+[Configure alerting high availability][configure-high-availability]
+
+{{% docs/reference %}}
+[configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/configure-high-availability"
+[configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
+{{% /docs/reference %}}

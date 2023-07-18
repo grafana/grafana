@@ -9,12 +9,21 @@
 
 package dataquery
 
+// Defines values for SearchStreamingState.
+const (
+	SearchStreamingStateDone      SearchStreamingState = "done"
+	SearchStreamingStateError     SearchStreamingState = "error"
+	SearchStreamingStatePending   SearchStreamingState = "pending"
+	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+)
+
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeSearch        TempoQueryType = "search"
 	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeTraceId       TempoQueryType = "traceId"
 	TempoQueryTypeTraceql       TempoQueryType = "traceql"
 	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
 	TempoQueryTypeUpload        TempoQueryType = "upload"
@@ -51,6 +60,9 @@ type DataQuery struct {
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 }
+
+// The state of the TraceQL streaming search query
+type SearchStreamingState string
 
 // TempoDataQuery defines model for TempoDataQuery.
 type TempoDataQuery = map[string]any
@@ -98,6 +110,9 @@ type TempoQuery struct {
 	// Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
 	Search *string `json:"search,omitempty"`
 
+	// Use service.namespace in addition to service.name to uniquely identify a service.
+	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
+
 	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 	ServiceMapQuery *string `json:"serviceMapQuery,omitempty"`
 
@@ -106,6 +121,9 @@ type TempoQuery struct {
 
 	// Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
+
+	// Use the streaming API to get partial results as they are available
+	Streaming *bool `json:"streaming,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility

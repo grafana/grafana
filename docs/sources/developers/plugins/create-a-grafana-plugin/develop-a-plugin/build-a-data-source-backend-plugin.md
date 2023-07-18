@@ -1,7 +1,5 @@
 ---
-title: Build a data source backend plugin
 description: Create a backend for your data source plugin.
-weight: 400
 keywords:
   - grafana
   - plugins
@@ -9,6 +7,12 @@ keywords:
   - backend
   - backend data source
   - datasource
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a data source backend plugin
+weight: 400
 ---
 
 ## Introduction
@@ -31,7 +35,7 @@ In this tutorial, you'll:
 - Grafana 7.0
 - Go ([Version](https://github.com/grafana/plugin-tools/blob/main/packages/create-plugin/templates/backend/go.mod#L3))
 - [Mage](https://magefile.org/)
-- NodeJS ([Version](https://github.com/grafana/plugin-tools/blob/main/packages/create-plugin/templates/common/package.json#L66))
+- [LTS](https://nodejs.dev/en/about/releases/) version of Node.js
 - yarn
   {{% /class %}}
 

@@ -14,6 +14,8 @@ export interface TokenTypes {
   Number: string;
   String: string;
   Variable: string;
+  Comment: string;
+  Regexp: string;
 }
 
 export enum StatementPosition {
@@ -43,6 +45,49 @@ export enum StatementPosition {
   PredefinedFuncSecondArg,
   AfterFunction,
   WithinString,
+  // logs
+  NewCommand,
+  Comment,
+
+  DedupKeyword,
+  AfterDedupKeyword,
+  DisplayKeyword,
+  AfterDisplayKeyword,
+  FieldsKeyword,
+  AfterFieldsKeyword,
+  FilterKeyword,
+  AfterFilterKeyword,
+  FilterArg,
+  LimitKeyword,
+  AfterLimitKeyword,
+  ParseKeyword,
+  AfterParseKeyword,
+  SortKeyword,
+  AfterSortKeyword,
+  SortArg,
+  StatsKeyword,
+  AfterStatsKeyword,
+
+  AsKeyword,
+  AfterAsKeyword,
+  ByKeyword,
+  AfterByKeyword,
+  InKeyword,
+  AfterInKeyword,
+  LikeKeyword,
+  AfterLikeKeyword,
+
+  Function,
+  FunctionArg,
+  CommandArg,
+  AfterCommand,
+
+  ArithmeticOperator,
+  ArithmeticOperatorArg,
+  BooleanOperator,
+  BooleanOperatorArg,
+  ComparisonOperator,
+  ComparisonOperatorArg,
 }
 
 export enum SuggestionKind {

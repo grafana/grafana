@@ -1,5 +1,4 @@
 ---
-title: Work with data frames
 aliases:
   - ../../../plugins/working-with-data-frames/
 description: How to work with data frames.
@@ -9,6 +8,11 @@ keywords:
   - plugin
   - data frames
   - dataframes
+labels:
+  products:
+    - enterprise
+    - oss
+title: Work with data frames
 weight: 900
 ---
 
