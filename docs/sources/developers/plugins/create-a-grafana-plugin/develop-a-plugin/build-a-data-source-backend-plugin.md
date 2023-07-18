@@ -106,7 +106,9 @@ Ensure that Grafana has been started in development mode. If you are running Gra
 app_mode = development
 ```
 
-You can then start Grafana in development mode by running `mage -v && yarn start` in the repository root. If you are running Grafana from a binary or inside a Docker container, you can start it in development mode by setting the environment variable `GF_DEFAULT_APP_MODE` to `development`.
+You can then start Grafana in development mode by running `make run & make run-frontend` in the Grafana repository root.
+
+If you are running Grafana from a binary or inside a Docker container, you can start it in development mode by setting the environment variable `GF_DEFAULT_APP_MODE` to `development`.
 
 By default, Grafana requires backend plugins to be signed. To load unsigned backend plugins, you need to
 configure Grafana to [allow unsigned plugins](/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
