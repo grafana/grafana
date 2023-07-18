@@ -237,11 +237,9 @@ function useUfuzzy(): uFuzzy {
 
   if (!ref.current) {
     ref.current = new uFuzzy({
-      intraMode: 1,
-      intraIns: 1,
-      intraSub: 1,
-      intraTrn: 1,
-      intraDel: 1,
+      // See https://github.com/leeoniya/uFuzzy#options
+      intraMode: 0, // don't allow for typos/extra letters
+      intraIns: 0, // require each term in the search to appear exactly
     });
   }
 
