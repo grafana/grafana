@@ -11,6 +11,7 @@ export interface RenderMarkdownOptions {
 }
 
 const markdownOptions = {
+  headerIds: false,
   pedantic: false,
   gfm: true,
   smartLists: true,
