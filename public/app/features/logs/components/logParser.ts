@@ -86,6 +86,11 @@ export const getDataframeFields = memoizeOne(
 );
 
 function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
+  // field that has empty value (we want to keep 0 or empty string)
+  if (field.values[row.rowIndex] == null) {
+    return true;
+  }
+
   // hidden field, remove
   if (field.config.custom?.hidden) {
     return true;
@@ -94,11 +99,6 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   // field with data-links, keep
   if ((field.config.links ?? []).length > 0) {
     return false;
-  }
-
-  // field that has empty value (we want to keep 0 or empty string)
-  if (field.values[row.rowIndex] == null) {
-    return true;
   }
 
   // the remaining checks use knowledge of how we parse logs-dataframes
