@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 
+import { FetchResponse } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
 import { getMockDS, getMockDSInstanceSettings, mockBackendService } from '../../../../../specs/mocks';
@@ -24,7 +25,17 @@ describe('useRetentionPolicies', () => {
   });
 });
 
-const response = {
+const response: FetchResponse = {
+  config: {
+    url: 'mock-response-url',
+  },
+  headers: new Headers(),
+  ok: false,
+  redirected: false,
+  status: 0,
+  statusText: '',
+  type: 'basic',
+  url: '',
   data: {
     results: {
       metadataQuery: {
