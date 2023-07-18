@@ -2,11 +2,6 @@ import lucene, { AST, NodeTerm } from 'lucene';
 
 type ModifierType = '' | '-';
 
-// @ts-ignore
-window.lucene = lucene;
-// @ts-ignore
-window.queryHasFilter = queryHasFilter;
-
 /**
  * Checks for the presence of a given label:"value" filter in the query.
  */
