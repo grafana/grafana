@@ -8,6 +8,7 @@ load(
     "codespell_step",
     "identify_runner_step",
     "yarn_install_step",
+    "verify_gen_cue_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -35,6 +36,7 @@ def docs_pipelines(ver_mode, trigger):
         codespell_step(),
         lint_docs(),
         build_docs_website_step(),
+        verify_gen_cue_step(),
     ]
 
     return pipeline(

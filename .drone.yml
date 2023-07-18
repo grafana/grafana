@@ -1084,6 +1084,15 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:dbd975af06
   name: build-docs-website
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-cue
 trigger:
   event:
   - pull_request
@@ -1358,6 +1367,15 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:dbd975af06
   name: build-docs-website
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-cue
 trigger:
   branch: main
   event:
@@ -4911,6 +4929,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 7796dccc1ebde8bf6985375aab1803a5d59dd3b8b0ce725d7ce23c5ca39e2c80
+hmac: 037fcad40d37e0f661f7c8da081074ddbd6c8ef95d0f8dd390e82c80ccfeb479
 
 ...
