@@ -45,6 +45,7 @@ export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): s
 
 export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
+    marked.use(mangle());
     marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }
