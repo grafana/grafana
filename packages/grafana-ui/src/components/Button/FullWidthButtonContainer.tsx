@@ -14,21 +14,21 @@ export const FullWidthButtonContainer = ({ className, children }: React.PropsWit
 };
 
 const getStyles = stylesFactory(() => {
-  return css`
-    display: flex;
+  return css({
+    display: 'flex',
 
-    button {
-      flex-grow: 1;
-      justify-content: center;
-    }
+    button: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
 
-    > * {
-      flex-grow: 1;
-    }
+    '> *': {
+      flexGrow: 1,
+    },
 
-    label {
-      flex-grow: 1;
-      text-align: center;
-    }
-  `;
+    label: {
+      flexGrow: 1,
+      textAlign: 'center',
+    },
+  });
 });

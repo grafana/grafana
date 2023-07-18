@@ -23,7 +23,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`                      | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
 | `featureHighlights`                              | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
-| `exploreMixedDatasource`                         | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`                         | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `topnav`                                         | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
@@ -49,7 +48,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `trimDefaults`                       | Use cue schema to remove values that will be applied automatically                                                                                                                           |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
-| `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
 | `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
@@ -127,6 +125,8 @@ Experimental features might be changed or removed without prior notice.
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
 | `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
 | `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                               |
+| `disableTraceQLStreaming`                   | Disables the option to stream the response of TraceQL queries of the Tempo data source                       |
+| `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 
 ## Development feature toggles
 

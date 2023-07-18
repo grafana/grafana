@@ -2,7 +2,6 @@ import { DataFrameDTO } from '@grafana/data';
 
 export const flameGraphData: DataFrameDTO = {
   name: 'response',
-  refId: 'A',
   // @ts-ignore
   meta: { preferredVisualisationType: 'flamegraph' },
   fields: [

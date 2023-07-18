@@ -23,14 +23,12 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  exploreMixedDatasource?: boolean;
   newTraceViewHeader?: boolean;
   correlations?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -114,4 +112,6 @@ export interface FeatureToggles {
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
   mlExpressions?: boolean;
+  disableTraceQLStreaming?: boolean;
+  grafanaAPIServer?: boolean;
 }

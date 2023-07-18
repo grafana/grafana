@@ -7,6 +7,11 @@ keywords:
   - grafana
   - mysql
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: MySQL
 title: MySQL data source
 weight: 1000

@@ -84,7 +84,9 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export {
-  TableCellDisplayMode,
+  type TableCustomCellOptions,
+  type CustomCellRendererProps,
+  type TableFieldOptions,
   type TableSortByFieldState,
   type TableFooterCalc,
   type AdHocFilterItem,

@@ -2,7 +2,13 @@
 aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/evaluate-grafana-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/
 description: How to alert on numeric data
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alerting on numeric data
 weight: 116
 ---

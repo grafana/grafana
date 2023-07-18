@@ -8,6 +8,11 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400

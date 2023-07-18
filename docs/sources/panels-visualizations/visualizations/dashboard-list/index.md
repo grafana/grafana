@@ -10,6 +10,11 @@ keywords:
   - documentation
   - panel
   - dashlist
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Dashboard list
 weight: 300
 ---
