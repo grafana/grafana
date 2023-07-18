@@ -140,12 +140,14 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
     .filter((i): i is VizLegendItem => !!i);
 
   return (
-    <VizLegend
-      items={legendItems}
-      seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
-      placement={legendOptions.placement}
-      displayMode={legendOptions.displayMode}
-    />
+    <VizLayout.Legend placement={legendOptions.placement} width={legendOptions.width}>
+      <VizLegend
+        items={legendItems}
+        seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
+        placement={legendOptions.placement}
+        displayMode={legendOptions.displayMode}
+      />
+    </VizLayout.Legend>
   );
 }
 

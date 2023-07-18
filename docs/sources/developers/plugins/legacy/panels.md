@@ -1,13 +1,17 @@
 ---
-title: Legacy panel plugins
 aliases:
   - ../../../plugins/developing/panels/
+description: Deprecated guide for Angular plugin development.
 keywords:
   - grafana
   - plugins
   - panel
   - documentation
-description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy panel plugins
 ---
 
 # Legacy panel plugins

@@ -12,6 +12,11 @@ keywords:
   - dashboard
   - standard
   - option
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure standard options
 title: Configure standard options
 weight: 2

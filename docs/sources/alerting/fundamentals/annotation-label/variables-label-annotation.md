@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
 description: Learn about templating of labels and annotations
 keywords:
   - grafana
@@ -6,6 +7,11 @@ keywords:
   - templating
   - labels
   - annotations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Templating labels and annotations
 weight: 117
 ---
