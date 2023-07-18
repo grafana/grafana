@@ -61,7 +61,7 @@ export const exploreInternalLinkSupplierFactory = (
     const { field, dataLinkScopedVars: vars, frame: dataFrame, link } = options;
     const { valueRowIndex: rowIndex } = options.config;
 
-    if (!rowIndex) {
+    if (rowIndex === undefined) {
       return undefined;
     }
 
