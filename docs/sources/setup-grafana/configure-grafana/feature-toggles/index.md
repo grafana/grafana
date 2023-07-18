@@ -96,7 +96,6 @@ Experimental features might be changed or removed without prior notice.
 | `lokiQuerySplittingConfig`                  | Give users the option to configure split durations for Loki queries                                          |
 | `individualCookiePreferences`               | Support overriding cookie preferences per user                                                               |
 | `onlyExternalOrgRoleSync`                   | Prohibits a user from changing organization roles synced with external auth providers                        |
-| `traceqlSearch`                             | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries    |
 | `timeSeriesTable`                           | Enable time series table transformer & sparkline cell type                                                   |
 | `prometheusResourceBrowserCache`            | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`                  | Query InfluxDB InfluxQL without the proxy                                                                    |

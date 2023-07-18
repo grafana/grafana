@@ -342,13 +342,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:         "traceqlSearch",
-			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
 			Expression:   "true",
