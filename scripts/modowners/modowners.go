@@ -130,14 +130,13 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 }
 
 // Print dependencies for a given owner. Can specify one or more owners.
-// Example CLI command to list all dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/grafana-authnz-team`
+// Example CLI command to list all dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -i -o @grafana/grafana-delivery,@grafana/grafana-authnz-team`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies")
-	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
-	m, err := parseGoMod(fileSystem, *modfile)
+	m, err := parseGoMod(fileSystem, fs.Arg(0))
 	if err != nil {
 		return err
 	}
@@ -146,11 +145,10 @@ func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	for _, mod := range m {
 		// If there are owner flags or modfile's dependency has an owner to compare
 		// Else if -i is present and current dependency is indirect
-		if len(*owner) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
-			if *indirect && !mod.Indirect {
+		if len(*owner) == 0 || hasCommonElement(mod.Owners, ownerFlags) {
+			if *indirect || !mod.Indirect {
 				logger.Println(mod.Name)
 			}
-			logger.Println(mod.Name)
 		}
 	}
 	return nil
