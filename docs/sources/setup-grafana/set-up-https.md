@@ -1,12 +1,16 @@
 ---
+description: Learn how to set up Grafana HTTPS for secure web traffic.
 keywords:
   - grafana
   - https
   - ssl
   - certificates
-title: Set up Grafana HTTPS for secure web traffic
-description: Learn how to set up Grafana HTTPS for secure web traffic.
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up HTTPS
+title: Set up Grafana HTTPS for secure web traffic
 weight: 900
 ---
 

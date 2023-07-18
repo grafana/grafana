@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - admin
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Admin HTTP API '
 ---
 

@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
@@ -78,7 +77,7 @@ func GetLocalPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
 }
 
 func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
-	f := finder.NewLocalFinder(&config.Cfg{})
+	f := finder.NewLocalFinder(true)
 
 	res, err := f.Find(context.Background(), sources.NewLocalSource(plugins.ClassExternal, []string{pluginDir}))
 	if err != nil {
@@ -87,4 +86,16 @@ func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
 	}
 
 	return res
+}
+
+func PluginVersionInstalled(pluginID, version, pluginDir string) bool {
+	for _, bundle := range GetLocalPlugins(pluginDir) {
+		pJSON := bundle.Primary.JSONData
+		if pJSON.ID == pluginID {
+			if pJSON.Info.Version == version {
+				return true
+			}
+		}
+	}
+	return false
 }

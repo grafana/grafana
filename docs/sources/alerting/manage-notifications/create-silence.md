@@ -11,6 +11,11 @@ keywords:
   - alerting
   - silence
   - mute
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Manage silences
 weight: 410
 ---

@@ -47,12 +47,12 @@ export const SeriesColorPickerPopoverWithTheme = withTheme2(SeriesColorPickerPop
 
 const getStyles = () => {
   return {
-    colorPickerAxisSwitch: css`
-      width: 100%;
-    `,
-    colorPickerAxisSwitchLabel: css`
-      display: flex;
-      flex-grow: 1;
-    `,
+    colorPickerAxisSwitch: css({
+      width: '100%',
+    }),
+    colorPickerAxisSwitchLabel: css({
+      display: 'flex',
+      flexGrow: 1,
+    }),
   };
 };
