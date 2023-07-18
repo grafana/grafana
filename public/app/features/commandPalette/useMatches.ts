@@ -186,8 +186,8 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
       return throttledFiltered.map((action) => ({ score: 0, action }));
     }
 
-    const haystack = throttledFiltered.map(({ name, keywords, subtitle }) =>
-      `${name} ${keywords ?? ''} ${subtitle ?? ''}`.toLowerCase()
+    const haystack = throttledFiltered.map(({ name, keywords }) =>
+      `${name} ${keywords ?? ''}`.toLowerCase()
     );
 
     const results: Match[] = [];
