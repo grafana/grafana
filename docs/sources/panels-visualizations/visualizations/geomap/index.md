@@ -345,6 +345,12 @@ To enable the Night / Day layer, set `enable_alpha` to `true` in your configurat
 enable_alpha = true
 ```
 
+To enable the Photos layer using Docker, run the following command:
+
+```
+docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
+```
+
 ### Options
 
 - **Show** toggles time source from panel time range
@@ -369,6 +375,12 @@ To enable the Photos layer, set `enable_alpha` to `true` in your configuration f
 ```
 [panels]
 enable_alpha = true
+```
+
+To enable the Photos layer using Docker, run the following command:
+
+```
+docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
 ```
 
 ### Options
