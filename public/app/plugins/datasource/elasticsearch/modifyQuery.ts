@@ -1,7 +1,5 @@
 import lucene, { AST, NodeTerm } from 'lucene';
 
-import { escapeRegex } from '@grafana/data';
-
 type ModifierType = '' | '-';
 
 // @ts-ignore
@@ -13,19 +11,30 @@ window.queryHasFilter = queryHasFilter;
  * Checks for the presence of a given label:"value" filter in the query.
  */
 export function queryHasFilter(query: string, key: string, value: string, modifier: ModifierType = ''): boolean {
+  return findFilterNode(query, key, value, modifier) !== null;
+}
+
+/**
+ * Given a query, find the NodeTerm that matches the given field and value.
+ */
+export function findFilterNode(
+  query: string,
+  key: string,
+  value: string,
+  modifier: ModifierType = ''
+): NodeTerm | null {
   const field = `${modifier}${lucene.term.escape(key)}`;
   let ast: AST | null = null;
   try {
     ast = lucene.parse(normalizeQuery(query));
   } catch (e) {
-    console.log(query);
-    return false;
+    return null;
   }
 
   let node = getNode(ast);
   while (node) {
     if (node.field === field && node.term === value) {
-      return true;
+      return node;
     }
     if (getNextAST(ast)) {
       ast = getNextAST(ast);
@@ -35,8 +44,7 @@ export function queryHasFilter(query: string, key: string, value: string, modifi
       ast = null;
     }
   }
-
-  return false;
+  return null;
 }
 
 /**
@@ -47,34 +55,26 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
     return query;
   }
 
-  key = escapeFilter(key);
+  key = lucene.term.escape(key);
   const filter = `${modifier}${key}:"${value}"`;
 
   return query === '' ? filter : `${query} AND ${filter}`;
-}
-
-function getFilterRegex(key: string, value: string) {
-  return new RegExp(`[-]{0,1}\\s*${escapeRegex(key)}\\s*:\\s*["']{0,1}${escapeRegex(value)}["']{0,1}`, 'ig');
 }
 
 /**
  * Removes a label:"value" expression from the query.
  */
 export function removeFilterFromQuery(query: string, key: string, value: string, modifier: ModifierType = ''): string {
-  key = escapeFilter(key);
-  const regex = getFilterRegex(key, value);
-  const matches = query.matchAll(regex);
-  const opRegex = new RegExp(`\\s+(?:AND|OR)\\s*$|^\\s*(?:AND|OR)\\s+`, 'ig');
-  for (const match of matches) {
-    if (modifier === '-' && match[0].startsWith(modifier)) {
-      query = query.replace(regex, '').replace(opRegex, '');
-    }
-    if (modifier === '' && !match[0].startsWith('-')) {
-      query = query.replace(regex, '').replace(opRegex, '');
-    }
+  const node = findFilterNode(query, key, value, modifier);
+  if (!node) {
+    return query;
   }
+  query = normalizeQuery(query);
+  query = query.substring(0, node.fieldLocation?.start.offset) + query.substring(node.termLocation?.end.offset);
   query = query.replace(/AND\s+OR/gi, 'OR');
   query = query.replace(/OR\s+AND/gi, 'AND');
+  query = query.replace(/^\s*(AND|OR)|(AND|OR)\s*$/gi, '').trim();
+
   return query;
 }
 
@@ -83,7 +83,7 @@ export function removeFilterFromQuery(query: string, key: string, value: string,
  * Use this function to escape filter keys.
  */
 export function escapeFilter(value: string) {
-  return value.replace(/:/g, '\\:');
+  return lucene.term.escape(value);
 }
 
 /**
