@@ -45,7 +45,7 @@ RBAC roles contain multiple permissions, each of which has an action and a scope
 
 ### Basic roles
 
-Basic roles are the standard roles that are available in Grafana OSS. If you have purchased a Grafana Enterprise license, you can still use basic roles.
+Basic roles are the standard roles that are available in Grafana OSS. If you have purchased a Grafana Enterprise license, or Grafana Cloud subscription you can still use basic roles.
 
 Grafana includes the following basic roles:
 
@@ -79,7 +79,7 @@ To interact with the API and view or modify basic roles permissions, refer to [t
 
 ### Fixed roles
 
-Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
+You can assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
@@ -105,7 +105,7 @@ To learn more about the permissions you can grant for each resource, refer to [R
 
 ### Custom roles
 
-If you are a Grafana Enterprise customer, you can create custom roles to manage user permissions in a way that meets your security requirements.
+Create custom roles to manage user permissions in a way that meets your security requirements.
 
 Custom roles contain unique combinations of permissions _actions_ and _scopes_. An action defines the action a use can perform on a Grafana resource. For example, the `teams.roles:read` action allows a user to see a list of roles associated with each team.
 
