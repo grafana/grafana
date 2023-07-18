@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps, DataFrameType } from '@grafana/data';
+import { PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { Options } from './panelcfg.gen';
 import { AnnotationEditorPlugin } from './plugins/AnnotationEditorPlugin';
@@ -31,19 +30,8 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const {
-    sync,
-    canAddAnnotations,
-    onThresholdsChange,
-    canEditThresholds,
-    showThresholds,
-    onSplitOpen,
-    internalDataLinkSupplier,
-  } = usePanelContext();
-
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-  };
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, internalDataLinkSupplier } =
+    usePanelContext();
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -162,7 +150,6 @@ export const TimeSeriesPanel = ({
                 config={config}
                 exemplars={data.annotations}
                 timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
               />
             )}
 

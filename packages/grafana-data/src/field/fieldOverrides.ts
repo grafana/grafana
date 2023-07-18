@@ -362,14 +362,14 @@ export function validateFieldConfig(config: FieldConfig) {
 
 const defaultInternalDataLinkSupplier: InternalDataLinkSupplier = (options) => {
   // For internal links at the moment only destination is Explore.
-  const { link, fieldScopedVars, field, replaceVariables } = options;
+  const { link, dataLinkScopedVars, field, replaceVariables } = options;
   if (!link.internal) {
     return undefined;
   }
   return mapInternalLinkToExplore({
     link,
     internalLink: link.internal,
-    scopedVars: fieldScopedVars,
+    scopedVars: dataLinkScopedVars,
     field,
     range: link.internal.range ?? ({} as any),
     replaceVariables,
@@ -427,7 +427,7 @@ export const getLinksSupplier =
         return (internalDataLinkSupplier || defaultInternalDataLinkSupplier)({
           frame,
           field,
-          fieldScopedVars,
+          dataLinkScopedVars,
           replaceVariables,
           config,
           link,
@@ -521,7 +521,7 @@ export function useFieldOverrides(
       structureRev.current++;
     }
 
-    return {
+    const panelData: PanelData = {
       structureRev: structureRev.current,
       ...data,
       series: applyFieldOverrides({
@@ -534,6 +534,20 @@ export function useFieldOverrides(
         internalDataLinkSupplier,
       }),
     };
+    if (data.annotations) {
+      panelData.annotations = applyFieldOverrides({
+        data: data.annotations,
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        replaceVariables: replace,
+        theme,
+        timeZone,
+        internalDataLinkSupplier,
+      });
+    }
+    return panelData;
   }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace, internalDataLinkSupplier]);
 }
 

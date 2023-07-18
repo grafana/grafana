@@ -141,6 +141,20 @@ export function ExploreGraph({
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, internalDataLinkSupplier]);
 
+  const annotationsWithConfig = useMemo(() => {
+    return applyFieldOverrides({
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      data: annotations,
+      timeZone,
+      replaceVariables: (value) => value,
+      theme,
+      internalDataLinkSupplier,
+    });
+  }, [annotations, timeZone, theme, internalDataLinkSupplier]);
+
   const structureRev = useStructureRev(dataWithConfig);
 
   useEffect(() => {
@@ -159,7 +173,6 @@ export function ExploreGraph({
   const panelContext: PanelContext = {
     eventBus,
     sync: () => DashboardCursorSync.Crosshair,
-    onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
@@ -196,7 +209,13 @@ export function ExploreGraph({
         </div>
       )}
       <PanelRenderer
-        data={{ series: dataWithConfig, timeRange, state: loadingState, annotations, structureRev }}
+        data={{
+          series: dataWithConfig,
+          timeRange,
+          state: loadingState,
+          annotations: annotationsWithConfig,
+          structureRev,
+        }}
         pluginId="timeseries"
         title=""
         width={width}

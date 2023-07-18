@@ -58,7 +58,7 @@ export const exploreInternalLinkSupplierFactory = (
   range: TimeRange
 ): InternalDataLinkSupplier => {
   const exploreInternalLinkSupplier: InternalDataLinkSupplier = (options) => {
-    const { field, fieldScopedVars: vars, frame: dataFrame, link } = options;
+    const { field, dataLinkScopedVars: vars, frame: dataFrame, link } = options;
     const { valueRowIndex: rowIndex } = options.config;
 
     if (!rowIndex) {

@@ -6,7 +6,6 @@ import {
   DashboardCursorSync,
   AnnotationEventUIModel,
   ThresholdsConfig,
-  SplitOpen,
   CoreApp,
   DataFrame,
   InternalDataLinkSupplier,
@@ -67,12 +66,6 @@ export interface PanelContext {
    * @alpha -- experimental
    */
   onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
-
-  /**
-   * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
-   * For example TimeSeries panel.
-   */
-  onSplitOpen?: SplitOpen;
 
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;

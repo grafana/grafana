@@ -11,7 +11,6 @@ import { TimeSeries, TooltipPlugin, UPlotConfigBuilder, usePanelContext, useThem
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { config } from 'app/core/config';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
@@ -38,12 +37,7 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
-    usePanelContext();
-
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-  };
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds } = usePanelContext();
 
   const theme = useTheme2();
 
@@ -316,14 +310,7 @@ export const CandlestickPanel = ({
                 defaultItems={[]}
               />
             )}
-            {data.annotations && (
-              <ExemplarsPlugin
-                config={config}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-              />
-            )}
+            {data.annotations && <ExemplarsPlugin config={config} exemplars={data.annotations} timeZone={timeZone} />}
 
             {((canEditThresholds && onThresholdsChange) || showThresholds) && (
               <ThresholdControlsPlugin

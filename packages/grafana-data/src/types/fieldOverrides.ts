@@ -125,7 +125,7 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
 export type InternalLinkSupplierOptions = {
   frame: DataFrame;
   field: Field;
-  fieldScopedVars: ScopedVars;
+  dataLinkScopedVars: ScopedVars;
   replaceVariables: InterpolateFunction;
   timeZone?: TimeZone;
   config: ValueLinkConfig;
