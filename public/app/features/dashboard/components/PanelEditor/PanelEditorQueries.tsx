@@ -4,6 +4,7 @@ import { DataQuery, getDataSourceRef } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { PanelModel } from '../../state';
@@ -24,6 +25,10 @@ export class PanelEditorQueries extends PureComponent<Props> {
   updateLastUsedDatasource = (datasource: QueryGroupDataSource) => {
     if (!datasource.uid) {
       return;
+    }
+    // if datasource is MIXED reset datasource uid in storage, because Mixed datasource can contain multiple ds
+    if (datasource.uid === MIXED_DATASOURCE_NAME) {
+      return updateDatasourceUidLastUsedDatasource('');
     }
     updateDatasourceUidLastUsedDatasource(datasource.uid);
   };
