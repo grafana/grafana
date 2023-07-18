@@ -18,7 +18,6 @@ import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
   AzureMonitorResource,
-  AzureMonitorLocations,
   AzureMonitorQuery,
   AzureResourceGraphOptions,
   AzureResourceSummaryItem,
@@ -380,12 +379,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
       );
     }
     this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
-  }
-
-  async getLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
-    const subscriptionIds = subscriptions.map((sub) => sub.id);
-    const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
-    return locations;
   }
 
   parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {
