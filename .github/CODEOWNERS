@@ -332,6 +332,8 @@
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
 eslint-local-rules @grafana/frontend-ops
+/.eslintrc @grafana/frontend-ops
+/.eslintrc.js @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
