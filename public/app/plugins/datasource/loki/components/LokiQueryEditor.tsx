@@ -99,7 +99,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
     if (update) {
       const makeAsyncRequest = async () => {
-        const stats = await getStats(datasource, query.expr);
+        const stats = await getStats(datasource, query);
         setQueryStats(stats);
       };
       makeAsyncRequest();

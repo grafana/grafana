@@ -1,9 +1,9 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
-import { QueryStats } from '../types';
+import { LokiQuery, QueryStats } from '../types';
 
-export async function getStats(datasource: LokiDatasource, query: string): Promise<QueryStats | null> {
+export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | null> {
   if (!query) {
     return null;
   }

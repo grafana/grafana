@@ -450,14 +450,14 @@ export class LokiDatasource
     return await this.getResource(url, params, options);
   }
 
-  async getQueryStats(query: string): Promise<QueryStats | undefined> {
+  async getQueryStats(query: LokiQuery): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    if (isQueryWithError(this.interpolateString(query, placeHolderScopedVars))) {
+    if (isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return undefined;
     }
 
     const { start, end } = this.getTimeRangeParams();
-    const labelMatchers = getStreamSelectorsFromQuery(query);
+    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 

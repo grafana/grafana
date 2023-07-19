@@ -1199,21 +1199,26 @@ describe('LokiDatasource', () => {
 
   describe('getQueryStats', () => {
     let ds: LokiDatasource;
+    let query: LokiQuery;
     beforeEach(() => {
       ds = createLokiDatasource(templateSrvStub);
       ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
       ds.interpolateString = jest.fn().mockImplementation((value: string) => value.replace('$__interval', '1m'));
+
+      query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
     });
 
     it('uses statsMetadataRequest', async () => {
-      const result = await ds.getQueryStats('{foo="bar"}');
+      query.expr = '{foo="bar"}';
+      const result = await ds.getQueryStats(query);
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
     });
 
     it('supports queries with template variables', async () => {
-      const result = await ds.getQueryStats('rate({instance="server\\1"}[$__interval])');
+      query.expr = 'rate({instance="server\\1"}[$__interval])';
+      const result = await ds.getQueryStats(query);
 
       expect(result).toEqual({
         streams: 1,
@@ -1224,14 +1229,16 @@ describe('LokiDatasource', () => {
     });
 
     it('does not call stats if the query is invalid', async () => {
-      const result = await ds.getQueryStats('rate({label="value"}');
+      query.expr = 'rate({label="value"}';
+      const result = await ds.getQueryStats(query);
 
       expect(ds.statsMetadataRequest).not.toHaveBeenCalled();
       expect(result).toBe(undefined);
     });
 
     it('combines the stats of each label matcher', async () => {
-      const result = await ds.getQueryStats('count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])');
+      query.expr = 'count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])';
+      const result = await ds.getQueryStats(query);
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });

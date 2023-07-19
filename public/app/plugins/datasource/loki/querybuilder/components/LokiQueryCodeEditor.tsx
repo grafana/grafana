@@ -8,7 +8,7 @@ import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
 import { getStats } from '../../components/stats';
 import { LokiQueryEditorProps } from '../../components/types';
-import { QueryStats } from '../../types';
+import { LokiQuery, QueryStats } from '../../types';
 
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
 
@@ -43,7 +43,7 @@ export function LokiQueryCodeEditor({
         data={data}
         app={app}
         data-testid={testIds.editor}
-        onQueryType={async (query: string) => {
+        onQueryType={async (query: LokiQuery) => {
           const stats = await getStats(datasource, query);
           setQueryStats(stats);
         }}

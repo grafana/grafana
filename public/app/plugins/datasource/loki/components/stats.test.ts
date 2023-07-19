@@ -1,6 +1,7 @@
 import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { createLokiDatasource } from '../mocks';
+import { LokiQuery, LokiQueryType } from '../types';
 
 import { getStats, shouldUpdateStats } from './stats';
 
@@ -52,25 +53,30 @@ describe('shouldUpdateStats', () => {
 
 describe('makeStatsRequest', () => {
   const datasource = createLokiDatasource();
+  let query: LokiQuery;
+
+  beforeEach(() => {
+    query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
+  });
 
   it('should return null if there is no query', () => {
-    const query = '';
+    query.expr = '';
     expect(getStats(datasource, query)).resolves.toBe(null);
   });
 
   it('should return null if the query is invalid', () => {
-    const query = '{job="grafana",';
+    query.expr = '{job="grafana",';
     expect(getStats(datasource, query)).resolves.toBe(null);
   });
 
   it('should return null if the response has no data', () => {
-    const query = '{job="grafana"}';
+    query.expr = '{job="grafana"}';
     datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
     expect(getStats(datasource, query)).resolves.toBe(null);
   });
 
   it('should return the stats if the response has data', () => {
-    const query = '{job="grafana"}';
+    query.expr = '{job="grafana"}';
 
     datasource.getQueryStats = jest
       .fn()
@@ -84,7 +90,7 @@ describe('makeStatsRequest', () => {
   });
 
   it('should support queries with variables', () => {
-    const query = 'count_over_time({job="grafana"}[$__interval])';
+    query.expr = 'count_over_time({job="grafana"}[$__interval])';
 
     datasource.interpolateString = jest
       .fn()
