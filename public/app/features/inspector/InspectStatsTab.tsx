@@ -3,7 +3,6 @@ import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 import { InspectStatsTable } from './InspectStatsTable';

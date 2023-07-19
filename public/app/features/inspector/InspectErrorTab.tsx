@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { DataQueryError } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, JSONFormatter } from '@grafana/ui';
 
 interface InspectErrorTabProps {
