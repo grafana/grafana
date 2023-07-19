@@ -253,7 +253,7 @@ $btn-service-icon-width: 35px;
   }
 
   &.active {
-    background-color: color.adjust($input-label-bg, $lightness: -5%);
+    background-color: color.adjust($input-label-bg, $lightness: 5%);
     color: $link-color;
     &:hover {
       cursor: default;
