@@ -288,7 +288,6 @@ export function transform(
       preferredVisualisationType: transformOptions.query.instant ? 'rawPrometheus' : 'graph',
     },
   };
-
   const prometheusResult = response.data.data;
 
   if (isExemplarData(prometheusResult)) {
@@ -353,8 +352,7 @@ export function transform(
 
   // When format is heatmap use the already created data frames and transform it more
   if (options.format === 'heatmap') {
-    const sortedFrames = dataFrame.sort(sortSeriesByLabel);
-    return mergeHeatmapFrames(transformToHistogramOverTime(sortedFrames));
+    return mergeHeatmapFrames(transformToHistogramOverTime(dataFrame.sort(sortSeriesByLabel)));
   }
 
   // Return matrix or vector result as DataFrame[]
