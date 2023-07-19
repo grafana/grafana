@@ -72,6 +72,7 @@ export function transformV2(
 ) {
   // migration for dataplane field name issue
   if (config.featureToggles.prometheusDataplane) {
+    console.log('dataplane is true');
     // update displayNameFromDS in the field config
     response.data.forEach((f: DataFrame) => {
       const target = request.targets.find((t) => t.refId === f.refId);
@@ -86,6 +87,25 @@ export function transformV2(
       }
     });
   }
+
+  console.log('fieldsBefore', JSON.parse(JSON.stringify(response.data)));
+
+  // "Undo" the changes made by the backend to the field names
+  for (let dataFrameIndex = 0; dataFrameIndex < response.data.length; dataFrameIndex++) {
+    const dataFrame = response.data[dataFrameIndex];
+
+    if (dataFrame.fields.length === 2 && dataFrame.fields[0].name === 'Time') {
+      for (let fieldIndex = 0; fieldIndex < dataFrame.fields.length; fieldIndex++) {
+        const field = dataFrame.fields[fieldIndex];
+        if (field.type === FieldType.number && field.name !== 'Value') {
+          // dataFrame.name = field.name
+          field.name = TIME_SERIES_VALUE_FIELD_NAME;
+          break;
+        }
+      }
+    }
+  }
+  console.log('fieldsAfter', JSON.parse(JSON.stringify(response.data)));
 
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
