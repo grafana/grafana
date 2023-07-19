@@ -2,15 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  ApplyFieldOverrideOptions,
-  dateMath,
-  FieldColorModeId,
-  isPluginExtensionLink,
-  NavModelItem,
-  PanelData,
-} from '@grafana/data';
-import { getPluginExtensions } from '@grafana/runtime';
+import { ApplyFieldOverrideOptions, dateMath, FieldColorModeId, NavModelItem, PanelData } from '@grafana/data';
+import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -69,7 +62,7 @@ export const TestStuffPage = () => {
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
         <HorizontalGroup>
-          <LinkToBasicApp placement="grafana/sandbox/testing" />
+          <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
         </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
@@ -150,13 +143,12 @@ export function getDefaultState(): State {
         name: 'gdev-testdata',
       },
       maxDataPoints: 100,
-      savedQueryUid: null,
     },
   };
 }
 
-function LinkToBasicApp({ placement }: { placement: string }) {
-  const { extensions } = getPluginExtensions({ placement });
+function LinkToBasicApp({ extensionPointId }: { extensionPointId: string }) {
+  const { extensions } = getPluginExtensions({ extensionPointId });
 
   if (extensions.length === 0) {
     return null;
@@ -164,12 +156,12 @@ function LinkToBasicApp({ placement }: { placement: string }) {
 
   return (
     <div>
-      {extensions.map((extension) => {
+      {extensions.map((extension, i) => {
         if (!isPluginExtensionLink(extension)) {
           return null;
         }
         return (
-          <LinkButton href={extension.path} title={extension.description} key={extension.key}>
+          <LinkButton href={extension.path} title={extension.description} key={extension.id}>
             {extension.title}
           </LinkButton>
         );

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { PanelModel } from '../dashboard/state';
@@ -27,13 +27,15 @@ const props: React.ComponentProps<typeof TestRuleResult> = {
 };
 
 describe('TestRuleResult', () => {
-  it('should render without error', () => {
-    expect(() => render(<TestRuleResult {...props} />)).not.toThrow();
+  it('should render without error', async () => {
+    render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
   });
 
-  it('should call testRule when mounting', () => {
+  it('should call testRule when mounting', async () => {
     jest.spyOn(backendSrv, 'post');
     render(<TestRuleResult {...props} />);
+    await screen.findByRole('button', { name: 'Copy to Clipboard' });
 
     expect(backendSrv.post).toHaveBeenCalledWith(
       '/api/alerts/test',

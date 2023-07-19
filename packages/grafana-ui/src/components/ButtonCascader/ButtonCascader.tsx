@@ -29,22 +29,22 @@ export interface ButtonCascaderProps {
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    popup: css`
-      label: popup;
-      z-index: ${theme.zIndex.dropdown};
-    `,
+    popup: css({
+      label: 'popup',
+      zIndex: theme.zIndex.dropdown,
+    }),
     icons: {
-      right: css`
-        margin: 1px 0 0 4px;
-      `,
-      left: css`
-        margin: -1px 4px 0 0;
-      `,
+      right: css({
+        margin: '1px 0 0 4px',
+      }),
+      left: css({
+        margin: '-1px 4px 0 0',
+      }),
     },
   };
 });
 
-export const ButtonCascader: React.FC<ButtonCascaderProps> = (props) => {
+export const ButtonCascader = (props: ButtonCascaderProps) => {
   const { onChange, className, loadData, icon, buttonProps, hideDownIcon, variant, disabled, ...rest } = props;
   const theme = useTheme2();
   const styles = getStyles(theme);

@@ -5,13 +5,13 @@ import {
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
   SceneGridLayout,
   SceneGridRow,
   SceneTimeRange,
-  SceneObject,
   SceneQueryRunner,
   SceneVariableSet,
   VariableValueSelectors,
@@ -20,13 +20,23 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  SceneRefreshPicker,
+  SceneDataTransformer,
+  SceneGridItem,
+  SceneDataProvider,
+  SceneObject,
+  SceneControlsSpacer,
+  VizPanelMenu,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { DashboardDTO } from 'app/types';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 
 import { DashboardScene } from './DashboardScene';
+import { panelMenuBehavior } from './PanelMenuBehavior';
+import { ShareQueryDataProvider } from './ShareQueryDataProvider';
+import { getVizPanelKeyForPanelId } from './utils';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -37,51 +47,53 @@ export interface DashboardLoaderState {
 export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   private cache: Record<string, DashboardScene> = {};
 
-  public async load(uid: string) {
-    const fromCache = this.cache[uid];
-    if (fromCache) {
-      this.setState({ dashboard: fromCache });
-      return;
-    }
-
-    this.setState({ isLoading: true });
-
+  async loadAndInit(uid: string) {
     try {
-      const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+      const scene = await this.loadScene(uid);
+      scene.initUrlSync();
 
-      if (rsp.dashboard) {
-        this.initDashboard(rsp);
-      } else {
-        throw new Error('Dashboard not found');
-      }
+      this.cache[uid] = scene;
+      this.setState({ dashboard: scene, isLoading: false });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
   }
 
-  private initDashboard(rsp: DashboardDTO) {
-    // Just to have migrations run
-    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
+  private async loadScene(uid: string): Promise<DashboardScene> {
+    const fromCache = this.cache[uid];
+    if (fromCache) {
+      return fromCache;
+    }
 
-    const dashboard = createDashboardSceneFromDashboardModel(oldModel);
+    this.setState({ isLoading: true });
 
-    // We initialize URL sync here as it better to do that before mounting and doing any rendering.
-    // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
-    dashboard.initUrlSync();
+    const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
 
-    this.cache[rsp.dashboard.uid] = dashboard;
-    this.setState({ dashboard, isLoading: false });
+    if (rsp.dashboard) {
+      // Just to have migrations run
+      const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
+        autoMigrateOldPanels: true,
+      });
+
+      return createDashboardSceneFromDashboardModel(oldModel);
+    }
+
+    throw new Error('Dashboard not found');
+  }
+
+  clearState() {
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
   }
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObject[] {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
   // collects all panels and rows
-  const panels: SceneObject[] = [];
+  const panels: Array<SceneGridItem | SceneGridRow> = [];
 
   // indicates expanded row that's currently processed
   let currentRow: PanelModel | null = null;
   // collects panels in the currently processed, expanded row
-  let currentRowPanels: SceneObject[] = [];
+  let currentRowPanels: SceneGridItem[] = [];
 
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
@@ -92,9 +104,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
             new SceneGridRow({
               title: panel.title,
               isCollapsed: true,
-              placement: {
-                y: panel.gridPos.y,
-              },
+              y: panel.gridPos.y,
               children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
             })
           );
@@ -109,9 +119,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
           panels.push(
             new SceneGridRow({
               title: currentRow!.title,
-              placement: {
-                y: currentRow.gridPos.y,
-              },
+              y: currentRow.gridPos.y,
               children: currentRowPanels,
             })
           );
@@ -137,9 +145,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
     panels.push(
       new SceneGridRow({
         title: currentRow!.title,
-        placement: {
-          y: currentRow.gridPos.y,
-        },
+        y: currentRow.gridPos.y,
         children: currentRowPanels,
       })
     );
@@ -151,7 +157,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
 
-  if (oldModel.templating.list.length) {
+  if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
@@ -170,6 +176,16 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
+  const controls: SceneObject[] = [
+    new VariableValueSelectors({}),
+    new SceneControlsSpacer(),
+    new SceneTimePicker({}),
+    new SceneRefreshPicker({
+      refresh: oldModel.refresh,
+      intervals: oldModel.timepicker.refresh_intervals,
+    }),
+  ];
+
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
@@ -177,11 +193,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
     $timeRange: new SceneTimeRange(oldModel.time),
-    actions: [new SceneTimePicker({})],
     $variables: variables,
-    ...(variables && {
-      controls: [new VariableValueSelectors({})],
-    }),
+    controls: controls,
   });
 }
 
@@ -229,7 +242,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       text: variable.current.text,
       description: variable.description,
       regex: variable.regex,
-      query: variable.query,
+      pluginId: variable.query,
       allValue: variable.allValue || undefined,
       includeAll: variable.includeAll,
       defaultToAll: Boolean(variable.includeAll),
@@ -251,24 +264,60 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 }
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
-  return new VizPanel({
-    title: panel.title,
-    pluginId: panel.type,
-    placement: {
-      x: panel.gridPos.x,
-      y: panel.gridPos.y,
-      width: panel.gridPos.w,
-      height: panel.gridPos.h,
-    },
-    options: panel.options,
-    fieldConfig: panel.fieldConfig,
-    pluginVersion: panel.pluginVersion,
-    $data: new SceneQueryRunner({
-      transformations: panel.transformations,
-      queries: panel.targets,
-      maxDataPoints: panel.maxDataPoints ?? undefined,
+  return new SceneGridItem({
+    x: panel.gridPos.x,
+    y: panel.gridPos.y,
+    width: panel.gridPos.w,
+    height: panel.gridPos.h,
+    body: new VizPanel({
+      key: getVizPanelKeyForPanelId(panel.id),
+      title: panel.title,
+      pluginId: panel.type,
+      options: panel.options ?? {},
+      fieldConfig: panel.fieldConfig,
+      pluginVersion: panel.pluginVersion,
+      displayMode: panel.transparent ? 'transparent' : undefined,
+      // To be replaced with it's own option persited option instead derived
+      hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+      $data: createPanelDataProvider(panel),
+      menu: new VizPanelMenu({
+        $behaviors: [panelMenuBehavior],
+      }),
     }),
   });
+}
+
+export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+  // Skip setting query runner for panels without queries
+  if (!panel.targets?.length) {
+    return undefined;
+  }
+
+  // Skip setting query runner for panel plugins with skipDataQuery
+  if (config.panels[panel.type]?.skipDataQuery) {
+    return undefined;
+  }
+
+  let dataProvider: SceneDataProvider | undefined = undefined;
+
+  if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY) {
+    dataProvider = new ShareQueryDataProvider({ query: panel.targets[0] });
+  } else {
+    dataProvider = new SceneQueryRunner({
+      queries: panel.targets,
+      maxDataPoints: panel.maxDataPoints ?? undefined,
+    });
+  }
+
+  // Wrap inner data provider in a data transformer
+  if (panel.transformations?.length) {
+    dataProvider = new SceneDataTransformer({
+      $data: dataProvider,
+      transformations: panel.transformations,
+    });
+  }
+
+  return dataProvider;
 }
 
 let loader: DashboardLoader | null = null;

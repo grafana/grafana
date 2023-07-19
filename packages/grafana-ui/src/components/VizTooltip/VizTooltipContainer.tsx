@@ -22,14 +22,14 @@ export interface VizTooltipContainerProps extends HTMLAttributes<HTMLDivElement>
 /**
  * @public
  */
-export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
+export const VizTooltipContainer = ({
   position: { x: positionX, y: positionY },
   offset: { x: offsetX, y: offsetY },
   children,
   allowPointerEvents = false,
   className,
   ...otherProps
-}) => {
+}: VizTooltipContainerProps) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipMeasurement, setTooltipMeasurement] = useState<Dimensions2D>({ width: 0, height: 0 });
   const { width, height } = useWindowSize();
@@ -100,6 +100,8 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
         transform: `translate(${placement.x}px, ${placement.y}px)`,
         transition: 'transform ease-out 0.1s',
       }}
+      aria-live="polite"
+      aria-atomic="true"
       {...otherProps}
       className={cx(styles.wrapper, className)}
     >
@@ -111,7 +113,5 @@ export const VizTooltipContainer: React.FC<VizTooltipContainerProps> = ({
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    ${getTooltipContainerStyles(theme)}
-  `,
+  wrapper: css(getTooltipContainerStyles(theme)),
 });

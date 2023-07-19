@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
-import { useEffectOnce } from 'react-use';
+import { useEffectOnce, useToggle } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
@@ -18,34 +18,91 @@ import {
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
-import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
-  getAllRulesSourceNames,
-  GRAFANA_DATASOURCE_NAME,
-  GRAFANA_RULES_SOURCE_NAME,
-} from 'app/features/alerting/unified/utils/datasource';
-import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
+  fetchAllPromAndRulerRulesAction,
+  fetchPromAndRulerRulesAction,
+} from 'app/features/alerting/unified/state/actions';
+import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import {
+  isAsyncRequestMapSlicePartiallyDispatched,
+  isAsyncRequestMapSlicePartiallyFulfilled,
+  isAsyncRequestMapSlicePending,
+} from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { AccessControlAction, useDispatch } from 'app/types';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction, ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
 import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
-import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
+import { GroupMode, SortOrder, StateFilter, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
 import UngroupedModeView from './unified-alerting/UngroupedView';
 import { filterAlerts } from './util';
 
+function getStateList(state: StateFilter) {
+  const reducer = (list: string[], [stateKey, value]: [string, boolean]) => {
+    if (Boolean(value)) {
+      return [...list, stateKey];
+    } else {
+      return list;
+    }
+  };
+  return Object.entries(state).reduce(reducer, []);
+}
+
+const fetchPromAndRuler = ({
+  dispatch,
+  limitInstances,
+  matcherList,
+  dataSourceName,
+  stateList,
+}: {
+  dispatch: ThunkDispatch;
+  limitInstances: boolean;
+  matcherList?: Matcher[] | undefined;
+  dataSourceName?: string;
+  stateList: string[];
+}) => {
+  if (dataSourceName) {
+    dispatch(
+      fetchPromAndRulerRulesAction({
+        rulesSourceName: dataSourceName,
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        matcher: matcherList,
+        state: stateList,
+      })
+    );
+  } else {
+    dispatch(
+      fetchAllPromAndRulerRulesAction(false, {
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        matcher: matcherList,
+        state: stateList,
+      })
+    );
+  }
+};
+
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
-  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [limitInstances, toggleLimit] = useToggle(true);
+
+  const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
+
+  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+
+  const somePromRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(promRulesRequests);
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -61,30 +118,62 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     dashboard = getDashboardSrv().getCurrent();
   });
 
+  const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
+  const { options, replaceVariables } = props;
+  const dataSourceName =
+    options.datasource === GRAFANA_DATASOURCE_NAME ? GRAFANA_RULES_SOURCE_NAME : options.datasource;
+  const parsedOptions: UnifiedAlertListOptions = {
+    ...props.options,
+    alertName: replaceVariables(options.alertName),
+    alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+  };
+
+  const matcherList = useMemo(
+    () => parseMatchers(parsedOptions.alertInstanceLabelFilter),
+    [parsedOptions.alertInstanceLabelFilter]
+  );
+
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
-    dispatch(fetchAllPromAndRulerRulesAction());
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromAndRulerRulesAction()));
+    if (!promRulesRequests.loading) {
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+    }
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList })
+    );
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard]);
+  }, [dispatch, dashboard, matcherList, stateList, limitInstances, dataSourceName, promRulesRequests.loading]);
 
-  const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
-    prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
-    ruler: state.rulerRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
-  }));
+  const handleInstancesLimit = (limit: boolean) => {
+    if (limit) {
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+      toggleLimit(true);
+    } else {
+      fetchPromAndRuler({ dispatch, limitInstances: false, matcherList, dataSourceName, stateList });
+      toggleLimit(false);
+    }
+  };
 
-  const loading = prom.loading || ruler.loading;
-  const haveResults = !!prom.result || !!ruler.result;
+  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
+  //See https://github.com/grafana/grafana/pull/70482
+  const { currentData: promRules = [], isLoading: grafanaRulesLoading } = usePrometheusRulesByNamespaceQuery(
+    {
+      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+      matcher: matcherList,
+      state: stateList,
+    },
+    { skip: dataSourceName !== GRAFANA_RULES_SOURCE_NAME }
+  );
 
-  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const combinedRules = useCombinedRuleNamespaces();
+  const combinedRules = useCombinedRuleNamespaces(undefined, promRules);
 
-  const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
-  const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
+  const someRulerRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(rulerRulesRequests);
+  const haveResults = isAsyncRequestMapSlicePartiallyFulfilled(promRulesRequests);
+
   const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
+  const loading = isAsyncRequestMapSlicePending(promRulesRequests);
 
   const styles = useStyles2(getStyles);
 
@@ -110,7 +199,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
-        {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
+        {(grafanaRulesLoading || (dispatched && loading && !haveResults)) && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
           {props.options.viewMode === ViewMode.Stat && haveResults && (
@@ -125,10 +214,15 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
-            <GroupedModeView rules={rules} options={props.options} />
+            <GroupedModeView rules={rules} options={parsedOptions} />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView rules={rules} options={props.options} />
+            <UngroupedModeView
+              rules={rules}
+              options={parsedOptions}
+              handleInstancesLimit={handleInstancesLimit}
+              limitInstances={limitInstances}
+            />
           )}
         </section>
       </div>
@@ -190,22 +284,6 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     );
   });
 
-  if (options.alertInstanceLabelFilter) {
-    const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
-    const matchers = parseMatchers(replacedLabelFilter);
-
-    // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
-      const alertingRule = getAlertingRule(rule);
-      const filteredAlerts = (alertingRule?.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
-      if (filteredAlerts.length) {
-        const alertRule: AlertingRule | null = getAlertingRule(rule);
-        alertRule && rules.push({ ...rule, promRule: { ...alertRule, alerts: filteredAlerts } });
-      }
-      return rules;
-    }, []);
-  }
-
   if (options.folder) {
     filteredRules = filteredRules.filter((rule) => {
       return rule.namespaceName === options.folder.title;
@@ -226,7 +304,15 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
   // when we display a rule with 0 instances
   filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
     const alertingRule = getAlertingRule(rule);
-    const filteredAlerts = alertingRule ? filterAlerts(options, alertingRule.alerts ?? []) : [];
+    const filteredAlerts = alertingRule
+      ? filterAlerts(
+          {
+            stateFilter: options.stateFilter,
+            alertInstanceLabelFilter: replaceVariables(options.alertInstanceLabelFilter),
+          },
+          alertingRule.alerts ?? []
+        )
+      : [];
     if (filteredAlerts.length) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
@@ -261,7 +347,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius()};
     margin-bottom: ${theme.spacing(0.5)};
 
     gap: ${theme.spacing(2)};

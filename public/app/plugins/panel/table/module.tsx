@@ -7,19 +7,25 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions } from '@grafana/schema';
+import {
+  TableFieldOptions,
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
+import { Options, defaultOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
-const cellCategory = ['Cell Options'];
+const cellCategory = ['Cell options'];
 
-export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
+export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
@@ -64,7 +70,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
           path: 'cellOptions',
-          name: 'Cell Type',
+          name: 'Cell type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
           defaultValue: defaultTableFieldOptions.cellOptions,
@@ -106,18 +112,25 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
       .addBooleanSwitch({
         path: 'showHeader',
         name: 'Show table header',
-        defaultValue: defaultPanelOptions.showHeader,
+        defaultValue: defaultOptions.showHeader,
       })
-      .addBooleanSwitch({
-        path: 'showRowNums',
-        name: 'Show row numbers',
-        defaultValue: defaultPanelOptions.showRowNums,
+      .addRadio({
+        path: 'cellHeight',
+        name: 'Cell height',
+        defaultValue: defaultOptions.cellHeight,
+        settings: {
+          options: [
+            { value: TableCellHeight.Sm, label: 'Small' },
+            { value: TableCellHeight.Md, label: 'Medium' },
+            { value: TableCellHeight.Lg, label: 'Large' },
+          ],
+        },
       })
       .addBooleanSwitch({
         path: 'footer.show',
         category: [footerCategory],
         name: 'Show table footer',
-        defaultValue: defaultPanelOptions.footer?.show,
+        defaultValue: defaultOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
@@ -134,7 +147,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         category: [footerCategory],
         name: 'Count rows',
         description: 'Display a single count for all data rows',
-        defaultValue: defaultPanelOptions.footer?.countRows,
+        defaultValue: defaultOptions.footer?.countRows,
         showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
       })
       .addMultiSelect({

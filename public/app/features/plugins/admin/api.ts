@@ -103,7 +103,10 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
 export async function installPlugin(id: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
-  return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
+  return await getBackendSrv().post(`${API_ROOT}/${id}/install`, undefined, {
+    // Error is displayed in the page
+    showErrorAlert: false,
+  });
 }
 
 export async function uninstallPlugin(id: string) {

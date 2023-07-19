@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,6 +33,7 @@ type getUserPermissionsTestCase struct {
 	teamPermissions    []string
 	builtinPermissions []string
 	expected           int
+	policyCount        int
 }
 
 func TestAccessControlStore_GetUserPermissions(t *testing.T) {
@@ -44,6 +46,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			teamPermissions:    []string{"100", "2"},
 			builtinPermissions: []string{"5", "6"},
 			expected:           7,
+			policyCount:        7,
 		},
 		{
 			desc:               "Should not get admin roles",
@@ -53,6 +56,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			teamPermissions:    []string{"100", "2"},
 			builtinPermissions: []string{"5", "6"},
 			expected:           5,
+			policyCount:        7,
 		},
 		{
 			desc:               "Should work without org role",
@@ -62,6 +66,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			teamPermissions:    []string{"100", "2"},
 			builtinPermissions: []string{"5", "6"},
 			expected:           5,
+			policyCount:        7,
 		},
 		{
 			desc:               "should only get br permissions for anonymous user",
@@ -72,6 +77,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			teamPermissions:    []string{"100", "2"},
 			builtinPermissions: []string{"5", "6"},
 			expected:           2,
+			policyCount:        7,
 		},
 	}
 	for _, tt := range tests {
@@ -132,6 +138,17 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Len(t, permissions, tt.expected)
+
+			policies, err := GetAccessPolicies(context.Background(), user.OrgID, store.sql.GetSqlxSession(),
+				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+					return strings.Split(scope, ":"), nil
+				})
+			require.NoError(t, err)
+			assert.Len(t, policies, tt.policyCount)
+
+			for idx, p := range policies {
+				fmt.Printf("POLICIES[%d] %+v\n", idx, p.Spec)
+			}
 		})
 	}
 }

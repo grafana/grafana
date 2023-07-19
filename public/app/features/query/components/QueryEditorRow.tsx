@@ -25,7 +25,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
+import {
+  QueryOperationAction,
+  QueryOperationToggleAction,
+} from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -46,6 +49,7 @@ interface Props<TQuery extends DataQuery> {
   index: number;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
+  onDataSourceLoaded?: (instance: DataSourceApi) => void;
   renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
@@ -60,11 +64,12 @@ interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  collapsable?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
   /** DatasourceUid or ds variable expression used to resolve current datasource */
-  loadedDataSourceIdentifier?: string | null;
+  queriedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
   datasourceUid?: string | null;
   hasTextEditMode: boolean;
@@ -77,6 +82,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   element: HTMLElement | null = null;
   angularScope: AngularQueryComponentScope<TQuery> | null = null;
   angularQueryEditor: AngularComponent | null = null;
+  dataSourceSrv = getDataSourceSrv();
   id = '';
 
   state: State<TQuery> = {
@@ -136,31 +142,44 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     };
   }
 
-  getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dataSource: dsSettings } = this.props;
-    return query.datasource?.uid ?? dsSettings.uid;
+  /**
+   * When datasource variables are used the query.datasource.uid property is a string variable expression
+   * DataSourceSettings.uid can also be this variable expression.
+   * This function always returns the current interpolated datasource uid.
+   */
+  getInterpolatedDataSourceUID(): string | undefined {
+    if (this.props.query.datasource) {
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
+    }
+
+    return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
   }
 
   async loadDatasource() {
-    const dataSourceSrv = getDataSourceSrv();
     let datasource: DataSourceApi;
-    const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
+    const interpolatedUID = this.getInterpolatedDataSourceUID();
 
     try {
-      datasource = await dataSourceSrv.get(dataSourceIdentifier);
+      datasource = await this.dataSourceSrv.get(interpolatedUID);
     } catch (error) {
-      datasource = await dataSourceSrv.get();
+      // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
+      datasource = await this.dataSourceSrv.get();
+    }
+
+    if (typeof this.props.onDataSourceLoaded === 'function') {
+      this.props.onDataSourceLoaded(datasource);
     }
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: dataSourceIdentifier,
+      queriedDataSourceIdentifier: interpolatedUID,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
-    const { datasource, loadedDataSourceIdentifier } = this.state;
+    const { datasource, queriedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (prevProps.id !== this.props.id) {
@@ -182,7 +201,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     // check if we need to load another datasource
-    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
+    if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -243,7 +262,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   isWaitingForDatasourceToLoad(): boolean {
     // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
-    return this.props.dataSource.uid !== this.state.loadedDataSourceIdentifier;
+    return this.getInterpolatedDataSourceUID() !== this.state.queriedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {
@@ -415,15 +434,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
-    const isDisabled = query.hide;
+    const isDisabled = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
       <HorizontalGroup width="auto">
         {hasEditorHelp && (
-          <QueryOperationAction
-            title="Toggle data source help"
+          <QueryOperationToggleAction
+            title="Show data source help"
             icon="question-circle"
             onClick={this.onToggleHelp}
             active={showingHelp}
@@ -441,8 +460,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         {this.renderExtraActions()}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery ? (
-          <QueryOperationAction
-            title="Disable/enable query"
+          <QueryOperationToggleAction
+            title="Disable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
@@ -473,7 +492,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization } = this.props;
+    const { query, index, visualization, collapsable } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
 
@@ -494,6 +513,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <QueryOperationRow
           id={this.id}
           draggable={true}
+          collapsable={collapsable}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}

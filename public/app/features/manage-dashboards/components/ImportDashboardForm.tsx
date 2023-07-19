@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -37,7 +37,7 @@ interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' 
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
 }
 
-export const ImportDashboardForm: FC<Props> = ({
+export const ImportDashboardForm = ({
   register,
   errors,
   control,
@@ -49,7 +49,7 @@ export const ImportDashboardForm: FC<Props> = ({
   onCancel,
   onSubmit,
   watch,
-}) => {
+}: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
   const watchFolder = watch('folder');

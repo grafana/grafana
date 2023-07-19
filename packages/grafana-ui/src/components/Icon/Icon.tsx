@@ -20,19 +20,19 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
 const getIconStyles = (theme: GrafanaTheme2) => {
   return {
     // line-height: 0; is needed for correct icon alignment in Safari
-    container: css`
-      label: Icon;
-      display: inline-block;
-      line-height: 0;
-    `,
-    icon: css`
-      vertical-align: middle;
-      display: inline-block;
-      fill: currentColor;
-    `,
-    orange: css`
-      fill: ${theme.v1.palette.orange};
-    `,
+    container: css({
+      label: 'Icon',
+      display: 'inline-block',
+      lineHeight: 0,
+    }),
+    icon: css({
+      verticalAlign: 'middle',
+      display: 'inline-block',
+      fill: 'currentColor',
+    }),
+    orange: css({
+      fill: theme.v1.palette.orange,
+    }),
   };
 };
 
@@ -43,10 +43,6 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     /* Temporary solution to display also font awesome icons */
     if (name?.startsWith('fa fa-')) {
       return <i className={getFontAwesomeIconStyles(name, className)} {...divElementProps} style={style} />;
-    }
-
-    if (name === 'panel-add') {
-      size = 'xl';
     }
 
     if (!cacheInitialized) {

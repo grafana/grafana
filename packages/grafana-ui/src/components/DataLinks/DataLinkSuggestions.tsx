@@ -18,42 +18,42 @@ interface DataLinkSuggestionsProps {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    list: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      &:last-child {
-        border: none;
-      }
-    `,
-    wrapper: css`
-      background: ${theme.colors.background.primary};
-      width: 250px;
-    `,
-    item: css`
-      background: none;
-      padding: 2px 8px;
-      color: ${theme.colors.text.primary};
-      cursor: pointer;
-      &:hover {
-        background: ${theme.colors.action.hover};
-      }
-    `,
-    label: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    activeItem: css`
-      background: ${theme.colors.background.secondary};
-      &:hover {
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-    itemValue: css`
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.size.sm};
-    `,
+    list: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:last-child': {
+        border: 'none',
+      },
+    }),
+    wrapper: css({
+      background: theme.colors.background.primary,
+      width: '250px',
+    }),
+    item: css({
+      background: 'none',
+      padding: '2px 8px',
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+    }),
+    label: css({
+      color: theme.colors.text.secondary,
+    }),
+    activeItem: css({
+      background: theme.colors.background.secondary,
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    itemValue: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.size.sm,
+    }),
   };
 };
 
-export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
+export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSuggestionsProps) => {
   const ref = useRef(null);
 
   useClickAway(ref, () => {
@@ -104,8 +104,16 @@ interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
 }
 
-const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
+const DataLinkSuggestionsList = React.memo(
+  ({
+    activeIndex,
+    activeIndexOffset,
+    label,
+    onClose,
+    onSuggestionSelect,
+    suggestions,
+    activeRef: selectedRef,
+  }: DataLinkSuggestionsListProps) => {
     const styles = useStyles2(getStyles);
 
     return (

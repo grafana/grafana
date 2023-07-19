@@ -6,6 +6,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
@@ -69,4 +70,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   transformation: standardTransformers.joinByFieldTransformer,
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
+  categories: new Set([TransformerCategory.Combine]),
 };

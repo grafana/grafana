@@ -10,7 +10,12 @@ keywords:
   - documentation
   - '7.0'
   - release notes
-title: What's New in Grafana v7.0
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: What's new in Grafana v7.0
 weight: -27
 ---
 
@@ -22,7 +27,7 @@ This major release of Grafana is the next step in our Observability story. It in
 
 The Grafana 7.0 stable release is scheduled for the 18th of May. In the meantime, if you want to know more about what we've been up to and what is coming, sign up for our online GrafanaCon conference.
 
-[{{< figure src="/assets/img/blog/GrafanaCONline.jpg" max-width="800px" lightbox="false" caption="GrafanaCONline May 13-29" >}}](https://grafana.com/about/events/grafanacon/2020/?source=blog)
+[{{< figure src="/assets/img/blog/GrafanaCONline.jpg" max-width="800px" lightbox="false" caption="GrafanaCONline May 13-29" >}}](/about/events/grafanacon/2020/?source=blog)
 
 The main highlights are:
 
@@ -35,7 +40,7 @@ The main highlights are:
 - [**Plugins** New plugins platform.]({{< relref "#plugins-platform" >}})
 - [**Tutorials** New tutorials section.]({{< relref "#new-tutorials" >}})
 - [**Cloudwatch** Support for Cloudwatch Logs in Explore and the Logs panel.]({{< relref "#cloudwatch-logs" >}})
-- [**Breaking change** PhantomJS removed.]({{< relref "#breaking-change-phantomjs-removed" >}})
+- [**Breaking change** PhantomJS removed.]({{< relref "#breaking-change---phantomjs-removed" >}})
 - [**Time zones** Time zone support]({{< relref "#time-zone-support" >}})
 
 ## New panel editor and unified data model
@@ -48,7 +53,7 @@ In previous versions of Grafana, each visualization had slightly different ways 
 
 We have yet to migrate all core panels to this new architecture so in 7.0 there will be some inconsistencies in the UI between panels. This will be fixed soon in future releases as we update all the core panels and help the community update the community panel plugins.
 
-Learn more about this feature in [Panel editor]({{< relref "../panels-visualizations/panel-editor-overview/" >}}).
+Learn more about this feature in [Panel editor]({{< relref "../panels-visualizations/panel-editor-overview" >}}).
 
 ## New tracing UI
 
@@ -64,15 +69,15 @@ In the future we will add more workflows and integrations so that correlating be
 
 The data you want to visualize can come from many different places and it is usually not in exactly the right form. Users can now transform non-time series data into tables (e.g., JSON files or even simple lookup tables) in seconds without any customization or additional overhead. They can then combine non-time series data with any other data in Grafana; data from an external database or a panel that already exists in one of their current dashboards.
 
-By chaining a simple set of point and click [transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data/#transformation-functions" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
+By chaining a simple set of point and click [transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data#transformation-functions" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
-[Transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data/" >}}) also adds the ability to do math across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
+[Transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data" >}}) also adds the ability to do math across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
 For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 
-The [Google Sheets data source](https://grafana.com/grafana/plugins/grafana-googlesheets-datasource) that was published a few weeks ago works really well together with the transformations feature.
+The [Google Sheets data source](/grafana/plugins/grafana-googlesheets-datasource) that was published a few weeks ago works really well together with the transformations feature.
 
-We are also introducing a new shared data model for both time series and table data that we call [DataFrame]({{< relref "../developers/plugins/data-frames/#data-frames" >}}). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
+We are also introducing a new shared data model for both time series and table data that we call [DataFrame]({{< relref "../developers/plugins/introduction-to-plugin-development/data-frames#data-frames" >}}). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
 
 **Transformations shipping in 7.0**
 
@@ -84,7 +89,7 @@ We are also introducing a new shared data model for both time series and table d
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another and add the result to a new field.
 
-Learn more about this feature in [Transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data/#transformation-functions" >}}).
+Learn more about this feature in [Transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data#transformation-functions" >}}).
 
 ## Field options and overrides
 
@@ -94,7 +99,7 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field overrides]({{< relref "../panels-visualizations/configure-overrides/" >}}).
+Learn more about this feature in [Field overrides]({{< relref "../panels-visualizations/configure-overrides" >}}).
 
 ## Inspect panels and export data to CSV
 
@@ -102,7 +107,7 @@ Learn more about this feature in [Field overrides]({{< relref "../panels-visuali
 
 Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
-Learn more about this feature in [Panel Inspector]({{< relref "../panels-visualizations/panel-inspector/#inspect-query-request-and-response-data" >}}).
+Learn more about this feature in [Panel Inspector]({{< relref "../panels-visualizations/panel-inspector#inspect-query-request-and-response-data" >}}).
 
 <div class="clearfix"></div>
 
@@ -126,9 +131,9 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 
 ## Plugins platform
 
-The [platform for plugins]({{< relref "../developers/plugins/" >}}) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
+The [platform for plugins]({{< relref "../developers/plugins" >}}) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
 
-Learn more about developing plugins in the new framework in [Build a plugin]({{< relref "../developers/plugins/" >}}).
+Learn more about developing plugins in the new framework in [Build a plugin]({{< relref "../developers/plugins" >}}).
 
 ### Front end plugins platform
 
@@ -136,28 +141,28 @@ In Grafana 7.0 we are maturing our panel and front-end datasource plugins platfo
 
 Plugins can use the same React components that the Grafana team uses to build Grafana. Using these components means the Grafana team will support and improve them continually and make your plugin as polished as the rest of Grafana’s UI. The new [`@grafana/ui` components library](https://developers.grafana.com/ui) is documented with Storybook (visual documentation) and is available on NPM.
 
-The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/v7.0/packages_api/) for plugin developers.
+The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](/docs/grafana/v7.0/packages_api/) for plugin developers.
 
 With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
 
 ### Support for backend plugins
 
-Grafana now officially supports [backend plugins]({{< relref "../developers/plugins/backend/" >}}) and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we introduce the [Grafana Plugin SDK for Go]({{< relref "../developers/plugins/backend/grafana-plugin-sdk-for-go/" >}}) that enables and simplifies building a backend plugin in [Go](https://golang.org/).
+Grafana now officially supports [backend plugins]({{< relref "../developers/plugins/introduction-to-plugin-development/backend" >}}) and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we introduce the [Grafana Plugin SDK for Go]({{< relref "../developers/plugins/introduction-to-plugin-development/backend/grafana-plugin-sdk-for-go" >}}) that enables and simplifies building a backend plugin in [Go](https://golang.org/).
 
 Plugins can be monitored with the new metrics and health check capabilities. The new Resources capability means backend components can return non-time series data like JSON or static resources like images and opens up Grafana for new use cases.
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [overview]({{< relref "../developers/plugins/backend/" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting/" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
+To learn more, start with the [overview]({{< relref "../developers/plugins/introduction-to-plugin-development/backend" >}}). Next, in this [tutorial](/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 
 To help you get started with Grafana, we’ve launched a brand new tutorials platform. We’ll continue to expand the platform with more tutorials, but here are some of the ones you can try out now:
 
-- [Grafana fundamentals](https://grafana.com/tutorials/grafana-fundamentals/)
-- [Create users and teams](https://grafana.com/tutorials/create-users-and-teams/)
-- [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
-- [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
+- [Grafana fundamentals](/tutorials/grafana-fundamentals/)
+- [Create users and teams](/tutorials/create-users-and-teams/)
+- [Build a panel plugin](/tutorials/build-a-panel-plugin/)
+- [Build a data source plugin](/tutorials/build-a-data-source-plugin/)
 
 ## Rollup indicator for Metrictank queries
 
@@ -171,25 +176,25 @@ Depending on the cardinality of the data and the time range MetricTank may retur
 
 [PhantomJS](https://phantomjs.org/), have been used for rendering images of dashboards and panels and have been included with Grafana since Grafana v2.0. Since then we’ve had a lot of related bugs and security related issues, mainly due to the fact that PhantomJS have struggled with supporting modern web technologies. Throughout the years, maintaining PhantomJS support in Grafana has been a nightmare. Removing support for PhantomJS has been a high priority for the Grafana project and got stressed even more when the PhantomJS maintainer in March 2018 [announced](https://github.com/ariya/phantomjs/issues/15344) the end of the project.
 
-Since then we have been working towards removing PhantomJS. In October 2019, when Grafana v6.4 was released, we [announced](https://grafana.com/blog/2019/10/02/grafana-v6.4-released/#phantomjs-deprecation) the deprecation of PhantomJS. Grafana v7.0 removes all PhantomJS support which means that Grafana distribution no longer will include a built-in image renderer.
+Since then we have been working towards removing PhantomJS. In October 2019, when Grafana v6.4 was released, we [announced](/blog/2019/10/02/grafana-v6.4-released/#phantomjs-deprecation) the deprecation of PhantomJS. Grafana v7.0 removes all PhantomJS support which means that Grafana distribution no longer will include a built-in image renderer.
 
-As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) which is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chromium/Chrome. The [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) can either be installed as a Grafana plugin running in its own process side-by-side with Grafana. or runs as an external HTTP service, hosted using Docker or as a standalone application.
+As a replacement for PhantomJS we’ve developed the [Grafana Image Renderer plugin](/grafana/plugins/grafana-image-renderer) which is a plugin that runs on the backend and handles rendering panels and dashboards as PNG images using headless Chromium/Chrome. The [Grafana Image Renderer plugin](/grafana/plugins/grafana-image-renderer) can either be installed as a Grafana plugin running in its own process side-by-side with Grafana. or runs as an external HTTP service, hosted using Docker or as a standalone application.
 
-Read more about [Image Rendering]({{< relref "../setup-grafana/image-rendering/" >}}) in the documentation for further instructions.
+Read more about [Image Rendering]({{< relref "../setup-grafana/image-rendering" >}}) in the documentation for further instructions.
 
 ## Query history in Explore out of beta
 
 The Query history feature lets you view and interact with the queries that you have previously run in Explore. You can add queries to the Explore query editor, write comments, create and share URL links, star your favorite queries, and much more. Starred queries are displayed in the Starred tab, so it is easier to reuse queries that you run often without typing them from scratch.
 
-It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../explore/" >}}).
+It was released as a beta feature in Grafana 6.7. The feedback has been really positive and it is now out of beta for the 7.0 release. Learn more about query history in [Explore]({{< relref "../explore" >}}).
 
 ## Stackdriver data source supports Service Monitoring
 
-[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/google-cloud-monitoring/#slo-service-level-objective-queries" >}}).
+[Service monitoring](https://cloud.google.com/service-monitoring) in Google Cloud Platform (GCP) enables you to monitor based on Service Level Objectives (SLOs) for your GCP services. The new SLO query builder in the Stackdriver data source allows you to display SLO data in Grafana. Read more about it in the [Stackdriver data source documentation]({{< relref "../datasources/google-cloud-monitoring#slo-service-level-objective-queries" >}}).
 
 ## Time zone support
 
-You can now override the [time zone]({{< relref "../dashboards/manage-dashboards/#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
+You can now override the [time zone]({{< relref "../dashboards/manage-dashboards#dashboard-time-settings" >}}) used to display date and time values in a dashboard. One benefit of this is that you can specify the local time zone of the service or system that you are monitoring which can be helpful when monitoring a system or service that operates across several time zones.
 
 ## Alerting and deep linking for Azure Log Analytics
 
@@ -214,17 +219,17 @@ This includes problems like:
 
 ### Usage insights and Presence indicator
 
-This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../dashboards/assess-dashboard-usage/#sort-dashboards-by-using-insights-data" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../dashboards/assess-dashboard-usage/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../dashboards/assess-dashboard-usage/#dashboard-insights" >}}) allows you to view recent dashboard usage.
+This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../dashboards/assess-dashboard-usage#sort-dashboards-by-using-insights-data" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../dashboards/assess-dashboard-usage#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../dashboards/assess-dashboard-usage#dashboard-insights" >}}) allows you to view recent dashboard usage.
 
 {{< figure src="/static/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 
 ### SAML Role and Team Sync
 
-SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#configure-team-sync" >}}).
+SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Read more about how to use these features in the [SAML team sync documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/saml#configure-team-sync" >}}).
 
 ### Okta OAuth Team Sync
 
-Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/" >}}).
+Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/okta" >}}).
 
 ## Changelog
 

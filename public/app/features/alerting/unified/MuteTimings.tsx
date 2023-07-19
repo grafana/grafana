@@ -1,47 +1,31 @@
-import React, { useCallback, useEffect } from 'react';
-import { Route, Redirect, Switch } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Route, Redirect, Switch, useRouteMatch } from 'react-router-dom';
 
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { NavModelItem } from '@grafana/data';
+import { Alert } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
-import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction } from './state/actions';
-import { initialAsyncRequestState } from './utils/redux';
+import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
+import { useAlertmanager } from './state/AlertmanagerContext';
 
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
-  const dispatch = useDispatch();
-  const alertManagers = useAlertManagersByPermission('notification');
-  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
-
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const fetchConfig = useCallback(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch]);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
-
-  const { result, error, loading } =
-    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
-
-  const config = result?.alertmanager_config;
+  const { selectedAlertmanager } = useAlertmanager();
+  const { currentData, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+  const config = currentData?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
       const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
-        const provenance = (config?.muteTimeProvenances ?? {})[timing.name];
+        const provenance = config?.muteTimeProvenances?.[timing.name];
 
         return {
           ...timing,
@@ -56,16 +40,15 @@ const MuteTimings = () => {
 
   return (
     <>
-      {loading && <LoadingPlaceholder text="Loading mute timing" />}
-      {error && !loading && (
-        <Alert severity="error" title={`Error loading Alertmanager config for ${alertManagerSourceName}`}>
+      {error && !isLoading && !currentData && (
+        <Alert severity="error" title={`Error loading Alertmanager config for ${selectedAlertmanager}`}>
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {result && !error && (
+      {currentData && !error && (
         <Switch>
           <Route exact path="/alerting/routes/mute-timing/new">
-            <MuteTimingForm />
+            <MuteTimingForm loading={isLoading} />
           </Route>
           <Route exact path="/alerting/routes/mute-timing/edit">
             {() => {
@@ -73,7 +56,14 @@ const MuteTimings = () => {
                 const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
                 const provenance = muteTiming?.provenance;
 
-                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} provenance={provenance} />;
+                return (
+                  <MuteTimingForm
+                    loading={isLoading}
+                    muteTiming={muteTiming}
+                    showError={!muteTiming && !isLoading}
+                    provenance={provenance}
+                  />
+                );
               }
               return <Redirect to="/alerting/routes" />;
             }}
@@ -84,4 +74,35 @@ const MuteTimings = () => {
   );
 };
 
-export default MuteTimings;
+const MuteTimingsPage = () => {
+  const pageNav = useMuteTimingNavData();
+
+  return (
+    <AlertmanagerPageWrapper pageId="am-routes" pageNav={pageNav} accessType="notification">
+      <MuteTimings />
+    </AlertmanagerPageWrapper>
+  );
+};
+
+export function useMuteTimingNavData() {
+  const { isExact, path } = useRouteMatch();
+  const [pageNav, setPageNav] = useState<Pick<NavModelItem, 'id' | 'text' | 'icon'> | undefined>();
+
+  useEffect(() => {
+    if (path === '/alerting/routes/mute-timing/new') {
+      setPageNav({
+        id: 'alert-policy-new',
+        text: 'Add mute timing',
+      });
+    } else if (path === '/alerting/routes/mute-timing/edit') {
+      setPageNav({
+        id: 'alert-policy-edit',
+        text: 'Edit mute timing',
+      });
+    }
+  }, [path, isExact]);
+
+  return pageNav;
+}
+
+export default MuteTimingsPage;

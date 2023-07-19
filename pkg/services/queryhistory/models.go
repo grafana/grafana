@@ -74,20 +74,6 @@ type QueryHistoryDeleteQueryResponse struct {
 	Message string `json:"message"`
 }
 
-type QueryToMigrate struct {
-	DatasourceUID string           `json:"datasourceUid"`
-	Queries       *simplejson.Json `json:"queries"`
-	CreatedAt     int64            `json:"createdAt"`
-	Comment       string           `json:"comment"`
-	Starred       bool             `json:"starred"`
-}
-
-type QueryHistoryMigrationResponse struct {
-	Message      string `json:"message"`
-	TotalCount   int    `json:"totalCount"`
-	StarredCount int    `json:"starredCount"`
-}
-
 // CreateQueryInQueryHistoryCommand is the command for adding query history
 // swagger:model
 type CreateQueryInQueryHistoryCommand struct {
@@ -104,11 +90,4 @@ type CreateQueryInQueryHistoryCommand struct {
 type PatchQueryCommentInQueryHistoryCommand struct {
 	// Updated comment
 	Comment string `json:"comment"`
-}
-
-// MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history
-// swagger:model
-type MigrateQueriesToQueryHistoryCommand struct {
-	// Array of queries to store in query history.
-	Queries []QueryToMigrate `json:"queries"`
 }

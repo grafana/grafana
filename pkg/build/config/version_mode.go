@@ -11,6 +11,7 @@ const (
 	DownstreamMode    VersionMode = "downstream"
 	Enterprise2Mode   VersionMode = "enterprise2"
 	CronjobMode       VersionMode = "cron"
+	CloudMode         VersionMode = "cloud"
 )
 
 const (

@@ -2,9 +2,6 @@ package userimpl
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -65,6 +62,17 @@ func ProvideService(
 
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 	return s, nil
+}
+
+func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
+	stats := map[string]interface{}{}
+	caseInsensitiveLoginVal := 0
+	if s.cfg.CaseInsensitiveLogin {
+		caseInsensitiveLoginVal = 1
+	}
+
+	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	return stats
 }
 
 func (s *Service) Usage(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
@@ -366,7 +374,7 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 	cmd.Email = cmd.Login
 	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
 	if err != nil {
-		return nil, serviceaccounts.ErrServiceAccountAlreadyExists
+		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
 
 	// create user
@@ -419,7 +427,9 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 				Login:            "sa-supportbundle",
 				OrgRole:          "Admin",
 				IsGrafanaAdmin:   true,
-				IsServiceAccount: true},
+				IsServiceAccount: true,
+				Permissions:      map[int64]map[string][]string{ac.GlobalOrgID: {ac.ActionUsersRead: {ac.ScopeGlobalUsersAll}}},
+			},
 			OrgID:      0,
 			Query:      "",
 			Page:       0,
@@ -433,7 +443,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 			return nil, err
 		}
 
-		userBytes, err := json.Marshal(res.Users)
+		userBytes, err := json.MarshalIndent(res.Users, "", " ")
 		if err != nil {
 			return nil, err
 		}
@@ -452,26 +462,4 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           false,
 		Fn:                collectorFn,
 	}
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-func buildUserAnalyticsSettings(signedInUser user.SignedInUser, intercomSecret string) user.AnalyticsSettings {
-	var settings user.AnalyticsSettings
-
-	if signedInUser.ExternalAuthID != "" {
-		settings.Identifier = signedInUser.ExternalAuthID
-	} else {
-		settings.Identifier = signedInUser.Email + "@" + setting.AppUrl
-	}
-
-	if intercomSecret != "" {
-		settings.IntercomIdentifier = hashUserIdentifier(settings.Identifier, intercomSecret)
-	}
-	return settings
 }

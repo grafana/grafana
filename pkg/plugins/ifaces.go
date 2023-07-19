@@ -2,6 +2,8 @@ package plugins
 
 import (
 	"context"
+	"io/fs"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -23,19 +25,72 @@ type Installer interface {
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type PluginSource struct {
-	Class Class
-	Paths []string
+type PluginSource interface {
+	PluginClass(ctx context.Context) Class
+	PluginURIs(ctx context.Context) []string
+	DefaultSignature(ctx context.Context) (Signature, bool)
+}
+
+type FileStore interface {
+	// File retrieves a plugin file.
+	File(ctx context.Context, pluginID, filename string) (*File, error)
+}
+
+type File struct {
+	Content []byte
+	ModTime time.Time
 }
 
 type CompatOpts struct {
-	GrafanaVersion string
-	OS             string
-	Arch           string
+	grafanaVersion string
+
+	os   string
+	arch string
+}
+
+func (co CompatOpts) GrafanaVersion() string {
+	return co.grafanaVersion
+}
+
+func (co CompatOpts) OS() string {
+	return co.os
+}
+
+func (co CompatOpts) Arch() string {
+	return co.arch
+}
+
+func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
+	return CompatOpts{grafanaVersion: grafanaVersion, arch: arch, os: os}
+}
+
+func NewSystemCompatOpts(os, arch string) CompatOpts {
+	return CompatOpts{arch: arch, os: os}
 }
 
 type UpdateInfo struct {
 	PluginZipURL string
+}
+
+type FS interface {
+	fs.FS
+
+	Base() string
+	Files() ([]string, error)
+}
+
+type FSRemover interface {
+	Remove() error
+}
+
+type FoundBundle struct {
+	Primary  FoundPlugin
+	Children []*FoundPlugin
+}
+
+type FoundPlugin struct {
+	JSONData JSONData
+	FS       FS
 }
 
 // Client is used to communicate with backend plugin implementations.
@@ -81,6 +136,8 @@ type Licensing interface {
 	Edition() string
 
 	Path() string
+
+	AppURL() string
 }
 
 // RoleRegistry handles the plugin RBAC roles and their assignments
@@ -103,4 +160,25 @@ type ClientMiddlewareFunc func(next Client) Client
 // CreateClientMiddleware implements the ClientMiddleware interface.
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
+}
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+type SignatureCalculator interface {
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+}
+
+type KeyStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key string, value string) error
+	Del(ctx context.Context, key string) error
+	ListKeys(ctx context.Context) ([]string, error)
+	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	SetLastUpdated(ctx context.Context) error
+}
+
+type KeyRetriever interface {
+	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }

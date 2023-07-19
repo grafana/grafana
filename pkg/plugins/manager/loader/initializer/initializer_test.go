@@ -2,27 +2,21 @@ package initializer
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
-	absCurPath, err := filepath.Abs(".")
-	assert.NoError(t, err)
-
 	t.Run("core backend datasource", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
-				Type: plugins.DataSource,
+				Type: plugins.TypeDataSource,
 				Includes: []*plugins.Includes{
 					{
 						Name: "Example dashboard",
@@ -31,16 +25,14 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.Core,
+			Class: plugins.ClassCore,
 		}
 
 		i := &Initializer{
-			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
+			envVarProvider: &fakeEnvVarsProvider{},
 		}
 
 		err := i.Initialize(context.Background(), p)
@@ -55,22 +47,20 @@ func TestInitializer_Initialize(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
-				Type: plugins.Renderer,
+				Type: plugins.TypeRenderer,
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion: ">=8.x",
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
+			Class: plugins.ClassExternal,
 		}
 
 		i := &Initializer{
-			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
+			envVarProvider: &fakeEnvVarsProvider{},
 		}
 
 		err := i.Initialize(context.Background(), p)
@@ -85,22 +75,20 @@ func TestInitializer_Initialize(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
-				Type: plugins.SecretsManager,
+				Type: plugins.TypeSecretsManager,
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion: ">=8.x",
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
+			Class: plugins.ClassExternal,
 		}
 
 		i := &Initializer{
-			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
+			envVarProvider: &fakeEnvVarsProvider{},
 		}
 
 		err := i.Initialize(context.Background(), p)
@@ -119,11 +107,10 @@ func TestInitializer_Initialize(t *testing.T) {
 		}
 
 		i := &Initializer{
-			cfg: &config.Cfg{},
-			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
+			envVarProvider: &fakeEnvVarsProvider{},
 		}
 
 		err := i.Initialize(context.Background(), p)
@@ -133,73 +120,6 @@ func TestInitializer_Initialize(t *testing.T) {
 		assert.False(t, exists)
 		assert.Nil(t, c)
 	})
-}
-
-func TestInitializer_envVars(t *testing.T) {
-	t.Run("backend datasource with license", func(t *testing.T) {
-		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID: "test",
-			},
-		}
-
-		licensing := &fakes.FakeLicensingService{
-			LicenseEdition: "test",
-			TokenRaw:       "token",
-			LicensePath:    "/path/to/ent/license",
-		}
-
-		i := &Initializer{
-			cfg: &config.Cfg{
-				PluginSettings: map[string]map[string]string{
-					"test": {
-						"custom_env_var": "customVal",
-					},
-				},
-			},
-			license: licensing,
-			log:     log.NewTestLogger(),
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-		}
-
-		envVars := i.envVars(p)
-		assert.Len(t, envVars, 5)
-		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
-		assert.Equal(t, "GF_VERSION=", envVars[1])
-		assert.Equal(t, "GF_EDITION=test", envVars[2])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
-		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
-	})
-}
-
-func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {
-
-}
-
-func TestInitializer_handleModuleDefaults(t *testing.T) {
-
-}
-
-func Test_defaultLogoPath(t *testing.T) {
-
-}
-
-func Test_evalRelativePluginUrlPath(t *testing.T) {
-
-}
-
-func Test_getPluginLogoUrl(t *testing.T) {
-
-}
-
-func Test_getPluginSettings(t *testing.T) {
-
-}
-
-func Test_pluginSettings_ToEnv(t *testing.T) {
-
 }
 
 type fakeBackendProvider struct {
@@ -212,4 +132,15 @@ func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugi
 	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 		return f.plugin, nil
 	}
+}
+
+type fakeEnvVarsProvider struct {
+	GetFunc func(ctx context.Context, p *plugins.Plugin) []string
+}
+
+func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
+	if f.GetFunc != nil {
+		return f.GetFunc(ctx, p), nil
+	}
+	return nil, nil
 }

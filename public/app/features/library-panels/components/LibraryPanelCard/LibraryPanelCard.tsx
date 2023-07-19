@@ -17,12 +17,9 @@ export interface LibraryPanelCardProps {
   showSecondaryActions?: boolean;
 }
 
-export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] }> = ({
-  libraryPanel,
-  onClick,
-  onDelete,
-  showSecondaryActions,
-}) => {
+type Props = LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] };
+
+export const LibraryPanelCard = ({ libraryPanel, onClick, onDelete, showSecondaryActions }: Props) => {
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {

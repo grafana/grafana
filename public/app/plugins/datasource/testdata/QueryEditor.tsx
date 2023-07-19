@@ -3,7 +3,8 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
@@ -21,7 +22,6 @@ import { CSVWave, NodesQuery, TestData, TestDataQueryType, USAQuery } from './da
 import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
-const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
   { value: 'datasources', label: 'Data Sources' },
   { value: 'search', label: 'Search' },
@@ -57,10 +57,10 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = ['simulation'];
+    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
-      hideAliasField: hideAlias.includes(v.id),
+      hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
     }));
   }, []);
 
@@ -114,6 +114,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.PredictableCSVWave:
         update.csvWave = defaultCSVWaveQuery;
         break;
+      case TestDataQueryType.Annotations:
+        update.lines = 10;
+        break;
       case TestDataQueryType.USA:
         update.usa = {
           mode: usaQueryModes[0].value,
@@ -163,6 +166,13 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, csvWave });
   };
 
+  const onDropPercentChanged = (dropPercent: number | undefined) => {
+    if (!dropPercent) {
+      dropPercent = undefined;
+    }
+    onChange({ ...query, dropPercent });
+  };
+
   const options = useMemo(
     () =>
       (scenarioList || [])
@@ -170,7 +180,15 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
-  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
+
+  // Common options that can be added to various scenarios
+  const show = useMemo(() => {
+    const scenarioId = query.scenarioId ?? '';
+    return {
+      labels: ['random_walk', 'predictable_pulse'].includes(scenarioId),
+      dropPercent: ['csv_content', 'csv_file'].includes(scenarioId),
+    };
+  }, [query?.scenarioId]);
 
   if (loading) {
     return null;
@@ -214,7 +232,21 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
         )}
-        {showLabels && (
+        {show.dropPercent && (
+          <InlineField label="Drop" tooltip={'Drop a random set of points'}>
+            <NumberInput
+              min={0}
+              max={100}
+              step={5}
+              width={8}
+              onChange={onDropPercentChanged}
+              placeholder="0"
+              value={query.dropPercent}
+              suffix={<Icon name="percentage" />}
+            />
+          </InlineField>
+        )}
+        {show.labels && (
           <InlineField
             label="Labels"
             labelWidth={14}
@@ -228,6 +260,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
                 <br />
                 key=value, key2=value
                 <br />
+                Value can contain templates:
+                <br />
+                $seriesIndex - replaced with index of the series
               </>
             }
           >
@@ -277,7 +312,20 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           </InlineField>
         </InlineFieldRow>
       )}
-
+      {scenarioId === TestDataQueryType.Annotations && (
+        <InlineFieldRow>
+          <InlineField label="Count" labelWidth={14}>
+            <Input
+              type="number"
+              name="lines"
+              value={query.lines}
+              width={32}
+              onChange={onInputChange}
+              placeholder="10"
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {scenarioId === TestDataQueryType.USA && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
       {scenarioId === TestDataQueryType.GrafanaAPI && (
         <InlineField labelWidth={14} label="Endpoint">

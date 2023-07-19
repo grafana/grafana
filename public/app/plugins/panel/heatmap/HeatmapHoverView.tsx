@@ -13,8 +13,7 @@ import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-
-import { DataHoverView } from '../geomap/components/DataHoverView';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';
@@ -39,7 +38,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   const yField = data.heatmap?.fields[1];
   const countField = data.heatmap?.fields[2];
 
-  const xDisp = (v: any) => {
+  const xDisp = (v: number) => {
     if (xField?.display) {
       return formattedValueToString(xField.display(v));
     }
@@ -51,13 +50,13 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     return `${v}`;
   };
 
-  const xVals = xField?.values.toArray();
-  const yVals = yField?.values.toArray();
-  const countVals = countField?.values.toArray();
+  const xVals = xField?.values;
+  const yVals = yField?.values;
+  const countVals = countField?.values;
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
-  const yDisp = yField?.display ? (v: any) => formattedValueToString(yField.display!(v)) : (v: any) => `${v}`;
+  const yDisp = yField?.display ? (v: string) => formattedValueToString(yField.display!(v)) : (v: string) => `${v}`;
 
   const yValueIdx = index % data.yBucketCount! ?? 0;
 
@@ -122,7 +121,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   for (const field of visibleFields ?? []) {
     // TODO: Currently always undefined? (getLinks)
     if (field.getLinks) {
-      const v = field.values.get(index);
+      const v = field.values[index];
       const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
 
       field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {

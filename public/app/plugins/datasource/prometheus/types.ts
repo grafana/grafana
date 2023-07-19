@@ -1,27 +1,33 @@
-import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
-import { QueryEditorMode } from './querybuilder/shared/types';
+import { Prometheus as GenPromQuery } from './dataquery.gen';
+import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
-export interface PromQuery extends DataQuery {
-  expr: string;
-  format?: string;
-  instant?: boolean;
-  range?: boolean;
-  exemplar?: boolean;
-  hinting?: boolean;
-  interval?: string;
-  intervalFactor?: number;
-  // Timezone offset to align start & end time on backend
+export interface PromQuery extends GenPromQuery, DataQuery {
+  /**
+   * Timezone offset to align start & end time on backend
+   */
   utcOffsetSec?: number;
-  legendFormat?: string;
   valueWithRefId?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
-  /** Code, Builder or Explain */
-  editorMode?: QueryEditorMode;
+  hinting?: boolean;
+  interval?: string;
+  // store the metrics explorer additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  fullMetaSearch?: boolean;
+  includeNullMetadata?: boolean;
+}
+
+export enum PrometheusCacheLevel {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+  None = 'None',
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -34,7 +40,11 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
+  cacheLevel?: PrometheusCacheLevel;
   defaultEditor?: QueryEditorMode;
+  incrementalQuerying?: boolean;
+  incrementalQueryOverlapWindow?: string;
+  disableRecordingRules?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -182,6 +192,8 @@ export interface PromVariableQuery extends DataQuery {
   metric?: string;
   varQuery?: string;
   seriesQuery?: string;
+  labelFilters?: QueryBuilderLabelFilter[];
+  match?: string;
 }
 
 export type StandardPromVariableQuery = {

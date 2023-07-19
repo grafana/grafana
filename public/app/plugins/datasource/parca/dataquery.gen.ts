@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export type ParcaQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultParcaQueryType: ParcaQueryType = 'both';

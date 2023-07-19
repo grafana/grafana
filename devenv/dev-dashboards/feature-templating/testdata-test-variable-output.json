@@ -55,6 +55,38 @@
       "pluginVersion": "8.4.0-pre",
       "title": "Panel Title",
       "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 2,
+      "options": {
+        "mode": "markdown",
+        "content": "VariableUnderTestText: ${VariableUnderTest:text}"
+      },
+      "pluginVersion": "8.4.0-pre",
+      "title": "Panel Title",
+      "type": "text"
+    },
+    {
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 2,
+      "options": {
+        "mode": "markdown",
+        "content": "VariableUnderTestRaw: ${VariableUnderTest:raw}"
+      },
+      "pluginVersion": "8.4.0-pre",
+      "title": "Panel Title",
+      "type": "text"
     }
   ],
   "schemaVersion": 35,

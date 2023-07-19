@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,6 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	maxDatasourceNameLen = 190
+	maxDatasourceUrlLen  = 255
 )
 
 type Service struct {
@@ -161,7 +167,7 @@ func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetData
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
@@ -171,6 +177,10 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
+
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+		return dataSource, err
+	}
 
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
@@ -231,6 +241,11 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
+
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+		return dataSource, err
+	}
+
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -241,6 +256,21 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
+		}
+
+		if cmd.Name != "" && cmd.Name != dataSource.Name {
+			query := &datasources.GetDataSourceQuery{
+				Name:  cmd.Name,
+				OrgID: cmd.OrgID,
+			}
+			exist, err := s.SQLStore.GetDataSource(ctx, query)
+			if exist != nil {
+				return datasources.ErrDataSourceNameExists
+			}
+
+			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return err
+			}
 		}
 
 		err = s.fillWithSecureJSONData(ctx, cmd, dataSource)
@@ -424,10 +454,11 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		opts.CustomOptions["grafanaData"] = make(map[string]interface{})
+		deepJsonDataCopy := make(map[string]interface{}, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {
-			opts.CustomOptions[k] = v
+			deepJsonDataCopy[k] = v
 		}
+		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
 	}
 	if ds.BasicAuth {
 		password, err := s.DecryptedBasicAuthPassword(ctx, ds)
@@ -560,8 +591,8 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 	index := 0
 	for {
 		index++
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+		headerNameSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderName, index)
+		headerValueSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderValue, index)
 
 		key := jsonData.Get(headerNameSuffix).MustString()
 		if key == "" {
@@ -630,6 +661,18 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 	return nil
 }
 
+func validateFields(name, url string) error {
+	if len(name) > maxDatasourceNameLen {
+		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
+	}
+
+	if len(url) > maxDatasourceUrlLen {
+		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
+	}
+
+	return nil
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 
@@ -649,4 +692,13 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.DataSource)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
 	return limits, nil
+}
+
+// CustomerHeaders returns the custom headers specified in the datasource. The context is used for the decryption operation that might use the store, so consider setting an acceptable timeout for your use case.
+func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+	return s.getCustomHeaders(ds.JsonData, values), nil
 }

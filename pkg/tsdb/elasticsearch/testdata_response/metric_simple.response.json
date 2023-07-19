@@ -16,10 +16,10 @@
               "doc_count": 79,
               "2": {
                 "buckets": [
-                  { "key_as_string": "1668422400000", "key": 1668422400000, "doc_count": 0 },
-                  { "key_as_string": "1668422460000", "key": 1668422460000, "doc_count": 27 },
-                  { "key_as_string": "1668422520000", "key": 1668422520000, "doc_count": 21 },
-                  { "key_as_string": "1668422580000", "key": 1668422580000, "doc_count": 31 }
+                  { "key_as_string": "1668422400123", "key": 1668422400123, "doc_count": 0 },
+                  { "key_as_string": "1668422460123", "key": 1668422460123, "doc_count": 27 },
+                  { "key_as_string": "1668422520123", "key": 1668422520123, "doc_count": 21 },
+                  { "key_as_string": "1668422580123", "key": 1668422580123, "doc_count": 31 }
                 ]
               }
             },
@@ -28,10 +28,10 @@
               "doc_count": 89,
               "2": {
                 "buckets": [
-                  { "key_as_string": "1668422400000", "key": 1668422400000, "doc_count": 0 },
-                  { "key_as_string": "1668422460000", "key": 1668422460000, "doc_count": 28 },
-                  { "key_as_string": "1668422520000", "key": 1668422520000, "doc_count": 22 },
-                  { "key_as_string": "1668422580000", "key": 1668422580000, "doc_count": 39 }
+                  { "key_as_string": "1668422400123", "key": 1668422400123, "doc_count": 0 },
+                  { "key_as_string": "1668422460123", "key": 1668422460123, "doc_count": 28 },
+                  { "key_as_string": "1668422520123", "key": 1668422520123, "doc_count": 22 },
+                  { "key_as_string": "1668422580123", "key": 1668422580123, "doc_count": 39 }
                 ]
               }
             },
@@ -40,10 +40,10 @@
               "doc_count": 87,
               "2": {
                 "buckets": [
-                  { "key_as_string": "1668422400000", "key": 1668422400000, "doc_count": 0 },
-                  { "key_as_string": "1668422460000", "key": 1668422460000, "doc_count": 26 },
-                  { "key_as_string": "1668422520000", "key": 1668422520000, "doc_count": 20 },
-                  { "key_as_string": "1668422580000", "key": 1668422580000, "doc_count": 41 }
+                  { "key_as_string": "1668422400123", "key": 1668422400123, "doc_count": 0 },
+                  { "key_as_string": "1668422460123", "key": 1668422460123, "doc_count": 26 },
+                  { "key_as_string": "1668422520123", "key": 1668422520123, "doc_count": 20 },
+                  { "key_as_string": "1668422580123", "key": 1668422580123, "doc_count": 41 }
                 ]
               }
             }

@@ -2,7 +2,6 @@ import { isString, get } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import {
-  ArrayVector,
   DataFrame,
   DataTransformerID,
   Field,
@@ -53,7 +52,7 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
   const values = new Map<string, any[]>();
 
   for (let i = 0; i < count; i++) {
-    let obj = source.values.get(i);
+    let obj = source.values[i];
 
     if (isString(obj)) {
       try {
@@ -61,6 +60,10 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
       } catch {
         obj = {}; // empty
       }
+    }
+
+    if (obj == null) {
+      continue;
     }
 
     if (options.format === FieldExtractorID.JSON && options.jsonPaths && options.jsonPaths?.length > 0) {
@@ -93,7 +96,7 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
     const buffer = values.get(name);
     return {
       name,
-      values: new ArrayVector(buffer),
+      values: buffer,
       type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
     } as Field;

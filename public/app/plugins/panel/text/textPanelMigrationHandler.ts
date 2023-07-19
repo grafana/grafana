@@ -1,8 +1,8 @@
 import { PanelModel } from '@grafana/data';
 
-import { TextMode, PanelOptions } from './panelcfg.gen';
+import { TextMode, Options } from './panelcfg.gen';
 
-export const textPanelMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {
+export const textPanelMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
   let options = panel.options;
 

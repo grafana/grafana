@@ -1,31 +1,42 @@
 package frontend
 
 import (
-	"github.com/urfave/cli/v2"
+	"fmt"
 
+	"github.com/blang/semver/v4"
 	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/urfave/cli/v2"
 )
 
 const GrafanaDir = "."
 
-func GetConfig(c *cli.Context, version string) (config.Config, config.Edition, error) {
+func GetConfig(c *cli.Context, metadata config.Metadata) (config.Config, config.Edition, error) {
 	cfg := config.Config{
-		NumWorkers:     c.Int("jobs"),
-		GitHubToken:    c.String("github-token"),
-		PackageVersion: version,
+		NumWorkers:  c.Int("jobs"),
+		GitHubToken: c.String("github-token"),
 	}
 
 	mode := config.Edition(c.String("edition"))
 
-	if version == "" {
-		buildID := c.String("build-id")
-		var err error
-		version, err = config.GetGrafanaVersion(buildID, GrafanaDir)
-		cfg.PackageVersion = version
+	if metadata.ReleaseMode.Mode == config.TagMode && !metadata.ReleaseMode.IsTest {
+		packageJSONVersion, err := config.GetPackageJSONVersion(GrafanaDir)
 		if err != nil {
-			return config.Config{}, config.EditionOSS, cli.Exit(err.Error(), 1)
+			return config.Config{}, "", err
+		}
+		semverGrafanaVersion, err := semver.Parse(metadata.GrafanaVersion)
+		if err != nil {
+			return config.Config{}, "", err
+		}
+		semverPackageJSONVersion, err := semver.Parse(packageJSONVersion)
+		if err != nil {
+			return config.Config{}, "", err
+		}
+		// Check if the semver digits of the tag are not equal
+		if semverGrafanaVersion.FinalizeVersion() != semverPackageJSONVersion.FinalizeVersion() {
+			return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json", packageJSONVersion, metadata.GrafanaVersion), 1)
 		}
 	}
 
+	cfg.PackageVersion = metadata.GrafanaVersion
 	return cfg, mode, nil
 }

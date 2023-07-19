@@ -18,6 +18,7 @@ type FakeServiceAccountStore struct {
 	ExpectedServiceAccountProfileDTO        *serviceaccounts.ServiceAccountProfileDTO
 	ExpectedSearchServiceAccountQueryResult *serviceaccounts.SearchOrgServiceAccountsResult
 	ExpectedStats                           *serviceaccounts.Stats
+	expectedMigratedResults                 *serviceaccounts.MigrationResult
 	ExpectedAPIKeys                         []apikey.APIKey
 	ExpectedAPIKey                          *apikey.APIKey
 	ExpectedBoolean                         bool
@@ -60,8 +61,8 @@ func (f *FakeServiceAccountStore) DeleteServiceAccount(ctx context.Context, orgI
 }
 
 // MigrateApiKeysToServiceAccounts is a fake migrating api keys to service accounts.
-func (f *FakeServiceAccountStore) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
-	return f.ExpectedError
+func (f *FakeServiceAccountStore) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
+	return f.expectedMigratedResults, f.ExpectedError
 }
 
 // MigrateApiKey is a fake migrating an api key to a service account.

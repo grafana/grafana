@@ -9,8 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,6 +46,147 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 		}
 	}
 	return nil, datasources.ErrDataSourceNotFound
+}
+
+func TestService_AddDataSource(t *testing.T) {
+	cfg := &setting.Cfg{}
+
+	t.Run("should return validation error if command validation failed", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		cmd := &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  string(make([]byte, 256)),
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
+
+		cmd = &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			URL:   string(make([]byte, 256)),
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+	})
+}
+
+func TestService_UpdateDataSource(t *testing.T) {
+	cfg := &setting.Cfg{}
+
+	t.Run("should return not found error if datasource not found", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			UID:   uuid.New().String(),
+			ID:    1,
+			OrgID: 1,
+		}
+
+		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
+	})
+
+	t.Run("should return validation error if command validation failed", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    1,
+			OrgID: 1,
+			Name:  string(make([]byte, 256)),
+		}
+
+		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
+
+		cmd = &datasources.UpdateDataSourceCommand{
+			ID:    1,
+			OrgID: 1,
+			URL:   string(make([]byte, 256)),
+		}
+
+		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
+	})
+
+	t.Run("should return no error if updated datasource", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "test-datasource-updated",
+		}
+
+		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error if datasource with same name exist", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		dsToUpdate, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+		})
+		require.NoError(t, err)
+
+		existingDs, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "name already taken",
+		})
+		require.NoError(t, err)
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    dsToUpdate.ID,
+			OrgID: dsToUpdate.OrgID,
+			Name:  existingDs.Name,
+		}
+
+		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.ErrorIs(t, err, datasources.ErrDataSourceNameExists)
+	})
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
@@ -427,6 +571,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, rt)
 		tr := configuredTransport
 
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.Equal(t, ds.JsonData.MustMap()["grafanaData"], opts.CustomOptions["grafanaData"])
+
 		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
 		_, err = ds.JsonData.MarshalJSON()
 		require.NoError(t, err)
@@ -701,6 +849,78 @@ func TestService_GetDecryptedValues(t *testing.T) {
 
 		require.Equal(t, jsonData, values)
 	})
+}
+
+func TestDataSource_CustomHeaders(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
+
+	dsService.cfg = setting.NewCfg()
+
+	testValue := "HeaderValue1"
+
+	encryptedValue, err := secretsService.Encrypt(context.Background(), []byte(testValue), secrets.WithoutScope())
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name             string
+		jsonData         *simplejson.Json
+		secureJsonData   map[string][]byte
+		expectedHeaders  map[string]string
+		expectedErrorMsg string
+	}{
+		{
+			name: "valid custom headers",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"httpHeaderName1": "X-Test-Header1",
+			}),
+			secureJsonData: map[string][]byte{
+				"httpHeaderValue1": encryptedValue,
+			},
+			expectedHeaders: map[string]string{
+				"X-Test-Header1": testValue,
+			},
+		},
+		{
+			name: "missing header value",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"httpHeaderName1": "X-Test-Header1",
+			}),
+			secureJsonData:  map[string][]byte{},
+			expectedHeaders: map[string]string{},
+		},
+		{
+			name: "non customer header value",
+			jsonData: simplejson.NewFromAny(map[string]interface{}{
+				"someotherheader": "X-Test-Header1",
+			}),
+			secureJsonData:  map[string][]byte{},
+			expectedHeaders: map[string]string{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ds := &datasources.DataSource{
+				JsonData:       tc.jsonData,
+				SecureJsonData: tc.secureJsonData,
+			}
+
+			headers, err := dsService.CustomHeaders(context.Background(), ds)
+
+			if tc.expectedErrorMsg != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tc.expectedErrorMsg)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedHeaders, headers)
+			}
+		})
+	}
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----

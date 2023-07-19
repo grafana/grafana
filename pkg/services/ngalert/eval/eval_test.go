@@ -9,12 +9,16 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -355,7 +359,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 func TestValidate(t *testing.T) {
 	type services struct {
 		cache        *fakes.FakeCacheService
-		pluginsStore *plugins.FakePluginStore
+		pluginsStore *pluginFakes.FakePluginStore
 	}
 
 	testCases := []struct {
@@ -526,20 +530,201 @@ func TestValidate(t *testing.T) {
 
 		t.Run(testCase.name, func(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
-			store := &plugins.FakePluginStore{}
+			store := &pluginFakes.FakePluginStore{}
 			condition := testCase.condition(services{
 				cache:        cacheService,
 				pluginsStore: store,
 			})
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), store)
-			evalCtx := Context(context.Background(), u)
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), store)
+			evalCtx := NewContext(context.Background(), u)
 
 			err := evaluator.Validate(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestEvaluate(t *testing.T) {
+	cases := []struct {
+		name     string
+		cond     models.Condition
+		resp     backend.QueryDataResponse
+		expected Results
+		error    string
+	}{{
+		name: "is no data with no frames",
+		cond: models.Condition{
+			Data: []models.AlertQuery{{
+				RefID:         "A",
+				DatasourceUID: "test",
+			}},
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {Frames: nil},
+			},
+		},
+		expected: Results{{
+			State: NoData,
+			Instance: data.Labels{
+				"datasource_uid": "test",
+				"ref_id":         "A",
+			},
+		}},
+	}, {
+		name: "is no data for one frame with no fields",
+		cond: models.Condition{
+			Data: []models.AlertQuery{{
+				RefID:         "A",
+				DatasourceUID: "test",
+			}},
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {Frames: []*data.Frame{{Fields: nil}}},
+			},
+		},
+		expected: Results{{
+			State: NoData,
+			Instance: data.Labels{
+				"datasource_uid": "test",
+				"ref_id":         "A",
+			},
+		}},
+	}, {
+		name: "results contains captured values for exact label matches",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+				},
+			},
+		},
+		expected: Results{{
+			State: Alerting,
+			Instance: data.Labels{
+				"foo": "bar",
+			},
+			Values: map[string]NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(10.0),
+				},
+				"B": {
+					Var:    "B",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(1.0),
+				},
+			},
+			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
+		}},
+	}, {
+		name: "results contains captured values for subset of labels",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+				},
+			},
+		},
+		expected: Results{{
+			State: Alerting,
+			Instance: data.Labels{
+				"foo": "bar",
+				"bar": "baz",
+			},
+			Values: map[string]NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(10.0),
+				},
+				"B": {
+					Var:    "B",
+					Labels: data.Labels{"foo": "bar", "bar": "baz"},
+					Value:  util.Pointer(1.0),
+				},
+			},
+			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
+		}},
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ev := conditionEvaluator{
+				pipeline: nil,
+				expressionService: &fakeExpressionService{
+					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+						return &tc.resp, nil
+					},
+				},
+				condition: tc.cond,
+			}
+			results, err := ev.Evaluate(context.Background(), time.Now())
+			if tc.error != "" {
+				require.EqualError(t, err, tc.error)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, results, len(tc.expected))
+				for i := range results {
+					tc.expected[i].EvaluatedAt = results[i].EvaluatedAt
+					tc.expected[i].EvaluationDuration = results[i].EvaluationDuration
+					assert.Equal(t, tc.expected[i], results[i])
+				}
 			}
 		})
 	}

@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -188,31 +190,73 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 	if state.State == eval.Normal {
 		logger.Debug("Keeping state", "state", state.State)
 	} else {
-		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
+		nextEndsAt := result.EvaluatedAt
+		logger.Debug("Changing state",
+			"previous_state",
+			state.State,
+			"next_state",
+			eval.Normal,
+			"previous_ends_at",
+			state.EndsAt,
+			"next_ends_at",
+			nextEndsAt)
 		// Normal states have the same start and end timestamps
-		state.SetNormal("", result.EvaluatedAt, result.EvaluatedAt)
+		state.SetNormal("", nextEndsAt, nextEndsAt)
 	}
 }
 
 func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch state.State {
 	case eval.Alerting:
-		logger.Debug("Keeping state", "state", state.State)
+		prevEndsAt := state.EndsAt
 		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		logger.Debug("Keeping state",
+			"state",
+			state.State,
+			"previous_ends_at",
+			prevEndsAt,
+			"next_ends_at",
+			state.EndsAt)
 	case eval.Pending:
 		// If the previous state is Pending then check if the For duration has been observed
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
-			state.SetAlerting("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+			logger.Debug("Changing state",
+				"previous_state",
+				state.State,
+				"next_state",
+				eval.Alerting,
+				"previous_ends_at",
+				state.EndsAt,
+				"next_ends_at",
+				nextEndsAt)
+			state.SetAlerting("", result.EvaluatedAt, nextEndsAt)
 		}
 	default:
+		nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
 		if rule.For > 0 {
 			// If the alert rule has a For duration that should be observed then the state should be set to Pending
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
-			state.SetPending("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			logger.Debug("Changing state",
+				"previous_state",
+				state.State,
+				"next_state",
+				eval.Pending,
+				"previous_ends_at",
+				state.EndsAt,
+				"next_ends_at",
+				nextEndsAt)
+			state.SetPending("", result.EvaluatedAt, nextEndsAt)
 		} else {
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
-			state.SetAlerting("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			logger.Debug("Changing state",
+				"previous_state",
+				state.State,
+				"next_state",
+				eval.Alerting,
+				"previous_ends_at",
+				state.EndsAt,
+				"next_ends_at",
+				nextEndsAt)
+			state.SetAlerting("", result.EvaluatedAt, nextEndsAt)
 		}
 	}
 }
@@ -226,12 +270,28 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		state.StateReason = "error"
 	case models.ErrorErrState:
 		if state.State == eval.Error {
-			logger.Debug("Keeping state", "state", state.State)
+			prevEndsAt := state.EndsAt
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+			logger.Debug("Keeping state",
+				"state",
+				state.State,
+				"previous_ends_at",
+				prevEndsAt,
+				"next_ends_at",
+				state.EndsAt)
 		} else {
+			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
 			// This is the first occurrence of an error
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
-			state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			logger.Debug("Changing state",
+				"previous_state",
+				state.State,
+				"next_state",
+				eval.Error,
+				"previous_ends_at",
+				state.EndsAt,
+				"next_ends_at",
+				nextEndsAt)
+			state.SetError(result.Error, result.EvaluatedAt, nextEndsAt)
 
 			if result.Error != nil {
 				state.Annotations["Error"] = result.Error.Error()
@@ -259,21 +319,45 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	}
 }
 
-func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
-	state.Error = result.Error
-
-	if state.StartsAt.IsZero() {
-		state.StartsAt = result.EvaluatedAt
-	}
-	state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-
+func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch rule.NoDataState {
 	case models.Alerting:
-		state.State = eval.Alerting
+		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
+		resultAlerting(state, rule, result, logger)
+		state.StateReason = models.NoData.String()
 	case models.NoData:
-		state.State = eval.NoData
+		if state.State == eval.NoData {
+			prevEndsAt := state.EndsAt
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+			logger.Debug("Keeping state",
+				"state",
+				state.State,
+				"previous_ends_at",
+				prevEndsAt,
+				"next_ends_at",
+				state.EndsAt)
+		} else {
+			// This is the first occurrence of no data
+			nextEndsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+			logger.Debug("Changing state",
+				"previous_state",
+				state.State,
+				"next_state",
+				eval.NoData,
+				"previous_ends_at",
+				state.EndsAt,
+				"next_ends_at",
+				nextEndsAt)
+			state.SetNoData("", result.EvaluatedAt, nextEndsAt)
+		}
 	case models.OK:
-		state.State = eval.Normal
+		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
+		resultNormal(state, rule, result, logger)
+		state.StateReason = models.NoData.String()
+	default:
+		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
+		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.Annotations["Error"] = err.Error()
 	}
 }
 
@@ -388,4 +472,18 @@ func FormatStateAndReason(state eval.State, reason string) string {
 		s += fmt.Sprintf(" (%v)", reason)
 	}
 	return s
+}
+
+// GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
+func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+	extraLabels := make(map[string]string, 4)
+
+	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
+	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
+
+	if includeFolder {
+		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+	return extraLabels
 }

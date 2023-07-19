@@ -20,6 +20,7 @@ export interface QueryOperationRowProps {
   children: React.ReactNode;
   isOpen?: boolean;
   draggable?: boolean;
+  collapsable?: boolean;
   disabled?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function QueryOperationRow({
   isOpen,
   disabled,
   draggable,
+  collapsable,
   index,
   id,
 }: QueryOperationRowProps) {
@@ -106,6 +108,7 @@ export function QueryOperationRow({
                     actionsElement={actionsElement}
                     disabled={disabled}
                     draggable
+                    collapsable={collapsable}
                     dragHandleProps={provided.dragHandleProps}
                     headerElement={headerElementRendered}
                     isContentVisible={isContentVisible}
@@ -130,6 +133,7 @@ export function QueryOperationRow({
         actionsElement={actionsElement}
         disabled={disabled}
         draggable={false}
+        collapsable={collapsable}
         headerElement={headerElementRendered}
         isContentVisible={isContentVisible}
         onRowToggle={onRowToggle}

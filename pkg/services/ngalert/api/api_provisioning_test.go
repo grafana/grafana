@@ -99,7 +99,7 @@ func TestProvisioningApi(t *testing.T) {
 			})
 		})
 
-		t.Run("when an unspecified error occurrs", func(t *testing.T) {
+		t.Run("when an unspecified error occurs", func(t *testing.T) {
 			t.Run("GET returns 500", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				sut.policies = &fakeFailingNotificationPolicyService{}
@@ -303,6 +303,14 @@ func TestProvisioningApi(t *testing.T) {
 			rule := createTestAlertRule("rule", 1)
 
 			response := sut.RoutePutAlertRule(&rc, rule, "does not exist")
+
+			require.Equal(t, 404, response.Status())
+		})
+
+		t.Run("are missing, GET returns 404", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			response := sut.RouteRouteGetAlertRule(&rc, "does not exist")
 
 			require.Equal(t, 404, response.Status())
 		})
@@ -1021,13 +1029,13 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		OrgID:     orgID,
 		Title:     title,
 		Condition: "A",
-		Data: []models.AlertQuery{
+		Data: []definitions.AlertQuery{
 			{
 				RefID: "A",
 				Model: json.RawMessage(testModel),
-				RelativeTimeRange: models.RelativeTimeRange{
-					From: models.Duration(60),
-					To:   models.Duration(0),
+				RelativeTimeRange: definitions.RelativeTimeRange{
+					From: definitions.Duration(60),
+					To:   definitions.Duration(0),
 				},
 			},
 		},

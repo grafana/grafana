@@ -52,7 +52,7 @@ describe('Live Stream Tests', () => {
         const last = { ...view.get(view.length - 1) };
         expect(last).toEqual({
           Time: '2019-08-28T20:50:40.118Z',
-          id: '25d81461-a66f-53ff-98d5-e39515af4735_A',
+          id: 'A_25d81461-a66f-53ff-98d5-e39515af4735',
           Line: 'Kittens',
         });
       },

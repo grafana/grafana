@@ -52,7 +52,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
   }
 
   if (Boolean(config.featureToggles['publicDashboards'])) {
-    tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
+    tabs.push({ label: 'Public dashboard', value: 'public-dashboard', component: SharePublicDashboard });
   }
 
   const at = tabs.find((t) => t.value === activeTab);
@@ -95,7 +95,7 @@ export class ShareModal extends React.Component<Props, State> {
     reportInteraction('grafana_dashboards_share_modal_viewed');
   }
 
-  onSelectTab = (t: any) => {
+  onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {
     this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
   };
 

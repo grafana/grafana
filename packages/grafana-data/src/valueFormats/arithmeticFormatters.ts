@@ -42,5 +42,5 @@ export function sci(value: number | null, decimals: DecimalCount): FormattedValu
   if (value == null) {
     return { text: '' };
   }
-  return { text: value.toExponential(decimals as number) };
+  return { text: value.toExponential(decimals ?? undefined) };
 }

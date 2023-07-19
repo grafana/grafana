@@ -1,4 +1,4 @@
-import { ResourceDimensionMode } from 'app/features/dimensions';
+import { ResourceDimensionMode } from '@grafana/schema';
 
 import { StyleConfig } from './types';
 import { getStyleConfigState } from './utils';

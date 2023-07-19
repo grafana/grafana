@@ -87,6 +87,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
+  eventsScope = '__global_',
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -181,6 +182,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
+      range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
     builder.addAxis({
@@ -190,6 +192,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
+      formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
     });
   }
 
@@ -616,9 +619,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
       data: frame,
     };
+
     const hoverEvent = new DataHoverEvent(payload);
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (sync && sync() === DashboardCursorSync.Off) {

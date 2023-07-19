@@ -5,14 +5,14 @@
   "builtIn": true,
 
   "info": {
-    "description": "TODO",
+    "description": "A built-in data source that generates random walk data and can poll the Testdata data source. This helps you test visualizations and run experiments.",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "public/img/icn-datasource.svg",
-      "large": "public/img/icn-datasource.svg"
+      "small": "img/icn-grafanadb.svg",
+      "large": "img/icn-grafanadb.svg"
     }
   },
   "backend": true,

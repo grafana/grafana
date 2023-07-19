@@ -29,7 +29,7 @@ export function ServiceGraphSection({
   const [hasKeys, setHasKeys] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     async function fn(ds: PrometheusDatasource) {
-      const keys = await ds.getLabelNames({
+      const keys = await ds.getTagKeys({
         series: [
           'traces_service_graph_request_server_seconds_sum',
           'traces_service_graph_request_total',
@@ -98,7 +98,8 @@ export function ServiceGraphSection({
           <a
             target="_blank"
             rel="noreferrer noopener"
-            href="https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/"
+            href="https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph"
+            className={styles.link}
           >
             Tempo documentation
           </a>
@@ -132,5 +133,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alert: css`
     max-width: 75ch;
     margin-top: ${theme.spacing(2)};
+  `,
+  link: css`
+    color: ${theme.colors.text.link};
+    text-decoration: underline;
   `,
 });

@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export enum TestDataQueryType {
   Annotations = 'annotations',
   Arrow = 'arrow',
@@ -112,7 +110,11 @@ export interface TestData extends common.DataQuery {
   channel?: string;
   csvContent?: string;
   csvFileName?: string;
-  csvWave?: Array<CSVWave>;
+  csvWave?: Array<CSVWave>; // TODO can we prevent partial from being generated
+  /**
+   * Drop percentage (the chance we will lose a point 0-100)
+   */
+  dropPercent?: number;
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
   labels?: string;
   levelColumn?: boolean;

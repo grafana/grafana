@@ -21,12 +21,12 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
 
 import { prepareCandlestickFields } from './fields';
-import { CandlestickOptions, defaultColors, VizDisplayMode } from './models.gen';
+import { Options, defaultCandlestickColors, VizDisplayMode } from './types';
 import { drawMarkers, FieldIndices } from './utils';
 
-interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
+interface CandlestickPanelProps extends PanelProps<Options> {}
 
-export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
+export const CandlestickPanel = ({
   data,
   id,
   timeRange,
@@ -37,7 +37,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-}) => {
+}: CandlestickPanelProps) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
     usePanelContext();
 
@@ -49,7 +49,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
-  }, [data, options, theme, timeRange]);
+  }, [data.series, options, theme, timeRange]);
 
   const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -76,7 +76,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
     }
 
     const { mode, candleStyle, colorStrategy } = options;
-    const colors = { ...defaultColors, ...options.colors };
+    const colors = { ...defaultCandlestickColors, ...options.colors };
     let { open, high, low, close, volume } = fieldMap; // names from matched fields
 
     if (open == null || close == null) {

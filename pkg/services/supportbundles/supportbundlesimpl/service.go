@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -77,10 +77,8 @@ func ProvideService(
 		return s, nil
 	}
 
-	if !accessControl.IsDisabled() {
-		if err := s.declareFixedRoles(accesscontrolService); err != nil {
-			return nil, err
-		}
+	if err := s.declareFixedRoles(accesscontrolService); err != nil {
+		return nil, err
 	}
 
 	s.registerAPIEndpoints(httpServer, routeRegister)

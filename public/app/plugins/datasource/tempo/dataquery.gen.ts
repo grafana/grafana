@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
   /**
@@ -35,6 +33,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   search?: string;
   /**
+   * Use service.namespace in addition to service.name to uniquely identify a service.
+   */
+  serviceMapIncludeNamespace?: boolean;
+  /**
    * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
    */
   serviceMapQuery?: string;
@@ -46,6 +48,10 @@ export interface TempoQuery extends common.DataQuery {
    * Query traces by span name
    */
   spanName?: string;
+  /**
+   * Use the streaming API to get partial results as they are available
+   */
+  streaming?: boolean;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
@@ -55,12 +61,26 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 /**
  * search = Loki search, nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+/**
+ * The state of the TraceQL streaming search query
+ */
+export enum SearchStreamingState {
+  Done = 'done',
+  Error = 'error',
+  Pending = 'pending',
+  Streaming = 'streaming',
+}
 
 /**
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
-export type TraceqlSearchFilterType = ('static' | 'dynamic');
+export enum TraceqlSearchScope {
+  Resource = 'resource',
+  Span = 'span',
+  Unscoped = 'unscoped',
+}
 
 export interface TraceqlFilter {
   /**
@@ -72,13 +92,13 @@ export interface TraceqlFilter {
    */
   operator?: string;
   /**
+   * The scope of the filter, can either be unscoped/all scopes, resource or span
+   */
+  scope?: TraceqlSearchScope;
+  /**
    * The tag for the search filter, for example: .http.status_code, .service.name, status
    */
   tag?: string;
-  /**
-   * The type of the filter, can either be static (pre defined in the UI) or dynamic
-   */
-  type: TraceqlSearchFilterType;
   /**
    * The value for the search filter
    */

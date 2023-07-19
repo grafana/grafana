@@ -3,7 +3,7 @@ import { LokiDatasource } from '../../../datasource';
 import { createLokiDatasource } from '../../../mocks';
 
 import { CompletionDataProvider } from './CompletionDataProvider';
-import { getCompletions } from './completions';
+import { getAfterSelectorCompletions, getCompletions } from './completions';
 import { Label, Situation } from './situation';
 
 jest.mock('../../../querybuilder/operations', () => ({
@@ -99,27 +99,6 @@ const afterSelectorCompletions = [
     type: 'PARSER',
   },
   {
-    insertText: '| unwrap extracted',
-    label: 'unwrap extracted',
-    type: 'PIPE_OPERATION',
-  },
-  {
-    insertText: '| unwrap place',
-    label: 'unwrap place',
-    type: 'PIPE_OPERATION',
-  },
-  {
-    insertText: '| unwrap source',
-    label: 'unwrap source',
-    type: 'PIPE_OPERATION',
-  },
-  {
-    insertText: '| unwrap',
-    label: 'unwrap',
-    type: 'PIPE_OPERATION',
-    documentation: 'Operator docs',
-  },
-  {
     insertText: '| line_format "{{.$0}}"',
     isSnippet: true,
     label: 'line_format',
@@ -132,6 +111,24 @@ const afterSelectorCompletions = [
     label: 'label_format',
     type: 'PIPE_OPERATION',
     documentation: 'Operator docs',
+  },
+  {
+    insertText: '| unwrap',
+    label: 'unwrap',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
+  },
+  {
+    insertText: '| decolorize',
+    label: 'decolorize',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| distinct',
+    label: 'distinct',
+    type: 'PIPE_OPERATION',
   },
 ];
 
@@ -199,6 +196,7 @@ describe('getCompletions', () => {
       unwrapLabelKeys,
       hasJSON: false,
       hasLogfmt: false,
+      hasPack: false,
     });
   });
 
@@ -332,8 +330,9 @@ describe('getCompletions', () => {
         unwrapLabelKeys,
         hasJSON: true,
         hasLogfmt: false,
+        hasPack: false,
       });
-      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace };
+      const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '{job="grafana"}', afterPipe, hasSpace };
       const completions = await getCompletions(situation, completionProvider);
 
       const expected = buildAfterSelectorCompletions('json', 'logfmt', afterPipe, hasSpace);
@@ -349,6 +348,7 @@ describe('getCompletions', () => {
         unwrapLabelKeys,
         hasJSON: false,
         hasLogfmt: true,
+        hasPack: false,
       });
       const situation: Situation = { type: 'AFTER_SELECTOR', logQuery: '', afterPipe, hasSpace: true };
       const completions = await getCompletions(situation, completionProvider);
@@ -387,5 +387,122 @@ describe('getCompletions', () => {
       },
     ]);
     expect(functionCompletions).toHaveLength(3);
+  });
+
+  test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
+    const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
+    const completions = await getCompletions(situation, completionProvider);
+
+    expect(completions).toEqual([
+      {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'place',
+        label: 'place',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'source',
+        label: 'source',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+    ]);
+  });
+});
+
+describe('getAfterSelectorCompletions', () => {
+  let datasource: LokiDatasource;
+  let languageProvider: LokiLanguageProvider;
+  let completionProvider: CompletionDataProvider;
+
+  beforeEach(() => {
+    datasource = createLokiDatasource();
+    languageProvider = new LokiLanguageProvider(datasource);
+    completionProvider = new CompletionDataProvider(languageProvider, {
+      current: history,
+    });
+
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys: ['abc', 'def'],
+      unwrapLabelKeys: [],
+      hasJSON: true,
+      hasLogfmt: false,
+      hasPack: false,
+    });
+  });
+  it('should remove trailing pipeline from logQuery', () => {
+    getAfterSelectorCompletions(`{job="grafana"} | `, true, true, completionProvider);
+    expect(completionProvider.getParserAndLabelKeys).toHaveBeenCalledWith(`{job="grafana"}`);
+  });
+
+  it('should show detected parser if query has no parser', async () => {
+    const suggestions = await getAfterSelectorCompletions(`{job="grafana"} |  `, true, true, completionProvider);
+    const parsersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'PARSER')
+      .map((parser) => parser.label);
+    expect(parsersInSuggestions).toStrictEqual(['json (detected)', 'logfmt', 'pattern', 'regexp', 'unpack']);
+  });
+
+  it('should show detected unpack parser if query has no parser', async () => {
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys: ['abc', 'def'],
+      unwrapLabelKeys: [],
+      hasJSON: true,
+      hasLogfmt: false,
+      hasPack: true,
+    });
+    const suggestions = await getAfterSelectorCompletions(`{job="grafana"} |  `, true, true, completionProvider);
+    const parsersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'PARSER')
+      .map((parser) => parser.label);
+    expect(parsersInSuggestions).toStrictEqual(['unpack (detected)', 'json', 'logfmt', 'pattern', 'regexp']);
+  });
+
+  it('should not show detected parser if query already has parser', async () => {
+    const suggestions = await getAfterSelectorCompletions(
+      `{job="grafana"} | logfmt | `,
+      true,
+      true,
+      completionProvider
+    );
+    const parsersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'PARSER')
+      .map((parser) => parser.label);
+    expect(parsersInSuggestions).toStrictEqual(['json', 'logfmt', 'pattern', 'regexp', 'unpack']);
+  });
+
+  it('should show label filter options if query has parser and trailing pipeline', async () => {
+    const suggestions = await getAfterSelectorCompletions(
+      `{job="grafana"} | logfmt | `,
+      true,
+      true,
+      completionProvider
+    );
+    const labelFiltersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'LABEL_NAME')
+      .map((label) => label.label);
+    expect(labelFiltersInSuggestions).toStrictEqual(['abc (detected)', 'def (detected)']);
+  });
+
+  it('should show label filter options if query has parser and no trailing pipeline', async () => {
+    const suggestions = await getAfterSelectorCompletions(`{job="grafana"} | logfmt`, true, true, completionProvider);
+    const labelFiltersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'LABEL_NAME')
+      .map((label) => label.label);
+    expect(labelFiltersInSuggestions).toStrictEqual(['abc (detected)', 'def (detected)']);
+  });
+
+  it('should not show label filter options if query has no parser', async () => {
+    const suggestions = await getAfterSelectorCompletions(`{job="grafana"} | `, true, true, completionProvider);
+    const labelFiltersInSuggestions = suggestions
+      .filter((suggestion) => suggestion.type === 'LABEL_NAME')
+      .map((label) => label.label);
+    expect(labelFiltersInSuggestions.length).toBe(0);
   });
 });

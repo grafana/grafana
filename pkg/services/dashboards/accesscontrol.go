@@ -196,6 +196,9 @@ func resolveDashboardScope(ctx context.Context, folderDB folder.FolderStore, org
 }
 
 func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.Service) ([]string, error) {
+	if folderUID == ac.GeneralFolderUID {
+		return nil, nil
+	}
 	ancestors, err := folderSvc.GetParents(ctx, folder.GetParentsQuery{
 		UID:   folderUID,
 		OrgID: orgID,

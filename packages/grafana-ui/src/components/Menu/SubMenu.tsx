@@ -28,8 +28,8 @@ export interface SubMenuProps {
 }
 
 /** @internal */
-export const SubMenu: React.FC<SubMenuProps> = React.memo(
-  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close, customStyle }) => {
+export const SubMenu = React.memo(
+  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close, customStyle }: SubMenuProps) => {
     const styles = useStyles2(getStyles);
     const localRef = useRef<HTMLDivElement>(null);
     const [handleKeys] = useMenuFocus({
@@ -74,31 +74,31 @@ SubMenu.displayName = 'SubMenu';
 /** @internal */
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    iconWrapper: css`
-      display: flex;
-      flex: 1;
-      justify-content: end;
-    `,
-    icon: css`
-      opacity: 0.7;
-      margin-left: ${theme.spacing(1)};
-      color: ${theme.colors.text.secondary};
-    `,
-    itemsWrapper: css`
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      display: inline-block;
-      border-radius: ${theme.shape.borderRadius()};
-    `,
-    pushLeft: css`
-      right: 100%;
-      left: unset;
-    `,
-    subMenu: css`
-      position: absolute;
-      top: 0;
-      left: 100%;
-      z-index: ${theme.zIndex.dropdown};
-    `,
+    iconWrapper: css({
+      display: 'flex',
+      flex: 1,
+      justifyContent: 'end',
+    }),
+    icon: css({
+      opacity: 0.7,
+      marginLeft: theme.spacing(1),
+      color: theme.colors.text.secondary,
+    }),
+    itemsWrapper: css({
+      background: theme.colors.background.primary,
+      boxShadow: theme.shadows.z3,
+      display: 'inline-block',
+      borderRadius: theme.shape.borderRadius(),
+    }),
+    pushLeft: css({
+      right: '100%',
+      left: 'unset',
+    }),
+    subMenu: css({
+      position: 'absolute',
+      top: 0,
+      left: '100%',
+      zIndex: theme.zIndex.dropdown,
+    }),
   };
 };

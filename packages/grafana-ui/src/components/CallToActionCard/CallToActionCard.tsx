@@ -12,12 +12,7 @@ export interface CallToActionCardProps {
   className?: string;
 }
 
-export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
-  message,
-  callToActionElement,
-  footer,
-  className,
-}) => {
+export const CallToActionCard = ({ message, callToActionElement, footer, className }: CallToActionCardProps) => {
   const css = useStyles2(getStyles);
 
   return (
@@ -30,22 +25,22 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: call-to-action-card;
-    padding: ${theme.spacing(3)};
-    background: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.borderRadius(2)};
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 1;
-  `,
-  message: css`
-    margin-bottom: ${theme.spacing(3)};
-    font-style: italic;
-  `,
-  footer: css`
-    margin-top: ${theme.spacing(3)}};
-  `,
+  wrapper: css({
+    label: 'call-to-action-card',
+    padding: theme.spacing(3),
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+  }),
+  message: css({
+    marginBottom: theme.spacing(3),
+    fontStyle: 'italic',
+  }),
+  footer: css({
+    marginTop: theme.spacing(3),
+  }),
 });

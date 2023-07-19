@@ -56,16 +56,15 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 	}
 
 	authorize := ac.Middleware(accessControl)
-	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 
 	router.Group("/api/admin", func(adminRoute routing.RouteRegister) {
-		adminRoute.Post("/ldap/reload", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPConfigReload)), routing.Wrap(s.ReloadLDAPCfg))
-		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersSync)), routing.Wrap(s.PostSyncUserWithLDAP))
-		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersRead)), routing.Wrap(s.GetUserFromLDAP))
-		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(s.GetLDAPStatus))
+		adminRoute.Post("/ldap/reload", authorize(ac.EvalPermission(ac.ActionLDAPConfigReload)), routing.Wrap(s.ReloadLDAPCfg))
+		adminRoute.Post("/ldap/sync/:id", authorize(ac.EvalPermission(ac.ActionLDAPUsersSync)), routing.Wrap(s.PostSyncUserWithLDAP))
+		adminRoute.Get("/ldap/:username", authorize(ac.EvalPermission(ac.ActionLDAPUsersRead)), routing.Wrap(s.GetUserFromLDAP))
+		adminRoute.Get("/ldap/status", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(s.GetLDAPStatus))
 	}, middleware.ReqSignedIn)
 
-	if cfg.LDAPEnabled {
+	if cfg.LDAPAuthEnabled {
 		bundleRegistry.RegisterSupportItemCollector(supportbundles.Collector{
 			UID:               "auth-ldap",
 			DisplayName:       "LDAP",
@@ -94,7 +93,7 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -120,7 +119,7 @@ func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -167,7 +166,7 @@ func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -193,7 +192,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 	}
 
 	authModuleQuery := &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
-	if err := s.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
+	if _, err := s.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
 		}
@@ -239,7 +238,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 		},
 	}
 
-	err = s.loginService.UpsertUser(c.Req.Context(), upsertCmd)
+	_, err = s.loginService.UpsertUser(c.Req.Context(), upsertCmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
@@ -262,7 +261,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response {
-	if !s.cfg.LDAPEnabled {
+	if !s.cfg.LDAPAuthEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -277,8 +276,6 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 	if user == nil || err != nil {
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
-
-	s.log.Debug("user found", "user", user)
 
 	name, surname := splitName(user.Name)
 

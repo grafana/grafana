@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -23,12 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
-	return func(fallback web.Handler, evaluator Evaluator) web.Handler {
-		if ac.IsDisabled() {
-			return fallback
-		}
-
+func Middleware(ac AccessControl) func(Evaluator) web.Handler {
+	return func(evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
@@ -39,12 +36,18 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 
 				if !c.IsSignedIn && forceLogin {
 					unauthorized(c, nil)
+					return
 				}
 			}
 
-			var revokedErr *usertoken.TokenRevokedError
-			if errors.As(c.LookupTokenErr, &revokedErr) {
-				unauthorized(c, revokedErr)
+			if c.LookupTokenErr != nil {
+				var revokedErr *usertoken.TokenRevokedError
+				if errors.As(c.LookupTokenErr, &revokedErr) {
+					tokenRevoked(c, revokedErr)
+					return
+				}
+
+				unauthorized(c, c.LookupTokenErr)
 				return
 			}
 
@@ -108,20 +111,28 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 
 func unauthorized(c *contextmodel.ReqContext, err error) {
 	if c.IsApiRequest() {
-		response := map[string]interface{}{
-			"message": "Unauthorized",
-		}
+		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
+		return
+	}
 
-		var revokedErr *usertoken.TokenRevokedError
-		if errors.As(err, &revokedErr) {
-			response["message"] = "Token revoked"
-			response["error"] = map[string]interface{}{
+	writeRedirectCookie(c)
+	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+func tokenRevoked(c *contextmodel.ReqContext, err *usertoken.TokenRevokedError) {
+	if c.IsApiRequest() {
+		c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"message": "Token revoked",
+			"error": map[string]interface{}{
 				"id":                    "ERR_TOKEN_REVOKED",
-				"maxConcurrentSessions": revokedErr.MaxConcurrentSessions,
-			}
-		}
-
-		c.JSON(http.StatusUnauthorized, response)
+				"maxConcurrentSessions": err.MaxConcurrentSessions,
+			},
+		})
 		return
 	}
 
@@ -165,26 +176,19 @@ type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 }
 
-func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(web.Handler, OrgIDGetter, Evaluator) web.Handler {
-	return func(fallback web.Handler, getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
-		if ac.IsDisabled() {
-			return fallback
-		}
-
+func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache) func(OrgIDGetter, Evaluator) web.Handler {
+	return func(getTargetOrg OrgIDGetter, evaluator Evaluator) web.Handler {
 		return func(c *contextmodel.ReqContext) {
-			// using a copy of the user not to modify the signedInUser, yet perform the permission evaluation in another org
+			// We need to copy the user here because we're going to mutate it
 			userCopy := *(c.SignedInUser)
-			orgID, err := getTargetOrg(c)
+			targetOrgID, err := getTargetOrg(c)
 			if err != nil {
 				deny(c, nil, fmt.Errorf("failed to get target org: %w", err))
 				return
 			}
-			if orgID == GlobalOrgID {
-				userCopy.OrgID = orgID
-				userCopy.OrgName = ""
-				userCopy.OrgRole = ""
-			} else {
-				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: orgID}
+
+			if targetOrgID != GlobalOrgID && userCopy.Permissions[targetOrgID] == nil {
+				query := user.GetSignedInUserQuery{UserID: c.UserID, OrgID: targetOrgID}
 				queryResult, err := cache.GetSignedInUserWithCacheCtx(c.Req.Context(), &query)
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
@@ -200,12 +204,20 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
 				}
+
+				// guard against nil map
+				if userCopy.Permissions == nil {
+					userCopy.Permissions = make(map[int64]map[string][]string)
+				}
 				userCopy.Permissions[userCopy.OrgID] = GroupScopesByAction(permissions)
 			}
 
 			authorize(c, ac, &userCopy, evaluator)
 
-			// Set the sign-ed in user permissions in that org
+			// guard against nil map
+			if c.SignedInUser.Permissions == nil {
+				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+			}
 			c.SignedInUser.Permissions[userCopy.OrgID] = userCopy.Permissions[userCopy.OrgID]
 		}
 	}
@@ -232,10 +244,6 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 
 func LoadPermissionsMiddleware(service Service) web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		if service.IsDisabled() {
-			return
-		}
-
 		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
 			Options{ReloadCache: false})
 		if err != nil {

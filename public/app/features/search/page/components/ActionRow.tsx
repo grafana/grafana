@@ -3,7 +3,7 @@ import React, { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { HorizontalGroup, RadioButtonGroup, useStyles2, Checkbox, Button } from '@grafana/ui';
+import { Button, Checkbox, HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { t, Trans } from 'app/core/internationalization';
@@ -11,20 +11,14 @@ import { t, Trans } from 'app/core/internationalization';
 import { SearchLayout, SearchState } from '../../types';
 
 function getLayoutOptions() {
-  const layoutOptions = [
-    { value: SearchLayout.Folders, icon: 'folder', ariaLabel: t('search.actions.view-as-folders', 'View by folders') },
-    { value: SearchLayout.List, icon: 'list-ul', ariaLabel: t('search.actions.view-as-list', 'View as list') },
+  return [
+    {
+      value: SearchLayout.Folders,
+      icon: 'folder',
+      description: t('search.actions.view-as-folders', 'View by folders'),
+    },
+    { value: SearchLayout.List, icon: 'list-ul', description: t('search.actions.view-as-list', 'View as list') },
   ];
-
-  if (config.featureToggles.dashboardPreviews) {
-    layoutOptions.push({
-      value: SearchLayout.Grid,
-      icon: 'apps',
-      ariaLabel: t('search.actions.view-as-grid', 'Grid view'),
-    });
-  }
-
-  return layoutOptions;
 }
 
 interface Props {
@@ -54,9 +48,6 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
     }
   }
 
-  if (layout === SearchLayout.Grid && !config.featureToggles.dashboardPreviews) {
-    return SearchLayout.List;
-  }
   return layout;
 }
 
@@ -118,25 +109,23 @@ export const ActionRow = ({
         )}
       </HorizontalGroup>
 
-      <div className={styles.rowContainer}>
-        <HorizontalGroup spacing="md" width="auto">
-          {!hideLayout && (
-            <RadioButtonGroup
-              options={getLayoutOptions()}
-              disabledOptions={disabledOptions}
-              onChange={onLayoutChange}
-              value={layout}
-            />
-          )}
-          <SortPicker
-            onChange={(change) => onSortChange(change?.value)}
-            value={state.sort}
-            getSortOptions={getSortOptions}
-            placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
-            isClearable
+      <HorizontalGroup spacing="md" width="auto">
+        {!hideLayout && (
+          <RadioButtonGroup
+            options={getLayoutOptions()}
+            disabledOptions={disabledOptions}
+            onChange={onLayoutChange}
+            value={layout}
           />
-        </HorizontalGroup>
-      </div>
+        )}
+        <SortPicker
+          onChange={(change) => onSortChange(change?.value)}
+          value={state.sort}
+          getSortOptions={getSortOptions}
+          placeholder={sortPlaceholder || t('search.actions.sort-placeholder', 'Sort')}
+          isClearable
+        />
+      </HorizontalGroup>
     </div>
   );
 };
@@ -155,9 +144,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         padding-bottom: ${theme.spacing(2)};
         width: 100%;
       }
-    `,
-    rowContainer: css`
-      margin-right: ${theme.v1.spacing.md};
     `,
     checkboxWrapper: css`
       label {

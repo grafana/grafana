@@ -65,7 +65,7 @@ e2e.scenario({
     });
 
     // Disable row with refId A
-    e2e.components.QueryEditorRow.actionButton('Disable/enable query').eq(1).should('be.visible').click();
+    e2e.components.QueryEditorRow.actionButton('Disable query').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
@@ -73,7 +73,7 @@ e2e.scenario({
     });
 
     // Enable row with refId B
-    e2e.components.QueryEditorRow.actionButton('Disable/enable query').eq(1).should('be.visible').click();
+    e2e.components.QueryEditorRow.actionButton('Disable query').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
@@ -88,14 +88,14 @@ e2e.scenario({
   },
 });
 
-const expectInspectorResultAndClose = (expectCallBack: (keys: any[]) => void) => {
+const expectInspectorResultAndClose = (expectCallBack: (keys: JQuery<HTMLElement>) => void) => {
   e2e.components.QueryTab.queryInspectorButton().should('be.visible').click();
 
   e2e.components.PanelInspector.Query.refreshButton().should('be.visible').click();
 
   e2e.components.PanelInspector.Query.jsonObjectKeys({ timeout: flakyTimeout })
     .should('be.visible')
-    .within((keys: any) => expectCallBack(keys));
+    .within((keys) => expectCallBack(keys));
 
   e2e.components.Drawer.General.close().should('be.visible').click();
 };

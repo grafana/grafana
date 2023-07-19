@@ -31,13 +31,13 @@ func TestAnnotationHistorian(t *testing.T) {
 	t.Run("alert annotations are queryable", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		items := []annotations.Item{createAnnotation()}
-		require.NoError(t, anns.recordAnnotations(context.Background(), nil, items, 1, log.NewNopLogger()))
+		require.NoError(t, anns.store.Save(context.Background(), nil, items, 1, log.NewNopLogger()))
 
 		q := models.HistoryQuery{
 			RuleUID: "my-rule",
 			OrgID:   1,
 		}
-		frame, err := anns.QueryStates(context.Background(), q)
+		frame, err := anns.Query(context.Background(), q)
 
 		require.NoError(t, err)
 		require.NotNil(t, frame)
@@ -55,7 +55,7 @@ func TestAnnotationHistorian(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		err := <-anns.RecordStatesAsync(context.Background(), rule, states)
+		err := <-anns.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
 	})
@@ -71,8 +71,8 @@ func TestAnnotationHistorian(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		<-anns.RecordStatesAsync(context.Background(), rule, states)
-		<-errAnns.RecordStatesAsync(context.Background(), rule, states)
+		<-anns.Record(context.Background(), rule, states)
+		<-errAnns.Record(context.Background(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
@@ -83,10 +83,10 @@ grafana_alerting_state_history_transitions_failed_total{org="1"} 1
 grafana_alerting_state_history_transitions_total{org="1"} 2
 # HELP grafana_alerting_state_history_writes_failed_total The total number of failed writes of state history batches.
 # TYPE grafana_alerting_state_history_writes_failed_total counter
-grafana_alerting_state_history_writes_failed_total{org="1"} 1
+grafana_alerting_state_history_writes_failed_total{backend="annotations",org="1"} 1
 # HELP grafana_alerting_state_history_writes_total The total number of state history batches that were attempted to be written.
 # TYPE grafana_alerting_state_history_writes_total counter
-grafana_alerting_state_history_writes_total{org="1"} 2
+grafana_alerting_state_history_writes_total{backend="annotations",org="1"} 2
 `)
 		err := testutil.GatherAndCompare(reg, exp,
 			"grafana_alerting_state_history_transitions_total",
@@ -113,7 +113,8 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	}
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
-	return NewAnnotationBackend(fakeAnnoRepo, dbs, rules, met)
+	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
+	return NewAnnotationBackend(store, rules, met)
 }
 
 func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *AnnotationBackend {
@@ -124,7 +125,8 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	}
 	dbs := &dashboards.FakeDashboardService{}
 	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
-	return NewAnnotationBackend(fakeAnnoRepo, dbs, rules, met)
+	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
+	return NewAnnotationBackend(store, rules, met)
 }
 
 func createAnnotation() annotations.Item {

@@ -46,6 +46,8 @@ export interface MenuItemProps<T = any> {
   customSubMenuContainerStyles?: CSSProperties;
   /** Shortcut key combination */
   shortcut?: string;
+  /** Test id for e2e tests and fullstory*/
+  testId?: string;
 }
 
 /** @internal */
@@ -68,6 +70,7 @@ export const MenuItem = React.memo(
       tabIndex = -1,
       customSubMenuContainerStyles,
       shortcut,
+      testId,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -150,6 +153,7 @@ export const MenuItem = React.memo(
         role={url === undefined ? role : undefined}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
+        data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
@@ -187,88 +191,80 @@ MenuItem.displayName = 'MenuItem';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    item: css`
-      background: none;
-      cursor: pointer;
-      white-space: nowrap;
-      color: ${theme.colors.text.primary};
-      display: flex;
-      align-items: center;
-      padding: ${theme.spacing(0.5, 2)};
-      min-height: ${theme.spacing(4)};
-      margin: 0;
-      border: none;
-      width: 100%;
-      position: relative;
+    item: css({
+      background: 'none',
+      cursor: 'pointer',
+      whiteSpace: 'nowrap',
+      color: theme.colors.text.primary,
+      display: 'flex',
+      alignItems: 'center',
+      padding: theme.spacing(0.5, 2),
+      minHeight: theme.spacing(4),
+      margin: 0,
+      border: 'none',
+      width: '100%',
+      position: 'relative',
 
-      &:hover,
-      &:focus,
-      &:focus-visible {
-        background: ${theme.colors.action.hover};
-        color: ${theme.colors.text.primary};
-        text-decoration: none;
-      }
+      '&:hover, &:focus, &:focus-visible': {
+        background: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+        textDecoration: 'none',
+      },
 
-      &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
-    `,
-    active: css`
-      background: ${theme.colors.action.hover};
-    `,
-    destructive: css`
-      color: ${theme.colors.error.text};
+      '&:focus-visible': getFocusStyles(theme),
+    }),
+    active: css({
+      background: theme.colors.action.hover,
+    }),
+    destructive: css({
+      color: theme.colors.error.text,
 
-      svg {
-        color: ${theme.colors.error.text};
-      }
+      svg: {
+        color: theme.colors.error.text,
+      },
 
-      &:hover,
-      &:focus,
-      &:focus-visible {
-        background: ${theme.colors.error.main};
-        color: ${theme.colors.error.contrastText};
+      '&:hover, &:focus, &:focus-visible': {
+        background: theme.colors.error.main,
+        color: theme.colors.error.contrastText,
 
-        svg {
-          color: ${theme.colors.error.contrastText};
-        }
-      }
-    `,
-    disabled: css`
-      color: ${theme.colors.action.disabledText};
+        svg: {
+          color: theme.colors.error.contrastText,
+        },
+      },
+    }),
+    disabled: css({
+      color: theme.colors.action.disabledText,
 
-      &:hover,
-      &:focus,
-      &:focus-visible {
-        cursor: not-allowed;
-        background: none;
-        color: ${theme.colors.action.disabledText};
-      }
-    `,
-    icon: css`
-      opacity: 0.7;
-      margin-right: 10px;
-      margin-left: -4px;
-      color: ${theme.colors.text.secondary};
-    `,
-    rightWrapper: css`
-      display: flex;
-      align-items: center;
-      margin-left: auto;
-    `,
-    shortcutIcon: css`
-      margin-right: ${theme.spacing(1)};
-    `,
-    withShortcut: css`
-      min-width: ${theme.spacing(10.5)};
-    `,
-    shortcut: css`
-      display: flex;
-      align-items: center;
-      gap: ${theme.spacing(1)};
-      margin-left: ${theme.spacing(2)};
-      color: ${theme.colors.text.secondary};
-      opacity: 0.7;
-    `,
+      '&:hover, &:focus, &:focus-visible': {
+        cursor: 'not-allowed',
+        background: 'none',
+        color: theme.colors.action.disabledText,
+      },
+    }),
+    icon: css({
+      opacity: 0.7,
+      marginRight: '10px',
+      marginLeft: '-4px',
+      color: theme.colors.text.secondary,
+    }),
+    rightWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      marginLeft: 'auto',
+    }),
+    shortcutIcon: css({
+      marginRight: theme.spacing(1),
+    }),
+    withShortcut: css({
+      minWidth: theme.spacing(10.5),
+    }),
+    shortcut: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      marginLeft: theme.spacing(2),
+      color: theme.colors.text.secondary,
+      opacity: 0.7,
+    }),
   };
 };

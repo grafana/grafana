@@ -15,15 +15,15 @@ describe('Reversing DataFrame', () => {
 
       const helper = new MutableDataFrame(frame);
 
-      expect(helper.fields[0].values.toArray()).toEqual([100, 200, 300]);
-      expect(helper.fields[1].values.toArray()).toEqual(['a', 'b', 'c']);
-      expect(helper.fields[2].values.toArray()).toEqual([1, 2, 3]);
+      expect(helper.fields[0].values).toEqual([100, 200, 300]);
+      expect(helper.fields[1].values).toEqual(['a', 'b', 'c']);
+      expect(helper.fields[2].values).toEqual([1, 2, 3]);
 
       helper.reverse();
 
-      expect(helper.fields[0].values.toArray()).toEqual([300, 200, 100]);
-      expect(helper.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
-      expect(helper.fields[2].values.toArray()).toEqual([3, 2, 1]);
+      expect(helper.fields[0].values).toEqual([300, 200, 100]);
+      expect(helper.fields[1].values).toEqual(['c', 'b', 'a']);
+      expect(helper.fields[2].values).toEqual([3, 2, 1]);
     });
   });
 });
@@ -39,7 +39,7 @@ describe('Apending DataFrame', () => {
     };
 
     const frame = new MutableDataFrame(dto);
-    expect(frame.fields[0].values.toArray()).toEqual([100, undefined, undefined]);
+    expect(frame.fields[0].values).toEqual([100, undefined, undefined]);
 
     // Set a value on the second row
     frame.set(1, { time: 200, name: 'BB', value: 20 });

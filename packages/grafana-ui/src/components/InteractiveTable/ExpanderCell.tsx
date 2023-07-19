@@ -4,13 +4,13 @@ import { CellProps } from 'react-table';
 
 import { IconButton } from '../IconButton/IconButton';
 
-const expanderContainerStyles = css`
-  display: flex;
-  align-items: center;
-  height: 100%;
-`;
+const expanderContainerStyles = css({
+  display: 'flex',
+  alignItems: 'center',
+  height: '100%',
+});
 
-export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, void> & { __rowID: string }) {
+export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, void>) {
   return (
     <div className={expanderContainerStyles}>
       <IconButton

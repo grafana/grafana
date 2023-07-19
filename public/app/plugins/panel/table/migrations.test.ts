@@ -128,6 +128,144 @@ describe('Table Migrations', () => {
     };
     const panel = {} as PanelModel;
     tablePanelChangedHandler(panel, 'table-old', oldStyles);
-    expect(panel).toMatchSnapshot();
+    expect(panel).toMatchInlineSnapshot(`
+      {
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "right",
+            },
+            "decimals": 2,
+            "displayName": "",
+            "unit": "short",
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Time",
+              },
+              "properties": [
+                {
+                  "id": "displayName",
+                  "value": "Time",
+                },
+                {
+                  "id": "unit",
+                  "value": "time: YYYY-MM-DD HH:mm:ss",
+                },
+                {
+                  "id": "custom.align",
+                  "value": null,
+                },
+              ],
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ColorCell",
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "currencyUSD",
+                },
+                {
+                  "id": "decimals",
+                  "value": 2,
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "color-background",
+                  },
+                },
+                {
+                  "id": "custom.align",
+                  "value": "left",
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "rgba(245, 54, 54, 0.9)",
+                        "value": -Infinity,
+                      },
+                      {
+                        "color": "rgba(237, 129, 40, 0.89)",
+                        "value": 5,
+                      },
+                      {
+                        "color": "rgba(50, 172, 45, 0.97)",
+                        "value": 10,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "ColorValue",
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "Bps",
+                },
+                {
+                  "id": "decimals",
+                  "value": 2,
+                },
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "targetBlank": true,
+                      "title": "",
+                      "url": "http://www.grafana.com",
+                    },
+                  ],
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "color-text",
+                  },
+                },
+                {
+                  "id": "custom.align",
+                  "value": null,
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "rgba(245, 54, 54, 0.9)",
+                        "value": -Infinity,
+                      },
+                      {
+                        "color": "rgba(237, 129, 40, 0.89)",
+                        "value": 5,
+                      },
+                      {
+                        "color": "rgba(50, 172, 45, 0.97)",
+                        "value": 10,
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        "transformations": [],
+      }
+    `);
   });
 });

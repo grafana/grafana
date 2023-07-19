@@ -5,6 +5,7 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { InlineField, Select } from '@grafana/ui';
+import { lokiOperators } from 'app/plugins/datasource/loki/querybuilder/types';
 
 import { isConflictingSelector } from './operationUtils';
 import { QueryBuilderLabelFilter } from './types';
@@ -38,6 +39,11 @@ export function LabelFilterItem({
     isLoadingLabelNames?: boolean;
     isLoadingLabelValues?: boolean;
   }>({});
+  // there's a bug in react-select where the menu doesn't recalculate its position when the options are loaded asynchronously
+  // see https://github.com/grafana/grafana/issues/63558
+  // instead, we explicitly control the menu visibility and prevent showing it until the options have fully loaded
+  const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
+  const [labelValuesMenuOpen, setLabelValuesMenuOpen] = useState(false);
   const CONFLICTING_LABEL_FILTER_ERROR_MESSAGE = 'You have conflicting label filters';
 
   const isMultiSelect = (operator = item.op) => {
@@ -78,8 +84,13 @@ export function LabelFilterItem({
             onOpenMenu={async () => {
               setState({ isLoadingLabelNames: true });
               const labelNames = await onGetLabelNames(item);
+              setLabelNamesMenuOpen(true);
               setState({ labelNames, isLoadingLabelNames: undefined });
             }}
+            onCloseMenu={() => {
+              setLabelNamesMenuOpen(false);
+            }}
+            isOpen={labelNamesMenuOpen}
             isLoading={state.isLoadingLabelNames}
             options={state.labelNames}
             onChange={(change) => {
@@ -130,7 +141,12 @@ export function LabelFilterItem({
                 labelValues,
                 isLoadingLabelValues: undefined,
               });
+              setLabelValuesMenuOpen(true);
             }}
+            onCloseMenu={() => {
+              setLabelValuesMenuOpen(false);
+            }}
+            isOpen={labelValuesMenuOpen}
             isMulti={isMultiSelect()}
             isLoading={state.isLoadingLabelValues}
             options={getOptions()}
@@ -160,8 +176,8 @@ export function LabelFilterItem({
 }
 
 const operators = [
-  { label: '=~', value: '=~', isMultiValue: true },
-  { label: '=', value: '=', isMultiValue: false },
-  { label: '!=', value: '!=', isMultiValue: false },
-  { label: '!~', value: '!~', isMultiValue: true },
+  lokiOperators.equals,
+  lokiOperators.doesNotEqual,
+  lokiOperators.matchesRegex,
+  lokiOperators.doesNotMatchRegex,
 ];

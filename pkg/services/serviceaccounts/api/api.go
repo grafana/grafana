@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -40,7 +38,7 @@ type service interface {
 	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
+	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error)
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	// Service account tokens
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
@@ -69,26 +67,16 @@ func NewServiceAccountsAPI(
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
-		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
-		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
-		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
-		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
-		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
-		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
-		serviceAccountsRoute.Post("/migrate", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
-		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Get("/search", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
+		serviceAccountsRoute.Post("/", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+		serviceAccountsRoute.Patch("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
+		serviceAccountsRoute.Delete("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
+		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
+		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
+		serviceAccountsRoute.Post("/migrate", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
+		serviceAccountsRoute.Post("/migrate/:keyId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 	})
 }
 
@@ -114,35 +102,23 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
-			return response.Error(http.StatusBadRequest, err.Error(), err)
-		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
-			return response.Error(http.StatusForbidden, err.Error(), err)
-		default:
-			return response.Error(http.StatusInternalServerError, "failed to create service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create service account", err)
 	}
 
 	serviceAccount, err := api.service.CreateServiceAccount(c.Req.Context(), c.OrgID, &cmd)
-	switch {
-	case errors.Is(err, serviceaccounts.ErrServiceAccountAlreadyExists):
-		return response.Error(http.StatusBadRequest, "Failed to create service account", err)
-	case err != nil:
-		return response.Error(http.StatusInternalServerError, "Failed to create service account", err)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	if !api.accesscontrol.IsDisabled() {
-		if c.SignedInUser.IsRealUser() {
-			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
-			}
+	if c.SignedInUser.IsRealUser() {
+		if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 		}
-
-		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
+
+	// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
@@ -169,12 +145,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqConte
 
 	serviceAccount, err := api.service.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, scopeID)
 	if err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
-		default:
-			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to retrieve service account", err)
 	}
 
 	saIDString := strconv.FormatInt(serviceAccount.Id, 10)
@@ -220,24 +191,12 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 	}
 
 	if err := api.validateRole(cmd.Role, &c.OrgRole); err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountInvalidRole):
-			return response.Error(http.StatusBadRequest, err.Error(), err)
-		case errors.Is(err, serviceaccounts.ErrServiceAccountRolePrivilegeDenied):
-			return response.Error(http.StatusForbidden, err.Error(), err)
-		default:
-			return response.Error(http.StatusInternalServerError, "failed to update service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update service account", err)
 	}
 
 	resp, err := api.service.UpdateServiceAccount(c.Req.Context(), c.OrgID, scopeID, &cmd)
 	if err != nil {
-		switch {
-		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
-			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
-		default:
-			return response.Error(http.StatusInternalServerError, "Failed update service account", err)
-		}
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed update service account", err)
 	}
 
 	saIDString := strconv.FormatInt(resp.Id, 10)
@@ -255,10 +214,10 @@ func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) 
 
 func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleType) error {
 	if r != nil && !r.IsValid() {
-		return serviceaccounts.ErrServiceAccountInvalidRole
+		return serviceaccounts.ErrServiceAccountInvalidRole.Errorf("invalid role specified")
 	}
 	if r != nil && !orgRole.Includes(*r) {
-		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied
+		return serviceaccounts.ErrServiceAccountRolePrivilegeDenied.Errorf("can not assign a role higher than user's role")
 	}
 	return nil
 }
@@ -356,11 +315,12 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID)
+	if err != nil {
+		return response.JSON(http.StatusInternalServerError, results)
 	}
 
-	return response.Success("API keys migrated to service accounts")
+	return response.JSON(http.StatusOK, results)
 }
 
 // POST /api/serviceaccounts/migrate/:keyId
@@ -378,7 +338,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
-	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return map[string]accesscontrol.Metadata{}
 	}
 
