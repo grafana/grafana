@@ -1,7 +1,6 @@
-import { EventBusSrv } from './EventBus';
-import { DataHoverEvent } from './common';
+import { EventBusSrv, ScopedEventBus } from './EventBus';
 import { eventFactory } from './eventFactory';
-import { BusEvent, BusEventWithPayload } from './types';
+import { BusEventWithPayload, EventFilter } from './types';
 
 interface LoginEventPayload {
   logins: number;
@@ -173,5 +172,125 @@ describe('EventBus', () => {
       expect(events.length).toBe(0);
       expect(completed).toBe(true);
     });
+  });
+});
+
+describe('ScopedEventBus', () => {
+  it('Proxies events to origin bus', () => {
+    const sourceBus = new EventBusSrv();
+    const events: LoginEvent[] = [];
+
+    sourceBus.subscribe(LoginEvent, (event) => {
+      events.push(event);
+    });
+
+    const scoped = new ScopedEventBus(sourceBus);
+    scoped.publish(new LoginEvent({ logins: 10 }));
+    scoped.publish(new LoginEvent({ logins: 11 }));
+    expect(events[0].payload.logins).toBe(10);
+    expect(events.length).toBe(2);
+  });
+
+  it('Filters out local events by default', () => {
+    const sourceBus = new EventBusSrv();
+
+    const events: LoginEvent[] = [];
+    const filteredEvents1: LoginEvent[] = [];
+    const filteredEvents2: LoginEvent[] = [];
+
+    sourceBus.subscribe(LoginEvent, (event) => {
+      events.push(event);
+    });
+
+    const scoped1 = new ScopedEventBus(sourceBus);
+    const scoped2 = new ScopedEventBus(sourceBus);
+
+    scoped1.subscribe(LoginEvent, (event) => {
+      filteredEvents1.push(event);
+    });
+
+    scoped2.subscribe(LoginEvent, (event) => {
+      filteredEvents2.push(event);
+    });
+
+    scoped1.publish(new LoginEvent({ logins: 10 }));
+    scoped1.publish(new LoginEvent({ logins: 11 }));
+
+    // reacted to all events
+    expect(events.length).toBe(2);
+    // ignored local events
+    expect(filteredEvents1.length).toBe(0);
+    // reacted to all events
+    expect(filteredEvents2.length).toBe(2);
+  });
+
+  it('Allows listening to local events only', () => {
+    const sourceBus = new EventBusSrv();
+
+    const events: LoginEvent[] = [];
+    const filteredEvents1: LoginEvent[] = [];
+    const filteredEvents2: LoginEvent[] = [];
+
+    sourceBus.subscribe(LoginEvent, (event) => {
+      events.push(event);
+    });
+
+    const scoped1 = new ScopedEventBus(sourceBus, { filter: EventFilter.OnlyLocal });
+    const scoped2 = new ScopedEventBus(sourceBus);
+
+    scoped1.subscribe(LoginEvent, (event) => {
+      filteredEvents1.push(event);
+    });
+
+    scoped2.subscribe(LoginEvent, (event) => {
+      filteredEvents2.push(event);
+    });
+
+    scoped1.publish(new LoginEvent({ logins: 10 }));
+    scoped1.publish(new LoginEvent({ logins: 11 }));
+    scoped2.publish(new LoginEvent({ logins: 11 }));
+    sourceBus.publish(new LoginEvent({ logins: 11 }));
+
+    // reacted to all events
+    expect(events.length).toBe(4);
+    // reacted to scoped1 bus events only
+    expect(filteredEvents1.length).toBe(2);
+    // reacted to sourceBus and scoped1 bus events
+    expect(filteredEvents2.length).toBe(3);
+  });
+
+  it('Allows listening to all events ', () => {
+    const sourceBus = new EventBusSrv();
+
+    const events: LoginEvent[] = [];
+    const filteredEvents1: LoginEvent[] = [];
+    const filteredEvents2: LoginEvent[] = [];
+
+    sourceBus.subscribe(LoginEvent, (event) => {
+      events.push(event);
+    });
+
+    const scoped1 = new ScopedEventBus(sourceBus, { filter: EventFilter.All });
+    const scoped2 = new ScopedEventBus(sourceBus, { filter: EventFilter.All });
+
+    scoped1.subscribe(LoginEvent, (event) => {
+      filteredEvents1.push(event);
+    });
+
+    scoped2.subscribe(LoginEvent, (event) => {
+      filteredEvents2.push(event);
+    });
+
+    scoped1.publish(new LoginEvent({ logins: 10 }));
+    scoped1.publish(new LoginEvent({ logins: 11 }));
+    scoped2.publish(new LoginEvent({ logins: 11 }));
+    sourceBus.publish(new LoginEvent({ logins: 11 }));
+
+    // reacted to all events
+    expect(events.length).toBe(4);
+    // reacted to all events
+    expect(filteredEvents1.length).toBe(4);
+    // reacted to all events
+    expect(filteredEvents2.length).toBe(4);
   });
 });
