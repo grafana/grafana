@@ -11,7 +11,7 @@ import { customWeight, customColor } from './utils';
 
 export interface TextProps {
   /** Defines what HTML element is defined underneath */
-  as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
+  as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
@@ -22,7 +22,7 @@ export interface TextProps {
   truncate?: boolean;
   /** Whether to align the text to left, center or right */
   textAlignment?: CSSProperties['textAlign'];
-  children: React.ReactNode;
+  children: React.ReactElement;
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
@@ -34,9 +34,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       )
     );
 
-    const tooltipText = ReactDomServer.renderToString(children);
-
-    const textElement = createElement(
+    const childElement = createElement(
       as,
       {
         className: styles,
@@ -45,7 +43,22 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       children
     );
 
-    return truncate ? <Tooltip content={tooltipText}>{textElement}</Tooltip> : textElement;
+    const getTooltipText = (children: React.ReactElement) => {
+      // if (children && typeof children === 'string' || typeof children === 'number') {
+      //   return children.toLocaleString();
+      // }
+      const html = ReactDomServer.renderToStaticMarkup(children);
+      const getRidOfTags = html.replace(/(<([^>]+)>)/gi, '');
+      return getRidOfTags;
+    };
+
+    const tooltipText = getTooltipText(children);
+
+    if (truncate === false) {
+      return childElement;
+    } else {
+      return <Tooltip content={tooltipText}>{childElement}</Tooltip>;
+    }
   }
 );
 
