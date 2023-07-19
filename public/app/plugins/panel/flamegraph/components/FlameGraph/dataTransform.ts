@@ -107,7 +107,7 @@ export class FlameGraphDataContainer {
     // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
     // users to use this panel with correct query from data sources that do not return profiles natively.
     if (enumConfig) {
-      this.labelDisplayProcessor = getEnumDisplayProcessor(theme, enumConfig);
+      this.labelDisplayProcessor = getEnumDisplayProcessor(theme, this.labelField.state!.seriesIndex!, enumConfig);
       this.uniqueLabels = enumConfig.text || [];
     } else {
       this.labelDisplayProcessor = (value) => ({
