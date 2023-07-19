@@ -65,7 +65,7 @@ When using Explore, the URL in the browser address bar is updated as you make ch
 
 ### Generating Explore URLs from external tools
 
-Explore URLs have a defined structure, you can build an URL from external tools and open it in Grafana. The URL structure is:
+Because Explore URLs have a defined structure, you can build an URL from external tools and open it in Grafana. The URL structure is:
 
 ```
 http://<grafana_url>/explore?panes=<panes>&schemaVersion=<schema_version>&orgId=<org_id>
