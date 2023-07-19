@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
@@ -12,11 +13,12 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldDisplayName,
+  GrafanaTheme2,
   TimeZone,
 } from '@grafana/data';
 import { TooltipDisplayMode, SortOrder } from '@grafana/schema';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { Portal } from '../../Portal/Portal';
 import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../VizTooltip';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
@@ -272,8 +274,10 @@ export const TooltipPlugin = ({
     tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
   }
 
+  const style = useStyles2(getStyles);
+
   return (
-    <Portal>
+    <Portal className={isActive ? style.tooltipWrapper : undefined}>
       {tooltip && coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
           {tooltip}
@@ -321,3 +325,9 @@ export function positionTooltip(u: uPlot, bbox: DOMRect) {
 
   return { x, y };
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  tooltipWrapper: css({
+    'z-index': theme.zIndex.portal + 1 + ' !important',
+  }),
+});
