@@ -4,29 +4,28 @@ const (
 	All string = "all"
 
 	BackgroundServices string = "background-services"
-	CertGenerator      string = "cert-generator"
-
+	// CertGenerator generates certificates for grafana-apiserver
+	CertGenerator string = "cert-generator"
+	// GrafanaAPIServer is the Kubertenes API server for Grafana Resources
+	GrafanaAPIServer string = "grafana-apiserver"
+	// HTTPServer is the HTTP server for Grafana
 	HTTPServer string = "http-server"
-
-	KubernetesAPIServer    string = "kubernetes-apiserver"
-	KubernetesRegistration string = "kubernetes-registration"
-	Kubernetes             string = "kubernetes"
-	KubernetesClientset    string = "kubernetes-clientset"
-
+	// Provisioning sets up Grafana with preconfigured datasources, dashboards, etc.
 	Provisioning string = "provisioning"
+	// KubernetesClientset provides a clientset for Kubernetes APIs
+	KubernetesClientset string = "kubernetes-clientset"
+	// KubernetesRegistration provides functionality to register GRDs
+	KubernetesRegistration string = "kubernetes-registration"
 )
 
 var dependencyMap = map[string][]string{
-	CertGenerator: {},
+	BackgroundServices: {Provisioning, HTTPServer},
 
-	HTTPServer: {CertGenerator},
+	CertGenerator:    {},
+	GrafanaAPIServer: {CertGenerator},
 
-	KubernetesAPIServer:    {CertGenerator},
-	KubernetesRegistration: {KubernetesAPIServer},
+	KubernetesRegistration: {GrafanaAPIServer},
 	KubernetesClientset:    {KubernetesRegistration},
-	Kubernetes:             {KubernetesClientset},
 
-	Provisioning: {},
-
-	All: {BackgroundServices, Kubernetes, HTTPServer, Provisioning},
+	All: {Provisioning, HTTPServer, BackgroundServices, KubernetesClientset},
 }

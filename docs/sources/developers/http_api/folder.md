@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - folder
+labels:
+  products:
+    - enterprise
+    - oss
 title: Folder HTTP API
 ---
 

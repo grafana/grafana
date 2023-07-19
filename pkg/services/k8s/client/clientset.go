@@ -20,7 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,12 +76,12 @@ func (c *Clientset) GetCABundle() []byte {
 type service struct {
 	*services.BasicService
 	clientset          *Clientset
-	restConfigProvider apiserver.RestConfigProvider
+	restConfigProvider grafanaapiserver.RestConfigProvider
 	grafanaCfg         *setting.Cfg
 }
 
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider, cfg *setting.Cfg) (*service, error) {
+func ProvideClientsetProvider(toggles featuremgmt.FeatureToggles, restConfigProvider grafanaapiserver.RestConfigProvider, cfg *setting.Cfg) (*service, error) {
 	s := &service{restConfigProvider: restConfigProvider, grafanaCfg: cfg}
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.KubernetesClientset)
 	return s, nil

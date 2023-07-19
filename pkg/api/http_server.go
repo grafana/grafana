@@ -11,13 +11,12 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
-	"github.com/grafana/grafana/pkg/services/export"
-
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
@@ -54,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
+	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -106,7 +106,9 @@ import (
 )
 
 type HTTPServer struct {
-	*services.BasicService
+	// services.NamedService is embedded so we can inherit AddListener, without
+	// implementing the service interface.
+	services.NamedService
 
 	log              log.Logger
 	web              *web.Mux
@@ -115,6 +117,7 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
+	errs             chan error
 
 	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -212,8 +215,6 @@ type HTTPServer struct {
 	authnService         authn.Service
 	starApi              *starApi.API
 	ExportService        export.ExportService
-
-	errs chan error
 }
 
 type ServerOptions struct {
@@ -257,6 +258,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	starApi *starApi.API,
 	exportService export.ExportService,
+
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -360,8 +362,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 		ExportService:                exportService,
-
-		errs: make(chan error),
+		errs:                         make(chan error),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -375,7 +376,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		return nil, err
 	}
 
-	hs.BasicService = services.NewBasicService(hs.start, hs.running, hs.stop).WithName(modules.HTTPServer)
+	hs.NamedService = services.NewBasicService(hs.start, hs.running, hs.stop).WithName(modules.HTTPServer)
 	return hs, nil
 }
 
@@ -416,14 +417,9 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 		return err
 	}
 
-	if true { // hs.Features.IsEnabled(featuremgmt.FlagK8S) {
-		go func() {
-			hs.errs <- hs.k8sWebhookServer()
-		}()
-	}
-
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
+
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		go func() {
@@ -454,27 +450,6 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 	return nil
 }
 
-func (hs *HTTPServer) k8sWebhookServer() error {
-	httpSrv := &http.Server{
-		Addr:        net.JoinHostPort("127.0.0.1", "2999"),
-		Handler:     hs.web,
-		ReadTimeout: hs.Cfg.ReadTimeout,
-	}
-
-	listener, err := net.Listen("tcp", "127.0.0.1:2999")
-	if err != nil {
-		return fmt.Errorf("failed to open listener on address 127.0.0.1:2999 - %w", err)
-	}
-
-	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
-		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
-
-	certpath := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.crt")
-	keypath := path.Join(hs.Cfg.DataPath, "k8s", "apiserver.key")
-
-	return httpSrv.ServeTLS(listener, certpath, keypath)
-}
-
 func (hs *HTTPServer) running(ctx context.Context) error {
 	select {
 	case err, ok := <-hs.errs:
@@ -488,11 +463,15 @@ func (hs *HTTPServer) running(ctx context.Context) error {
 	return nil
 }
 
-func (hs *HTTPServer) stop(failureReason error) error {
-	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-		hs.log.Error("Failed to shutdown server", "error", err)
+func (hs *HTTPServer) stop(_ error) error {
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := hs.httpSrv.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to shutdown server: %w", err)
 	}
-	return failureReason
+	return nil
 }
 
 func (hs *HTTPServer) getListener() (net.Listener, error) {

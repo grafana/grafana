@@ -44,13 +44,20 @@ composableKinds: DataQuery: {
 					maxDuration?: string
 					// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 					serviceMapQuery?: string
+					// Use service.namespace in addition to service.name to uniquely identify a service. 
+					serviceMapIncludeNamespace?: bool
 					// Defines the maximum number of traces that are returned from Tempo
 					limit?: int64
+					// Use the streaming API to get partial results as they are available
+					streaming?: bool
 					filters: [...#TraceqlFilter]
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
+				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+
+				// The state of the TraceQL streaming search query
+				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
 
 				// static fields are pre-set in the UI, dynamic fields are added by the user
 				#TraceqlSearchScope: "unscoped" | "resource" | "span" @cuetsy(kind="enum")

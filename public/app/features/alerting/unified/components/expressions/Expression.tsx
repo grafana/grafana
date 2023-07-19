@@ -63,7 +63,6 @@ export const Expression: FC<ExpressionProps> = ({
   const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
-  //const showSummary = isAlertCondition && hasResults;
 
   const groupedByState = {
     [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
@@ -225,9 +224,15 @@ export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: b
   seriesCount,
 }) => {
   const { mutedText } = useStyles2(getStyles);
+
+  if (seriesCount === 0) {
+    return <span className={mutedText}>No series</span>;
+  }
+
   if (isCondition) {
     return <span className={mutedText}>{`${seriesCount} series: ${firing} firing, ${normal} normal`}</span>;
   }
+
   return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 

@@ -17,12 +17,13 @@ import (
 	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	applyConfig "github.com/grafana/grafana-apiserver/pkg/client/applyconfiguration/kinds/v1"
 	grdClientset "github.com/grafana/grafana-apiserver/pkg/client/clientset/clientset/typed/kinds/v1"
-	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry/corekind"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 // New constructs a new [Registry].
@@ -32,7 +33,7 @@ import (
 // is passed, the singleton will be used.
 func New(
 	rt *thema.Runtime,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider grafanaapiserver.RestConfigProvider,
 ) *Registry {
 	breg := corekind.NewBase(rt)
 	r := doNewRegistry(
@@ -46,7 +47,7 @@ func New(
 type Registry struct {
 	*services.BasicService
 	breg               *corekind.Base
-	restConfigProvider apiserver.RestConfigProvider
+	restConfigProvider grafanaapiserver.RestConfigProvider
 }
 
 func (r *Registry) start(ctx context.Context) error {
@@ -713,7 +714,7 @@ func versionString(version thema.SyntacticVersion) string {
 
 func doNewRegistry(
 	breg *corekind.Base,
-	restConfigProvider apiserver.RestConfigProvider,
+	restConfigProvider grafanaapiserver.RestConfigProvider,
 ) *Registry {
 	return &Registry{
 		breg:               breg,
