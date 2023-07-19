@@ -6,7 +6,7 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
-import { H1, H2, H3, H4, H5, H6, Span, P, Legend, TextModifier } from './TextElements';
+import { H1, H2, H3, H4, H5, H6, Span, P, TextModifier } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
@@ -57,7 +57,6 @@ export const Example: StoryFn = () => {
         <H5>h5. Heading</H5>
         <H6>h6. Heading</H6>
         <P>This is a paragraph</P>
-        <Legend>This is a legend</Legend>
         <Span>This is a span</Span>
       </StoryExample>
     </VerticalGroup>
@@ -85,25 +84,6 @@ HeadingComponent.args = {
   truncate: false,
   color: 'primary',
   children: 'This is a H1 component',
-};
-
-export const LegendComponent: StoryFn = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <Legend variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </Legend>
-    </div>
-  );
-};
-
-LegendComponent.args = {
-  variant: undefined,
-  weight: 'bold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'error',
-  children: 'This is a lengend component',
 };
 
 export const TextModifierComponent: StoryFn = (args) => {

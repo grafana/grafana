@@ -62,12 +62,6 @@ export const Span = React.forwardRef<HTMLSpanElement, TextElementsProps>((props,
 
 Span.displayName = 'Span';
 
-export const Legend = React.forwardRef<HTMLLegendElement, TextElementsProps>((props, ref) => {
-  return <Text as="legend" {...props} variant={props.variant || 'bodySmall'} ref={ref} />;
-});
-
-Legend.displayName = 'Legend';
-
 export const TextModifier = React.forwardRef<HTMLSpanElement, TextModifierProps>((props, ref) => {
   return <Text as="span" {...props} ref={ref} />;
 });
