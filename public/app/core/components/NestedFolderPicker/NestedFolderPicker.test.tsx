@@ -78,9 +78,11 @@ describe('NestedFolderPicker', () => {
 
   it('clicking the button opens the folder picker', async () => {
     render(<NestedFolderPicker onChange={mockOnChange} />);
-    const button = await screen.findByRole('button', { name: 'Select folder' });
 
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
     await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
 
     // Select folder button is no longer visible
     expect(screen.queryByRole('button', { name: 'Select folder' })).not.toBeInTheDocument();
@@ -95,9 +97,11 @@ describe('NestedFolderPicker', () => {
 
   it('can select a folder from the picker', async () => {
     render(<NestedFolderPicker onChange={mockOnChange} />);
-    const button = await screen.findByRole('button', { name: 'Select folder' });
 
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
     await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
 
     await userEvent.click(screen.getByLabelText(folderA.item.title));
     expect(mockOnChange).toHaveBeenCalledWith({
@@ -108,9 +112,11 @@ describe('NestedFolderPicker', () => {
 
   it('can expand and collapse a folder to show its children', async () => {
     render(<NestedFolderPicker onChange={mockOnChange} />);
-    const button = await screen.findByRole('button', { name: 'Select folder' });
 
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
     await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
 
     // Expand Folder A
     await userEvent.click(screen.getByRole('button', { name: `Expand folder ${folderA.item.title}` }));
