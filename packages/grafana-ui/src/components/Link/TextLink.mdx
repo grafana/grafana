@@ -95,11 +95,10 @@ The following is the default behaviour and so, it will be applied according to i
     This an standalone link example
   </TextLink>
 </Preview>
-- _Initial appearence_: Blue and not underlined at first. Through the color prop the user will be able to change this value,
-but the rest will be kept. - _On hover_: blue and underlined.
+- _Initial appearence_: Blue and not underlined at first. - _On hover_: blue and underlined.
 
-_Example_: A user renders an external and standalone _text link_ setting the color value to 'primary'.
-The text link will be 'white' in dark theme or 'black' in light theme, as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
+_Example_: We should take into account that through the color prop the user will be able to change this value,
+but the rest will be kept. So, in this example, if the user renders an external and standalone _text link_ setting the color value to 'primary' the result will be a text link 'white' in dark theme or 'black' in light theme, as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
 
 <Preview>
   <TextLink href="https://google.es" color="primary" inline={false} external>
