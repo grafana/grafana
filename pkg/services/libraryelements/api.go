@@ -115,7 +115,7 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser,
 		model.GetLibraryElementCommand{
 			UID:        web.Params(c.Req)[":uid"],
-			FolderName: "General",
+			FolderName: dashboards.RootFolderName,
 		},
 	)
 	if err != nil {

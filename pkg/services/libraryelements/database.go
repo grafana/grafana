@@ -319,7 +319,7 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser *user.SignedInUser, name string) ([]model.LibraryElementDTO, error) {
 	return getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.OrgID}, {"name", name}}, l.features,
 		model.GetLibraryElementCommand{
-			FolderName: "General",
+			FolderName: dashboards.RootFolderName,
 		})
 }
 
