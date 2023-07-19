@@ -332,7 +332,6 @@
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
 eslint-local-rules @grafana/frontend-ops
-/.eslintrc @grafana/frontend-ops
 /.eslintrc.js @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
@@ -348,7 +347,6 @@ eslint-local-rules @grafana/frontend-ops
 /babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
-/.eslintrc @grafana/frontend-ops
 /.vim @zoltanbedi
 /jest.config.js @grafana/frontend-ops
 /latest.json @grafana/frontend-ops
