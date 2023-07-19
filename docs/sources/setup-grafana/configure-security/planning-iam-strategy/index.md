@@ -63,7 +63,7 @@ Teams are a perfect solution for working with a subset of users. Teams can share
 
 Having multiple organizations in a single instance of Grafana lets you manage your users in one place while completely separating resources.
 
-Organizations provide a higher measure of isolation within Grafana than teams do and can be helpful in certain scenarios. However, because organizations lack the scalability and flexibility of teams and [folders]({{< relref "../../../dashboards/manage-dashboards/#creeate-a-dashboard-folder" >}}), we do not recommend using them as the default way to group users and resources.
+Organizations provide a higher measure of isolation within Grafana than teams do and can be helpful in certain scenarios. However, because organizations lack the scalability and flexibility of teams and [folders]({{< relref "../../../dashboards/manage-dashboards#create-a-dashboard-folder" >}}), we do not recommend using them as the default way to group users and resources.
 
 Note that Grafana Cloud does not support having more than 1 organizations per instance.
 
@@ -149,7 +149,7 @@ You can assign roles through the user interface or APIs, establish them through 
 
 ### What are roles?
 
-Within an organization, Grafana has established three primary [organization roles]({{< relref "../../../administration/roles-and-permissions/#organization-roles" >}}) - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams.
+Within an organization, Grafana has established three primary [organization roles]({{< relref "../../../administration/roles-and-permissions#organization-roles" >}}) - organization administrator, editor, and viewer - which dictate the user's level of access and permissions, including the ability to edit data sources or create teams.
 To be a member of any organization, every user must be assigned a role.
 
 In addition, Grafana provides a server administrator role that grants access to and enables interaction with resources that affect the entire instance, including organizations, users, and server-wide settings.
@@ -157,7 +157,7 @@ This particular role can only be accessed by users of self-hosted Grafana instan
 
 ### What are permissions?
 
-Each role consists of a set of [permissions]({{< relref "../../../administration//user-management/manage-dashboard-permissions/#dashboard-permissions" >}}) that determine the tasks a user can perform in the system.
+Each role consists of a set of [permissions]({{< relref "../../../administration//user-management/manage-dashboard-permissions#dashboard-permissions" >}}) that determine the tasks a user can perform in the system.
 For example, the **Admin** role includes permissions that let an administrator create and delete users.
 
 Grafana allows for precise permission settings on both dashboards and folders, giving you the ability to control which users and teams can view, edit, and administer them.
@@ -173,7 +173,7 @@ Dashboard, folder, and data source permissions can be set through the UI or APIs
 Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ [role-based access control (RBAC)]({{< relref "../../../administration/roles-and-permissions/access-control/" >}}).
+If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ [role-based access control (RBAC)]({{< relref "../../../administration/roles-and-permissions/access-control" >}}).
 RBAC is a flexible approach to managing user access to Grafana resources, including users, data sources, and reports. It enables easy granting, changing, and revoking of read and write access for users.
 
 RBAC comes with pre-defined roles, such as data source writer, which allows updating, reading, or querying all data sources.
