@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -242,12 +243,11 @@ func Error(status int, message string, err error) *NormalResponse {
 		data["message"] = message
 	}
 
-	// TODO: Uncomment and restore
-	//if err != nil {
-	// if setting.Env != setting.Prod {
-	// 	data["error"] = err.Error()
-	// }
-	//}
+	if err != nil {
+		if setting.Env != setting.Prod {
+			data["error"] = err.Error()
+		}
+	}
 
 	resp := JSON(status, data)
 
