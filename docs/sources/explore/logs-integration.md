@@ -136,8 +136,6 @@ Linking of log lines in Grafana allows you to quickly navigate to specific log e
 
 > **Note:** This is currently only supported in Loki and other data sources that provide an `id` field.
 
-##
-
 ## Loki-specific features
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
