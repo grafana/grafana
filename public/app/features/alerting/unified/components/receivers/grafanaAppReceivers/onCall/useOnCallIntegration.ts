@@ -24,12 +24,50 @@ export enum OnCallIntegrationSetting {
   IntegrationName = 'integration_name',
 }
 
-export function useOnCallIntegration() {
+enum OnCallIntegrationStatus {
+  Disabled = 'disabled',
+  // The old integration done exclusively on the OnCall side
+  // Relies on automatic creation of contact points and altering notification policies
+  // If enabled Alerting UI should not enable any OnCall integration features
+  V1 = 'v1',
+  // The new integration - On Alerting side we create OnCall integrations and use theirs URLs
+  // as parameters for oncall contact points
+  V2 = 'v2',
+}
+
+function useOnCallPluginStatus() {
   const {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
     error: pluginError,
   } = usePluginBridge(SupportedPlugin.OnCall);
+
+  const integrationStatus = useMemo((): OnCallIntegrationStatus => {
+    if (!isOnCallEnabled) {
+      return OnCallIntegrationStatus.Disabled;
+    }
+    // TODO Support for V2 integration should be added when the OnCall team introduces the necessary changes
+
+    return OnCallIntegrationStatus.V1;
+  }, [isOnCallEnabled]);
+
+  const isAlertingV2IntegrationEnabled = useMemo(
+    () => integrationStatus === OnCallIntegrationStatus.V2,
+    [integrationStatus]
+  );
+
+  return {
+    isOnCallEnabled,
+    integrationStatus,
+    isAlertingV2IntegrationEnabled,
+    isOnCallStatusLoading: isPluginBridgeLoading,
+    onCallError: pluginError,
+  };
+}
+
+export function useOnCallIntegration() {
+  const { isOnCallEnabled, integrationStatus, isAlertingV2IntegrationEnabled, isOnCallStatusLoading, onCallError } =
+    useOnCallPluginStatus();
 
   const { useCreateIntegrationMutation, useGetOnCallIntegrationsQuery } = onCallApi;
 
@@ -39,7 +77,7 @@ export function useOnCallIntegration() {
     data: onCallIntegrations = [],
     isLoading: isLoadingOnCallIntegrations,
     isError: isIntegrationsQueryError,
-  } = useGetOnCallIntegrationsQuery(undefined, { skip: !isOnCallEnabled });
+  } = useGetOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
 
   const onCallFormValidators = useMemo(() => {
     // URL should be one of exsiting OnCall integrations of "grafana_alerting" type
@@ -55,7 +93,7 @@ export function useOnCallIntegration() {
           : true;
       },
       url: (value: string) => {
-        if (!isOnCallEnabled) {
+        if (!isAlertingV2IntegrationEnabled) {
           return true;
         }
 
@@ -64,11 +102,11 @@ export function useOnCallIntegration() {
           : 'Selection of existing OnCall integration is required';
       },
     };
-  }, [onCallIntegrations, isOnCallEnabled]);
+  }, [onCallIntegrations, isAlertingV2IntegrationEnabled]);
 
   const extendOnCalReceivers = useCallback(
     (receiver: Receiver): Receiver => {
-      if (!isOnCallEnabled) {
+      if (!isAlertingV2IntegrationEnabled) {
         return receiver;
       }
 
@@ -80,12 +118,12 @@ export function useOnCallIntegration() {
         });
       });
     },
-    [isOnCallEnabled]
+    [isAlertingV2IntegrationEnabled]
   );
 
   const createOnCallIntegrations = useCallback(
     async (receiver: Receiver): Promise<Receiver> => {
-      if (!isOnCallEnabled) {
+      if (!isAlertingV2IntegrationEnabled) {
         return receiver;
       }
 
@@ -114,12 +152,18 @@ export function useOnCallIntegration() {
         });
       });
     },
-    [isOnCallEnabled, createIntegrationMutation]
+    [isAlertingV2IntegrationEnabled, createIntegrationMutation]
   );
 
   const extendOnCallNotifierFeatures = useCallback(
     (notifier: NotifierDTO): NotifierDTO => {
-      if (notifier.type === ReceiverTypes.OnCall && isOnCallEnabled) {
+      // If V2 integration is not enabled the receiver will not be extended
+      // We still allow users to use this contact point but they need to provide URL manually
+      // As they do for webhook integration
+      // Removing the oncall notifier from the list of available notifiers has drawbacks - it's tricky to define what should happen
+      // if someone turned off or downgraded the OnCall plugin but had some receivers configured with OnCall notifier
+      // By falling back to plain URL input we allow users to change the config with OnCall disabled/not supporting V2 integration
+      if (notifier.type === ReceiverTypes.OnCall && isAlertingV2IntegrationEnabled) {
         const options = notifier.options.filter((o) => o.propertyName !== 'url');
 
         options.unshift(
@@ -167,10 +211,11 @@ export function useOnCallIntegration() {
 
       return notifier;
     },
-    [onCallIntegrations, isOnCallEnabled]
+    [onCallIntegrations, isAlertingV2IntegrationEnabled]
   );
 
   return {
+    integrationStatus,
     onCallNotifierMeta: {
       enabled: !!isOnCallEnabled,
       order: 1,
@@ -183,7 +228,7 @@ export function useOnCallIntegration() {
     extendOnCalReceivers,
     createOnCallIntegrations,
     onCallFormValidators,
-    isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isPluginBridgeLoading,
-    hasOnCallError: Boolean(pluginError) || isIntegrationsQueryError,
+    isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading,
+    hasOnCallError: Boolean(onCallError) || isIntegrationsQueryError,
   };
 }

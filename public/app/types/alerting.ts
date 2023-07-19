@@ -55,7 +55,8 @@ export type GrafanaNotifierType =
   | 'victorops'
   | 'pushover'
   | 'LINE'
-  | 'kafka';
+  | 'kafka'
+  | 'wecom';
 
 export type CloudNotifierType =
   | 'oncall' // Only FE implementation for now
