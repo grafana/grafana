@@ -12,7 +12,7 @@ import {
   PanelProps,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
+import { DashboardCursorSync, HideSeriesConfig, LegendDisplayMode } from '@grafana/schema';
 import {
   SeriesVisibilityChangeBehavior,
   usePanelContext,
@@ -41,10 +41,12 @@ interface Props extends PanelProps<Options> {}
  */
 export function PieChartPanel(props: Props) {
   const { data, timeZone, fieldConfig, replaceVariables, width, height, options, id } = props;
-  const { eventBus } = usePanelContext();
+  const { eventBus, sync } = usePanelContext();
 
   // Enable subscribing to own events, for i.e. legend highlighting support
-  eventBus.setFilterConfig({ filter: EventFilter.All });
+  eventBus.setFilterConfig({
+    filter: sync && sync() === DashboardCursorSync.Off ? EventFilter.OnlyLocal : EventFilter.All,
+  });
 
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();
