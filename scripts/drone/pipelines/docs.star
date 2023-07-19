@@ -39,7 +39,6 @@ def docs_pipelines(ver_mode, trigger):
 
     return pipeline(
         name = "{}-docs".format(ver_mode),
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,
@@ -67,6 +66,9 @@ def trigger_docs_main():
         "event": [
             "push",
         ],
+        "repo": [
+            "grafana/grafana",
+        ],
         "paths": docs_paths,
     }
 
@@ -74,6 +76,9 @@ def trigger_docs_pr():
     return {
         "event": [
             "pull_request",
+        ],
+        "repo": [
+            "grafana/grafana",
         ],
         "paths": docs_paths,
     }

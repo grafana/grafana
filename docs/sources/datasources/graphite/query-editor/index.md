@@ -11,6 +11,11 @@ keywords:
   - logs
   - resources
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Graphite query editor
 weight: 300

@@ -12,6 +12,10 @@ keywords:
   - role-based-access-control
   - acl
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: RBAC HTTP API
 ---
 

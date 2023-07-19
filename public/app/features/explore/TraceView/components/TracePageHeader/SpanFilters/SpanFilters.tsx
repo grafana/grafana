@@ -25,8 +25,8 @@ import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
 import { Trace } from '../../types';
-import NewTracePageSearchBar from '../SearchBar/NewTracePageSearchBar';
 import NextPrevResult from '../SearchBar/NextPrevResult';
+import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 
 export type SpanFilterProps = {
   trace: Trace;
@@ -277,12 +277,12 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       {!showSpanFilters && (
         <div className={styles.nextPrevResult}>
           <NextPrevResult
+            trace={trace}
             spanFilterMatches={spanFilterMatches}
             setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
             focusedSpanIndexForSearch={focusedSpanIndexForSearch}
             setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
             datasourceType={datasourceType}
-            totalSpans={trace.spans.length}
             showSpanFilters={showSpanFilters}
           />
         </div>
@@ -447,8 +447,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
 
-        <NewTracePageSearchBar
-          totalSpans={trace.spans.length}
+        <TracePageSearchBar
+          trace={trace}
           search={search}
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}

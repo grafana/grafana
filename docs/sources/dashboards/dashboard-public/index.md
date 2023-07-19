@@ -2,6 +2,11 @@
 aliases:
   - ../features/dashboard/dashboards/
   - dashboard-manage/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Public dashboards
 weight: 8
 ---

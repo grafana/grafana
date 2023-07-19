@@ -3,6 +3,11 @@ description: Tracing in Explore
 keywords:
   - explore
   - trace
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Tracing in Explore
 weight: 20
 ---
@@ -53,11 +58,6 @@ This section explains the elements of the Trace View.
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
 ### Span Filters
-
-{{% admonition type="note" %}}
-This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../setup-grafana/configure-grafana/feature-toggles" >}}).
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
