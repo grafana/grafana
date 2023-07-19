@@ -18,6 +18,8 @@ import { SeriesVisibilityChangeMode } from '.';
 
 /** @alpha */
 export interface PanelContext {
+  /** Identifier for the events scope */
+  eventsScope: string;
   eventBus: EventBus;
 
   /** Dashboard panels sync */
@@ -100,6 +102,7 @@ export interface PanelContext {
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
+  eventsScope: 'global',
   eventBus: new EventBusSrv(),
 });
 

@@ -171,6 +171,7 @@ export function ExploreGraph({
   }, [dataWithConfig, onHiddenSeriesChanged]);
 
   const panelContext: PanelContext = {
+    eventsScope: 'explore',
     eventBus,
     sync: () => DashboardCursorSync.Crosshair,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {

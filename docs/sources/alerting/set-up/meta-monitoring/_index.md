@@ -2,6 +2,7 @@
 aliases:
   - meta-monitoring/
   - alerting/meta-monitoring/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/meta-monitoring/
 description: Meta monitoring
 keywords:
   - grafana

@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../provision-alerting-resources/file-provisioning/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
   - grafana
