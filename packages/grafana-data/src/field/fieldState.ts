@@ -95,12 +95,20 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   let frameNameIncr = 0;
 
   if (allFrames && allFrames.length > 1) {
-    frameNamesDiffer = new Set(allFrames.map((f) => f.name)).size === allFrames.length;
+    for (let i = 1; i < allFrames.length; i++) {
+      const frame = allFrames[i];
+      if (frame.name !== allFrames[i - 1].name) {
+        frameNamesDiffer = true;
+        break;
+      }
+    }
 
-    let sameNamedFrames = allFrames?.filter((fr) => fr.name === frame?.name);
+    if (!frameNamesDiffer && frame) {
+      let sameNamedFrames = allFrames?.filter((fr) => fr.name === frame.name);
 
-    if (sameNamedFrames.length > 1) {
-      frameNameIncr = sameNamedFrames.indexOf(frame!) + 1;
+      if (sameNamedFrames.length > 1) {
+        frameNameIncr = sameNamedFrames.indexOf(frame) + 1;
+      }
     }
   }
 
