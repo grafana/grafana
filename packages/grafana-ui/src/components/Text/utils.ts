@@ -39,10 +39,9 @@ export const customVariant = (
   if (variant) {
     return theme.typography[variant];
   }
-  if (element === 'span') {
-    return;
-  }
   switch (element) {
+    case 'span':
+      return;
     case 'h1':
       return theme.typography.h1;
     case 'h2':
