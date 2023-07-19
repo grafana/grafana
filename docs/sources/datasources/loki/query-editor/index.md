@@ -114,9 +114,6 @@ The query editor groups operations into the following sections:
 - Label filters
 - Line filters
 
-<!-- Some operations have additional parameters under the operation header.
-For details about each operation, use the `info` button to view the operation's description, or refer to [Loki documentation]((/docs/loki/latest/operations/). -->
-
 Some operations make sense only when used in a specific order.b If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
 To re-order operations manually, drag the operation box by its name and drop it into the desired place. For additional information see [Order of operations](/docs/loki/latest/logql/#order-of-operations).
 
