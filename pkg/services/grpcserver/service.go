@@ -39,7 +39,7 @@ type GPRCServerService struct {
 	address string
 }
 
-func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &GPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
@@ -54,7 +54,10 @@ func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 			Help:      "Time (in seconds) spent serving HTTP requests.",
 			Buckets:   instrument.DefBuckets,
 		}, []string{"method", "route", "status_code", "ws"})
-		prometheus.MustRegister(grpcRequestDuration)
+
+		if err := registerer.Register(grpcRequestDuration); err != nil {
+			return nil, err
+		}
 	}
 
 	var opts []grpc.ServerOption
