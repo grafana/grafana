@@ -960,32 +960,19 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	// FIXME: this filter is no longer used, remove and clean-up/rewrite tests
-	filters := []interface{}{
-		permissions.DashboardPermissionFilter{
-			OrgRole:         query.SignedInUser.OrgRole,
-			OrgId:           query.SignedInUser.OrgID,
-			Dialect:         d.store.GetDialect(),
-			UserId:          query.SignedInUser.UserID,
-			PermissionLevel: query.Permission,
-		},
-	}
+	var filters []interface{}
+	if d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+		if err != nil {
+			return nil, err
+		}
 
-	if !ac.IsDisabled(d.cfg) {
-		if d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-			recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
-			if err != nil {
-				return nil, err
-			}
-
-			// if access control is enabled, overwrite the filters so far
-			filters = []interface{}{
-				permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
-			}
-		} else {
-			filters = []interface{}{
-				permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type, d.features, false),
-			}
+		filters = []interface{}{
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
+		}
+	} else {
+		filters = []interface{}{
+			permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type, d.features, false),
 		}
 	}
 
