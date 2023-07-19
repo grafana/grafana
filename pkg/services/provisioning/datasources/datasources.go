@@ -180,7 +180,6 @@ func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID 
 }
 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, dsToBeAdded []*upsertDataSourceFromConfig) error {
-
 	var uidsToBeAdded []string
 	for _, ds := range dsToBeAdded {
 		uidsToBeAdded = append(uidsToBeAdded, ds.UID)
