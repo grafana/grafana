@@ -16,10 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
 	maturity: "merged"
