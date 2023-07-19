@@ -46,8 +46,21 @@ export function useResetVariableListSizeCache(
 ) {
   useEffect(() => {
     if (extendedState.lastExpandedIndex !== undefined) {
-      listRef.current?.resetAfterIndex(Math.max(extendedState.lastExpandedIndex - 1, 0));
+      const index =
+        extendedState.pageIndex === 0
+          ? extendedState.lastExpandedIndex - 1
+          : extendedState.lastExpandedIndex -
+            extendedState.pageIndex -
+            extendedState.pageIndex * extendedState.pageSize;
+      listRef.current?.resetAfterIndex(Math.max(index, 0));
       return;
     }
-  }, [extendedState.lastExpandedIndex, extendedState.toggleRowExpandedCounter, listRef, data]);
+  }, [
+    extendedState.lastExpandedIndex,
+    extendedState.toggleRowExpandedCounter,
+    extendedState.pageIndex,
+    extendedState.pageSize,
+    listRef,
+    data,
+  ]);
 }

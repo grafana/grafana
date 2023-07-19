@@ -255,7 +255,14 @@ export const Table = memo((props: Props) => {
 
       return subTables;
     },
-    [state.expanded, tableStyles.rowHeight, theme.colors, width, nestedFields]
+    [nestedFields, state.expanded, tableStyles.rowHeight, theme.colors, width]
+  );
+
+  const rowIndexForPagination = useCallback(
+    (index: number) => {
+      return state.pageIndex * state.pageSize + index;
+    },
+    [state.pageIndex, state.pageSize]
   );
 
   const RenderRow = useCallback(
@@ -270,7 +277,7 @@ export const Table = memo((props: Props) => {
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {renderSubTables(rowIndex)}
+          {renderSubTables(rowIndexForPagination(rowIndex))}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -286,7 +293,18 @@ export const Table = memo((props: Props) => {
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTables, timeRange, data]
+    [
+      rows,
+      enablePagination,
+      prepareRow,
+      tableStyles,
+      renderSubTables,
+      rowIndexForPagination,
+      page,
+      onCellFilterAdded,
+      timeRange,
+      data,
+    ]
   );
 
   const onNavigate = useCallback(
@@ -323,8 +341,9 @@ export const Table = memo((props: Props) => {
   }
 
   const getItemSize = (index: number): number => {
-    if (state.expanded[index]) {
-      const height = nestedFields[index]?.values.reduce((acc, field) => {
+    const indexForPagination = rowIndexForPagination(index);
+    if (state.expanded[indexForPagination]) {
+      const height = nestedFields[indexForPagination]?.values.reduce((acc, field) => {
         if (field.length) {
           const noHeader = !!field.meta?.custom?.noHeader;
           return acc + tableStyles.rowHeight * (field.length + (noHeader ? 0 : 1)); // account for the header with + 1
@@ -363,8 +382,8 @@ export const Table = memo((props: Props) => {
             <div ref={variableSizeListScrollbarRef}>
               <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
                 <VariableSizeList
-                  // This component needs an unmount/remount when row height changes
-                  key={tableStyles.rowHeight}
+                  // This component needs an unmount/remount when row height or page changes
+                  key={tableStyles.rowHeight + state.pageIndex}
                   height={listHeight}
                   itemCount={itemCount}
                   itemSize={getItemSize}
