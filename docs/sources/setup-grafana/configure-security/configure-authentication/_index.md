@@ -5,7 +5,7 @@ aliases:
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 title: Configure authentication
-weight: 100
+weight: 200
 ---
 
 # Configure authentication
