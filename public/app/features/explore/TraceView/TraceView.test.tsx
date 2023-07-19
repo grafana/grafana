@@ -29,8 +29,6 @@ function getTraceView(frames: DataFrame[]) {
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
-        search=""
-        focusedSpanIdForSearch=""
         queryResponse={mockPanelData}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
