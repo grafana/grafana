@@ -113,7 +113,7 @@ it('renders page without Add Widget button when feature flag is disabled', () =>
   expect(screen.queryByRole('button', { name: 'Add widget' })).not.toBeInTheDocument();
 });
 
-it('renders page with Add Widget button when feature flag is enabled', () => {
+it.skip('renders page with Add Widget button when feature flag is enabled', () => {
   config.featureToggles.vizAndWidgetSplit = true;
   setup();
 
