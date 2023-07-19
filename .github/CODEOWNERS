@@ -597,7 +597,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-delivery
 /.github/workflows/bump-version.yml @grafana/grafana-delivery
 /.github/workflows/close-milestone.yml @grafana/grafana-delivery
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-datasources @grafana/aws-datasources
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
