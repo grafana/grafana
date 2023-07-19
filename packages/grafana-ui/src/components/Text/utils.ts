@@ -40,6 +40,7 @@ export const customVariant = (
     return theme.typography[variant];
   }
   switch (element) {
+    //Span elements does not have a default variant to be able to take the parents style
     case 'span':
       return;
     case 'h1':
