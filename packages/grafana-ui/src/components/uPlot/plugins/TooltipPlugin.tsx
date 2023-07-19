@@ -327,7 +327,7 @@ export function positionTooltip(u: uPlot, bbox: DOMRect) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tooltipWrapper: css`
-    z-index: ${theme.zIndex.portal + 1} !important;
-  `,
+  tooltipWrapper: css({
+    'z-index': theme.zIndex.portal + 1 + ' !important',
+  }),
 });
