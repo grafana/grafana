@@ -68,12 +68,7 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		correlationQuery := GetCorrelationQuery{
-			UID:       cmd.UID,
-			SourceUID: cmd.SourceUID,
-			OrgId:     cmd.OrgId,
-		}
-		correlation, err := s.GetCorrelation(ctx, correlationQuery)
+		correlation, err := s.GetCorrelation(ctx, GetCorrelationQuery(cmd))
 
 		if err != nil {
 			return err
