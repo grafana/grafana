@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  newTraceViewHeader?: boolean;
   correlations?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
@@ -114,4 +113,5 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
+  featureToggleAdminPage?: boolean;
 }

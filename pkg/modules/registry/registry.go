@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 )
 
 type Registry interface{}
@@ -24,6 +25,7 @@ func ProvideRegistry(
 	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 	certGenerator certgenerator.ServiceInterface,
 	httpServer *api.HTTPServer,
+	provisioningService *provisioning.ProvisioningServiceImpl,
 ) *registry {
 	return newRegistry(
 		log.New("modules.registry"),
@@ -32,6 +34,7 @@ func ProvideRegistry(
 		backgroundServiceRunner,
 		certGenerator,
 		httpServer,
+		provisioningService,
 	)
 }
 
