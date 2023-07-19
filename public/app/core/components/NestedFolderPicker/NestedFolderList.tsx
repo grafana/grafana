@@ -10,15 +10,17 @@ import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Trans } from 'app/core/internationalization';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
+import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
+import { useSelector } from 'app/types';
 
 import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
 
-export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id ?? 'root'}`;
+export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id || 'root'}`;
 
 interface NestedFolderListProps {
   items: DashboardsTreeItem[];
@@ -122,8 +124,14 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
-  const children = items.filter((i) => i.parentUID === item.uid).map((i) => i.item.uid);
-  const posInSet = items.filter((i) => i.parentUID === parentUID).findIndex((i) => i.item.uid === item.uid) + 1;
+  const rootCollection = useSelector(rootItemsSelector);
+  const childrenCollections = useSelector(childrenByParentUIDSelector);
+  const children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
+  let siblings: DashboardViewItem[] = [];
+  // only look for siblings if we're not at the root
+  if (item.uid) {
+    siblings = (parentUID ? childrenCollections[parentUID] : rootCollection)?.items ?? [];
+  }
 
   const styles = useStyles2(getStyles);
 
@@ -178,9 +186,9 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-labelledby={labelId}
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
-      aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child)).join(' ') : undefined}
+      aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child.uid)).join(' ') : undefined}
       aria-setsize={children.length}
-      aria-posinset={posInSet}
+      aria-posinset={siblings.findIndex((i) => i.uid === item.uid) + 1}
       id={getDOMId(idPrefix, item.uid)}
     >
       <div className={styles.rowBody}>
