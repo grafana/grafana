@@ -4495,6 +4495,12 @@ trigger:
 type: docker
 ---
 get:
+  name: grafana_api_key
+  path: infra/data/ci/drone-plugins
+kind: secret
+name: grafana_api_key
+---
+get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
@@ -4657,6 +4663,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 3c6d5a8fdfccf677ed0e1376e74f10be626a6381e0c88ba082f2da1270c19019
+hmac: 5d5936937bec3041564ccd1c5d42c318010ade93d778b2171818f742ca3b8225
 
 ...
