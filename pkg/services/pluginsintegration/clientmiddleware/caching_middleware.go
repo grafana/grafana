@@ -90,9 +90,10 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 
 	// Update the query cache with the result for this metrics request
 	if err == nil && cr.UpdateCacheFn != nil {
-		// If AWS async caching is enabled and it is a still running async query, don't cache it
+		// If AWS async caching is not enabled, use the old code path
 		if m.features == nil || !m.features.IsEnabled(featuremgmt.FlagAwsAsyncQueryCaching) {
 			cr.UpdateCacheFn(ctx, resp)
+			// If AWS async caching is enabled and resp is for a running async query, don't cache it
 		} else if shouldCacheQuery(resp) {
 			cr.UpdateCacheFn(ctx, resp)
 		}
