@@ -15,8 +15,8 @@ export const templateSrvStub = {
   replace: replaceMock,
 } as unknown as TemplateSrv;
 
-export function mockBackendService(response: any) {
-  const fetchMock = jest.fn().mockReturnValue(of(response as FetchResponse));
+export function mockBackendService(response: FetchResponse) {
+  const fetchMock = jest.fn().mockReturnValue(of(response));
   const origBackendSrv = getBackendSrv();
   setBackendSrv({
     ...origBackendSrv,

@@ -44,6 +44,8 @@ composableKinds: DataQuery: {
 					maxDuration?: string
 					// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 					serviceMapQuery?: string
+					// Use service.namespace in addition to service.name to uniquely identify a service. 
+					serviceMapIncludeNamespace?: bool
 					// Defines the maximum number of traces that are returned from Tempo
 					limit?: int64
 					// Use the streaming API to get partial results as they are available

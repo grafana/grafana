@@ -113,4 +113,5 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
+  featureToggleAdminPage?: boolean;
 }

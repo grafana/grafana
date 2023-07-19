@@ -2,6 +2,7 @@
 aliases:
   - ../notifications/mute-timings/
   - ../unified-alerting/notifications/mute-timings/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/mute-timings/
 description: Mute timings
 keywords:
   - grafana
