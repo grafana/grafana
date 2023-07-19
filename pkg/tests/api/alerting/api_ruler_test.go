@@ -41,7 +41,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, setting.NewCfg())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
@@ -868,7 +868,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, setting.NewCfg())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
