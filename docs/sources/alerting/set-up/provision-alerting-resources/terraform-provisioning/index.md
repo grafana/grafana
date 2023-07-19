@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../provision-alerting-resources/terraform-provisioning/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/
 description: Create and manage alerting resources using Terraform
 keywords:
   - grafana
