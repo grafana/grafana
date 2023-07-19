@@ -45,6 +45,13 @@ func TestGetConfig(t *testing.T) {
 		},
 		{
 			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}), nil),
+			name:               "custom tag, package.json doesn't match",
+			packageJsonVersion: "10.0.0",
+			metadata:           config.Metadata{GrafanaVersion: "10.0.0-abcd123pre", ReleaseMode: config.ReleaseMode{Mode: config.TagMode}},
+			wantErr:            false,
+		},
+		{
+			ctx:                cli.NewContext(app, setFlags(t, flag.NewFlagSet("flagSet", flag.ContinueOnError), flagObj{name: jobs, value: "2"}, flagObj{name: githubToken, value: "token"}), nil),
 			name:               "package.json doesn't match tag",
 			packageJsonVersion: "10.1.0",
 			metadata:           config.Metadata{GrafanaVersion: "10.0.0", ReleaseMode: config.ReleaseMode{Mode: config.TagMode}},

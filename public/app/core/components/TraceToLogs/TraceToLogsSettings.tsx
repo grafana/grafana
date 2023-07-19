@@ -125,24 +125,29 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <IntervalInput
-        label={getTimeShiftLabel('start')}
-        tooltip={getTimeShiftTooltip('start')}
-        value={traceToLogs.spanStartTimeShift || ''}
-        onChange={(val) => {
-          updateTracesToLogs({ spanStartTimeShift: val });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
-      <IntervalInput
-        label={getTimeShiftLabel('end')}
-        tooltip={getTimeShiftTooltip('end')}
-        value={traceToLogs.spanEndTimeShift || ''}
-        onChange={(val) => {
-          updateTracesToLogs({ spanEndTimeShift: val });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('start')}
+          tooltip={getTimeShiftTooltip('start')}
+          value={traceToLogs.spanStartTimeShift || ''}
+          onChange={(val) => {
+            updateTracesToLogs({ spanStartTimeShift: val });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('end')}
+          tooltip={getTimeShiftTooltip('end')}
+          value={traceToLogs.spanEndTimeShift || ''}
+          onChange={(val) => {
+            updateTracesToLogs({ spanEndTimeShift: val });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField

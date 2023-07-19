@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Breaking changes in Grafana v10.0
 weight: -1
 ---

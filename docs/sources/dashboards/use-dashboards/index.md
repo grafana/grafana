@@ -12,6 +12,11 @@ keywords:
   - dashboard
   - search
   - shortcuts
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Use dashboards
 title: Use dashboards
 weight: 1

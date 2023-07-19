@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { H1, H3, P } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
@@ -58,6 +58,32 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </Button>
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
+          {config.featureToggles.vizAndWidgetSplit && (
+            <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
+              <div className={styles.headerSmall}>
+                <H3 textAlignment="center" weight="medium">
+                  <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
+                </H3>
+              </div>
+              <div className={styles.bodySmall}>
+                <P textAlignment="center" color="secondary">
+                  <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
+                </P>
+              </div>
+              <Button
+                icon="plus"
+                fill="outline"
+                data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
+                onClick={() => {
+                  reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_widget' });
+                  locationService.partial({ addWidget: true });
+                }}
+                disabled={!canCreate}
+              >
+                <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
+              </Button>
+            </div>
+          )}
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
             <div className={styles.headerSmall}>
               <H3 textAlignment="center" weight="medium">
@@ -148,22 +174,30 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing.gridSize * 4,
     }),
     others: css({
+      width: '100%',
       label: 'others-wrapper',
       alignItems: 'stretch',
       flexDirection: 'row',
       gap: theme.spacing.gridSize * 4,
 
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
         flexDirection: 'column',
       },
+    }),
+    widgetContainer: css({
+      label: 'widget-container',
+      padding: theme.spacing.gridSize * 3,
+      flex: 1,
     }),
     rowContainer: css({
       label: 'row-container',
       padding: theme.spacing.gridSize * 3,
+      flex: 1,
     }),
     libraryContainer: css({
       label: 'library-container',
       padding: theme.spacing.gridSize * 3,
+      flex: 1,
     }),
     headerBig: css({
       marginBottom: theme.spacing.gridSize * 2,

@@ -31,6 +31,7 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
+  FieldType,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -626,7 +627,7 @@ export class ElasticDatasource
       {
         range: request.range,
         targets: request.targets,
-        extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
+        extractLevel,
       }
     );
   }
@@ -1154,4 +1155,10 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
       };
     }
   }
+}
+
+function extractLevel(dataFrame: DataFrame): LogLevel {
+  const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
+  const name = valueField?.labels?.['level'] ?? '';
+  return getLogLevelFromKey(name);
 }

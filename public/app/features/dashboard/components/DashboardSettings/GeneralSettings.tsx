@@ -5,7 +5,7 @@ import { TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
+import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
@@ -32,7 +32,7 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
 
   const onFolderChange = (newFolder: FolderChange) => {
-    dashboard.meta.folderUid = newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid;
+    dashboard.meta.folderUid = newFolder.uid;
     dashboard.meta.folderTitle = newFolder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
     setRenderCounter(renderCounter + 1);

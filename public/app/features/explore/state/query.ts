@@ -258,7 +258,7 @@ export function addQueryRow(exploreId: string, index: number): ThunkResult<void>
     // if it's not mixed, send it as an override. generateEmptyQuery doesn't have access to state
     if (queries.length === 0) {
       const rootDatasource = getState().explore.panes[exploreId]!.datasourceInstance;
-      if (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed) {
+      if (!rootDatasource?.meta.mixed) {
         datasourceOverride = rootDatasource;
       }
     }
@@ -1182,6 +1182,7 @@ export const processQueryResponse = (
     nodeGraphFrames,
     flameGraphFrames,
     rawPrometheusFrames,
+    customFrames,
   } = response;
 
   if (error) {
@@ -1224,6 +1225,7 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
+    showCustom: !!customFrames?.length,
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };
