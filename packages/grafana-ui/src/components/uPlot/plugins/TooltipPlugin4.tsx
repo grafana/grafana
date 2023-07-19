@@ -138,6 +138,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     const dismiss = () => {
       _isPinned = false;
       _isHovering = false;
+      _style = { pointerEvents: 'none' };
 
       // @ts-ignore
       _plot!.cursor._lock = _isPinned;
