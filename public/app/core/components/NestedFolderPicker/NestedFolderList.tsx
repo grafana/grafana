@@ -1,6 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useId, useMemo, useRef } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { FixedSizeList as List } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
@@ -26,6 +28,8 @@ interface NestedFolderListProps {
   selectedFolder: FolderUID | undefined;
   onFolderExpand: (uid: string, newOpenState: boolean) => void;
   onFolderSelect: (item: DashboardViewItem) => void;
+  isItemLoaded: (itemIndex: number) => boolean;
+  requestLoadMore: (folderUid: string | undefined) => void;
 }
 
 export function NestedFolderList({
@@ -36,7 +40,10 @@ export function NestedFolderList({
   selectedFolder,
   onFolderExpand,
   onFolderSelect,
+  isItemLoaded,
+  requestLoadMore,
 }: NestedFolderListProps) {
+  const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
 
   const virtualData = useMemo(
@@ -52,18 +59,44 @@ export function NestedFolderList({
     [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix]
   );
 
+  const handleIsItemLoaded = useCallback(
+    (itemIndex: number) => {
+      return isItemLoaded(itemIndex);
+    },
+    [isItemLoaded]
+  );
+
+  const handleLoadMore = useCallback(
+    (startIndex: number, endIndex: number) => {
+      const { parentUID } = items[startIndex];
+      requestLoadMore(parentUID);
+    },
+    [requestLoadMore, items]
+  );
+
   return (
     <div className={styles.table} role="tree">
       {items.length > 0 ? (
-        <List
-          height={ROW_HEIGHT * Math.min(6.5, items.length)}
-          width="100%"
-          itemData={virtualData}
-          itemSize={ROW_HEIGHT}
+        <InfiniteLoader
+          ref={infiniteLoaderRef}
           itemCount={items.length}
+          isItemLoaded={handleIsItemLoaded}
+          loadMoreItems={handleLoadMore}
         >
-          {Row}
-        </List>
+          {({ onItemsRendered, ref }) => (
+            <List
+              ref={ref}
+              height={ROW_HEIGHT * Math.min(6.5, items.length)}
+              width="100%"
+              itemData={virtualData}
+              itemSize={ROW_HEIGHT}
+              itemCount={items.length}
+              onItemsRendered={onItemsRendered}
+            >
+              {Row}
+            </List>
+          )}
+        </InfiniteLoader>
       ) : (
         <div className={styles.emptyMessage}>
           <Trans i18nKey="browse-dashboards.folder-picker.empty-message">No folders found</Trans>
@@ -73,13 +106,15 @@ export function NestedFolderList({
   );
 }
 
-interface VirtualData extends NestedFolderListProps {}
+interface VirtualData extends Omit<NestedFolderListProps, 'isItemLoaded' | 'requestLoadMore'> {}
 
 interface RowProps {
   index: number;
   style: React.CSSProperties;
   data: VirtualData;
 }
+
+const SKELETON_WIDTHS = [100, 200, 130, 160, 150];
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
   const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix } =
@@ -96,7 +131,9 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     (ev: React.MouseEvent<HTMLButtonElement>) => {
       ev.preventDefault();
       ev.stopPropagation();
-      onFolderExpand(item.uid, !isOpen);
+      if (item.uid) {
+        onFolderExpand(item.uid, !isOpen);
+      }
     },
     [item.uid, isOpen, onFolderExpand]
   );
@@ -107,10 +144,19 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     }
   }, [item, onFolderSelect]);
 
+  if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
+    return (
+      <span style={virtualStyles} className={styles.row}>
+        <Indent level={level} />
+        <Skeleton width={SKELETON_WIDTHS[index % SKELETON_WIDTHS.length]} />
+      </span>
+    );
+  }
+
   if (item.kind !== 'folder') {
     return process.env.NODE_ENV !== 'production' ? (
       <span style={virtualStyles} className={styles.row}>
-        Non-folder item {item.uid}
+        Non-folder {item.kind} {item.uid}
       </span>
     ) : null;
   }
