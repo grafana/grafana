@@ -59,3 +59,27 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.
 {{% /admonition %}}
+
+## Data sources
+
+### Step editor in Loki
+
+<!-- Ivana Huckova -->
+
+_Generally available in all editions of Grafana._
+
+We've made an improvement to the Loki query editor by adding a new step editor. This editor allows you to specify a value for the "step" parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want to get a matrix response from your queries.
+
+By default, the step parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki step parameter, you can visit [the Loki step parameter documentation](<(https://grafana.com/docs/loki/latest/api/#step-versus-interval)>).
+
+{{< figure src="/media/docs/grafana/data-sources/loki-step-editor.png" max-width="750px" caption="New Loki step editor" >}}
+
+### Copy link to a Loki log line
+
+<!-- Sven Grossmann -->
+
+_Generally available in all editions of Grafana._
+
+A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortcut** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana will automatically scroll to the corresponding log line and highlight it with a blue background, making it easy to identify and focus on the relevant information.
+
+{{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
