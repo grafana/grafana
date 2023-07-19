@@ -285,8 +285,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaCfg.BaseInterval = SchedulerBaseInterval
-
+	uaCfg.BaseInterval, err = gtime.ParseDuration(valueAsString(ua, "scheduler_tick_interval", SchedulerBaseInterval.String()))
+	if err != nil {
+		return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
+	}
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
 	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
 		// if the legacy option is invalid, fallback to 10 (unified alerting min interval default)
