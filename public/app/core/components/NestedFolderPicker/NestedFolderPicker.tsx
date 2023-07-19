@@ -7,7 +7,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
@@ -169,7 +169,13 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
       >
-        {selectedFolder.isLoading ? <Skeleton width={100} /> : <Text truncate>{label ?? 'Select folder'}</Text>}
+        {selectedFolder.isLoading ? (
+          <Skeleton width={100} />
+        ) : (
+          <Text truncate>
+            {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
+          </Text>
+        )}
       </Button>
     );
   }
