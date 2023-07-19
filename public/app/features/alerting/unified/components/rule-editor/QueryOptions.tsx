@@ -62,7 +62,11 @@ export const QueryOptions = ({
       </Toggletip>
 
       <div className={styles.staticValues}>
-        <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}</span>
+        <span>
+          {dateTime(timeRange?.from)
+            .locale('en')
+            .fromNow(true)}
+        </span>
         {queryOptions.maxDataPoints && <span>, MD {queryOptions.maxDataPoints}</span>}
       </div>
     </>

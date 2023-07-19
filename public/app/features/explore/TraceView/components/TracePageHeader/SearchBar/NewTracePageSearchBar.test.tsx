@@ -16,12 +16,14 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { defaultFilters } from '../../../useSearch';
+import { trace } from '../TracePageHeader.test';
 
 import NewTracePageSearchBar from './NewTracePageSearchBar';
 
 describe('<NewTracePageSearchBar>', () => {
   const NewTracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
     const searchBarProps = {
+      trace: trace,
       search: defaultFilters,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
       showSpanFilterMatchesOnly: false,

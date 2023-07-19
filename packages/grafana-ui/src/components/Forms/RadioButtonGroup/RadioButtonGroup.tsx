@@ -117,14 +117,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     fullWidth: css({
       display: 'flex',
     }),
-    icon: css`
-      margin-right: 6px;
-    `,
-    img: css`
-      width: ${theme.spacing(2)};
-      height: ${theme.spacing(2)};
-      margin-right: ${theme.spacing(1)};
-    `,
+    icon: css({
+      marginRight: '6px',
+    }),
+    img: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      marginRight: theme.spacing(1),
+    }),
     invalid: css({
       border: `1px solid ${theme.colors.error.border}`,
     }),

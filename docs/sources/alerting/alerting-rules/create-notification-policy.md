@@ -3,6 +3,7 @@ aliases:
   - ../notifications/
   - ../old-alerting/notifications/
   - ../unified-alerting/notifications/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
 description: Notification policies
 keywords:
   - grafana
@@ -10,6 +11,11 @@ keywords:
   - guide
   - notification policies
   - routes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure notification policies
 weight: 420
 ---

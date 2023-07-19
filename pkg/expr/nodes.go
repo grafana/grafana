@@ -47,6 +47,7 @@ type baseNode struct {
 type rawNode struct {
 	RefID      string `json:"refId"`
 	Query      map[string]interface{}
+	QueryRaw   []byte
 	QueryType  string
 	TimeRange  TimeRange
 	DataSource *datasources.DataSource

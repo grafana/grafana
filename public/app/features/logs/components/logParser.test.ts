@@ -6,12 +6,18 @@ import { getAllFields, createLogLineLinks, FieldDef } from './logParser';
 
 describe('logParser', () => {
   describe('getAllFields', () => {
-    it('should filter out field with labels name and other type', () => {
+    it('should filter out field with labels name old-loki-style frame', () => {
       const logRow = createLogRow({
-        entryFieldIndex: 10,
+        entryFieldIndex: 1,
         dataFrame: new MutableDataFrame({
+          meta: {
+            custom: {
+              frameType: 'LabeledTimeValues',
+            },
+          },
           refId: 'A',
           fields: [
+            testTimeField,
             testLineField,
             testStringField,
             {
@@ -29,12 +35,13 @@ describe('logParser', () => {
       expect(fields.find((field) => field.keys[0] === 'labels')).toBe(undefined);
     });
 
-    it('should not filter out field with labels name and string type', () => {
+    it('should not filter out field with labels name in not-old-loki-style frame', () => {
       const logRow = createLogRow({
-        entryFieldIndex: 10,
+        entryFieldIndex: 1,
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testTimeField,
             testLineField,
             testStringField,
             {
@@ -53,10 +60,11 @@ describe('logParser', () => {
 
     it('should not filter out field with labels name and other type and datalinks', () => {
       const logRow = createLogRow({
-        entryFieldIndex: 10,
+        entryFieldIndex: 1,
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testTimeField,
             testLineField,
             testStringField,
             {
@@ -82,10 +90,11 @@ describe('logParser', () => {
 
     it('should filter out field with id name', () => {
       const logRow = createLogRow({
-        entryFieldIndex: 10,
+        entryFieldIndex: 1,
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testTimeField,
             testLineField,
             testStringField,
             {
@@ -139,10 +148,10 @@ describe('logParser', () => {
 
     it('should not filter out field with string values', () => {
       const logRow = createLogRow({
-        entryFieldIndex: 10,
+        entryFieldIndex: 1,
         dataFrame: new MutableDataFrame({
           refId: 'A',
-          fields: [testLineField, { ...testStringField }],
+          fields: [testTimeField, testLineField, { ...testStringField }],
         }),
       });
 
@@ -213,6 +222,13 @@ describe('logParser', () => {
     });
   });
 });
+
+const testTimeField = {
+  name: 'timestamp',
+  type: FieldType.time,
+  config: {},
+  values: [1],
+};
 
 const testLineField = {
   name: 'body',
