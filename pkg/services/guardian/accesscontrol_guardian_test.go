@@ -154,20 +154,6 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			},
 			expected: false,
 		},
-		/*
-			{
-				desc:         "should be able to save with folder write and folder general scope",
-				dashUID:      "1",
-				dashIsFolder: true,
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionFoldersWrite,
-						Scope:  "folders:uid:general",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
 			desc:         "should be able to save with folder write and folder scope",
 			dashUID:      "1",
@@ -332,20 +318,6 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			},
 			expected: false,
 		},
-		/*
-			{
-				desc:         "should be able to edit with folder write and folder general scope",
-				dashUID:      "1",
-				dashIsFolder: true,
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionFoldersWrite,
-						Scope:  "folders:uid:general",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
 			desc:         "should be able to edit with folder write and folder scope",
 			dashUID:      "1",
@@ -515,20 +487,6 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			},
 			expected: false,
 		},
-		/*
-			{
-				desc:         "should be able to view with folders read and folder general scope",
-				dashUID:      "1",
-				dashIsFolder: true,
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionFoldersRead,
-						Scope:  "folders:uid:general",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
 			desc:         "should be able to view with folders read and folder scope",
 			dashUID:      "1",
@@ -759,22 +717,6 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		/*
-				{
-					desc:         "should be able to admin with folder read and write and folder general scope",
-					dashUID:      "1",
-					dashIsFolder: true,
-					permissions: []accesscontrol.Permission{
-						{
-							Action: dashboards.ActionFoldersPermissionsRead,
-							Scope:  "folders:uid:general",
-						},
-						{
-							Action: dashboards.ActionFoldersPermissionsWrite,
-							Scope:  "folders:uid:general",
-						},
-					},
-					expected: true,
-				},
 			{
 				desc:         "should be able to admin with folder read and write and folder scope",
 				dashUID:      "1",
@@ -978,20 +920,6 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			},
 			expected: false,
 		},
-		/*
-			{
-				desc:         "should be able to delete with folder delete and folder general scope",
-				dashUID:      "1",
-				dashIsFolder: true,
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionFoldersDelete,
-						Scope:  "folders:uid:general",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
 			desc:         "should be able to delete with folder delete and folder scope",
 			dashUID:      "1",
