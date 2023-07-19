@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
+	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/exp/slices"
 )
 
 type Store interface {
@@ -58,7 +57,7 @@ func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore Cor
 }
 
 func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error {
-	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources); err != nil {
+	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, cfg.Datasources); err != nil {
 		return err
 	}
 
@@ -74,7 +73,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
-			dataSource, err := dc.store.AddDataSource(ctx, insertCmd)
+			dataSource, err = dc.store.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
 			}
@@ -94,14 +93,6 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 				return err
 			}
 
-			if len(ds.Correlations) > 0 {
-				if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
-					SourceUID: dataSource.UID,
-				}); err != nil {
-					return err
-				}
-			}
-
 			for _, correlation := range ds.Correlations {
 				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, updateCmd.OrgID); err == nil {
 					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
@@ -110,6 +101,13 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 					return err
 				}
 			}
+		}
+
+		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
+			SourceUID:       dataSource.UID,
+			OnlyProvisioned: true,
+		}); err != nil {
+			return err
 		}
 	}
 
@@ -140,11 +138,11 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
-		SourceUID:         SourceUID,
-		Label:             correlation["label"].(string),
-		Description:       correlation["description"].(string),
-		OrgId:             OrgId,
-		SkipReadOnlyCheck: true,
+		SourceUID:   SourceUID,
+		Label:       correlation["label"].(string),
+		Description: correlation["description"].(string),
+		OrgId:       OrgId,
+		Provisioned: true,
 	}
 
 	targetUID, ok := correlation["targetUID"].(string)
@@ -181,33 +179,29 @@ func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID 
 	return createCommand, nil
 }
 
-func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig) error {
+func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, dsToBeAdded []*upsertDataSourceFromConfig) error {
+
+	var uidsToBeAdded []string
+	for _, ds := range dsToBeAdded {
+		uidsToBeAdded = append(uidsToBeAdded, ds.UID)
+	}
+
 	for _, ds := range dsToDelete {
-		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name}
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
 		dataSource, err := dc.store.GetDataSource(ctx, getDsQuery)
+
 		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
 		}
 
+		var willBeAdded = false
+		if dataSource != nil {
+			willBeAdded = slices.Contains(uidsToBeAdded, dataSource.UID)
+		}
+		// Skip publishing the event as the data source is not really deleted, it will be re-created during provisioning
+		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: willBeAdded}
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
-		}
-
-		if dataSource != nil {
-			if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
-				SourceUID: dataSource.UID,
-			}); err != nil {
-				return err
-			}
-
-			if err := dc.correlationsStore.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{
-				TargetUID: dataSource.UID,
-			}); err != nil {
-				return err
-			}
-
-			dc.log.Info("deleted correlations based on configuration", "ds_name", ds.Name)
 		}
 
 		if cmd.DeletedDatasourcesCount > 0 {

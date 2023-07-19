@@ -130,9 +130,16 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("deleting a correlation originating from a read-only data source should result in a 403", func(t *testing.T) {
+	t.Run("deleting a read-only correlation should result in a 403", func(t *testing.T) {
+		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID:   writableDs,
+			TargetUID:   &writableDs,
+			OrgId:       writableDsOrgId,
+			Provisioned: true,
+		})
+
 		res := ctx.Delete(DeleteParams{
-			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", readOnlyDS, "nonexistent-correlation-uid"),
+			url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", correlation.SourceUID, correlation.UID),
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusForbidden, res.StatusCode)
@@ -144,8 +151,8 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Data source is read only", response.Message)
-		require.Equal(t, correlations.ErrSourceDataSourceReadOnly.Error(), response.Error)
+		require.Equal(t, "Correlation is read only", response.Message)
+		require.Equal(t, correlations.ErrCorrelationsReadOnly.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())
 	})

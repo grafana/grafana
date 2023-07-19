@@ -20,6 +20,7 @@ var (
 	twoDatasourcesConfig            = "testdata/two-datasources"
 	twoDatasourcesConfigPurgeOthers = "testdata/insert-two-delete-two"
 	deleteOneDatasource             = "testdata/delete-one"
+	recreateOneDatasource           = "testdata/recreate-one"
 	doubleDatasourcesConfig         = "testdata/double-default"
 	allProperties                   = "testdata/all-properties"
 	versionZero                     = "testdata/version-0"
@@ -248,7 +249,10 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 2, len(correlationsStore.created))
-			require.Equal(t, 0, len(correlationsStore.deletedBySourceUID))
+			// clean-up of provisioned correlations called once per inserted/updated data source
+			require.Equal(t, 1, len(store.inserted))
+			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, true, correlationsStore.deletedBySourceUID[0].OnlyProvisioned)
 			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
 		})
 
@@ -263,7 +267,10 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 2, len(correlationsStore.created))
+			// clean-up of provisioned correlations called once per inserted/updated data source
+			require.Equal(t, 1, len(store.updated))
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, true, correlationsStore.deletedBySourceUID[0].OnlyProvisioned)
 			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
 		})
 
@@ -279,8 +286,35 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 0, len(correlationsStore.created))
+			// publish event is not skipped to delete correlations in correlations.go
+			require.Equal(t, 1, len(store.deleted))
+			require.Equal(t, false, store.deleted[0].SkipPublish)
+			// no clean-up as nothing is inserted
+			require.Equal(t, 0, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
+		})
+
+		t.Run("Re-creating datasource does not delete existing correlations", func(t *testing.T) {
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Test", OrgID: 1, UID: "test"}}}
+			orgFake := &orgtest.FakeOrgService{}
+			targetUid := "target-uid"
+			correlationsStore := &mockCorrelationsStore{items: []correlations.Correlation{{UID: "some-uid", SourceUID: "some-uid", TargetUID: &targetUid}}}
+
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+			err := dc.applyChanges(context.Background(), recreateOneDatasource)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 0, len(correlationsStore.created))
+			require.Equal(t, 1, len(store.deleted))
+			// publish is skipped so correlations are not removed in correlations.go handler
+			require.Equal(t, true, store.deleted[0].SkipPublish)
+			// we expect the same data source is added later
+			require.Equal(t, 1, len(store.inserted))
+			require.Equal(t, store.deleted[0].Name, store.inserted[0].Name)
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
-			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
+			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
 		})
 	})
 }
@@ -376,9 +410,10 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	s.deleted = append(s.deleted, cmd)
-	for _, v := range s.items {
+	for i, v := range s.items {
 		if cmd.Name == v.Name && cmd.OrgID == v.OrgID {
 			cmd.DeletedDatasourcesCount = 1
+			s.items = append(s.items[:i], s.items[i+1:]...)
 			return nil
 		}
 	}

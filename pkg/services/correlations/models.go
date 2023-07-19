@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrSourceDataSourceReadOnly           = errors.New("source data source is read only")
+	ErrCorrelationsReadOnly               = errors.New("correlation is read only")
 	ErrSourceDataSourceDoesNotExists      = errors.New("source data source does not exist")
 	ErrTargetDataSourceDoesNotExists      = errors.New("target data source does not exist")
 	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
@@ -120,6 +120,8 @@ type Correlation struct {
 	Description string `json:"description" xorm:"description"`
 	// Correlation Configuration
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
+	// Provisioned True if the correlation was created during provisioning
+	Provisioned bool `json:"provisioned"`
 }
 
 type GetCorrelationsResponseBody struct {
@@ -141,9 +143,8 @@ type CreateCorrelationResponseBody struct {
 // swagger:model
 type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
-	SourceUID         string `json:"-"`
-	OrgId             int64  `json:"-"`
-	SkipReadOnlyCheck bool   `json:"-"`
+	SourceUID string `json:"-"`
+	OrgId     int64  `json:"-"`
 	// Target data source UID to which the correlation is created. required if config.type = query
 	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
@@ -155,6 +156,8 @@ type CreateCorrelationCommand struct {
 	Description string `json:"description"`
 	// Arbitrary configuration object handled in frontend
 	Config CorrelationConfig `json:"config" binding:"Required"`
+	// True if correlation was created with provisioning. This makes it read-only.
+	Provisioned bool `json:"provisioned"`
 }
 
 func (c CreateCorrelationCommand) Validate() error {
@@ -285,7 +288,8 @@ type GetCorrelationsQuery struct {
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {
-	SourceUID string
+	SourceUID       string
+	OnlyProvisioned bool
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {

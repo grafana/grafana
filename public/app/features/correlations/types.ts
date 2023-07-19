@@ -41,6 +41,7 @@ export interface Correlation {
   targetUID: string;
   label?: string;
   description?: string;
+  provisioned: boolean;
   config: CorrelationConfig;
 }
 

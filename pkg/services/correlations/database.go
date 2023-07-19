@@ -18,6 +18,7 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		Label:       cmd.Label,
 		Description: cmd.Description,
 		Config:      cmd.Config,
+		Provisioned: cmd.Provisioned,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
@@ -27,13 +28,9 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		_, err = s.DataSourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
-		}
-
-		if !cmd.SkipReadOnlyCheck && dataSource.ReadOnly {
-			return ErrSourceDataSourceReadOnly
 		}
 
 		if cmd.TargetUID != nil {
@@ -66,13 +63,23 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		_, err := s.DataSourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if dataSource.ReadOnly {
-			return ErrSourceDataSourceReadOnly
+		correlation, err := s.GetCorrelation(ctx, GetCorrelationQuery{
+			UID:       cmd.UID,
+			SourceUID: cmd.SourceUID,
+			OrgId:     cmd.OrgId,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		if correlation.Provisioned {
+			return ErrCorrelationsReadOnly
 		}
 
 		deletedCount, err := session.Delete(&Correlation{UID: cmd.UID, SourceUID: cmd.SourceUID})
@@ -94,13 +101,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		_, err := s.DataSourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
-		}
-
-		if dataSource.ReadOnly {
-			return ErrSourceDataSourceReadOnly
 		}
 
 		found, err := session.Get(&correlation)
@@ -109,6 +112,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		}
 		if err != nil {
 			return err
+		}
+		if correlation.Provisioned {
+			return ErrCorrelationsReadOnly
 		}
 
 		if cmd.Label != nil {
@@ -265,7 +271,14 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
+		var err error
+		if cmd.OnlyProvisioned {
+			// bool in a struct needs to be in Where
+			// https://github.com/go-xorm/xorm/blob/v0.7.9/engine_cond.go#L102
+			_, err = session.Where("provisioned = ?", true).Delete(&Correlation{SourceUID: cmd.SourceUID})
+		} else {
+			_, err = session.Delete(&Correlation{SourceUID: cmd.SourceUID})
+		}
 		return err
 	})
 }
