@@ -67,9 +67,10 @@ const FlameGraph = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [levels, totalTicks, callersCount] = useMemo(() => {
+  const [levels, totalTicks, totalTicksRight, callersCount] = useMemo(() => {
     let levels = data.getLevels();
     let totalTicks = levels.length ? levels[0][0].value : 0;
+    let totalTicksRight = levels.length ? levels[0][0].valueRight : undefined;
     let callersCount = 0;
 
     if (sandwichItem) {
@@ -78,7 +79,7 @@ const FlameGraph = ({
       totalTicks = callees.length ? callees[0][0].value : 0;
       callersCount = callers.length;
     }
-    return [levels, totalTicks, callersCount];
+    return [levels, totalTicks, totalTicksRight, callersCount];
   }, [data, sandwichItem]);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
@@ -98,6 +99,7 @@ const FlameGraph = ({
     search,
     textAlign,
     totalTicks,
+    totalTicksRight,
     colorScheme,
     focusedItemData
   );

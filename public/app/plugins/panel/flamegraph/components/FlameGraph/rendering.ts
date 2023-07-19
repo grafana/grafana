@@ -14,7 +14,7 @@ import {
 } from '../../constants';
 import { ClickedItemData, ColorScheme, TextAlign } from '../types';
 
-import { getBarColorByPackage, getBarColorByValue } from './colors';
+import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 const ufuzzy = new uFuzzy();
@@ -29,6 +29,7 @@ export function useFlameRender(
   search: string,
   textAlign: TextAlign,
   totalTicks: number,
+  totalTicksRight: number | undefined,
   colorScheme: ColorScheme,
   focusedItemData?: ClickedItemData
 ) {
@@ -71,6 +72,7 @@ export function useFlameRender(
           ctx,
           rect,
           totalTicks,
+          totalTicksRight,
           rangeMin,
           rangeMax,
           levelIndex,
@@ -94,6 +96,7 @@ export function useFlameRender(
     foundLabels,
     textAlign,
     totalTicks,
+    totalTicksRight,
     colorScheme,
     theme,
   ]);
@@ -129,6 +132,7 @@ type RectData = {
   y: number;
   collapsed: boolean;
   ticks: number;
+  ticksRight?: number;
   label: string;
   unitLabel: string;
   itemIndex: number;
@@ -176,6 +180,8 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
+      // When collapsed this does not make that much sense but then we don't really use it anyway.
+      ticksRight: item.valueRight,
       label: data.getLabel(item.itemIndexes[0]),
       unitLabel: unit,
       itemIndex: item.itemIndexes[0],
@@ -188,6 +194,7 @@ export function renderRect(
   ctx: CanvasRenderingContext2D,
   rect: RectData,
   totalTicks: number,
+  totalTicksRight: number | undefined,
   rangeMin: number,
   rangeMax: number,
   levelIndex: number,
@@ -204,8 +211,13 @@ export function renderRect(
   ctx.beginPath();
   ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
 
+  if (rect.ticksRight !== undefined) {
+  }
+
   const color =
-    colorScheme === ColorScheme.ValueBased
+    rect.ticksRight !== undefined
+      ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!)
+      : colorScheme === ColorScheme.ValueBased
       ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
       : getBarColorByPackage(rect.label, theme);
 

@@ -18,6 +18,7 @@ export type LevelItem = {
   // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
   // to trim the value to correspond only to the part used by the children in the subtree.
   value: number;
+  valueRight?: number;
   // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
   // node.
   itemIndexes: number[];
@@ -46,7 +47,10 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
       const lastSibling = levels[currentLevel][levels[currentLevel].length - 1];
-      offset = lastSibling.start + container.getValue(lastSibling.itemIndexes[0]) + container.getValueRight(lastSibling.itemIndexes[0]);
+      offset =
+        lastSibling.start +
+        container.getValue(lastSibling.itemIndexes[0]) +
+        container.getValueRight(lastSibling.itemIndexes[0]);
       // we assume there is always a single root node so lastSibling should always have a parent.
       // Also it has to have the same parent because of how the items are ordered.
       parent = lastSibling.parents![0];
@@ -55,6 +59,7 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
     const newItem: LevelItem = {
       itemIndexes: [i],
       value: container.getValue(i) + container.getValueRight(i),
+      valueRight: container.isDiffFlamegraph() ? container.getValueRight(i) : undefined,
       start: offset,
       parents: parent && [parent],
       children: [],
@@ -110,7 +115,9 @@ export class FlameGraphDataContainer {
     this.selfRightField = data.fields.find((f) => f.name === 'selfRight')!;
 
     if ((this.valueField || this.selfField) && !(this.valueField && this.selfField)) {
-      throw new Error('Malformed dataFrame: both valueRight and selfRight has to be present if one of them is present.');
+      throw new Error(
+        'Malformed dataFrame: both valueRight and selfRight has to be present if one of them is present.'
+      );
     }
 
     const enumConfig = this.labelField?.config?.type?.enum;
