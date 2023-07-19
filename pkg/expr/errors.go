@@ -1,6 +1,8 @@
 package expr
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -30,14 +32,24 @@ var QueryError = errutil.NewBase(
 	errutil.StatusBadRequest, "sse.dataQueryError").MustTemplate(
 	"failed to execute query [{{ .Public.refId }}]: {{ .Error }}",
 	errutil.WithPublic(
-		"failed to execute query [{{ .Public.refId }}]",
+		"failed to execute query [{{ .Public.refId }}]: {{ .Public.error }}",
 	))
 
 func MakeQueryError(refID, datasourceUID string, err error) error {
+	var pErr error
+	var utilErr errutil.Error
+	// See if this is grafana error, if so, grab public message
+	if errors.As(err, &utilErr) {
+		pErr = utilErr.Public()
+	} else {
+		pErr = err
+	}
+
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
 			"refId":         refID,
 			"datasourceUID": datasourceUID,
+			"error":         pErr.Error(),
 		},
 		Error: err,
 	}
