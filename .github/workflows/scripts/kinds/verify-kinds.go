@@ -85,12 +85,6 @@ func main() {
 	}
 
 	for _, pp := range corelist.New(nil) {
-		// ElasticSearch composable kind causes the CUE evaluator to hand
-		// see https://github.com/grafana/grafana/pull/68034#discussion_r1187800059
-		if pp.Properties.Id == "elasticsearch" {
-			continue
-		}
-
 		for _, kind := range pp.ComposableKinds {
 			if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
 				continue
