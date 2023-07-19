@@ -395,6 +395,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanSaveValue: true,
 				CanViewValue: true,
+				// CanEditValue is required to create library elements
 				CanEditValue: true,
 			})
 
@@ -468,6 +469,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanSaveValue: true,
 				CanViewValue: true,
+				// CanEditValue is required to create library elements
 				CanEditValue: true,
 			})
 
@@ -595,6 +597,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 					CanSaveValue: true,
 					CanViewValue: true,
+					// CanEditValue is required to create library elements
 					CanEditValue: true,
 				})
 
