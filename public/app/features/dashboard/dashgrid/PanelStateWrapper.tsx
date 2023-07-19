@@ -22,6 +22,7 @@ import {
   TimeRange,
   toDataFrameDTO,
   toUtc,
+  EventFilter,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
@@ -87,7 +88,7 @@ export interface State {
 export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
-  private eventFilter: EventFilterOptions = { onlyLocal: false, allowLocal: false };
+  private eventFilter: EventFilterOptions = { filter: EventFilter.NoLocal };
 
   constructor(props: Props) {
     super(props);
@@ -553,10 +554,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       'panel-content--no-padding': plugin.noPadding,
     });
     const panelOptions = panel.getOptions();
-
-    // Update the event filter (dashboard settings may have changed)
-    // Yes this is called ever render for a function that is triggered on every mouse move
-    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
     const timeZone = this.props.timezone || this.props.dashboard.getTimezone();
 

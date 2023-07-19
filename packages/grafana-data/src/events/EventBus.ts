@@ -12,6 +12,7 @@ import {
   AppEvent,
   EventFilterOptions,
   EventBusWithFiltering,
+  EventFilter,
 } from './types';
 
 /**
@@ -108,7 +109,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 export class ScopedEventBus implements EventBusWithFiltering {
   constructor(
     private eventBus: EventBus,
-    private _filterConfig: EventFilterOptions = { onlyLocal: false, allowLocal: false }
+    private _filterConfig: EventFilterOptions = { filter: EventFilter.NoLocal }
   ) {}
 
   publish<T extends BusEvent>(event: T): void {
@@ -120,15 +121,17 @@ export class ScopedEventBus implements EventBusWithFiltering {
   }
 
   filter = (event: BusEvent) => {
-    if (this._filterConfig.onlyLocal && (event as any).origin === this) {
+    if (this._filterConfig.filter === EventFilter.All) {
       return true;
     }
-
-    if (this._filterConfig.allowLocal && (event as any).origin === this) {
-      return true;
+    if (this._filterConfig.filter === EventFilter.OnlyLocal) {
+      return (event as any).origin === this;
     }
 
-    return (event as any).origin !== this;
+    if (this._filterConfig.filter === EventFilter.NoLocal) {
+      return (event as any).origin !== this;
+    }
+    return true;
   };
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {

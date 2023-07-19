@@ -54,13 +54,17 @@ export interface BusEventHandler<T extends BusEvent> {
   (event: T): void;
 }
 
+export enum EventFilter {
+  All = 'all',
+  NoLocal = 'noLocal',
+  OnlyLocal = 'onlyLocal',
+}
 /**
  * @alpha
  * Main minimal interface
  */
 export interface EventFilterOptions {
-  onlyLocal: boolean;
-  allowLocal: boolean;
+  filter: EventFilter;
 }
 
 /**

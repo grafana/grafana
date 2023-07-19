@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import {
   DataHoverClearEvent,
   DataHoverEvent,
+  EventFilter,
   FALLBACK_COLOR,
   FieldDisplay,
   formattedValueToString,
@@ -43,7 +44,7 @@ export function PieChartPanel(props: Props) {
   const { eventBus } = usePanelContext();
 
   // Enable subscribing to own events, for i.e. legend highlighting support
-  eventBus.setFilterConfig({ allowLocal: true });
+  eventBus.setFilterConfig({ filter: EventFilter.All });
 
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();
