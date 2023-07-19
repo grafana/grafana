@@ -5,8 +5,13 @@ keywords:
   - troubleshooting
   - support
   - dashboards
-title: Send a panel to Grafana Labs support
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menutitle: Send panel to support
+title: Send a panel to Grafana Labs support
 weight: 100
 ---
 

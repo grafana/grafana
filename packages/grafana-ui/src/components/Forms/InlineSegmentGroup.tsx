@@ -25,14 +25,14 @@ InlineSegmentGroup.displayName = 'InlineSegmentGroup';
 
 const getStyles = (theme: GrafanaTheme2, grow?: boolean) => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      text-align: left;
-      position: relative;
-      flex: ${grow ? 1 : 0} 0 auto;
-      margin-bottom: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      position: 'relative',
+      flex: `${grow ? 1 : 0} 0 auto`,
+      marginBottom: theme.spacing(0.5),
+    }),
   };
 };

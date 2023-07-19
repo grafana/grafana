@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - preferences
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'HTTP Preferences API '
 ---
 

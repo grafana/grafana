@@ -2,6 +2,9 @@
 aliases:
   - ../enterprise/
 description: Grafana Enterprise overview
+labels:
+  products:
+    - enterprise
 title: Grafana Enterprise
 weight: 200
 ---
@@ -33,7 +36,7 @@ Supported auth providers:
 - [GitHub OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/github#configure-team-synchronization" >}})
 - [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab#team-sync-enterprise-only" >}})
 - [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization-for-teams" >}})
-- [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta#team-sync-enterprise-only" >}})
+- [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta#configure-team-synchronization-enterprise-only" >}})
 - [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml#configure-team-sync" >}})
 
 ### Enhanced LDAP integration
