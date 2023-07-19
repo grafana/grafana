@@ -61,9 +61,9 @@ To navigate Loki and build a query:
 
    The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
 
-1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button.
+1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button. Click **Clear** to start from the beginning.
 
-{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+{{< figure src="/static/img/docs/explore/Loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 
 - **Explain query** - Toggle to display a step-by-step explanation of all query components and operations.
 
@@ -82,6 +82,15 @@ When you select a label, Grafana retrieves available values from the server.
 
 Use the `+` button to add a label and the `x` button to remove a label. You can add multiple labels.
 
+Select comparison operators from the following options:
+
+- `=` - equal to
+- `!=` - is not equal
+- `=~` - matches regex
+- `!~` - does not match regex
+
+Select values by using the dropdown, which displays all possible values based on the label selected.
+
 ### Operations
 
 Select the `+ Operations` button to add operations to your query.
@@ -96,12 +105,20 @@ Each operation's header displays its name, and additional action buttons appear 
 | {{< figure src="/static/img/docs/v95/loki_operation_description.png" class="docs-image--no-shadow" max-width="30px" >}} | Opens the operation's description tooltip.                        |
 | {{< figure src="/static/img/docs/v95/loki_operation_remove.png" class="docs-image--no-shadow" max-width="30px" >}}      | Removes the operation.                                            |
 
-Some operations have additional parameters under the operation header.
-For details about each operation, use the `info` button to view the operation's description, or refer to the [Loki documentation](/docs/loki/latest/operations/).
+The query editor groups operations into the following sections:
 
-Some operations make sense only when used in a specific order.
-If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
-To re-order operations manually, drag the operation box by its name and drop it into the desired place.
+- Aggregations
+- Range functions
+- Formats
+- Binary operations
+- Label filters
+- Line filters
+
+<!-- Some operations have additional parameters under the operation header.
+For details about each operation, use the `info` button to view the operation's description, or refer to [Loki documentation]((/docs/loki/latest/operations/). -->
+
+Some operations make sense only when used in a specific order.b If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
+To re-order operations manually, drag the operation box by its name and drop it into the desired place. For additional information see [Order of operations](/docs/loki/latest/logql/#order-of-operations).
 
 ### Hints
 

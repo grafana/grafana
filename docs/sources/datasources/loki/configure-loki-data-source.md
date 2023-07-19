@@ -44,7 +44,7 @@ The first option to configure is the name of your connection:
 
 ### HTTP section
 
-- **URL** - The URL of your Loki server. Loki uses port 3100. If your Loki server is local, use `http://localhost:3100`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `http://loki.example.orgname:3100`.
+- **URL** - The URL of your Loki server. Loki uses port 3100. If your Loki server is local, use `http://localhost:3100`. If it is on a server within a network, this is the URL with port where you are running Loki. Example: `http://loki.example.orgname:3100`.
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
@@ -55,7 +55,7 @@ The first option to configure is the name of your connection:
 There are several authentication methods you can choose in the Authentication section.
 
 {{% admonition type="note" %}}
-Use TLS (Transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](https://grafana.com/docs/loki/latest/configuration/).
+Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](https://grafana.com/docs/loki/latest/configuration/).
 {{% /admonition %}}
 
 - **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.
