@@ -2,6 +2,7 @@ package eval
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -43,20 +44,20 @@ func extractEvalString(frame *data.Frame) (s string) {
 	}
 
 	if captures, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
+		// Sort captures in ascending order of "Var" so we can assert in tests
+		sort.Slice(captures, func(i, j int) bool {
+			return captures[i].Var < captures[j].Var
+		})
 		sb := strings.Builder{}
-
 		for i, capture := range captures {
 			sb.WriteString("[ ")
 			sb.WriteString(fmt.Sprintf("var='%s' ", capture.Var))
 			sb.WriteString(fmt.Sprintf("labels={%s} ", capture.Labels))
-
 			valString := "null"
 			if capture.Value != nil {
 				valString = fmt.Sprintf("%v", *capture.Value)
 			}
-
 			sb.WriteString(fmt.Sprintf("value=%v ", valString))
-
 			sb.WriteString("]")
 			if i < len(captures)-1 {
 				sb.WriteString(", ")
@@ -64,7 +65,6 @@ func extractEvalString(frame *data.Frame) (s string) {
 		}
 		return sb.String()
 	}
-
 	return ""
 }
 
