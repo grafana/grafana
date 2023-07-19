@@ -62,13 +62,23 @@ export const Example: StoryFn = (args) => {
         <Text {...args} element="h1">
           This is a header
         </Text>
-        <Text {...args} element="h3">
+        <Text {...args} element="p">
           This is a paragraph that contains
           <Text color="success" italic>
             {' '}
             a span element with different color and style{' '}
           </Text>
           but is comprised within the same block text
+        </Text>
+      </StoryExample>
+      <StoryExample name="Paragraph with truncate set to true and wrapping up a span element">
+        <Text {...args} element="p" truncate>
+          This is a paragraph that contains
+          <Text color="warning" italic>
+            {' '}
+            a span element{' '}
+          </Text>
+          but has truncate set to true
         </Text>
       </StoryExample>
     </VerticalGroup>
