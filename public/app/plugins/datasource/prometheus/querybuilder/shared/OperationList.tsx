@@ -192,6 +192,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexWrap: 'wrap',
       gap: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
     }),
     addButton: css({
       label: 'addButton',

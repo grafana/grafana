@@ -133,51 +133,37 @@ export function OperationEditor({
     }
   }
 
-  const isInvalid = (isDragging: boolean) => {
-    if (isDragging) {
-      return undefined;
-    }
-
-    return isConflicting ? true : undefined;
-  };
-
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
-      {(provided, snapshot) => (
-        <InlineField
-          error={'You have conflicting label filters'}
-          invalid={isInvalid(snapshot.isDragging)}
-          className={cx(styles.error, styles.cardWrapper)}
+      {(provided) => (
+        <div
+          className={cx(
+            styles.card,
+            (shouldFlash || highlight) && styles.cardHighlight,
+            isConflicting && styles.cardError
+          )}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          data-testid={`operations.${index}.wrapper`}
         >
-          <div
-            className={cx(
-              styles.card,
-              (shouldFlash || highlight) && styles.cardHighlight,
-              isConflicting && styles.cardError
-            )}
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            data-testid={`operations.${index}.wrapper`}
-          >
-            <OperationHeader
-              operation={operation}
-              dragHandleProps={provided.dragHandleProps}
-              def={def}
-              index={index}
-              onChange={onChange}
-              onRemove={onRemove}
-              queryModeller={queryModeller}
-            />
-            <div className={styles.body}>{operationElements}</div>
-            {restParam}
-            {index < query.operations.length - 1 && (
-              <div className={styles.arrow}>
-                <div className={styles.arrowLine} />
-                <div className={styles.arrowArrow} />
-              </div>
-            )}
-          </div>
-        </InlineField>
+          <OperationHeader
+            operation={operation}
+            dragHandleProps={provided.dragHandleProps}
+            def={def}
+            index={index}
+            onChange={onChange}
+            onRemove={onRemove}
+            queryModeller={queryModeller}
+          />
+          <div className={styles.body}>{operationElements}</div>
+          {restParam}
+          {index < query.operations.length - 1 && (
+            <div className={styles.arrow}>
+              <div className={styles.arrowLine} />
+              <div className={styles.arrowArrow} />
+            </div>
+          )}
+        </div>
       )}
     </Draggable>
   );
