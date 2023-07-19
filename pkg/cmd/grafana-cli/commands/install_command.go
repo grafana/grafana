@@ -40,7 +40,7 @@ func validateInput(c utils.CommandLine) error {
 		version := args.Get(1)
 		_, err := semver.NewVersion(version)
 		if err != nil {
-			return fmt.Errorf("the provided version (%s) is invalid", version)
+			logger.Errorf(color.RedString("the provided version (%s) is invalid\n\n"), version)
 		}
 	}
 
