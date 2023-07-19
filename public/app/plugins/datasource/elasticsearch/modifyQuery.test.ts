@@ -66,8 +66,20 @@ describe('removeFilterFromQuery', () => {
     expect(removeFilterFromQuery('label:"value" AND label2:"value2"', 'label', 'value')).toBe('label2:"value2"');
     expect(removeFilterFromQuery('label:value AND label2:"value2"', 'label', 'value')).toBe('label2:"value2"');
     expect(removeFilterFromQuery('label : "value" OR label2:"value2"', 'label', 'value')).toBe('label2:"value2"');
-    expect(removeFilterFromQuery('test="test" OR label:"value" AND label2:"value2"', 'label', 'value')).toBe(
-      'test="test" AND label2:"value2"'
+    expect(removeFilterFromQuery('test:"test" OR label:"value" AND label2:"value2"', 'label', 'value')).toBe(
+      'test:"test" OR label2:"value2"'
+    );
+    expect(removeFilterFromQuery('test:"test" OR (label:"value" AND label2:"value2")', 'label', 'value')).toBe(
+      'test:"test" OR label2:"value2"'
+    );
+    expect(removeFilterFromQuery('(test:"test" OR label:"value") AND label2:"value2"', 'label', 'value')).toBe(
+      '(test:"test") AND label2:"value2"'
+    );
+    expect(removeFilterFromQuery('(test:"test" OR label:"value") AND label2:"value2"', 'test', 'test')).toBe(
+      'label:"value" AND label2:"value2"'
+    );
+    expect(removeFilterFromQuery('test:"test" OR (label:"value" AND label2:"value2")', 'label2', 'value2')).toBe(
+      'test:"test" OR (label:"value")'
     );
   });
   it('should not remove the wrong filter', () => {

@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import lucene, { AST, BinaryAST, LeftOnlyAST, NodeTerm } from 'lucene';
 
 type ModifierType = '' | '-';
@@ -19,13 +20,7 @@ export function findFilterNode(
   modifier: ModifierType = ''
 ): NodeTerm | null {
   const field = `${modifier}${lucene.term.escape(key)}`;
-  let ast: AST | null = null;
-  try {
-    ast = lucene.parse(normalizeQuery(query));
-  } catch (e) {
-    return null;
-  }
-
+  let ast: AST | null = parseQuery(query);
   if (!ast) {
     return null;
   }
@@ -33,8 +28,7 @@ export function findFilterNode(
   return findNodeInTree(ast, field, value);
 }
 
-function findNodeInTree(tree: AST, field: string, value: string): NodeTerm | null {
-  let ast: AST | null = tree;
+function findNodeInTree(ast: AST, field: string, value: string): NodeTerm | null {
   // {}
   if (Object.keys(ast).length === 0) {
     return null;
@@ -77,16 +71,51 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
  */
 export function removeFilterFromQuery(query: string, key: string, value: string, modifier: ModifierType = ''): string {
   const node = findFilterNode(query, key, value, modifier);
-  if (!node) {
+  const ast = parseQuery(query);
+  if (!node || !ast) {
     return query;
   }
-  query = normalizeQuery(query);
-  query = query.substring(0, node.fieldLocation?.start.offset) + query.substring(node.termLocation?.end.offset);
-  query = query.replace(/AND\s+OR/gi, 'OR');
-  query = query.replace(/OR\s+AND/gi, 'AND');
-  query = query.replace(/^\s*(AND|OR)|(AND|OR)\s*$/gi, '').trim();
 
-  return query;
+  return lucene.toString(removeNodeFromTree(ast, node));
+}
+
+function removeNodeFromTree(ast: AST, node: NodeTerm): AST {
+  // {}
+  if (Object.keys(ast).length === 0) {
+    return ast;
+  }
+  // { left: {}, right: {} } or { left: {} }
+  if (isAST(ast.left)) {
+    ast.left = removeNodeFromTree(ast.left, node);
+    return ast;
+  }
+  if (isNodeTerm(ast.left) && isEqual(ast.left, node)) {
+    Object.assign(
+      ast,
+      {
+        left: undefined,
+        operator: undefined,
+        right: undefined,
+      },
+      'right' in ast ? ast.right : {}
+    );
+    return ast;
+  }
+  if (isLeftOnlyAST(ast)) {
+    return ast;
+  }
+  if (isNodeTerm(ast.right) && isEqual(ast.right, node)) {
+    Object.assign(ast, {
+      right: undefined,
+      operator: undefined,
+    });
+    return ast;
+  }
+  if (isBinaryAST(ast.right)) {
+    ast.right = removeNodeFromTree(ast.right, node);
+    return ast;
+  }
+  return ast;
 }
 
 /**
@@ -136,4 +165,12 @@ function isNodeTerm(ast: unknown): ast is NodeTerm {
     return true;
   }
   return false;
+}
+
+function parseQuery(query: string) {
+  try {
+    return lucene.parse(normalizeQuery(query));
+  } catch (e) {
+    return null;
+  }
 }
