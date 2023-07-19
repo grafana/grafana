@@ -13,6 +13,8 @@ const (
 	HTTPServer string = "http-server"
 	// Provisioning sets up Grafana with preconfigured datasources, dashboards, etc.
 	Provisioning string = "provisioning"
+	// SecretMigrator handles all database migrations for Grafana
+	SecretMigrator string = "secret-migrator"
 )
 
 // dependencyMap defines Module Targets => Dependencies
@@ -22,5 +24,5 @@ var dependencyMap = map[string][]string{
 	CertGenerator:    {},
 	GrafanaAPIServer: {CertGenerator},
 
-	All: {Provisioning, HTTPServer, BackgroundServices},
+	All: {Provisioning, SecretMigrator, HTTPServer, BackgroundServices},
 }
