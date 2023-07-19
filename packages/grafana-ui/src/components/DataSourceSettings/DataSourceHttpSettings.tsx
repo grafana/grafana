@@ -128,9 +128,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     dataSourceConfig.url
   );
 
-  const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
-  `;
+  const notValidStyle = css({
+    boxShadow: `inset 0 0px 5px ${theme.v1.palette.red}`,
+  });
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 
@@ -147,6 +147,12 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
+
+  // Azure Authentication doesn't work correctly when Forward OAuth Identity is enabled.
+  // The Authorization header that has been set by the ApplyAzureAuth middleware gets overwritten
+  // with the Authorization header set by the OAuthTokenMiddleware.
+  dataSourceConfig.jsonData.oauthPassThru = azureAuthEnabled ? false : dataSourceConfig.jsonData.oauthPassThru;
+  const shouldShowForwardOAuthIdentityOption = azureAuthEnabled ? false : showForwardOAuthIdentityOption;
 
   return (
     <div className="gf-form-group">
@@ -295,7 +301,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
               onChange={(jsonData) => onSettingsChange({ jsonData })}
-              showForwardOAuthIdentityOption={showForwardOAuthIdentityOption}
+              showForwardOAuthIdentityOption={shouldShowForwardOAuthIdentityOption}
             />
           )}
         </div>

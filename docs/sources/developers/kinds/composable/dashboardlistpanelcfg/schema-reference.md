@@ -1,26 +1,30 @@
 ---
 keywords:
-  - grafana
-  - schema
+- grafana
+- schema
+labels:
+  products:
+  - enterprise
+  - oss
 title: DashboardListPanelCfg kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## DashboardListPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property  | Type               | Required | Default | Description |
-|-----------|--------------------|----------|---------|-------------|
+| --------- | ------------------ | -------- | ------- | ----------- |
 | `Options` | [object](#options) | **Yes**  |         |             |
 
 ### Options
 
 | Property             | Type     | Required | Default | Description |
-|----------------------|----------|----------|---------|-------------|
+| -------------------- | -------- | -------- | ------- | ----------- |
 | `includeVars`        | boolean  | **Yes**  | `false` |             |
 | `keepTime`           | boolean  | **Yes**  | `false` |             |
 | `maxItems`           | integer  | **Yes**  | `10`    |             |
@@ -31,5 +35,3 @@ title: DashboardListPanelCfg kind
 | `showStarred`        | boolean  | **Yes**  | `true`  |             |
 | `tags`               | string[] | **Yes**  |         |             |
 | `folderId`           | integer  | No       |         |             |
-
-

@@ -28,7 +28,6 @@ def publish_ci_windows_test_image_pipeline():
     pl = pipeline(
         name = "publish-ci-windows-test-image",
         trigger = trigger,
-        edition = "",
         platform = "windows",
         steps = [
             {
@@ -79,7 +78,6 @@ def publish_ci_build_container_image_pipeline():
     pl = pipeline(
         name = "publish-ci-build-container-image",
         trigger = trigger,
-        edition = "",
         steps = [
             {
                 "name": "validate-version",

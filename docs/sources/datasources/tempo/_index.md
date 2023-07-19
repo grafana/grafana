@@ -8,6 +8,11 @@ keywords:
   - tempo
   - guide
   - tracing
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Tempo
 title: Tempo data source
 weight: 1400
@@ -223,7 +228,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
       serviceMap:
         datasourceUid: 'prometheus'
       nodeGraph:

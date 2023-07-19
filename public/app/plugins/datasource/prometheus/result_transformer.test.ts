@@ -1,4 +1,5 @@
 import {
+  cacheFieldDisplayNames,
   createDataFrame,
   DataFrame,
   DataQueryRequest,
@@ -7,7 +8,7 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 
-import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
+import { parseSampleValue, sortSeriesByLabel, transform, transformDFToTable, transformV2 } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -80,6 +81,54 @@ describe('Prometheus Result Transformer', () => {
 
     it('-infinity', () => {
       expect(parseSampleValue('-infinity')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+  });
+
+  describe('sortSeriesByLabel() should use frame.fields[1].state?.displayName when available', () => {
+    let frames = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [4, 5, 6],
+            config: {
+              displayNameFromDS: '2',
+            },
+            labels: {
+              offset_days: '2',
+            },
+          },
+        ],
+      }),
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [7, 8, 9],
+            config: {
+              displayNameFromDS: '1',
+            },
+            labels: {
+              offset_days: '1',
+            },
+          },
+        ],
+      }),
+    ];
+
+    it('sorts by displayNameFromDS', () => {
+      cacheFieldDisplayNames(frames);
+
+      let sorted = frames.slice().sort(sortSeriesByLabel);
+
+      expect(sorted[0]).toEqual(frames[1]);
+      expect(sorted[1]).toEqual(frames[0]);
     });
   });
 

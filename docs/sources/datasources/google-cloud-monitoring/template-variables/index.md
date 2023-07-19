@@ -11,6 +11,11 @@ keywords:
   - queries
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Google Cloud Monitoring template variables
 weight: 300

@@ -186,10 +186,6 @@ function getCollapsedInfo(
     items.push(`Legend: ${query.legendFormat}`);
   }
 
-  if (query.resolution) {
-    items.push(`Resolution: ${resolutionLabel?.label}`);
-  }
-
   items.push(`Type: ${queryTypeLabel?.label}`);
 
   if (isLogQuery) {

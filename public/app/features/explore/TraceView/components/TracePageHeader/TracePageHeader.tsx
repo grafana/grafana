@@ -91,11 +91,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         color: unset;
       }
     `,
-    TracePageHeaderArchiveIcon: css`
-      label: TracePageHeaderArchiveIcon;
-      font-size: 1.78em;
-      margin-right: 0.15em;
-    `,
     TracePageHeaderTraceId: css`
       label: TracePageHeaderTraceId;
       white-space: nowrap;
