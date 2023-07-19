@@ -201,6 +201,9 @@ describe('DateMath', () => {
     it('should return false if no text is passed', () => {
       expect(dateMath.isMathString('')).toBe(false);
     });
+    it('should return false if nothing is passed ', () => {
+      expect(dateMath.isMathString(' ')).toBe(false);
+    });
   });
 
   describe('Round to fiscal start/end', () => {

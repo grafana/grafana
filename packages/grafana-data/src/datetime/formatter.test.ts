@@ -66,52 +66,32 @@ describe('dateTimeFormat', () => {
     });
   });
 
-  describe('when Africa/Djibouti time zone have been set', () => {
-    const options = { timeZone: 'Africa/Djibouti' };
-
-    it('should format with default formatting in correct time zone', () => {
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 15:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'Europe/London' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 13:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'Europe/Berlin' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 14:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'Europe/Moscow' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 15:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'Europe/Madrid' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 14:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'America/New_York' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 08:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'America/Chicago' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 07:36:15');
-    });
-    it('should format with default formatting in correct time zone', () => {
-      const options = { timeZone: 'America/Denver' };
-      expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17 06:36:15');
+  const cases = [
+    [1587126975779, { timeZone: 'Africa/Djibouti' }, '2020-04-17 15:36:15'],
+    [1587126975779, { timeZone: 'Europe/London' }, '2020-04-17 13:36:15'],
+    [1587126975779, { timeZone: 'Europe/Berlin' }, '2020-04-17 14:36:15'],
+    [1587126975779, { timeZone: 'Europe/Moscow' }, '2020-04-17 15:36:15'],
+    [1587126975779, { timeZone: 'Europe/Madrid' }, '2020-04-17 14:36:15'],
+    [1587126975779, { timeZone: 'America/New_York' }, '2020-04-17 08:36:15'],
+    [1587126975779, { timeZone: 'America/Chicago' }, '2020-04-17 07:36:15'],
+    [1587126975779, { timeZone: 'America/Denver' }, '2020-04-17 06:36:15'],
+  ];
+  describe('when time zone have been set', () => {
+    it.each(cases)('should format with default formatting in correct time zone', (dateInUtc, options, expected) => {
+      expect(dateTimeFormat(dateInUtc, options)).toBe(expected);
     });
   });
 
   describe('DateTimeFormatISO', () => {
-    it('should format with correct ISO formatting', () => {
+    it('should format according to ISO standard', () => {
       const options = { timeZone: 'Europe/Stockholm', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' };
       expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17T14:36:15.779+02:00');
     });
-    it('should format with correct ISO formatting', () => {
+    it('should format according to ISO standard', () => {
       const options = { timeZone: 'America/New_York', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' };
       expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17T08:36:15.779-04:00');
     });
-    it('should format with correct ISO formatting', () => {
+    it('should format according to ISO standard', () => {
       const options = { timeZone: 'Europe/Madrid', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' };
       expect(dateTimeFormat(1587126975779, options)).toBe('2020-04-17T14:36:15.779+02:00');
     });
