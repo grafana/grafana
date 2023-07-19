@@ -1,7 +1,7 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
-import { LokiQuery, QueryStats } from '../types';
+import { LokiQuery, LokiQueryType, QueryStats } from '../types';
 
 export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | null> {
   if (!query) {
@@ -37,9 +37,11 @@ export function shouldUpdateStats(
   query: string,
   prevQuery: string | undefined,
   timerange: TimeRange,
-  prevTimerange: TimeRange | undefined
+  prevTimerange: TimeRange | undefined,
+  queryType: LokiQueryType | undefined,
+  prevQueryType: LokiQueryType | undefined
 ): boolean {
-  if (prevQuery === undefined || query.trim() !== prevQuery.trim()) {
+  if (prevQuery === undefined || query.trim() !== prevQuery.trim() || queryType !== prevQueryType) {
     return true;
   }
 

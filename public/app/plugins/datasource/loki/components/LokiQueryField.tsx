@@ -12,7 +12,6 @@ export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, Lo
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
-  onQueryType?: (query: LokiQuery) => void;
 }
 
 interface LokiQueryFieldState {
@@ -54,14 +53,10 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
   onChangeQuery = (value: string, override?: boolean) => {
     // Send text change to parent
-    const { query, onChange, onRunQuery, onQueryType } = this.props;
+    const { query, onChange, onRunQuery } = this.props;
     if (onChange) {
       const nextQuery = { ...query, expr: value };
       onChange(nextQuery);
-
-      if (onQueryType) {
-        onQueryType(nextQuery);
-      }
 
       if (override && onRunQuery) {
         onRunQuery();
