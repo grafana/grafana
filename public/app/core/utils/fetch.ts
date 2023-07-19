@@ -1,4 +1,3 @@
-import { Blob } from 'buffer';
 import { omitBy } from 'lodash';
 
 import { deprecationWarning } from '@grafana/data';
@@ -90,7 +89,7 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
   if (!options.data || typeof options.data === 'string') {
     return options.data;
   }
-  if (options.data.constructor.name === 'Blob') {
+  if (options.data instanceof Blob) {
     return options.data;
   }
 
