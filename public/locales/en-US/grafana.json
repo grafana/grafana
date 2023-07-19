@@ -62,6 +62,7 @@
       "move": "Move"
     },
     "folder-picker": {
+      "button-label": "Select folder",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
       "search-placeholder": "Search folders",
