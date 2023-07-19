@@ -1,9 +1,4 @@
 ---
-labels:
-  products:
-    - cloud
-    - enterprise
-    - oss
 title: Legend mode and legend placement
 ---
 
