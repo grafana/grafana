@@ -121,7 +121,7 @@ export function transformV2(
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
   heatmapResults.forEach((df) => {
     if (df.name == null) {
-      let f = df.fields[1];
+      let f = df.fields.find((f) => f.type === FieldType.number);
 
       if (f) {
         let le = f.labels?.le;
