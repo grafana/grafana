@@ -40,7 +40,7 @@ export function fetchNextChildrenPageFulfilled(
   }
 
   const { children, page, kind, lastPageOfKind } = payload;
-  const { parentUID, loadDashboards } = action.meta.arg;
+  const { parentUID, excludeKinds = [] } = action.meta.arg;
 
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
@@ -50,7 +50,7 @@ export function fetchNextChildrenPageFulfilled(
     lastFetchedKind: kind,
     lastFetchedPage: page,
     lastKindHasMoreItems: !lastPageOfKind,
-    isFullyLoaded: loadDashboards ? kind === 'dashboard' && lastPageOfKind : lastPageOfKind,
+    isFullyLoaded: !excludeKinds.includes('dashboard') ? kind === 'dashboard' && lastPageOfKind : lastPageOfKind,
   };
 
   if (!parentUID) {

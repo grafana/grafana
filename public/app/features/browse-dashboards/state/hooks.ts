@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
@@ -110,9 +110,6 @@ export function useLoadNextChildrenPage(
   const dispatch = useDispatch();
   const requestInFlightRef = useRef(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const memoizedExcludeKinds = useMemo(() => excludeKinds, excludeKinds);
-
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
       if (requestInFlightRef.current) {
@@ -121,14 +118,12 @@ export function useLoadNextChildrenPage(
 
       requestInFlightRef.current = true;
 
-      const promise = dispatch(
-        fetchNextChildrenPage({ parentUID: folderUID, excludeKinds: memoizedExcludeKinds, pageSize: PAGE_SIZE })
-      );
+      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, excludeKinds, pageSize: PAGE_SIZE }));
       promise.finally(() => (requestInFlightRef.current = false));
 
       return promise;
     },
-    [dispatch, memoizedExcludeKinds]
+    [dispatch, excludeKinds]
   );
 
   return handleLoadMore;
