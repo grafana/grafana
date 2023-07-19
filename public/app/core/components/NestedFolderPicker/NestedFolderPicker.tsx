@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import React, { useCallback, useId, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
@@ -17,6 +17,7 @@ import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
+import { useTreeInteractions } from './hooks';
 import { FolderChange, FolderUID } from './types';
 
 async function fetchRootFolders() {
@@ -35,7 +36,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const [search, setSearch] = useState('');
   const [autoFocusButton, setAutoFocusButton] = useState(false);
-  const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
@@ -127,7 +127,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       // ensure state is clean on opening the overlay
       if (value) {
         setSearch('');
-        setFocusedItemIndex(-1);
         setAutoFocusButton(true);
       }
       setOverlayOpen(value);
@@ -161,60 +160,15 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const tree = flatTree;
 
-  const handleKeyDown = useCallback(
-    (ev: React.KeyboardEvent<HTMLInputElement>) => {
-      const foldersAreOpenable = !(search && searchState.value);
-      switch (ev.key) {
-        // Expand/collapse folder on right/left arrow keys
-        case 'ArrowRight':
-        case 'ArrowLeft':
-          if (foldersAreOpenable) {
-            ev.preventDefault();
-            handleFolderExpand(tree[focusedItemIndex].item.uid, ev.key === 'ArrowRight');
-          }
-          break;
-        case 'ArrowUp':
-          if (focusedItemIndex > 0) {
-            ev.preventDefault();
-            setFocusedItemIndex(focusedItemIndex - 1);
-          }
-          break;
-        case 'ArrowDown':
-          if (focusedItemIndex < tree.length - 1) {
-            ev.preventDefault();
-            setFocusedItemIndex(focusedItemIndex + 1);
-          }
-          break;
-        case 'Enter':
-          ev.preventDefault();
-          const item = tree[focusedItemIndex].item;
-          if (item.kind === 'folder') {
-            handleFolderSelect(item);
-          }
-          break;
-        case 'Tab':
-          ev.stopPropagation();
-          setOverlayOpen(false);
-          break;
-        case 'Escape':
-          ev.stopPropagation();
-          ev.preventDefault();
-          setOverlayOpen(false);
-          break;
-      }
-    },
-    [focusedItemIndex, handleFolderExpand, handleFolderSelect, search, searchState.value, tree]
-  );
-
-  useEffect(() => {
-    setFocusedItemIndex(0);
-  }, [search, searchState.value]);
-
-  useEffect(() => {
-    document
-      .getElementById(getDOMId(overlayId, tree[focusedItemIndex]?.item.uid))
-      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [focusedItemIndex, overlayId, tree]);
+  const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
+    tree,
+    handleCloseOverlay: () => setOverlayOpen(false),
+    handleFolderSelect,
+    handleFolderExpand,
+    idPrefix: overlayId,
+    search,
+    visible,
+  });
 
   let label = selectedFolder.data?.title;
   if (value === '') {
