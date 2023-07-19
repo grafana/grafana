@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
-import { uniqueId, upperFirst } from 'lodash';
+import { groupBy, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { ReactNode, useState } from 'react';
 
@@ -24,6 +24,7 @@ import { Span } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
+import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { useAlertmanager } from '../../state/AlertmanagerContext';
@@ -179,6 +180,9 @@ export const ContactPoint = ({
 }: ContactPointProps) => {
   const styles = useStyles2(getStyles);
 
+  // TODO probably not the best way to figure out if we want to show either only the summary or full metadata for the receivers?
+  const showFullMetadata = receivers.some((receiver) => Boolean(receiver[RECEIVER_STATUS_KEY]));
+
   return (
     <div className={styles.contactPointWrapper} data-testid="contact-point">
       <Stack direction="column" gap={0}>
@@ -189,22 +193,28 @@ export const ContactPoint = ({
           disabled={disabled}
           onDelete={onDelete}
         />
-        <div className={styles.receiversWrapper}>
-          {receivers?.map((receiver) => {
-            const diagnostics = receiver[RECEIVER_STATUS_KEY];
-            const sendingResolved = !Boolean(receiver.disableResolveMessage);
+        {showFullMetadata ? (
+          <div className={styles.receiversWrapper}>
+            {receivers?.map((receiver) => {
+              const diagnostics = receiver[RECEIVER_STATUS_KEY];
+              const sendingResolved = !Boolean(receiver.disableResolveMessage);
 
-            return (
-              <ContactPointReceiver
-                key={uniqueId()}
-                type={receiver.type}
-                description={getReceiverDescription(receiver)}
-                diagnostics={diagnostics}
-                sendingResolved={sendingResolved}
-              />
-            );
-          })}
-        </div>
+              return (
+                <ContactPointReceiver
+                  key={uniqueId()}
+                  type={receiver.type}
+                  description={getReceiverDescription(receiver)}
+                  diagnostics={diagnostics}
+                  sendingResolved={sendingResolved}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className={styles.receiversWrapper}>
+            <ContactPointReceiverSummary receivers={receivers} />
+          </div>
+        )}
       </Stack>
     </div>
   );
@@ -313,7 +323,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   const styles = useStyles2(getStyles);
 
   const iconName = INTEGRATION_ICONS[type];
-  const hasMetadata = diagnostics !== undefined;
+
   // TODO get the actual name of the type from /ngalert if grafanaManaged AM
   const receiverName = receiverTypeNames[type] ?? upperFirst(type);
 
@@ -335,7 +345,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
             )}
           </Stack>
         </div>
-        {hasMetadata && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
+        {diagnostics && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
       </Stack>
     </div>
   );
@@ -346,8 +356,48 @@ interface ContactPointReceiverMetadata {
   diagnostics: NotifierStatus;
 }
 
-const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) => {
-  const { diagnostics, sendingResolved } = props;
+type ContactPointReceiverSummaryProps = {
+  receivers: GrafanaManagedReceiverConfig[];
+};
+
+/**
+ * This summary is used when we're dealing with non-Grafana managed alertmanager since they
+ * don't have any metadata worth showing other than a summary of what types are configured for the contact point
+ */
+const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryProps) => {
+  const styles = useStyles2(getStyles);
+  const countByType = groupBy(receivers, (receiver) => receiver.type);
+
+  return (
+    <div className={styles.integrationWrapper}>
+      <Stack direction="column" gap={0}>
+        <div className={styles.receiverDescriptionRow}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            {Object.entries(countByType)
+              .map<ReactNode>(([type, receivers]) => {
+                const iconName = INTEGRATION_ICONS[type];
+                const receiverName = receiverTypeNames[type] ?? upperFirst(type);
+
+                return (
+                  <Stack key={type} direction="row" alignItems="center" gap={0.5}>
+                    {iconName && <Icon name={iconName} />}
+                    <Span variant="body" color="primary">
+                      {receiverName}
+                      {receivers.length > 1 && <> ({receivers.length})</>}
+                    </Span>
+                  </Stack>
+                );
+              })
+              // join the elements with "⋅"
+              .reduce((prev, curr) => [prev, '⋅', curr])}
+          </Stack>
+        </div>
+      </Stack>
+    </div>
+  );
+};
+
+const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: ContactPointReceiverMetadata) => {
   const styles = useStyles2(getStyles);
 
   const failedToSend = Boolean(diagnostics.lastNotifyAttemptError);
