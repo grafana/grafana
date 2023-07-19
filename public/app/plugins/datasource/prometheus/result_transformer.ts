@@ -150,7 +150,7 @@ export function transformV2(
     // Create a new grouping by iterating through the data frames...
     const heatmapResultsGroupedByValues = groupBy<DataFrame>(heatmapResultsGroup, (dataFrame) => {
       // Each data frame has `Time` and `Value` properties, we want to get the values
-      const values = dataFrame.fields[1];
+      const values = dataFrame.fields.find((field) => field.type === FieldType.number);
       // Specific functionality for special "le" quantile heatmap value, we know if this value exists, that we do not want to calculate the heatmap density across data frames from the same quartile
       if (values?.labels && HISTOGRAM_QUANTILE_LABEL_NAME in values.labels) {
         const { le, ...notLE } = values?.labels;
