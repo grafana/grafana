@@ -12,11 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/stretchr/testify/require"
 )
 
-func SetupTestSecureSocksProxySettings(t *testing.T) *setting.SecureSocksDSProxySettings {
+func SetupTestSecureSocksProxySettings(t *testing.T) *sdkproxy.ClientCfg {
+	t.Helper()
 	proxyAddress := "localhost:3000"
 	serverName := "localhost"
 	tempDir := t.TempDir()
@@ -98,11 +99,15 @@ func SetupTestSecureSocksProxySettings(t *testing.T) *setting.SecureSocksDSProxy
 	err = keyFile.Close()
 	require.NoError(t, err)
 
-	return &setting.SecureSocksDSProxySettings{
+	settings := &sdkproxy.ClientCfg{
+		Enabled:      true,
 		ClientCert:   clientCert,
 		ClientKey:    clientKey,
 		RootCA:       rootCACert,
 		ServerName:   serverName,
 		ProxyAddress: proxyAddress,
 	}
+
+	sdkproxy.Cli = sdkproxy.NewWithCfg(settings)
+	return settings
 }

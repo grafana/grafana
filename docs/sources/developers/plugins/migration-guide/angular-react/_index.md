@@ -1,6 +1,4 @@
 ---
-title: Migrate a plugin from AngularJS to React
-menuTitle: Angular to React
 description: Guide for migrating plugins from AngularJS to React.
 keywords:
   - grafana
@@ -8,6 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Angular to React
+title: Migrate a plugin from AngularJS to React
 weight: 1000
 ---
 
