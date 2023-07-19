@@ -477,7 +477,7 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
   const missingIndex = columns.findIndex((field, index) => field?.id !== String(index));
 
   // Base case
-  if (missingIndex === -1) {
+  if (missingIndex === -1 || columns[missingIndex]?.id === 'expander') {
     return;
   }
 

@@ -246,6 +246,7 @@ export const Table = memo((props: Props) => {
                   width={width - EXPANDER_WIDTH}
                   height={tableStyles.rowHeight * (rowSubData.length + 1)}
                   noHeader={noHeader}
+                  cellHeight={cellHeight}
                 />
               </div>
             );
@@ -255,7 +256,7 @@ export const Table = memo((props: Props) => {
 
       return subTables;
     },
-    [nestedFields, state.expanded, tableStyles.rowHeight, theme.colors, width]
+    [cellHeight, nestedFields, state.expanded, tableStyles.rowHeight, theme.colors, width]
   );
 
   const rowIndexForPagination = useCallback(
