@@ -87,13 +87,11 @@ type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
-  scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
   spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
-  clearShouldScrollToFirstUiFindMatch: () => void;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
@@ -224,14 +222,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     let key: keyof VirtualizedTraceViewProps;
     for (key in nextProps) {
       if (nextProps[key] !== this.props[key]) {
-        // Unless the only change was props.shouldScrollToFirstUiFindMatch changing to false.
-        if (key === 'shouldScrollToFirstUiFindMatch') {
-          if (nextProps[key]) {
-            return true;
-          }
-        } else {
-          return true;
-        }
+        return true;
       }
     }
     return false;
@@ -240,9 +231,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
     const { registerAccessors, trace, headerHeight } = prevProps;
     const {
-      shouldScrollToFirstUiFindMatch,
-      clearShouldScrollToFirstUiFindMatch,
-      scrollToFirstVisibleSpan,
       registerAccessors: nextRegisterAccessors,
       setTrace,
       trace: nextTrace,
@@ -257,11 +245,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
     if (this.listView && registerAccessors !== nextRegisterAccessors) {
       nextRegisterAccessors(this.getAccessors());
-    }
-
-    if (shouldScrollToFirstUiFindMatch) {
-      scrollToFirstVisibleSpan();
-      clearShouldScrollToFirstUiFindMatch();
     }
 
     if (focusedSpanId !== prevProps.focusedSpanId) {

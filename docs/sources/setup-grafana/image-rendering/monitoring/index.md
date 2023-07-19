@@ -8,17 +8,21 @@ keywords:
   - rendering
   - plugin
   - monitoring
+labels:
+  products:
+    - enterprise
+    - oss
 title: Monitor the image renderer
 weight: 100
 ---
 
 # Monitor the image renderer
 
-Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help you allocate the right amount of resources to your rendering service and set the right [rendering mode]({{< relref "./#rendering-mode" >}}).
+Rendering images requires a lot of memory, mainly because Grafana creates browser instances in the background for the actual rendering. Monitoring your service can help you allocate the right amount of resources to your rendering service and set the right [rendering mode]({{< relref "../../image-rendering#rendering-mode" >}}).
 
 ## Enable Prometheus metrics endpoint
 
-Configure this service to expose a Prometheus metrics endpoint. For information on how to configure and monitor this service using Prometheus as a data source, refer to [Grafana Image Rendering Service dashboard](https://grafana.com/grafana/dashboards/12203).
+Configure this service to expose a Prometheus metrics endpoint. For information on how to configure and monitor this service using Prometheus as a data source, refer to [Grafana Image Rendering Service dashboard](/grafana/dashboards/12203).
 
 **Metrics endpoint output example:**
 

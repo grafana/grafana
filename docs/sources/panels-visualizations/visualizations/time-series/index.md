@@ -24,6 +24,11 @@ keywords:
   - documentation
   - guide
   - graph
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Time series
 weight: 90
 ---
@@ -34,7 +39,9 @@ weight: 90
 
 The time series visualization type is the default and primary way to visualize time series data as a graph. It can render series as lines, points, or bars. It is versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how it can be configured and styled.
 
-> **Note:** You can migrate from the old Graph visualization to the new Time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
+{{% admonition type="note" %}}
+You can migrate from the old Graph visualization to the new Time series visualization. To migrate, open the panel and click the **Migrate** button in the side pane.
+{{% /admonition %}}
 
 ## Tooltip options
 
@@ -129,15 +136,9 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 ![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
-### Connect null values
+{{< docs/shared "visualizations/connect-null-values.md" >}}
 
-Choose how null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected.
-
-![Connect null values option](/static/img/docs/time-series-panel/connect-null-values-option-v9.png)
-
-- **Never:** Time series data points with gaps in the the data are never connected.
-- **Always:** Time series data points with gaps in the the data are always connected.
-- **Threshold:** Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range, and gaps outside this range should no longer be connected.
+{{< docs/shared "visualizations/disconnect-values.md" >}}
 
 ### Stack series
 
@@ -222,11 +223,13 @@ Use this option to transform the series values without affecting the values show
 - **Negative Y transform:** Flip the results to negative values on the Y axis.
 - **Constant:** Show the first value as a constant line.
 
-> **Note:** The transform option is only available as an override.
+{{% admonition type="note" %}}
+The transform option is only available as an override.
+{{% /admonition %}}
 
 ## Color options
 
-By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}} option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
 color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette

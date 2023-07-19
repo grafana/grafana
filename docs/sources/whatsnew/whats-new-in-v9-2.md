@@ -8,6 +8,11 @@ keywords:
   - documentation
   - '9.2'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v9.2
 weight: -33
 ---
@@ -25,9 +30,9 @@ _Available in beta in Grafana Open Source._
 Dashboard panel issues can occur for all kinds of reasons, from problems processing data to issues with rendering or configuration.
 Shorten your communication time when reporting issues and requesting help from Grafana Labs by retrieving a panel's query response data and panel settings.
 This will help the support team reproduce, diagnose, and fix the issue as quickly as possible.
-See our [documentation](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) for more info.
+See our [documentation](/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) for more info.
 
-For details, see [GitHub issue #55005](https://github.com/grafana/grafana/issues/55005) and ["Send a panel to Grafana Labs support"](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) in the documentation.
+For details, see [GitHub issue #55005](https://github.com/grafana/grafana/issues/55005) and ["Send a panel to Grafana Labs support"](/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/) in the documentation.
 
 {{< figure src="/static/img/docs/panels/panel-help-9-2.gif" max-width="750px" caption="Retrieving a panel's query response data and panel settings" >}}
 
@@ -50,7 +55,7 @@ _Generally available in Grafana Open Source._
 
 You can now use Google Analytics 4 (GA4) to track usage of Grafana.
 To enable tracking with GA4, specify your property's measurement ID in Grafana's configuration file.
-Read more [in our documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#google_analytics_4_id).
+Read more [in our documentation](/docs/grafana/latest/setup-grafana/configure-grafana/#google_analytics_4_id).
 
 Google Analytics 4 replaces Universal Analytics, which will stop processing hits in 2023 (July 1 for free accounts, October 1 for Google Analytics 360).
 You can continue using Universal Analytics with Grafana and send analytics data to both types of properties.
@@ -75,7 +80,7 @@ You can change this default to either `Alerting` or `OK`.
 This change does not update existing alert rules.
 
 For details on this change, see [GitHub pull request #55345](https://github.com/grafana/grafana/pull/55345).
-For more information about alerting states, see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/fundamentals/state-and-health/).
+For more information about alerting states, see the [alerting documentation](/docs/grafana/latest/alerting/fundamentals/state-and-health/).
 
 ## Configure external alertmanagers as data sources
 
@@ -87,10 +92,10 @@ External alertmanagers should now be configured as data sources using Grafana Co
 
 ## Public dashboards
 
-_Available in Experimental in Grafana Open Source, Enterprise, Cloud Pro, and Cloud Advanced._
+_Available in Experimental in Grafana Open Source, Enterprise, and Cloud._
 _To enable public dashboards, you must enable a feature flag or request this feature from support._
 
-[Public dashboards](https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/) launched as an experimental feature in Grafana v9.1.
+[Public dashboards](/docs/grafana/latest/dashboards/dashboard-public/) launched as an experimental feature in Grafana v9.1.
 We've received lots of great feedback on this much-anticipated feature and thank everyone who has helped us improve it.
 The team has been hard at work polishing public dashboards, and we've closed quite a few bugs related to community reports.
 If you're trying out public dashboards, let us know how it is going in the [open discussion in GitHub](https://github.com/grafana/grafana/discussions/49253).
@@ -98,7 +103,7 @@ Beyond bug fixes, we're excited to share some new features:
 
 ### Expression support
 
-We have added the ability to use [expressions](https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/) for your public dashboards.
+We have added the ability to use [expressions](/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/) for your public dashboards.
 
 {{< figure src="/static/img/docs/dashboards/public-dashboards-expressions-9-2.png" max-width="750px" caption="Using expressions in a public dashboard" >}}
 
@@ -112,7 +117,7 @@ Usage Insights now has a "Public Dashboards" tab, which tracks how many people a
 
 ### Use RBAC to allow any user to share dashboards publicly
 
-_RBAC is available in Grafana Enterprise and Cloud Advanced._
+_RBAC is available in Grafana Enterprise and Cloud._
 
 We have introduced a new role called "Public Dashboard writer" that grants access to publish new public dashboards to additional roles and users.
 By default, only admins can share dashboards publicly.
@@ -140,8 +145,8 @@ For details on using this functionality, see [GitHub pull request #55313](https:
 
 ## Transformations: INNER JOINs
 
-[Transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data/" >}}) allow you to shape raw data from data sources, like metrics series or GitHub issues, into a format that's appropriate for the chosen visualization.
-We have extended the [Join transformation]({{< relref "../panels-visualizations/query-transform-data/transform-data/#join-by-field" >}}) to support INNER JOINs in addition to OUTER JOINs. These work similarly to SQL JOINs.
+[Transformations]({{< relref "../panels-visualizations/query-transform-data/transform-data" >}}) allow you to shape raw data from data sources, like metrics series or GitHub issues, into a format that's appropriate for the chosen visualization.
+We have extended the [Join transformation]({{< relref "../panels-visualizations/query-transform-data/transform-data#join-by-field" >}}) to support INNER JOINs in addition to OUTER JOINs. These work similarly to SQL JOINs.
 
 {{< figure src="/static/img/docs/transformations/transform-outer-join-9-2.png" max-width="750px" caption="Query builder groupings for Google Cloud monitoring" >}}
 
@@ -153,7 +158,7 @@ _Generally available in Grafana Open Source._
 
 We have significantly simplified and improved the way you can create template variable queries for Loki data sources in dashboards.
 Use drop-downs to choose query type, label, and stream selector, without needing to worry about templating query syntax.
-For more information, refer to [Loki data source documentation](https://grafana.com/docs/grafana/latest/datasources/loki/#query-variable).
+For more information, refer to [Loki data source documentation](/docs/grafana/latest/datasources/loki/#query-variable).
 
 {{< figure src="/static/img/docs/queries/loki-template-variable-queries-9-2.png" max-width="750px" caption="Creating a template variable query for Loki" >}}
 
@@ -171,7 +176,7 @@ Previously, teams required at least one Admin user to be in a team.
 
 ### Role-based access control is easier to use
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced._
+_Generally available in Grafana Enterprise and Grafana Cloud._
 
 #### Role picker when creating and editing teams
 
@@ -183,7 +188,7 @@ Previously, you could assign roles only when looking at a list of all teams.
 #### RBAC: Organize custom roles into groups
 
 If you create many custom roles in Grafana – for example, different roles for editing specific dashboards or folders, or specific roles for certain teams in your company – you can now organize them into groups for more efficient navigation, browsing, and custom role assignment.
-For more information on custom roles, see the [documentation](https://grafana.com/docs/grafana/latest/developers/http_api/access_control/#create-a-new-custom-role).
+For more information on custom roles, see the [documentation](/docs/grafana/latest/developers/http_api/access_control/#create-a-new-custom-role).
 
 {{< figure src="/static/img/docs/manage-users/rbac-groups-9-2.png" max-width="750px" caption="Organizing custom roles into RBAC groups" >}}
 
@@ -200,7 +205,7 @@ _Generally available in Grafana Enterprise, Grafana Cloud Pro, and Advanced._
 ### Map a user to all organizations in Grafana
 
 You can now use `*` as the Grafana organization in the mapping to add all users from a given SAML Organization to all existing Grafana organizations.
-For more information, see ["Configure SAML authentication"](https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/#configure-organization-mapping) in the documentation.
+For more information, see ["Configure SAML authentication"](/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/#configure-organization-mapping) in the documentation.
 
 ### Skip organization role sync
 
@@ -210,24 +215,24 @@ If you use a SAML identity provider to manage your users but prefer to assign ro
 
 Use the `skip_org_role_sync` configuration option when configuring SAML to prevent synchronization with SAML roles and make user roles editable from within Grafana.
 
-For more information, see the [SAML configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/).
+For more information, see the [SAML configuration documentation](/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/).
 
 ## Assign Server Admin permissions from Oauth
 
 You can now map OAuth groups and roles to Server Admin for the GitLab, GitHub, AzureAD, Okta, and Generic OAuth integrations.
 To enable this functionality, set the `allow_assign_grafana_admin` configuration option to `true` in the desired OAuth integration section.
-For more information, see the [authentication configuration documentation](https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/) for each OAuth client.
+For more information, see the [authentication configuration documentation](/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/) for each OAuth client.
 
 ## Match parameter support in prometheus labels API
 
-Prometheus users running Prometheus v2.24 and higher can use the [labels endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) instead of the [series endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) for the [`label_values` function]({{< relref "../datasources/prometheus/#query-variable" >}}).
+Prometheus users running Prometheus v2.24 and higher can use the [labels endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#querying-label-values) instead of the [series endpoint](https://prometheus.io/docs/prometheus/latest/querying/api/#finding-series-by-label-matchers) for the [`label_values` function]({{< relref "../datasources/prometheus#query-variable" >}}).
 This decreases load times for templated high-cardinality Prometheus instances.
 
-If you want to benefit from this endpoint you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus/" >}}).
+If you want to benefit from this endpoint you must first configure the Prometheus type and version in any Prometheus data sources' [configuration]({{< relref "../datasources/prometheus" >}}).
 
 ## New Prometheus streaming parser
 
-In Grafana v9.2, you can enable the `prometheusStreamingJSONParser` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) to use a better-performing, memory-efficient streaming JSON client for Prometheus.
+In Grafana v9.2, you can enable the `prometheusStreamingJSONParser` [feature toggle]({{< relref "../setup-grafana/configure-grafana#feature_toggles" >}}) to use a better-performing, memory-efficient streaming JSON client for Prometheus.
 We'll make this client the default in Grafana v9.3.
 
 When Prometheus returns `NaN` values, this new client doesn't change them, neither to the value `null` nor to `0` as in recent Grafana versions.

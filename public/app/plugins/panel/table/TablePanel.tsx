@@ -11,7 +11,7 @@ import { Options } from './panelcfg.gen';
 interface Props extends PanelProps<Options> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id } = props;
+  const { data, height, width, options, fieldConfig, id, timeRange } = props;
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -54,6 +54,7 @@ export function TablePanel(props: Props) {
       enablePagination={options.footer?.enablePagination}
       subData={subData}
       cellHeight={options.cellHeight}
+      timeRange={timeRange}
     />
   );
 

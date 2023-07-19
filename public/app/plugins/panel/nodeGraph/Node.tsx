@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
 
   text: css`
     fill: ${theme.colors.text.primary};
+    pointer-events: none;
   `,
 
   titleText: css`
@@ -40,7 +41,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     overflow: hidden;
     white-space: nowrap;
     background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.6).toHex8String()};
-    width: 100px;
+    width: 140px;
   `,
 
   statsText: css`
@@ -56,6 +57,12 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     & span {
       background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.8).toHex8String()};
     }
+  `,
+
+  clickTarget: css`
+    fill: none;
+    stroke: none;
+    pointer-events: fill;
   `,
 });
 
@@ -76,29 +83,16 @@ export const Node = memo(function Node(props: {
   }
 
   return (
-    <g
-      data-node-id={node.id}
-      className={styles.mainGroup}
-      onMouseEnter={() => {
-        onMouseEnter(node.id);
-      }}
-      onMouseLeave={() => {
-        onMouseLeave(node.id);
-      }}
-      onClick={(event) => {
-        onClick(event, node);
-      }}
-      aria-label={`Node: ${node.title}`}
-    >
+    <g data-node-id={node.id} className={styles.mainGroup} aria-label={`Node: ${node.title}`}>
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       {isHovered && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ColorCircle node={node} />
-      <g className={styles.text}>
+      <g className={styles.text} style={{ pointerEvents: 'none' }}>
         <NodeContents node={node} hovering={hovering} />
         <foreignObject
-          x={node.x - (isHovered ? 100 : 50)}
+          x={node.x - (isHovered ? 100 : 70)}
           y={node.y + nodeR + 5}
-          width={isHovered ? '200' : '100'}
+          width={isHovered ? '200' : '140'}
           height="40"
         >
           <div className={cx(styles.titleText, isHovered && styles.textHovering)}>
@@ -108,6 +102,23 @@ export const Node = memo(function Node(props: {
           </div>
         </foreignObject>
       </g>
+      <rect
+        data-testid={`node-click-rect-${node.id}`}
+        onMouseEnter={() => {
+          onMouseEnter(node.id);
+        }}
+        onMouseLeave={() => {
+          onMouseLeave(node.id);
+        }}
+        onClick={(event) => {
+          onClick(event, node);
+        }}
+        className={styles.clickTarget}
+        x={node.x - nodeR - 5}
+        y={node.y - nodeR - 5}
+        width={nodeR * 2 + 10}
+        height={nodeR * 2 + 50}
+      />
     </g>
   );
 });

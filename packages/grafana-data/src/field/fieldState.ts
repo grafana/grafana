@@ -9,16 +9,23 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
     return frame.name;
   }
 
-  // Single field with tags
-  const valuesWithLabels: Field[] = [];
+  const valueFieldNames: string[] = [];
   for (const field of frame.fields) {
-    if (field.labels && Object.keys(field.labels).length > 0) {
-      valuesWithLabels.push(field);
+    if (field.type === FieldType.time) {
+      continue;
     }
+
+    // No point in doing more
+    if (valueFieldNames.length > 1) {
+      break;
+    }
+
+    valueFieldNames.push(getFieldDisplayName(field, frame));
   }
 
-  if (valuesWithLabels.length === 1) {
-    return formatLabels(valuesWithLabels[0].labels!);
+  // If the frame has a single value field then use the name of that field as the frame name
+  if (valueFieldNames.length === 1) {
+    return valueFieldNames[0];
   }
 
   // list all the
@@ -34,6 +41,14 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   return `Series (${index})`;
+}
+
+export function cacheFieldDisplayNames(frames: DataFrame[]) {
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      getFieldDisplayName(field, frame, frames);
+    });
+  });
 }
 
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {

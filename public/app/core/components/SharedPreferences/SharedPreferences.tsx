@@ -49,8 +49,6 @@ function getLanguageOptions(): Array<SelectableValue<string>> {
   return options;
 }
 
-const i18nFlag = Boolean(config.featureToggles.internationalization);
-
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: SelectableValue[];
@@ -108,7 +106,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
   };
 
   onTimeZoneChanged = (timezone?: string) => {
-    if (!timezone) {
+    if (typeof timezone !== 'string') {
       return;
     }
     this.setState({ timezone: timezone });
@@ -195,27 +193,25 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 />
               </Field>
 
-              {i18nFlag ? (
-                <Field
-                  label={
-                    <Label htmlFor="locale-select">
-                      <span className={styles.labelText}>
-                        <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
-                      </span>
-                      <FeatureBadge featureState={FeatureState.beta} />
-                    </Label>
-                  }
-                  data-testid="User preferences language drop down"
-                >
-                  <Select
-                    value={languages.find((lang) => lang.value === language)}
-                    onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
-                    options={languages}
-                    placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-                    inputId="locale-select"
-                  />
-                </Field>
-              ) : null}
+              <Field
+                label={
+                  <Label htmlFor="locale-select">
+                    <span className={styles.labelText}>
+                      <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
+                    </span>
+                    <FeatureBadge featureState={FeatureState.beta} />
+                  </Label>
+                }
+                data-testid="User preferences language drop down"
+              >
+                <Select
+                  value={languages.find((lang) => lang.value === language)}
+                  onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
+                  options={languages}
+                  placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
+                  inputId="locale-select"
+                />
+              </Field>
 
               <div className="gf-form-button-row">
                 <Button

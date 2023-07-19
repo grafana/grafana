@@ -11,8 +11,9 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
+	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -93,7 +95,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -104,6 +105,10 @@ import (
 )
 
 type HTTPServer struct {
+	// services.NamedService is embedded so we can inherit AddListener, without
+	// implementing the service interface.
+	services.NamedService
+
 	log              log.Logger
 	web              *web.Mux
 	context          context.Context
@@ -111,8 +116,9 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
+	errs             chan error
 
-	PluginContextProvider        *plugincontext.Provider
+	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
@@ -168,7 +174,6 @@ type HTTPServer struct {
 	grafanaUpdateChecker         *updatechecker.GrafanaService
 	pluginsUpdateChecker         *updatechecker.PluginsService
 	searchUsersService           searchusers.Service
-	teamGuardian                 teamguardian.TeamGuardian
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
@@ -231,7 +236,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
-	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
@@ -293,7 +298,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SearchService:                searchService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
-		PluginContextProvider:        plugCtxProvider,
+		pluginContextProvider:        plugCtxProvider,
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
@@ -314,7 +319,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
-		teamGuardian:                 teamGuardian,
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
@@ -354,6 +358,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
+		errs:                         make(chan error),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -366,6 +371,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
+
+	hs.NamedService = services.NewBasicService(hs.start, hs.running, hs.stop).WithName(modules.HTTPServer)
 	return hs, nil
 }
 
@@ -377,7 +384,7 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
-func (hs *HTTPServer) Run(ctx context.Context) error {
+func (hs *HTTPServer) start(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
@@ -409,42 +416,57 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	// handle http shutdown on server context done
-	go func() {
-		defer wg.Done()
-
-		<-ctx.Done()
-		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-			hs.log.Error("Failed to shutdown server", "error", err)
-		}
-	}()
-
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
-		if err := hs.httpSrv.Serve(listener); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
-				return nil
+		go func() {
+			if err := hs.httpSrv.Serve(listener); err != nil {
+				if errors.Is(err, http.ErrServerClosed) {
+					hs.log.Debug("server was shutdown gracefully")
+					close(hs.errs)
+					return
+				}
+				hs.errs <- err
 			}
-			return err
-		}
+		}()
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
-			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
-				return nil
+		go func() {
+			if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+				if errors.Is(err, http.ErrServerClosed) {
+					hs.log.Debug("server was shutdown gracefully")
+					close(hs.errs)
+					return
+				}
+				hs.errs <- err
 			}
-			return err
-		}
+		}()
 	default:
 		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
 
-	wg.Wait()
+	return nil
+}
 
+func (hs *HTTPServer) running(ctx context.Context) error {
+	select {
+	case err, ok := <-hs.errs:
+		if !ok {
+			return nil
+		}
+		return err
+	case <-ctx.Done():
+	}
+
+	return nil
+}
+
+func (hs *HTTPServer) stop(_ error) error {
+	// Create a context with a timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := hs.httpSrv.Shutdown(ctx); err != nil {
+		return fmt.Errorf("failed to shutdown server: %w", err)
+	}
 	return nil
 }
 
@@ -620,7 +642,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if !hs.Cfg.AuthBrokerEnabled {
 		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 	}
 

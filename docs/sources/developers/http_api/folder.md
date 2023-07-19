@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - folder
+labels:
+  products:
+    - enterprise
+    - oss
 title: Folder HTTP API
 ---
 
@@ -34,6 +38,10 @@ that you cannot use this API for retrieving information about the General folder
 `GET /api/folders`
 
 Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000. You can also pass the `page` query parameter for fetching folders from a page other than the first one.
+
+If nested folders are enabled, the operation expects an additional optional query parameter `parentUid` with the parent folder UID, and returns the immediate subfolders that the authenticated user has permission to view.
+If the parameter is not supplied, then the operation returns immediate subfolders under the root
+that the authenticated user has permission to view.
 
 **Required permissions**
 
@@ -118,6 +126,11 @@ Content-Type: application/json
 }
 ```
 
+If nested folders are enabled, and the folder is nested (lives under another folder), then the response additionally contains:
+
+- **parentUid** - The parent folder UID.
+- **parents** - An array with the whole tree hierarchy, starting from the root going down up to the parent folder.
+
 Status Codes:
 
 - **200** – Found
@@ -158,7 +171,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid).
+- **uid** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **title** – The title of the folder.
 
 **Example Response**:
@@ -183,6 +196,11 @@ Content-Type: application/json
   "version": 1
 }
 ```
+
+If nested folders are enabled, and the folder is nested (lives under another folder) then the response additionally contains:
+
+- **parentUid** - the parent folder UID.
+- **parents** - an array with the whole tree hierarchy starting from the root going down up to the parent folder.
 
 Status Codes:
 
@@ -222,7 +240,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier.
+- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier. Starting with 10.0, this is **deprecated**. It will be removed in a future release. Please avoid using it because it can result in folder losing its permissions.
 - **title** – The title of the folder.
 - **version** – Provide the current version to be able to update the folder. Not needed if `overwrite=true`.
 - **overwrite** – Set to true if you want to overwrite existing folder with newer version.
@@ -249,6 +267,11 @@ Content-Type: application/json
   "version": 1
 }
 ```
+
+If nested folders are enabled, and the folder is nested (lives under another folder) then the response additionally contains:
+
+- **parentUid** - the parent folder UID.
+- **parents** - an array with the whole tree hierarchy starting from the root going down up to the parent folder.
 
 Status Codes:
 
@@ -329,6 +352,8 @@ Status Codes:
 
 Will return the folder identified by id.
 
+This is deprecated. Use [get folder by UID]({{< ref "#get-folder-by-uid" >}}) instead.
+
 **Required permissions**
 
 See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
@@ -375,3 +400,92 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access Denied
 - **404** – Folder not found
+
+## Move folder
+
+`POST /api/folders/:uid/move`
+
+Moves the folder.
+
+This is relevant only if nested folders are enabled.
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+
+If moving the folder under another folder:
+
+| Action          | Scope                                  |
+| --------------- | -------------------------------------- |
+| `folders:write` | `folders:uid:<destination folder UID>` |
+
+If moving the folder under root:
+| Action | Scope |
+| -------------- | ------------- |
+| `folders:create` | `folders:*` |
+
+JSON body schema:
+
+- **parentUid** – Optional [unique identifier]({{< relref "#identifier-id-vs-unique-identifier-uid" >}}) of the new parent folder. If this is empty, then the folder is moved under the root.
+
+**Example Request**:
+
+```http
+POST /api/folders/a5393ec3-5568-4e88-8809-b866968ae8a6/move HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "parentUid": "d80b18c0-266a-4aa4-ad5d-5537a00cb8e8",
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"id": 4,
+	"uid": "a5393ec3-5568-4e88-8809-b866968ae8a6",
+	"title": "just-testing",
+	"url": "/dashboards/f/a5393ec3-5568-4e88-8809-b866968ae8a6/just-testing",
+	"hasAcl": false,
+	"canSave": true,
+	"canEdit": true,
+	"canAdmin": true,
+	"canDelete": true,
+	"createdBy": "Anonymous",
+	"created": "2023-04-27T21:55:01.593741+03:00",
+	"updatedBy": "Anonymous",
+	"updated": "2023-04-27T21:55:15.747444+03:00",
+	"parentUid": "d80b18c0-266a-4aa4-ad5d-5537a00cb8e8",
+	"parents": [
+		{
+			"id": 2,
+			"uid": "d80b18c0-266a-4aa4-ad5d-5537a00cb8e8",
+			"title": "f0",
+			"url": "",
+			"hasAcl": false,
+			"canSave": true,
+			"canEdit": true,
+			"canAdmin": true,
+			"canDelete": true,
+			"createdBy": "Anonymous",
+			"created": "2023-04-27T21:53:46.070672+03:00",
+			"updatedBy": "Anonymous",
+			"updated": "2023-04-27T21:53:46.070673+03:00"
+		}
+	]
+}
+```
+
+Status Codes:
+
+- **200** – Moved
+- **400** – Errors (invalid JSON, missing or invalid fields, and so on)
+- **401** – Unauthorized
+- **403** – Access denied
+- **404** – Not found

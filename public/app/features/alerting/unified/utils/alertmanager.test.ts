@@ -27,7 +27,7 @@ describe('Alertmanager utils', () => {
       });
       expect(parseMatcher('foo!~ bar')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar',
+        value: ' bar',
         isRegex: true,
         isEqual: false,
       });
@@ -79,6 +79,17 @@ describe('Alertmanager utils', () => {
         {
           name: 'foo',
           value: 'bar',
+          isRegex: false,
+          isEqual: true,
+        },
+      ]);
+    });
+
+    it('should parse with spaces in the value', () => {
+      expect(parseMatchers('foo=bar bazz')).toEqual<Matcher[]>([
+        {
+          name: 'foo',
+          value: 'bar bazz',
           isRegex: false,
           isEqual: true,
         },

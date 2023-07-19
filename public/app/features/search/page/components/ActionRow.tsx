@@ -12,8 +12,12 @@ import { SearchLayout, SearchState } from '../../types';
 
 function getLayoutOptions() {
   return [
-    { value: SearchLayout.Folders, icon: 'folder', ariaLabel: t('search.actions.view-as-folders', 'View by folders') },
-    { value: SearchLayout.List, icon: 'list-ul', ariaLabel: t('search.actions.view-as-list', 'View as list') },
+    {
+      value: SearchLayout.Folders,
+      icon: 'folder',
+      description: t('search.actions.view-as-folders', 'View by folders'),
+    },
+    { value: SearchLayout.List, icon: 'list-ul', description: t('search.actions.view-as-list', 'View as list') },
   ];
 }
 

@@ -12,6 +12,11 @@ keywords:
   - dashboard
   - search
   - shortcuts
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Use dashboards
 title: Use dashboards
 weight: 1
@@ -25,13 +30,13 @@ This topic provides an overview of dashboard features and shortcuts, and describ
 
 The dashboard user interface provides a number of features that you can use to customize the presentation of your data.
 
-The following image and descriptions highlights all dashboards features.
+The following image and descriptions highlight all dashboard features.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-annotated-9-5-0.png" width="700px" >}}
 
 - (1) **Grafana home**: Click **Home** in the breadcrumb to be redirected to the home page configured in the Grafana instance.
-- (2) **Dashboard title**: When you click the dashboard title you can search for dashboard contained in the current folder.
-- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel by link or snapshot. You can also export the dashboard definition from the share modal.
+- (2) **Dashboard title**: When you click the dashboard title, you can search for dashboards contained in the current folder.
+- (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
 - (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics]({{< relref "../assess-dashboard-usage/" >}}).
@@ -105,7 +110,7 @@ The following table provides example relative ranges:
 | This Year              | `now/Y`     | `now/Y`     |
 | Previous fiscal year   | `now-1y/fy` | `now-1y/fy` |
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 Grafana Alerting does not support the following syntaxes at this time:
 
@@ -160,7 +165,7 @@ This section also displays recently used absolute ranges.
 
 #### Semi-relative time range
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 Grafana Alerting does not support semi-relative time ranges.
 
@@ -196,7 +201,9 @@ Click and drag to select the time range in the visualization that you want to vi
 
 Click the **Refresh dashboard** icon to immediately run every query on the dashboard and refresh the visualizations. Grafana cancels any pending requests when you trigger a refresh.
 
-By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
+By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, click the down arrow next to the **Refresh dashboard** icon, and then select a refresh interval.
+
+Selecting the **Auto** interval schedules a refresh based on the query time range and browser window width. Short time ranges update frequently, while longer ones update infrequently. There is no need to refresh more often then the pixels available to draw any updates.
 
 ### Control the time range using a URL
 

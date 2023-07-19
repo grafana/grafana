@@ -18,10 +18,21 @@ export type DeleteDashboardResponse = {
   title: string;
 };
 
-export interface ListPublicDashboardResponse {
+export interface PublicDashboardListWithPaginationResponse {
+  publicDashboards: PublicDashboardListResponse[];
+  page: number;
+  perPage: number;
+  totalCount: number;
+}
+
+export interface PublicDashboardListResponse {
   uid: string;
   accessToken: string;
   dashboardUid: string;
   title: string;
   isEnabled: boolean;
+}
+
+export interface PublicDashboardListWithPagination extends PublicDashboardListWithPaginationResponse {
+  totalPages: number;
 }

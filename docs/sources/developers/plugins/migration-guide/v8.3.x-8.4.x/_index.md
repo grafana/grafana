@@ -6,30 +6,38 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrating plugins from Grafana version 8.3.x to 8.4.x
-menutitle: v8.3.x to v8.4.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v8.3.x to v8.4.x
+title: Migrate plugins from Grafana version 8.3.x to 8.4.x
 weight: 2200
 ---
 
-# Migrating plugins from Grafana version 8.3.x to 8.4.x
+# Migrate plugins from Grafana version 8.3.x to 8.4.x
 
 This section explains how to migrate Grafana v8.3.x plugins to the updated plugin system available in Grafana v8.4.x. Depending on your plugin, you need to perform one or more of the following steps.
 
 ## Value Mapping Editor has been removed from @grafana-ui library
 
-Removed due to being an internal component.
+Removed because it is an internal component.
 
 ## Thresholds Editor has been removed from @grafana-ui library
 
-Removed due to being an internal component.
+Removed because it is an internal component.
 
 ## 8.4 deprecations
 
-### LocationService replaces getLocationSrv
+The following features have been deprecated in version 8.4.
+
+### `LocationService` replaces `getLocationSrv`
 
 In a previous release, we migrated to use a new routing system and introduced a new service for managing locations, navigation, and related information. In this release, we are making that new service the primary service.
 
-**Example:** Import the service.
+**Example:**
+
+Import the service:
 
 ```ts
 // before
@@ -39,7 +47,9 @@ import { getLocationSrv } from '@grafana/runtime';
 import { locationService } from '@grafana/runtime';
 ```
 
-**Example:** Navigate to a path and add a new record in the navigation history so that you can navigate back to the previous one.
+**Example:**
+
+Navigate to a path and add a new record in the navigation history so that you can navigate back to the previous one:
 
 ```ts
 // before
@@ -52,7 +62,9 @@ getLocationSrv.update({
 locationService.push('/route-to-navigate-to');
 ```
 
-**Example:** Navigate to a path and replace the current record in the navigation history.
+**Example:**
+
+Navigate to a path and replace the current record in the navigation history:
 
 ```ts
 // before
@@ -65,7 +77,9 @@ getLocationSrv.update({
 locationService.replace('/route-to-navigate-to');
 ```
 
-**Example:** Update the search or query parameter for the current route and add a new record in the navigation history so that you can navigate back to the previous one.
+**Example:**
+
+Update the search or query parameter for the current route and add a new record in the navigation history so that you can navigate back to the previous one:
 
 ```ts
 // How to navigate to a new path
@@ -82,7 +96,7 @@ getLocationSrv.update({
 locationService.partial({ value: 1 });
 ```
 
-**Example:** Update the search or query parameter for the current route and add replacing it in the navigation history.
+**Example:** Update the search or query parameter for the current route and add replacing it in the navigation history:
 
 ```ts
 // before

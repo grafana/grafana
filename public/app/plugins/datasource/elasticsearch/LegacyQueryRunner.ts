@@ -7,6 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   dateTime,
+  ensureTimeField,
   Field,
   LogRowContextOptions,
   LogRowContextQueryDirection,
@@ -15,10 +16,10 @@ import {
 import { BackendSrvRequest, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { ElasticResponse } from './ElasticResponse';
-import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { ElasticDatasource, enhanceDataFrameWithDataLinks } from './datasource';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { trackQuery } from './tracking';
-import { ElasticsearchQuery, Logs } from './types';
+import { DataLinkConfig, ElasticsearchQuery, Logs } from './types';
 
 export class LegacyQueryRunner {
   datasource: ElasticDatasource;
@@ -75,7 +76,7 @@ export class LegacyQueryRunner {
             const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
             return throwError({
-              message: 'Elasticsearch error: ' + message,
+              message,
               error: err.data.error,
             });
           }
@@ -134,12 +135,13 @@ export class LegacyQueryRunner {
      */
     const timestampField = dataFrame.fields.find((f: Field) => f.name === this.datasource.timeField);
     const lineField = dataFrame.fields.find((f: Field) => f.name === this.datasource.logMessageField);
+    const otherFields = dataFrame.fields.filter((f: Field) => f !== timestampField && f !== lineField);
     if (timestampField && lineField) {
       return {
         data: [
           {
             ...dataFrame,
-            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
+            fields: [ensureTimeField(timestampField), lineField, ...otherFields],
           },
         ],
       };
@@ -249,4 +251,18 @@ function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc')
       },
     ],
   };
+}
+
+/**
+ * Modifies dataFrame and adds dataLinks from the config.
+ * Exported for tests.
+ */
+export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[], limit?: number) {
+  if (limit) {
+    dataFrame.meta = {
+      ...dataFrame.meta,
+      limit,
+    };
+  }
+  enhanceDataFrameWithDataLinks(dataFrame, dataLinks);
 }

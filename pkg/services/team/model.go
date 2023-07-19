@@ -4,8 +4,10 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Typed errors
@@ -30,6 +32,18 @@ type Team struct {
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+func (t *Team) ToResource() team.K8sResource {
+	r := team.NewK8sResource(t.UID, &team.Spec{
+		Name: t.Name,
+	})
+	r.Metadata.CreationTimestamp = v1.NewTime(t.Created)
+	r.Metadata.SetUpdatedTimestamp(&t.Updated)
+	if t.Email != "" {
+		r.Spec.Email = &t.Email
+	}
+	return r
 }
 
 // ---------------------
@@ -58,7 +72,6 @@ type GetTeamByIDQuery struct {
 	ID           int64
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
-	UserIdFilter int64
 }
 
 // FilterIgnoreUser is used in a get / search teams query when the caller does not want to filter teams by user ID / membership
@@ -76,7 +89,6 @@ type SearchTeamsQuery struct {
 	Limit        int
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
-	UserIDFilter int64 `xorm:"user_id_filter"`
 	SignedInUser *user.SignedInUser
 	HiddenUsers  map[string]struct{}
 }
@@ -98,10 +110,6 @@ type SearchTeamQueryResult struct {
 	Teams      []*TeamDTO `json:"teams"`
 	Page       int        `json:"page"`
 	PerPage    int        `json:"perPage"`
-}
-
-type IsAdminOfTeamsQuery struct {
-	SignedInUser *user.SignedInUser
 }
 
 // TeamMember model

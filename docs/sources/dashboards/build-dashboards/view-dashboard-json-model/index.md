@@ -8,6 +8,11 @@ keywords:
   - documentation
   - json
   - model
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: JSON model
 weight: 700
 ---
@@ -26,7 +31,9 @@ To view the JSON of a dashboard:
 
 When a user creates a new dashboard, a new dashboard JSON object is initialized with the following fields:
 
-> **Note:** In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
+{{% admonition type="note" %}}
+In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
+{{% /admonition %}}
 
 ```json
 {

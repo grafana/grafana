@@ -61,11 +61,10 @@ export type TraceSearchMetadata = {
 export type SearchMetrics = {
   inspectedTraces?: number;
   inspectedBytes?: number;
-  inspectedBlocks?: number;
-  skippedBlocks?: number;
-  skippedTraces?: number;
+  totalBlocks?: number;
+  completedJobs?: number;
+  totalJobs?: number;
   totalBlockBytes?: number;
-  spanSets?: Spanset[];
 };
 
 export enum SpanKind {
@@ -89,7 +88,18 @@ export type Span = {
   endTimeUnixNano?: string;
   attributes?: Array<{
     key: string;
-    value: { stringValue?: string; intValue?: string; boolValue?: boolean; doubleValue?: string };
+    value: {
+      stringValue?: string;
+      intValue?: string;
+      boolValue?: boolean;
+      doubleValue?: string;
+      Value?: {
+        string_value?: string;
+        int_value?: string;
+        bool_value?: boolean;
+        double_value?: string;
+      };
+    };
   }>;
   dropped_attributes_count?: number;
 };
@@ -102,4 +112,9 @@ export type Spanset = {
 export type SearchResponse = {
   traces: TraceSearchMetadata[];
   metrics: SearchMetrics;
+};
+
+export type Scope = {
+  name: string;
+  tags: string[];
 };

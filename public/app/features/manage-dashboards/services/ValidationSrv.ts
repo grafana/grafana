@@ -1,9 +1,4 @@
-import { backendSrv } from 'app/core/services/backend_srv';
-
-const hitTypes = {
-  FOLDER: 'dash-folder',
-  DASHBOARD: 'dash-db',
-};
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 class ValidationError extends Error {
   type: string;
@@ -17,15 +12,19 @@ class ValidationError extends Error {
 export class ValidationSrv {
   rootName = 'general';
 
-  validateNewDashboardName(folderUid: any, name: string) {
-    return this.validate(folderUid, name, 'A dashboard or a folder with the same name already exists');
+  validateNewDashboardName(folderUID: string, name: string) {
+    return this.validate(folderUID, name, 'A dashboard or a folder with the same name already exists');
   }
 
   validateNewFolderName(name?: string) {
-    return this.validate(0, name, 'A folder or dashboard in the general folder with the same name already exists');
+    return this.validate(
+      this.rootName,
+      name,
+      'A folder or dashboard in the general folder with the same name already exists'
+    );
   }
 
-  private async validate(folderId: any, name: string | undefined, existingErrorMessage: string) {
+  private async validate(folderUID: string, name: string | undefined, existingErrorMessage: string) {
     name = (name || '').trim();
     const nameLowerCased = name.toLowerCase();
 
@@ -33,27 +32,20 @@ export class ValidationSrv {
       throw new ValidationError('REQUIRED', 'Name is required');
     }
 
-    if (folderId === 0 && nameLowerCased === this.rootName) {
+    if (nameLowerCased === this.rootName) {
       throw new ValidationError('EXISTING', 'This is a reserved name and cannot be used for a folder.');
     }
 
-    const promises = [];
-    promises.push(backendSrv.search({ type: hitTypes.FOLDER, folderIds: [folderId], query: name }));
-    promises.push(backendSrv.search({ type: hitTypes.DASHBOARD, folderIds: [folderId], query: name }));
+    const searcher = getGrafanaSearcher();
 
-    const res = await Promise.all(promises);
-    let hits: any[] = [];
+    const dashboardResults = await searcher.search({
+      kind: ['dashboard'],
+      query: name,
+      location: folderUID || 'general',
+    });
 
-    if (res.length > 0 && res[0].length > 0) {
-      hits = res[0];
-    }
-
-    if (res.length > 1 && res[1].length > 0) {
-      hits = hits.concat(res[1]);
-    }
-
-    for (const hit of hits) {
-      if (nameLowerCased === hit.title.toLowerCase()) {
+    for (const result of dashboardResults.view) {
+      if (nameLowerCased === result.name.toLowerCase()) {
         throw new ValidationError('EXISTING', existingErrorMessage);
       }
     }

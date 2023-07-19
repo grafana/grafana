@@ -29,7 +29,6 @@ const topOfExploreViewRef = jest.fn();
 let props = {
   childrenHiddenIDs: new Set(),
   childrenToggle: jest.fn(),
-  clearShouldScrollToFirstUiFindMatch: jest.fn(),
   currentViewRangeTime: [0.25, 0.75],
   detailLogItemToggle: jest.fn(),
   detailLogsToggle: jest.fn(),
@@ -39,10 +38,8 @@ let props = {
   detailToggle: jest.fn(),
   findMatchesIDs: null,
   registerAccessors: jest.fn(),
-  scrollToFirstVisibleSpan: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),
   setTrace: jest.fn(),
-  shouldScrollToFirstUiFindMatch: false,
   spanNameColumnWidth: 0.5,
   trace,
   uiFind: 'uiFind',

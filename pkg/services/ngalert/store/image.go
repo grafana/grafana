@@ -31,6 +31,10 @@ type ImageStore interface {
 
 	// SaveImage saves the image or returns an error.
 	SaveImage(ctx context.Context, img *models.Image) error
+
+	// URLExists takes a URL and returns a boolean indicating whether or not
+	// we have an image for that URL.
+	URLExists(ctx context.Context, url string) (bool, error)
 }
 
 type ImageAdminStore interface {
@@ -73,6 +77,19 @@ func (st DBstore) GetImageByURL(ctx context.Context, url string) (*models.Image,
 		return nil, err
 	}
 	return &image, nil
+}
+
+func (st DBstore) URLExists(ctx context.Context, url string) (bool, error) {
+	var exists bool
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		ok, err := sess.Table("alert_image").Where("url = ? AND expires_at > ?", url, TimeNow().UTC()).Exist()
+		if err != nil {
+			return err
+		}
+		exists = ok
+		return nil
+	})
+	return exists, err
 }
 
 func (st DBstore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {

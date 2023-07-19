@@ -1,5 +1,6 @@
 import { AnyAction } from '@reduxjs/toolkit';
 
+import { reportInteraction } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
@@ -32,17 +33,9 @@ export async function setMetrics(
   let metricsData: MetricsData | undefined;
 
   metricsData = initialMetrics?.map((m: string) => {
-    const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
-    const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
+    const metricData = buildMetricData(m, datasource);
 
-    // possibly remove the type in favor of the type select
-    const metaDataString = `${m}¦${type}¦${description}`;
-
-    const metricData: MetricData = {
-      value: m,
-      type: type,
-      description: description,
-    };
+    const metaDataString = `${m}¦${metricData.description}`;
 
     nameHaystackDictionaryData[m] = metricData;
     metaHaystackDictionaryData[metaDataString] = metricData;
@@ -62,6 +55,33 @@ export async function setMetrics(
 }
 
 /**
+ * Builds the metric data object with type and description
+ *
+ * @param   metric  The metric name
+ * @param   datasource  The Prometheus datasource for mapping metradata to the metric name
+ * @returns A MetricData object.
+ */
+function buildMetricData(metric: string, datasource: PrometheusDatasource): MetricData {
+  let type = getMetadataType(metric, datasource.languageProvider.metricsMetadata!);
+
+  const description = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!);
+
+  ['histogram', 'summary'].forEach((t) => {
+    if (description?.toLowerCase().includes(t) && type !== t) {
+      type += ` (${t})`;
+    }
+  });
+
+  const metricData: MetricData = {
+    value: metric,
+    type: type,
+    description: description,
+  };
+
+  return metricData;
+}
+
+/**
  * The filtered and paginated metrics displayed in the modal
  * */
 export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispatch<AnyAction>) {
@@ -75,12 +95,9 @@ export function displayedMetrics(state: MetricsModalState, dispatch: React.Dispa
 }
 
 /**
- * Filter the metrics with all the options, fuzzy, type, letter
- * @param metrics
- * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
- * @returns
+ * Filter the metrics with all the options, fuzzy, type, null metadata
  */
-export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boolean): MetricsData {
+export function filterMetrics(state: MetricsModalState): MetricsData {
   let filteredMetrics: MetricsData = state.metrics;
 
   if (state.fuzzySearchQuery && !state.useBackend) {
@@ -91,26 +108,27 @@ export function filterMetrics(state: MetricsModalState, skipLetterSearch?: boole
     }
   }
 
-  if (state.letterSearch && !skipLetterSearch) {
-    filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-      const letters: string[] = [state.letterSearch, state.letterSearch.toLowerCase()];
-      return letters.includes(m.value[0]);
-    });
-  }
-
-  if (state.selectedTypes.length > 0 && !state.useBackend) {
+  if (state.selectedTypes.length > 0) {
     filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
       // Matches type
-      const matchesSelectedType = state.selectedTypes.some((t) => t.value === m.type);
+      const matchesSelectedType = state.selectedTypes.some((t) => {
+        if (m.type && t.value) {
+          return m.type.includes(t.value);
+        }
 
-      // missing type
-      const hasNoType = !m.type;
+        if (!m.type && t.value === 'no type') {
+          return true;
+        }
 
-      return matchesSelectedType || (hasNoType && !state.excludeNullMetadata);
+        return false;
+      });
+
+      // when a user filters for type, only return metrics with defined types
+      return matchesSelectedType;
     });
   }
 
-  if (state.excludeNullMetadata) {
+  if (!state.includeNullMetadata) {
     filteredMetrics = filteredMetrics.filter((m: MetricData) => {
       return m.type !== undefined && m.description !== undefined;
     });
@@ -152,10 +170,11 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
 
 /**
  * The backend query that replaces the uFuzzy search when the option 'useBackend' has been selected
+ * this is a regex search either to the series or labels Prometheus endpoint
+ * depending on which the Prometheus type or version supports
  * @param metricText
  * @param labels
  * @param datasource
- * @returns
  */
 export async function getBackendSearchMetrics(
   metricText: string,
@@ -173,12 +192,30 @@ export async function getBackendSearchMetrics(
   const results = datasource.metricFindQuery(params);
 
   return await results.then((results) => {
-    return results.map((result) => {
-      return {
-        value: result.text,
-      };
-    });
+    return results.map((result) => buildMetricData(result.text, datasource));
   });
+}
+
+export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
+  switch (event) {
+    case 'grafana_prom_metric_encycopedia_tracking':
+      reportInteraction(event, {
+        metric: metric,
+        hasMetadata: state?.hasMetadata,
+        totalMetricCount: state?.totalMetricCount,
+        fuzzySearchQuery: state?.fuzzySearchQuery,
+        fullMetaSearch: state?.fullMetaSearch,
+        selectedTypes: state?.selectedTypes,
+      });
+    case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
+      reportInteraction(event, {
+        disableTextWrap: state?.disableTextWrap,
+      });
+    case 'grafana_prometheus_metric_encyclopedia_open':
+      reportInteraction(event, {
+        query: query,
+      });
+  }
 }
 
 export const promTypes: PromFilterOption[] = [
@@ -201,13 +238,20 @@ export const promTypes: PromFilterOption[] = [
     description:
       'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.',
   },
+  {
+    value: 'unknown',
+    description: 'These metrics have been given the type unknown in the metadata.',
+  },
+  {
+    value: 'no type',
+    description: 'These metrics have no defined type in the metadata.',
+  },
 ];
 
 export const placeholders = {
   browse: 'Search metrics by name',
-  metadataSearchSwitch: 'Search by metadata type and description in addition to name',
-  type: 'Select...',
-  variables: 'Select...',
-  excludeNoMetadata: 'Exclude results with no metadata',
-  setUseBackend: 'Use the backend to browse metrics',
+  metadataSearchSwitch: 'Include description in search',
+  type: 'Filter by type',
+  includeNullMetadata: 'Include results with no metadata',
+  setUseBackend: 'Enable regex search',
 };

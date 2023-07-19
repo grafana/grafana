@@ -4,7 +4,14 @@ import {
   VisualizationSuggestion,
   DataTransformerID,
 } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  LineInterpolation,
+  StackingMode,
+  VizLegendOptions,
+} from '@grafana/schema';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SuggestionName } from 'app/types/suggestions';
 
@@ -22,7 +29,7 @@ export class TimeSeriesSuggestionsSupplier {
       name: SuggestionName.LineChart,
       pluginId: 'timeseries',
       options: {
-        legend: {} as any,
+        legend: {} as VizLegendOptions,
       },
       fieldConfig: {
         defaults: {

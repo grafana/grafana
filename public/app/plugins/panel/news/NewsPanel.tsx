@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import { PanelProps } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
-import { CustomScrollbar } from '@grafana/ui';
+import { Alert, CustomScrollbar, Icon } from '@grafana/ui';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';
@@ -32,7 +32,17 @@ export function NewsPanel(props: NewsPanelProps) {
   }, [getNews]);
 
   if (state.error) {
-    return <div>Error loading RSS feed.</div>;
+    return (
+      <Alert title="Error loading RSS feed">
+        Make sure that the feed URL is correct and that CORS is configured correctly on the server. See{' '}
+        <a
+          style={{ textDecoration: 'underline' }}
+          href="https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/news/"
+        >
+          News panel documentation. <Icon name="external-link-alt" />
+        </a>
+      </Alert>
+    );
   }
   if (state.loading) {
     return <div>Loading...</div>;

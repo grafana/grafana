@@ -64,7 +64,7 @@ const WindTurbineDisplay = ({ data }: CanvasElementProps<WindTurbineConfig, Wind
   );
 };
 
-export const windTurbineItem: CanvasElementItem<any, any> = {
+export const windTurbineItem: CanvasElementItem = {
   id: 'windTurbine',
   name: 'Wind Turbine',
   description: 'Spinny spinny',

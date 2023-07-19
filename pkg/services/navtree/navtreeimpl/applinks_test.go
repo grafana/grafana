@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -37,7 +38,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app1",
 			Name: "Test app1 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
@@ -60,7 +61,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app2",
 			Name: "Test app2 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Hello",
@@ -77,7 +78,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app3",
 			Name: "Test app3 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Default page",
@@ -114,7 +115,7 @@ func TestAddAppLinks(t *testing.T) {
 		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
-		pluginStore: plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{testApp1, testApp2, testApp3},
 		},
 	}
@@ -402,7 +403,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 	testApp1 := plugins.PluginDTO{
 		JSONData: plugins.JSONData{
-			ID: "test-app1", Name: "Test app1 name", Type: plugins.App,
+			ID: "test-app1", Name: "Test app1 name", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
@@ -436,7 +437,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		accessControl:  acimpl.ProvideAccessControl(cfg),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
-		pluginStore: plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{testApp1},
 		},
 	}

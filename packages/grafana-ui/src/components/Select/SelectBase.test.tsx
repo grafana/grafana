@@ -233,7 +233,7 @@ describe('SelectBase', () => {
 
       expect(screen.getByLabelText('My select')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByLabelText('Remove Option 1'));
+      await userEvent.click(screen.getAllByLabelText('Remove')[0]);
       expect(onChangeHandler).toHaveBeenCalledWith([], {
         action: 'remove-value',
         name: undefined,

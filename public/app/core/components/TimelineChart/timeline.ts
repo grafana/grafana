@@ -47,6 +47,7 @@ export interface TimelineCoreOptions {
   showValue: VisibilityMode;
   mergeValues?: boolean;
   isDiscrete: (seriesIdx: number) => boolean;
+  hasMappedNull: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: unknown) => string;
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
@@ -64,6 +65,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     mode,
     numSeries,
     isDiscrete,
+    hasMappedNull,
     rowHeight = 0,
     colWidth = 0,
     showValue,
@@ -210,6 +212,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
 
         let discrete = isDiscrete(sidx);
+        let mappedNull = discrete && hasMappedNull(sidx);
 
         u.ctx.save();
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
@@ -220,7 +223,7 @@ export function getConfig(opts: TimelineCoreOptions) {
             for (let ix = 0; ix < dataY.length; ix++) {
               let yVal = dataY[ix];
 
-              if (yVal != null) {
+              if (yVal != null || mappedNull) {
                 let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
@@ -262,7 +265,9 @@ export function getConfig(opts: TimelineCoreOptions) {
             //let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
 
             for (let ix = idx0; ix <= idx1; ix++) {
-              if (dataY[ix] != null) {
+              let yVal = dataY[ix];
+
+              if (yVal != null || mappedNull) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
                 let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
@@ -278,7 +283,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                   strokeWidth,
                   iy,
                   ix,
-                  dataY[ix],
+                  yVal,
                   discrete
                 );
               }
@@ -316,10 +321,13 @@ export function getConfig(opts: TimelineCoreOptions) {
             (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
               let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
 
+              let discrete = isDiscrete(sidx);
+              let mappedNull = discrete && hasMappedNull(sidx);
+
               let y = round(yOff + yMids[sidx - 1]);
 
               for (let ix = 0; ix < dataY.length; ix++) {
-                if (dataY[ix] != null) {
+                if (dataY[ix] != null || mappedNull) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   if (!boxRect || boxRect.x >= xDim) {

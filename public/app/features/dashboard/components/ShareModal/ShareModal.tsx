@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { locationService, reportInteraction } from '@grafana/runtime/src';
+import { reportInteraction } from '@grafana/runtime/src';
 import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -93,10 +93,6 @@ export class ShareModal extends React.Component<Props, State> {
 
   componentDidMount() {
     reportInteraction('grafana_dashboards_share_modal_viewed');
-  }
-
-  componentWillUnmount() {
-    locationService.partial({ shareView: null });
   }
 
   onSelectTab: React.ComponentProps<typeof ModalTabsHeader>['onChangeTab'] = (t) => {

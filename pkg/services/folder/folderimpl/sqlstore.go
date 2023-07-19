@@ -97,7 +97,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		sql.Write([]byte("UPDATE folder SET "))
+		sql.WriteString("UPDATE folder SET ")
 		columnsToUpdate := []string{"updated = ?"}
 		args := []interface{}{updated}
 		if cmd.NewDescription != nil {
@@ -129,8 +129,8 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			return folder.ErrBadRequest.Errorf("no columns to update")
 		}
 
-		sql.Write([]byte(strings.Join(columnsToUpdate, ", ")))
-		sql.Write([]byte(" WHERE uid = ? AND org_id = ?"))
+		sql.WriteString(strings.Join(columnsToUpdate, ", "))
+		sql.WriteString(" WHERE uid = ? AND org_id = ?")
 		args = append(args, cmd.UID, cmd.OrgID)
 
 		args = append([]interface{}{sql.String()}, args...)
@@ -244,10 +244,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		sql := strings.Builder{}
 		args := make([]interface{}, 0, 2)
 		if q.UID == "" {
-			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC"))
+			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC")
 			args = append(args, q.OrgID)
 		} else {
-			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY title ASC"))
+			sql.WriteString("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY title ASC")
 			args = append(args, q.UID, q.OrgID)
 		}
 
@@ -256,7 +256,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			if q.Page > 0 {
 				offset = q.Limit * (q.Page - 1)
 			}
-			sql.Write([]byte(ss.db.GetDialect().LimitOffset(q.Limit, offset)))
+			sql.WriteString(ss.db.GetDialect().LimitOffset(q.Limit, offset))
 		}
 		err := sess.SQL(sql.String(), args...).Find(&folders)
 		if err != nil {

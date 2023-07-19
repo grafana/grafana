@@ -1,9 +1,15 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/
 description: Learn about the different alert rule types
 keywords:
   - grafana
   - alerting
   - rule types
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert rule types
 weight: 102
 ---
@@ -39,7 +45,7 @@ To create Grafana Mimir or Grafana Loki-managed alert rules, you must have a com
 
 You can check if your data source supports rule creation via Grafana by testing the data source and observing if the Ruler API is supported.
 
-For more information on the Ruler API, refer to [Ruler API](docs/loki/latest/api/#ruler).
+For more information on the Ruler API, refer to [Ruler API](/docs/loki/latest/api/#ruler).
 
 The following diagram shows how Grafana Mimir or Grafana Loki-managed alerting works.
 

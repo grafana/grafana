@@ -9,10 +9,10 @@ export interface PromVisualQuery {
   labels: QueryBuilderLabelFilter[];
   operations: QueryBuilderOperation[];
   binaryQueries?: PromVisualQueryBinary[];
-  // metrics modal additional settings
+  // metrics explorer additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
-  excludeNullMetadata?: boolean;
+  includeNullMetadata?: boolean;
   fullMetaSearch?: boolean;
 }
 

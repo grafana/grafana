@@ -1,7 +1,7 @@
 import intersect from 'fast_array_intersect';
 
 import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType } from '../../types';
+import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -42,7 +42,7 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
-   * The field to join -- frames that do not have this field will be droppped
+   * The field to join -- frames that do not have this field will be dropped
    */
   joinBy?: FieldMatcher;
 
@@ -180,12 +180,18 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
+        let name = field.name;
         if (frame.name) {
-          labels = { ...labels, name: frame.name };
+          if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
+            name = frame.name;
+          } else {
+            labels = { ...labels, name: frame.name };
+          }
         }
 
         fields.push({
           ...field,
+          name,
           labels, // add the name label from frame
         });
       }

@@ -4,6 +4,10 @@ aliases:
   - ../guides/gettingstarted/
   - getting-started-prometheus/
 description: Learn how to build your first Prometheus dashboard in Grafana.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Get started with Grafana and Prometheus
 weight: 300
 ---
@@ -38,7 +42,9 @@ Prometheus node_exporter is a widely used tool that exposes system metrics. For 
 
 When you run node_exporter locally, navigate to `http://localhost:9100/metrics` to check that it is exporting metrics.
 
-> **Note**: The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
+{{% admonition type="note" %}}
+The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
+{{% /admonition %}}
 
 #### Install and configure Prometheus
 
@@ -82,11 +88,11 @@ You can see that the node_exporter metrics have been delivered to Prometheus. Ne
 
 #### Configure Prometheus for Grafana
 
-When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You can use a hosted Grafana instance at [Grafana Cloud](https://grafana.com/) or run Grafana locally.
+When running Prometheus locally, there are two ways to configure Prometheus for Grafana. You can use a hosted Grafana instance at [Grafana Cloud](/) or run Grafana locally.
 
 This guide describes configuring Prometheus in a hosted Grafana instance on Grafana Cloud.
 
-1. Sign up for [https://grafana.com/](https://grafana.com/auth/sign-up/create-user). Grafana gives you a Prometheus instance out of the box.
+1. Sign up for [https://grafana.com/](/auth/sign-up/create-user). Grafana gives you a Prometheus instance out of the box.
 
 ![Prometheus details in Grafana.com](/static/img/docs/getting-started/screenshot-grafana-prometheus-details.png)
 
@@ -102,15 +108,17 @@ remote_write:
     password: <Your Grafana.com API Key>
 ```
 
-> **Note**: To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](https://grafana.com/grafana/download) and follow the configuration steps listed [here](https://grafana.com/docs/grafana/latest/datasources/prometheus/#configure-the-data-source).
+{{% admonition type="note" %}}
+To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](/grafana/download) and follow the configuration steps listed [here](/docs/grafana/latest/datasources/prometheus/#configure-the-data-source).
+{{% /admonition %}}
 
 #### Check Prometheus metrics in Grafana Explore view
 
-In your Grafana instance, go to the [Explore]({{< relref "../explore/" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
+In your Grafana instance, go to the [Explore]({{< relref "../explore" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus.
 
 #### Start building dashboards
 
-Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
+Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
 
 The following image shows a dashboard with three panels showing some system metrics.
 
@@ -118,5 +126,5 @@ The following image shows a dashboard with three panels showing some system metr
 
 To learn more:
 
-- Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus/" >}})
+- Grafana documentation: [Prometheus data source]({{< relref "../datasources/prometheus" >}})
 - Prometheus documentation: [What is Prometheus?](https://prometheus.io/docs/introduction/overview/)

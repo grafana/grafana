@@ -41,6 +41,7 @@ type (
 	tvars_resource struct {
 		PackageName      string
 		KindName         string
+		Version          string
 		SubresourceNames []string
 	}
 )

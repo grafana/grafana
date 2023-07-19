@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,12 +32,13 @@ const (
 	rfc9068MediaType      = "application/at+jwt"
 )
 
-func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service) *ExtendedJWT {
+func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service, oauthServer oauthserver.OAuth2Server) *ExtendedJWT {
 	return &ExtendedJWT{
 		cfg:         cfg,
 		log:         log.New(authn.ClientExtendedJWT),
 		userService: userService,
 		signingKeys: signingKeys,
+		oauthServer: oauthServer,
 	}
 }
 
@@ -44,6 +47,7 @@ type ExtendedJWT struct {
 	log         log.Logger
 	userService user.Service
 	signingKeys signingkeys.Service
+	oauthServer oauthserver.OAuth2Server
 }
 
 type ExtendedJWTClaims struct {
@@ -97,7 +101,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	signedInUser.Permissions[s.getDefaultOrgID()] = claims.Entitlements
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}, login.ExtendedJWTModule), nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
@@ -211,10 +215,9 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims Extended
 		return fmt.Errorf("missing 'client_id' claim")
 	}
 
-	// TODO: Implement the validation for client_id when the OAuth server is ready.
-	// if _, err := s.oauthService.GetExternalService(ctx, clientId); err != nil {
-	// 	return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
-	// }
+	if _, err := s.oauthServer.GetExternalService(ctx, claims.ClientID); err != nil {
+		return fmt.Errorf("invalid 'client_id' claim: %s", claims.ClientID)
+	}
 
 	return nil
 }

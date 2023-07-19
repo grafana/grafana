@@ -2,12 +2,11 @@
 aliases:
   - data-sources/
   - overview/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Data sources
 weight: 60
 ---

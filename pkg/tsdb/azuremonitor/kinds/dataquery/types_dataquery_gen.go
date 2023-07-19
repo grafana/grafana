@@ -9,10 +9,6 @@
 
 package dataquery
 
-import (
-	"encoding/json"
-)
-
 // Defines values for AppInsightsGroupByQueryKind.
 const (
 	AppInsightsGroupByQueryKindAppInsightsGroupByQuery AppInsightsGroupByQueryKind = "AppInsightsGroupByQuery"
@@ -21,27 +17,6 @@ const (
 // Defines values for AppInsightsMetricNameQueryKind.
 const (
 	AppInsightsMetricNameQueryKindAppInsightsMetricNameQuery AppInsightsMetricNameQueryKind = "AppInsightsMetricNameQuery"
-)
-
-// Defines values for AzureLogsQueryResultFormat.
-const (
-	AzureLogsQueryResultFormatTable      AzureLogsQueryResultFormat = "table"
-	AzureLogsQueryResultFormatTimeSeries AzureLogsQueryResultFormat = "time_series"
-	AzureLogsQueryResultFormatTrace      AzureLogsQueryResultFormat = "trace"
-)
-
-// Defines values for AzureMonitorQueryAzureLogAnalyticsResultFormat.
-const (
-	AzureMonitorQueryAzureLogAnalyticsResultFormatTable      AzureMonitorQueryAzureLogAnalyticsResultFormat = "table"
-	AzureMonitorQueryAzureLogAnalyticsResultFormatTimeSeries AzureMonitorQueryAzureLogAnalyticsResultFormat = "time_series"
-	AzureMonitorQueryAzureLogAnalyticsResultFormatTrace      AzureMonitorQueryAzureLogAnalyticsResultFormat = "trace"
-)
-
-// Defines values for AzureMonitorQueryAzureTracesResultFormat.
-const (
-	AzureMonitorQueryAzureTracesResultFormatTable      AzureMonitorQueryAzureTracesResultFormat = "table"
-	AzureMonitorQueryAzureTracesResultFormatTimeSeries AzureMonitorQueryAzureTracesResultFormat = "time_series"
-	AzureMonitorQueryAzureTracesResultFormatTrace      AzureMonitorQueryAzureTracesResultFormat = "trace"
 )
 
 // Defines values for AzureQueryType.
@@ -58,13 +33,6 @@ const (
 	AzureQueryTypeAzureTraces                     AzureQueryType = "Azure Traces"
 	AzureQueryTypeAzureWorkspaces                 AzureQueryType = "Azure Workspaces"
 	AzureQueryTypeGrafanaTemplateVariableFunction AzureQueryType = "Grafana Template Variable Function"
-)
-
-// Defines values for AzureTracesQueryResultFormat.
-const (
-	AzureTracesQueryResultFormatTable      AzureTracesQueryResultFormat = "table"
-	AzureTracesQueryResultFormatTimeSeries AzureTracesQueryResultFormat = "time_series"
-	AzureTracesQueryResultFormatTrace      AzureTracesQueryResultFormat = "trace"
 )
 
 // Defines values for GrafanaTemplateVariableQueryType.
@@ -129,10 +97,10 @@ const (
 
 // AppInsightsGroupByQuery defines model for AppInsightsGroupByQuery.
 type AppInsightsGroupByQuery struct {
-	Kind                 AppInsightsGroupByQueryKind `json:"kind"`
-	MetricName           string                      `json:"metricName"`
-	RawQuery             *string                     `json:"rawQuery,omitempty"`
-	AdditionalProperties map[string]interface{}      `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind       AppInsightsGroupByQueryKind `json:"kind"`
+	MetricName string                      `json:"metricName"`
+	RawQuery   *string                     `json:"rawQuery,omitempty"`
 }
 
 // AppInsightsGroupByQueryKind defines model for AppInsightsGroupByQuery.Kind.
@@ -140,9 +108,9 @@ type AppInsightsGroupByQueryKind string
 
 // AppInsightsMetricNameQuery defines model for AppInsightsMetricNameQuery.
 type AppInsightsMetricNameQuery struct {
-	Kind                 AppInsightsMetricNameQueryKind `json:"kind"`
-	RawQuery             *string                        `json:"rawQuery,omitempty"`
-	AdditionalProperties map[string]interface{}         `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind     AppInsightsMetricNameQueryKind `json:"kind"`
+	RawQuery *string                        `json:"rawQuery,omitempty"`
 }
 
 // AppInsightsMetricNameQueryKind defines model for AppInsightsMetricNameQuery.Kind.
@@ -150,6 +118,9 @@ type AppInsightsMetricNameQueryKind string
 
 // Azure Monitor Logs sub-query properties
 type AzureLogsQuery struct {
+	// If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+	IntersectTime *bool `json:"intersectTime,omitempty"`
+
 	// KQL query to be executed.
 	Query *string `json:"query,omitempty"`
 
@@ -157,17 +128,12 @@ type AzureLogsQuery struct {
 	Resource *string `json:"resource,omitempty"`
 
 	// Array of resource URIs to be queried.
-	Resources []string `json:"resources,omitempty"`
-
-	// Specifies the format results should be returned as.
-	ResultFormat *AzureLogsQueryResultFormat `json:"resultFormat,omitempty"`
+	Resources    []string      `json:"resources,omitempty"`
+	ResultFormat *ResultFormat `json:"resultFormat,omitempty"`
 
 	// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
 	Workspace *string `json:"workspace,omitempty"`
 }
-
-// Specifies the format results should be returned as.
-type AzureLogsQueryResultFormat string
 
 // AzureMetricDimension defines model for AzureMetricDimension.
 type AzureMetricDimension struct {
@@ -205,19 +171,7 @@ type AzureMetricQuery struct {
 	DimensionFilter *string `json:"dimensionFilter,omitempty"`
 
 	// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
-	DimensionFilters []struct {
-		// Name of Dimension to be filtered on.
-		Dimension *string `json:"dimension,omitempty"`
-
-		// @deprecated filter is deprecated in favour of filters to support multiselect.
-		Filter *string `json:"filter,omitempty"`
-
-		// Values to match with the filter.
-		Filters []string `json:"filters,omitempty"`
-
-		// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-		Operator *string `json:"operator,omitempty"`
-	} `json:"dimensionFilters,omitempty"`
+	DimensionFilters []AzureMetricDimension `json:"dimensionFilters,omitempty"`
 
 	// @deprecated Use metricNamespace instead
 	MetricDefinition *string `json:"metricDefinition,omitempty"`
@@ -243,13 +197,7 @@ type AzureMetricQuery struct {
 	ResourceUri *string `json:"resourceUri,omitempty"`
 
 	// Array of resource URIs to be queried.
-	Resources []struct {
-		MetricNamespace *string `json:"metricNamespace,omitempty"`
-		Region          *string `json:"region,omitempty"`
-		ResourceGroup   *string `json:"resourceGroup,omitempty"`
-		ResourceName    *string `json:"resourceName,omitempty"`
-		Subscription    *string `json:"subscription,omitempty"`
-	} `json:"resources,omitempty"`
+	Resources []AzureMonitorResource `json:"resources,omitempty"`
 
 	// The granularity of data points to be queried. Defaults to auto.
 	TimeGrain *string `json:"timeGrain,omitempty"`
@@ -262,167 +210,24 @@ type AzureMetricQuery struct {
 }
 
 // AzureMonitorDataQuery defines model for AzureMonitorDataQuery.
-type AzureMonitorDataQuery = map[string]interface{}
+type AzureMonitorDataQuery = map[string]any
 
 // AzureMonitorQuery defines model for AzureMonitorQuery.
 type AzureMonitorQuery struct {
-	// Azure Monitor Logs sub-query properties.
-	AzureLogAnalytics *struct {
-		// KQL query to be executed.
-		Query *string `json:"query,omitempty"`
+	// DataQuery These are the common properties available to all queries in all datasources.
+	// Specific implementations will *extend* this interface, adding the required
+	// properties for the given context.
+	DataQuery
 
-		// @deprecated Use resources instead
-		Resource *string `json:"resource,omitempty"`
+	// Azure Monitor Logs sub-query properties
+	AzureLogAnalytics  *AzureLogsQuery          `json:"azureLogAnalytics,omitempty"`
+	AzureMonitor       *AzureMetricQuery        `json:"azureMonitor,omitempty"`
+	AzureResourceGraph *AzureResourceGraphQuery `json:"azureResourceGraph,omitempty"`
 
-		// Array of resource URIs to be queried.
-		Resources []string `json:"resources,omitempty"`
-
-		// Specifies the format results should be returned as.
-		ResultFormat *AzureMonitorQueryAzureLogAnalyticsResultFormat `json:"resultFormat,omitempty"`
-
-		// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
-		Workspace *string `json:"workspace,omitempty"`
-	} `json:"azureLogAnalytics,omitempty"`
-
-	// Azure Monitor Metrics sub-query properties.
-	AzureMonitor *struct {
-		// The aggregation to be used within the query. Defaults to the primaryAggregationType defined by the metric.
-		Aggregation *string `json:"aggregation,omitempty"`
-
-		// Aliases can be set to modify the legend labels. e.g. {{ resourceGroup }}. See docs for more detail.
-		Alias *string `json:"alias,omitempty"`
-
-		// Time grains that are supported by the metric.
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs,omitempty"`
-
-		// Used as the value for the metricNamespace property when it's different from the resource namespace.
-		CustomNamespace *string `json:"customNamespace,omitempty"`
-
-		// @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration
-		Dimension *string `json:"dimension,omitempty"`
-
-		// @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration
-		DimensionFilter *string `json:"dimensionFilter,omitempty"`
-
-		// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
-		DimensionFilters []struct {
-			// Name of Dimension to be filtered on.
-			Dimension *string `json:"dimension,omitempty"`
-
-			// @deprecated filter is deprecated in favour of filters to support multiselect.
-			Filter *string `json:"filter,omitempty"`
-
-			// Values to match with the filter.
-			Filters []string `json:"filters,omitempty"`
-
-			// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-			Operator *string `json:"operator,omitempty"`
-		} `json:"dimensionFilters,omitempty"`
-
-		// @deprecated Use metricNamespace instead
-		MetricDefinition *string `json:"metricDefinition,omitempty"`
-
-		// The metric to query data for within the specified metricNamespace. e.g. UsedCapacity
-		MetricName *string `json:"metricName,omitempty"`
-
-		// metricNamespace is used as the resource type (or resource namespace).
-		// It's usually equal to the target metric namespace. e.g. microsoft.storage/storageaccounts
-		// Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
-		MetricNamespace *string `json:"metricNamespace,omitempty"`
-
-		// The Azure region containing the resource(s).
-		Region *string `json:"region,omitempty"`
-
-		// @deprecated Use resources instead
-		ResourceGroup *string `json:"resourceGroup,omitempty"`
-
-		// @deprecated Use resources instead
-		ResourceName *string `json:"resourceName,omitempty"`
-
-		// @deprecated Use resourceGroup, resourceName and metricNamespace instead
-		ResourceUri *string `json:"resourceUri,omitempty"`
-
-		// Array of resource URIs to be queried.
-		Resources []struct {
-			MetricNamespace *string `json:"metricNamespace,omitempty"`
-			Region          *string `json:"region,omitempty"`
-			ResourceGroup   *string `json:"resourceGroup,omitempty"`
-			ResourceName    *string `json:"resourceName,omitempty"`
-			Subscription    *string `json:"subscription,omitempty"`
-		} `json:"resources,omitempty"`
-
-		// The granularity of data points to be queried. Defaults to auto.
-		TimeGrain *string `json:"timeGrain,omitempty"`
-
-		// TimeGrainUnit @deprecated
-		TimeGrainUnit *string `json:"timeGrainUnit,omitempty"`
-
-		// Maximum number of records to return. Defaults to 10.
-		Top *string `json:"top,omitempty"`
-	} `json:"azureMonitor,omitempty"`
-
-	// Azure Resource Graph sub-query properties.
-	AzureResourceGraph *struct {
-		// Azure Resource Graph KQL query to be executed.
-		Query *string `json:"query,omitempty"`
-
-		// Specifies the format results should be returned as. Defaults to table.
-		ResultFormat *string `json:"resultFormat,omitempty"`
-	} `json:"azureResourceGraph,omitempty"`
-
-	// Application Insights Traces sub-query properties.
-	AzureTraces *struct {
-		// Filters for property values.
-		Filters []struct {
-			// Values to filter by.
-			Filters []string `json:"filters"`
-
-			// Comparison operator to use. Either equals or not equals.
-			Operation string `json:"operation"`
-
-			// Property name, auto-populated based on available traces.
-			Property string `json:"property"`
-		} `json:"filters,omitempty"`
-
-		// Operation ID. Used only for Traces queries.
-		OperationId *string `json:"operationId,omitempty"`
-
-		// KQL query to be executed.
-		Query *string `json:"query,omitempty"`
-
-		// Array of resource URIs to be queried.
-		Resources []string `json:"resources,omitempty"`
-
-		// Specifies the format results should be returned as.
-		ResultFormat *AzureMonitorQueryAzureTracesResultFormat `json:"resultFormat,omitempty"`
-
-		// Types of events to filter by.
-		TraceTypes []string `json:"traceTypes,omitempty"`
-	} `json:"azureTraces,omitempty"`
-
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
-
-	// @deprecated Legacy template variable support.
-	GrafanaTemplateVariableFn *AzureMonitorQueryGrafanaTemplateVariableFn `json:"grafanaTemplateVariableFn,omitempty"`
-
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
-	Hide      *bool   `json:"hide,omitempty"`
-	Namespace *string `json:"namespace,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
+	// Application Insights Traces sub-query properties
+	AzureTraces               *AzureTracesQuery `json:"azureTraces,omitempty"`
+	GrafanaTemplateVariableFn *any              `json:"grafanaTemplateVariableFn,omitempty"`
+	Namespace                 *string           `json:"namespace,omitempty"`
 
 	// Azure Monitor query type.
 	// queryType: #AzureQueryType
@@ -437,25 +242,6 @@ type AzureMonitorQuery struct {
 
 	// Subscriptions to be queried via Azure Resource Graph.
 	Subscriptions []string `json:"subscriptions,omitempty"`
-}
-
-// Specifies the format results should be returned as.
-type AzureMonitorQueryAzureLogAnalyticsResultFormat string
-
-// Specifies the format results should be returned as.
-type AzureMonitorQueryAzureTracesResultFormat string
-
-// @deprecated Legacy template variable support.
-type AzureMonitorQueryGrafanaTemplateVariableFn struct {
-	Kind                 *interface{}           `json:"kind,omitempty"`
-	MetricName           *string                `json:"metricName,omitempty"`
-	MetricNamespace      *string                `json:"metricNamespace,omitempty"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	ResourceGroup        *string                `json:"resourceGroup,omitempty"`
-	ResourceName         *string                `json:"resourceName,omitempty"`
-	Subscription         *string                `json:"subscription,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
-	union                json.RawMessage
 }
 
 // AzureMonitorResource defines model for AzureMonitorResource.
@@ -494,16 +280,7 @@ type AzureTracesFilter struct {
 // Application Insights Traces sub-query properties
 type AzureTracesQuery struct {
 	// Filters for property values.
-	Filters []struct {
-		// Values to filter by.
-		Filters []string `json:"filters"`
-
-		// Comparison operator to use. Either equals or not equals.
-		Operation string `json:"operation"`
-
-		// Property name, auto-populated based on available traces.
-		Property string `json:"property"`
-	} `json:"filters,omitempty"`
+	Filters []AzureTracesFilter `json:"filters,omitempty"`
 
 	// Operation ID. Used only for Traces queries.
 	OperationId *string `json:"operationId,omitempty"`
@@ -512,49 +289,55 @@ type AzureTracesQuery struct {
 	Query *string `json:"query,omitempty"`
 
 	// Array of resource URIs to be queried.
-	Resources []string `json:"resources,omitempty"`
-
-	// Specifies the format results should be returned as.
-	ResultFormat *AzureTracesQueryResultFormat `json:"resultFormat,omitempty"`
+	Resources    []string      `json:"resources,omitempty"`
+	ResultFormat *ResultFormat `json:"resultFormat,omitempty"`
 
 	// Types of events to filter by.
 	TraceTypes []string `json:"traceTypes,omitempty"`
 }
 
-// Specifies the format results should be returned as.
-type AzureTracesQueryResultFormat string
-
 // BaseGrafanaTemplateVariableQuery defines model for BaseGrafanaTemplateVariableQuery.
 type BaseGrafanaTemplateVariableQuery struct {
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	RawQuery *string `json:"rawQuery,omitempty"`
 }
 
-// GrafanaTemplateVariableQuery defines model for GrafanaTemplateVariableQuery.
-type GrafanaTemplateVariableQuery struct {
-	Kind                 *interface{}           `json:"kind,omitempty"`
-	MetricName           *string                `json:"metricName,omitempty"`
-	MetricNamespace      *string                `json:"metricNamespace,omitempty"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	ResourceGroup        *string                `json:"resourceGroup,omitempty"`
-	ResourceName         *string                `json:"resourceName,omitempty"`
-	Subscription         *string                `json:"subscription,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
-	union                json.RawMessage
+// These are the common properties available to all queries in all datasources.
+// Specific implementations will *extend* this interface, adding the required
+// properties for the given context.
+type DataQuery struct {
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *any `json:"datasource,omitempty"`
+
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide *bool `json:"hide,omitempty"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
 }
 
 // GrafanaTemplateVariableQueryType defines model for GrafanaTemplateVariableQueryType.
 type GrafanaTemplateVariableQueryType string
 
-// @deprecated Use MetricNamespaceQuery instead
+// MetricDefinitionsQuery defines model for MetricDefinitionsQuery.
 type MetricDefinitionsQuery struct {
-	Kind                 MetricDefinitionsQueryKind `json:"kind"`
-	MetricNamespace      *string                    `json:"metricNamespace,omitempty"`
-	RawQuery             *string                    `json:"rawQuery,omitempty"`
-	ResourceGroup        string                     `json:"resourceGroup"`
-	ResourceName         *string                    `json:"resourceName,omitempty"`
-	Subscription         string                     `json:"subscription"`
-	AdditionalProperties map[string]interface{}     `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind            MetricDefinitionsQueryKind `json:"kind"`
+	MetricNamespace *string                    `json:"metricNamespace,omitempty"`
+	RawQuery        *string                    `json:"rawQuery,omitempty"`
+	ResourceGroup   string                     `json:"resourceGroup"`
+	ResourceName    *string                    `json:"resourceName,omitempty"`
+	Subscription    string                     `json:"subscription"`
 }
 
 // MetricDefinitionsQueryKind defines model for MetricDefinitionsQuery.Kind.
@@ -562,13 +345,13 @@ type MetricDefinitionsQueryKind string
 
 // MetricNamesQuery defines model for MetricNamesQuery.
 type MetricNamesQuery struct {
-	Kind                 MetricNamesQueryKind   `json:"kind"`
-	MetricNamespace      string                 `json:"metricNamespace"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	ResourceGroup        string                 `json:"resourceGroup"`
-	ResourceName         string                 `json:"resourceName"`
-	Subscription         string                 `json:"subscription"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind            MetricNamesQueryKind `json:"kind"`
+	MetricNamespace string               `json:"metricNamespace"`
+	RawQuery        *string              `json:"rawQuery,omitempty"`
+	ResourceGroup   string               `json:"resourceGroup"`
+	ResourceName    string               `json:"resourceName"`
+	Subscription    string               `json:"subscription"`
 }
 
 // MetricNamesQueryKind defines model for MetricNamesQuery.Kind.
@@ -576,13 +359,13 @@ type MetricNamesQueryKind string
 
 // MetricNamespaceQuery defines model for MetricNamespaceQuery.
 type MetricNamespaceQuery struct {
-	Kind                 MetricNamespaceQueryKind `json:"kind"`
-	MetricNamespace      *string                  `json:"metricNamespace,omitempty"`
-	RawQuery             *string                  `json:"rawQuery,omitempty"`
-	ResourceGroup        string                   `json:"resourceGroup"`
-	ResourceName         *string                  `json:"resourceName,omitempty"`
-	Subscription         string                   `json:"subscription"`
-	AdditionalProperties map[string]interface{}   `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind            MetricNamespaceQueryKind `json:"kind"`
+	MetricNamespace *string                  `json:"metricNamespace,omitempty"`
+	RawQuery        *string                  `json:"rawQuery,omitempty"`
+	ResourceGroup   string                   `json:"resourceGroup"`
+	ResourceName    *string                  `json:"resourceName,omitempty"`
+	Subscription    string                   `json:"subscription"`
 }
 
 // MetricNamespaceQueryKind defines model for MetricNamespaceQuery.Kind.
@@ -590,10 +373,10 @@ type MetricNamespaceQueryKind string
 
 // ResourceGroupsQuery defines model for ResourceGroupsQuery.
 type ResourceGroupsQuery struct {
-	Kind                 ResourceGroupsQueryKind `json:"kind"`
-	RawQuery             *string                 `json:"rawQuery,omitempty"`
-	Subscription         string                  `json:"subscription"`
-	AdditionalProperties map[string]interface{}  `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind         ResourceGroupsQueryKind `json:"kind"`
+	RawQuery     *string                 `json:"rawQuery,omitempty"`
+	Subscription string                  `json:"subscription"`
 }
 
 // ResourceGroupsQueryKind defines model for ResourceGroupsQuery.Kind.
@@ -601,12 +384,12 @@ type ResourceGroupsQueryKind string
 
 // ResourceNamesQuery defines model for ResourceNamesQuery.
 type ResourceNamesQuery struct {
-	Kind                 ResourceNamesQueryKind `json:"kind"`
-	MetricNamespace      string                 `json:"metricNamespace"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	ResourceGroup        string                 `json:"resourceGroup"`
-	Subscription         string                 `json:"subscription"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind            ResourceNamesQueryKind `json:"kind"`
+	MetricNamespace string                 `json:"metricNamespace"`
+	RawQuery        *string                `json:"rawQuery,omitempty"`
+	ResourceGroup   string                 `json:"resourceGroup"`
+	Subscription    string                 `json:"subscription"`
 }
 
 // ResourceNamesQueryKind defines model for ResourceNamesQuery.Kind.
@@ -617,9 +400,9 @@ type ResultFormat string
 
 // SubscriptionsQuery defines model for SubscriptionsQuery.
 type SubscriptionsQuery struct {
-	Kind                 SubscriptionsQueryKind `json:"kind"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind     SubscriptionsQueryKind `json:"kind"`
+	RawQuery *string                `json:"rawQuery,omitempty"`
 }
 
 // SubscriptionsQueryKind defines model for SubscriptionsQuery.Kind.
@@ -627,9 +410,9 @@ type SubscriptionsQueryKind string
 
 // UnknownQuery defines model for UnknownQuery.
 type UnknownQuery struct {
-	Kind                 UnknownQueryKind       `json:"kind"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind     UnknownQueryKind `json:"kind"`
+	RawQuery *string          `json:"rawQuery,omitempty"`
 }
 
 // UnknownQueryKind defines model for UnknownQuery.Kind.
@@ -637,10 +420,10 @@ type UnknownQueryKind string
 
 // WorkspacesQuery defines model for WorkspacesQuery.
 type WorkspacesQuery struct {
-	Kind                 WorkspacesQueryKind    `json:"kind"`
-	RawQuery             *string                `json:"rawQuery,omitempty"`
-	Subscription         string                 `json:"subscription"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	BaseGrafanaTemplateVariableQuery
+	Kind         WorkspacesQueryKind `json:"kind"`
+	RawQuery     *string             `json:"rawQuery,omitempty"`
+	Subscription string              `json:"subscription"`
 }
 
 // WorkspacesQueryKind defines model for WorkspacesQuery.Kind.

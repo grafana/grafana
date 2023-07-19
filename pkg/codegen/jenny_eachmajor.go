@@ -34,6 +34,11 @@ func (j *lmox) JennyName() string {
 }
 
 func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
+	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
+	if kind == nil {
+		return nil, nil
+	}
+
 	comm := kind.Props().Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,

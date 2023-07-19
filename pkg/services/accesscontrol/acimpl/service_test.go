@@ -46,11 +46,6 @@ func TestUsageMetrics(t *testing.T) {
 		expectedValue int
 	}{
 		{
-			name:          "Expecting metric with value 0",
-			enabled:       false,
-			expectedValue: 0,
-		},
-		{
 			name:          "Expecting metric with value 1",
 			enabled:       true,
 			expectedValue: 1,
@@ -848,6 +843,58 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.OrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
 				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+			}
+		})
+	}
+}
+
+func TestService_DeleteExternalServiceRole(t *testing.T) {
+	tests := []struct {
+		name              string
+		initCmd           *accesscontrol.SaveExternalServiceRoleCommand
+		externalServiceID string
+		wantErr           bool
+	}{
+		{
+			name:              "handles deleting role that doesn't exist",
+			externalServiceID: "App 1",
+			wantErr:           false,
+		},
+		{
+			name: "handles deleting role that exists",
+			initCmd: &accesscontrol.SaveExternalServiceRoleCommand{
+				Global:            true,
+				ServiceAccountID:  2,
+				ExternalServiceID: "App 1",
+				Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+			},
+			externalServiceID: "App 1",
+			wantErr:           false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+
+			if tt.initCmd != nil {
+				err := ac.SaveExternalServiceRole(ctx, *tt.initCmd)
+				require.NoError(t, err)
+			}
+
+			err := ac.DeleteExternalServiceRole(ctx, tt.externalServiceID)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			if tt.initCmd != nil {
+				// Check that the permissions and assignment are removed correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				assert.Empty(t, perms)
 			}
 		})
 	}

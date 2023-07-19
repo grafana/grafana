@@ -9,14 +9,11 @@ interface Props {
  * Delay the rendering of the children by N amount of milliseconds
  */
 export function DelayRender({ children, delay }: Props) {
-  const [shouldRender, setRender] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setRender(true);
+    window.setTimeout(() => {
+      setShouldRender(true);
     }, delay);
-    return () => {
-      clearInterval(intervalId);
-    };
   }, [children, delay]);
 
   return <>{shouldRender ? children : null}</>;

@@ -16,7 +16,7 @@ import { VizWrapper } from './VizWrapper';
 export interface RecordingRuleEditorProps {
   queries: AlertQuery[];
   onChangeQuery: (updatedQueries: AlertQuery[]) => void;
-  runQueries: (queries: AlertQuery[]) => void;
+  runQueries: () => void;
   panelData: Record<string, PanelData>;
   dataSourceName: string;
 }
@@ -94,7 +94,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
           queries={queries}
           app={CoreApp.UnifiedAlerting}
           onChange={handleChangedQuery}
-          onRunQuery={() => runQueries(queries)}
+          onRunQuery={runQueries}
           datasource={dataSource}
         />
       )}

@@ -24,7 +24,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private tags: { [tag: string]: Set<string> } = {};
   private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
@@ -65,13 +64,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     });
   }
 
-  /**
-   * We expect the tags list data directly from the request and assign it an empty set here.
-   */
-  setTags(tags: string[]) {
-    tags.forEach((t) => (this.tags[t] = new Set<string>()));
-  }
-
   private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
 
@@ -90,9 +82,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @private
    */
   private async getCompletions(situation: Situation): Promise<Completion[]> {
-    if (!Object.keys(this.tags).length) {
-      return [];
-    }
     switch (situation.type) {
       // Not really sure what would make sense to suggest in this case so just leave it
       case 'UNKNOWN': {
@@ -125,7 +114,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getTagsCompletions(): Completion[] {
-    return Object.keys(this.tags)
+    const tags = this.languageProvider.getAutocompleteTags();
+    return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
       .map((key) => ({
         label: key,

@@ -5,12 +5,21 @@ rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following ev
 """
 
 load(
+    "scripts/drone/steps/lib.star",
+    "get_windows_steps",
+)
+load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
 load(
+    "scripts/drone/events/release.star",
+    "verify_release_pipeline",
+)
+load(
     "scripts/drone/vault.star",
     "from_secret",
+    "rgm_dagger_token",
     "rgm_destination",
     "rgm_gcp_key_base64",
     "rgm_github_token",
@@ -20,26 +29,19 @@ rgm_env_secrets = {
     "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
     "DESTINATION": from_secret(rgm_destination),
     "GITHUB_TOKEN": from_secret(rgm_github_token),
+    "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
+    "GPG_PRIVATE_KEY": from_secret("packages_gpg_private_key"),
+    "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
+    "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
 }
 
 def rgm_build(script = "drone_publish_main.sh"):
-    clone_step = {
-        "name": "clone-rgm",
-        "image": "alpine/git",
-        "commands": [
-            "git clone https://github.com/grafana/grafana-build.git rgm",
-        ],
-        "failure": "ignore",
-    }
-
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "golang:1.20.3-alpine",
+        "image": "grafana/grafana-build:main",
         "commands": [
-            # the docker program is a requirement for running dagger programs
-            "apk update && apk add docker",
             "export GRAFANA_DIR=$$(pwd)",
-            "cd rgm && ./scripts/{}".format(script),
+            "cd /src && ./scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
@@ -49,9 +51,17 @@ def rgm_build(script = "drone_publish_main.sh"):
     }
 
     return [
-        clone_step,
         rgm_build_step,
     ]
+
+docs_paths = {
+    "exclude": [
+        "*.md",
+        "docs/**",
+        "packages/**/*.md",
+        "latest.json",
+    ],
+}
 
 def rgm_main():
     trigger = {
@@ -59,43 +69,68 @@ def rgm_main():
             "push",
         ],
         "branch": "main",
+        "paths": docs_paths,
     }
 
     return pipeline(
-        name = "[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging to main",
-        edition = "all",
+        name = "rgm-main-prerelease",
         trigger = trigger,
         steps = rgm_build(),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
-def rgm_tag():
-    trigger = {
-        "event": {
-            "exclude": [
-                "promote",
-            ],
-        },
-        "ref": {
-            "include": [
-                "refs/tags/v*",
-            ],
-            "exclude": [
-                "refs/tags/*-cloud*",
-            ],
-        },
-    }
+tag_trigger = {
+    "event": {
+        "exclude": [
+            "promote",
+        ],
+    },
+    "ref": {
+        "include": [
+            "refs/tags/v*",
+        ],
+        "exclude": [
+            "refs/tags/*-cloud*",
+        ],
+    },
+}
 
+def rgm_tag():
     return pipeline(
-        name = "[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging",
-        edition = "all",
-        trigger = trigger,
+        name = "rgm-tag-prerelease",
+        trigger = tag_trigger,
         steps = rgm_build(script = "drone_publish_tag.sh"),
         depends_on = [],
+    )
+
+def rgm_windows(edition = "oss"):
+    return pipeline(
+        name = "rgm-tag-prerelease-windows-{}".format(edition),
+        trigger = tag_trigger,
+        steps = get_windows_steps(
+            ver_mode = "release",
+            bucket = "grafana-prerelease-dev",
+            edition = edition,
+        ),
+        depends_on = ["rgm-tag-prerelease"],
+        platform = "windows",
+        environment = {"EDITION": edition},
     )
 
 def rgm():
     return [
         rgm_main(),
         rgm_tag(),
+        rgm_windows(edition = "oss"),
+        rgm_windows(edition = "enterprise"),
+        verify_release_pipeline(
+            trigger = tag_trigger,
+            name = "rgm-tag-verify-prerelease-assets",
+            bucket = "grafana-prerelease-dev",
+            depends_on = [
+                "rgm-tag-prerelease",
+                "rgm-tag-prerelease-windows-oss",
+                "rgm-tag-prerelease-windows-enterprise",
+            ],
+        ),
     ]

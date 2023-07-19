@@ -29,6 +29,8 @@ import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
+import 'core-js/stable/structured-clone';
+
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');

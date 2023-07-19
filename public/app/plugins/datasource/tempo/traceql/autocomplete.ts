@@ -34,7 +34,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private tags: { [tag: string]: Set<string> } = {};
   private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
@@ -82,13 +81,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   /**
-   * We expect the tags list data directly from the request and assign it an empty set here.
-   */
-  setTags(tags: string[]) {
-    tags.forEach((t) => (this.tags[t] = new Set<string>()));
-  }
-
-  /**
    * Set the ID for the registerInteraction command, to be used to keep track of how many completions are used by the users
    */
   setRegisterInteractionCommandId(id: string | null) {
@@ -113,9 +105,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @private
    */
   private async getCompletions(situation: Situation): Promise<Completion[]> {
-    if (!Object.keys(this.tags).length) {
-      return [];
-    }
     switch (situation.type) {
       // Not really sure what would make sense to suggest in this case so just leave it
       case 'UNKNOWN': {
@@ -134,7 +123,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
-        return this.getTagsCompletions();
+        return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_AFTER_NAME':
         return CompletionProvider.operators.map((key) => ({
           label: key,
@@ -183,8 +172,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
-  private getTagsCompletions(prepend?: string): Completion[] {
-    return Object.keys(this.tags)
+  private getTagsCompletions(prepend?: string, scope?: string): Completion[] {
+    const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
+    return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
       .map((key) => ({
         label: key,
@@ -258,6 +248,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         if (scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
           return {
             type: 'SPANSET_IN_NAME_SCOPE',
+            scope: nameMatched?.groups?.word || '',
           };
         }
         // It's not one of the scopes, so we now check if we're after the name (there's a space after the word) or if we still have to autocomplete the rest of the name
@@ -373,6 +364,7 @@ export type Situation =
     }
   | {
       type: 'SPANSET_IN_NAME_SCOPE';
+      scope: string;
     }
   | {
       type: 'SPANSET_IN_VALUE';

@@ -29,7 +29,7 @@ import { ControlsOptions, Options, MapLayerState, MapViewConfig, TooltipMode } f
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
-import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tootltip';
+import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
 import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 

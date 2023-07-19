@@ -8,7 +8,12 @@ keywords:
   - rendering
   - plugin
   - troubleshooting
-title: Troubleshooting
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Troubleshooting
+title: Troubleshoot image rendering
 weight: 200
 ---
 
@@ -27,11 +32,7 @@ You can enable debug log messages for rendering in the Grafana configuration fil
 filters = rendering:debug
 ```
 
-You can also enable more logs in image renderer service itself by:
-
-- Increasing the [log level]({{< relref ".#log-level" >}}).
-- Enabling [verbose logging]({{< relref "./#verbose-logging" >}}).
-- [Capturing headless browser output]({{< relref "./#capture-browser-output" >}}).
+You can also enable more logs in image renderer service itself by enabling [debug logging]({{< relref "#enable-debug-logging" >}}).
 
 ## Missing libraries
 
@@ -127,11 +128,13 @@ certutil –addstore "Root" <path>/internal-root-ca.crt.pem
 ## Custom Chrome/Chromium
 
 As a last resort, if you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
-installed on your system, then you can configure the [Grafana Image renderer plugin](../#custom-chromechromium) to use this
+installed on your system, then you can configure the Grafana Image renderer plugin to use this
 instead of the pre-packaged version of Chromium.
 
-> **Note:** Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
-> compatible with the [Grafana Image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+{{% admonition type="note" %}}
+Please note that this is not recommended, since you may encounter problems if the installed version of Chrome/Chromium is not
+compatible with the [Grafana Image renderer plugin](/grafana/plugins/grafana-image-renderer).
+{{% /admonition %}}
 
 To override the path to the Chrome/Chromium executable in plugin mode, set an environment variable and make sure that it's available for the Grafana process. For example:
 

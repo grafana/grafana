@@ -110,23 +110,24 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 }
 
 // assignApiKeyToServiceAccount sets the API key service account ID
-func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session, apiKeyId int64, serviceAccountId int64) error {
-	key := apikey.APIKey{ID: apiKeyId}
-	exists, err := sess.Get(&key)
-	if err != nil {
-		s.log.Warn("API key not loaded", "err", err)
-		return err
-	}
-	if !exists {
-		s.log.Warn("API key not found", "err", err)
-		return apikey.ErrNotFound
-	}
-	key.ServiceAccountId = &serviceAccountId
+func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(ctx context.Context, apiKeyId int64, serviceAccountId int64) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		key := apikey.APIKey{ID: apiKeyId}
+		exists, err := sess.Get(&key)
+		if err != nil {
+			s.log.Warn("API key not loaded", "err", err)
+			return err
+		}
+		if !exists {
+			s.log.Warn("API key not found", "err", err)
+			return apikey.ErrNotFound
+		}
+		key.ServiceAccountId = &serviceAccountId
 
-	if _, err := sess.ID(key.ID).Update(&key); err != nil {
-		s.log.Warn("Could not update api key", "err", err)
-		return err
-	}
-
-	return nil
+		if _, err := sess.ID(key.ID).Update(&key); err != nil {
+			s.log.Warn("Could not update api key", "err", err)
+			return err
+		}
+		return nil
+	})
 }

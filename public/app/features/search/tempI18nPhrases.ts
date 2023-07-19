@@ -10,11 +10,11 @@ export function getSearchPlaceholder(includePanels = false) {
 }
 
 export function getNewDashboardPhrase() {
-  return t('search.dashboard-actions.new-dashboard', 'New Dashboard');
+  return t('search.dashboard-actions.new-dashboard', 'New dashboard');
 }
 
 export function getNewFolderPhrase() {
-  return t('search.dashboard-actions.new-folder', 'New Folder');
+  return t('search.dashboard-actions.new-folder', 'New folder');
 }
 
 export function getImportPhrase() {

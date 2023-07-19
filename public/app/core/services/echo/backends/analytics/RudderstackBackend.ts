@@ -1,6 +1,6 @@
 import type { apiOptions, identify, load, page, track } from 'rudder-sdk-js'; // SDK is loaded dynamically from config, so we only import types from the SDK package
 
-import { CurrentUserDTO } from '@grafana/data';
+import { BuildInfo, CurrentUserDTO } from '@grafana/data';
 import {
   EchoBackend,
   EchoEventType,
@@ -30,6 +30,7 @@ declare global {
 export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
+  buildInfo: BuildInfo;
   user?: CurrentUserDTO;
   sdkUrl?: string;
   configUrl?: string;
@@ -85,6 +86,8 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
           email: options.user.email,
           orgId: options.user.orgId,
           language: options.user.language,
+          version: options.buildInfo.version,
+          edition: options.buildInfo.edition,
         },
         apiOptions
       );

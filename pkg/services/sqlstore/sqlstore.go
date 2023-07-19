@@ -112,7 +112,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
-	ss.Dialect = migrator.NewDialect(ss.engine)
+	ss.Dialect = migrator.NewDialect(ss.engine.DriverName())
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -298,7 +298,7 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 
 		if isolation := ss.dbCfg.IsolationLevel; isolation != "" {
 			val := url.QueryEscape(fmt.Sprintf("'%s'", isolation))
-			cnnstr += fmt.Sprintf("&tx_isolation=%s", val)
+			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
 		if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) || ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagNewDBLibrary) {
@@ -316,15 +316,17 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
-		if ss.dbCfg.Pwd == "" {
-			ss.dbCfg.Pwd = "''"
+		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
+			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
+		for i, arg := range args {
+			if arg == "" {
+				args[i] = "''"
+			}
 		}
-		if ss.dbCfg.User == "" {
-			ss.dbCfg.User = "''"
+		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
+		if ss.dbCfg.Pwd != "" {
+			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s",
-			ss.dbCfg.User, ss.dbCfg.Pwd, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
-			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
 
 		cnnstr += ss.buildExtraConnectionString(' ')
 	case migrator.SQLite:
@@ -402,6 +404,14 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		if err != nil {
 			return err
 		}
+		// Only for MySQL or MariaDB, verify we can connect with the current connection string's system var for transaction isolation.
+		// If not, create a new engine with a compatible connection string.
+		if ss.dbCfg.Type == migrator.MySQL {
+			engine, err = ss.ensureTransactionIsolationCompatibility(engine, connectionString)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	engine.SetMaxOpenConns(ss.dbCfg.MaxOpenConn)
@@ -421,6 +431,32 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 
 	ss.engine = engine
 	return nil
+}
+
+// The transaction_isolation system variable isn't compatible with MySQL < 5.7.20 or MariaDB. If we get an error saying this
+// system variable is unknown, then replace it with it's older version tx_isolation which is compatible with MySQL < 5.7.20 and MariaDB.
+func (ss *SQLStore) ensureTransactionIsolationCompatibility(engine *xorm.Engine, connectionString string) (*xorm.Engine, error) {
+	var result string
+	_, err := engine.SQL("SELECT 1").Get(&result)
+
+	var mysqlError *mysql.MySQLError
+	if errors.As(err, &mysqlError) {
+		// if there was an error due to transaction isolation
+		if strings.Contains(mysqlError.Message, "Unknown system variable 'transaction_isolation'") {
+			ss.log.Debug("transaction_isolation system var is unknown, overriding in connection string with tx_isolation instead")
+			// replace with compatible system var for transaction isolation
+			connectionString = strings.Replace(connectionString, "&transaction_isolation", "&tx_isolation", -1)
+			// recreate the xorm engine with new connection string that is compatible
+			engine, err = xorm.NewEngine(ss.dbCfg.Type, connectionString)
+			if err != nil {
+				return nil, err
+			}
+		}
+	} else if err != nil {
+		return nil, err
+	}
+
+	return engine, nil
 }
 
 // readConfig initializes the SQLStore from its configuration.
@@ -477,6 +513,10 @@ func (ss *SQLStore) readConfig() error {
 	ss.dbCfg.QueryRetries = sec.Key("query_retries").MustInt()
 	ss.dbCfg.TransactionRetries = sec.Key("transaction_retries").MustInt(5)
 	return nil
+}
+
+func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
+	return ss.dbCfg.MigrationLockAttemptTimeout
 }
 
 func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
@@ -666,7 +706,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 			return nil, err
 		}
 
-		if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
+		if err := testSQLStore.Dialect.TruncateDBTables(engine); err != nil {
 			return nil, err
 		}
 
@@ -694,7 +734,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		return false
 	}
 
-	if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
+	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {

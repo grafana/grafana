@@ -11,7 +11,10 @@ import {
   SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
+import {
+  PublicDashboardListWithPagination,
+  PublicDashboardListWithPaginationResponse,
+} from 'app/features/manage-dashboards/types';
 
 type ReqOptions = {
   manageError?: (err: unknown) => { error: unknown };
@@ -85,23 +88,30 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: (result, error, { dashboard }) => [{ type: 'PublicDashboard', id: dashboard.uid }],
     }),
-    updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    updatePublicDashboard: builder.mutation<
+      PublicDashboard,
+      { dashboard: Partial<DashboardModel>; payload: Partial<PublicDashboard> }
+    >({
       query: (params) => ({
         url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
-        method: 'PUT',
+        method: 'PATCH',
         data: params.payload,
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
 
-        // Update runtime meta flag
-        dashboard.updateMeta({
-          publicDashboardUid: data.uid,
-          publicDashboardEnabled: data.isEnabled,
-        });
+        if (dashboard.updateMeta) {
+          dashboard.updateMeta({
+            publicDashboardUid: data.uid,
+            publicDashboardEnabled: data.isEnabled,
+          });
+        }
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { payload }) => [
+        { type: 'PublicDashboard', id: payload.dashboardUid },
+        'AuditTablePublicDashboard',
+      ],
     }),
     addRecipient: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
       query: () => ({
@@ -130,9 +140,13 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: (result, _, email) => [{ type: 'ActiveUserDashboards', id: email }],
     }),
-    listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
-      query: () => ({
-        url: '/dashboards/public-dashboards',
+    listPublicDashboards: builder.query<PublicDashboardListWithPagination, number | void>({
+      query: (page = 1) => ({
+        url: `/dashboards/public-dashboards?page=${page}&perpage=8`,
+      }),
+      transformResponse: (response: PublicDashboardListWithPaginationResponse) => ({
+        ...response,
+        totalPages: Math.ceil(response.totalCount / response.perPage),
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),

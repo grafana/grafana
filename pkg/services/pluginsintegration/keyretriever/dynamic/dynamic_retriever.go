@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,9 +28,8 @@ type ManifestKeys struct {
 }
 
 type KeyRetriever struct {
-	cfg   *setting.Cfg
-	log   log.Logger
-	flags featuremgmt.FeatureToggles
+	cfg *setting.Cfg
+	log log.Logger
 
 	lock    sync.Mutex
 	cli     http.Client
@@ -41,20 +39,19 @@ type KeyRetriever struct {
 
 var _ plugins.KeyRetriever = (*KeyRetriever)(nil)
 
-func ProvideService(cfg *setting.Cfg, kv plugins.KeyStore, flags featuremgmt.FeatureToggles) *KeyRetriever {
+func ProvideService(cfg *setting.Cfg, kv plugins.KeyStore) *KeyRetriever {
 	kr := &KeyRetriever{
-		cfg:   cfg,
-		flags: flags,
-		log:   log.New("plugin.signature.key_retriever"),
-		cli:   makeHttpClient(),
-		kv:    kv,
+		cfg: cfg,
+		log: log.New("plugin.signature.key_retriever"),
+		cli: makeHttpClient(),
+		kv:  kv,
 	}
 	return kr
 }
 
 // IsDisabled disables dynamic retrieval of public keys from the API server.
 func (kr *KeyRetriever) IsDisabled() bool {
-	return !kr.flags.IsEnabled(featuremgmt.FlagPluginsAPIManifestKey)
+	return kr.cfg.PluginSkipPublicKeyDownload
 }
 
 func (kr *KeyRetriever) Run(ctx context.Context) error {

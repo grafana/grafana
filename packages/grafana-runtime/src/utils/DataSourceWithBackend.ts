@@ -76,8 +76,8 @@ export enum HealthStatus {
 enum PluginRequestHeaders {
   PluginID = 'X-Plugin-Id', // can be used for routing
   DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
-  DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
-  PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
+  DashboardUID = 'X-Dashboard-Uid', // mainly useful for debugging slow queries
+  PanelID = 'X-Panel-Id', // mainly useful for debugging slow queries
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
 }
@@ -113,7 +113,7 @@ export interface HealthCheckResult {
  */
 class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
@@ -187,7 +187,6 @@ class DataSourceWithBackend<
     const body: any = { queries };
 
     if (range) {
-      body.range = range;
       body.from = range.from.valueOf().toString();
       body.to = range.to.valueOf().toString();
     }

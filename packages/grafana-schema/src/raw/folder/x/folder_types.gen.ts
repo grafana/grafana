@@ -8,6 +8,10 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+/**
+ * TODO:
+ * common metadata will soon support setting the parent folder in the metadata
+ */
 export interface Folder {
   /**
    * Description of the folder.

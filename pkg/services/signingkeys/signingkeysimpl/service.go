@@ -2,13 +2,13 @@ package signingkeysimpl
 
 import (
 	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 
 	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
@@ -18,13 +18,13 @@ const (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService(features *featuremgmt.FeatureManager) (*Service, error) {
+func ProvideEmbeddedSigningKeysService() (*Service, error) {
 	s := &Service{
 		log:  log.New("auth.key_service"),
 		keys: map[string]crypto.Signer{},
 	}
 
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		s.log.Error("Error generating private key", "err", err)
 		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)

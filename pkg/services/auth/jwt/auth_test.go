@@ -112,6 +112,16 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
 			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
 		})
+		require.NoError(t, err)
+
+		oldEnv := setting.Env
+		setting.Env = setting.Prod
+		defer func() {
+			setting.Env = oldEnv
+		}()
+		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
+		})
 		require.Error(t, err)
 	})
 

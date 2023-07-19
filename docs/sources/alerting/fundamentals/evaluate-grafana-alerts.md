@@ -2,6 +2,13 @@
 aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/evaluate-grafana-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/
+description: How to alert on numeric data
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alerting on numeric data
 weight: 116
 ---
@@ -23,11 +30,11 @@ Grafana managed alerts query the following backend data sources that have alerti
 
 - built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Monitor`
-- community developed backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json]({{< relref "/docs/grafana/latest/developers/plugins/metadata" >}}))
+- community developed backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json][metadata])
 
 ### Metrics from the alerting engine
 
-The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics]({{< relref "/docs/grafana/latest/setup-grafana/set-up-grafana-monitoring" >}}).
+The alerting engine publishes some internal metrics about itself. You can read more about how Grafana publishes [internal metrics][set-up-grafana-monitoring].
 
 | Metric Name                                       | Type      | Description                                                                              |
 | ------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------- |
@@ -99,3 +106,11 @@ When this query is used as the **condition** in an alert rule, then the non-zero
 | {Host=web1,disk=/etc} | Alerting |
 | {Host=web2,disk=/var} | Alerting |
 | {Host=web3,disk=/var} | Normal   |
+
+{{% docs/reference %}}
+[metadata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/metadata"
+[metadata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/metadata"
+
+[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+{{% /docs/reference %}}

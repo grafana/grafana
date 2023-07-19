@@ -68,7 +68,7 @@ const DroneSideDisplay = ({ data }: CanvasElementProps<DroneSideConfig, DroneSid
   );
 };
 
-export const droneSideItem: CanvasElementItem<any, any> = {
+export const droneSideItem: CanvasElementItem = {
   id: 'droneSide',
   name: 'Drone Side',
   description: 'Drone Side',

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,23 +82,19 @@ func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *set
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData, err := simplejson.NewJson(settings.JSONData)
-		if err != nil {
-			return nil, fmt.Errorf("error reading settings: %w", err)
-		}
 		jsonDataObj := map[string]any{}
-		err = json.Unmarshal(settings.JSONData, &jsonDataObj)
+		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		azMonitorSettings := types.AzureMonitorSettings{}
-		err = json.Unmarshal(settings.JSONData, &azMonitorSettings)
+		azSettings := types.AzureSettings{}
+		err = json.Unmarshal(settings.JSONData, &azSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		cloud, err := getAzureCloud(cfg, jsonData)
+		cloud, err := getAzureCloud(cfg, &azSettings.AzureClientSettings)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -109,7 +104,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, err
 		}
 
-		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
+		credentials, err := getAzureCredentials(cfg, &azSettings.AzureClientSettings, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
@@ -117,7 +112,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		model := types.DatasourceInfo{
 			Cloud:                   cloud,
 			Credentials:             credentials,
-			Settings:                azMonitorSettings,
+			Settings:                azSettings.AzureMonitorSettings,
 			JSONData:                jsonDataObj,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 			DatasourceID:            settings.ID,
@@ -167,8 +162,8 @@ type azDatasourceExecutor interface {
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
-func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (types.DatasourceInfo, error) {
-	i, err := s.im.Get(req.PluginContext)
+func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.QueryDataRequest) (types.DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, req.PluginContext)
 	if err != nil {
 		return types.DatasourceInfo{}, err
 	}
@@ -190,7 +185,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 		dst := dsType
 		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			executor := s.executors[dst]
-			dsInfo, err := s.getDataSourceFromPluginReq(req)
+			dsInfo, err := s.getDataSourceFromPluginReq(ctx, req)
 			if err != nil {
 				return nil, err
 			}
@@ -204,8 +199,8 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 	return mux
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (types.DatasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (types.DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return types.DatasourceInfo{}, err
 	}
@@ -326,7 +321,7 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
