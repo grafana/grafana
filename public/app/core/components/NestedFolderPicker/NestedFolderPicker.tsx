@@ -26,6 +26,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
+import Trigger from './Trigger';
 import { useTreeInteractions } from './hooks';
 import { FolderChange, FolderUID } from './types';
 
@@ -198,22 +199,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   if (!visible) {
     return (
-      <Button
-        autoFocus={autoFocusButton}
-        className={styles.button}
-        variant="secondary"
-        icon={value !== undefined ? 'folder' : undefined}
-        ref={setTriggerRef}
-        aria-label={label ? `Select folder: ${label} currently selected` : undefined}
-      >
-        {selectedFolder.isLoading ? (
-          <Skeleton width={100} />
-        ) : (
-          <Text truncate>
-            {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
-          </Text>
-        )}
-      </Button>
+      <Trigger label={label} isLoading={selectedFolder.isLoading} autoFocus={autoFocusButton} ref={setTriggerRef} />
     );
   }
 
