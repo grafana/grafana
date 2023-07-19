@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
@@ -22,14 +23,25 @@ import (
 const installArgsSize = 2
 
 func validateInput(c utils.CommandLine) error {
-	if c.Args().Len() > installArgsSize {
+	args := c.Args()
+	argsLen := args.Len()
+
+	if argsLen > installArgsSize {
 		logger.Info(color.RedString("Please specify the correct format. For example ./grafana cli (<command arguments>) plugins install <plugin ID> (<plugin version>)\n\n"))
 		return errors.New("install only supports 2 arguments: plugin and version")
 	}
 
-	arg := c.Args().First()
+	arg := args.First()
 	if arg == "" {
 		return errors.New("please specify plugin to install")
+	}
+
+	if argsLen == installArgsSize {
+		version := args.Get(1)
+		_, err := semver.NewVersion(version)
+		if err != nil {
+			logger.Info(color.YellowString("The provided version doesn't use semantic versioning format\n\n"))
+		}
 	}
 
 	pluginsDir := c.PluginDirectory()

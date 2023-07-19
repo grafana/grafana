@@ -8,6 +8,11 @@ aliases:
   - ../panels/specify-thresholds/delete-a-threshold/
   - ../panels/thresholds/
 description: This section includes information about using thresholds in your visualizations.
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure thresholds
 title: Configure thresholds
 weight: 300

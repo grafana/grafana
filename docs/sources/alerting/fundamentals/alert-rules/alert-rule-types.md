@@ -1,9 +1,15 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/
 description: Learn about the different alert rule types
 keywords:
   - grafana
   - alerting
   - rule types
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert rule types
 weight: 102
 ---

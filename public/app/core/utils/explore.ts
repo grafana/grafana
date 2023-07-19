@@ -74,22 +74,6 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
     .map((t) => omit(t, 'legendFormat'))
     .filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
   let url: string | undefined;
-  // if the mixed datasource is not enabled for explore, choose only one datasource
-  if (
-    config.featureToggles.exploreMixedDatasource === false &&
-    exploreDatasource.meta?.id === 'mixed' &&
-    exploreTargets
-  ) {
-    // Find first explore datasource among targets
-    for (const t of exploreTargets) {
-      const datasource = await datasourceSrv.get(t.datasource || undefined);
-      if (datasource) {
-        exploreDatasource = datasource;
-        exploreTargets = panel.targets.filter((t) => t.datasource === datasource.name);
-        break;
-      }
-    }
-  }
 
   if (exploreDatasource) {
     const range = timeSrv.timeRangeForUrl();

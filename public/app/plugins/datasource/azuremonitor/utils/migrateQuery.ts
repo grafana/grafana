@@ -44,6 +44,16 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     delete workingQuery.azureLogAnalytics?.resource;
   }
 
+  if (workingQuery.azureLogAnalytics && workingQuery.azureLogAnalytics.intersectTime === undefined) {
+    workingQuery = {
+      ...workingQuery,
+      azureLogAnalytics: {
+        ...workingQuery.azureLogAnalytics,
+        intersectTime: false,
+      },
+    };
+  }
+
   return workingQuery;
 }
 

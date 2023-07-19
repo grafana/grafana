@@ -1,12 +1,17 @@
 ---
-title: Legacy alerting deprecation
 aliases:
   - alerting/legacy-alerting-deprecation/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting-deprecation/
 description: Legacy alerting deprecation notice
-weight: 109
 keywords:
   - grafana
   - alerting
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy alerting deprecation
+weight: 109
 ---
 
 # Legacy alerting deprecation
