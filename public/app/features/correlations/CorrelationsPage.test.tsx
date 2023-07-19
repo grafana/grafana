@@ -638,6 +638,7 @@ describe('CorrelationsPage', () => {
         targetUID: 'loki',
         uid: '1',
         label: 'Some label',
+        provisioned: true,
         config: {
           field: 'line',
           target: {},

@@ -50,5 +50,5 @@ export type GetCorrelationsParams = {
 };
 
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
-export type CreateCorrelationParams = Omit<Correlation, 'uid'>;
-export type UpdateCorrelationParams = Omit<Correlation, 'targetUID'>;
+export type CreateCorrelationParams = Omit<Correlation, 'uid' | 'provisioned'>;
+export type UpdateCorrelationParams = Omit<Correlation, 'targetUID' | 'provisioned'>;
