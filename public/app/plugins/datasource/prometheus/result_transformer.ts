@@ -121,7 +121,7 @@ export function transformV2(
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
   heatmapResults.forEach((df) => {
     if (df.name == null) {
-      let f = df.fields.find((f) => f.name === 'Value');
+      let f = df.fields[1];
 
       if (f) {
         let le = f.labels?.le;
@@ -150,7 +150,7 @@ export function transformV2(
     // Create a new grouping by iterating through the data frames...
     const heatmapResultsGroupedByValues = groupBy<DataFrame>(heatmapResultsGroup, (dataFrame) => {
       // Each data frame has `Time` and `Value` properties, we want to get the values
-      const values = dataFrame.fields.find((field) => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+      const values = dataFrame.fields[1];
       // Specific functionality for special "le" quantile heatmap value, we know if this value exists, that we do not want to calculate the heatmap density across data frames from the same quartile
       if (values?.labels && HISTOGRAM_QUANTILE_LABEL_NAME in values.labels) {
         const { le, ...notLE } = values?.labels;
@@ -654,8 +654,8 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le30    30  10  35    =>    10  0   5
     */
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const topSeries = seriesList[i].fields[1];
+    const bottomSeries = seriesList[i - 1].fields[1];
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
