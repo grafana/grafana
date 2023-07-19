@@ -1093,6 +1093,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1368,6 +1370,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1428,6 +1432,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1492,6 +1498,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1571,6 +1579,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1638,6 +1648,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2070,6 +2082,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2252,6 +2266,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2422,6 +2438,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -4977,6 +4995,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 95007b8a7b6c9fbf7759ed245fc9afda168d765149b7db8ad0c996c9e4d74dc0
+hmac: 46fcad7f5676723529e6702b7d30cca995e85a2998dad8e1cbc49694fa14e7e7
 
 ...

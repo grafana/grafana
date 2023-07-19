@@ -51,10 +51,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagNewTraceViewHeader
-	// Shows the new trace view header
-	FlagNewTraceViewHeader = "newTraceViewHeader"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
