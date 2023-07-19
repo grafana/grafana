@@ -93,7 +93,6 @@ export function PanelChrome({
   width,
   height,
   children,
-  // headerFunctionality = 'normal',
   padding = 'md',
   title = '',
   description = '',
