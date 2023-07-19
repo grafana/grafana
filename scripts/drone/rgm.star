@@ -103,28 +103,34 @@ def rgm_tag():
         depends_on = [],
     )
 
-def rgm_windows():
+def rgm_windows(edition = "oss"):
     return pipeline(
-        name = "rgm-tag-prerelease-windows",
+        name = "rgm-tag-prerelease-windows-{}".format(edition),
         trigger = tag_trigger,
         steps = get_windows_steps(
             ver_mode = "release",
             bucket = "grafana-prerelease-dev",
+            edition = edition,
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
-        environment = {"EDITION": "oss"},
+        environment = {"EDITION": edition},
     )
 
 def rgm():
     return [
         rgm_main(),
         rgm_tag(),
-        rgm_windows(),
+        rgm_windows(edition = "oss"),
+        rgm_windows(edition = "enterprise"),
         verify_release_pipeline(
-            name = "rgm-tag-verify-prerelease-assets",
             trigger = tag_trigger,
-            depends_on = ["rgm-tag-prerelease", "rgm-tag-prerelease-windows"],
+            name = "rgm-tag-verify-prerelease-assets",
             bucket = "grafana-prerelease-dev",
+            depends_on = [
+                "rgm-tag-prerelease",
+                "rgm-tag-prerelease-windows-oss",
+                "rgm-tag-prerelease-windows-enterprise",
+            ],
         ),
     ]
