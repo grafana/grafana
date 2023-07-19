@@ -68,7 +68,7 @@ The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2
 
 _Generally available in all editions of Grafana._
 
-We've made an improvement to the Loki query editor by adding a new step editor. This editor allows you to specify a value for the "step" parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want to get a matrix response from your queries.
+We've improved the Loki query editor by adding a new step editor. This editor allows you to specify a value for the _step_ parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want to get a matrix response from your queries.
 
 By default, the step parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki step parameter, you can visit [the Loki step parameter documentation](<(https://grafana.com/docs/loki/latest/api/#step-versus-interval)>).
 
