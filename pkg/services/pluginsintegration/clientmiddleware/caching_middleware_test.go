@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -74,8 +75,17 @@ func TestCachingMiddleware(t *testing.T) {
 		})
 
 		t.Run("If cache returns a miss, queries are issued and the update cache function is called", func(t *testing.T) {
+			origShouldCacheQuery := shouldCacheQuery
+			var shouldCacheQueryCalled bool
+			shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+				shouldCacheQueryCalled = true
+				return true
+			}
+
 			t.Cleanup(func() {
 				updateCacheCalled = false
+				shouldCacheQueryCalled = false
+				shouldCacheQuery = origShouldCacheQuery
 				cs.Reset()
 			})
 
@@ -90,15 +100,27 @@ func TestCachingMiddleware(t *testing.T) {
 			assert.Nil(t, resp)
 			// Since it was a miss, the middleware called the update func
 			assert.True(t, updateCacheCalled)
+			// Since the feature flag was not set, the middleware did not call shouldCacheQuery
+			assert.False(t, shouldCacheQueryCalled)
 		})
 
 		t.Run("with async queries", func(t *testing.T) {
+			asyncCdt := clienttest.NewClientDecoratorTest(t,
+				clienttest.WithReqContext(req, &user.SignedInUser{}),
+				clienttest.WithMiddlewares(
+					NewCachingMiddlewareWithFeatureManager(cs, featuremgmt.WithFeatures(featuremgmt.FlagAwsAsyncQueryCaching))),
+			)
 			t.Run("If shoudCacheQuery returns true update cache function is called", func(t *testing.T) {
 				origShouldCacheQuery := shouldCacheQuery
-				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool { return true }
+				var shouldCacheQueryCalled bool
+				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+					shouldCacheQueryCalled = true
+					return true
+				}
 
 				t.Cleanup(func() {
 					updateCacheCalled = false
+					shouldCacheQueryCalled = false
 					shouldCacheQuery = origShouldCacheQuery
 					cs.Reset()
 				})
@@ -106,7 +128,7 @@ func TestCachingMiddleware(t *testing.T) {
 				cs.ReturnHit = false
 				cs.ReturnQueryResponse = dataResponse
 
-				resp, err := cdt.Decorator.QueryData(req.Context(), qdr)
+				resp, err := asyncCdt.Decorator.QueryData(req.Context(), qdr)
 				assert.NoError(t, err)
 				// Cache service is called once
 				cs.AssertCalls(t, "HandleQueryRequest", 1)
@@ -114,14 +136,21 @@ func TestCachingMiddleware(t *testing.T) {
 				assert.Nil(t, resp)
 				// Since it was a miss, the middleware called the update func
 				assert.True(t, updateCacheCalled)
+				// Since the feature flag set, the middleware called shouldCacheQuery
+				assert.True(t, shouldCacheQueryCalled)
 			})
 
 			t.Run("If shoudCacheQuery returns false update cache function is not called", func(t *testing.T) {
 				origShouldCacheQuery := shouldCacheQuery
-				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool { return false }
+				var shouldCacheQueryCalled bool
+				shouldCacheQuery = func(resp *backend.QueryDataResponse) bool {
+					shouldCacheQueryCalled = true
+					return false
+				}
 
 				t.Cleanup(func() {
 					updateCacheCalled = false
+					shouldCacheQueryCalled = false
 					shouldCacheQuery = origShouldCacheQuery
 					cs.Reset()
 				})
@@ -129,7 +158,7 @@ func TestCachingMiddleware(t *testing.T) {
 				cs.ReturnHit = false
 				cs.ReturnQueryResponse = dataResponse
 
-				resp, err := cdt.Decorator.QueryData(req.Context(), qdr)
+				resp, err := asyncCdt.Decorator.QueryData(req.Context(), qdr)
 				assert.NoError(t, err)
 				// Cache service is called once
 				cs.AssertCalls(t, "HandleQueryRequest", 1)
@@ -137,6 +166,8 @@ func TestCachingMiddleware(t *testing.T) {
 				assert.Nil(t, resp)
 				// Since it was a miss, the middleware called the update func
 				assert.False(t, updateCacheCalled)
+				// Since the feature flag set, the middleware called shouldCacheQuery
+				assert.True(t, shouldCacheQueryCalled)
 			})
 		})
 	})

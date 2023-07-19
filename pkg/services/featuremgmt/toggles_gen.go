@@ -396,6 +396,6 @@ const (
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 
 	// FlagAwsAsyncQueryCaching
-	// Enable caching for async query for Redshift and Athena. Requires useCachingService and the datasource to have caching and async query support enabled
+	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
 	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
 )

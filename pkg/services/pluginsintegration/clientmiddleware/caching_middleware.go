@@ -10,14 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// needed to mock the function for testing
 var shouldCacheQuery = awsds.ShouldCacheQuery
 
 // NewCachingMiddleware creates a new plugins.ClientMiddleware that will
 // attempt to read and write query results to the cache
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
+	return NewCachingMiddlewareWithFeatureManager(cachingService, nil)
+}
+
+// NewCachingMiddlewareWithFeatureManager creates a new plugins.ClientMiddleware that will
+// attempt to read and write query results to the cache with a feature manager
+func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features *featuremgmt.FeatureManager) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
 	if err := prometheus.Register(QueryCachingRequestHistogram); err != nil {
 		log.Error("error registering prometheus collector 'QueryRequestHistogram'", "error", err)
@@ -27,17 +35,19 @@ func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientM
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CachingMiddleware{
-			next:    next,
-			caching: cachingService,
-			log:     log,
+			next:     next,
+			caching:  cachingService,
+			log:      log,
+			features: features,
 		}
 	})
 }
 
 type CachingMiddleware struct {
-	next    plugins.Client
-	caching caching.CachingService
-	log     log.Logger
+	next     plugins.Client
+	caching  caching.CachingService
+	log      log.Logger
+	features *featuremgmt.FeatureManager
 }
 
 // QueryData receives a data request and attempts to access results already stored in the cache for that request.
@@ -80,8 +90,10 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 
 	// Update the query cache with the result for this metrics request
 	if err == nil && cr.UpdateCacheFn != nil {
-		// Check if it is a still running async query, if it is don't cache it
-		if shouldCacheQuery(resp) {
+		// If AWS async cahing is enabled and it is a still running async query, don't cache it
+		if m.features == nil || !m.features.IsEnabled(featuremgmt.FlagAwsAsyncQueryCaching) {
+			cr.UpdateCacheFn(ctx, resp)
+		} else if shouldCacheQuery(resp) {
 			cr.UpdateCacheFn(ctx, resp)
 		}
 	}
