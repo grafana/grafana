@@ -212,9 +212,9 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   useEffect(() => {
     document
-      .getElementById(getDOMId(tree[focusedItemIndex]?.item.uid))
+      .getElementById(getDOMId(overlayId, tree[focusedItemIndex]?.item.uid))
       ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [focusedItemIndex, tree]);
+  }, [focusedItemIndex, overlayId, tree]);
 
   let label = selectedFolder.data?.title;
   if (value === '') {
@@ -257,7 +257,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         aria-haspopup
         aria-controls={overlayId}
         aria-owns={overlayId}
-        aria-activedescendant={getDOMId(tree[focusedItemIndex]?.item.uid)}
+        aria-activedescendant={getDOMId(overlayId, tree[focusedItemIndex]?.item.uid)}
         role="combobox"
         suffix={<Icon name="search" />}
       />
@@ -293,6 +293,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
               focusedItemIndex={focusedItemIndex}
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
+              idPrefix={overlayId}
               foldersAreOpenable={!(search && searchState.value)}
             />
           </div>

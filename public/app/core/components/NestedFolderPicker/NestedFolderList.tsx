@@ -15,14 +15,14 @@ import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
-const ID_PREFIX = 'folder-picker-item';
 
-export const getDOMId = (id: string) => `${ID_PREFIX}-${id ?? 'root'}`;
+export const getDOMId = (idPrefix: string, id: string) => `${idPrefix}-${id ?? 'root'}`;
 
 interface NestedFolderListProps {
   items: DashboardsTreeItem[];
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
+  idPrefix: string;
   selectedFolder: FolderUID | undefined;
   onFolderExpand: (uid: string, newOpenState: boolean) => void;
   onFolderSelect: (item: DashboardViewItem) => void;
@@ -32,6 +32,7 @@ export function NestedFolderList({
   items,
   focusedItemIndex,
   foldersAreOpenable,
+  idPrefix,
   selectedFolder,
   onFolderExpand,
   onFolderSelect,
@@ -46,8 +47,9 @@ export function NestedFolderList({
       selectedFolder,
       onFolderExpand,
       onFolderSelect,
+      idPrefix,
     }),
-    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect]
+    [items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix]
   );
 
   return (
@@ -80,7 +82,8 @@ interface RowProps {
 }
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
-  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect } = data;
+  const { items, focusedItemIndex, foldersAreOpenable, selectedFolder, onFolderExpand, onFolderSelect, idPrefix } =
+    data;
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
@@ -129,10 +132,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       aria-labelledby={labelId}
       aria-level={level + 1} // aria-level is 1-indexed
       role="treeitem"
-      aria-owns={children.length > 0 ? children.map((child) => getDOMId(child)).join(' ') : undefined}
+      aria-owns={children.length > 0 ? children.map((child) => getDOMId(idPrefix, child)).join(' ') : undefined}
       aria-setsize={children.length}
       aria-posinset={posInSet}
-      id={getDOMId(item.uid)}
+      id={getDOMId(idPrefix, item.uid)}
     >
       <div className={styles.rowBody}>
         <Indent level={level} />
