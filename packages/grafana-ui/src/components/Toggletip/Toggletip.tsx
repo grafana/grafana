@@ -8,7 +8,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
-import { Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -70,19 +69,24 @@ export const Toggletip = React.memo(
       return;
     }, [controlledVisible, closeToggletip]);
 
-    const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
-      visible: controlledVisible,
-      placement: placement,
-      interactive: true,
-      offset: [0, 8],
-      trigger: 'click',
-      onVisibleChange: (value: boolean) => {
-        setControlledVisible(value);
-        if (!value) {
-          onClose?.();
-        }
+    const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip(
+      {
+        visible: controlledVisible,
+        placement: placement,
+        interactive: true,
+        offset: [0, 8],
+        trigger: 'click',
+        onVisibleChange: (value: boolean) => {
+          setControlledVisible(value);
+          if (!value) {
+            onClose?.();
+          }
+        },
       },
-    });
+      {
+        strategy: 'fixed',
+      }
+    );
 
     return (
       <>
@@ -91,31 +95,29 @@ export const Toggletip = React.memo(
           tabIndex: 0,
         })}
         {visible && (
-          <Portal>
-            <div
-              data-testid="toggletip-content"
-              ref={setTooltipRef}
-              {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
-            >
-              {Boolean(title) && <div className={style.header}>{title}</div>}
-              {closeButton && (
-                <div className={style.headerClose}>
-                  <IconButton
-                    tooltip="Close"
-                    name="times"
-                    data-testid="toggletip-header-close"
-                    onClick={closeToggletip}
-                  />
-                </div>
-              )}
-              <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
-              <div className={style.body}>
-                {(typeof content === 'string' || React.isValidElement(content)) && content}
-                {typeof content === 'function' && update && content({ update })}
+          <div
+            data-testid="toggletip-content"
+            ref={setTooltipRef}
+            {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
+          >
+            {Boolean(title) && <div className={style.header}>{title}</div>}
+            {closeButton && (
+              <div className={style.headerClose}>
+                <IconButton
+                  tooltip="Close"
+                  name="times"
+                  data-testid="toggletip-header-close"
+                  onClick={closeToggletip}
+                />
               </div>
-              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
+            )}
+            <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
+            <div className={style.body}>
+              {(typeof content === 'string' || React.isValidElement(content)) && content}
+              {typeof content === 'function' && update && content({ update })}
             </div>
-          </Portal>
+            {Boolean(footer) && <div className={style.footer}>{footer}</div>}
+          </div>
         )}
       </>
     );

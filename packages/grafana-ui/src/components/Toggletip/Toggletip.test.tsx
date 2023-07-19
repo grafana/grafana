@@ -7,7 +7,7 @@ import { Button } from '../Button';
 import { Toggletip } from './Toggletip';
 
 describe('Toggletip', () => {
-  it('should display toogletip after click on "Click me!" button', async () => {
+  it('should display toggletip after click on "Click me!" button', async () => {
     render(
       <Toggletip placement="auto" content="Tooltip text">
         <Button type="button" data-testid="myButton">
@@ -22,7 +22,7 @@ describe('Toggletip', () => {
     expect(screen.getByTestId('toggletip-content')).toBeInTheDocument();
   });
 
-  it('should close toogletip after click on close button', async () => {
+  it('should close toggletip after click on close button', async () => {
     const closeSpy = jest.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onClose={closeSpy}>
@@ -43,7 +43,7 @@ describe('Toggletip', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should close toogletip after press ESC', async () => {
+  it('should close toggletip after press ESC', async () => {
     const closeSpy = jest.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onClose={closeSpy}>
@@ -62,7 +62,7 @@ describe('Toggletip', () => {
     expect(closeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should display the toogletip after press ENTER', async () => {
+  it('should display the toggletip after press ENTER', async () => {
     const closeSpy = jest.fn();
     render(
       <Toggletip placement="auto" content="Tooltip text" onClose={closeSpy}>
@@ -80,5 +80,38 @@ describe('Toggletip', () => {
     await userEvent.keyboard('{enter}');
 
     expect(screen.getByTestId('toggletip-content')).toBeInTheDocument();
+  });
+
+  it('should be able to focus toggletip content next in DOM order - forwards and backwards', async () => {
+    const closeSpy = jest.fn();
+    const afterInDom = `Red herring button`;
+
+    render(
+      <>
+        <Toggletip placement="auto" content="Tooltip text" onClose={closeSpy}>
+          <Button type="button" data-testid="myButton">
+            Click me!
+          </Button>
+        </Toggletip>
+        <button>{afterInDom}</button>
+      </>
+    );
+
+    expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+
+    const button = screen.getByTestId('myButton');
+    const afterButton = screen.getByText(afterInDom);
+    await userEvent.click(button);
+    await userEvent.tab();
+    const closeButton = screen.getByTestId('toggletip-header-close');
+    expect(closeButton).toHaveFocus();
+
+    // focus after
+    await userEvent.tab();
+    expect(afterButton).toHaveFocus();
+
+    // focus backwards
+    await userEvent.tab({ shift: true });
+    expect(closeButton).toHaveFocus();
   });
 });
