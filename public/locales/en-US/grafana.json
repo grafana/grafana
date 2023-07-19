@@ -142,7 +142,19 @@
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget"
+      "add-widget-header": "Add a widget",
+      "connect-data-body": "Before you can build a dashboard you need to connect data.",
+      "connect-data-button": "Connect data",
+      "connect-data-header": "Connect data",
+      "continue-to-dashboard-body": "Build a dashboard using csv or the Grafana DB.",
+      "continue-to-dashboard-button": "Continue to dashboard",
+      "continue-to-dashboard-header": "Continue to dashboard",
+      "dashboard-demos-body": "Try Grafana dashboards capabilities on our demo page.",
+      "dashboard-demos-header": "Dashboard demos",
+      "quick-start-a-dashboard": "Quick start a dashboard",
+      "quick-start-a-dashboard-body": "Simplest & fastest way to try out Grafana Cloud with your data",
+      "quick-start-a-dashboard-header": "Quick start a dashboard",
+      "see-dashboard-demos": "Go to Grafana demo page"
     },
     "inspect": {
       "data-tab": "Data",

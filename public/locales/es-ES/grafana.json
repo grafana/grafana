@@ -147,7 +147,19 @@
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "",
       "add-widget-button": "",
-      "add-widget-header": ""
+      "add-widget-header": "",
+      "connect-data-body": "",
+      "connect-data-button": "",
+      "connect-data-header": "",
+      "continue-to-dashboard-body": "",
+      "continue-to-dashboard-button": "",
+      "continue-to-dashboard-header": "",
+      "dashboard-demos-body": "",
+      "dashboard-demos-header": "",
+      "quick-start-a-dashboard": "",
+      "quick-start-a-dashboard-body": "",
+      "quick-start-a-dashboard-header": "",
+      "see-dashboard-demos": ""
     },
     "inspect": {
       "data-tab": "Datos",
