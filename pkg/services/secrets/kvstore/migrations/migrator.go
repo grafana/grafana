@@ -27,12 +27,17 @@ type SecretMigrationProvider interface {
 }
 
 type SecretMigrationProviderImpl struct {
-	*services.BasicService
 	migServices              []SecretMigrationService
 	ServerLockService        *serverlock.ServerLockService
 	migrateToPluginService   *MigrateToPluginService
 	migrateFromPluginService *MigrateFromPluginService
-	errs                     chan error
+
+	// SecretMigrationProviderImpl is a dskit module Note on dskit module usage:
+	// The SecretMigrationProviderImpl iterates over several service's
+	// Migration() method sequentially. dskit has the concept of a service
+	// Manager which launches services. We could use the Manager here, but it
+	// seems heavyweight given that these services only log errors.
+	*services.BasicService
 }
 
 func ProvideSecretMigrationProvider(
@@ -59,7 +64,6 @@ func ProvideSecretMigrationProvider(
 		migServices:              migServices,
 		migrateToPluginService:   migrateToPluginService,
 		migrateFromPluginService: migrateFromPluginService,
-		errs:                     make(chan error),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.SecretMigrator)
@@ -70,16 +74,10 @@ func (s *SecretMigrationProviderImpl) start(ctx context.Context) error {
 	return s.Migrate(ctx)
 }
 
+// Migrate() logs errors, but does not return them, so we just block until the
+// context is done.
 func (s *SecretMigrationProviderImpl) running(ctx context.Context) error {
-	select {
-	case err, ok := <-s.errs:
-		if !ok {
-			return nil
-		}
-		return err
-	case <-ctx.Done():
-	}
-
+	<-ctx.Done()
 	return nil
 }
 
@@ -100,7 +98,6 @@ func (s *SecretMigrationProviderImpl) Migrate(ctx context.Context) error {
 	})
 	if err != nil {
 		logger.Error("Server lock for secret migration already exists")
-		s.errs <- err // ????
 	}
 	return nil
 }
