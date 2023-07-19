@@ -1,7 +1,6 @@
 package backgroundsvcs
 
 import (
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
@@ -40,7 +40,7 @@ import (
 )
 
 func ProvideBackgroundServiceRegistry(
-	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
+	ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, processManager *process.Manager,
 	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing tracing.Tracer,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
@@ -52,6 +52,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service,
 	publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever,
+	dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -59,7 +60,6 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
-		httpServer,
 		ng,
 		cleanup,
 		live,
@@ -89,18 +89,19 @@ func ProvideBackgroundServiceRegistry(
 		bundleService,
 		publicDashboardsMetric,
 		keyRetriever,
+		dynamicAngularDetectorsProvider,
 	)
 }
 
 // BackgroundServiceRegistry provides background services.
 type BackgroundServiceRegistry struct {
-	Services []registry.BackgroundService
+	services []registry.BackgroundService
 }
 
-func NewBackgroundServiceRegistry(services ...registry.BackgroundService) *BackgroundServiceRegistry {
-	return &BackgroundServiceRegistry{services}
+func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundServiceRegistry {
+	return &BackgroundServiceRegistry{services: s}
 }
 
 func (r *BackgroundServiceRegistry) GetServices() []registry.BackgroundService {
-	return r.Services
+	return r.services
 }

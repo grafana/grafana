@@ -95,7 +95,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
           streams.push(this.nodesQuery(target, options));
           break;
         case 'flame_graph':
-          streams.push(this.flameGraphQuery());
+          streams.push(this.flameGraphQuery(target));
           break;
         case 'trace':
           streams.push(this.trace(target, options));
@@ -242,8 +242,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return of({ data: frames }).pipe(delay(100));
   }
 
-  flameGraphQuery(): Observable<DataQueryResponse> {
-    return of({ data: [flameGraphData] }).pipe(delay(100));
+  flameGraphQuery(target: TestData): Observable<DataQueryResponse> {
+    return of({ data: [{ ...flameGraphData, refId: target.refId }] }).pipe(delay(100));
   }
 
   trace(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {

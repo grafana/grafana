@@ -167,7 +167,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 			builder.Write(")")
 		}
 
-		builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
+		builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, "")
 
 		builder.Write(" ORDER BY name ASC")
 

@@ -2,46 +2,36 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
-
-import { LogContextButtons, LoadMoreOptions } from './LogContextButtons';
+import { LogContextButtons } from './LogContextButtons';
 
 describe('LogContextButtons', () => {
-  const onChangeOption = jest.fn();
-  const option: SelectableValue<number> = { label: '10 lines', value: 10 };
-  const position: 'top' | 'bottom' = 'bottom';
-
-  beforeEach(() => {
-    render(<LogContextButtons option={option} onChangeOption={onChangeOption} position={position} />);
+  it('should call onChangeWrapLines when the checkbox is used, case 1', async () => {
+    const onChangeWrapLines = jest.fn();
+    render(<LogContextButtons onChangeWrapLines={onChangeWrapLines} onScrollCenterClick={jest.fn()} />);
+    const wrapLinesBox = screen.getByRole('checkbox', {
+      name: 'Wrap lines',
+    });
+    await userEvent.click(wrapLinesBox);
+    expect(onChangeWrapLines).toHaveBeenCalledTimes(1);
+    expect(onChangeWrapLines).toHaveBeenCalledWith(true);
   });
 
-  it('should render a ButtonGroup with one button', () => {
-    const buttons = screen.getAllByRole('button');
-    expect(buttons.length).toBe(1);
+  it('should call onChangeWrapLines when the checkbox is used, case 2', async () => {
+    const onChangeWrapLines = jest.fn();
+    render(<LogContextButtons onChangeWrapLines={onChangeWrapLines} onScrollCenterClick={jest.fn()} wrapLines />);
+    const wrapLinesBox = screen.getByRole('checkbox', {
+      name: 'Wrap lines',
+    });
+    await userEvent.click(wrapLinesBox);
+    expect(onChangeWrapLines).toHaveBeenCalledTimes(1);
+    expect(onChangeWrapLines).toHaveBeenCalledWith(false);
   });
 
-  it('should render a ButtonSelect with LoadMoreOptions', async () => {
-    const tenLinesButton = screen.getByRole('button', {
-      name: /10 lines/i,
-    });
-    await userEvent.click(tenLinesButton);
-    const options = screen.getAllByRole('menuitemradio');
-    expect(options.length).toBe(LoadMoreOptions.length);
-    options.forEach((optionEl, index) => {
-      expect(optionEl).toHaveTextContent(LoadMoreOptions[index].label!);
-    });
-  });
-
-  it('should call onChangeOption when an option is selected', async () => {
-    const tenLinesButton = screen.getByRole('button', {
-      name: /10 lines/i,
-    });
-    await userEvent.click(tenLinesButton);
-    const twentyLinesButton = screen.getByRole('menuitemradio', {
-      name: /20 lines/i,
-    });
-    await userEvent.click(twentyLinesButton);
-    const newOption = { label: '20 lines', value: 20 };
-    expect(onChangeOption).toHaveBeenCalledWith(newOption);
+  it('should call onScrollCenterClick when the button is clicked', async () => {
+    const onScrollCenterClick = jest.fn();
+    render(<LogContextButtons onChangeWrapLines={jest.fn()} onScrollCenterClick={onScrollCenterClick} />);
+    const scrollButton = screen.getByRole('button');
+    await userEvent.click(scrollButton);
+    expect(onScrollCenterClick).toHaveBeenCalledTimes(1);
   });
 });

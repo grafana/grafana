@@ -10,35 +10,71 @@ import {
 
 import { SampleUnit } from '../types';
 
-export type LevelItem = { start: number; itemIndex: number };
+import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
+
+export type LevelItem = {
+  // Offset from the start of the level.
+  start: number;
+  // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
+  // to trim the value to correspond only to the part used by the children in the subtree.
+  value: number;
+  // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
+  // node.
+  itemIndexes: number[];
+  children: LevelItem[];
+  parents?: LevelItem[];
+};
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
  * rendering code.
  */
-export function nestedSetToLevels(container: FlameGraphDataContainer): LevelItem[][] {
+export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelItem[][], Record<string, LevelItem[]>] {
   const levels: LevelItem[][] = [];
   let offset = 0;
+
+  let parent: LevelItem | undefined = undefined;
+  const uniqueLabels: Record<string, LevelItem[]> = {};
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
     const prevLevel = i > 0 ? container.getLevel(i - 1) : undefined;
 
     levels[currentLevel] = levels[currentLevel] || [];
+
     if (prevLevel && prevLevel >= currentLevel) {
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
-      const lastItem = levels[currentLevel][levels[currentLevel].length - 1];
-      offset = lastItem.start + container.getValue(lastItem.itemIndex);
+      const lastSibling = levels[currentLevel][levels[currentLevel].length - 1];
+      offset = lastSibling.start + container.getValue(lastSibling.itemIndexes[0]);
+      // we assume there is always a single root node so lastSibling should always have a parent.
+      // Also it has to have the same parent because of how the items are ordered.
+      parent = lastSibling.parents![0];
     }
+
     const newItem: LevelItem = {
-      itemIndex: i,
+      itemIndexes: [i],
+      value: container.getValue(i),
       start: offset,
+      parents: parent && [parent],
+      children: [],
     };
+
+    if (uniqueLabels[container.getLabel(i)]) {
+      uniqueLabels[container.getLabel(i)].push(newItem);
+    } else {
+      uniqueLabels[container.getLabel(i)] = [newItem];
+    }
+
+    if (parent) {
+      parent.children.push(newItem);
+    }
+    parent = newItem;
 
     levels[currentLevel].push(newItem);
   }
-  return levels;
+
+  return [levels, uniqueLabels];
 }
 
 export class FlameGraphDataContainer {
@@ -51,6 +87,9 @@ export class FlameGraphDataContainer {
   labelDisplayProcessor: DisplayProcessor;
   valueDisplayProcessor: DisplayProcessor;
   uniqueLabels: string[];
+
+  private levels: LevelItem[][] | undefined;
+  private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
 
   constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
@@ -92,20 +131,26 @@ export class FlameGraphDataContainer {
     return this.levelField.values[index];
   }
 
-  getValue(index: number) {
-    return this.valueField.values[index];
+  getValue(index: number | number[]) {
+    let indexArray: number[] = typeof index === 'number' ? [index] : index;
+    return indexArray.reduce((acc, index) => {
+      return acc + this.valueField.values[index];
+    }, 0);
   }
 
-  getValueDisplay(index: number) {
-    return this.valueDisplayProcessor(this.valueField.values[index]);
+  getValueDisplay(index: number | number[]) {
+    return this.valueDisplayProcessor(this.getValue(index));
   }
 
-  getSelf(index: number) {
-    return this.selfField.values[index];
+  getSelf(index: number | number[]) {
+    let indexArray: number[] = typeof index === 'number' ? [index] : index;
+    return indexArray.reduce((acc, index) => {
+      return acc + this.selfField.values[index];
+    }, 0);
   }
 
-  getSelfDisplay(index: number) {
-    return this.valueDisplayProcessor(this.selfField.values[index]);
+  getSelfDisplay(index: number | number[]) {
+    return this.valueDisplayProcessor(this.getSelf(index));
   }
 
   getUniqueLabels() {
@@ -121,5 +166,36 @@ export class FlameGraphDataContainer {
     }
 
     return 'Count';
+  }
+
+  getLevels() {
+    this.initLevels();
+    return this.levels!;
+  }
+
+  getSandwichLevels(label: string) {
+    const nodes = this.getNodesWithLabel(label);
+
+    if (!nodes?.length) {
+      return [];
+    }
+
+    const callers = mergeParentSubtrees(nodes, this);
+    const callees = mergeSubtrees(nodes, this);
+
+    return [callers, callees];
+  }
+
+  getNodesWithLabel(label: string) {
+    this.initLevels();
+    return this.uniqueLabelsMap![label];
+  }
+
+  private initLevels() {
+    if (!this.levels) {
+      const [levels, uniqueLabelsMap] = nestedSetToLevels(this);
+      this.levels = levels;
+      this.uniqueLabelsMap = uniqueLabelsMap;
+    }
   }
 }

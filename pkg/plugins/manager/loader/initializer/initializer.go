@@ -28,7 +28,10 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 			return errors.New("could not find backend factory for plugin")
 		}
 
-		env := i.envVarProvider.Get(ctx, p)
+		env, err := i.envVarProvider.Get(ctx, p)
+		if err != nil {
+			return err
+		}
 		if backendClient, err := backendFactory(p.ID, p.Logger(), env); err != nil {
 			return err
 		} else {

@@ -59,11 +59,11 @@ export const ElasticsearchProvider = ({
   // This initializes the query by dispatching an init action to each reducer.
   // useStatelessReducer will then call `onChange` with the newly generated query
   useEffect(() => {
-    if (shouldRunInit) {
+    if (shouldRunInit && isUninitialized) {
       dispatch(initQuery());
       setShouldRunInit(false);
     }
-  }, [shouldRunInit, dispatch]);
+  }, [shouldRunInit, dispatch, isUninitialized]);
 
   if (isUninitialized) {
     return null;

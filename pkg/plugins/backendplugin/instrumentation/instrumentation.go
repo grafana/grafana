@@ -79,7 +79,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
 	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
 
-	PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, string(cfg.Target), status).Observe(elapsed.Seconds())
+	PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Observe(elapsed.Seconds())
 
 	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{

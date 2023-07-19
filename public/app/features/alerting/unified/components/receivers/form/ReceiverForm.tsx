@@ -17,6 +17,7 @@ import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
+import { normalizeFormValues } from './util';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
@@ -48,7 +49,10 @@ export function ReceiverForm<R extends ChannelValues>({
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
 
-  const defaultValues = initialValues || {
+  // normalize deprecated and new config values
+  const normalizedConfig = normalizeFormValues(initialValues);
+
+  const defaultValues = normalizedConfig ?? {
     name: '',
     items: [
       {

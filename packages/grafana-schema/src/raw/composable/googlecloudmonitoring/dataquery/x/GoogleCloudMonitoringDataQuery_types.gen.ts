@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "1.0.0";
+
 export interface CloudMonitoringQuery extends common.DataQuery {
   /**
    * Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.

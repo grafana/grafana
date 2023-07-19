@@ -46,13 +46,13 @@ type SignatureError struct {
 
 func (e SignatureError) Error() string {
 	switch e.SignatureStatus {
-	case SignatureInvalid:
+	case SignatureStatusInvalid:
 		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
-	case SignatureModified:
+	case SignatureStatusModified:
 		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
-	case SignatureUnsigned:
+	case SignatureStatusUnsigned:
 		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
-	case SignatureInternal, SignatureValid:
+	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
 
@@ -61,13 +61,13 @@ func (e SignatureError) Error() string {
 
 func (e SignatureError) AsErrorCode() ErrorCode {
 	switch e.SignatureStatus {
-	case SignatureInvalid:
-		return signatureInvalid
-	case SignatureModified:
-		return signatureModified
-	case SignatureUnsigned:
-		return signatureMissing
-	case SignatureInternal, SignatureValid:
+	case SignatureStatusInvalid:
+		return errorCodeSignatureInvalid
+	case SignatureStatusModified:
+		return errorCodeSignatureModified
+	case SignatureStatusUnsigned:
+		return errorCodeSignatureMissing
+	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
 
@@ -155,40 +155,41 @@ type StaticRoute struct {
 type SignatureStatus string
 
 func (ss SignatureStatus) IsValid() bool {
-	return ss == SignatureValid
+	return ss == SignatureStatusValid
 }
 
 func (ss SignatureStatus) IsInternal() bool {
-	return ss == SignatureInternal
+	return ss == SignatureStatusInternal
 }
 
 const (
-	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
-	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
-	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
-	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
-	SignatureUnsigned SignatureStatus = "unsigned" // no MANIFEST file
+	SignatureStatusInternal SignatureStatus = "internal" // core plugin, no signature
+	SignatureStatusValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
+	SignatureStatusInvalid  SignatureStatus = "invalid"  // invalid signature
+	SignatureStatusModified SignatureStatus = "modified" // valid signature, but content mismatch
+	SignatureStatusUnsigned SignatureStatus = "unsigned" // no MANIFEST file
 )
 
 type ReleaseState string
 
 const (
-	AlphaRelease ReleaseState = "alpha"
+	ReleaseStateAlpha ReleaseState = "alpha"
 )
 
 type SignatureType string
 
 const (
-	GrafanaSignature     SignatureType = "grafana"
-	CommercialSignature  SignatureType = "commercial"
-	CommunitySignature   SignatureType = "community"
-	PrivateSignature     SignatureType = "private"
-	PrivateGlobSignature SignatureType = "private-glob"
+	SignatureTypeGrafana     SignatureType = "grafana"
+	SignatureTypeCommercial  SignatureType = "commercial"
+	SignatureTypeCommunity   SignatureType = "community"
+	SignatureTypePrivate     SignatureType = "private"
+	SignatureTypePrivateGlob SignatureType = "private-glob"
 )
 
 func (s SignatureType) IsValid() bool {
 	switch s {
-	case GrafanaSignature, CommercialSignature, CommunitySignature, PrivateSignature, PrivateGlobSignature:
+	case SignatureTypeGrafana, SignatureTypeCommercial, SignatureTypeCommunity, SignatureTypePrivate,
+		SignatureTypePrivateGlob:
 		return true
 	}
 	return false
@@ -265,9 +266,9 @@ type AppDTO struct {
 }
 
 const (
-	signatureMissing  ErrorCode = "signatureMissing"
-	signatureModified ErrorCode = "signatureModified"
-	signatureInvalid  ErrorCode = "signatureInvalid"
+	errorCodeSignatureMissing  ErrorCode = "signatureMissing"
+	errorCodeSignatureModified ErrorCode = "signatureModified"
+	errorCodeSignatureInvalid  ErrorCode = "signatureInvalid"
 )
 
 type ErrorCode string

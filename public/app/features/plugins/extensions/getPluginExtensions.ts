@@ -74,6 +74,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
 
           // Configurable properties
+          icon: overrides?.icon || extensionConfig.icon,
           title: overrides?.title || extensionConfig.title,
           description: overrides?.description || extensionConfig.description,
           path: overrides?.path || extensionConfig.path,
@@ -119,7 +120,13 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       return undefined;
     }
 
-    let { title = config.title, description = config.description, path = config.path, ...rest } = overrides;
+    let {
+      title = config.title,
+      description = config.description,
+      path = config.path,
+      icon = config.icon,
+      ...rest
+    } = overrides;
 
     assertIsNotPromise(
       overrides,
@@ -141,6 +148,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       title,
       description,
       path,
+      icon,
     };
   } catch (error) {
     if (error instanceof Error) {

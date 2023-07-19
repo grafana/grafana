@@ -16,7 +16,6 @@ const { setFilteredMetricCount } = stateSlice.actions;
 export async function setMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery,
-  inferType: boolean,
   initialMetrics?: string[]
 ): Promise<MetricsModalMetadata> {
   // metadata is set in the metric select now
@@ -34,9 +33,9 @@ export async function setMetrics(
   let metricsData: MetricsData | undefined;
 
   metricsData = initialMetrics?.map((m: string) => {
-    const metricData = buildMetricData(m, inferType, datasource);
+    const metricData = buildMetricData(m, datasource);
 
-    const metaDataString = `${m}¦${metricData.type}¦${metricData.description}`;
+    const metaDataString = `${m}¦${metricData.description}`;
 
     nameHaystackDictionaryData[m] = metricData;
     metaHaystackDictionaryData[metaDataString] = metricData;
@@ -56,34 +55,27 @@ export async function setMetrics(
 }
 
 /**
- * Builds the metric data object with type, description and inferred flag
+ * Builds the metric data object with type and description
  *
  * @param   metric  The metric name
- * @param   inferType  state attribute that the infer type setting is on or off
  * @param   datasource  The Prometheus datasource for mapping metradata to the metric name
  * @returns A MetricData object.
  */
-function buildMetricData(metric: string, inferType: boolean, datasource: PrometheusDatasource): MetricData {
+function buildMetricData(metric: string, datasource: PrometheusDatasource): MetricData {
   let type = getMetadataType(metric, datasource.languageProvider.metricsMetadata!);
-  let inferredType;
-  if (!type && inferType) {
-    type = metricTypeHints(metric);
 
-    if (type) {
-      inferredType = true;
-    }
-  }
   const description = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!);
 
-  if (description?.toLowerCase().includes('histogram') && type !== 'histogram') {
-    type += ' (histogram)';
-  }
+  ['histogram', 'summary'].forEach((t) => {
+    if (description?.toLowerCase().includes(t) && type !== t) {
+      type += ` (${t})`;
+    }
+  });
 
   const metricData: MetricData = {
     value: metric,
     type: type,
     description: description,
-    inferred: inferredType,
   };
 
   return metricData;
@@ -123,22 +115,21 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
         if (m.type && t.value) {
           return m.type.includes(t.value);
         }
+
+        if (!m.type && t.value === 'no type') {
+          return true;
+        }
+
         return false;
       });
 
-      // missing type
-      const hasNoType = !m.type;
-
-      return matchesSelectedType || (hasNoType && state.includeNullMetadata);
+      // when a user filters for type, only return metrics with defined types
+      return matchesSelectedType;
     });
   }
 
   if (!state.includeNullMetadata) {
     filteredMetrics = filteredMetrics.filter((m: MetricData) => {
-      if (state.inferType && m.inferred) {
-        return true;
-      }
-
       return m.type !== undefined && m.description !== undefined;
     });
   }
@@ -188,8 +179,7 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
 export async function getBackendSearchMetrics(
   metricText: string,
   labels: QueryBuilderLabelFilter[],
-  datasource: PrometheusDatasource,
-  inferType: boolean
+  datasource: PrometheusDatasource
 ): Promise<Array<{ value: string }>> {
   const queryString = regexifyLabelValuesQueryString(metricText);
 
@@ -202,22 +192,8 @@ export async function getBackendSearchMetrics(
   const results = datasource.metricFindQuery(params);
 
   return await results.then((results) => {
-    return results.map((result) => buildMetricData(result.text, inferType, datasource));
+    return results.map((result) => buildMetricData(result.text, datasource));
   });
-}
-
-function metricTypeHints(metric: string): string {
-  const histogramMetric = metric.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
-  if (histogramMetric) {
-    return 'counter (histogram)';
-  }
-
-  const counterMatch = metric.match(/\b(\w+_(total|sum|count))\b/);
-  if (counterMatch) {
-    return 'counter';
-  }
-
-  return '';
 }
 
 export function tracking(event: string, state?: MetricsModalState | null, metric?: string, query?: PromVisualQuery) {
@@ -230,7 +206,6 @@ export function tracking(event: string, state?: MetricsModalState | null, metric
         fuzzySearchQuery: state?.fuzzySearchQuery,
         fullMetaSearch: state?.fullMetaSearch,
         selectedTypes: state?.selectedTypes,
-        inferType: state?.inferType,
       });
     case 'grafana_prom_metric_encycopedia_disable_text_wrap_interaction':
       reportInteraction(event, {
@@ -263,13 +238,20 @@ export const promTypes: PromFilterOption[] = [
     description:
       'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.',
   },
+  {
+    value: 'unknown',
+    description: 'These metrics have been given the type unknown in the metadata.',
+  },
+  {
+    value: 'no type',
+    description: 'These metrics have no defined type in the metadata.',
+  },
 ];
 
 export const placeholders = {
   browse: 'Search metrics by name',
-  metadataSearchSwitch: 'Include search with type and description',
+  metadataSearchSwitch: 'Include description in search',
   type: 'Filter by type',
   includeNullMetadata: 'Include results with no metadata',
   setUseBackend: 'Enable regex search',
-  inferType: 'Infer metric type',
 };

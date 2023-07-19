@@ -3,7 +3,6 @@ package db
 import (
 	"bytes"
 
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -60,26 +59,17 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
 	var (
 		sql          string
 		params       []interface{}
 		recQry       string
 		recQryParams []interface{}
 	)
-	if !ac.IsDisabled(sb.cfg) {
-		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features, sb.recursiveQueriesAreSupported)
-		sql, params = filterRBAC.Where()
-		recQry, recQryParams = filterRBAC.With()
-	} else {
-		sql, params = permissions.DashboardPermissionFilter{
-			OrgRole:         user.OrgRole,
-			Dialect:         sb.dialect,
-			UserId:          user.UserID,
-			OrgId:           user.OrgID,
-			PermissionLevel: permission,
-		}.Where()
-	}
+
+	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+	sql, params = filterRBAC.Where()
+	recQry, recQryParams = filterRBAC.With()
 
 	sb.sql.WriteString(" AND " + sql)
 	sb.params = append(sb.params, params...)

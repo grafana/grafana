@@ -24,8 +24,6 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"canvas":      true,
-	"candlestick": true,
 	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
 	"mixed":       true, // plugin.json fails validation (mixed)
 	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)

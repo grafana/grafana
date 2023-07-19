@@ -1,13 +1,20 @@
 ---
-title: Stream metrics from Telegraf to Grafana
-summary: Use Telegraf to stream live metrics to Grafana.
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Use Telegraf to stream live metrics to Grafana.
 id: stream-metrics-from-telegraf-to-grafana
-categories: ['administration']
-tags: ['beginner']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Use Telegraf to stream live metrics to Grafana.
+tags:
+  - beginner
+title: Stream metrics from Telegraf to Grafana
 weight: 75
 ---
 

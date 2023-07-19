@@ -1,9 +1,138 @@
 import { reduce } from 'lodash';
 
-import { escapeRegex } from '@grafana/data';
+import { escapeRegex, ScopedVars } from '@grafana/data/src';
 
-function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
-  // FIXME: merge this function with influx_query_model/renderTagCondition
+import { TemplateSrv } from '../../../features/templating/template_srv';
+
+import { InfluxQueryTag, MetadataQueryType } from './types';
+
+export const buildMetadataQuery = (params: {
+  type: MetadataQueryType;
+  templateService: TemplateSrv;
+  scopedVars?: ScopedVars;
+  database?: string;
+  measurement?: string;
+  retentionPolicy?: string;
+  tags?: InfluxQueryTag[];
+  withKey?: string;
+  withMeasurementFilter?: string;
+}): string => {
+  let query = '';
+  let {
+    type,
+    templateService,
+    scopedVars,
+    database,
+    measurement,
+    retentionPolicy,
+    tags,
+    withKey,
+    withMeasurementFilter,
+  } = params;
+
+  switch (type) {
+    case 'RETENTION_POLICIES':
+      return 'SHOW RETENTION POLICIES on "' + database + '"';
+    case 'FIELDS':
+      if (!measurement || measurement === '') {
+        return 'SHOW FIELD KEYS';
+      }
+
+      // If there is a measurement and it is not empty string
+      if (measurement && !measurement.match(/^\/.*\/|^$/)) {
+        measurement = '"' + measurement + '"';
+
+        if (retentionPolicy && retentionPolicy !== 'default') {
+          retentionPolicy = '"' + retentionPolicy + '"';
+          measurement = retentionPolicy + '.' + measurement;
+        }
+      }
+
+      return 'SHOW FIELD KEYS FROM ' + measurement;
+    case 'TAG_KEYS':
+      query = 'SHOW TAG KEYS';
+      break;
+    case 'TAG_VALUES':
+      query = 'SHOW TAG VALUES';
+      break;
+    case 'MEASUREMENTS':
+      query = 'SHOW MEASUREMENTS';
+      if (withMeasurementFilter) {
+        // we do a case-insensitive regex-based lookup
+        query += ' WITH MEASUREMENT =~ /(?i)' + escapeRegex(withMeasurementFilter) + '/';
+      }
+      break;
+    default:
+      return query;
+  }
+  if (measurement) {
+    if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+      measurement = '"' + measurement + '"';
+    }
+
+    if (retentionPolicy && retentionPolicy !== 'default') {
+      retentionPolicy = '"' + retentionPolicy + '"';
+      measurement = retentionPolicy + '.' + measurement;
+    }
+
+    if (measurement !== '') {
+      query += ' FROM ' + measurement;
+    }
+  }
+
+  if (withKey) {
+    let keyIdentifier = withKey;
+
+    if (keyIdentifier.endsWith('::tag')) {
+      keyIdentifier = keyIdentifier.slice(0, -5);
+    }
+
+    query += ' WITH KEY = "' + keyIdentifier + '"';
+  }
+
+  if (tags && tags.length > 0) {
+    const whereConditions = reduce<InfluxQueryTag, string[]>(
+      tags,
+      (memo, tag) => {
+        // do not add a condition for the key we want to explore for
+        if (tag.key && tag.key === withKey) {
+          return memo;
+        }
+
+        // value operators not supported in these types of queries
+        if (tag.operator === '>' || tag.operator === '<') {
+          return memo;
+        }
+
+        memo.push(renderTagCondition(tag, memo.length, templateService, scopedVars, true));
+        return memo;
+      },
+      []
+    );
+
+    if (whereConditions.length > 0) {
+      query += ' WHERE ' + whereConditions.join(' ');
+    }
+  }
+
+  if (type === 'MEASUREMENTS') {
+    query += ' LIMIT 100';
+    //Solve issue #2524 by limiting the number of measurements returned
+    //LIMIT must be after WITH MEASUREMENT and WHERE clauses
+    //This also could be used for TAG KEYS and TAG VALUES, if desired
+  }
+
+  return query;
+};
+
+// A merge of query_builder/renderTagCondition and influx_query_model/renderTagCondition
+export function renderTagCondition(
+  tag: InfluxQueryTag,
+  index: number,
+  templateSrv: TemplateSrv,
+  scopedVars?: ScopedVars,
+  interpolate?: boolean
+) {
   let str = '';
   let operator = tag.operator;
   let value = tag.value;
@@ -25,6 +154,17 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
+  // quote value unless regex
+  if (operator !== '=~' && operator !== '!~') {
+    if (interpolate) {
+      value = templateSrv.replace(value, scopedVars);
+    } else if (operator !== '>' && operator !== '<') {
+      value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
+    }
+  } else if (interpolate) {
+    value = templateSrv.replace(value, scopedVars, 'regex');
+  }
+
   let escapedKey = `"${tag.key}"`;
 
   if (tag.key.endsWith('::tag')) {
@@ -36,111 +176,4 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
   }
 
   return str + escapedKey + ' ' + operator + ' ' + value;
-}
-
-export class InfluxQueryBuilder {
-  constructor(private target: { measurement: any; tags: any; policy?: any }, private database?: string) {}
-
-  buildExploreQuery(type: string, withKey?: string, withMeasurementFilter?: string): string {
-    let query = '';
-    let measurement;
-    let policy;
-
-    if (type === 'TAG_KEYS') {
-      query = 'SHOW TAG KEYS';
-      measurement = this.target.measurement;
-      policy = this.target.policy;
-    } else if (type === 'TAG_VALUES') {
-      query = 'SHOW TAG VALUES';
-      measurement = this.target.measurement;
-      policy = this.target.policy;
-    } else if (type === 'MEASUREMENTS') {
-      query = 'SHOW MEASUREMENTS';
-      if (withMeasurementFilter) {
-        // we do a case-insensitive regex-based lookup
-        query += ' WITH MEASUREMENT =~ /(?i)' + escapeRegex(withMeasurementFilter) + '/';
-      }
-    } else if (type === 'FIELDS') {
-      measurement = this.target.measurement;
-      policy = this.target.policy;
-
-      // If there is a measurement and it is not empty string
-      if (!measurement.match(/^\/.*\/|^$/)) {
-        measurement = '"' + measurement + '"';
-
-        if (policy && policy !== 'default') {
-          policy = '"' + policy + '"';
-          measurement = policy + '.' + measurement;
-        }
-      }
-
-      if (measurement === '') {
-        return 'SHOW FIELD KEYS';
-      }
-
-      return 'SHOW FIELD KEYS FROM ' + measurement;
-    } else if (type === 'RETENTION POLICIES') {
-      query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
-      return query;
-    }
-
-    if (measurement) {
-      if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-        measurement = '"' + measurement + '"';
-      }
-
-      if (policy && policy !== 'default') {
-        policy = '"' + policy + '"';
-        measurement = policy + '.' + measurement;
-      }
-
-      if (measurement !== '') {
-        query += ' FROM ' + measurement;
-      }
-    }
-
-    if (withKey) {
-      let keyIdentifier = withKey;
-
-      if (keyIdentifier.endsWith('::tag')) {
-        keyIdentifier = keyIdentifier.slice(0, -5);
-      }
-
-      query += ' WITH KEY = "' + keyIdentifier + '"';
-    }
-
-    if (this.target.tags && this.target.tags.length > 0) {
-      const whereConditions = reduce(
-        this.target.tags,
-        (memo, tag) => {
-          // do not add a condition for the key we want to explore for
-          if (tag.key === withKey) {
-            return memo;
-          }
-
-          // value operators not supported in these types of queries
-          if (tag.operator === '>' || tag.operator === '<') {
-            return memo;
-          }
-
-          memo.push(renderTagCondition(tag, memo.length));
-          return memo;
-        },
-        [] as string[]
-      );
-
-      if (whereConditions.length > 0) {
-        query += ' WHERE ' + whereConditions.join(' ');
-      }
-    }
-
-    if (type === 'MEASUREMENTS') {
-      query += ' LIMIT 100';
-      //Solve issue #2524 by limiting the number of measurements returned
-      //LIMIT must be after WITH MEASUREMENT and WHERE clauses
-      //This also could be used for TAG KEYS and TAG VALUES, if desired
-    }
-
-    return query;
-  }
 }

@@ -99,7 +99,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   profileButton: css({
     padding: theme.spacing(0, 0.25),
     img: {
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       height: '24px',
       marginRight: 0,
       width: '24px',

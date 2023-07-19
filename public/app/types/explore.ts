@@ -15,21 +15,13 @@ import {
   DataQueryResponse,
   ExplorePanelsState,
   SupplementaryQueryType,
+  UrlQueryMap,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
-export enum ExploreId {
-  left = 'left',
-  right = 'right',
-}
-
-export type ExploreQueryParams = {
-  left: string;
-  right: string;
-};
-
+export type ExploreQueryParams = UrlQueryMap;
 /**
  * Global Explore state
  */
@@ -39,15 +31,7 @@ export interface ExploreState {
    */
   syncedTimes: boolean;
 
-  // This being optional wouldn't be needed with noUncheckedIndexedAccess set to true, but it cause more than 5k errors currently.
-  // In order to be safe, we declare each item as pssobly undefined to force existence checks.
-  // This will have the side effect of also forcing undefined checks when iterating over this object entries, but
-  // it's better to error on the safer side.
-  panes: {
-    [paneId in ExploreId]?: ExploreItemState;
-  };
-
-  correlations?: CorrelationData[];
+  panes: Record<string, ExploreItemState | undefined>;
 
   /**
    * Settings for rich history (note: filters are stored per each pane separately)
@@ -94,10 +78,6 @@ export interface ExploreItemState {
    */
   datasourceInstance?: DataSourceApi | null;
   /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
-  /**
    * Emitter to send events to the rest of Grafana.
    */
   eventBridge: EventBusExtended;
@@ -139,7 +119,6 @@ export interface ExploreItemState {
    */
   scanRange?: RawTimeRange;
 
-  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -190,6 +169,7 @@ export interface ExploreItemState {
   showTrace?: boolean;
   showNodeGraph?: boolean;
   showFlameGraph?: boolean;
+  showCustom?: boolean;
 
   /**
    * History of all queries
@@ -212,7 +192,7 @@ export interface ExploreItemState {
 
   panelsState: ExplorePanelsState;
 
-  isFromCompactUrl?: boolean;
+  correlations?: CorrelationData[];
 }
 
 export interface ExploreUpdateState {
@@ -251,6 +231,7 @@ export interface ExplorePanelData extends PanelData {
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
+  customFrames: DataFrame[];
   nodeGraphFrames: DataFrame[];
   rawPrometheusFrames: DataFrame[];
   flameGraphFrames: DataFrame[];

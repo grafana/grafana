@@ -639,6 +639,41 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.ID, results[0].ID)
 }
 
+func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
+	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, false)
+	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
+	})
+
+	t.Run("Returns no error when dashboard does not exist in root folder", func(t *testing.T) {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Finds a dashboard with existing name in specific folder and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
+		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, true, "prod", "webapp")
+		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, false, "prod", "webapp")
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderID: savedFolder.ID, OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
+	})
+}
+
 func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {

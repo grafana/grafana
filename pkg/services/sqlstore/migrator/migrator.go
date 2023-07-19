@@ -5,6 +5,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
@@ -51,7 +52,7 @@ func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Mig
 		DBEngine:     engine,
 		migrations:   make([]Migration, 0),
 		migrationIds: make(map[string]struct{}),
-		Dialect:      NewDialect(engine),
+		Dialect:      NewDialect(engine.DriverName()),
 	}
 	if scope == "" {
 		mg.tableName = "migration_log"
@@ -142,16 +143,31 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 		return mg.run()
 	}
 
+	dbName, err := mg.Dialect.GetDBName(mg.DBEngine.DataSourceName())
+	if err != nil {
+		return err
+	}
+	key, err := database.GenerateAdvisoryLockId(dbName)
+	if err != nil {
+		return err
+	}
+
 	return mg.InTransaction(func(sess *xorm.Session) error {
 		mg.Logger.Info("Locking database")
-		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, LockCfg{Session: sess, Timeout: lockAttemptTimeout}); err != nil {
+		lockCfg := LockCfg{
+			Session: sess,
+			Key:     key,
+			Timeout: lockAttemptTimeout,
+		}
+
+		if err := casRestoreOnErr(&mg.isLocked, false, true, ErrMigratorIsLocked, mg.Dialect.Lock, lockCfg); err != nil {
 			mg.Logger.Error("Failed to lock database", "error", err)
 			return err
 		}
 
 		defer func() {
 			mg.Logger.Info("Unlocking database")
-			unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, LockCfg{Session: sess})
+			unlockErr := casRestoreOnErr(&mg.isLocked, true, false, ErrMigratorIsUnlocked, mg.Dialect.Unlock, lockCfg)
 			if unlockErr != nil {
 				mg.Logger.Error("Failed to unlock database", "error", unlockErr)
 			}

@@ -1,26 +1,30 @@
 ---
 keywords:
-  - grafana
-  - schema
+- grafana
+- schema
+labels:
+  products:
+  - enterprise
+  - oss
 title: TablePanelCfg kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## TablePanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property  | Type               | Required | Default | Description |
-|-----------|--------------------|----------|---------|-------------|
+| --------- | ------------------ | -------- | ------- | ----------- |
 | `Options` | [object](#options) | **Yes**  |         |             |
 
 ### Options
 
 | Property        | Type                                              | Required | Default                                      | Description                                                        |
-|-----------------|---------------------------------------------------|----------|----------------------------------------------|--------------------------------------------------------------------|
+| --------------- | ------------------------------------------------- | -------- | -------------------------------------------- | ------------------------------------------------------------------ |
 | `frameIndex`    | number                                            | **Yes**  | `0`                                          | Represents the index of the selected frame                         |
 | `showHeader`    | boolean                                           | **Yes**  | `true`                                       | Controls whether the panel should show the header                  |
 | `cellHeight`    | string                                            | No       |                                              | Controls the height of the rows                                    |
@@ -33,7 +37,7 @@ title: TablePanelCfg kind
 Sort by field state
 
 | Property      | Type    | Required | Default | Description                                   |
-|---------------|---------|----------|---------|-----------------------------------------------|
+| ------------- | ------- | -------- | ------- | --------------------------------------------- |
 | `displayName` | string  | **Yes**  |         | Sets the display name of the field to sort by |
 | `desc`        | boolean | No       |         | Flag used to indicate descending sort order   |
 
@@ -42,7 +46,5 @@ Sort by field state
 Controls footer options
 
 | Property | Type                              | Required | Default | Description |
-|----------|-----------------------------------|----------|---------|-------------|
+| -------- | --------------------------------- | -------- | ------- | ----------- |
 | `object` | Possible types are: [](#), [](#). |          |         |
-
-

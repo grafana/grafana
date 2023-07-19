@@ -87,8 +87,8 @@ type Average struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Missing *string      `json:"missing,omitempty"`
-		Script  *interface{} `json:"script,omitempty"`
+		Missing *string `json:"missing,omitempty"`
+		Script  *any    `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -96,7 +96,7 @@ type Average struct {
 // BaseBucketAggregation defines model for BaseBucketAggregation.
 type BaseBucketAggregation struct {
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 
@@ -138,7 +138,7 @@ type BucketScript struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Script *interface{} `json:"script,omitempty"`
+		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -170,7 +170,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -191,7 +191,7 @@ type DataQuery struct {
 type DateHistogram struct {
 	BucketAggregationWithField
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 
@@ -226,10 +226,10 @@ type ElasticsearchDataQuery struct {
 	Alias *string `json:"alias,omitempty"`
 
 	// List of bucket aggregations
-	BucketAggs []interface{} `json:"bucketAggs,omitempty"`
+	BucketAggs []any `json:"bucketAggs,omitempty"`
 
 	// List of metric aggregations
-	Metrics []interface{} `json:"metrics,omitempty"`
+	Metrics []any `json:"metrics,omitempty"`
 
 	// Lucene query
 	Query *string `json:"query,omitempty"`
@@ -251,13 +251,13 @@ type ExtendedStatMetaType string
 type ExtendedStats struct {
 	MetricAggregationWithField
 	MetricAggregationWithInlineScript
-	Hide     *bool                  `json:"hide,omitempty"`
-	Id       string                 `json:"id"`
-	Meta     map[string]interface{} `json:"meta,omitempty"`
+	Hide     *bool          `json:"hide,omitempty"`
+	Id       string         `json:"id"`
+	Meta     map[string]any `json:"meta,omitempty"`
 	Settings *struct {
-		Missing *string      `json:"missing,omitempty"`
-		Script  *interface{} `json:"script,omitempty"`
-		Sigma   *string      `json:"sigma,omitempty"`
+		Missing *string `json:"missing,omitempty"`
+		Script  *any    `json:"script,omitempty"`
+		Sigma   *string `json:"sigma,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -272,7 +272,7 @@ type Filter struct {
 type Filters struct {
 	BaseBucketAggregation
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 
@@ -285,7 +285,7 @@ type FiltersSettings struct {
 type GeoHashGrid struct {
 	BucketAggregationWithField
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 
@@ -298,7 +298,7 @@ type GeoHashGridSettings struct {
 type Histogram struct {
 	BucketAggregationWithField
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 
@@ -326,8 +326,8 @@ type Max struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Missing *string      `json:"missing,omitempty"`
-		Script  *interface{} `json:"script,omitempty"`
+		Missing *string `json:"missing,omitempty"`
+		Script  *any    `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -345,7 +345,7 @@ type MetricAggregationWithField struct {
 type MetricAggregationWithInlineScript struct {
 	BaseMetricAggregation
 	Settings *struct {
-		Script *interface{} `json:"script,omitempty"`
+		Script *any `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 }
 
@@ -364,8 +364,8 @@ type Min struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Missing *string      `json:"missing,omitempty"`
-		Script  *interface{} `json:"script,omitempty"`
+		Missing *string `json:"missing,omitempty"`
+		Script  *any    `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -373,10 +373,10 @@ type Min struct {
 // MovingAverage defines model for MovingAverage.
 type MovingAverage struct {
 	BasePipelineMetricAggregation
-	Hide     *bool                  `json:"hide,omitempty"`
-	Id       string                 `json:"id"`
-	Settings map[string]interface{} `json:"settings,omitempty"`
-	Type     MetricAggregationType  `json:"type"`
+	Hide     *bool                 `json:"hide,omitempty"`
+	Id       string                `json:"id"`
+	Settings map[string]any        `json:"settings,omitempty"`
+	Type     MetricAggregationType `json:"type"`
 }
 
 // MovingAverageEWMAModelSettings defines model for MovingAverageEWMAModelSettings.
@@ -451,9 +451,9 @@ type MovingFunction struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Script *interface{} `json:"script,omitempty"`
-		Shift  *string      `json:"shift,omitempty"`
-		Window *string      `json:"window,omitempty"`
+		Script *any    `json:"script,omitempty"`
+		Shift  *string `json:"shift,omitempty"`
+		Window *string `json:"window,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -462,7 +462,7 @@ type MovingFunction struct {
 type Nested struct {
 	BucketAggregationWithField
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 
@@ -473,9 +473,9 @@ type Percentiles struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Missing  *string      `json:"missing,omitempty"`
-		Percents []string     `json:"percents,omitempty"`
-		Script   *interface{} `json:"script,omitempty"`
+		Missing  *string  `json:"missing,omitempty"`
+		Percents []string `json:"percents,omitempty"`
+		Script   *any     `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -547,8 +547,8 @@ type Sum struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Missing *string      `json:"missing,omitempty"`
-		Script  *interface{} `json:"script,omitempty"`
+		Missing *string `json:"missing,omitempty"`
+		Script  *any    `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type MetricAggregationType `json:"type"`
 }
@@ -557,7 +557,7 @@ type Sum struct {
 type Terms struct {
 	BucketAggregationWithField
 	Id       string                `json:"id"`
-	Settings *interface{}          `json:"settings,omitempty"`
+	Settings *any                  `json:"settings,omitempty"`
 	Type     BucketAggregationType `json:"type"`
 }
 

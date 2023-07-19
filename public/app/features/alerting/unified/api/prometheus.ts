@@ -2,10 +2,11 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleNamespace } from 'app/types/unified-alerting';
-import { PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 export interface FetchPromRulesFilter {
   dashboardUID: string;
@@ -15,10 +16,11 @@ export interface FetchPromRulesFilter {
 export interface PrometheusDataSourceConfig {
   dataSourceName: string;
   limitAlerts?: number;
+  identifier?: RuleIdentifier;
 }
 
 export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfig) {
-  const { dataSourceName, limitAlerts } = dataSourceConfig;
+  const { dataSourceName, limitAlerts, identifier } = dataSourceConfig;
 
   return {
     rules: (filter?: FetchPromRulesFilter, state?: string[], matcher?: Matcher[]) => {
@@ -28,6 +30,11 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
       // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
       if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && limitAlerts) {
         searchParams.set('limit_alerts', String(limitAlerts));
+      }
+
+      if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
+        searchParams.set('file', identifier.namespace);
+        searchParams.set('rule_group', identifier.groupName);
       }
 
       const params = prepareRulesFilterQueryParams(searchParams, filter);
@@ -76,18 +83,43 @@ export function paramsWithMatcherAndState(
   return paramsResult;
 }
 
+export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName: string) => {
+  const nsMap: { [key: string]: RuleNamespace } = {};
+  groups.forEach((group) => {
+    group.rules.forEach((rule) => {
+      rule.query = rule.query || '';
+    });
+    if (!nsMap[group.file]) {
+      nsMap[group.file] = {
+        dataSourceName,
+        name: group.file,
+        groups: [group],
+      };
+    } else {
+      nsMap[group.file].groups.push(group);
+    }
+  });
+
+  return Object.values(nsMap);
+};
+
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
   limitAlerts?: number,
   matcher?: Matcher[],
-  state?: string[]
+  state?: string[],
+  identifier?: RuleIdentifier
 ): Promise<RuleNamespace[]> {
   if (filter?.dashboardUID && dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
     throw new Error('Filtering by dashboard UID is only supported for Grafana Managed rules.');
   }
 
-  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts }).rules(filter, state, matcher);
+  const { url, params } = prometheusUrlBuilder({ dataSourceName, limitAlerts, identifier }).rules(
+    filter,
+    state,
+    matcher
+  );
 
   // adding state param here instead of adding it in prometheusUrlBuilder, for being a possible multiple query param
   const response = await lastValueFrom(
@@ -104,21 +136,5 @@ export async function fetchRules(
     throw e;
   });
 
-  const nsMap: { [key: string]: RuleNamespace } = {};
-  response.data.data.groups.forEach((group) => {
-    group.rules.forEach((rule) => {
-      rule.query = rule.query || '';
-    });
-    if (!nsMap[group.file]) {
-      nsMap[group.file] = {
-        dataSourceName,
-        name: group.file,
-        groups: [group],
-      };
-    } else {
-      nsMap[group.file].groups.push(group);
-    }
-  });
-
-  return Object.values(nsMap);
+  return groupRulesByFileName(response.data.data.groups, dataSourceName);
 }

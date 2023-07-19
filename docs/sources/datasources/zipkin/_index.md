@@ -8,6 +8,11 @@ keywords:
   - zipkin
   - tracing
   - querying
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Zipkin
 title: Zipkin data source
 weight: 1600
@@ -150,7 +155,7 @@ You can choose one of three options:
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
 | **None**     | Adds nothing to the span bar row.                                                                                                |
 | **Duration** | _(Default)_ Displays the span duration on the span bar row.                                                                      |
-| **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `span.kind`. |
+| **Tag**      | Displays the span tag on the span bar row. You must also specify which tag key to use to get the tag value, such as `component`. |
 
 ### Provision the data source
 
@@ -191,7 +196,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
       nodeGraph:
         enabled: true
       traceQuery:

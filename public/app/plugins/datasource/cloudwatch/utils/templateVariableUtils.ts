@@ -48,7 +48,12 @@ export const isTemplateVariable = (templateSrv: TemplateSrv, string: string) => 
 };
 
 const isVariableOption = (
-  current: VariableOption | { value: UserProps } | { value: OrgProps } | { value: DashboardProps }
+  current:
+    | VariableOption
+    | Record<string, never>
+    | { value: UserProps }
+    | { value: OrgProps }
+    | { value: DashboardProps }
 ): current is VariableOption => {
   return current.hasOwnProperty('value') && current.hasOwnProperty('text');
 };

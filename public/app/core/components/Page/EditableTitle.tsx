@@ -13,7 +13,7 @@ export interface Props {
 
 export const EditableTitle = ({ value, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
-  const [localValue, setLocalValue] = useState<string>();
+  const [localValue, setLocalValue] = useState(value);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();

@@ -46,11 +46,6 @@ func TestUsageMetrics(t *testing.T) {
 		expectedValue int
 	}{
 		{
-			name:          "Expecting metric with value 0",
-			enabled:       false,
-			expectedValue: 0,
-		},
-		{
 			name:          "Expecting metric with value 1",
 			enabled:       true,
 			expectedValue: 1,

@@ -107,10 +107,9 @@ export const createReducer =
     }
 
     if (initQuery.match(action)) {
-      if (state?.length || 0 > 0) {
+      if (state && state.length > 0) {
         return state;
       }
-
       return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
     }
 

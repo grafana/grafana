@@ -112,7 +112,7 @@ func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine
 		return nil, fmt.Errorf("%v: %w", "failed to connect to database", err)
 	}
 
-	ss.Dialect = migrator.NewDialect(ss.engine)
+	ss.Dialect = migrator.NewDialect(ss.engine.DriverName())
 
 	// if err := ss.Reset(); err != nil {
 	// 	return nil, err
@@ -316,15 +316,17 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
-		if ss.dbCfg.Pwd == "" {
-			ss.dbCfg.Pwd = "''"
+		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
+			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
+		for i, arg := range args {
+			if arg == "" {
+				args[i] = "''"
+			}
 		}
-		if ss.dbCfg.User == "" {
-			ss.dbCfg.User = "''"
+		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
+		if ss.dbCfg.Pwd != "" {
+			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s",
-			ss.dbCfg.User, ss.dbCfg.Pwd, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
-			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
 
 		cnnstr += ss.buildExtraConnectionString(' ')
 	case migrator.SQLite:
@@ -704,7 +706,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 			return nil, err
 		}
 
-		if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
+		if err := testSQLStore.Dialect.TruncateDBTables(engine); err != nil {
 			return nil, err
 		}
 
@@ -732,7 +734,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		return false
 	}
 
-	if err := testSQLStore.Dialect.TruncateDBTables(); err != nil {
+	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
 	}
 	if err := testSQLStore.Reset(); err != nil {

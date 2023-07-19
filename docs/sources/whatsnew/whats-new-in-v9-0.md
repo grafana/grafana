@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '9.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v9.0
 weight: -33
 ---
@@ -156,7 +161,7 @@ Query history is a panel that keeps track of all queries that are run in Explore
 
 ### RBAC is generally available
 
-Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud Advanced, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs](/docs/grafana/next/enterprise/access-control/).
+Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs](/docs/grafana/next/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/rbac-ga.png" max-width="755px" caption="RBAC is GA" >}}
 

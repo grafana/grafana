@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -57,7 +58,13 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), buf.Bytes(), ag), nil
+
+	content, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), content, ag), nil
 }
 
 type SubresourceGoTypesJenny struct {

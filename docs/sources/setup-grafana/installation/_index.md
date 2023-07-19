@@ -7,6 +7,10 @@ aliases:
   - /docs/grafana/v2.1/installation/install/
   - ./installation/rpm/
 description: Installation guide for Grafana
+labels:
+  products:
+    - enterprise
+    - oss
 title: Install Grafana
 weight: 100
 ---
@@ -23,9 +27,9 @@ Grafana relies on other open source software to operate. For a list of open sour
 
 Grafana supports the following operating systems:
 
-- [Debian/Ubuntu]({{< relref "./debian" >}})
-- [Red Hat/RHEL/Fedora]({{< relref "./redhat-rhel-fedora" >}})
-- [SUSE/openSUSE]({{< relref "./suse-opensuse" >}})
+- [Debian or Ubuntu]({{< relref "./debian" >}})
+- [Red Hat, RHEL, or Fedora]({{< relref "./redhat-rhel-fedora" >}})
+- [SUSE or openSUSE]({{< relref "./suse-opensuse" >}})
 - [macOS]({{< relref "./mac" >}})
 - [Windows]({{< relref "./windows" >}})
 
