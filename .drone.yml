@@ -4852,7 +4852,7 @@ type: docker
 ---
 get:
   name: grafana_api_key
-  path: infra/data/ci/drone-plugins/grafana_api_key
+  path: infra/data/ci/drone-plugins
 kind: secret
 name: grafana_api_key
 ---
@@ -5001,6 +5001,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 60724e3b585d40352f46c872ab7deb2861cc0f647784f2462ef9199f00db360a
+hmac: 10c93c162d673898b7de97d732f3e795ac6607fbd960ff2f893f976dd2a76682
 
 ...
