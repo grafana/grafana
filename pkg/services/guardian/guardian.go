@@ -19,7 +19,9 @@ var (
 	ErrGuardianPermissionExists    = errors.New("permission already exists")
 	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
 	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
+	ErrGuardianGetFolderFailure    = errutil.NewBase(errutil.StatusInternal, "guardian.getFolderFailure", errutil.WithPublicMessage("Failed to get folder"))
 	ErrGuardianDashboardNotFound   = errutil.NewBase(errutil.StatusNotFound, "guardian.dashboardNotFound")
+	ErrGuardianFolderNotFound      = errutil.NewBase(errutil.StatusNotFound, "guardian.folderNotFound")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl

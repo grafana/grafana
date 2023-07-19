@@ -52,7 +52,7 @@ func NewAccessControlDashboardGuardian(
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
 				cfg:              cfg,
-				log:              log.New("dashboard.permissions"),
+				log:              log.New("folder.permissions"),
 				user:             user,
 				store:            store,
 				ac:               ac,
@@ -108,7 +108,7 @@ func NewAccessControlDashboardGuardianByUID(
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
 				cfg:              cfg,
-				log:              log.New("dashboard.permissions"),
+				log:              log.New("folder.permissions"),
 				user:             user,
 				store:            store,
 				ac:               ac,
@@ -149,7 +149,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 			accessControlBaseGuardian: accessControlBaseGuardian{
 				ctx:              ctx,
 				cfg:              cfg,
-				log:              log.New("dashboard.permissions"),
+				log:              log.New("folder.permissions"),
 				user:             user,
 				store:            store,
 				ac:               ac,
@@ -175,9 +175,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 	}, nil
 }
 
-// NewAccessControlFolderGuardian creates a dashboard guardian by the provided dashboard.
-// This constructor should be preferred over the other two if the dashboard in available
-// since it avoids querying the database for fetching the dashboard.
+// NewAccessControlFolderGuardian creates a folder guardian by the provided folder.
 func NewAccessControlFolderGuardian(
 	ctx context.Context, cfg *setting.Cfg, f *folder.Folder, user *user.SignedInUser,
 	store db.DB, ac accesscontrol.AccessControl,
@@ -189,7 +187,7 @@ func NewAccessControlFolderGuardian(
 		accessControlBaseGuardian: accessControlBaseGuardian{
 			ctx:              ctx,
 			cfg:              cfg,
-			log:              log.New("dashboard.permissions"),
+			log:              log.New("folder.permissions"),
 			user:             user,
 			store:            store,
 			ac:               ac,
@@ -224,7 +222,7 @@ type accessControlFolderGuardian struct {
 
 func (a *accessControlDashboardGuardian) CanSave() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianDashboardNotFound.Errorf("failed to check save permissions for dashboard")
 	}
 
 	return a.evaluate(
@@ -234,7 +232,7 @@ func (a *accessControlDashboardGuardian) CanSave() (bool, error) {
 
 func (a *accessControlFolderGuardian) CanSave() (bool, error) {
 	if a.folder == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianFolderNotFound.Errorf("failed to check save permissions for folder")
 	}
 
 	return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.folder.UID)))
@@ -242,7 +240,7 @@ func (a *accessControlFolderGuardian) CanSave() (bool, error) {
 
 func (a *accessControlDashboardGuardian) CanEdit() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianDashboardNotFound.Errorf("failed to check edit permissions for dashboard")
 	}
 
 	if a.cfg.ViewersCanEdit {
@@ -256,7 +254,7 @@ func (a *accessControlDashboardGuardian) CanEdit() (bool, error) {
 
 func (a *accessControlFolderGuardian) CanEdit() (bool, error) {
 	if a.folder == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianFolderNotFound.Errorf("failed to check edit permissions for folder")
 	}
 
 	if a.cfg.ViewersCanEdit {
@@ -268,7 +266,7 @@ func (a *accessControlFolderGuardian) CanEdit() (bool, error) {
 
 func (a *accessControlDashboardGuardian) CanView() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianDashboardNotFound.Errorf("failed to check view permissions for dashboard")
 	}
 
 	return a.evaluate(
@@ -278,7 +276,7 @@ func (a *accessControlDashboardGuardian) CanView() (bool, error) {
 
 func (a *accessControlFolderGuardian) CanView() (bool, error) {
 	if a.folder == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianFolderNotFound.Errorf("failed to check view permissions for folder")
 	}
 
 	return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.folder.UID)))
@@ -286,7 +284,7 @@ func (a *accessControlFolderGuardian) CanView() (bool, error) {
 
 func (a *accessControlDashboardGuardian) CanAdmin() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianDashboardNotFound.Errorf("failed to check admin permissions for dashboard")
 	}
 
 	return a.evaluate(accesscontrol.EvalAll(
@@ -297,7 +295,7 @@ func (a *accessControlDashboardGuardian) CanAdmin() (bool, error) {
 
 func (a *accessControlFolderGuardian) CanAdmin() (bool, error) {
 	if a.folder == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianFolderNotFound.Errorf("failed to check admin permissions for folder")
 	}
 
 	return a.evaluate(accesscontrol.EvalAll(
@@ -308,7 +306,7 @@ func (a *accessControlFolderGuardian) CanAdmin() (bool, error) {
 
 func (a *accessControlDashboardGuardian) CanDelete() (bool, error) {
 	if a.dashboard == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianDashboardNotFound.Errorf("failed to check delete permissions for dashboard")
 	}
 
 	return a.evaluate(
@@ -318,7 +316,7 @@ func (a *accessControlDashboardGuardian) CanDelete() (bool, error) {
 
 func (a *accessControlFolderGuardian) CanDelete() (bool, error) {
 	if a.folder == nil {
-		return false, ErrGuardianDashboardNotFound
+		return false, ErrGuardianFolderNotFound.Errorf("failed to check delete permissions for folder")
 	}
 
 	return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.folder.UID)))
@@ -400,7 +398,7 @@ func (a *accessControlBaseGuardian) CheckPermissionBeforeUpdate(permission dashb
 // GetACL translate access control permissions to dashboard acl info
 func (a *accessControlDashboardGuardian) GetACL() ([]*dashboards.DashboardACLInfoDTO, error) {
 	if a.dashboard == nil {
-		return nil, ErrGuardianGetDashboardFailure
+		return nil, ErrGuardianGetDashboardFailure.Errorf("failed to translate access control permissions to dashboard acl info")
 	}
 
 	svc := a.dashboardPermissionsService
@@ -452,7 +450,7 @@ func (a *accessControlDashboardGuardian) GetACL() ([]*dashboards.DashboardACLInf
 // GetACL translate access control permissions to dashboard acl info
 func (a *accessControlFolderGuardian) GetACL() ([]*dashboards.DashboardACLInfoDTO, error) {
 	if a.folder == nil {
-		return nil, ErrGuardianGetDashboardFailure
+		return nil, ErrGuardianGetFolderFailure.Errorf("failed to translate access control permissions to dashboard acl info")
 	}
 
 	svc := a.folderPermissionsService
