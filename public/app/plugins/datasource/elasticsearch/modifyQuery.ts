@@ -1,4 +1,4 @@
-import lucene, { AST, NodeTerm } from 'lucene';
+import lucene, { AST, BinaryAST, LeftOnlyAST, NodeTerm } from 'lucene';
 
 type ModifierType = '' | '-';
 
@@ -26,18 +26,34 @@ export function findFilterNode(
     return null;
   }
 
-  let node = getNode(ast);
-  while (node) {
-    if (node.field === field && node.term === value) {
-      return node;
-    }
-    if (getNextAST(ast)) {
-      ast = getNextAST(ast);
-      node = getNode(ast);
-    } else {
-      node = getNextNode(ast);
-      ast = null;
-    }
+  if (!ast) {
+    return null;
+  }
+
+  return findNodeInTree(ast, field, value);
+}
+
+function findNodeInTree(tree: AST, field: string, value: string): NodeTerm | null {
+  let ast: AST | null = tree;
+  // {}
+  if (Object.keys(ast).length === 0) {
+    return null;
+  }
+  // { left: {}, right: {} } or { left: {} }
+  if (isAST(ast.left)) {
+    return findNodeInTree(ast.left, field, value);
+  }
+  if (isNodeTerm(ast.left) && ast.left.field === field && ast.left.term === value) {
+    return ast.left;
+  }
+  if (isLeftOnlyAST(ast)) {
+    return null;
+  }
+  if (isNodeTerm(ast.right) && ast.right.field === field && ast.right.term === value) {
+    return ast.right;
+  }
+  if (isBinaryAST(ast.right)) {
+    return findNodeInTree(ast.right, field, value);
   }
   return null;
 }
@@ -88,57 +104,36 @@ function normalizeQuery(query: string) {
   return query.replace(/\s+:\s+/g, ':');
 }
 
-/**
- * Given an AST, resolve the NodeTerm:
- * - if it's a NodeTerm, return it
- * - if left is defined and is a NodeTerm, return it
- * - otherwise return null
- */
-function getNode(ast: AST | null): NodeTerm | null {
+function isLeftOnlyAST(ast: unknown): ast is LeftOnlyAST {
   if (!ast) {
-    return null;
+    return false;
+  }
+  if ('left' in ast && !('right' in ast)) {
+    return true;
+  }
+  return false;
+}
+
+function isBinaryAST(ast: unknown): ast is BinaryAST {
+  if (!ast) {
+    return false;
+  }
+  if ('left' in ast && 'right' in ast) {
+    return true;
+  }
+  return false;
+}
+
+function isAST(ast: unknown): ast is AST {
+  return isLeftOnlyAST(ast) || isBinaryAST(ast);
+}
+
+function isNodeTerm(ast: unknown): ast is NodeTerm {
+  if (!ast) {
+    return false;
   }
   if ('term' in ast) {
-    return ast;
+    return true;
   }
-  if ('left' in ast && 'term' in ast.left) {
-    return ast.left;
-  }
-  return null;
-}
-
-/**
- * Given an AST, resolve the next AST:
- * - if right is defined and is a NodeTerm, return it
- * - otherwise return null
- */
-function getNextAST(ast: AST | null): AST | null {
-  if (!ast) {
-    return null;
-  }
-  if (!('right' in ast)) {
-    return null;
-  }
-  if ('left' in ast.right) {
-    return ast.right;
-  }
-  return null;
-}
-
-/**
- * When the NextAST is null, resolve the NodeTerm from the current AST:
- * - if right is defined and is a NodeTerm, return it
- * - otherwise return null
- */
-function getNextNode(ast: AST | null): NodeTerm | null {
-  if (!ast) {
-    return null;
-  }
-  if (!('right' in ast)) {
-    return null;
-  }
-  if ('term' in ast.right) {
-    return ast.right;
-  }
-  return null;
+  return false;
 }
