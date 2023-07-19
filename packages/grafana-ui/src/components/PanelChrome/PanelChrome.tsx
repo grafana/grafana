@@ -360,7 +360,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
-      contain: 'content',
+      contain: 'strict',
     }),
     headerContainer: css({
       label: 'panel-header',
