@@ -111,6 +111,8 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     [onChange]
   );
 
+  const handleCloseOverlay = useCallback(() => setOverlayOpen(false), [setOverlayOpen]);
+
   const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
@@ -181,7 +183,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,
-    handleCloseOverlay: () => setOverlayOpen(false),
+    handleCloseOverlay,
     handleFolderSelect,
     handleFolderExpand,
     idPrefix: overlayId,
