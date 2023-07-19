@@ -130,6 +130,7 @@ export interface TestData extends common.DataQuery {
   stream?: StreamingQuery;
   stringInput?: string;
   usa?: USAQuery;
+  flamegraphDiff?: boolean;
 }
 
 export const defaultTestData: Partial<TestData> = {

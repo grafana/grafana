@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea, Switch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
@@ -346,6 +346,18 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             rows={10}
             placeholder="Copy base64 text data from query result"
             onChange={onInputChange}
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === TestDataQueryType.FlameGraph && (
+        <InlineField grow>
+          <Switch
+            label="Flamegraph with diff data"
+            value={query.flamegraphDiff}
+            onChange={(e) => {
+              onUpdate({ ...query, flamegraphDiff: e.currentTarget.checked });
+            }}
           />
         </InlineField>
       )}
