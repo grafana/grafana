@@ -163,6 +163,7 @@
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
 /devenv/docker/blocks/elastic* @grafana/observability-logs
+/devenv/docker/blocks/self-instrumentation* @grafana/observability-metrics
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
