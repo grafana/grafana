@@ -7,6 +7,10 @@ aliases:
   - ../manage-users-and-permissions/manage-org-users/manage-pending-invites/
   - ../manage-users-and-permissions/manage-org-users/remove-user-from-org/
   - ../manage-users-and-permissions/manage-org-users/view-list-org-users/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage users in an organization
 weight: 400
 ---

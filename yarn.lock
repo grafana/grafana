@@ -3736,7 +3736,7 @@ __metadata:
     "@types/jest": 29.2.3
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.191
-    "@types/marked": 4.0.8
+    "@types/marked": 5.0.1
     "@types/node": 18.16.16
     "@types/papaparse": 5.3.7
     "@types/react": 18.2.15
@@ -3753,7 +3753,8 @@ __metadata:
     fast_array_intersect: 1.1.0
     history: 4.10.1
     lodash: 4.17.21
-    marked: 4.2.12
+    marked: 5.1.1
+    marked-mangle: 1.1.0
     moment: 2.29.4
     moment-timezone: 0.5.41
     ol: 7.4.0
@@ -4203,7 +4204,7 @@ __metadata:
     rc-tooltip: 6.0.1
     react: 18.2.0
     react-beautiful-dnd: 13.1.1
-    react-calendar: 4.0.0
+    react-calendar: 4.3.0
     react-colorful: 5.6.1
     react-custom-scrollbars-2: 4.5.0
     react-dom: 18.2.0
@@ -10164,6 +10165,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lodash.memoize@npm:^4.1.7":
+  version: 4.1.7
+  resolution: "@types/lodash.memoize@npm:4.1.7"
+  dependencies:
+    "@types/lodash": "*"
+  checksum: 85f128b6606ab0545c11194208cf844536f981859221dff0032b1043dd4e02ee5aa1b96020d1e02a24db31be7493f2e9ff45836d2e3c35cf973fc6488f129eed
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:*":
+  version: 4.14.195
+  resolution: "@types/lodash@npm:4.14.195"
+  checksum: 39b75ca635b3fa943d17d3d3aabc750babe4c8212485a4df166fe0516e39288e14b0c60afc6e21913cc0e5a84734633c71e617e2bd14eaa1cf51b8d7799c432e
+  languageName: node
+  linkType: hard
+
 "@types/lodash@npm:4.14.191":
   version: 4.14.191
   resolution: "@types/lodash@npm:4.14.191"
@@ -10194,10 +10211,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/marked@npm:4.0.8, @types/marked@npm:^4":
-  version: 4.0.8
-  resolution: "@types/marked@npm:4.0.8"
-  checksum: 68278fa7acaa5d920cdc239d675b5daf842e0ad4779e4848cd617d9baf2ac1afccb5a264c331e37d80031d647e1640cb983cd31e73d45b28552670b4853fad8e
+"@types/marked@npm:5.0.1":
+  version: 5.0.1
+  resolution: "@types/marked@npm:5.0.1"
+  checksum: 84323058e0a5127aeb67d709e1dcb0cc0024b190c337ca68813fcd1f271e7c7351ed14ea83e5e21a7a264fb87ba8767c0a98fb26d05a06181a7edd49299ef437
   languageName: node
   linkType: hard
 
@@ -11770,10 +11787,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wojtekmaj/date-utils@npm:^1.0.2":
-  version: 1.0.3
-  resolution: "@wojtekmaj/date-utils@npm:1.0.3"
-  checksum: 70b7152160529295319ead97e070f85a50c0eab7973b5845e3a58eab9b0c999023975d2739b5e2a059d27b108ce7cdbf14da99737d6fa3e3822d4dafb76b06f0
+"@wojtekmaj/date-utils@npm:^1.1.3":
+  version: 1.4.1
+  resolution: "@wojtekmaj/date-utils@npm:1.4.1"
+  checksum: e1def2f26e2b2e781152b9f2b847f849abfb4ad90d2fddb77dc418ec4c8753dc29775d52205bc47952a71e47abf53bcb6df6306707486b3aa3b69ef9c359d8d6
   languageName: node
   linkType: hard
 
@@ -18839,12 +18856,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"get-user-locale@npm:^1.2.0":
-  version: 1.4.0
-  resolution: "get-user-locale@npm:1.4.0"
+"get-user-locale@npm:^2.2.1":
+  version: 2.3.0
+  resolution: "get-user-locale@npm:2.3.0"
   dependencies:
-    lodash.once: ^4.1.1
-  checksum: d27a6cf7b1aacdec1786c6877511efc956eb17810e10c55a408753af38f13b5d854f3a0033320f94a6046e95d3c0fc2248c950aeecfc181353599facd344b7e4
+    "@types/lodash.memoize": ^4.1.7
+    lodash.memoize: ^4.1.1
+  checksum: 8a815e7528d1a75d85b25573ecd66890b126cdc6759f06354dd0b59371d88618aad5a4955ccab5c1267a9ca6a6e46b9362e9bad2639ad5949d3e90542a480791
   languageName: node
   linkType: hard
 
@@ -19334,7 +19352,7 @@ __metadata:
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.191
     "@types/logfmt": ^1.2.3
-    "@types/marked": ^4
+    "@types/marked": 5.0.1
     "@types/mousetrap": 1.6.11
     "@types/node": 18.16.16
     "@types/node-forge": ^1
@@ -19462,7 +19480,8 @@ __metadata:
     logfmt: ^1.3.2
     lru-cache: 10.0.0
     lru-memoize: ^1.1.0
-    marked: ^4.3.0
+    marked: 5.1.1
+    marked-mangle: 1.1.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.7.2
     moment: 2.29.4
@@ -19485,7 +19504,7 @@ __metadata:
     postcss-loader: 7.3.3
     postcss-reporter: 7.0.5
     postcss-scss: 4.0.6
-    prettier: 2.8.4
+    prettier: 3.0.0
     prismjs: 1.29.0
     prop-types: 15.8.1
     pseudoizer: ^0.1.0
@@ -19577,6 +19596,9 @@ __metadata:
     whatwg-fetch: 3.6.2
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     yargs: ^17.5.1
+  dependenciesMeta:
+    prettier@3.0.0:
+      unplugged: true
   languageName: unknown
   linkType: soft
 
@@ -23077,7 +23099,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.memoize@npm:4.x, lodash.memoize@npm:^4.1.2":
+"lodash.memoize@npm:4.x, lodash.memoize@npm:^4.1.1, lodash.memoize@npm:^4.1.2":
   version: 4.1.2
   resolution: "lodash.memoize@npm:4.1.2"
   checksum: 9ff3942feeccffa4f1fafa88d32f0d24fdc62fd15ded5a74a5f950ff5f0c6f61916157246744c620173dddf38d37095a92327d5fd3861e2063e736a5c207d089
@@ -23394,21 +23416,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:4.2.12":
-  version: 4.2.12
-  resolution: "marked@npm:4.2.12"
-  bin:
-    marked: bin/marked.js
-  checksum: bd551cd61028ee639d4ca2ccdfcc5a6ba4227c1b143c4538f3cde27f569dcb57df8e6313560394645b418b84a7336c07ab1e438b89b6324c29d7d8cdd3102d63
+"marked-mangle@npm:1.1.0":
+  version: 1.1.0
+  resolution: "marked-mangle@npm:1.1.0"
+  peerDependencies:
+    marked: ^4 || ^5
+  checksum: 3897cb6b0ed580e9be029bf78f8b3b22534ca3e0c061fd9e45d0f256263c01f9667122d68235c767583c7109347bd1cc823dca5f428b95460123ba4b212cdb11
   languageName: node
   linkType: hard
 
-"marked@npm:^4.3.0":
-  version: 4.3.0
-  resolution: "marked@npm:4.3.0"
+"marked@npm:5.1.1":
+  version: 5.1.1
+  resolution: "marked@npm:5.1.1"
   bin:
     marked: bin/marked.js
-  checksum: 0db6817893952c3ec710eb9ceafb8468bf5ae38cb0f92b7b083baa13d70b19774674be04db5b817681fa7c5c6a088f61300815e4dd75a59696f4716ad69f6260
+  checksum: e0c6d3a63d01c3b47f7758c3add02abdb3747701b6fce60c4b5602cc3b33122439c5c0a95ac1e8b5fcbb0f7d3aa7af2126aa56074c3d41e207bf9a9ed9948026
   languageName: node
   linkType: hard
 
@@ -26315,12 +26337,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:2.8.4":
-  version: 2.8.4
-  resolution: "prettier@npm:2.8.4"
+"prettier@npm:3.0.0":
+  version: 3.0.0
+  resolution: "prettier@npm:3.0.0"
   bin:
-    prettier: bin-prettier.js
-  checksum: c173064bf3df57b6d93d19aa98753b9b9dd7657212e33b41ada8e2e9f9884066bb9ca0b4005b89b3ab137efffdf8fbe0b462785aba20364798ff4303aadda57e
+    prettier: bin/prettier.cjs
+  checksum: 6a832876a1552dc58330d2467874e5a0b46b9ccbfc5d3531eb69d15684743e7f83dc9fbd202db6270446deba9c82b79d24383d09924c462b457136a759425e33
   languageName: node
   linkType: hard
 
@@ -27325,18 +27347,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:4.0.0":
-  version: 4.0.0
-  resolution: "react-calendar@npm:4.0.0"
+"react-calendar@npm:4.3.0":
+  version: 4.3.0
+  resolution: "react-calendar@npm:4.3.0"
   dependencies:
-    "@wojtekmaj/date-utils": ^1.0.2
+    "@types/react": "*"
+    "@wojtekmaj/date-utils": ^1.1.3
     clsx: ^1.2.1
-    get-user-locale: ^1.2.0
+    get-user-locale: ^2.2.1
     prop-types: ^15.6.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: a470ea1eab914cda9f76245060e15129a220c30f2942a28c20b3cb999fd994d0c0fadae849184ba123b3b78541fbb3301c5ac0c44e0bd2ab156bfba8cc587593
+  checksum: 0abfb0e6c6c8ea6d5d10a9073db1861b9d6c746905573a1ba576d77e260c4cf4d90cc45a7eccb3166e8ccdad71df787cd629ae2d0b2839409db7e25c76f8cd32
   languageName: node
   linkType: hard
 

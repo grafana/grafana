@@ -9,6 +9,11 @@ keywords:
   - queries
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Loki template variables
 weight: 300

@@ -1,6 +1,5 @@
 ---
-title: Extend a Grafana plugin
-menuTitle: Extend a plugin
+description: An index of how-to topics for extending or enhancing Grafana plugins.
 keywords:
   - grafana
   - plugins
@@ -8,7 +7,12 @@ keywords:
   - development
   - extension
   - documentation
-description: An index of how-to topics for extending or enhancing Grafana plugins.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Extend a plugin
+title: Extend a Grafana plugin
 weight: 200
 ---
 

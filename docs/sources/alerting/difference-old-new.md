@@ -1,12 +1,18 @@
 ---
 aliases:
   - unified-alerting/difference-old-new/
+canonical: https://grafana.com/docs/grafana/latest/alerting/difference-old-new/
 description: What's New with Grafana alerts
 draft: true
 keywords:
   - grafana
   - alerting
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana Alerting
 weight: 108
 ---
