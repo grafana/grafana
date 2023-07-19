@@ -1,4 +1,4 @@
-import { QueryType, MetricKind, ValueTypes } from './types/query';
+import { QueryType, MetricKind, ValueTypes, AlignmentTypes } from './types/query';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;
@@ -9,7 +9,7 @@ export const SELECT_WIDTH = 28;
 export const ALIGNMENTS = [
   {
     text: 'none',
-    value: 'ALIGN_NONE',
+    value: AlignmentTypes.ALIGN_NONE,
     valueTypes: [
       ValueTypes.INT64,
       ValueTypes.DOUBLE,
@@ -23,25 +23,25 @@ export const ALIGNMENTS = [
   },
   {
     text: 'delta',
-    value: 'ALIGN_DELTA',
+    value: AlignmentTypes.ALIGN_DELTA,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.CUMULATIVE, MetricKind.DELTA],
   },
   {
     text: 'rate',
-    value: 'ALIGN_RATE',
+    value: AlignmentTypes.ALIGN_RATE,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.CUMULATIVE, MetricKind.DELTA],
   },
   {
     text: 'interpolate',
-    value: 'ALIGN_INTERPOLATE',
+    value: AlignmentTypes.ALIGN_INTERPOLATE,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.GAUGE],
   },
   {
     text: 'next older',
-    value: 'ALIGN_NEXT_OLDER',
+    value: AlignmentTypes.ALIGN_NEXT_OLDER,
     valueTypes: [
       ValueTypes.INT64,
       ValueTypes.DOUBLE,
@@ -55,85 +55,85 @@ export const ALIGNMENTS = [
   },
   {
     text: 'min',
-    value: 'ALIGN_MIN',
+    value: AlignmentTypes.ALIGN_MIN,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'max',
-    value: 'ALIGN_MAX',
+    value: AlignmentTypes.ALIGN_MAX,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'mean',
-    value: 'ALIGN_MEAN',
+    value: AlignmentTypes.ALIGN_MEAN,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'count',
-    value: 'ALIGN_COUNT',
+    value: AlignmentTypes.ALIGN_COUNT,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.BOOL],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'sum',
-    value: 'ALIGN_SUM',
+    value: AlignmentTypes.ALIGN_SUM,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'stddev',
-    value: 'ALIGN_STDDEV',
+    value: AlignmentTypes.ALIGN_STDDEV,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'count true',
-    value: 'ALIGN_COUNT_TRUE',
+    value: AlignmentTypes.ALIGN_COUNT_TRUE,
     valueTypes: [ValueTypes.BOOL],
     metricKinds: [MetricKind.GAUGE],
   },
   {
     text: 'count false',
-    value: 'ALIGN_COUNT_FALSE',
+    value: AlignmentTypes.ALIGN_COUNT_FALSE,
     valueTypes: [ValueTypes.BOOL],
     metricKinds: [MetricKind.GAUGE],
   },
   {
     text: 'fraction true',
-    value: 'ALIGN_FRACTION_TRUE',
+    value: AlignmentTypes.ALIGN_FRACTION_TRUE,
     valueTypes: [ValueTypes.BOOL],
     metricKinds: [MetricKind.GAUGE],
   },
   {
     text: 'percentile 99',
-    value: 'ALIGN_PERCENTILE_99',
+    value: AlignmentTypes.ALIGN_PERCENTILE_99,
     valueTypes: [ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'percentile 95',
-    value: 'ALIGN_PERCENTILE_95',
+    value: AlignmentTypes.ALIGN_PERCENTILE_95,
     valueTypes: [ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'percentile 50',
-    value: 'ALIGN_PERCENTILE_50',
+    value: AlignmentTypes.ALIGN_PERCENTILE_50,
     valueTypes: [ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'percentile 05',
-    value: 'ALIGN_PERCENTILE_05',
+    value: AlignmentTypes.ALIGN_PERCENTILE_05,
     valueTypes: [ValueTypes.DISTRIBUTION],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
   {
     text: 'percent change',
-    value: 'ALIGN_PERCENT_CHANGE',
+    value: AlignmentTypes.ALIGN_PERCENT_CHANGE,
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY],
     metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
   },
