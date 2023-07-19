@@ -66,19 +66,12 @@ func ProvideSecretMigrationProvider(
 		migrateFromPluginService: migrateFromPluginService,
 	}
 
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.SecretMigrator)
+	s.BasicService = services.NewIdleService(s.start, nil).WithName(modules.SecretMigrator)
 	return s
 }
 
 func (s *SecretMigrationProviderImpl) start(ctx context.Context) error {
 	return s.Migrate(ctx)
-}
-
-// Migrate() logs errors, but does not return them, so we just block until the
-// context is done.
-func (s *SecretMigrationProviderImpl) running(ctx context.Context) error {
-	<-ctx.Done()
-	return nil
 }
 
 // Migrate Run migration services. This will block until all services have exited.
