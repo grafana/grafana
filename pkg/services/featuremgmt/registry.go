@@ -80,13 +80,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:         "newTraceViewHeader",
-			Description:  "Shows the new trace view header",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
