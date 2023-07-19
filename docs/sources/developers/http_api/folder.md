@@ -167,7 +167,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid).
+- **uid** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **title** – The title of the folder.
 
 **Example Response**:
