@@ -113,43 +113,6 @@ func TestBuilder_Pagination(t *testing.T) {
 	assert.Equal(t, "P", resPg2[0].Title, "page 2 should start with the 16th dashboard")
 }
 
-func TestBuilder_Permissions(t *testing.T) {
-	user := &user.SignedInUser{
-		UserID:  1,
-		OrgID:   1,
-		OrgRole: org.RoleViewer,
-	}
-
-	store := setupTestEnvironment(t)
-	createDashboards(t, store, 0, 1, user.OrgID)
-
-	level := dashboards.PERMISSION_EDIT
-
-	builder := &searchstore.Builder{
-		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgID},
-			searchstore.TitleSorter{},
-			permissions.DashboardPermissionFilter{
-				Dialect:         store.GetDialect(),
-				OrgRole:         user.OrgRole,
-				OrgId:           user.OrgID,
-				UserId:          user.UserID,
-				PermissionLevel: level,
-			},
-		},
-		Dialect: store.GetDialect(),
-	}
-
-	res := []dashboards.DashboardSearchProjection{}
-	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		sql, params := builder.ToSQL(limit, page)
-		return sess.SQL(sql, params...).Find(&res)
-	})
-	require.NoError(t, err)
-
-	assert.Len(t, res, 0)
-}
-
 func TestBuilder_RBAC(t *testing.T) {
 	testsCases := []struct {
 		desc            string

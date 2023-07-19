@@ -357,7 +357,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 	}
 
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -493,7 +493,7 @@ type AzureLogAnalyticsURLResource struct {
 	ResourceID string `json:"resourceId"`
 }
 
-func getQueryUrl(query string, resources []string, azurePortalUrl string) (string, error) {
+func getQueryUrl(query string, resources []string, azurePortalUrl string, timeRange backend.TimeRange) (string, error) {
 	encodedQuery, err := encodeQuery(query)
 	if err != nil {
 		return "", fmt.Errorf("failed to encode the query: %s", err)
@@ -517,8 +517,11 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string) (strin
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal log analytics resources: %s", err)
 	}
+	from := timeRange.From.Format(time.RFC3339)
+	to := timeRange.To.Format(time.RFC3339)
+	timespan := url.QueryEscape(fmt.Sprintf("%s/%s", from, to))
 	portalUrl += url.QueryEscape(string(resourcesMarshalled))
-	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
+	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespan/" + timespan
 	return portalUrl, nil
 }
 
