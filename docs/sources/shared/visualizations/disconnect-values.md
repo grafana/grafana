@@ -1,4 +1,9 @@
 ---
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Disconnect values
 ---
 
