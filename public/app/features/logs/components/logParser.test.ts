@@ -38,6 +38,12 @@ describe('logParser', () => {
       expect(getAllFields(createScenario(undefined))).toHaveLength(0);
       expect(getAllFields(createScenario(''))).toHaveLength(1);
       expect(getAllFields(createScenario('test'))).toHaveLength(1);
+      // technically this is a field-type-string, but i will add more
+      // falsy-values, just to be sure
+      expect(getAllFields(createScenario(false))).toHaveLength(1);
+      expect(getAllFields(createScenario(NaN))).toHaveLength(1);
+      expect(getAllFields(createScenario(0))).toHaveLength(1);
+      expect(getAllFields(createScenario(-0))).toHaveLength(1);
     });
 
     it('should filter out field with labels name old-loki-style frame', () => {
