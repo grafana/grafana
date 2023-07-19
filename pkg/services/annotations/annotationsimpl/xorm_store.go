@@ -388,7 +388,6 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (ac
 				recQueries, recQueriesParams = filterRBAC.With()
 				filter = fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
 				params = dashboardParams
-
 			} else {
 				filterRBAC := permissions.NewDashboardFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, false)
 				where, filterParams := filterRBAC.Where()

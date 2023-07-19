@@ -165,7 +165,6 @@ func TestIntegration_DashboardFilter(t *testing.T) {
 			count, err = queryWithFilter(store, filter)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedResult, count)
-
 		})
 	}
 }
