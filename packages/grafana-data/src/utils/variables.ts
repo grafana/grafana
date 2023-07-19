@@ -1,6 +1,6 @@
 import { ScopedVars } from '../types';
 
-export const SEARCH_FILTER_VARIABLE = '__searchFilter';
+const SEARCH_FILTER_VARIABLE = '__searchFilter';
 
 export const containsSearchFilter = (query: string | unknown): boolean =>
   query && typeof query === 'string' ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
