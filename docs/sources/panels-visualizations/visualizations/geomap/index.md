@@ -373,6 +373,12 @@ To enable the Route layer, set `enable_alpha` to `true` in your configuration fi
 enable_alpha = true
 ```
 
+To enable the Route layer using Docker, run the following command:
+
+```
+docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
+```
+
 ### Options
 
 - **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
@@ -399,6 +405,12 @@ To enable the Photos layer, set `enable_alpha` to `true` in your configuration f
 ```
 [panels]
 enable_alpha = true
+```
+
+To enable the Photos layer using Docker, run the following command:
+
+```
+docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
 ```
 
 ### Options

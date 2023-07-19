@@ -145,8 +145,10 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
 
       if (spanFilterMatches) {
         spanFilterMatches.forEach((spanID) => {
-          matchedServices.push(trace.processes[spanID].serviceName);
-          matchedDepth.push(trace.spans.find((span) => span.spanID === spanID)?.depth || 0);
+          if (trace.processes[spanID]) {
+            matchedServices.push(trace.processes[spanID].serviceName);
+            matchedDepth.push(trace.spans.find((span) => span.spanID === spanID)?.depth || 0);
+          }
         });
 
         if (spanFilterMatches.size === 0) {

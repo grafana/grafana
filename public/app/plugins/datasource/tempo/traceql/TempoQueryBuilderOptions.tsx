@@ -19,7 +19,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   }
 
   if (!query.hasOwnProperty('streaming')) {
-    query.streaming = true;
+    query.streaming = !config.featureToggles.disableTraceQLStreaming;
   }
 
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {

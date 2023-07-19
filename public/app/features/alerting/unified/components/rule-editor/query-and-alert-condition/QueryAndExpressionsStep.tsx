@@ -25,7 +25,7 @@ import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { errorFromSeries, refIdExists } from '../util';
+import { errorFromSeries, refIdExists, findRenamedDataQueryReferences } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
@@ -161,15 +161,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
-      // check if we need to rewire expressions
-      updatedQueries.forEach((query, index) => {
-        const oldRefId = queries[index].refId;
-        const newRefId = query.refId;
 
-        if (oldRefId !== newRefId) {
-          dispatch(rewireExpressions({ oldRefId, newRefId }));
-        }
-      });
+      // check if we need to rewire expressions (and which ones)
+      const [oldRefId, newRefId] = findRenamedDataQueryReferences(queries, updatedQueries);
+      if (oldRefId && newRefId) {
+        dispatch(rewireExpressions({ oldRefId, newRefId }));
+      }
     },
     [queries, setValue, updateExpressionAndDatasource]
   );
@@ -439,7 +436,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           />
           {/* Expression Queries */}
           <H5>Expressions</H5>
-          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}
@@ -539,9 +536,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 const useSetExpressionAndDataSource = () => {
   const { setValue } = useFormContext<RuleFormValues>();
+
   return (updatedQueries: AlertQuery[]) => {
     // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
     const query = updatedQueries[0];
+    if (!query) {
+      return;
+    }
+
     const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
     if (!dataSourceSettings) {
       throw new Error('The Data source has not been defined.');
