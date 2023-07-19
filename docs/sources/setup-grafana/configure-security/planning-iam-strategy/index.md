@@ -157,7 +157,7 @@ This particular role can only be accessed by users of self-hosted Grafana instan
 
 ### What are permissions?
 
-Each role consists of a set of [permissions]({{< relref "../../../administration/roles-and-permissions/#dashboard-permissions" >}}) that determine the tasks a user can perform in the system.
+Each role consists of a set of [permissions]({{< relref "../../../administration/roles-and-permissions#dashboard-permissions" >}}) that determine the tasks a user can perform in the system.
 For example, the **Admin** role includes permissions that let an administrator create and delete users.
 
 Grafana allows for precise permission settings on both dashboards and folders, giving you the ability to control which users and teams can view, edit, and administer them.
