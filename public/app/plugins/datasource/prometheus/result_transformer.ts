@@ -288,6 +288,7 @@ export function transform(
       preferredVisualisationType: transformOptions.query.instant ? 'rawPrometheus' : 'graph',
     },
   };
+
   const prometheusResult = response.data.data;
 
   if (isExemplarData(prometheusResult)) {
@@ -352,7 +353,8 @@ export function transform(
 
   // When format is heatmap use the already created data frames and transform it more
   if (options.format === 'heatmap') {
-    return mergeHeatmapFrames(transformToHistogramOverTime(dataFrame.sort(sortSeriesByLabel)));
+    const sortedFrames = dataFrame.sort(sortSeriesByLabel);
+    return mergeHeatmapFrames(transformToHistogramOverTime(sortedFrames));
   }
 
   // Return matrix or vector result as DataFrame[]
@@ -653,9 +655,10 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le20    20  10  30    =>    10  0   30
     le30    30  10  35    =>    10  0   5
     */
+
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields[1];
-    const bottomSeries = seriesList[i - 1].fields[1];
+    const topSeries = seriesList[i].fields.find((s) => s.type === FieldType.number);
+    const bottomSeries = seriesList[i - 1].fields.find((s) => s.type === FieldType.number);
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
