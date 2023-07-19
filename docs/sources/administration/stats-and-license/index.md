@@ -11,6 +11,10 @@ keywords:
   - configuration
   - server
   - settings
+labels:
+  products:
+    - cloud
+    - enterprise
 title: View server statistics and license
 weight: 400
 ---

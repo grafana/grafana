@@ -166,6 +166,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
           }}
           beforeMount={this.handleBeforeMount}
           onMount={this.handleOnMount}
+          keepCurrentModel={true}
         />
       </div>
     );
@@ -176,9 +177,9 @@ export const CodeEditor = withTheme2(UnthemedCodeEditor);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      border-radius: ${theme.shape.borderRadius()};
-      border: 1px solid ${theme.components.input.borderColor};
-    `,
+    container: css({
+      borderRadius: theme.shape.borderRadius(),
+      border: `1px solid ${theme.components.input.borderColor}`,
+    }),
   };
 };

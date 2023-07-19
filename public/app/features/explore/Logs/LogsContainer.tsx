@@ -72,11 +72,15 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     );
   }
 
-  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
+  getLogRowContext = async (
+    row: LogRowModel,
+    origRow: LogRowModel,
+    options: LogRowContextOptions
+  ): Promise<DataQueryResponse | []> => {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
+      const query = this.getQuery(logsQueries, origRow, datasourceInstance);
       return datasourceInstance.getLogRowContext(row, options, query);
     }
 
@@ -210,7 +214,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             clearCache={() => clearCache(exploreId)}
             eventBus={this.props.eventBus}
             panelState={this.props.panelState}
+            logsFrames={this.props.logsFrames}
             scrollElement={scrollElement}
+            range={range}
           />
         </LogsCrossFadeTransition>
       </>
@@ -254,6 +260,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     logsVolume,
     panelState,
+    logsFrames: item.queryResponse.logsFrames,
   };
 }
 

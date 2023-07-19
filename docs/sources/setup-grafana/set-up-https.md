@@ -1,12 +1,16 @@
 ---
+description: Learn how to set up Grafana HTTPS for secure web traffic.
 keywords:
   - grafana
   - https
   - ssl
   - certificates
-title: Set up Grafana HTTPS for secure web traffic
-description: Learn how to set up Grafana HTTPS for secure web traffic.
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up HTTPS
+title: Set up Grafana HTTPS for secure web traffic
 weight: 900
 ---
 
@@ -80,7 +84,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 1. Run the following command to self-sign the certificate with the private key, for a period of validity of 365 days:
 
    ```bash
-   sudo openssl x509 -req -days 365 -in grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
+   sudo openssl x509 -req -days 365 -in /etc/grafana/grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
    ```
 
 1. Run the following commands to set the appropriate permissions for the files:
@@ -88,7 +92,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
    ```bash
    sudo chown grafana:grafana /etc/grafana/grafana.crt
    sudo chown grafana:grafana /etc/grafana/grafana.key
-   sudo chmod 400 grafana.key /etc/grafana/grafana.crt
+   sudo chmod 400 /etc/grafana/grafana.key /etc/grafana/grafana.crt
    ```
 
    **Note**: When using these files, browsers might provide warnings for the resulting website because a third-party source does not trust the certificate. Browsers will show trust warnings; however, the connection will remain encrypted.

@@ -1,10 +1,14 @@
 package codegen
 
 import (
+	"fmt"
+	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/build"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
@@ -37,6 +41,13 @@ func (j *pleJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 		return nil, err
 	}
 
+	version := "export const pluginVersion = \"%s\";"
+	if decl.PluginMeta.Info.Version != nil {
+		version = fmt.Sprintf(version, *decl.PluginMeta.Info.Version)
+	} else {
+		version = fmt.Sprintf(version, getGrafanaVersion())
+	}
+
 	files := make(codejen.Files, len(jf))
 	for i, file := range jf {
 		tsf := &tsast.File{}
@@ -47,6 +58,10 @@ func (j *pleJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 				tsf.Imports = append(tsf.Imports, tsim)
 			}
 		}
+
+		tsf.Nodes = append(tsf.Nodes, tsast.Raw{
+			Data: version,
+		})
 
 		tsf.Nodes = append(tsf.Nodes, tsast.Raw{
 			Data: string(file.Data),
@@ -69,4 +84,18 @@ func kinds2pd(rt *thema.Runtime, j codejen.OneToMany[kindsys.Kind]) codejen.OneT
 		}
 		return kd
 	})
+}
+
+func getGrafanaVersion() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	pkg, err := build.OpenPackageJSON(path.Join(dir, "../../../"))
+	if err != nil {
+		return ""
+	}
+
+	return pkg.Version
 }

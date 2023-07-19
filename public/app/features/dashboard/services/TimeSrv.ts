@@ -29,8 +29,8 @@ export class TimeSrv {
   oldRefresh?: string;
   timeModel?: TimeModel;
   timeAtLoad: RawTimeRange;
+  refreshMS?: number;
   private autoRefreshBlocked?: boolean;
-  private refreshMS?: number;
 
   constructor(private contextSrv: ContextSrv) {
     // default time

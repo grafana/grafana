@@ -1,7 +1,11 @@
 ---
 description: Install guide for Grafana on SUSE or openSUSE.
-title: Install Grafana on SUSE or openSUSE
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: SUSE or openSUSE
+title: Install Grafana on SUSE or openSUSE
 weight: 300
 ---
 
@@ -87,6 +91,40 @@ Complete the following steps to install Grafana using the standalone binaries:
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
+
+## Uninstall on SUSE or openSUSE
+
+To uninstall Grafana, run the following commands in a terminal window:
+
+1. If you configured Grafana to run with systemd, stop the systemd service for Grafana server:
+
+   ```shell
+   sudo systemctl stop grafana-server
+   ```
+
+1. If you configured Grafana to run with init.d, stop the init.d service for Grafana server:
+
+   ```shell
+   sudo service grafana-server stop
+   ```
+
+1. To uninstall Grafana OSS:
+
+   ```shell
+   sudo zypper remove grafana
+   ```
+
+1. To uninstall Grafana Enterprise:
+
+   ```shell
+   sudo zypper remove grafana-enterprise
+   ```
+
+1. Optional: To remove the Grafana repository:
+
+   ```shell
+   sudo zypper removerepo grafana
+   ```
 
 ## Next steps
 

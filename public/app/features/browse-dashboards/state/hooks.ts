@@ -4,7 +4,7 @@ import { createSelector } from 'reselect';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState, useDispatch } from 'app/types';
 
-import { ROOT_PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/services';
 import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
 import { fetchNextChildrenPage } from './actions';
@@ -97,22 +97,25 @@ export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
-export function useLoadNextChildrenPage(folderUID: string | undefined) {
+export function useLoadNextChildrenPage() {
   const dispatch = useDispatch();
   const requestInFlightRef = useRef(false);
 
-  const handleLoadMore = useCallback(() => {
-    if (requestInFlightRef.current) {
-      return Promise.resolve();
-    }
+  const handleLoadMore = useCallback(
+    (folderUID: string | undefined) => {
+      if (requestInFlightRef.current) {
+        return Promise.resolve();
+      }
 
-    requestInFlightRef.current = true;
+      requestInFlightRef.current = true;
 
-    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-    promise.finally(() => (requestInFlightRef.current = false));
+      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: PAGE_SIZE }));
+      promise.finally(() => (requestInFlightRef.current = false));
 
-    return promise;
-  }, [dispatch, folderUID]);
+      return promise;
+    },
+    [dispatch]
+  );
 
   return handleLoadMore;
 }
@@ -126,23 +129,32 @@ export function useLoadNextChildrenPage(folderUID: string | undefined) {
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-function createFlatTree(
+export function createFlatTree(
   folderUID: string | undefined,
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0
+  level = 0,
+  insertEmptyFolderIndicator = true
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
+    const mappedChildren = createFlatTree(
+      item.uid,
+      rootCollection,
+      childrenByUID,
+      openFolders,
+      level + 1,
+      insertEmptyFolderIndicator
+    );
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder) {
+    if (isOpen && emptyFolder && insertEmptyFolderIndicator) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
         item: { kind: 'ui', uiKind: 'empty-folder', uid: item.uid + 'empty-folder' },
+        parentUID,
       });
     }
 
@@ -164,10 +176,12 @@ function createFlatTree(
     ? isOpen && collection?.items // keep seperate lines
     : collection?.items;
 
-  let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
+  let children = (items || []).flatMap((item) => {
+    return mapItem(item, folderUID, level);
+  });
 
-  if (level === 0 && (!collection || !collection.isFullyLoaded)) {
-    children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
+  if ((level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded)) {
+    children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
   }
 
   return children;

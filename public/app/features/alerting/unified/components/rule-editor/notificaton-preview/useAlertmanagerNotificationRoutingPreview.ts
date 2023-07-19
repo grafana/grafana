@@ -15,17 +15,14 @@ export const useAlertmanagerNotificationRoutingPreview = (
   alertManagerSourceName: string,
   potentialInstances: Labels[]
 ) => {
-  const {
-    config: AMConfig,
-    loading: configLoading,
-    error: configError,
-  } = useAlertmanagerConfig(alertManagerSourceName);
+  const { currentData, isLoading: configLoading, error: configError } = useAlertmanagerConfig(alertManagerSourceName);
+  const config = currentData?.alertmanager_config;
 
   const { matchInstancesToRoute } = useRouteGroupsMatcher();
 
   // to create the list of matching contact points we need to first get the rootRoute
   const { rootRoute, receivers } = useMemo(() => {
-    if (!AMConfig) {
+    if (!config) {
       return {
         receivers: [],
         rootRoute: undefined,
@@ -33,10 +30,10 @@ export const useAlertmanagerNotificationRoutingPreview = (
     }
 
     return {
-      rootRoute: AMConfig.route ? normalizeRoute(addUniqueIdentifierToRoute(AMConfig.route)) : undefined,
-      receivers: AMConfig.receivers ?? [],
+      rootRoute: config.route ? normalizeRoute(addUniqueIdentifierToRoute(config.route)) : undefined,
+      receivers: config.receivers ?? [],
     };
-  }, [AMConfig]);
+  }, [config]);
 
   // create maps for routes to be get by id, this map also contains the path to the route
   // ⚠️ don't forget to compute the inherited tree before using this map

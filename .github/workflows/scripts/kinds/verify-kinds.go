@@ -85,12 +85,6 @@ func main() {
 	}
 
 	for _, pp := range corelist.New(nil) {
-		// ElasticSearch composable kind causes the CUE evaluator to hand
-		// see https://github.com/grafana/grafana/pull/68034#discussion_r1187800059
-		if pp.Properties.Id == "elasticsearch" {
-			continue
-		}
-
 		for _, kind := range pp.ComposableKinds {
 			if len(kindArgs) > 0 && !contains(kindArgs, kind.Name()) {
 				continue
@@ -351,7 +345,7 @@ func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	path := filepath.Join(j.path, "next", "core", name+".cue")
+	path := filepath.Join(j.path, "next", "core", name, name+".cue")
 	return codejen.NewFile(path, newKindBytes, j), nil
 }
 
@@ -399,6 +393,8 @@ func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	newKindBytes = []byte(fmt.Sprintf("package kind\n\n%s", newKindBytes))
 
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
 }

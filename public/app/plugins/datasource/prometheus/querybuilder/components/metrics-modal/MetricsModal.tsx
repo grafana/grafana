@@ -66,7 +66,6 @@ const {
   setIncludeNullMetadata,
   setSelectedTypes,
   setUseBackend,
-  setSelectedIdx,
   setDisableTextWrap,
   showAdditionalSettings,
 } = stateSlice.actions;
@@ -158,22 +157,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
     }
   }
 
-  function keyFunction(e: React.KeyboardEvent<HTMLElement>) {
-    if (e.code === 'ArrowDown' && state.selectedIdx < state.resultsPerPage - 1) {
-      dispatch(setSelectedIdx(state.selectedIdx + 1));
-    } else if (e.code === 'ArrowUp' && state.selectedIdx > 0) {
-      dispatch(setSelectedIdx(state.selectedIdx - 1));
-    } else if (e.code === 'Enter') {
-      const metric = displayedMetrics(state, dispatch)[state.selectedIdx];
-
-      onChange({ ...query, metric: metric.value });
-
-      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
-
-      onClose();
-    }
-  }
-
   /* Settings switches */
   const additionalSettings = (
     <AdditionalSettings
@@ -182,7 +165,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
         const newVal = !state.fullMetaSearch;
         dispatch(setFullMetaSearch(newVal));
         onChange({ ...query, fullMetaSearch: newVal });
-
         searchCallback(state.fuzzySearchQuery, newVal);
       }}
       onChangeIncludeNullMetadata={() => {
@@ -233,9 +215,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
               const value = e.currentTarget.value ?? '';
               dispatch(setFuzzySearchQuery(value));
               searchCallback(value, state.fullMetaSearch);
-            }}
-            onKeyDown={(e) => {
-              keyFunction(e);
             }}
           />
         </div>
@@ -299,9 +278,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             onClose={onClose}
             query={query}
             state={state}
-            selectedIdx={state.selectedIdx}
             disableTextWrap={state.disableTextWrap}
-            onFocusRow={(idx: number) => dispatch(setSelectedIdx(idx))}
           />
         )}
       </div>

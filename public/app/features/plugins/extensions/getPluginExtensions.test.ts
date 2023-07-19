@@ -116,6 +116,7 @@ describe('getPluginExtensions()', () => {
       title: 'Updated title',
       description: 'Updated description',
       path: `/a/${pluginId}/updated-path`,
+      icon: 'search',
     }));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
@@ -128,6 +129,7 @@ describe('getPluginExtensions()', () => {
     expect(extension.title).toBe('Updated title');
     expect(extension.description).toBe('Updated description');
     expect(extension.path).toBe(`/a/${pluginId}/updated-path`);
+    expect(extension.icon).toBe('search');
   });
 
   test('should hide the extension if it tries to override not-allowed properties with the configure() function', () => {

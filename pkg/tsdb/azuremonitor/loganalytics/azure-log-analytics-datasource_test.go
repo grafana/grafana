@@ -36,38 +36,38 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		var correlationRes AzureCorrelationAPIResponse
 		if strings.Contains(r.URL.Path, "test-op-id") {
 			correlationRes = AzureCorrelationAPIResponse{
-				ID:   "/subscriptions/r1",
+				ID:   "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
 				Name: "guid-1",
 				Type: "microsoft.insights/transactions",
 				Properties: AzureCorrelationAPIResponseProperties{
 					Resources: []string{
-						"/subscriptions/r1",
+						"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
 					},
 					NextLink: nil,
 				},
 			}
 		} else if strings.Contains(r.URL.Path, "op-id-multi") {
 			correlationRes = AzureCorrelationAPIResponse{
-				ID:   "/subscriptions/r1",
+				ID:   "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
 				Name: "guid-1",
 				Type: "microsoft.insights/transactions",
 				Properties: AzureCorrelationAPIResponseProperties{
 					Resources: []string{
-						"/subscriptions/r1",
-						"/subscriptions/r2",
+						"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
+						"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2",
 					},
 					NextLink: nil,
 				},
 			}
 		} else if strings.Contains(r.URL.Path, "op-id-non-overlapping") {
 			correlationRes = AzureCorrelationAPIResponse{
-				ID:   "/subscriptions/r1",
+				ID:   "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
 				Name: "guid-1",
 				Type: "microsoft.insights/transactions",
 				Properties: AzureCorrelationAPIResponseProperties{
 					Resources: []string{
-						"/subscriptions/r1",
-						"/subscriptions/r3",
+						"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1",
+						"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r3",
 					},
 					NextLink: nil,
 				},
@@ -109,7 +109,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": "%s"
+							"resultFormat": "%s",
+							"intersectTime": false
 						}
 					}`, types.TimeSeries)),
 					RefID:     "A",
@@ -127,13 +128,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
-							"resultFormat": "%s"
+							"resultFormat": "%s",
+							"intersectTime": false
 						}
 					}`, types.TimeSeries)),
-					Query:     "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
-					Resources: []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
-					TimeRange: timeRange,
-					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
+					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
+					TimeRange:        timeRange,
+					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					AppInsightsQuery: false,
+					IntersectTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -167,9 +171,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s"
 						}
 					}`, types.TimeSeries)),
-					Query:     "Perf",
-					Resources: []string{},
-					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					Query:            "Perf",
+					Resources:        []string{},
+					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					AppInsightsQuery: false,
+					IntersectTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -203,9 +209,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resultFormat": "%s"
 						}
 					}`, types.TimeSeries)),
-					Query:     "Perf",
-					Resources: []string{},
-					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					Query:            "Perf",
+					Resources:        []string{},
+					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					AppInsightsQuery: false,
+					IntersectTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -219,7 +227,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf",
-							"resultFormat": "%s"
+							"resultFormat": "%s",
+							"intersectTime": false
 						}
 					}`, types.TimeSeries)),
 					RefID:     "A",
@@ -236,12 +245,15 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"azureLogAnalytics": {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf",
-							"resultFormat": "%s"
+							"resultFormat": "%s",
+							"intersectTime": false
 						}
 					}`, types.TimeSeries)),
-					Query:     "Perf",
-					Resources: []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
-					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					Query:            "Perf",
+					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
+					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					AppInsightsQuery: false,
+					IntersectTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -253,9 +265,10 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
 						"azureLogAnalytics": {
-							"resources":     ["/subscriptions/r1","/subscriptions/r2"],
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",  "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"],
 							"query":        "Perf",
-							"resultFormat": "%s"
+							"resultFormat": "%s",
+							"intersectTime": false
 						}
 					}`, types.TimeSeries)),
 					RefID:     "A",
@@ -267,19 +280,22 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: types.TimeSeries,
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace/query",
 					JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
 						"azureLogAnalytics": {
-							"resources":     ["/subscriptions/r1","/subscriptions/r2"],
+							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",  "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"],
 							"query":        "Perf",
-							"resultFormat": "%s"
+							"resultFormat": "%s",
+							"intersectTime": false
 						}
 					}`, types.TimeSeries)),
-					Query:     "Perf",
-					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
-					TimeRange: timeRange,
-					QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					Query:            "Perf",
+					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace", "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"},
+					TimeRange:        timeRange,
+					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
+					AppInsightsQuery: false,
+					IntersectTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -292,7 +308,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"traceTypes":	["trace"],
 								"operationId":	"test-op-id"
@@ -307,11 +323,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"traceTypes":	["trace"],
 								"operationId":	"test-op-id"
@@ -329,7 +345,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
@@ -359,6 +375,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -370,7 +388,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"traceTypes":	["trace"],
 								"operationId":	"test-op-id"
 							}
@@ -384,11 +402,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"traceTypes":	["trace"],
 								"operationId":	"test-op-id"
 							}
@@ -405,7 +423,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true trace` +
@@ -435,6 +453,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -446,7 +466,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTable)),
@@ -459,11 +479,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTable)),
@@ -478,7 +498,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
@@ -508,6 +528,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -519,7 +541,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"operationId":	"test-op-id"
 							}
@@ -533,11 +555,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"operationId":	"test-op-id"
 							}
@@ -554,7 +576,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
@@ -584,6 +606,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -595,7 +619,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 								"queryType": "Azure Traces",
 								"azureTraces": {
-									"resources":     ["/subscriptions/r1"],
+									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 									"resultFormat": "%s",
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "eq"}]
@@ -610,11 +634,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 								"queryType": "Azure Traces",
 								"azureTraces": {
-									"resources":     ["/subscriptions/r1"],
+									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 									"resultFormat": "%s",
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "eq"}]
@@ -633,7 +657,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
@@ -665,6 +689,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -676,7 +702,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 								"queryType": "Azure Traces",
 								"azureTraces": {
-									"resources":     ["/subscriptions/r1"],
+									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 									"resultFormat": "%s",
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"}]
@@ -691,11 +717,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 								"queryType": "Azure Traces",
 								"azureTraces": {
-									"resources":     ["/subscriptions/r1"],
+									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 									"resultFormat": "%s",
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"}]
@@ -714,7 +740,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
@@ -746,6 +772,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -757,7 +785,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 								"queryType": "Azure Traces",
 								"azureTraces": {
-									"resources":     ["/subscriptions/r1"],
+									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 									"resultFormat": "%s",
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"},{"filters": ["test-client-id"], "property": "clientId", "operation": "eq"}]
@@ -772,11 +800,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTable),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 								"queryType": "Azure Traces",
 								"azureTraces": {
-									"resources":     ["/subscriptions/r1"],
+									"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 									"resultFormat": "%s",
 									"operationId":	"test-op-id",
 									"filters":		[{"filters": ["test-app-id"], "property": "appId", "operation": "ne"},{"filters": ["test-client-id"], "property": "clientId", "operation": "eq"}]
@@ -795,7 +823,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,traces` +
@@ -827,6 +855,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -838,7 +868,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -851,11 +881,11 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":     ["/subscriptions/r1"],
+								"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -870,7 +900,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
@@ -900,6 +930,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -912,7 +944,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
-								"resources":    ["/subscriptions/r1"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -925,12 +957,12 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
-								"resources":    ["/subscriptions/r1"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -946,7 +978,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests` +
@@ -976,6 +1008,8 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -988,7 +1022,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
-								"resources":    ["/subscriptions/r1"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"traceTypes":		["traces"]
 							}
@@ -1002,24 +1036,26 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"test-op-id",
-								"resources":    ["/subscriptions/r1"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s",
 								"traceTypes":		["traces"]
 							}
 						}`, dataquery.ResultFormatTrace)),
 					Query:                   "",
-					Resources:               []string{"/subscriptions/r1"},
+					Resources:               []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange:               timeRange,
 					QueryType:               string(dataquery.AzureQueryTypeAzureTraces),
 					TraceExploreQuery:       "",
 					TraceParentExploreQuery: "",
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1032,7 +1068,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
-								"resources":    ["/subscriptions/r1"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -1045,16 +1081,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
-								"resources":    ["/subscriptions/r1"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1065,10 +1101,10 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1079,7 +1115,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -1092,14 +1128,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('/subscriptions/r2').availabilityResults,\n" +
-						"app('/subscriptions/r2').customEvents,\n" +
-						"app('/subscriptions/r2').dependencies,\n" +
-						"app('/subscriptions/r2').exceptions,\n" +
-						"app('/subscriptions/r2').pageViews,\n" +
-						"app('/subscriptions/r2').requests,\n" +
-						"app('/subscriptions/r2').traces\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1111,7 +1149,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":    ["/subscriptions/r1", "/subscriptions/r2"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -1124,15 +1162,15 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
-								"resources":    ["/subscriptions/r1", "/subscriptions/r2"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
 						`| extend operationName = iff(isempty(column_ifexists("name", "")), column_ifexists("problemId", ""), column_ifexists("name", ""))` +
@@ -1142,10 +1180,10 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1156,7 +1194,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == '${__data.fields.traceID}') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == '${__data.fields.traceID}')` +
 						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -1169,14 +1207,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('/subscriptions/r2').availabilityResults,\n" +
-						"app('/subscriptions/r2').customEvents,\n" +
-						"app('/subscriptions/r2').dependencies,\n" +
-						"app('/subscriptions/r2').exceptions,\n" +
-						"app('/subscriptions/r2').pageViews,\n" +
-						"app('/subscriptions/r2').requests,\n" +
-						"app('/subscriptions/r2').traces\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1189,7 +1229,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
-								"resources":    ["/subscriptions/r1", "/subscriptions/r2"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -1202,16 +1242,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-multi",
-								"resources":    ["/subscriptions/r1", "/subscriptions/r2"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1222,10 +1262,10 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1236,7 +1276,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests` +
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-multi') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-multi')` +
 						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -1249,14 +1289,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('/subscriptions/r2').availabilityResults,\n" +
-						"app('/subscriptions/r2').customEvents,\n" +
-						"app('/subscriptions/r2').dependencies,\n" +
-						"app('/subscriptions/r2').exceptions,\n" +
-						"app('/subscriptions/r2').pageViews,\n" +
-						"app('/subscriptions/r2').requests,\n" +
-						"app('/subscriptions/r2').traces\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1269,7 +1311,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-non-overlapping",
-								"resources":    ["/subscriptions/r1", "/subscriptions/r2"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
@@ -1282,16 +1324,16 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 				{
 					RefID:        "A",
 					ResultFormat: string(dataquery.ResultFormatTrace),
-					URL:          "v1/subscriptions/r1/query",
+					URL:          "v1/apps/r1/query",
 					JSON: []byte(fmt.Sprintf(`{
 							"queryType": "Azure Traces",
 							"azureTraces": {
 								"operationId": 	"op-id-non-overlapping",
-								"resources":    ["/subscriptions/r1", "/subscriptions/r2"],
+								"resources":    ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],
 								"resultFormat": "%s"
 							}
 						}`, dataquery.ResultFormatTrace)),
-					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
+					Query: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1302,10 +1344,10 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					Resources: []string{"/subscriptions/r1", "/subscriptions/r2"},
+					Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 					TimeRange: timeRange,
 					QueryType: string(dataquery.AzureQueryTypeAzureTraces),
-					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
+					TraceExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
 						`| extend spanID = iff(itemType == "pageView" or isempty(column_ifexists("id", "")), tostring(new_guid()), column_ifexists("id", ""))` +
@@ -1316,7 +1358,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project-rename traceID = operation_Id, parentSpanID = operation_ParentId, startTime = timestamp` +
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
-					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/r2').availabilityResults,app('/subscriptions/r2').customEvents,app('/subscriptions/r2').dependencies,app('/subscriptions/r2').exceptions,app('/subscriptions/r2').pageViews,app('/subscriptions/r2').requests,app('/subscriptions/r3').availabilityResults,app('/subscriptions/r3').customEvents,app('/subscriptions/r3').dependencies,app('/subscriptions/r3').exceptions,app('/subscriptions/r3').pageViews,app('/subscriptions/r3').requests` +
+					TraceParentExploreQuery: `set truncationmaxrecords=10000; set truncationmaxsize=67108864; union isfuzzy=true availabilityResults,customEvents,dependencies,exceptions,pageViews,requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').availabilityResults,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').customEvents,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').dependencies,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').exceptions,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').pageViews,app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').requests` +
 						`| where (operation_Id != '' and operation_Id == 'op-id-non-overlapping') or (customDimensions.ai_legacyRootId != '' and customDimensions.ai_legacyRootId == 'op-id-non-overlapping')` +
 						`| where (operation_ParentId != '' and operation_ParentId == '${__data.fields.parentSpanID}')` +
 						`| extend duration = iff(isnull(column_ifexists("duration", real(null))), toreal(0), column_ifexists("duration", real(null)))` +
@@ -1329,21 +1371,23 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						`| project startTime, itemType, serviceName, duration, traceID, spanID, parentSpanID, operationName, serviceTags, tags, itemId` +
 						`| order by startTime asc`,
 					TraceLogsExploreQuery: "union *,\n" +
-						"app('/subscriptions/r2').availabilityResults,\n" +
-						"app('/subscriptions/r2').customEvents,\n" +
-						"app('/subscriptions/r2').dependencies,\n" +
-						"app('/subscriptions/r2').exceptions,\n" +
-						"app('/subscriptions/r2').pageViews,\n" +
-						"app('/subscriptions/r2').requests,\n" +
-						"app('/subscriptions/r2').traces,\n" +
-						"app('/subscriptions/r3').availabilityResults,\n" +
-						"app('/subscriptions/r3').customEvents,\n" +
-						"app('/subscriptions/r3').dependencies,\n" +
-						"app('/subscriptions/r3').exceptions,\n" +
-						"app('/subscriptions/r3').pageViews,\n" +
-						"app('/subscriptions/r3').requests,\n" +
-						"app('/subscriptions/r3').traces\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').availabilityResults,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').customEvents,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').dependencies,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').exceptions,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').pageViews,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').requests,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').availabilityResults,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').customEvents,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').dependencies,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').exceptions,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').pageViews,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').requests,\n" +
+						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').traces\n" +
 						"| where operation_Id == \"op-id-non-overlapping\"",
+					AppInsightsQuery: true,
+					IntersectTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1368,8 +1412,34 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	t.Run("creates a request", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
-			Resources: []string{"r"},
-			Query:     "Perf",
+			Resources:        []string{"r"},
+			Query:            "Perf",
+			IntersectTime:    false,
+			AppInsightsQuery: false,
+		})
+		require.NoError(t, err)
+		if req.URL.String() != url {
+			t.Errorf("Expecting %s, got %s", url, req.URL.String())
+		}
+		expectedHeaders := http.Header{"Content-Type": []string{"application/json"}}
+		if !cmp.Equal(req.Header, expectedHeaders) {
+			t.Errorf("Unexpected HTTP headers: %v", cmp.Diff(req.Header, expectedHeaders))
+		}
+		expectedBody := `{"query":"Perf"}`
+		body, err := io.ReadAll(req.Body)
+		require.NoError(t, err)
+		if !cmp.Equal(string(body), expectedBody) {
+			t.Errorf("Unexpected Body: %v", cmp.Diff(string(body), expectedBody))
+		}
+	})
+
+	t.Run("creates a request with timespan", func(t *testing.T) {
+		ds := AzureLogAnalyticsDatasource{}
+		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+			Resources:        []string{"r"},
+			Query:            "Perf",
+			IntersectTime:    true,
+			AppInsightsQuery: false,
 		})
 		require.NoError(t, err)
 		if req.URL.String() != url {
@@ -1390,12 +1460,14 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 	t.Run("creates a request with multiple resources", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
-			Resources: []string{"r1", "r2"},
-			Query:     "Perf",
-			QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"},
+			Query:            "Perf",
+			QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
+			AppInsightsQuery: false,
+			IntersectTime:    false,
 		})
 		require.NoError(t, err)
-		expectedBody := `{"query":"Perf","timespan":"0001-01-01T00:00:00Z/0001-01-01T00:00:00Z","workspaces":["r1","r2"]}`
+		expectedBody := `{"query":"Perf","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"]}`
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
@@ -1408,16 +1480,18 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		from := time.Now()
 		to := from.Add(3 * time.Hour)
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
-			Resources: []string{"r1", "r2"},
+			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"},
 			Query:     "Perf",
 			QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
 			TimeRange: backend.TimeRange{
 				From: from,
 				To:   to,
 			},
+			AppInsightsQuery: false,
+			IntersectTime:    true,
 		})
 		require.NoError(t, err)
-		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["r1","r2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
+		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {
@@ -1425,20 +1499,22 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		}
 	})
 
-	t.Run("does not pass multiple resources for traces queries", func(t *testing.T) {
+	t.Run("correctly passes multiple resources for traces queries", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		from := time.Now()
 		to := from.Add(3 * time.Hour)
 		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
-			Resources: []string{"r1", "r2"},
+			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 			QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			TimeRange: backend.TimeRange{
 				From: from,
 				To:   to,
 			},
+			AppInsightsQuery: true,
+			IntersectTime:    true,
 		})
 		require.NoError(t, err)
-		expectedBody := fmt.Sprintf(`{"query":"","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
+		expectedBody := fmt.Sprintf(`{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],"query":"","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
 		body, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 		if !cmp.Equal(string(body), expectedBody) {

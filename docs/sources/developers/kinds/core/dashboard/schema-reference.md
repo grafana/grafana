@@ -274,10 +274,10 @@ Thresholds configuration for the panel
 User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
 They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
 
-| Property | Type   | Required | Default | Description                                                                                                                                                                                                    |
-|----------|--------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `color`  | string | **Yes**  |         | Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.                                                                                  |
-| `value`  | number | **Yes**  |         | Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.<br/>Nulls currently appear here when serializing -Infinity to JSON. |
+| Property | Type           | Required | Default | Description                                                                                                                                                                                                    |
+|----------|----------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `color`  | string         | **Yes**  |         | Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.                                                                                  |
+| `value`  | number or null | **Yes**  |         | Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.<br/>Nulls currently appear here when serializing -Infinity to JSON. |
 
 ### ValueMapping
 
@@ -303,9 +303,9 @@ Range to match against and the result to apply when the value is within the rang
 
 | Property | Type                                      | Required | Default | Description                                                           |
 |----------|-------------------------------------------|----------|---------|-----------------------------------------------------------------------|
-| `from`   | number                                    | **Yes**  |         | Min value of the range. It can be null which means -Infinity          |
+| `from`   | number or null                            | **Yes**  |         | Min value of the range. It can be null which means -Infinity          |
 | `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches |
-| `to`     | number                                    | **Yes**  |         | Max value of the range. It can be null which means +Infinity          |
+| `to`     | number or null                            | **Yes**  |         | Max value of the range. It can be null which means +Infinity          |
 
 ### ValueMappingResult
 

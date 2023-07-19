@@ -22,7 +22,6 @@ import (
 	"github.com/gobwas/glob"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -64,10 +63,10 @@ type Signature struct {
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+func ProvideService(kr plugins.KeyRetriever) *Signature {
 	return &Signature{
-		log: log.New("plugin.signature"),
 		kr:  kr,
+		log: log.New("plugin.signature"),
 	}
 }
 

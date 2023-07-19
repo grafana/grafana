@@ -4,14 +4,16 @@ import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
+import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
+import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
@@ -19,6 +21,7 @@ import { getInheritedProperties, InhertitableProperties } from '../../utils/noti
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
+import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
@@ -30,6 +33,7 @@ interface PolicyComponentProps {
   alertGroups?: AlertmanagerGroup[];
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
+  provisioned?: boolean;
   inheritedProperties?: Partial<InhertitableProperties>;
   routesMatchingFilters?: RouteWithID[];
   // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
@@ -49,6 +53,7 @@ const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
   contactPointsState,
   readOnly = false,
+  provisioned = false,
   alertGroups = [],
   alertManagerSourceName,
   currentRoute,
@@ -130,7 +135,7 @@ const Policy: FC<PolicyComponentProps> = ({
         <div className={styles.policyItemWrapper}>
           <Stack direction="column" gap={1}>
             {/* Matchers and actions */}
-            <div className={styles.matchersRow}>
+            <div>
               <Stack direction="row" alignItems="center" gap={1}>
                 {isDefaultPolicy ? (
                   <DefaultPolicyIndicator />
@@ -142,49 +147,57 @@ const Policy: FC<PolicyComponentProps> = ({
                 <Spacer />
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
-                {!readOnly && (
+                {provisioned && <ProvisioningBadge />}
+                {readOnly ? null : (
                   <Stack direction="row" gap={0.5}>
-                    <Button
-                      variant="secondary"
-                      icon="plus"
-                      size="sm"
-                      onClick={() => onAddPolicy(currentRoute)}
-                      type="button"
-                    >
-                      New nested policy
-                    </Button>
-                    <Dropdown
-                      overlay={
-                        <Menu>
-                          <Menu.Item
-                            icon="edit"
-                            disabled={!isEditable}
-                            label="Edit"
-                            onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                          />
-                          {isDeletable && (
-                            <>
-                              <Menu.Divider />
-                              <Menu.Item
-                                destructive
-                                icon="trash-alt"
-                                label="Delete"
-                                onClick={() => onDeletePolicy(currentRoute)}
-                              />
-                            </>
-                          )}
-                        </Menu>
-                      }
-                    >
+                    <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
                       <Button
-                        icon="ellipsis-h"
                         variant="secondary"
+                        icon="plus"
                         size="sm"
+                        onClick={() => onAddPolicy(currentRoute)}
+                        disabled={provisioned}
                         type="button"
-                        aria-label="more-actions"
-                        data-testid="more-actions"
-                      />
-                    </Dropdown>
+                      >
+                        New nested policy
+                      </Button>
+                    </ConditionalWrap>
+
+                    <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                      <Dropdown
+                        overlay={
+                          <Menu>
+                            <Menu.Item
+                              icon="edit"
+                              disabled={!isEditable}
+                              label="Edit"
+                              onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                            />
+                            {isDeletable && (
+                              <>
+                                <Menu.Divider />
+                                <Menu.Item
+                                  destructive
+                                  icon="trash-alt"
+                                  label="Delete"
+                                  onClick={() => onDeletePolicy(currentRoute)}
+                                />
+                              </>
+                            )}
+                          </Menu>
+                        }
+                      >
+                        <Button
+                          icon="ellipsis-h"
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          aria-label="more-actions"
+                          data-testid="more-actions"
+                          disabled={provisioned}
+                        />
+                      </Dropdown>
+                    </ConditionalWrap>
                   </Stack>
                 )}
               </Stack>
@@ -269,7 +282,7 @@ const Policy: FC<PolicyComponentProps> = ({
               currentRoute={child}
               receivers={receivers}
               contactPointsState={contactPointsState}
-              readOnly={readOnly}
+              readOnly={readOnly || provisioned}
               inheritedProperties={childInheritedProperties}
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
@@ -286,6 +299,12 @@ const Policy: FC<PolicyComponentProps> = ({
     </Stack>
   );
 };
+
+const ProvisionedTooltip = (children: ReactNode) => (
+  <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
+    <span>{children}</span>
+  </Tooltip>
+);
 
 const Errors: FC<{ errors: React.ReactNode[] }> = ({ errors }) => (
   <HoverCard
@@ -428,18 +447,6 @@ interface ContactPointDetailsProps {
   contactPoint: string;
   receivers: Receiver[];
 }
-
-const INTEGRATION_ICONS: Record<string, IconName> = {
-  discord: 'discord',
-  email: 'envelope',
-  googlechat: 'google-hangouts-alt',
-  hipchat: 'hipchat',
-  line: 'line',
-  pagerduty: 'pagerduty',
-  slack: 'slack',
-  teams: 'microsoft',
-  telegram: 'telegram-alt',
-};
 
 // @TODO make this work for cloud AMs too
 const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
@@ -601,10 +608,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css`
     background: ${theme.colors.background.secondary};
 
-    border-bottom-left-radius: ${theme.shape.borderRadius(1)};
-    border-bottom-right-radius: ${theme.shape.borderRadius(1)};
+    border-bottom-left-radius: ${theme.shape.borderRadius(2)};
+    border-bottom-right-radius: ${theme.shape.borderRadius(2)};
   `,
-  matchersRow: css``,
   policyWrapper: (hasFocus = false) => css`
     flex: 1;
     position: relative;

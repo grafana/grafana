@@ -28,15 +28,15 @@ type Local struct {
 	production bool
 }
 
-func NewLocalFinder(cfg *config.Cfg) *Local {
+func NewLocalFinder(devMode bool) *Local {
 	return &Local{
-		production: !cfg.DevMode,
+		production: !devMode,
 		log:        log.New("local.finder"),
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg)
+	return NewLocalFinder(cfg.DevMode)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -79,10 +79,6 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			continue
 		}
 
-		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
-			continue
-		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 

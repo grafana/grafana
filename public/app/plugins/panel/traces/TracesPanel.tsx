@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { PanelProps } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
-import TracePageSearchBar from 'app/features/explore/TraceView/components/TracePageHeader/TracePageSearchBar';
+import TracePageSearchBar from 'app/features/explore/TraceView/components/TracePageHeader/SearchBar/TracePageSearchBar';
 import { TopOfViewRefType } from 'app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView';
 import { useSearch } from 'app/features/explore/TraceView/useSearch';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';

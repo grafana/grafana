@@ -241,6 +241,7 @@ export function removeCommentsFromQuery(query: string): string {
     newQuery = newQuery + query.substring(prev, lineCommentPosition.from);
     prev = lineCommentPosition.to;
   }
+  newQuery = newQuery + query.substring(prev);
   return newQuery;
 }
 
