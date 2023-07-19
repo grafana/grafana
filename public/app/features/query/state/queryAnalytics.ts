@@ -65,6 +65,7 @@ export function emitDataRequestEvent(datasource: DataSourceApi) {
     const totalQueries = Object.keys(queryCacheStatus).length;
     const cachedQueries = Object.values(queryCacheStatus).filter((val) => val === true).length;
 
+    eventData.variableName = data.request!.variableName;
     eventData.panelId = data.request!.panelId;
     eventData.totalQueries = totalQueries;
     eventData.cachedQueries = cachedQueries;

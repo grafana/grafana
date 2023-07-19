@@ -103,6 +103,25 @@ function getTestData(requestApp: string, series: DataFrame[] = []): PanelData {
   };
 }
 
+function getTestDataForVariable(requestApp: string, series: DataFrame[] = []): PanelData {
+  const now = dateTime();
+  return {
+    request: {
+      app: requestApp,
+      variableName: 'variable_name',
+      startTime: now.unix(),
+      endTime: now.add(1, 's').unix(),
+    } as DataQueryRequest,
+    series,
+    state: LoadingState.Done,
+    timeRange: {
+      from: dateTime(),
+      to: dateTime(),
+      raw: { from: '1h', to: 'now' },
+    },
+  };
+}
+
 function getTestDataForExplore(requestApp: string, series: DataFrame[] = []): PanelData {
   const now = dateTime();
   const error: DataQueryError = { message: 'test error' };
@@ -123,6 +142,30 @@ function getTestDataForExplore(requestApp: string, series: DataFrame[] = []): Pa
     error: error,
   };
 }
+
+describe('emitDataRequestEvent - from a dashboard variable', () => {
+  it('Should report meta analytics', () => {
+    const data = getTestDataForVariable(CoreApp.Dashboard);
+    emitDataRequestEvent(datasource)(data);
+
+    expect(reportMetaAnalytics).toBeCalledTimes(1);
+    expect(reportMetaAnalytics).toBeCalledWith(
+      expect.objectContaining({
+        eventName: MetaAnalyticsEventName.DataRequest,
+        datasourceName: datasource.name,
+        datasourceUid: datasource.uid,
+        datasourceType: datasource.type,
+        source: 'dashboard',
+        variableName: 'variable_name',
+        dashboardUid: 'test', // from dashboard srv
+        dataSize: 0,
+        duration: 1,
+        totalQueries: 0,
+        cachedQueries: 0,
+      })
+    );
+  });
+});
 
 describe('emitDataRequestEvent - from a dashboard panel', () => {
   it('Should report meta analytics', () => {

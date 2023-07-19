@@ -119,6 +119,12 @@ describe('VariableQueryRunner', () => {
           expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
           expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
           expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
+          expect(queryRunner.runRequest).toBeCalledWith(
+            expect.anything(),
+            expect.objectContaining({
+              variableName: 'query',
+            })
+          );
           expect(datasource.metricFindQuery).not.toHaveBeenCalled();
 
           // updateVariableOptions and validateVariableSelectionState
