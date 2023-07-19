@@ -21,18 +21,16 @@ import { TitleItem } from './TitleItem';
 /**
  * @internal
  */
-export type PanelChromeProps = FixedDimensions | AutoSize;
+export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | HoverHeader);
+
 interface BaseProps {
-  collapsible?: boolean;
   padding?: PanelPadding;
-  hoverHeaderOffset?: number;
   title?: string;
   description?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
   dragClassCancel?: string;
-  hoverHeader?: boolean;
   /**
    * Use only to indicate loading or streaming data in the panel.
    * Any other values of loadingState are ignored.
@@ -71,6 +69,18 @@ interface AutoSize extends BaseProps {
   children: ReactNode;
 }
 
+interface Collapsible {
+  collapsible: boolean;
+  hoverHeader?: never;
+  hoverHeaderOffset?: never;
+}
+
+interface HoverHeader {
+  collapsible?: never;
+  hoverHeader?: boolean;
+  hoverHeaderOffset?: number;
+}
+
 /**
  * @internal
  */
@@ -83,6 +93,7 @@ export function PanelChrome({
   width,
   height,
   children,
+  // headerFunctionality = 'normal',
   padding = 'md',
   title = '',
   description = '',
@@ -142,6 +153,15 @@ export function PanelChrome({
 
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
+  const collapsibleHeader = (
+    <button type="button" className={styles.clearButtonStyles} onClick={() => setIsOpen(!isOpen)}>
+      <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
+      <h6 title={title} className={styles.title}>
+        {title}
+      </h6>
+    </button>
+  );
+
   const headerContent = (
     <>
       {title &&
@@ -150,12 +170,7 @@ export function PanelChrome({
             {title}
           </h6>
         ) : (
-          <button type="button" className={styles.clearButtonStyles} onClick={() => setIsOpen(!isOpen)}>
-            <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-            <h6 title={title} className={styles.title}>
-              {title}
-            </h6>
-          </button>
+          collapsibleHeader
         ))}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
