@@ -246,6 +246,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.20
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/armon/go-radix v1.0.0
+	github.com/blang/semver/v4 v4.0.0
 	github.com/blugelabs/bluge v0.1.9
 	github.com/blugelabs/bluge_segment_api v0.2.0
 	github.com/bufbuild/connect-go v1.0.0
