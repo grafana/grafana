@@ -37,7 +37,7 @@ function renderError(error: DataQueryError) {
         <>
           {error.status && <>Status: {error.status}. Message: </>}
           {msg}
-          {config.featureToggles.showTraceId && error.traceId != null && (
+          {error.traceId != null && (
             <>
               <br />
               (Trace ID: {error.traceId})

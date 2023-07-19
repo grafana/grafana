@@ -67,9 +67,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
     <div aria-label={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
-      {config.featureToggles.showTraceId && (
-        <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
-      )}
+      <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
     </div>
   );
 };

@@ -21,7 +21,7 @@ export function QueryErrorAlert({ error }: Props) {
       </div>
       <div className={styles.message}>
         {message}
-        {config.featureToggles.showTraceId && error.traceId != null && (
+        {error.traceId != null && (
           <>
             <br /> <span>(Trace ID: {error.traceId})</span>
           </>
