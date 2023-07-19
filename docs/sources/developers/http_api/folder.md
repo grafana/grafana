@@ -35,8 +35,8 @@ that you cannot use this API for retrieving information about the General folder
 
 Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000. You can also pass the `page` query parameter for fetching folders from a page other than the first one.
 
-If nested folders are enabled, the operation expects an additional optional query parameter `parentUid` with the parent folder UID and returns the immediate subfolders that the authenticated user has permission to view.
-If the parameter is not supplied then the operation returns immediate subfolders under the root
+If nested folders are enabled, the operation expects an additional optional query parameter `parentUid` with the parent folder UID, and returns the immediate subfolders that the authenticated user has permission to view.
+If the parameter is not supplied, then the operation returns immediate subfolders under the root
 that the authenticated user has permission to view.
 
 **Required permissions**
@@ -422,7 +422,7 @@ If moving the folder under root:
 
 JSON body schema:
 
-- **parentUid** – Optional [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) of the new parent folder. If this is empty, then the folder is moved under the root.
+- **parentUid** – Optional [unique identifier]({{< relref "#identifier-id-vs-unique-identifier-uid" >}}) of the new parent folder. If this is empty, then the folder is moved under the root.
 
 **Example Request**:
 
