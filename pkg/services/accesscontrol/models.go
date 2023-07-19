@@ -182,6 +182,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
+	Kind       string `json:"-"`
+	Attribute  string `json:"-"`
+	Identifier string `json:"-"`
+
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
 }
@@ -190,6 +194,23 @@ func (p Permission) OSSPermission() Permission {
 	return Permission{
 		Action: p.Action,
 		Scope:  p.Scope,
+	}
+}
+
+// SplitScope returns kind, attribute and Identifier
+func (p Permission) SplitScope() (string, string, string) {
+	if p.Scope == "" {
+		return "", "", ""
+	}
+
+	fragments := strings.Split(p.Scope, ":")
+	switch l := len(fragments); l {
+	case 1:
+		return "", "", fragments[0]
+	case 2:
+		return fragments[0], "", fragments[1]
+	default:
+		return fragments[0], fragments[1], fragments[2]
 	}
 }
 
