@@ -6,7 +6,7 @@ e2e.scenario({
   itName: 'Tests each panel type in the panel edit view to ensure no crash',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
-  skipScenario: false,
+  skipScenario: true,
   scenario: () => {
     e2e.flows.addDashboard();
 

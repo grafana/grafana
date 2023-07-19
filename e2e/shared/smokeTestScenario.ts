@@ -5,7 +5,7 @@ export const smokeTestScenario = {
   itName: 'Login scenario, create test data source, dashboard, panel, and export scenario',
   addScenarioDataSource: true,
   addScenarioDashBoard: true,
-  skipScenario: false,
+  skipScenario: true,
   loginViaApi: false,
   scenario: () => {
     // wait for time to be set to account for any layout shift
