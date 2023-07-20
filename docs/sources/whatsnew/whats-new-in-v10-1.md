@@ -98,3 +98,15 @@ _Generally available in all editions of Grafana._
 A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it with a blue background, making it easy to identify and focus on the relevant information.
 
 {{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
+
+### TraceQL response streaming in Tempo
+
+<!-- André Pereira -->
+
+_Generally available in all editions of Grafana._
+
+Grafana's Tempo data source latest upgrade includes support for streaming responses of TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for those long queries that take a long time to return a response.
+
+To use this feature, toggle on the "Streaming" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+
+{{< figure src="/media/docs/grafana/data-sources/tempo-streaming.png" max-width="750px" caption="TraceQL Search streaming" >}}
