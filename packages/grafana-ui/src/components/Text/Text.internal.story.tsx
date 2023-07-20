@@ -6,7 +6,6 @@ import { VerticalGroup } from '../Layout/Layout';
 
 import { Text } from './Text';
 import mdx from './Text.mdx';
-import { H1, H2, H3, H4, H5, H6, Span, P, Legend, TextModifier } from './TextElements';
 
 const meta: Meta = {
   title: 'General/Text',
@@ -15,7 +14,6 @@ const meta: Meta = {
     docs: {
       page: mdx,
     },
-    controls: { exclude: ['as'] },
   },
   argTypes: {
     variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
@@ -39,93 +37,73 @@ const meta: Meta = {
       ],
     },
     truncate: { control: 'boolean' },
+    italic: { control: 'boolean' },
     textAlignment: {
       control: 'select',
       options: ['inherit', 'initial', 'left', 'right', 'center', 'justify', undefined],
     },
   },
+  args: {
+    element: 'h1',
+    variant: undefined,
+    weight: 'light',
+    textAlignment: 'left',
+    truncate: false,
+    italic: false,
+    color: 'primary',
+    children: `This is an example of a Text component`,
+  },
 };
 
-export const Example: StoryFn = () => {
+export const Example: StoryFn = (args) => {
   return (
     <VerticalGroup>
-      <StoryExample name="Header, paragraph, span and legend elements">
-        <H1>h1. Heading</H1>
-        <H2>h2. Heading</H2>
-        <H3>h3. Heading</H3>
-        <H4>h4. Heading</H4>
-        <H5>h5. Heading</H5>
-        <H6>h6. Heading</H6>
-        <P>This is a paragraph</P>
-        <Legend>This is a legend</Legend>
-        <Span>This is a span</Span>
+      <StoryExample name="Header, paragraph and span">
+        <Text {...args} element="h1">
+          This is a header
+        </Text>
+        <Text {...args} element="p">
+          This is a paragraph that contains
+          <Text color="success" italic>
+            {' '}
+            a span element with different color and style{' '}
+          </Text>
+          but is comprised within the same block text
+        </Text>
+      </StoryExample>
+      <StoryExample name="Paragraph with truncate set to true and wrapping up a span element">
+        <Text {...args} element="p" truncate>
+          This is a paragraph that contains
+          <Text color="warning" italic>
+            {' '}
+            a span element{' '}
+          </Text>
+          but has truncate set to true
+        </Text>
       </StoryExample>
     </VerticalGroup>
   );
 };
 Example.parameters = {
   controls: {
-    exclude: ['variant', 'weight', 'textAlignment', 'truncate', 'color', 'children'],
+    exclude: ['element', 'variant', 'weight', 'textAlignment', 'truncate', 'italic', 'color', 'children'],
   },
 };
 
-export const HeadingComponent: StoryFn = (args) => {
+export const Basic: StoryFn = (args) => {
   return (
     <div style={{ width: '300px' }}>
-      <H1 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
+      <Text
+        element={args.element}
+        variant={args.variant}
+        weight={args.weight}
+        textAlignment={args.textAlignment}
+        {...args}
+      >
         {args.children}
-      </H1>
+      </Text>
     </div>
   );
-};
-HeadingComponent.args = {
-  variant: undefined,
-  weight: 'light',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'primary',
-  children: 'This is a H1 component',
-};
-
-export const LegendComponent: StoryFn = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <Legend variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}
-      </Legend>
-    </div>
-  );
-};
-
-LegendComponent.args = {
-  variant: undefined,
-  weight: 'bold',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'error',
-  children: 'This is a lengend component',
-};
-
-export const TextModifierComponent: StoryFn = (args) => {
-  return (
-    <div style={{ width: '300px' }}>
-      <H6 variant={args.variant} weight={args.weight} textAlignment={args.textAlignment} {...args}>
-        {args.children}{' '}
-        <TextModifier weight="bold" color="error">
-          {' '}
-          with a part of its text modified{' '}
-        </TextModifier>
-      </H6>
-    </div>
-  );
-};
-TextModifierComponent.args = {
-  variant: undefined,
-  weight: 'light',
-  textAlignment: 'center',
-  truncate: false,
-  color: 'maxContrast',
-  children: 'This is a H6 component',
 };
 
 export default meta;
