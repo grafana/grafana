@@ -266,7 +266,7 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
 
 export interface QueryFilterOptions extends KeyValue<string> {}
 export interface ToggleFilterAction {
-  type: 'ADD_FILTER' | 'ADD_FILTER_OUT';
+  type: 'FILTER' | 'FILTER_OUT';
   options: QueryFilterOptions;
 }
 /**

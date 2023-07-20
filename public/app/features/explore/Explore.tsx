@@ -199,14 +199,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       if (!hasToggleableQueryFiltersSupport(ds)) {
         return false;
       }
-      const hasFilter = ds.analyzeQuery(query, {
-        check: 'HAS_FILTER',
-        attributes: {
-          key,
-          value,
-        },
-      });
-      if (!hasFilter) {
+      if (!ds.queryHasFilter(query, { key, value })) {
         return false;
       }
     }
@@ -247,6 +240,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
+      if (hasToggleableQueryFiltersSupport(ds)) {
+        return ds.toggleFilter(query, {
+          type: modification.type === 'ADD_FILTER' ? 'FILTER' : 'FILTER_OUT',
+          options: modification.options ?? {},
+        });
+      }
       if (ds.modifyQuery) {
         return ds.modifyQuery(query, modification);
       } else {
