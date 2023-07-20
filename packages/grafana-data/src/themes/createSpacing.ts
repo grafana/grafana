@@ -27,16 +27,14 @@ export interface ThemeSpacing extends ThemeSpacingTokens {
     left: ThemeSpacingArgument
   ): string;
   gridSize: number;
-  // Function to get the numeric value of a spacing token
-  num: (key: SpacingTokenValues) => number;
 }
 
 // Possible spacing token options
-type SpacingTokenValues = 0 | 25 | 50 | 100 | 150 | 200 | 250 | 300 | 400 | 500 | 600 | 800 | 1000;
+type SpacingTokens = 0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10;
 
 // Spacing tokens as represented in the theme
 type ThemeSpacingTokens = {
-  [key in `x${SpacingTokenValues}`]: string;
+  [key in `x${Exclude<SpacingTokens, 0.25 | 0.5 | 1.5 | 2.5> | '0_25' | '0_5' | '1_5' | '2_5'}`]: string;
 };
 
 /** @internal */
@@ -77,26 +75,20 @@ export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {
 
   spacing.gridSize = gridSize;
 
-  // Function to get the numeric value of a spacing token
-  spacing.num = (key: SpacingTokenValues): number => {
-    const pxVal = spacing[`x${key}`];
-    return parseInt(pxVal, 10);
-  };
-
   // Design system spacing tokens
   spacing.x0 = '0px';
-  spacing.x25 = '2px';
-  spacing.x50 = '4px';
-  spacing.x100 = '8px';
-  spacing.x150 = '12px';
-  spacing.x200 = '16px';
-  spacing.x250 = '20px';
-  spacing.x300 = '24px';
-  spacing.x400 = '32px';
-  spacing.x500 = '40px';
-  spacing.x600 = '48px';
-  spacing.x800 = '64px';
-  spacing.x1000 = '80px';
+  spacing.x0_25 = '2px';
+  spacing.x0_5 = '4px';
+  spacing.x1 = '8px';
+  spacing.x1_5 = '12px';
+  spacing.x2 = '16px';
+  spacing.x2_5 = '20px';
+  spacing.x3 = '24px';
+  spacing.x4 = '32px';
+  spacing.x5 = '40px';
+  spacing.x6 = '48px';
+  spacing.x8 = '64px';
+  spacing.x10 = '80px';
 
   return spacing;
 }
