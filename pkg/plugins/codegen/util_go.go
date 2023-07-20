@@ -75,14 +75,14 @@ func importFromProvider(p kindsys.Provider) ([]*ast.ImportSpec, error) {
 	imports := make([]*ast.ImportSpec, 0)
 
 	if bi == nil {
-		return nil, fmt.Errorf("could not get build instance from provider.V in %s", provider.Name)
+		return nil, fmt.Errorf("could not get build instance from provider.V in %s", p.Name)
 	}
 
 	for _, f := range bi.Files {
 		for _, im := range f.Imports {
 			ip := strings.Trim(im.Path.Value, "\"")
 			if !pfs.ImportAllowed(ip) {
-				fmt.Printf("import of %q in grafanaplugin cue package not allowed in %s", ip, provider.Name)
+				fmt.Printf("import of %q in grafanaplugin cue package not allowed in %s", ip, p.Name)
 				continue
 			}
 			imports = append(imports, im)

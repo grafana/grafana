@@ -72,6 +72,7 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
 	kindProps := kind.Props().Common()
+
 	data := templateData{
 		KindName:        kindProps.Name,
 		KindVersion:     kind.Lineage().Latest().Version().String(),
