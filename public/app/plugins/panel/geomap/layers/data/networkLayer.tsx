@@ -241,6 +241,9 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
             path: 'config.edgeStyle',
             name: 'Edge Styles',
             editor: StyleEditor,
+            settings: {
+              edgeEditor: true,
+            },
             defaultValue: defaultOptions.style,
           })
           .addRadio({

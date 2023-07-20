@@ -39,6 +39,7 @@ export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
   displayRotation?: boolean;
+  edgeEditor?: boolean;
 }
 
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
@@ -188,24 +189,26 @@ export const StyleEditor = ({ value, context, onChange, item }: Props) => {
           }
         />
       </Field>
-      <Field label={'Symbol'}>
-        <ResourceDimensionEditor
-          value={value?.symbol ?? defaultStyleConfig.symbol}
-          context={context}
-          onChange={onSymbolChange}
-          item={
-            {
-              settings: {
-                resourceType: MediaType.Icon,
-                folderName: ResourceFolderName.Marker,
-                placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
-                placeholderValue: defaultStyleConfig.symbol.fixed,
-                showSourceRadio: false,
-              },
-            } as StandardEditorsRegistryItem
-          }
-        />
-      </Field>
+      {!settings?.edgeEditor && (
+        <Field label={'Symbol'}>
+          <ResourceDimensionEditor
+            value={value?.symbol ?? defaultStyleConfig.symbol}
+            context={context}
+            onChange={onSymbolChange}
+            item={
+              {
+                settings: {
+                  resourceType: MediaType.Icon,
+                  folderName: ResourceFolderName.Marker,
+                  placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                  placeholderValue: defaultStyleConfig.symbol.fixed,
+                  showSourceRadio: false,
+                },
+              } as StandardEditorsRegistryItem
+            }
+          />
+        </Field>
+      )}
       <Field label={'Color'}>
         <ColorDimensionEditor
           value={value?.color ?? defaultStyleConfig.color}
