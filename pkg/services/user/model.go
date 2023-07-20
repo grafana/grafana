@@ -95,6 +95,7 @@ type ChangeUserPasswordCommand struct {
 
 type UpdateUserLastSeenAtCommand struct {
 	UserID int64
+	OrgID  int64
 }
 
 type SetUsingOrgCommand struct {

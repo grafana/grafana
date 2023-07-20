@@ -219,7 +219,24 @@ func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswo
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	user, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+		UserID: cmd.UserID,
+		OrgID:  cmd.OrgID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !shouldUpdateLastSeen(user.LastSeenAt) {
+		return nil
+	}
+
 	return s.store.UpdateLastSeenAt(ctx, cmd)
+}
+
+func shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > time.Minute*5
 }
 
 func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {
