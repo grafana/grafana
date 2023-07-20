@@ -6,6 +6,46 @@ import { getAllFields, createLogLineLinks, FieldDef } from './logParser';
 
 describe('logParser', () => {
   describe('getAllFields', () => {
+    it('should filter out fields with data links that have a nullish value', () => {
+      const createScenario = (value: unknown) =>
+        createLogRow({
+          entryFieldIndex: 1,
+          rowIndex: 0,
+          dataFrame: {
+            refId: 'A',
+            fields: [
+              testTimeField,
+              testLineField,
+              {
+                name: 'link',
+                type: FieldType.string,
+                config: {
+                  links: [
+                    {
+                      title: 'link1',
+                      url: 'https://example.com',
+                    },
+                  ],
+                },
+                values: [value],
+              },
+            ],
+            length: 1,
+          },
+        });
+
+      expect(getAllFields(createScenario(null))).toHaveLength(0);
+      expect(getAllFields(createScenario(undefined))).toHaveLength(0);
+      expect(getAllFields(createScenario(''))).toHaveLength(1);
+      expect(getAllFields(createScenario('test'))).toHaveLength(1);
+      // technically this is a field-type-string, but i will add more
+      // falsy-values, just to be sure
+      expect(getAllFields(createScenario(false))).toHaveLength(1);
+      expect(getAllFields(createScenario(NaN))).toHaveLength(1);
+      expect(getAllFields(createScenario(0))).toHaveLength(1);
+      expect(getAllFields(createScenario(-0))).toHaveLength(1);
+    });
+
     it('should filter out field with labels name old-loki-style frame', () => {
       const logRow = createLogRow({
         entryFieldIndex: 1,

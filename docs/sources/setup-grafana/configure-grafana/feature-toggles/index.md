@@ -78,7 +78,6 @@ Experimental features might be changed or removed without prior notice.
 | `queryOverLive`                             | Use Grafana Live WebSocket to execute backend queries                                                        |
 | `lokiExperimentalStreaming`                 | Support new streaming approach for loki (prototype, needs special loki build)                                |
 | `storage`                                   | Configurable storage for dashboards, datasources, and resources                                              |
-| `newTraceViewHeader`                        | Shows the new trace view header                                                                              |
 | `datasourceQueryMultiStatus`                | Introduce HTTP 207 Multi Status for api/ds/query                                                             |
 | `traceToMetrics`                            | Enable trace to metrics links                                                                                |
 | `prometheusWideSeries`                      | Enable wide series responses in the Prometheus datasource                                                    |
@@ -89,7 +88,6 @@ Experimental features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
 | `nestedFolderPicker`                        | Enables the still in-development new folder picker to support nested folders                                 |
-| `showTraceId`                               | Show trace ids for requests                                                                                  |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                |
 | `lokiQuerySplitting`                        | Split large interval queries into subqueries with smaller time intervals                                     |

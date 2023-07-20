@@ -1084,6 +1084,15 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:dbd975af06
   name: build-docs-website
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-cue
 trigger:
   event:
   - pull_request
@@ -1093,6 +1102,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1358,6 +1369,15 @@ steps:
   - cd /hugo && make prod
   image: grafana/docs-base:dbd975af06
   name: build-docs-website
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-cue
 trigger:
   branch: main
   event:
@@ -1368,6 +1388,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1428,6 +1450,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1492,6 +1516,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1571,6 +1597,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1638,6 +1666,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2070,6 +2100,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2252,6 +2284,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2422,6 +2456,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -4833,6 +4869,12 @@ trigger:
 type: docker
 ---
 get:
+  name: grafana_api_key
+  path: infra/data/ci/drone-plugins
+kind: secret
+name: grafana_api_key
+---
+get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
@@ -4977,6 +5019,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 95007b8a7b6c9fbf7759ed245fc9afda168d765149b7db8ad0c996c9e4d74dc0
+hmac: 1eb4671cf92fa08539a22e82cfcf1a58573fa410df4d9512063a95e0c746fe97
 
 ...
