@@ -34,11 +34,12 @@ interface NestedFolderPickerProps {
   // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
   // vs removing selection (if possible?)
   onChange?: (folder: FolderChange) => void;
+  excludedUids?: string[];
 }
 
 const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
-export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps) {
+export function NestedFolderPicker({ value, onChange, excludedUids = [] }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -137,10 +138,18 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         items: searchResults.items ?? [],
       };
 
-      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS);
+      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludedUids);
     }
 
-    let flatTree = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState, 0, EXCLUDED_KINDS);
+    let flatTree = createFlatTree(
+      undefined,
+      rootCollection,
+      childrenCollections,
+      folderOpenState,
+      0,
+      EXCLUDED_KINDS,
+      excludedUids
+    );
 
     // Increase the level of each item to 'make way' for the fake root Dashboards item
     for (const item of flatTree) {
@@ -163,7 +172,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     }
 
     return flatTree;
-  }, [search, searchState.value, rootCollection, childrenCollections, folderOpenState]);
+  }, [search, searchState.value, rootCollection, childrenCollections, folderOpenState, excludedUids]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
