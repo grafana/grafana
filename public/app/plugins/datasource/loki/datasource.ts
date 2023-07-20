@@ -615,34 +615,34 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  toggleQueryFilter(query: LokiQuery, action: ToggleFilterAction): LokiQuery {
+  toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
-    switch (action.type) {
+    switch (filter.type) {
       case 'FILTER': {
-        if (action.options?.key && action.options?.value) {
-          const value = escapeLabelValueInSelector(action.options.value);
+        if (filter.options?.key && filter.options?.value) {
+          const value = escapeLabelValueInSelector(filter.options.value);
 
           // This gives the user the ability to toggle a filter on and off.
-          expression = queryHasFilter(expression, action.options.key, '=', value)
-            ? removeLabelFromQuery(expression, action.options.key, '=', value)
-            : addLabelToQuery(expression, action.options.key, '=', value);
+          expression = queryHasFilter(expression, filter.options.key, '=', value)
+            ? removeLabelFromQuery(expression, filter.options.key, '=', value)
+            : addLabelToQuery(expression, filter.options.key, '=', value);
         }
         break;
       }
       case 'FILTER_OUT': {
-        if (action.options?.key && action.options?.value) {
-          const value = escapeLabelValueInSelector(action.options.value);
+        if (filter.options?.key && filter.options?.value) {
+          const value = escapeLabelValueInSelector(filter.options.value);
 
           /**
            * If there is a filter with the same key and value, remove it.
            * This prevents the user from seeing no changes in the query when they apply
            * this filter.
            */
-          if (queryHasFilter(expression, action.options.key, '=', value)) {
-            expression = removeLabelFromQuery(expression, action.options.key, '=', value);
+          if (queryHasFilter(expression, filter.options.key, '=', value)) {
+            expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
           }
 
-          expression = addLabelToQuery(expression, action.options.key, '!=', value);
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
         }
         break;
       }
@@ -652,9 +652,9 @@ export class LokiDatasource
     return { ...query, expr: expression };
   }
 
-  queryHasFilter(query: LokiQuery, options: QueryFilterOptions): boolean {
+  queryHasFilter(query: LokiQuery, filter: QueryFilterOptions): boolean {
     let expression = query.expr ?? '';
-    return queryHasFilter(expression, options.key, '=', options.value);
+    return queryHasFilter(expression, filter.key, '=', filter.value);
   }
 
   modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
