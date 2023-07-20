@@ -11,6 +11,7 @@ import {
   AlertmanagerConfig,
   AlertManagerCortexConfig,
   EmailConfig,
+  GrafanaManagedReceiverConfig,
   MatcherOperator,
   Receiver,
   Route,
@@ -18,6 +19,8 @@ import {
 import { NotifierDTO } from '../../../types';
 
 import { CreateIntegrationDTO, OnCallIntegration } from './api/onCallApi';
+
+type Configurator<T> = (builder: T) => T;
 
 export class AlertmanagerConfigBuilder {
   private alertmanagerConfig: AlertmanagerConfig = { receivers: [] };
@@ -88,11 +91,44 @@ class EmailConfigBuilder {
   }
 }
 
+class GrafanaReceiverConfigBuilder {
+  private grafanaReceiverConfig: GrafanaManagedReceiverConfig = {
+    name: '',
+    type: '',
+    settings: {},
+    disableResolveMessage: false,
+  };
+
+  withType(type: string): GrafanaReceiverConfigBuilder {
+    this.grafanaReceiverConfig.type = type;
+    return this;
+  }
+
+  withName(name: string): GrafanaReceiverConfigBuilder {
+    this.grafanaReceiverConfig.name = name;
+    return this;
+  }
+
+  addSetting(key: string, value: string): GrafanaReceiverConfigBuilder {
+    this.grafanaReceiverConfig.settings[key] = value;
+    return this;
+  }
+
+  build() {
+    return this.grafanaReceiverConfig;
+  }
+}
+
 class AlertmanagerReceiverBuilder {
-  private receiver: Receiver = { name: '', email_configs: [] };
+  private receiver: Receiver = { name: '', email_configs: [], grafana_managed_receiver_configs: [] };
 
   withName(name: string): AlertmanagerReceiverBuilder {
     this.receiver.name = name;
+    return this;
+  }
+
+  addGrafanaReceiverConfig(configure: Configurator<GrafanaReceiverConfigBuilder>): AlertmanagerReceiverBuilder {
+    this.receiver.grafana_managed_receiver_configs?.push(configure(new GrafanaReceiverConfigBuilder()).build());
     return this;
   }
 

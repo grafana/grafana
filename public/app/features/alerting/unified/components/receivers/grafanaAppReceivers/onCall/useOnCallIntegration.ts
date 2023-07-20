@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';

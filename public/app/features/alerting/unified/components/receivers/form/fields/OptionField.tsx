@@ -62,6 +62,7 @@ export const OptionField: FC<Props> = ({
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
+      data-testid={`${optionPath}${option.propertyName}`}
     >
       <OptionInput
         id={`${optionPath}${option.propertyName}`}
