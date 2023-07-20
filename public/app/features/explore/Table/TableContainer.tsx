@@ -1,15 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import {
-  ValueLinkConfig,
-  applyFieldOverrides,
-  TimeZone,
-  SplitOpen,
-  LoadingState,
-  DataFrame,
-  FieldType,
-} from '@grafana/data';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, LoadingState, DataFrame } from '@grafana/data';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
@@ -74,7 +66,7 @@ export class TableContainer extends PureComponent<Props> {
       // differently and sidestep this getLinks API on a dataframe
       for (const frame of dataFrames) {
         for (const field of frame.fields) {
-          if (field.type === FieldType.trace) {
+          if (field.config.nested) {
             for (const frame of field.values) {
               for (const valueField of frame.fields) {
                 valueField.getLinks = (config: ValueLinkConfig) => {
