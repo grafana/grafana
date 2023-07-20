@@ -84,12 +84,12 @@ where:
 
 ```
 {
-  datasource: string; // the datasource UID, or `-- Mixed --` for mixed datasources
+  datasource: string; // the pane's root datasource UID, or `-- Mixed --` for mixed datasources
   queries: {
     refId: string; // an alphanumeric identifier for this query, must be unique within the pane, i.e. "A", "B", "C", etc.
     datasource: {
-      uid: string; // the datasource UID ie: "AD7864H6422"
-      type: string; // the datasource type-id, i.e: "loki"
+      uid: string; // the query's datasource UID ie: "AD7864H6422"
+      type: string; // the query's datasource type-id, i.e: "loki"
     }
     // ... any other datasource-specific query parameters
   }[]; // array of queries for this pane
