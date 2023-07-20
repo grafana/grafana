@@ -379,9 +379,9 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
-	// FlagLogsActiveLabelsUI
+	// FlagToggleLabelsInLogsUI
 	// Based on the current query show the active labels in log details
-	FlagLogsActiveLabelsUI = "logsActiveLabelsUI"
+	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
 
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions

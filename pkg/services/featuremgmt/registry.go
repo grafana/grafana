@@ -634,7 +634,7 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "logsActiveLabelsUI",
+			Name:         "toggleLabelsInLogsUI",
 			Description:  "Based on the current query show the active labels in log details",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
