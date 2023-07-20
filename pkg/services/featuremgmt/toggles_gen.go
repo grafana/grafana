@@ -51,10 +51,6 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagNewTraceViewHeader
-	// Shows the new trace view header
-	FlagNewTraceViewHeader = "newTraceViewHeader"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -158,10 +154,6 @@ const (
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
-
-	// FlagShowTraceId
-	// Show trace ids for requests
-	FlagShowTraceId = "showTraceId"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -390,4 +382,8 @@ const (
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
 	FlagGrafanaAPIServer = "grafanaAPIServer"
+
+	// FlagFeatureToggleAdminPage
+	// Enable admin page for managing feature toggles from the Grafana front-end
+	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
 )

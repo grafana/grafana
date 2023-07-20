@@ -10,8 +10,12 @@ keywords:
   - ldap
   - active directory
   - enterprise
-title: Configure enhanced LDAP integration
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Enhanced LDAP
+title: Configure enhanced LDAP integration
 weight: 400
 ---
 

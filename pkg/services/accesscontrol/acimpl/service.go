@@ -35,11 +35,9 @@ func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRe
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
 
-	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
-			return nil, err
-		}
+	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+		return nil, err
 	}
 
 	return service, nil
