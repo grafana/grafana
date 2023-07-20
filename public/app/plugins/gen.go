@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/kindsys"
 
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
@@ -32,10 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/thema"
 )
 
 var skipPlugins = map[string]bool{
@@ -65,8 +64,7 @@ func main() {
 	}
 
 	providers := srvs.kindCatalog.AllProviders(ctx)
-
-	// rt := cuectx.GrafanaThemaRuntime()
+	rt := cuectx.GrafanaThemaRuntime()
 
 	pluginKindGen := codejen.JennyListWithNamer(func(p kindsys.Provider) string {
 		return p.Name
@@ -75,64 +73,41 @@ func main() {
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(ctx, srvs.pluginStore),
 		codegen.PluginGoTypesJenny(ctx, "pkg/tsdb", srvs.pluginStore),
+		codegen.PluginTSTypesJenny(ctx, "public/app/plugins", adaptToKind(corecodegen.TSTypesJenny{}), srvs.pluginStore),
+		codegen.ProviderToKindsJenny(corecodegen.DocsJenny(
+			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
+		)),
+		codegen.PluginTSEachMajor(ctx, srvs.pluginStore),
 	)
 
-	pluginKindGen.GenerateFS(providers...)
+	schifs := kindsys.SchemaInterfaces(rt.Context())
+	schifnames := make([]string, 0, len(schifs))
+	for _, schif := range schifs {
+		schifnames = append(schifnames, strings.ToLower(schif.Name()))
+	}
+	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
 
-	// pluginKindGen.Append(
-	// 	codegen.PluginTreeListJenny(),
-	// 	codegen.PluginGoTypesJenny("pkg/tsdb"),
-	// 	codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-	// 	kind2pd(rt, corecodegen.DocsJenny(
-	// 		filepath.Join("docs", "sources", "developers", "kinds", "composable"),
-	// 	)),
-	// 	codegen.PluginTSEachMajor(rt),
-	// )
+	jfs, err := pluginKindGen.GenerateFS(providers...)
+	if err != nil {
+		log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
+	}
 
-	// schifs := kindsys.SchemaInterfaces(rt.Context())
-	// schifnames := make([]string, 0, len(schifs))
-	// for _, schif := range schifs {
-	// 	schifnames = append(schifnames, strings.ToLower(schif.Name()))
-	// }
-	// pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
-
-	// declParser := pfs.NewDeclParser(rt, skipPlugins)
-	// decls, err := declParser.Parse(os.DirFS(cwd))
-	// if err != nil {
-	// 	log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
-	// }
-
-	// jfs, err := pluginKindGen.GenerateFS(decls...)
-	// if err != nil {
-	// 	log.Fatalln(fmt.Errorf("error writing files to disk: %s", err))
-	// }
-
-	// if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-	// 	if err = jfs.Verify(context.Background(), groot); err != nil {
-	// 		log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
-	// 	}
-	// } else if err = jfs.Write(context.Background(), groot); err != nil {
-	// 	log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
-	// }
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		if err = jfs.Verify(ctx, groot); err != nil {
+			log.Fatal(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
+		}
+	} else if err = jfs.Write(ctx, groot); err != nil {
+		log.Fatal(fmt.Errorf("error while writing generated code to disk:\n%s", err))
+	}
 }
 
-func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
+func adaptToKind(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[kindsys.Kind] {
+	return codejen.AdaptOneToOne(j, func(k kindsys.Kind) corecodegen.SchemaForGen {
 		return corecodegen.SchemaForGen{
-			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
-			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.SchemaInterface.IsGroup(),
+			Name:    strings.ReplaceAll(k.Name(), " ", ""),
+			Schema:  k.Lineage().Latest(),
+			IsGroup: k.Props().Common().LineageIsGroup,
 		}
-	})
-}
-
-func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
-		kd, err := kindsys.BindComposable(rt, pd.KindDecl)
-		if err != nil {
-			return nil
-		}
-		return kd
 	})
 }
 

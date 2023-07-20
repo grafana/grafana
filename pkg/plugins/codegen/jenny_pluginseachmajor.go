@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path"
@@ -11,79 +12,81 @@ import (
 	"github.com/grafana/grafana/pkg/build"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
 )
 
-func PluginTSEachMajor(rt *thema.Runtime) codejen.OneToMany[*pfs.PluginDecl] {
+func PluginTSEachMajor(ctx context.Context, store *store.Service) codejen.OneToMany[kindsys.Provider] {
 	latestMajorsOrX := corecodegen.LatestMajorsOrXJenny(filepath.Join("packages", "grafana-schema", "src", "raw", "composable"), false, corecodegen.TSTypesJenny{})
 	return &pleJenny{
-		inner: kinds2pd(rt, latestMajorsOrX),
+		inner:       latestMajorsOrX,
+		ctx:         ctx,
+		pluginStore: store,
 	}
 }
 
 type pleJenny struct {
-	inner codejen.OneToMany[*pfs.PluginDecl]
+	inner       codejen.OneToMany[kindsys.Kind]
+	pluginStore *store.Service
+	ctx         context.Context
 }
 
 func (*pleJenny) JennyName() string {
 	return "PluginEachMajorJenny"
 }
 
-func (j *pleJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
-	if !decl.HasSchema() {
+func (j *pleJenny) Generate(provider kindsys.Provider) (codejen.Files, error) {
+	all := provider.AllKinds()
+	plugin, available := j.pluginStore.Plugin(j.ctx, provider.Name)
+
+	if len(all) == 0 || !available {
 		return nil, nil
 	}
 
-	jf, err := j.inner.Generate(decl)
+	version := fmt.Sprintf("export const pluginVersion = \"%s\";", plugin.Info.Version)
+	files := make(codejen.Files, 0)
+	imports, err := importFromProvider(provider)
+
 	if err != nil {
 		return nil, err
 	}
 
-	version := "export const pluginVersion = \"%s\";"
-	if decl.PluginMeta.Info.Version != nil {
-		version = fmt.Sprintf(version, *decl.PluginMeta.Info.Version)
-	} else {
-		version = fmt.Sprintf(version, getGrafanaVersion())
-	}
-
-	files := make(codejen.Files, len(jf))
-	for i, file := range jf {
-		tsf := &tsast.File{}
-		for _, im := range decl.Imports {
-			if tsim, err := cuectx.ConvertImport(im); err != nil {
-				return nil, err
-			} else if tsim.From.Value != "" {
-				tsf.Imports = append(tsf.Imports, tsim)
-			}
+	for _, k := range all {
+		jf, err := j.inner.Generate(k)
+		if err != nil {
+			continue
 		}
 
-		tsf.Nodes = append(tsf.Nodes, tsast.Raw{
-			Data: version,
-		})
+		jfiles := make(codejen.Files, len(jf))
+		for i, file := range jf {
+			tsf := &tsast.File{}
+			for _, im := range imports {
+				if tsim, err := cuectx.ConvertImport(im); err != nil {
+					return nil, err
+				} else if tsim.From.Value != "" {
+					tsf.Imports = append(tsf.Imports, tsim)
+				}
+			}
 
-		tsf.Nodes = append(tsf.Nodes, tsast.Raw{
-			Data: string(file.Data),
-		})
+			tsf.Nodes = append(tsf.Nodes, tsast.Raw{
+				Data: version,
+			})
 
-		data := []byte(tsf.String())
-		data = data[:len(data)-1] // remove the additional line break added by the inner jenny
+			tsf.Nodes = append(tsf.Nodes, tsast.Raw{
+				Data: string(file.Data),
+			})
 
-		files[i] = *codejen.NewFile(file.RelativePath, data, append(file.From, j)...)
+			data := []byte(tsf.String())
+			data = data[:len(data)-1] // remove the additional line break added by the inner jenny
+
+			jfiles[i] = *codejen.NewFile(file.RelativePath, data, append(file.From, j)...)
+		}
+
+		files = append(files, jfiles...)
+
 	}
 
 	return files, nil
-}
-
-func kinds2pd(rt *thema.Runtime, j codejen.OneToMany[kindsys.Kind]) codejen.OneToMany[*pfs.PluginDecl] {
-	return codejen.AdaptOneToMany(j, func(pd *pfs.PluginDecl) kindsys.Kind {
-		kd, err := kindsys.BindComposable(rt, pd.KindDecl)
-		if err != nil {
-			return nil
-		}
-		return kd
-	})
 }
 
 func getGrafanaVersion() string {

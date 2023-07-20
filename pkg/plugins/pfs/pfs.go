@@ -55,7 +55,7 @@ func loadGP(ctx *cue.Context) cue.Value {
 // plugin's grafanaplugin cue package.
 var PermittedCUEImports = cuectx.PermittedCUEImports
 
-func importAllowed(path string) bool {
+func ImportAllowed(path string) bool {
 	for _, p := range PermittedCUEImports() {
 		if p == path {
 			return true
@@ -169,7 +169,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	for _, f := range bi.Files {
 		for _, im := range f.Imports {
 			ip := strings.Trim(im.Path.Value, "\"")
-			if !importAllowed(ip) {
+			if !ImportAllowed(ip) {
 				return ParsedPlugin{}, errors.Wrap(errors.Newf(im.Pos(),
 					"import of %q in grafanaplugin cue package not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr),
 					ErrDisallowedCUEImport)
@@ -359,7 +359,7 @@ func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (*kindsys.Provider, er
 	// for _, f := range bi.Files {
 	// 	for _, im := range f.Imports {
 	// 		ip := strings.Trim(im.Path.Value, "\"")
-	// 		if !importAllowed(ip) {
+	// 		if !ImportAllowed(ip) {
 	// 			return kindsys.Provider{}, errors.Wrap(errors.Newf(im.Pos(),
 	// 				"import of %q in grafanaplugin cue package not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr),
 	// 				ErrDisallowedCUEImport)

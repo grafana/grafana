@@ -10,8 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cuelang.org/go/cue/ast"
 	"github.com/dave/dst/decorator"
 	"github.com/dave/dst/dstutil"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/kindsys"
 	"golang.org/x/tools/imports"
 )
 
@@ -65,4 +68,26 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 	}
 
 	return byt, nil
+}
+
+func importFromProvider(p kindsys.Provider) ([]*ast.ImportSpec, error) {
+	bi := p.V.BuildInstance()
+	imports := make([]*ast.ImportSpec, 0)
+
+	if bi == nil {
+		return nil, fmt.Errorf("could not get build instance from provider.V in %s", provider.Name)
+	}
+
+	for _, f := range bi.Files {
+		for _, im := range f.Imports {
+			ip := strings.Trim(im.Path.Value, "\"")
+			if !pfs.ImportAllowed(ip) {
+				fmt.Printf("import of %q in grafanaplugin cue package not allowed in %s", ip, provider.Name)
+				continue
+			}
+			imports = append(imports, im)
+		}
+	}
+
+	return imports, nil
 }
