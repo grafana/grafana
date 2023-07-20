@@ -40,6 +40,10 @@ enabled = true
 header_name = X-JWT-Assertion
 ```
 
+{{% admonition type="warning" %}}
+header name should be specified even if only URL login is used, otherwise, the JWT token in the URL will be ignored.
+{{% /admonition %}}
+
 ## Configure login claim
 
 To identify the user, some of the claims needs to be selected as a login info. The subject claim called `"sub"` is mandatory and needs to identify the principal that is the subject of the JWT.
