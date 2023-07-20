@@ -26,7 +26,7 @@ With Grafana 10.1, on every login, if the role_attribute_path property does not 
 
 To avoid overriding manually set roles, enable the skip_org_role_sync option in the Grafana configuration for your OAuth provider before upgrading to Grafana 10.1 and before users log in for the first time in Grafana 10.1.
 
-Example for generic OAuth:
+Example for Generic OAuth2:
 
 ```ini
 [auth.generic_oauth]
