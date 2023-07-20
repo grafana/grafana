@@ -17,30 +17,49 @@ jest.mock('rxjs', () => ({
     }),
 }));
 
+function mockBoundingRectWidth(element: Element, width: number) {
+  element.getBoundingClientRect = (): DOMRect => {
+    return {
+      x: 0,
+      y: 0,
+      toJSON: () => '',
+      bottom: 0,
+      height: 0,
+      left: 0,
+      right: 0,
+      top: 0,
+      width,
+    };
+  };
+}
+
 describe('ExplorePage', () => {
   it('updates split size when dragging', async () => {
     setupExplore();
 
+    // Click split button
     const splitButton = await screen.findByText(/split/i);
     await userEvent.click(splitButton);
 
-    // Get resizer and right pane
+    // Get resizer and panes
     const resizer = screen.getByRole('presentation');
-    const rightPane = resizer.nextElementSibling;
+    const splitPaneContainer = resizer.parentElement!;
+    const leftPane = resizer.previousElementSibling!;
+    const rightPane = resizer.nextElementSibling!;
+
+    mockBoundingRectWidth(splitPaneContainer, 1024);
+    mockBoundingRectWidth(leftPane, 512);
+    mockBoundingRectWidth(rightPane, 512);
 
     // Assert width before dragging
     expect(rightPane).toHaveStyle({ width: '512px' });
 
+    // Drag resizer
     fireEvent.mouseDown(resizer, { button: 1 });
     fireEvent.mouseMove(resizer, { clientX: 100, button: 1 });
     fireEvent.mouseUp(resizer);
 
     // Verify that the split size is updated after dragging
-    /* Currently, right pane will always be 200px,
-    except when clientX is set to -200 and lower, 
-    then it returns an unexpected value of -204800px.
-    Also, widthCalc calculation always goes to scenario 3 in ExplorePage, see line 84 in ExplorePage.tsx
-    */
-    expect(rightPane).toHaveStyle({ width: '200px' });
+    expect(rightPane).toHaveStyle({ width: '412px' });
   });
 });
