@@ -2977,8 +2977,7 @@ steps:
   name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
+  - $$gcpKey > gcpkey.json
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
@@ -3525,8 +3524,7 @@ steps:
   name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
+  - $$gcpKey > gcpkey.json
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
@@ -3590,8 +3588,7 @@ steps:
   name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
+  - $$gcpKey > gcpkey.json
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
@@ -4343,8 +4340,7 @@ steps:
   name: windows-init
 - commands:
   - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
+  - $$gcpKey > gcpkey.json
   - dos2unix gcpkey.json
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
@@ -5019,6 +5015,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: e88a3047df33738d302db2e0e4357cc4e1abbda7416cfbd9c5aa8c6ece08c596
+hmac: bdb72dfd574ab2ce9c5dabd0cf8180e1c1227b142a1306fe23283ce3d9d54670
 
 ...

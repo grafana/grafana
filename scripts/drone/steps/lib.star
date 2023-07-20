@@ -1309,7 +1309,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss")
             ver_part = "--build-id $$env:{}".format(build_no)
         installer_commands = [
             "$$gcpKey = $$env:GCP_KEY",
-            "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json",
+            "$$gcpKey > gcpkey.json",
             # gcloud fails to read the file unless converted with dos2unix
             "dos2unix gcpkey.json",
             "gcloud auth activate-service-account --key-file=gcpkey.json",
