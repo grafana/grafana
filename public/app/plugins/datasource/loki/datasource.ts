@@ -33,8 +33,9 @@ import {
   SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
-  AnalyzeQueryOptions,
   DataSourceToggleableQueryFiltersSupport,
+  ToggleFilterAction,
+  QueryFilterOptions,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -614,21 +615,10 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  analyzeQuery(query: LokiQuery, options: AnalyzeQueryOptions): boolean {
-    let expression = query.expr ?? '';
-    switch (options.check) {
-      case 'HAS_FILTER': {
-        return queryHasFilter(expression, options.attributes.key, '=', options.attributes.value);
-      }
-      default:
-        return false;
-    }
-  }
-
-  modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
+  toggleQueryFilter(query: LokiQuery, action: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
     switch (action.type) {
-      case 'ADD_FILTER': {
+      case 'FILTER': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
 
@@ -639,7 +629,7 @@ export class LokiDatasource
         }
         break;
       }
-      case 'ADD_FILTER_OUT': {
+      case 'FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
 
@@ -652,6 +642,34 @@ export class LokiDatasource
             expression = removeLabelFromQuery(expression, action.options.key, '=', value);
           }
 
+          expression = addLabelToQuery(expression, action.options.key, '!=', value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return { ...query, expr: expression };
+  }
+
+  queryHasFilter(query: LokiQuery, options: QueryFilterOptions): boolean {
+    let expression = query.expr ?? '';
+    return queryHasFilter(expression, options.key, '=', options.value);
+  }
+
+  modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
+    let expression = query.expr ?? '';
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        if (action.options?.key && action.options?.value) {
+          const value = escapeLabelValueInSelector(action.options.value);
+          expression = addLabelToQuery(expression, action.options.key, '=', value);
+        }
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        if (action.options?.key && action.options?.value) {
+          const value = escapeLabelValueInSelector(action.options.value);
           expression = addLabelToQuery(expression, action.options.key, '!=', value);
         }
         break;
