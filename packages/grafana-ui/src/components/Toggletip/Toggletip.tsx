@@ -94,6 +94,7 @@ export const Toggletip = React.memo(
         {React.cloneElement(children, {
           ref: setTriggerRef,
           tabIndex: 0,
+          'aria-expanded': visible,
         })}
         {visible && (
           <FocusScope restoreFocus>
