@@ -102,7 +102,7 @@ where:
 }
 ```
 
-> **Note**: the `from` and `to` also accepts relative ranges defined in [Time units and relative ranges](https://grafana.com/docs/grafana/latest/dashboards/use-dashboards/?pg=blog&plcmt=body-txt#time-units-and-relative-ranges)
+> **Note**: the `from` and `to` also accepts relative ranges defined in [Time units and relative ranges]({{< relref "../dashboards/use-dashboards/#time-units-and-relative-ranges" >}})
 
 ## Share shortened link
 
