@@ -163,14 +163,13 @@ export function PanelChrome({
 
   const headerContent = (
     <>
-      {title &&
-        (!collapsible ? (
-          <h6 title={title} className={styles.title}>
-            {title}
-          </h6>
-        ) : (
-          collapsibleHeader
-        ))}
+      {collapsible
+        ? collapsibleHeader
+        : title && (
+            <h6 title={title} className={styles.title}>
+              {title}
+            </h6>
+          )}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
         <PanelDescription description={description} className={dragClassCancel} />
