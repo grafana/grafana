@@ -130,6 +130,28 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 	return response.JSON(http.StatusOK, result.OrgUsers)
 }
 
+func (hs *HTTPServer) GetOrgUserForCurrentOrg(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "userId is invalid", err)
+	}
+
+	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
+		OrgID:  c.OrgID,
+		UserID: userID,
+		User:   c.SignedInUser,
+	})
+
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get user for current organization", err)
+	}
+	if len(result.OrgUsers) == 0 {
+		return response.Respond(http.StatusNotFound, "Failed to get user for organization")
+	}
+
+	return response.JSON(http.StatusOK, result.OrgUsers[0])
+}
+
 // swagger:route GET /org/users/lookup org getOrgUsersForCurrentOrgLookup
 //
 // Get all users within the current organization (lookup)

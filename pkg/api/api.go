@@ -308,6 +308,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Put("/", authorize(ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateCurrentOrg))
 			orgRoute.Put("/address", authorize(ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateCurrentOrgAddress))
 			orgRoute.Get("/users", authorize(ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
+			orgRoute.Get("/users/:userId", authorize(ac.EvalPermission(ac.ActionOrgUsersRead, userIDScope)), routing.Wrap(hs.GetOrgUserForCurrentOrg))
 			orgRoute.Get("/users/search", authorize(ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.SearchOrgUsersWithPaging))
 			orgRoute.Post("/users", authorize(ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), quota(user.QuotaTargetSrv), quota(org.QuotaTargetSrv), routing.Wrap(hs.AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", authorize(ac.EvalPermission(ac.ActionOrgUsersWrite, userIDScope)), routing.Wrap(hs.UpdateOrgUserForCurrentOrg))
