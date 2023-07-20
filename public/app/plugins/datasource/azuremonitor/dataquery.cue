@@ -18,7 +18,7 @@ import "github.com/grafana/grafana/packages/grafana-schema/src/common"
 
 composableKinds: DataQuery: {
 	maturity: "merged"
-	name:     "DataQuery"
+	name:     "AzureMonitorDataQuery"
 
 	lineage: {
 		schemas: [{

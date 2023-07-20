@@ -20,6 +20,7 @@ import (
 
 composableKinds: PanelCfg: {
 	maturity: "experimental"
+	name:     "PieChartPanelCfg"
 
 	lineage: {
 		schemas: [{

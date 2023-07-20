@@ -16,6 +16,7 @@ package grafanaplugin
 
 composableKinds: PanelCfg: {
 	maturity: "experimental"
+	name:     "DatagridPanelCfg"
 
 	lineage: {
 		schemas: [{

@@ -20,6 +20,7 @@ import (
 
 composableKinds: PanelCfg: {
 	maturity: "experimental"
+	name:     "GaugePanelCfg"
 
 	lineage: {
 		schemas: [{
