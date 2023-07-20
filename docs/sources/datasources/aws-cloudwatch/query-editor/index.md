@@ -23,14 +23,14 @@ weight: 300
 # Amazon CloudWatch query editor
 
 This topic explains querying specific to the CloudWatch data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Choose a query editing mode
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
 
-- [CloudWatch metrics]({{< relref "#query-cloudwatch-metrics" >}})
-- [CloudWatch Logs]({{< relref "#query-cloudwatch-logs" >}})
+- [CloudWatch metrics](#query-cloudwatch-metrics)
+- [CloudWatch Logs](#query-cloudwatch-logs)
 
 {{< figure src="/static/img/docs/cloudwatch/cloudwatch-query-editor-api-modes-8.3.0.png" max-width="500px" class="docs-image--right" caption="CloudWatch API modes" >}}
 
@@ -40,8 +40,8 @@ Select which API to query by using the query mode switch on top of the editor.
 
 You can build two types of queries with the CloudWatch query editor:
 
-- [Metric Search]({{< relref "#create-a-metric-search-query" >}})
-- [Metric Query]({{< relref "#create-a-metric-insights-query" >}}), which uses the Metrics Insights feature
+- [Metric Search](#create-a-metric-search-query)
+- [Metric Query](#create-a-metric-insights-query), which uses the Metrics Insights feature
 
 ### Create a Metric Search query
 
@@ -51,7 +51,7 @@ If you enable `Match Exact`, you must also specify all dimensions of the metric 
 If `Match Exact` is disabled, you can specify any number of dimensions on which you'd like to filter.
 The data source returns up to 100 metrics matching your filter criteria.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 #### Create dynamic queries with dimension wildcards
 
@@ -65,7 +65,7 @@ This can help you monitor metrics for AWS resources, like EC2 instances or conta
 When an auto-scaling event creates new instances, they automatically appear in the graph without you having to track the new instance IDs.
 This capability is currently limited to retrieving up to 100 metrics.
 
-You can expand the [Query inspector]({{< relref "../../../panels-visualizations/query-transform-data/#navigate-the-query-tab" >}}) button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
+You can expand the [Query inspector][query-transform-data-navigate-the-query-tab] button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
 
 To learn more about search expressions, refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
@@ -145,7 +145,7 @@ For details about the Metrics Insights syntax, refer to the [AWS reference docum
 
 For information about Metrics Insights limits, refer to the [AWS feature documentation](https://docs.aws.amazon.com/console/cloudwatch/metricsinsights).
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 #### Use Metrics Insights keywords
 
@@ -221,7 +221,7 @@ The logs query editor helps you write CloudWatch Logs Query Language queries acr
 1. Use the main input area to write your query in [CloudWatch Logs Query Language](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html).
 
 You can also write queries returning time series data by using the [`stats` command](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_Insights-Visualizing-Log-Data.html).
-When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), make sure you are in Metrics Explore mode.
+When making `stats` queries in [Explore][explore], make sure you are in Metrics Explore mode.
 
 {{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
@@ -235,7 +235,7 @@ To enable cross-account observability, complete the following steps:
 
 1. Go to the [Amazon CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.
 
-1. Add [two API actions](/docs/grafana/latest/datasources/aws-cloudwatch/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions]({{< relref "../../aws-cloudwatch#cross-account-observability-permissions" >}}) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the `Logs` mode and the `Metric search` mode. Once you have it configured correctly, you'll see a "Monitoring account" badge displayed in the query editor header.
 
@@ -259,3 +259,14 @@ To view your query in the CloudWatch Logs Insights console, click the `CloudWatc
 If you're not logged in to the CloudWatch console, the link forwards you to the login page.
 
 The provided link is valid for any account, but displays the expected metrics only if you're logged in to the account that corresponds to the selected data source in Grafana.
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[query-transform-data-navigate-the-query-tab]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#navigate-the-query-tab"
+[query-transform-data-navigate-the-query-tab]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#navigate-the-query-tab"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}
