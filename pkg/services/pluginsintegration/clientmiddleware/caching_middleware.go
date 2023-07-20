@@ -2,6 +2,7 @@ package clientmiddleware
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
@@ -70,7 +71,8 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	hit, cr := m.caching.HandleQueryRequest(ctx, req)
 
 	// record request duration if caching was used
-	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
+	if ch != "" {
 		defer func() {
 			QueryCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
@@ -93,9 +95,21 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 		// If AWS async caching is not enabled, use the old code path
 		if m.features == nil || !m.features.IsEnabled(featuremgmt.FlagAwsAsyncQueryCaching) {
 			cr.UpdateCacheFn(ctx, resp)
+		} else {
+			// time how long shouldCacheQuery takes
+			startShouldCacheQuery := time.Now()
+			shouldCache := shouldCacheQuery(resp)
+			ShouldCacheQueryHistogram.With(prometheus.Labels{
+				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
+				"cache":           ch,
+				"shouldCache":     strconv.FormatBool(shouldCache),
+				"query_type":      getQueryType(reqCtx),
+			}).Observe(time.Since(startShouldCacheQuery).Seconds())
+
 			// If AWS async caching is enabled and resp is for a running async query, don't cache it
-		} else if shouldCacheQuery(resp) {
-			cr.UpdateCacheFn(ctx, resp)
+			if shouldCache {
+				cr.UpdateCacheFn(ctx, resp)
+			}
 		}
 	}
 
