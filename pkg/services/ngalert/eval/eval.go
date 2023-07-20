@@ -301,13 +301,13 @@ type NumberValueCapture struct {
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
-	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
+	captures := make(map[string]map[fingerprint]NumberValueCapture)
 	captureFn := func(refID string, labels data.Labels, value *float64) {
 		m := captures[refID]
 		if m == nil {
-			m = make(map[data.Fingerprint]NumberValueCapture)
+			m = make(map[fingerprint]NumberValueCapture)
 		}
-		fp := labels.Fingerprint()
+		fp := fingerprintLabels(labels)
 		m[fp] = NumberValueCapture{
 			Var:    refID,
 			Value:  value,
@@ -383,7 +383,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 		if len(frame.Fields) == 1 {
 			theseLabels := frame.Fields[0].Labels
-			fp := theseLabels.Fingerprint()
+			fp := fingerprintLabels(theseLabels)
 
 			for _, fps := range captures {
 				// First look for a capture whose labels are an exact match
