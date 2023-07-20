@@ -70,8 +70,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
   } else if (!unit && field.type === FieldType.string) {
     unit = 'string';
-  } else if (field.type === FieldType.enum) {
-    return getEnumDisplayProcessor(options.theme, field.state?.seriesIndex!, config.type?.enum);
   }
 
   const hasCurrencyUnit = unit?.startsWith('currency');
@@ -115,6 +113,23 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         if (mappingResult.icon != null) {
           icon = mappingResult.icon;
         }
+      }
+    } else if (field.type === FieldType.enum) {
+      // Apply enum display handling if field is enum type and no mappings are specified
+      if (value == null) {
+        return {
+          text: '',
+          numeric: NaN,
+        };
+      }
+
+      const enumIndex = +value;
+      if (config && config.type && config.type.enum) {
+        const { text: enumText, color: enumColor } = config.type.enum;
+
+        text = enumText ? enumText[enumIndex] : `${value}`;
+        // If no color specified in enum field config this will fallback to series color
+        color = enumColor ? enumColor[enumIndex] : undefined;
       }
     }
 
@@ -190,48 +205,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
 function toStringProcessor(value: unknown): DisplayValue {
   return { text: toString(value), numeric: anyToNumber(value) };
-}
-
-export function getEnumDisplayProcessor(
-  theme: GrafanaTheme2,
-  seriesIndex: number,
-  cfg?: EnumFieldConfig
-): DisplayProcessor {
-  const { palette } = theme.visualization;
-
-  const seriesColor = palette[seriesIndex % palette.length];
-
-  const config = {
-    text: cfg?.text ?? [],
-    color: cfg?.color ?? Array(cfg?.text!.length).fill(seriesColor),
-  };
-  // use the theme specific color values
-  config.color = config.color.map((v) => theme.visualization.getColorByName(v));
-
-  return (value: unknown) => {
-    if (value == null) {
-      return {
-        text: '',
-        numeric: NaN,
-      };
-    }
-    const idx = +value;
-    let text = config.text[idx];
-    if (text == null) {
-      text = `${value}`; // the original value
-    }
-    let color = config.color[idx];
-    if (color == null) {
-      // constant color for index
-      color = palette[idx % palette.length];
-      config.color[idx] = color;
-    }
-    return {
-      text,
-      numeric: idx,
-      color,
-    };
-  };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {
