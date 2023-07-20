@@ -1,11 +1,19 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrame, DataFrameType, Field, getLinksSupplier, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  DataFrameType,
+  Field,
+  getLinksSupplier,
+  GrafanaTheme2,
+  outerJoinDataFrames,
+  PanelProps,
+  TimeRange,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
-  Portal,
   ScaleDistribution,
   TooltipPlugin4,
   ZoomXPlugin,
@@ -14,11 +22,11 @@ import {
   useStyles2,
   useTheme2,
   VizLayout,
-  VizTooltipContainer,
 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { AnnotationXEditorPlugin } from '../timeseries/plugins/AnnotationXEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 
 import { ExemplarModalHeader } from './ExemplarModalHeader';
@@ -28,8 +36,6 @@ import { quantizeScheme } from './palettes';
 import { HeatmapTooltip } from './tooltip/HeatmapTooltip';
 import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
-import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
-import { AnnotationXEditorPlugin } from '../timeseries/plugins/AnnotationXEditorPlugin';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
@@ -200,6 +206,8 @@ export const HeatmapPanel = ({
     );
   }
 
+  const alignedDataFrame = outerJoinDataFrames({ frames: data.series });
+
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
@@ -236,7 +244,12 @@ export const HeatmapPanel = ({
               <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
             )}
             {enableAnnotationCreation && (
-              <AnnotationXEditorPlugin timeRange={null} builder={builder} timeZone={timeZone} />
+              <AnnotationXEditorPlugin
+                timeRange={null}
+                builder={builder}
+                timeZone={timeZone}
+                data={alignedDataFrame!}
+              />
             )}
 
             {/*{enableAnnotationCreation && (*/}

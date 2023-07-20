@@ -128,7 +128,8 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
 
     return (
       <>
-        <div className={styles.backdrop} />
+        {/*@TODO revisit */}
+        {/*<div className={styles.backdrop} />*/}
         <div ref={clickAwayRef}>{form}</div>
       </>
     );

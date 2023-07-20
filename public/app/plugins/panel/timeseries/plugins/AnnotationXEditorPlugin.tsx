@@ -1,29 +1,44 @@
 import { css } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { UPlotConfigBuilder, useStyles2, PlotSelection } from '@grafana/ui';
+
+import { AnnotationEditor2 } from './annotations/AnnotationEditor2';
 
 interface AnnotationXEditorPluginProps {
   builder: UPlotConfigBuilder;
   timeRange?: { from: number; to: number } | null;
   timeZone: TimeZone;
+  data: DataFrame;
 }
 
 /**
  * @alpha
  */
-export const AnnotationXEditorPlugin = ({ builder, timeRange }: AnnotationXEditorPluginProps) => {
+export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: AnnotationXEditorPluginProps) => {
   // set ref here?
 
+  console.log('timeRange', timeRange);
   const domRef = useRef<HTMLDivElement>(null);
   const [plot, setPlot] = useState<uPlot>();
+  const [selection, setSelection] = useState<PlotSelection | null>(null);
+  const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);
 
   const [, forceRender] = useState(Math.random());
 
   const styles = useStyles2(getStyles);
+
+  const clearSelection = useCallback(() => {
+    setSelection(null);
+    setIsAddingAnnotation(false);
+
+    if (plot) {
+      plot.setSelect({ top: 0, left: 0, width: 0, height: 0 });
+    }
+  }, [setIsAddingAnnotation, setSelection, plot]);
 
   useLayoutEffect(() => {
     let _plot: uPlot;
@@ -33,14 +48,26 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange }: AnnotationXEdito
     });
 
     builder.addHook('setSelect', (u) => {
-      if (u.cursor.event?.ctrlKey) {
+      if (u.cursor.event?.ctrlKey || u.cursor.event?.metaKey) {
+        setIsAddingAnnotation(true);
+        setSelection({
+          min: u.posToVal(u.select.left, 'x'),
+          max: u.posToVal(u.select.left + u.select.width, 'x'),
+          bbox: {
+            left: u.select.left,
+            top: 0,
+            height: u.select.height,
+            width: u.select.width,
+          },
+        });
+
         u.over.querySelector<HTMLDivElement>('.u-select')!.classList.add(styles.overlay);
         forceRender(Math.random());
       }
     });
-  }, [builder]);
+  }, [builder, styles.overlay]);
 
-  if (plot && plot.select.width > 0) {
+  if (plot && plot.select.width > 0 && isAddingAnnotation) {
     // && timeRange
     return createPortal(
       <div
@@ -50,9 +77,15 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange }: AnnotationXEdito
           left: `${plot.select.left + plot.select.width / 2}px`,
         }}
       >
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-        magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-        consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum
+        {isAddingAnnotation && selection && (
+          <AnnotationEditor2
+            selection={selection}
+            timeZone={timeZone}
+            data={data}
+            onDismiss={clearSelection}
+            onSave={clearSelection}
+          />
+        )}
       </div>,
       plot.over
     );
@@ -71,6 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: '6px',
     background: theme.colors.background.secondary,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+    zIndex: 999,
   }),
   overlay: css({
     background: 'rgba(0, 211, 255, 0.1)',
@@ -79,5 +113,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: '5px solid rgb(0, 211, 255)',
 
     // height: '100% !important', // todo: uPlot should do this
-  })
+  }),
 });

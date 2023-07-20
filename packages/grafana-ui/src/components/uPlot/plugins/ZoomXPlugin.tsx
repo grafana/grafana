@@ -17,7 +17,7 @@ const xScaleKey = 'x';
 export const ZoomXPlugin = ({ onZoom, builder }: ZoomXPluginProps) => {
   useLayoutEffect(() => {
     builder.addHook('setSelect', (u) => {
-      if (u.select.width >= MIN_ZOOM_DIST && !u.cursor.event?.ctrlKey) {
+      if (u.select.width >= MIN_ZOOM_DIST && !u.cursor.event?.ctrlKey && !u.cursor.event?.metaKey) {
         onZoom(u.posToVal(u.select.left, xScaleKey), u.posToVal(u.select.left + u.select.width, xScaleKey));
         u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
       }

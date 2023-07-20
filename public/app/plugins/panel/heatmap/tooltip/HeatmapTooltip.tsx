@@ -244,10 +244,6 @@ const HeatmapTooltipHover = ({
     );
   }
 
-  if (canAnnotate) {
-    const alignedDataFrame = outerJoinDataFrames({ frames: panelData.series });
-  }
-
   const { cellColor, colorPalette } = getHoverCellColor(data, index);
 
   const getLabelValue = (): LabelValue[] => {

@@ -5523,6 +5523,9 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditor2.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/plugins/panel/timeseries/suggestions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
