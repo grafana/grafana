@@ -7,8 +7,8 @@ load(
     "build_docs_website_step",
     "codespell_step",
     "identify_runner_step",
-    "yarn_install_step",
     "verify_gen_cue_step",
+    "yarn_install_step",
 )
 load(
     "scripts/drone/utils/images.star",
