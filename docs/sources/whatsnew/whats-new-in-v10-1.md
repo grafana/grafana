@@ -40,6 +40,21 @@ To learn more, refer to our [disconnect values documentation]({{< relref "../pan
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
 
+### Flamegraph improvements
+
+_Generally available in all editions of Grafana._
+
+<!-- Andrej Ocenas -->
+
+We have added 4 new features to the flamegraph visualization:
+
+- **Sandwich view**: You can now show a sandwich of any symbol in the flamegraph. Sandwich view will show all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
+- **Switching color scheme**: You can now switch color scheme between color gradient by the relative value of a symbol or by package name of a symbol.
+- **Switching symbol name alignment**: With symbols with long name it may be problematic to differentiate them if they have the same prefix. This new option allows you to align the text to left or right so that you can see the part of the symbol name that is important.
+- **Improved navigation**: You can also highlight a symbol or switch on sandwich view for a symbol from the table. Also, a new status bar on top of the flamegraph gives you an overview of which views are enabled.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
+
 ## Authentication and authorization
 
 ### Configure refresh token handling separately for OAuth providers
