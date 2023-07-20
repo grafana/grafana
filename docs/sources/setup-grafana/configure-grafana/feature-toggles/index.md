@@ -126,6 +126,7 @@ Experimental features might be changed or removed without prior notice.
 | `disableTraceQLStreaming`                   | Disables the option to stream the response of TraceQL queries of the Tempo data source                       |
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
+| `refactoredSearchPermissionFilter`          | Enable refactored search permission filter                                                                   |
 
 ## Development feature toggles
 

@@ -386,4 +386,8 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagRefactoredSearchPermissionFilter
+	// Enable refactored search permission filter
+	FlagRefactoredSearchPermissionFilter = "refactoredSearchPermissionFilter"
 )

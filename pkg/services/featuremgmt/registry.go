@@ -649,5 +649,13 @@ var (
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "refactoredSearchPermissionFilter",
+			Description:     "Enable refactored search permission filter",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaBackendPlatformSquad,
+			RequiresRestart: true,
+		},
 	}
 )

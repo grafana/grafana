@@ -113,4 +113,5 @@ export interface FeatureToggles {
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
+  refactoredSearchPermissionFilter?: boolean;
 }
