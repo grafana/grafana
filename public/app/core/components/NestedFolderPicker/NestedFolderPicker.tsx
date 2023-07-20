@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useId, useMemo, useState } from 'react';
-import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/components/Text/Text';
-import { t, Trans } from 'app/core/internationalization';
+import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import {
@@ -26,6 +24,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
+import Trigger from './Trigger';
 import { useTreeInteractions } from './hooks';
 import { FolderChange, FolderUID } from './types';
 
@@ -198,22 +197,19 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   if (!visible) {
     return (
-      <Button
+      <Trigger
+        label={label}
+        isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
-        className={styles.button}
-        variant="secondary"
-        icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
-        aria-label={label ? `Select folder: ${label} currently selected` : undefined}
-      >
-        {selectedFolder.isLoading ? (
-          <Skeleton width={100} />
-        ) : (
-          <Text truncate>
-            {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
-          </Text>
-        )}
-      </Button>
+        aria-label={
+          label
+            ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
+                label,
+              })
+            : undefined
+        }
+      />
     );
   }
 
@@ -222,6 +218,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       <Input
         ref={setTriggerRef}
         autoFocus
+        prefix={label ? <Icon name="folder" /> : null}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         className={styles.search}

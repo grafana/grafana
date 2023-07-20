@@ -62,6 +62,7 @@
       "move": "Move"
     },
     "folder-picker": {
+      "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
