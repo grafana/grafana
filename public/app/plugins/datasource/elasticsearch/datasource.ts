@@ -31,9 +31,10 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
-  AnalyzeQueryOptions,
   FieldType,
   DataSourceToggleableQueryFiltersSupport,
+  QueryFilterOptions,
+  ToggleFilterAction,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -895,15 +896,32 @@ export class ElasticDatasource
     return false;
   }
 
-  analyzeQuery(query: ElasticsearchQuery, options: AnalyzeQueryOptions): boolean {
+  toggleQueryFilter(query: ElasticsearchQuery, filter: ToggleFilterAction): ElasticsearchQuery {
     let expression = query.query ?? '';
-    switch (options.check) {
-      case 'HAS_FILTER': {
-        return queryHasFilter(expression, options.attributes.key, options.attributes.value);
+    switch (filter.type) {
+      case 'FILTER': {
+        // This gives the user the ability to toggle a filter on and off.
+        expression = queryHasFilter(expression, filter.options.key, filter.options.value)
+          ? removeFilterFromQuery(expression, filter.options.key, filter.options.value)
+          : addFilterToQuery(expression, filter.options.key, filter.options.value);
+        break;
       }
-      default:
-        return false;
+      case 'FILTER_OUT': {
+        // If the opposite filter is present, remove it before adding the new one.
+        if (queryHasFilter(expression, filter.options.key, filter.options.value)) {
+          expression = removeFilterFromQuery(expression, filter.options.key, filter.options.value);
+        }
+        expression = addFilterToQuery(expression, filter.options.key, filter.options.value, '-');
+        break;
+      }
     }
+
+    return { ...query, query: expression };
+  }
+
+  queryHasFilter(query: ElasticsearchQuery, options: QueryFilterOptions): boolean {
+    let expression = query.query ?? '';
+    return queryHasFilter(expression, options.key, options.value);
   }
 
   modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
@@ -912,35 +930,14 @@ export class ElasticDatasource
     }
 
     let expression = query.query ?? '';
-    if (config.featureToggles.elasticToggleableFilters) {
-      switch (action.type) {
-        case 'ADD_FILTER': {
-          // This gives the user the ability to toggle a filter on and off.
-          expression = queryHasFilter(expression, action.options.key, action.options.value)
-            ? removeFilterFromQuery(expression, action.options.key, action.options.value)
-            : addFilterToQuery(expression, action.options.key, action.options.value);
-          break;
-        }
-        case 'ADD_FILTER_OUT': {
-          // If the opposite filter is present, remove it before adding the new one.
-          if (queryHasFilter(expression, action.options.key, action.options.value)) {
-            expression = removeFilterFromQuery(expression, action.options.key, action.options.value);
-          }
-          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
-          break;
-        }
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        expression = addFilterToQuery(expression, action.options.key, action.options.value);
+        break;
       }
-    } else {
-      // Legacy behavior
-      switch (action.type) {
-        case 'ADD_FILTER': {
-          expression = addFilterToQuery(expression, action.options.key, action.options.value);
-          break;
-        }
-        case 'ADD_FILTER_OUT': {
-          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
-          break;
-        }
+      case 'ADD_FILTER_OUT': {
+        expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+        break;
       }
     }
 
