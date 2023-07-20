@@ -166,14 +166,20 @@ describe('Toggletip', () => {
         </>
       );
 
-      const button = screen.getByText(afterInDom);
-      button.focus();
+      const button = screen.getByTestId('myButton');
+      await user.click(button);
+      const closeButton = await screen.findByTestId('toggletip-header-close');
+
+      expect(closeButton).toBeInTheDocument();
+      const afterButton = screen.getByText(afterInDom);
+      afterButton.focus();
+
       await user.keyboard('{escape}');
       act(() => {
         jest.runAllTimers();
       });
 
-      expect(button).toHaveFocus();
+      expect(afterButton).toHaveFocus();
     });
   });
 });
