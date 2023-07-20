@@ -208,7 +208,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
           <span className={styles.folderButtonSpacer} />
         )}
 
-        <label className={styles.label} htmlFor={id}>
+        <label className={styles.label} id={labelId}>
           {/* TODO: text is not truncated properly, it still overflows the container */}
           <Text truncate>{item.title}</Text>
         </label>
