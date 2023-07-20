@@ -39,6 +39,15 @@ type FilterLeftJoin interface {
 	LeftJoin() string
 }
 
+// FilterJoin adds the returned string as join to the dashboard table to
+// allow for fetching extra columns from a table outside of the
+// dashboard column.
+type FilterJoin interface {
+	// Join returns the join string in the join and its arguments.
+	// Implementations should start with "JOIN" or "INNER JOIN" or "LEFT JOIN"
+	Join() (string, []interface{})
+}
+
 type FilterSelect interface {
 	Select() string
 }

@@ -176,3 +176,37 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 
 	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
 }
+
+func UserRolesFilterCondition(orgID, userID int64) (string, []interface{}) {
+	if userID == 0 {
+		return "", nil
+	}
+
+	return `ur.user_id = ? AND (ur.org_id = ? OR ur.org_id = ?)`, []interface{}{userID, orgID, GlobalOrgID}
+}
+
+func TeamRolesFilderCondition(orgID int64, teamIDs []int64) (string, []interface{}) {
+	if len(teamIDs) == 0 {
+		return "", nil
+	}
+
+	var params []interface{}
+	for _, id := range teamIDs {
+		params = append(params, id)
+	}
+	params = append(params, orgID)
+	return `tr.team_id IN(?` + strings.Repeat(", ?", len(teamIDs)-1) + `) AND tr.org_id = ?`, params
+}
+
+func BuiltinRolesFilterCondition(orgID int64, roles []string) (string, []interface{}) {
+	if len(roles) == 0 {
+		return "", nil
+	}
+
+	var params []interface{}
+	for _, role := range roles {
+		params = append(params, role)
+	}
+	params = append(params, orgID, GlobalOrgID)
+	return `br.role IN (?` + strings.Repeat(", ?", len(roles)-1) + `) AND (br.org_id = ? OR br.org_id = ?)`, params
+}

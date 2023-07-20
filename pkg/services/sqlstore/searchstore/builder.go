@@ -48,7 +48,7 @@ func (b *Builder) buildSelect() {
 	var recQueryParams []interface{}
 
 	b.sql.WriteString(
-		`SELECT
+		`SELECT DISTINCT
 			dashboard.id,
 			dashboard.uid,
 			dashboard.title,
@@ -87,6 +87,7 @@ func (b *Builder) buildSelect() {
 
 func (b *Builder) applyFilters() (ordering string) {
 	joins := []string{}
+	joinParams := []interface{}{}
 	orderJoins := []string{}
 
 	wheres := []string{}
@@ -100,6 +101,12 @@ func (b *Builder) applyFilters() (ordering string) {
 	for _, f := range b.Filters {
 		if f, ok := f.(FilterLeftJoin); ok {
 			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+		}
+
+		if f, ok := f.(FilterJoin); ok {
+			sql, params := f.Join()
+			joins = append(joins, fmt.Sprintf(" %s ", sql))
+			joinParams = append(joinParams, params...)
 		}
 
 		if f, ok := f.(FilterWhere); ok {
@@ -128,6 +135,9 @@ func (b *Builder) applyFilters() (ordering string) {
 
 	b.sql.WriteString("SELECT dashboard.id FROM dashboard")
 	b.sql.WriteString(strings.Join(joins, ""))
+	if len(joinParams) > 0 {
+		b.params = append(b.params, joinParams...)
+	}
 
 	if len(wheres) > 0 {
 		b.sql.WriteString(fmt.Sprintf(" WHERE %s", strings.Join(wheres, " AND ")))

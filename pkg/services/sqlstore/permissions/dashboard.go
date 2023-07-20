@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -22,11 +23,13 @@ type clause struct {
 	params []interface{}
 }
 
-type permissionsFilter interface {
+type PermissionsFilter interface {
+	LeftJoin() (string, []interface{})
+	GroupBy() (string, []interface{})
 	With() (string, []interface{})
 	Where() (string, []interface{})
 
-	buildClauses()
+	buildClauses() (string, []interface{})
 }
 
 type accessControlDashboardPermissionFilter struct {
@@ -42,7 +45,7 @@ type accessControlDashboardPermissionFilter struct {
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) permissionsFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool, dialect migrator.Dialect) PermissionsFilter {
 	if features == nil {
 		features = featuremgmt.WithFeatures()
 	}
@@ -82,12 +85,18 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		}
 	}
 
-	var f permissionsFilter = &accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
+	var f PermissionsFilter = &accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
 		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 	}
 
 	if features.IsEnabled(featuremgmt.FlagRefactoredSearchPermissionFilter) {
-		f = refactoredDashboardPermissionFilter{accessControlDashboardPermissionFilter: f.(*accessControlDashboardPermissionFilter)}
+		f = &refactoredDashboardPermissionFilter{
+			user:             user,
+			folderActions:    folderActions,
+			dashboardActions: dashboardActions,
+			features:         features,
+			dialect:          dialect,
+		}
 	}
 
 	f.buildClauses()
@@ -102,10 +111,18 @@ func (f *accessControlDashboardPermissionFilter) Where() (string, []interface{})
 	return f.where.string, f.where.params
 }
 
-func (f *accessControlDashboardPermissionFilter) buildClauses() {
+func (f *accessControlDashboardPermissionFilter) LeftJoin() (string, []interface{}) {
+	return "", nil
+}
+
+func (f *accessControlDashboardPermissionFilter) GroupBy() (string, []interface{}) {
+	return "", nil
+}
+
+func (f *accessControlDashboardPermissionFilter) buildClauses() (string, []interface{}) {
 	if f.user == nil || f.user.Permissions == nil || f.user.Permissions[f.user.OrgID] == nil {
 		f.where = clause{string: "(1 = 0)"}
-		return
+		return "", nil
 	}
 	dashWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
 	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
@@ -284,6 +301,8 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	builder.WriteRune(')')
 
 	f.where = clause{string: builder.String(), params: args}
+
+	return "", nil
 }
 
 // With returns:

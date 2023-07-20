@@ -67,7 +67,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		recQryParams []interface{}
 	)
 
-	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported, sb.dialect)
 	sql, params = filterRBAC.Where()
 	recQry, recQryParams = filterRBAC.With()
 
