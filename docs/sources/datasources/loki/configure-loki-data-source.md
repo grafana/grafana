@@ -55,7 +55,7 @@ The first option to configure is the name of your connection:
 There are several authentication methods you can choose in the Authentication section.
 
 {{% admonition type="note" %}}
-Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](https://grafana.com/docs/loki/latest/configuration/).
+Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](/docs/loki/latest/configuration/).
 {{% /admonition %}}
 
 - **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.

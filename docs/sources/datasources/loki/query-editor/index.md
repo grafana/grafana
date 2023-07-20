@@ -107,12 +107,12 @@ Each operation's header displays its name, and additional action buttons appear 
 
 The query editor groups operations into the following sections:
 
-- Aggregations
-- Range functions
-- Formats
-- Binary operations
-- Label filters
-- Line filters
+- Aggregations - see [Built-in aggregation operators](/docs/loki/latest/logql/metric_queries/#built-in-aggregation-operators)
+- Range functions - see [Range Vector aggregation](/docs/loki/latest/logql/metric_queries/#range-vector-aggregation)
+- Formats - see [Log queries](/docs/loki/latest/logql/log_queries/#log-queries)
+- Binary operations - see [Binary operators](/docs/loki/latest/logql/#binary-operators)
+- Label filters - see [Label filter expression](/docs/loki/latest/logql/log_queries/#label-filter-expression)
+- Line filters - see [Line filter expression](/docs/loki/latest/logql/log_queries/#label-filter-expression)
 
 Some operations make sense only when used in a specific order.b If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
 To re-order operations manually, drag the operation box by its name and drop it into the desired place. For additional information see [Order of operations](/docs/loki/latest/logql/#order-of-operations).
