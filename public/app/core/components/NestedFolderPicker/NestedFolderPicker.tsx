@@ -197,7 +197,19 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   if (!visible) {
     return (
-      <Trigger label={label} isLoading={selectedFolder.isLoading} autoFocus={autoFocusButton} ref={setTriggerRef} />
+      <Trigger
+        label={label}
+        isLoading={selectedFolder.isLoading}
+        autoFocus={autoFocusButton}
+        ref={setTriggerRef}
+        aria-label={
+          label
+            ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
+                label,
+              })
+            : undefined
+        }
+      />
     );
   }
 
