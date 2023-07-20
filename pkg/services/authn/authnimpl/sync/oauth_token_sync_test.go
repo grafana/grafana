@@ -185,7 +185,6 @@ func fakeIDToken(t *testing.T, expiryDate time.Time) string {
 	payload, err := json.Marshal(Payload{Iss: "fake", Sub: "a-sub", Exp: u})
 	require.NoError(t, err)
 
-	fakeSignature := "6ICJm"
-
-	return fmt.Sprintf("%s.%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload), fakeSignature)
+	fakeSignature := []byte("6ICJm")
+	return fmt.Sprintf("%s.%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload), base64.RawURLEncoding.EncodeToString(fakeSignature))
 }
