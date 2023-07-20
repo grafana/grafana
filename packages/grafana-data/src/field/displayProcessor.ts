@@ -6,7 +6,7 @@ import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { toUtc, dateTimeParse } from '../datetime';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue, TimeZone } from '../types';
-import { EnumFieldConfig, Field, FieldType } from '../types/dataFrame';
+import { Field, FieldType } from '../types/dataFrame';
 import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
