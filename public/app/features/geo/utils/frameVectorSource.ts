@@ -63,7 +63,6 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
     // find location frame
     const frameNodes = frames[0];
     const frameEdges = frames[1];
-    console.log(frames);
 
     const info = getGeometryField(frameNodes, this.location);
     if (!info.field) {
@@ -91,11 +90,11 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
       const sourceValue = field.values[si].getCoordinates();
       const targetValue = field.values[ti].getCoordinates();
       const geometryEdge = new LineString([sourceValue, targetValue]) as Geometry;
-      this.addFeatureInternal(
-        new Feature({
-          geometry: geometryEdge as T,
-        })
-      );
+      const edgeFeature = new Feature({
+        geometry: geometryEdge as T,
+      });
+      edgeFeature.setId(i);
+      this.addFeatureInternal(edgeFeature);
     }
 
     // Nodes
