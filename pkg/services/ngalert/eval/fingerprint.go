@@ -3,11 +3,9 @@ package eval
 
 import (
 	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"hash/fnv"
 	"sort"
-	"unsafe"
-
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type fingerprint uint64
@@ -30,13 +28,11 @@ func fingerprintLabels(l data.Labels) fingerprint {
 	}
 	sort.Strings(keys)
 	for _, name := range keys {
-		// avoid an extra allocation of a slice of bytes using unsafe conversions.
-		// The internal structure of the string is almost like a slice (except capacity).
-		_, _ = h.Write(unsafe.Slice(unsafe.StringData(name), len(name)))
+		_, _ = h.Write([]byte(name))
 		// ignore errors returned by Write method because fnv never returns them.
 		_, _ = h.Write([]byte{255}) // use an invalid utf-8 sequence as separator
 		value := l[name]
-		_, _ = h.Write(unsafe.Slice(unsafe.StringData(value), len(value)))
+		_, _ = h.Write([]byte(value))
 		_, _ = h.Write([]byte{255})
 	}
 	return fingerprint(h.Sum64())
