@@ -97,7 +97,7 @@ export function OldFolderPicker(props: Props) {
       const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
       const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
 
-      reportInteraction('folder_picker_search_results_loaded', {
+      reportInteraction('grafana_folder_picker_results_loaded', {
         results: options.length,
         searchTermLength: query.length,
         enableCreateNew: Boolean(enableCreateNew),
