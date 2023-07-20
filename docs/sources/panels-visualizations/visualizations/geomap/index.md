@@ -27,6 +27,11 @@ keywords:
   - Geomap
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Geomap
 weight: 600
 ---

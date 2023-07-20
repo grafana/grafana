@@ -1,20 +1,24 @@
 ---
 keywords:
-  - grafana
-  - schema
+- grafana
+- schema
+labels:
+  products:
+  - enterprise
+  - oss
 title: CanvasPanelCfg kind
 ---
+
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 ## CanvasPanelCfg
 
 #### Maturity: [experimental](../../../maturity/#experimental)
+
 #### Version: 0.0
 
-
-
 | Property                | Type                             | Required | Default | Description                                                           |
-|-------------------------|----------------------------------|----------|---------|-----------------------------------------------------------------------|
+| ----------------------- | -------------------------------- | -------- | ------- | --------------------------------------------------------------------- |
 | `BackgroundConfig`      | [object](#backgroundconfig)      | **Yes**  |         |                                                                       |
 | `BackgroundImageSize`   | string                           | **Yes**  |         | Possible values are: `original`, `contain`, `cover`, `fill`, `tile`.  |
 | `CanvasConnection`      | [object](#canvasconnection)      | **Yes**  |         |                                                                       |
@@ -31,7 +35,7 @@ title: CanvasPanelCfg kind
 ### BackgroundConfig
 
 | Property | Type                                                | Required | Default | Description                                                          |
-|----------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------|
+| -------- | --------------------------------------------------- | -------- | ------- | -------------------------------------------------------------------- |
 | `color`  | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                      |
 | `image`  | [ResourceDimensionConfig](#resourcedimensionconfig) | No       |         | Links to a resource (image/svg path)                                 |
 | `size`   | string                                              | No       |         | Possible values are: `original`, `contain`, `cover`, `fill`, `tile`. |
@@ -41,14 +45,14 @@ title: CanvasPanelCfg kind
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `field`  | string | No       |         | _(Inherited from [BaseDimensionConfig](#basedimensionconfig))_<br/>fixed: T -- will be added by each element |
 | `fixed`  | string | No       |         |                                                                                                              |
 
 ### BaseDimensionConfig
 
 | Property | Type   | Required | Default | Description                               |
-|----------|--------|----------|---------|-------------------------------------------|
+| -------- | ------ | -------- | ------- | ----------------------------------------- |
 | `field`  | string | No       |         | fixed: T -- will be added by each element |
 
 ### ResourceDimensionConfig
@@ -58,15 +62,15 @@ Links to a resource (image/svg path)
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
 | `mode`   | string | **Yes**  |         | Possible values are: `fixed`, `field`, `mapping`.                                                            |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `field`  | string | No       |         | _(Inherited from [BaseDimensionConfig](#basedimensionconfig))_<br/>fixed: T -- will be added by each element |
 | `fixed`  | string | No       |         |                                                                                                              |
 
 ### CanvasConnection
 
 | Property     | Type                                            | Required | Default | Description                      |
-|--------------|-------------------------------------------------|----------|---------|----------------------------------|
+| ------------ | ----------------------------------------------- | -------- | ------- | -------------------------------- |
 | `path`       | string                                          | **Yes**  |         | Possible values are: `straight`. |
 | `source`     | [ConnectionCoordinates](#connectioncoordinates) | **Yes**  |         |                                  |
 | `target`     | [ConnectionCoordinates](#connectioncoordinates) | **Yes**  |         |                                  |
@@ -77,7 +81,7 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 ### ConnectionCoordinates
 
 | Property | Type   | Required | Default | Description |
-|----------|--------|----------|---------|-------------|
+| -------- | ------ | -------- | ------- | ----------- |
 | `x`      | number | **Yes**  |         |             |
 | `y`      | number | **Yes**  |         |             |
 
@@ -86,17 +90,17 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| -------- | ------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------ |
 | `max`    | number | **Yes**  |         |                                                                                                              |
 | `min`    | number | **Yes**  |         |                                                                                                              |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `field`  | string | No       |         | _(Inherited from [BaseDimensionConfig](#basedimensionconfig))_<br/>fixed: T -- will be added by each element |
 | `fixed`  | number | No       |         |                                                                                                              |
 | `mode`   | string | No       |         | Possible values are: `linear`, `quad`.                                                                       |
 
 ### CanvasElementOptions
 
 | Property      | Type                                    | Required | Default | Description                                             |
-|---------------|-----------------------------------------|----------|---------|---------------------------------------------------------|
+| ------------- | --------------------------------------- | -------- | ------- | ------------------------------------------------------- |
 | `name`        | string                                  | **Yes**  |         |                                                         |
 | `type`        | string                                  | **Yes**  |         |                                                         |
 | `background`  | [BackgroundConfig](#backgroundconfig)   | No       |         |                                                         |
@@ -109,21 +113,21 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 ### Constraint
 
 | Property     | Type   | Required | Default | Description                                                           |
-|--------------|--------|----------|---------|-----------------------------------------------------------------------|
+| ------------ | ------ | -------- | ------- | --------------------------------------------------------------------- |
 | `horizontal` | string | No       |         | Possible values are: `left`, `right`, `leftright`, `center`, `scale`. |
 | `vertical`   | string | No       |         | Possible values are: `top`, `bottom`, `topbottom`, `center`, `scale`. |
 
 ### LineConfig
 
 | Property | Type                                          | Required | Default | Description |
-|----------|-----------------------------------------------|----------|---------|-------------|
+| -------- | --------------------------------------------- | -------- | ------- | ----------- |
 | `color`  | [ColorDimensionConfig](#colordimensionconfig) | No       |         |             |
 | `width`  | number                                        | No       |         |             |
 
 ### Placement
 
 | Property | Type   | Required | Default | Description |
-|----------|--------|----------|---------|-------------|
+| -------- | ------ | -------- | ------- | ----------- |
 | `bottom` | number | No       |         |             |
 | `height` | number | No       |         |             |
 | `left`   | number | No       |         |             |
@@ -134,7 +138,7 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 ### Options
 
 | Property            | Type            | Required | Default | Description                                                                                                                          |
-|---------------------|-----------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------- | --------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `inlineEditing`     | boolean         | **Yes**  | `true`  | Enable inline editing                                                                                                                |
 | `root`              | [object](#root) | **Yes**  |         | The root element of canvas (frame), where all canvas elements are nested<br/>TODO: Figure out how to define a default value for this |
 | `showAdvancedTypes` | boolean         | **Yes**  | `true`  | Show all available element types                                                                                                     |
@@ -145,9 +149,7 @@ The root element of canvas (frame), where all canvas elements are nested
 TODO: Figure out how to define a default value for this
 
 | Property   | Type                                            | Required | Default | Description                                                    |
-|------------|-------------------------------------------------|----------|---------|----------------------------------------------------------------|
+| ---------- | ----------------------------------------------- | -------- | ------- | -------------------------------------------------------------- |
 | `elements` | [CanvasElementOptions](#canvaselementoptions)[] | **Yes**  |         | The list of canvas elements attached to the root element       |
 | `name`     | string                                          | **Yes**  |         | Name of the root element                                       |
 | `type`     | string                                          | **Yes**  |         | Type of root element (frame)<br/>Possible values are: `frame`. |
-
-

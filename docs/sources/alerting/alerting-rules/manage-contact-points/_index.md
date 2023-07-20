@@ -13,6 +13,11 @@ keywords:
   - guide
   - contact point
   - templating
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure contact points
 weight: 410
 ---

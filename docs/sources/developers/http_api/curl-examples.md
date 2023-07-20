@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - curl
+labels:
+  products:
+    - enterprise
+    - oss
 title: cURL examples
 ---
 

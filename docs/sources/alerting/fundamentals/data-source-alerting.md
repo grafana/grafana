@@ -1,5 +1,10 @@
 ---
 description: Data sources in Grafana Alerting
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Data sources
 weight: 100
 ---

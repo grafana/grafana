@@ -4,6 +4,11 @@ aliases:
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/alertmanager/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/alertmanager/
 description: Alertmanager
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alertmanager
 weight: 500
 ---

@@ -2,6 +2,10 @@
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
 description: Learn about feature toggles, which you can enable or disable.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure feature toggles
 weight: 150
 ---
@@ -23,7 +27,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `disableEnvelopeEncryption`                      | Disable envelope encryption (emergency only)                                                                                                                                                        |                    |
 | `featureHighlights`                              | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
-| `exploreMixedDatasource`                         | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`                         | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `topnav`                                         | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |

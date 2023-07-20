@@ -7,6 +7,11 @@ keywords:
   - grafana
   - prometheus
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Prometheus
 title: Prometheus data source
 weight: 1300

@@ -7,6 +7,10 @@ keywords:
   - grafana
   - alerting
   - meta-monitoring
+labels:
+  products:
+    - enterprise
+    - oss
 title: Meta monitoring
 weight: 500
 ---

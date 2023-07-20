@@ -6,10 +6,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
 )
 
@@ -28,7 +27,7 @@ func ProvideService() *Service {
 			data.NewField("Time", nil, make([]time.Time, 1)),
 			data.NewField("Value", nil, make([]float64, 1)),
 		),
-		logger: log.New("tsdb.testdata"),
+		logger: backend.NewLoggerWith("logger", "tsdb.testdata"),
 	}
 
 	var err error

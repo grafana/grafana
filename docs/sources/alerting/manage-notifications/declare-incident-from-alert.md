@@ -6,6 +6,11 @@ keywords:
   - grafana
   - alert rules
   - incident
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Declare incidents from firing alerts
 weight: 1010
 ---

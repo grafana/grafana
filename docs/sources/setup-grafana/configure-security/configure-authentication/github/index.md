@@ -7,8 +7,13 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitHub OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: GitHub OAuth2
+title: Configure GitHub OAuth2 authentication
 weight: 900
 ---
 

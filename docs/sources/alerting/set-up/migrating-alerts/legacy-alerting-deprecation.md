@@ -1,12 +1,16 @@
 ---
-title: Legacy alerting deprecation
 aliases:
   - alerting/legacy-alerting-deprecation/
 description: Legacy alerting deprecation notice
-weight: 109
 keywords:
   - grafana
   - alerting
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy alerting deprecation
+weight: 109
 ---
 
 # Legacy alerting deprecation

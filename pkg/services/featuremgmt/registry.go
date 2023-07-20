@@ -80,14 +80,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:         "exploreMixedDatasource",
-			Description:  "Enable mixed datasource in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // turned on by default
-			Owner:        grafanaExploreSquad,
-		},
-		{
 			Name:         "newTraceViewHeader",
 			Description:  "Shows the new trace view header",
 			Stage:        FeatureStageExperimental,

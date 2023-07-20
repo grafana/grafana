@@ -11,6 +11,11 @@ keywords:
   - namespace
   - grafana mimir
   - loki
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Grafana Mimir or Loki rule groups and namespaces
 weight: 405
 ---

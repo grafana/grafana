@@ -5,6 +5,10 @@ aliases:
   - ../../../enterprise/access-control/provisioning/
 description: Learn how to view permissions associated with roles, create custom roles,
   and update and delete roles in Grafana.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Manage RBAC roles
 title: Manage Grafana RBAC roles
 weight: 50

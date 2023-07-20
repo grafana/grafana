@@ -10,6 +10,11 @@ keywords:
   - notification policies
   - contact points
   - silences
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Notification policies
 weight: 410
 ---

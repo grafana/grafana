@@ -8,6 +8,11 @@ keywords:
   - alerting resources
   - file provisioning
   - provisioning
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create and manage alerting resources using file provisioning
 weight: 100
 ---
@@ -486,7 +491,7 @@ settings:
 
 ### Provision notification policies
 
-Create or reset notification policies in your Grafana instance(s).
+Create or reset the notification policy tree in your Grafana instance(s).
 
 1. Create a YAML or JSON configuration file.
 
@@ -494,7 +499,7 @@ Create or reset notification policies in your Grafana instance(s).
 
 2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
-Here is an example of a configuration file for creating notification policiies.
+Here is an example of a configuration file for creating notification policies.
 
 ```yaml
 # config file version
@@ -548,13 +553,16 @@ policies:
     # <duration>  How long to wait before sending a notification again if it has already
     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
     repeat_interval: 4h
-    # <list> Zero or more child routes
+    # <list> Zero or more child policies. The schema is the same as the root policy.
     # routes:
-    #   - Another recursively nested policy...
+    #   # Another recursively nested policy...
+    #   - receiver: another-receiver
+    #     matchers:
+    #       - ...
     #     ...
 ```
 
-Here is an example of a configuration file for resetting notification policies.
+Here is an example of a configuration file for resetting the policy tree back to its default value:
 
 ```yaml
 # config file version
@@ -564,6 +572,12 @@ apiVersion: 1
 resetPolicies:
   - 1
 ```
+
+**Note:**
+
+In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
+
+Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
 
 ### Provision templates
 
@@ -707,7 +721,7 @@ spec:
             name: grafana-alerting
 ```
 
-This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment.
+This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
 
 {{% docs/reference %}}
 [alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
