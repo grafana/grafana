@@ -108,7 +108,11 @@ export class DatasourceSrv implements DataSourceService {
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
   }
 
-  get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(
+    ref?: string | DataSourceRef | null,
+    scopedVars?: ScopedVars,
+    isPublicDashboard?: boolean
+  ): Promise<DataSourceApi> {
     let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
       return this.get(this.defaultName);
@@ -140,19 +144,20 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(this.datasources[nameOrUid]);
     }
 
-    return this.loadDatasource(nameOrUid);
+    return this.loadDatasource(nameOrUid, isPublicDashboard);
   }
 
-  async loadDatasource(key: string): Promise<DataSourceApi<any, any>> {
+  async loadDatasource(key: string, isPublicDashboard?: boolean): Promise<DataSourceApi<any, any>> {
     if (this.datasources[key]) {
       return Promise.resolve(this.datasources[key]);
     }
 
     // find the metadata
-    const instanceSettings = this.getInstanceSettings(key);
+    let instanceSettings = this.getInstanceSettings(key);
     if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }
+    instanceSettings = { ...instanceSettings, isPublicDashboard };
 
     try {
       const dsPlugin = await importDataSourcePlugin(instanceSettings.meta);

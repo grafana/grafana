@@ -625,6 +625,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  isPublicDashboard?: boolean;
   /**
    *  @deprecated -- use jsonData to store information related to database.
    *  This field should only be used by Elasticsearch and Influxdb.

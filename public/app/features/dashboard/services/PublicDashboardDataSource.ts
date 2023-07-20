@@ -21,7 +21,10 @@ import { GRAFANA_DATASOURCE_NAME } from '../../alerting/unified/utils/datasource
 export const PUBLIC_DATASOURCE = '-- Public --';
 export const DEFAULT_INTERVAL = '1min';
 
-export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
+export class PublicDashboardDataSource<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+> extends DataSourceApi<DataQuery, DataSourceJsonData> {
   constructor(datasource: DataSourceRef | string | DataSourceApi | null) {
     let meta = {} as DataSourcePluginMeta;
     if (PublicDashboardDataSource.isMixedDatasource(datasource)) {
