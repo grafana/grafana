@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef, Ref } from 'react';
 
 interface ConditionalWrapProps {
   shouldWrap: boolean;
@@ -6,7 +6,8 @@ interface ConditionalWrapProps {
   wrap: (children: JSX.Element) => JSX.Element;
 }
 
-export const ConditionalWrap = ({ shouldWrap, children, wrap }: ConditionalWrapProps): JSX.Element =>
-  shouldWrap ? React.cloneElement(wrap(children)) : children;
+function ConditionalWrap({ children, shouldWrap, wrap }: ConditionalWrapProps, _ref: Ref<HTMLElement>) {
+  return shouldWrap ? React.cloneElement(wrap(children)) : children;
+}
 
-export default ConditionalWrap;
+export default forwardRef(ConditionalWrap);

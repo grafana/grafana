@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
-import { groupBy, uniqueId, upperFirst } from 'lodash';
+import { groupBy, size, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { ReactNode, useState } from 'react';
 
@@ -231,20 +231,22 @@ interface ContactPointHeaderProps {
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
   const styles = useStyles2(getStyles);
+  const isReferencedByPolicies = policies > 0;
 
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Span variant="body">{name}</Span>
+          <Span variant="body" weight="medium">
+            {name}
+          </Span>
         </Stack>
-        {policies > 0 ? (
+        {isReferencedByPolicies ? (
           <MetaText>
             {/* TODO make this a link to the notification policies page with the filter applied */}
             is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
           </MetaText>
         ) : (
-          // TODO implement the number of linked policies
           <UnusedContactPointBadge />
         )}
         {provisioned && <ProvisioningBadge />}
@@ -272,8 +274,8 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
               icon={provisioned ? 'document-info' : 'edit'}
               type="button"
               disabled={disabled}
-              aria-label="edit-action"
-              data-testid="edit-action"
+              aria-label={`${provisioned ? 'view' : 'edit'}-action`}
+              data-testid={`${provisioned ? 'view' : 'edit'}-action`}
               href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
             >
               {provisioned ? 'View' : 'Edit'}
@@ -373,23 +375,24 @@ const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryP
       <Stack direction="column" gap={0}>
         <div className={styles.receiverDescriptionRow}>
           <Stack direction="row" alignItems="center" gap={1}>
-            {Object.entries(countByType)
-              .map<ReactNode>(([type, receivers]) => {
-                const iconName = INTEGRATION_ICONS[type];
-                const receiverName = receiverTypeNames[type] ?? upperFirst(type);
+            {Object.entries(countByType).map(([type, receivers], index) => {
+              const iconName = INTEGRATION_ICONS[type];
+              const receiverName = receiverTypeNames[type] ?? upperFirst(type);
+              const isLastItem = size(countByType) - 1 === index;
 
-                return (
-                  <Stack key={type} direction="row" alignItems="center" gap={0.5}>
+              return (
+                <React.Fragment key={type}>
+                  <Stack direction="row" alignItems="center" gap={0.5}>
                     {iconName && <Icon name={iconName} />}
                     <Span variant="body" color="primary">
                       {receiverName}
                       {receivers.length > 1 && <> ({receivers.length})</>}
                     </Span>
                   </Stack>
-                );
-              })
-              // join the elements with "⋅"
-              .reduce((prev, curr) => [prev, '⋅', curr])}
+                  {!isLastItem && '⋅'}
+                </React.Fragment>
+              );
+            })}
           </Stack>
         </div>
       </Stack>

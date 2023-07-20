@@ -10,8 +10,7 @@ import { disableRBAC } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
-
-import './__mocks__/server';
+import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -32,23 +31,29 @@ describe('ContactPoints', () => {
     disableRBAC();
   });
 
-  it('should show / hide loading states', async () => {
-    render(
-      <AlertmanagerProvider accessType={'notification'}>
-        <ContactPoints />
-      </AlertmanagerProvider>,
-      { wrapper: TestProvider }
-    );
+  describe('Grafana managed alertmanager', () => {
+    setupGrafanaManagedServer();
 
-    await waitFor(async () => {
-      await expect(screen.getByText('Loading...')).toBeInTheDocument();
-      await waitForElementToBeRemoved(screen.getByText('Loading...'));
-      await expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
+    it('should show / hide loading states', async () => {
+      render(
+        <AlertmanagerProvider accessType={'notification'}>
+          <ContactPoints />
+        </AlertmanagerProvider>,
+        { wrapper: TestProvider }
+      );
+
+      await waitFor(async () => {
+        await expect(screen.getByText('Loading...')).toBeInTheDocument();
+        await waitForElementToBeRemoved(screen.getByText('Loading...'));
+        await expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
+      expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
     });
-
-    expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
-    expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
   });
+
+  describe('Mimir-flavored alertmanager', () => {});
 });
 
 describe('ContactPoint', () => {
@@ -66,25 +71,32 @@ describe('ContactPoint', () => {
     expect(onDelete).toHaveBeenCalledWith('my-contact-point');
   });
 
-  it('should disabled buttons', async () => {
+  it('should disable edit button', async () => {
     render(<ContactPoint name={'my-contact-point'} disabled={true} receivers={[]} onDelete={noop} />);
 
     const moreActions = screen.getByTestId('more-actions');
-    const editAction = screen.getByTestId('edit-action');
+    expect(moreActions).not.toBeDisabled();
 
-    expect(moreActions).toHaveProperty('disabled', true);
-    expect(editAction).toHaveProperty('disabled', true);
+    const editAction = screen.getByTestId('edit-action');
+    expect(editAction).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('should disabled buttons when provisioned', async () => {
+  it('should disable buttons when provisioned', async () => {
     render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />);
 
     expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
 
-    const moreActions = screen.getByTestId('more-actions');
-    const editAction = screen.getByTestId('edit-action');
+    const editAction = screen.queryByTestId('edit-action');
+    expect(editAction).not.toBeInTheDocument();
 
-    expect(moreActions).toHaveProperty('disabled', true);
-    expect(editAction).toHaveProperty('disabled', true);
+    const viewAction = screen.getByRole('link', { name: /view/i });
+    expect(viewAction).toBeInTheDocument();
+
+    const moreActions = screen.getByTestId('more-actions');
+    expect(moreActions).not.toBeDisabled();
+    await userEvent.click(moreActions);
+
+    const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+    expect(deleteButton).toBeDisabled();
   });
 });

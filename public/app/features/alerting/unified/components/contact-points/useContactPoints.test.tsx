@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import './__mocks__/server';
+import './__mocks__/grafanaManagedServer';
 import { useContactPointsWithStatus } from './useContactPoints';
 
 describe('useContactPoints', () => {
