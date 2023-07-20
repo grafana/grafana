@@ -2,6 +2,7 @@
 aliases:
   - data-sources/
   - overview/
+  - ./features/datasources/
 title: Data sources
 weight: 60
 ---
