@@ -274,16 +274,18 @@ export interface AnalyzeQueryOptions {
  * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
  */
-export interface DataSourceWithQueryModificationSupport<TQuery extends DataQuery> {
+export interface DataSourceToggleableQueryFiltersSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
   /**
-   * Used in explore
+   * Modify the query with a given action.
+   * To support toggleable filters, `ADD_FILTER` or `ADD_FILTER_OUT` should be implemented.
+   * If the filter is already present, it should be removed.
+   * If the opposite filter is present, it should be replaceted.
    */
   modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
-}
 
-export interface DataSourceWithQueryAnalysisSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
   /**
-   * Used in explore for Log details
+   * Analyze the query to determine if it meets a given criteria.
+   * Should minimally support `HAS_FILTER` to support the display of filter status.
    *
    * @alpha
    */
@@ -293,17 +295,10 @@ export interface DataSourceWithQueryAnalysisSupport<TQuery extends DataQuery, TA
 /**
  * @internal
  */
-export const hasQueryModificationSupport = <TQuery extends DataQuery>(
+export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   datasource: unknown
-): datasource is DataSourceWithQueryModificationSupport<TQuery> => {
-  return datasource !== null && typeof datasource === 'object' && 'modifyQuery' in datasource;
-};
-
-/**
- * @internal
- */
-export const hasQueryAnalysisSupport = <TQuery extends DataQuery>(
-  datasource: unknown
-): datasource is DataSourceWithQueryAnalysisSupport<TQuery> => {
-  return datasource !== null && typeof datasource === 'object' && 'analyzeQuery' in datasource;
+): datasource is DataSourceToggleableQueryFiltersSupport<TQuery> => {
+  return (
+    datasource !== null && typeof datasource === 'object' && 'modifyQuery' in datasource && 'analyzeQuery' in datasource
+  );
 };
