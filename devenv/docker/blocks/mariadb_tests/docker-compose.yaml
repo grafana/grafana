@@ -1,0 +1,14 @@
+  mysqltests:
+    build:
+      context: docker/blocks/mariadb_tests
+      args:
+        - mariadb_version=${mariadb_version}
+    platform: linux/amd64
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: grafana_tests
+      MARIADB_USER: grafana
+      MARIADB_PASSWORD: password
+    ports:
+      - "3306:3306"
+    tmpfs: /var/lib/mysql:rw
