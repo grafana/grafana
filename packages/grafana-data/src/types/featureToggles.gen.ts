@@ -55,7 +55,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
-  showTraceId?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;

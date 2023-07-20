@@ -252,12 +252,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "showTraceId",
-			Description: "Show trace ids for requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "emptyDashboardPage",
 			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
 			Stage:        FeatureStageGeneralAvailability,

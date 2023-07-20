@@ -209,9 +209,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         )}
 
         <label className={styles.label} id={labelId}>
-          <Text as="span" truncate>
-            {item.title}
-          </Text>
+          {/* TODO: text is not truncated properly, it still overflows the container */}
+          <Text truncate>{item.title}</Text>
         </label>
       </div>
     </div>
