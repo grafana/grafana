@@ -71,11 +71,11 @@ describe('valueFormats', () => {
     ${'dtdurationms'}     | ${undefined} | ${100000}                                   | ${'1 minute'}
     ${'lengthcm'}         | ${undefined} | ${102}                                      | ${'1.02 m'}
     ${'lengthcm'}         | ${undefined} | ${15}                                       | ${'15 cm'}
-    ${'lengthcm'}         | ${undefined} | ${0.94}                                     | ${'9.40 mm'}
-    ${'lengthmm'}         | ${undefined} | ${25}                                       | ${'25 mm'}
-    ${'lengthmm'}         | ${undefined} | ${400}                                      | ${'400 mm'}
+    ${'lengthcm'}         | ${undefined} | ${0.94}                                     | ${'9.4 mm'}
+    ${'lengthmm'}         | ${undefined} | ${25}                                       | ${'2.5 cm'}
+    ${'lengthmm'}         | ${undefined} | ${400}                                      | ${'40 cm'}
     ${'lengthmm'}         | ${undefined} | ${1250}                                     | ${'1.25 m'}
-    ${'lengthm'}          | ${undefined} | ${0.45}                                     | ${'450 mm'}
+    ${'lengthm'}          | ${undefined} | ${0.45}                                     | ${'45 cm'}
     ${'lengthm'}          | ${undefined} | ${1250}                                     | ${'1.25 km'}
   `(
     'With format=$format decimals=$decimals and value=$value then result should be = $expected',

@@ -154,28 +154,76 @@ export function scaledUnits(factor: number, extArray: string[], offset = 0): Val
   };
 }
 
+// [log10(val), [exponent, unit index]]
+const MM_SCALE_MAP = new Map([
+  [0, [0, 0]],
+  [1, [-1, 1]],
+  [2, [-1, 1]],
+  [3, [-3, 2]],
+  [4, [-3, 2]],
+  [5, [-3, 2]],
+  [6, [-6, 3]],
+]);
+const CM_SCALE_MAP = new Map([
+  [-1, [1, 0]],
+  [0, [0, 1]],
+  [1, [0, 1]],
+  [2, [-2, 2]],
+  [3, [-2, 2]],
+  [4, [-2, 2]],
+  [5, [-5, 3]],
+]);
+const M_SCALE_MAP = new Map([
+  [-3, [3, 0]],
+  [-2, [2, 1]],
+  [-1, [2, 1]],
+  [0, [0, 2]],
+  [1, [0, 2]],
+  [2, [0, 2]],
+  [3, [-3, 3]],
+]);
+const KM_SCALE_MAP = new Map([
+  [-6, [6, 0]],
+  [-5, [5, 1]],
+  [-4, [5, 1]],
+  [-3, [3, 2]],
+  [-2, [3, 2]],
+  [-1, [3, 2]],
+  [0, [0, 3]],
+]);
+
+const METRIC_SCALES_ARRAY = [MM_SCALE_MAP, CM_SCALE_MAP, M_SCALE_MAP, KM_SCALE_MAP];
+
+const clampMatrix = [
+  [0, 6],
+  [-1, 5],
+  [-3, 3],
+  [-6, 0],
+];
+
 export function scaledMetricUnits(units: string[], offset = 0): ValueFormatter {
-  return (size: number, decimals?: DecimalCount) => {
-    if (size === null || size === undefined) {
+  return (val: number, decimals?: DecimalCount) => {
+    if (val === null || val === undefined) {
       return { text: '' };
     }
 
-    if (size === Number.NEGATIVE_INFINITY || size === Number.POSITIVE_INFINITY || isNaN(size)) {
-      return { text: size.toLocaleString() };
+    if (val === Number.NEGATIVE_INFINITY || val === Number.POSITIVE_INFINITY || isNaN(val)) {
+      return { text: val.toLocaleString() };
     }
 
-    let factor = 1000;
-    // calculate scale factors for centimeters
-    if (units.includes(' cm')) {
-      factor = size < 1 ? 10 : size > 100 ? 100 : 1000;
+    if (val === 0) {
+      return {
+        text: val.toLocaleString(),
+        suffix: units[offset],
+      };
     }
-
-    const siIndex = size === 0 ? 0 : Math.floor(logb(factor, Math.abs(size)));
-    const suffix = units[clamp(offset + siIndex, 0, units.length - 1)];
+    const scales = METRIC_SCALES_ARRAY[offset];
+    const [min, max] = clampMatrix[offset];
+    const [pow, unitIndex] = scales.get(clamp(Math.floor(Math.log10(Math.abs(val))), min, max)) || [0, 0];
 
     return {
-      text: toFixed(size / factor ** clamp(siIndex, -offset, units.length - offset - 1), decimals),
-      suffix,
+      text: (val * 10 ** pow).toLocaleString(),
+      suffix: units[unitIndex],
     };
   };
 }

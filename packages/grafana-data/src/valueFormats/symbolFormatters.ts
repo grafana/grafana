@@ -46,16 +46,10 @@ export function SIPrefix(unit: string, offset = 0): ValueFormatter {
   return scaledUnits(1000, units, SI_BASE_INDEX + offset);
 }
 
+const MERTIC_PREFIXES = ['m', 'c', '', 'k'];
+
 export function metricPrefix(unit: string, offset = 0): ValueFormatter {
-  let prefixes = ['m', 'c', '', 'k'];
-
-  // exclude centimeters from prefixes
-  if (offset !== -1) {
-    prefixes = prefixes.filter((p) => p !== 'c');
-    offset += offset < 0 ? 1 : 0;
-  }
-
-  const baseIndex = prefixes.indexOf('');
-  const units = prefixes.map((p) => ' ' + p + unit);
+  const baseIndex = MERTIC_PREFIXES.indexOf('');
+  const units = MERTIC_PREFIXES.map((p) => ' ' + p + unit);
   return scaledMetricUnits(units, baseIndex + offset);
 }
