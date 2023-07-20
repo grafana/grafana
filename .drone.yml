@@ -1102,6 +1102,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1386,6 +1388,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1446,6 +1450,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1510,6 +1516,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1589,6 +1597,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -1656,6 +1666,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2088,6 +2100,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2270,6 +2284,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2440,6 +2456,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
   status:
   - failure
 type: docker
@@ -3344,8 +3362,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
-    "No URLs matched"
+  - '! ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat |
+    grep "No URLs matched"'
   depends_on:
   - clone
   environment:
@@ -3488,7 +3506,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease-windows
+name: rgm-tag-prerelease-windows-oss
 platform:
   arch: amd64
   os: windows
@@ -3548,7 +3566,73 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-- rgm-tag-prerelease-windows
+environment:
+  EDITION: enterprise
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-prerelease-windows-enterprise
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.40/windows/grabpl.exe
+    -OutFile grabpl.exe
+  image: grafana/ci-wix:0.1.1
+  name: windows-init
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/grafana-enterprise-${DRONE_TAG:1}.windows-amd64.zip
+    --edition enterprise ${DRONE_TAG}
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/
+  depends_on:
+  - windows-init
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
+- rgm-tag-prerelease-windows-oss
+- rgm-tag-prerelease-windows-enterprise
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3564,8 +3648,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat | grep
-    "No URLs matched"
+  - '! ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat |
+    grep "No URLs matched"'
   depends_on:
   - clone
   environment:
@@ -4785,6 +4869,12 @@ trigger:
 type: docker
 ---
 get:
+  name: grafana_api_key
+  path: infra/data/ci/drone-plugins
+kind: secret
+name: grafana_api_key
+---
+get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
@@ -4929,6 +5019,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 037fcad40d37e0f661f7c8da081074ddbd6c8ef95d0f8dd390e82c80ccfeb479
+hmac: 1eb4671cf92fa08539a22e82cfcf1a58573fa410df4d9512063a95e0c746fe97
 
 ...

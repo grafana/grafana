@@ -68,6 +68,9 @@ def trigger_docs_main():
         "event": [
             "push",
         ],
+        "repo": [
+            "grafana/grafana",
+        ],
         "paths": docs_paths,
     }
 
@@ -75,6 +78,9 @@ def trigger_docs_pr():
     return {
         "event": [
             "pull_request",
+        ],
+        "repo": [
+            "grafana/grafana",
         ],
         "paths": docs_paths,
     }
