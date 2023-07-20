@@ -43,6 +43,10 @@ type accessControlDashboardPermissionFilter struct {
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
 func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) permissionsFilter {
+	if features == nil {
+		features = featuremgmt.WithFeatures()
+	}
+
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
@@ -81,6 +85,7 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 	var f permissionsFilter = &accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
 		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 	}
+
 	if features.IsEnabled(featuremgmt.FlagRefactoredSearchPermissionFilter) {
 		f = refactoredDashboardPermissionFilter{accessControlDashboardPermissionFilter: f.(*accessControlDashboardPermissionFilter)}
 	}
