@@ -47,6 +47,7 @@ export function CustomContainer({
   const panelContext: PanelContext = {
     internalDataLinkSupplier,
     eventBus,
+    eventsScope: 'explore',
   };
 
   return (
