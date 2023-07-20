@@ -19,7 +19,7 @@ jobs:
           go-version: '1.20.6'
       - name: Build swagger
         run: |
-          make -C pkg/services/ngalert/api/tooling post.json
+          make -C pkg/services/ngalert/api/tooling post.json api.json
       - name: Open Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
