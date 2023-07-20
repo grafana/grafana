@@ -261,7 +261,14 @@ func (l *Loader) Unload(ctx context.Context, pluginID string) error {
 }
 
 func (l *Loader) registerKinds(ctx context.Context, p *plugins.Plugin) error {
+	fmt.Printf("Starting to compile %s\n", p.ID)
+	// something is odd with the elasticsearch cue definition
+	if p.ID == "elasticsearch" {
+		fmt.Printf("Skipping %s\n", p.ID)
+		return nil
+	}
 	provider, err := pfs.CompilePluginProvider(p.FS, nil)
+	fmt.Printf("Done to compiling %s\n", p.ID)
 	if err != nil {
 		fmt.Printf("Error: %s, Plugin: %s\n", err, p.ID)
 		return err

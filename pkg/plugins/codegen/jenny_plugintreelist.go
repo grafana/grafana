@@ -2,44 +2,48 @@ package codegen
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"path"
 	"path/filepath"
 	"strings"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/kindsys"
 )
 
 const prefix = "github.com/grafana/grafana/public/app/plugins"
 
 // PluginTreeListJenny creates a [codejen.ManyToOne] that produces Go code
-// for loading a [pfs.PluginList] given [*kindsys.PluginDecl] as inputs.
-func PluginTreeListJenny() codejen.ManyToOne[*pfs.PluginDecl] {
+// for loading a [pfs.PluginList] given [kindsys.Provider] as inputs.
+func PluginTreeListJenny(ctx context.Context, store *store.Service) codejen.ManyToOne[kindsys.Provider] {
 	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
 
 	return &ptlJenny{
-		outputFile: outputFile,
-		plugins:    make(map[string]bool, 0),
+		outputFile:  outputFile,
+		pluginStore: store,
+		ctx:         ctx,
 	}
 }
 
 type ptlJenny struct {
-	outputFile string
-	plugins    map[string]bool
+	outputFile  string
+	pluginStore *store.Service
+	ctx         context.Context
 }
 
 func (j *ptlJenny) JennyName() string {
 	return "PluginTreeListJenny"
 }
 
-func (j *ptlJenny) Generate(decls ...*pfs.PluginDecl) (*codejen.File, error) {
+func (j *ptlJenny) Generate(providers ...kindsys.Provider) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	vars := templateVars_plugin_registry{
 		Plugins: make([]struct {
 			PkgName, Path, ImportPath string
 			NoAlias                   bool
-		}, 0, len(decls)),
+		}, 0, len(providers)),
 	}
 
 	type tpl struct {
@@ -47,22 +51,24 @@ func (j *ptlJenny) Generate(decls ...*pfs.PluginDecl) (*codejen.File, error) {
 		NoAlias                   bool
 	}
 
-	for _, decl := range decls {
-		meta := decl.PluginMeta
+	for _, p := range providers {
+		plugin, available := j.pluginStore.Plugin(j.ctx, p.Name)
 
-		if _, exists := j.plugins[meta.Id]; exists {
+		if !available {
+			fmt.Printf("plugin not available for provider: %s\n", p.Name)
 			continue
 		}
 
-		pluginId := j.sanitizePluginId(meta.Id)
+		pluginPath := filepath.Join("public", filepath.Dir(plugin.Module))
+		pluginId := j.sanitizePluginId(plugin.ID)
+
 		vars.Plugins = append(vars.Plugins, tpl{
 			PkgName:    pluginId,
-			NoAlias:    pluginId != filepath.Base(decl.PluginPath),
-			ImportPath: filepath.ToSlash(filepath.Join(prefix, decl.PluginPath)),
-			Path:       path.Join(append(strings.Split(prefix, "/")[3:], decl.PluginPath)...),
+			NoAlias:    pluginId != filepath.Base(pluginPath),
+			ImportPath: filepath.ToSlash(filepath.Join(prefix, pluginPath)),
+			Path:       path.Join(append(strings.Split(prefix, "/")[3:], pluginPath)...),
 		})
 
-		j.plugins[meta.Id] = true
 	}
 
 	if err := tmpls.Lookup("plugin_registry.tmpl").Execute(buf, vars); err != nil {

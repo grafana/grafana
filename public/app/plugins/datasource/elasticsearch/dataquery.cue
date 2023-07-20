@@ -22,6 +22,9 @@ import (
 // This file (with its sibling .cue files) implements pfs.GrafanaPlugin
 pfs.GrafanaPlugin
 
+name:    "elasticsearch"
+version: "1.0.0"
+
 composableKinds: DataQuery: {
 	maturity: "experimental"
 

@@ -20,6 +20,7 @@ import (
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -55,6 +56,7 @@ func main() {
 		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
 
+	ctx := context.Background()
 	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
 	srvs, err := wireServices(groot)
 	if err != nil {
@@ -62,17 +64,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	plugins := srvs.pluginStore.Plugins(context.Background())
-	log.Printf("loaded plugins: %d", len(plugins))
-
-	k := srvs.kindCatalog.AllKinds(context.Background())
-	log.Printf("loaded kinds: %d", len(k))
+	providers := srvs.kindCatalog.AllProviders(ctx)
 
 	// rt := cuectx.GrafanaThemaRuntime()
 
-	// pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
-	// 	return d.PluginMeta.Id
-	// })
+	pluginKindGen := codejen.JennyListWithNamer(func(p kindsys.Provider) string {
+		return p.Name
+	})
+
+	pluginKindGen.Append(
+		codegen.PluginTreeListJenny(ctx, srvs.pluginStore),
+		codegen.PluginGoTypesJenny(ctx, "pkg/tsdb", srvs.pluginStore),
+	)
+
+	pluginKindGen.GenerateFS(providers...)
 
 	// pluginKindGen.Append(
 	// 	codegen.PluginTreeListJenny(),
