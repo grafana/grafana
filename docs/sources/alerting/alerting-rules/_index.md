@@ -4,6 +4,7 @@ aliases:
   - rules/
   - unified-alerting/alerting-rules/
   - ./create-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/
 description: Configure alerting
 labels:
   products:

@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/create-edit-rules/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/create-edit-rules/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/create-edit-rules/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting/grafana-cloud-alerting/create-edit-rules/
 description: Create and edit alert rules
 labels:
   products:

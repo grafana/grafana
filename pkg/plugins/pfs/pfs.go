@@ -196,13 +196,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	})
 	bi.Files = append(bi.Files, f)
 
-	gpi := ctx.BuildInstance(bi)
-	// Temporary hack while we figure out what in the elasticsearch lineage turns
-	// this into an endless loop in thema, and why unifying twice is anything other
-	// than a total no-op.
-	if pp.Properties.Id != "elasticsearch" {
-		gpi = gpi.Unify(gpv)
-	}
+	gpi := ctx.BuildInstance(bi).Unify(gpv)
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}
