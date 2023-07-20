@@ -193,7 +193,16 @@ export function createFlatTree(
     return mapItem(item, folderUID, level);
   });
 
-  if ((level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded)) {
+  // this is very custom to the folder picker right now
+  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
+  // so we need to check that we're ignoring dashboards and we've fetched all the folders
+  // TODO generalize this properly (e.g. split state by kind?)
+  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
+
+  const showPlaceholders =
+    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+
+  if (showPlaceholders) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
   }
 
