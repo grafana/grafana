@@ -8,3 +8,9 @@ export * from './ArrayDataFrame';
 export * from './DataFrameJSON';
 export * from './frameComparisons';
 export { anySeriesWithTimeField, isTimeSeriesFrame, isTimeSeriesFrames } from './utils';
+export {
+  StreamingDataFrame,
+  closestIdx,
+  getStreamingFrameOptions,
+  getLastStreamingDataFramePacket,
+} from './StreamingDataFrame';

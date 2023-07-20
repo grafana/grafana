@@ -14,9 +14,9 @@ import {
   LiveChannelScope,
   LoadingState,
 } from '@grafana/data';
+import { StreamingDataFrame } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import { StreamingFrameAction } from '@grafana/runtime';
 
-import { StreamingDataFrame } from '../data/StreamingDataFrame';
 import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 
 import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';

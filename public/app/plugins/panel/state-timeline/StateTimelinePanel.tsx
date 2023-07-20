@@ -1,6 +1,13 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import {
+  CartesianCoords2D,
+  DashboardCursorSync,
+  DataFrame,
+  FieldType,
+  PanelProps,
+  getLastStreamingDataFramePacket,
+} from '@grafana/data';
 import {
   Portal,
   TooltipDisplayMode,
@@ -18,7 +25,6 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
-import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';

@@ -1,21 +1,38 @@
+import { AlignedData } from 'uplot';
+
+import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta, renderLegendFormat } from '..';
+import { join } from '../transformations/transformers/joinDataFrames';
+
 import {
-  DataFrame,
   DataFrameJSON,
   decodeFieldValueEntities,
-  Field,
-  FieldDTO,
   FieldSchema,
-  FieldType,
   guessFieldTypeFromValue,
-  Labels,
-  parseLabels,
-  QueryResultMeta,
   toFilteredDataFrameDTO,
-} from '@grafana/data';
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
-import { renderLegendFormat } from 'app/plugins/datasource/prometheus/legend';
-import { AlignedData } from 'uplot';
+} from '.';
+
+/**
+ * Indicate if the frame is appened or replace
+ * From @grafana/runtime/src/services/live
+ * @alpha
+ */
+export enum StreamingFrameAction {
+  Append = 'append',
+  Replace = 'replace',
+}
+
+/**
+ * From @grafana/runtime/src/services/live
+ * @alpha
+ * */
+export interface StreamingFrameOptions {
+  maxLength: number; // 1000
+  maxDelta: number; // how long to keep things
+  action: StreamingFrameAction; // default will append
+
+  /** optionally format field names based on labels */
+  displayNameFormat?: string;
+}
 
 /**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
@@ -98,6 +115,7 @@ export class StreamingDataFrame implements DataFrame {
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
+      // eslint-disable-next-line
       dataFrameDTO.fields.map((f) => f.values) as unknown[][],
       typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
@@ -106,10 +124,11 @@ export class StreamingDataFrame implements DataFrame {
 
     dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
       ...f,
+      // eslint-disable-next-line
       values: (f.values as unknown[]).slice(numberOfItemsToRemove),
     }));
 
-    const length = dataFrameDTO.fields[0]?.values?.length ?? 0
+    const length = dataFrameDTO.fields[0]?.values?.length ?? 0;
 
     return {
       ...dataFrameDTO,
@@ -408,6 +427,7 @@ export class StreamingDataFrame implements DataFrame {
   getMatchingFieldIndexes = (fieldPredicate: (f: Field) => boolean): number[] =>
     this.fields
       .map((f, index) => (fieldPredicate(f) ? index : undefined))
+      // eslint-disable-next-line
       .filter((val) => val !== undefined) as number[];
 
   getValuesFromLastPacket = (): unknown[][] =>
@@ -439,6 +459,7 @@ export class StreamingDataFrame implements DataFrame {
       });
     } else {
       for (let i = 1; i < this.schemaFields.length; i++) {
+        // eslint-disable-next-line
         let proto = this.schemaFields[i] as Field;
         const config = proto.config ?? {};
         if (displayNameFormat) {
@@ -471,6 +492,7 @@ export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>):
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
 // to join()-able tables with column arrays
+// eslint-disable-next-line
 export function transpose(vrecs: any[][]) {
   let tableKeys = new Set(vrecs[0]);
   let tables = new Map();
@@ -536,6 +558,7 @@ export function parseLabelsFromField(str: string): Labels {
  * @internal // not exported in yet
  */
 export function getLastStreamingDataFramePacket(frame: DataFrame) {
+  // eslint-disable-next-line
   const pi = (frame as StreamingDataFrame).packetInfo;
   return pi?.action ? pi : undefined;
 }
@@ -577,6 +600,7 @@ function getNumberOfItemsToRemove(data: unknown[][], maxLength = Infinity, delta
   }
 
   if (maxDelta !== Infinity && deltaIdx >= 0) {
+    // eslint-disable-next-line
     const deltaLookup = data[deltaIdx] as number[];
 
     const low = deltaLookup[sliceIdx];
