@@ -26,7 +26,7 @@ import (
 func TestService(t *testing.T) {
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("value", nil, []*float64{fp(2)}))
+		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}))
 
 	me := &mockEndpoint{
 		Frames: []*data.Frame{dsDF},
@@ -78,7 +78,7 @@ func TestService(t *testing.T) {
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []time.Time{time.Unix(1, 0)}),
-		data.NewField("B", nil, []*float64{fp(4)}))
+		data.NewField("B", data.Labels{"test": "label"}, []*float64{fp(4)}))
 	bDF.RefID = "B"
 	bDF.SetMeta(&data.FrameMeta{
 		Type:        data.FrameTypeTimeSeriesMulti,

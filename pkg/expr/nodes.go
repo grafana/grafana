@@ -359,9 +359,11 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 		return "no data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frames[0]}}}, nil
 	}
 
+	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType)
+
 	vals := make([]mathexp.Value, 0, totalLen)
 	for _, frame := range filtered {
-		series, err := WideToMany(frame)
+		series, err := WideToMany(frame, maybeFixerFn)
 		if err != nil {
 			return "", mathexp.Results{}, err
 		}
@@ -487,7 +489,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 // is created for each value type column of wide frame.
 //
 // This might not be a good idea long term, but works now as an adapter/shim.
-func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
+func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueField *data.Field)) ([]mathexp.Series, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type != data.TimeSeriesTypeWide {
 		return nil, fmt.Errorf("input data must be a wide series but got type %s (input refid)", tsSchema.Type)
@@ -498,10 +500,13 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 		if err != nil {
 			return nil, err
 		}
+		if fixSeries != nil {
+			fixSeries(s, frame.Fields[tsSchema.ValueIndices[0]])
+		}
 		return []mathexp.Series{s}, nil
 	}
 
-	series := []mathexp.Series{}
+	series := make([]mathexp.Series, 0, len(tsSchema.ValueIndices))
 	for _, valIdx := range tsSchema.ValueIndices {
 		l := frame.Rows()
 		f := data.NewFrameOfFieldTypes(frame.Name, l, frame.Fields[tsSchema.TimeIndex].Type(), frame.Fields[valIdx].Type())
@@ -520,6 +525,9 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 		s, err := mathexp.SeriesFromFrame(f)
 		if err != nil {
 			return nil, err
+		}
+		if fixSeries != nil {
+			fixSeries(s, frame.Fields[valIdx])
 		}
 		series = append(series, s)
 	}
