@@ -29,6 +29,8 @@ export enum SelectedView {
 export interface TableData {
   self: number;
   total: number;
+  // For diff view
+  totalRight: number;
 }
 
 export interface TopTableData {
