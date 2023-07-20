@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { Placement } from '@popperjs/core';
+import { FocusScope } from '@react-aria/focus';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
@@ -95,29 +96,31 @@ export const Toggletip = React.memo(
           tabIndex: 0,
         })}
         {visible && (
-          <div
-            data-testid="toggletip-content"
-            ref={setTooltipRef}
-            {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
-          >
-            {Boolean(title) && <div className={style.header}>{title}</div>}
-            {closeButton && (
-              <div className={style.headerClose}>
-                <IconButton
-                  tooltip="Close"
-                  name="times"
-                  data-testid="toggletip-header-close"
-                  onClick={closeToggletip}
-                />
+          <FocusScope restoreFocus>
+            <div
+              data-testid="toggletip-content"
+              ref={setTooltipRef}
+              {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
+            >
+              {Boolean(title) && <div className={style.header}>{title}</div>}
+              {closeButton && (
+                <div className={style.headerClose}>
+                  <IconButton
+                    tooltip="Close"
+                    name="times"
+                    data-testid="toggletip-header-close"
+                    onClick={closeToggletip}
+                  />
+                </div>
+              )}
+              <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
+              <div className={style.body}>
+                {(typeof content === 'string' || React.isValidElement(content)) && content}
+                {typeof content === 'function' && update && content({ update })}
               </div>
-            )}
-            <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
-            <div className={style.body}>
-              {(typeof content === 'string' || React.isValidElement(content)) && content}
-              {typeof content === 'function' && update && content({ update })}
+              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
             </div>
-            {Boolean(footer) && <div className={style.footer}>{footer}</div>}
-          </div>
+          </FocusScope>
         )}
       </>
     );

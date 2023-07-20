@@ -1,4 +1,4 @@
-﻿import { render, screen } from '@testing-library/react';
+﻿import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -84,7 +84,7 @@ describe('Toggletip', () => {
 
   it('should be able to focus toggletip content next in DOM order - forwards and backwards', async () => {
     const closeSpy = jest.fn();
-    const afterInDom = `Red herring button`;
+    const afterInDom = 'Outside of toggletip';
 
     render(
       <>
@@ -113,5 +113,67 @@ describe('Toggletip', () => {
     // focus backwards
     await userEvent.tab({ shift: true });
     expect(closeButton).toHaveFocus();
+  });
+
+  describe('Focus state', () => {
+    let user: ReturnType<typeof userEvent.setup>;
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+      // Need to use delay: null here to work with fakeTimers
+      // see https://github.com/testing-library/user-event/issues/833
+      user = userEvent.setup({ delay: null });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should restore focus to the button that opened the toggletip when closed from within the toggletip', async () => {
+      const closeSpy = jest.fn();
+      render(
+        <Toggletip placement="auto" content="Tooltip text" onClose={closeSpy}>
+          <Button type="button" data-testid="myButton">
+            Click me!
+          </Button>
+        </Toggletip>
+      );
+
+      const button = screen.getByTestId('myButton');
+      await user.click(button);
+      const closeButton = await screen.findByTestId('toggletip-header-close');
+      expect(closeButton).toBeInTheDocument();
+      await user.click(closeButton);
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(button).toHaveFocus();
+    });
+
+    it('should NOT restore focus to the button that opened the toggletip when closed from outside the toggletip', async () => {
+      const closeSpy = jest.fn();
+      const afterInDom = 'Outside of toggletip';
+
+      render(
+        <>
+          <Toggletip placement="auto" content="Tooltip text" onClose={closeSpy}>
+            <Button type="button" data-testid="myButton">
+              Click me!
+            </Button>
+          </Toggletip>
+          <button>{afterInDom}</button>
+        </>
+      );
+
+      const button = screen.getByText(afterInDom);
+      button.focus();
+      await user.keyboard('{escape}');
+      act(() => {
+        jest.runAllTimers();
+      });
+
+      expect(button).toHaveFocus();
+    });
   });
 });
