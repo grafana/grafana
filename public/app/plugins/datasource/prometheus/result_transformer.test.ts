@@ -313,7 +313,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
-    it('results with heatmap format should be correctly transformed', () => {
+    it('results with deprecated heatmap format should be correctly transformed', () => {
       const options = {
         targets: [
           {
@@ -394,8 +394,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -406,8 +406,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
@@ -418,8 +418,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
@@ -430,8 +430,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'B',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -442,8 +442,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'B',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
@@ -454,8 +454,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'B',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
@@ -489,8 +489,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1', additionalProperty: '10' },
@@ -501,8 +501,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2', additionalProperty: '10' },
@@ -513,8 +513,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf', additionalProperty: '10' },
@@ -526,8 +526,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [0, 10, 10],
                 labels: { le: '1', additionalProperty: '20' },
@@ -538,8 +538,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 40],
                 labels: { le: '2', additionalProperty: '20' },
@@ -550,8 +550,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 60],
                 labels: { le: '+Inf', additionalProperty: '20' },
@@ -563,8 +563,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 30, 60],
                 labels: { le: '1', additionalProperty: '30' },
@@ -575,8 +575,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 40, 60],
                 labels: { le: '2', additionalProperty: '30' },
@@ -587,8 +587,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [40, 40, 60],
                 labels: { le: '+Inf', additionalProperty: '30' },
@@ -629,8 +629,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -647,8 +647,8 @@ describe('Prometheus Result Transformer', () => {
             },
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40, 90, 14, 21],
                 labels: { le: '6' },
@@ -679,8 +679,8 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -697,8 +697,8 @@ describe('Prometheus Result Transformer', () => {
             },
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              //@ts-ignore missing name
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40, 90, 14, 21],
                 labels: { le: '6' },
