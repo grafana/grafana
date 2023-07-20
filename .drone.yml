@@ -865,6 +865,18 @@ services:
   volumes:
   - name: mysql80
     path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mariadbd
+  environment:
+    MARIADB_DATABASE: grafana_tests
+    MARIADB_PASSWORD: password
+    MARIADB_ROOT_PASSWORD: rootpass
+    MARIADB_USER: grafana
+  image: mariadb:10.11
+  name: mariadb1011
+  volumes:
+  - name: mariadb1011
+    path: /var/lib/mysql
 - environment: {}
   image: redis:6.2.11-alpine
   name: redis
