@@ -145,10 +145,10 @@ export function createFlatTree(
   openFolders: Record<string, boolean>,
   level = 0,
   excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
-  excludedUids: string[] = []
+  excludeUIDs: string[] = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    if (excludeKinds.includes(item.kind) || excludedUids.includes(item.uid)) {
+    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
       return [];
     }
 
@@ -159,7 +159,7 @@ export function createFlatTree(
       openFolders,
       level + 1,
       excludeKinds,
-      excludedUids
+      excludeUIDs
     );
 
     const isOpen = Boolean(openFolders[item.uid]);
