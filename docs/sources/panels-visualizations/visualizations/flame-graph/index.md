@@ -30,19 +30,19 @@ The flame graph takes advantage of the hierarchical nature of profiling data. It
 
 Grayed-out sections are a set of functions that represent a relatively small value and were collapsed together into one section for performance reasons.
 
-![<Hover tooltip>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-tooltip.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-tooltip.png" max-width="500px" caption="Hover tooltip" >}}
 
 You can hover over a specific function to view a tooltip that shows you what the additional data about that function, like function's value, function's % of total value, and the number of samples with that function.
 
 ### Dropdown actions
 
-![<Dropdown actions>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-dropdown.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-dropdown.png" max-width="500px" caption="Dropdown actions" >}}
 
 You can click on a function to show a dropdown menu with additional actions.
 
 #### Focus block
 
-![<Focus block>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-focus.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-focus.png" max-width="500px" caption="Focus block" >}}
 
 The focused block or function is set to 100% of the flame graph's width and all its children functions are shown with their widths updated relative to the width of the parent function, so you can better drill down into smaller parts of the flame graph.
 
@@ -52,7 +52,7 @@ This action copies the full name of the function that the block represents.
 
 #### Sandwich view
 
-![<Sandwich view>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-sandwich.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-sandwich.png" max-width="500px" caption="Sandwich view">}}
 Sandwich view allows you to show the context of the clicked function. It shows all the function's callers on the top and all the callees to the bottom. This shows aggregated context of the function so if the function exists in multiple places in the flame graph, all the contexts are shown and aggregated in the sandwich view.
 
 ### Status bar
