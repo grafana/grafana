@@ -11,27 +11,42 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	dashUID          = "1"
+	folderID         = 42
+	folderUID        = "42"
+	invalidFolderUID = "142"
+)
+
+var (
+	folderUIDScope        = fmt.Sprintf("folders:uid:%s", folderUID)
+	invalidFolderUIDScope = fmt.Sprintf("folders:uid:%s", invalidFolderUID)
+	dashboard             = &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: folderID}
+	fldr                  = &dashboards.Dashboard{OrgID: orgID, UID: folderUID, IsFolder: true}
+)
+
 type accessControlGuardianTestCase struct {
 	desc           string
-	dashUID        string
-	dashIsFolder   bool
+	dashboard      *dashboards.Dashboard
 	permissions    []accesscontrol.Permission
 	viewersCanEdit bool
 	expected       bool
@@ -40,8 +55,8 @@ type accessControlGuardianTestCase struct {
 func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
-			desc:    "should be able to save with dashboard wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to save dashboard with dashboard wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -51,8 +66,8 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to save with folder wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to save dashboard with folder wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -62,8 +77,8 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to save with dashboard scope",
-			dashUID: "1",
+			desc:      "should be able to save dashboard with dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -73,32 +88,19 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to save with folder general scope",
-			dashUID: "1",
+			desc:      "should be able to save dashboard with folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
-					Scope:  "folders:uid:general",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
-		/*
-			{
-				desc:    "should be able to save with folder scope",
-				dashUID: "1",
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionDashboardsWrite,
-						Scope:  "folders:uid:1",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
-			desc:    "should not be able to save with incorrect dashboard scope",
-			dashUID: "1",
+			desc:      "should not be able to save dashboard with incorrect dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -108,20 +110,19 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:    "should not be able to save with incorrect folder scope",
-			dashUID: "1",
+			desc:      "should not be able to save dashboard with incorrect folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
-					Scope:  "folders:uid:100",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should not be able to save with folder write and dashboard wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to save folder with folder write and dashboard wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -131,9 +132,8 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to save with folder write and folder wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to save folder with folder write and folder wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -143,9 +143,8 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:         "should not be able to save with folder write and dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to save folder with folder write and dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -155,21 +154,19 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to save with folder write and folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to save folder with folder write and folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
 		{
-			desc:         "should not be able to save with folder write and incorrect dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to save folder with folder write and incorrect dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -179,13 +176,12 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should not be able to save with folder write and incorrect folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to save folder with folder write and incorrect folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
-					Scope:  "folders:uid:100",
+					Scope:  invalidFolderUID,
 				},
 			},
 			expected: false,
@@ -194,7 +190,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil, nil, tt.dashIsFolder)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
 			can, err := guardian.CanSave()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
@@ -205,8 +201,8 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
-			desc:    "should be able to edit with dashboard wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to edit dashboard with dashboard wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -216,8 +212,8 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to edit with folder wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to edit dashboard with folder wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -227,8 +223,8 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to edit with dashboard scope",
-			dashUID: "1",
+			desc:      "should be able to edit dashboard with dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -238,19 +234,19 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to edit with folder scope",
-			dashUID: "1",
+			desc:      "should be able to edit dashboard with folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
-					Scope:  "folders:uid:general",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
 		{
-			desc:    "should not be able to edit with incorrect dashboard scope",
-			dashUID: "1",
+			desc:      "should not be able to edit dashboard with incorrect dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
@@ -260,19 +256,19 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:    "should not be able to edit with incorrect folder scope",
-			dashUID: "1",
+			desc:      "should not be able to edit dashboard with incorrect folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsWrite,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:    "should be able to edit with read action when viewer_can_edit is true",
-			dashUID: "1",
+			desc:      "should be able to edit dashboard with read action when viewer_can_edit is true",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
@@ -283,9 +279,8 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected:       true,
 		},
 		{
-			desc:         "should not be able to edit with folder write and dashboard wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to edit folder with folder write and dashboard wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -295,9 +290,8 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to edit with folder write and folder wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to edit folder with folder write and folder wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -307,9 +301,8 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:         "should not be able to edit with folder write and dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to edit folder with folder write and dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
@@ -319,37 +312,34 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to edit with folder write and folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to edit folder with folder write and folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
 		{
-			desc:         "should not be able to edit with folder write and incorrect folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to edit folder with folder write and incorrect folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersWrite,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should be able to edit with folder read action when viewer_can_edit is true",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to edit folder with folder read action when viewer_can_edit is true",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
 				},
 			},
 			viewersCanEdit: true,
@@ -361,7 +351,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.ViewersCanEdit = tt.viewersCanEdit
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, cfg, nil, nil, tt.dashIsFolder)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, cfg, nil, nil)
 
 			can, err := guardian.CanEdit()
 			require.NoError(t, err)
@@ -373,8 +363,8 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
-			desc:    "should be able to view with dashboard wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to view dashboard with dashboard wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
@@ -384,8 +374,8 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to view with folder wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to view dashboard with folder wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
@@ -395,8 +385,8 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to view with dashboard scope",
-			dashUID: "1",
+			desc:      "should be able to view dashboard with dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
@@ -406,32 +396,19 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to view with folder general scope",
-			dashUID: "1",
+			desc:      "should be able to view dashboard with folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
-					Scope:  "folders:uid:general",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
-		/*
-			{
-				desc:    "should be able to view with folder scope",
-				dashUID: "1",
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionDashboardsRead,
-						Scope:  "folders:uid:1",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
-			desc:    "should not be able to view with incorrect dashboard scope",
-			dashUID: "1",
+			desc:      "should not be able to view dashboard with incorrect dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
@@ -441,20 +418,19 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:    "should not be able to view with incorrect folder scope",
-			dashUID: "1",
+			desc:      "should not be able to view dashboard with incorrect folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsRead,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should not be able to view with folders read and dashboard wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to view folder with folders read and dashboard wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
@@ -464,9 +440,8 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to view with folders read and folder wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to view folder with folders read and folder wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
@@ -476,9 +451,8 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:         "should not be able to view with folders read and dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to folder view with folders read and dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
@@ -488,21 +462,19 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to view with folders read and folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to view folder with folders read and folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
 		{
-			desc:         "should not be able to view with folders read incorrect dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to view folder with folders read incorrect dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
@@ -512,13 +484,12 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should not be able to view with folders read and incorrect folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to view folder with folders read and incorrect folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersRead,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
@@ -527,7 +498,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil, nil, tt.dashIsFolder)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
 
 			can, err := guardian.CanView()
 			require.NoError(t, err)
@@ -538,8 +509,8 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
-			desc:    "should be able to admin with dashboard wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to admin dashboard with dashboard wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
@@ -553,8 +524,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to admin with folder wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to admin dashboard with folder wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
@@ -568,8 +539,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to admin with dashboard scope",
-			dashUID: "1",
+			desc:      "should be able to admin dashboard with dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
@@ -582,41 +553,24 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			},
 			expected: true,
 		},
-		/*
-				{
-					desc:    "should be able to admin with folder general scope",
-					dashUID: "1",
-					permissions: []accesscontrol.Permission{
-						{
-							Action: dashboards.ActionDashboardsPermissionsRead,
-							Scope:  "folders:uid:general",
-						},
-						{
-							Action: dashboards.ActionDashboardsPermissionsWrite,
-							Scope:  "folders:uid:general",
-						},
-					},
-					expected: true,
-				},
-			{
-				desc:    "should be able to admin with folder scope",
-				dashUID: "1",
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionDashboardsPermissionsRead,
-						Scope:  "folders:uid:1",
-					},
-					{
-						Action: dashboards.ActionDashboardsPermissionsWrite,
-						Scope:  "folders:uid:1",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
-			desc:    "should not be able to admin with incorrect dashboard scope",
-			dashUID: "1",
+			desc:      "should be able to admin dashboard with folder scope",
+			dashboard: dashboard,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionDashboardsPermissionsRead,
+					Scope:  folderUIDScope,
+				},
+				{
+					Action: dashboards.ActionDashboardsPermissionsWrite,
+					Scope:  folderUIDScope,
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:      "should not be able to admin dashboard with incorrect dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
@@ -630,24 +584,23 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:    "should not be able to admin with incorrect folder scope",
-			dashUID: "1",
+			desc:      "should not be able to admin dashboard with incorrect folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsPermissionsRead,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 				{
 					Action: dashboards.ActionDashboardsPermissionsWrite,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should not be able to admin with folder read and write and dashboard wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to admin folder with folder read and write and dashboard wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
@@ -661,9 +614,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to admin with folder read and write and wildcard scope",
-			dashIsFolder: true,
-			dashUID:      "1",
+			desc:      "should be able to admin folder with folder read and write and wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
@@ -677,9 +629,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:         "should not be able to admin with folder read and wildcard scope",
-			dashIsFolder: true,
-			dashUID:      "1",
+			desc:      "should not be able to admin folder with folder read and wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
@@ -689,9 +640,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should not be able to admin with folder write and wildcard scope",
-			dashIsFolder: true,
-			dashUID:      "1",
+			desc:      "should not be able to admin folder with folder write and wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsWrite,
@@ -701,9 +651,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should not be able to admin with folder read and write and dashboard scope",
-			dashIsFolder: true,
-			dashUID:      "1",
+			desc:      "should not be able to admin folder with folder read and write and dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
@@ -716,52 +665,46 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			},
 			expected: false,
 		},
-		/*
-			{
-				desc:         "should be able to admin with folder read and write and folder scope",
-				dashUID:      "1",
-				dashIsFolder: true,
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionFoldersPermissionsRead,
-						Scope:  "folders:uid:1",
-					},
-					{
-						Action: dashboards.ActionFoldersPermissionsWrite,
-						Scope:  "folders:uid:1",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
-			desc:         "should not be able to admin with folder read and folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to admin folder with folder read and write and folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
+				},
+				{
+					Action: dashboards.ActionFoldersPermissionsWrite,
+					Scope:  folderUIDScope,
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:      "should not be able to admin folder with folder read and folder scope",
+			dashboard: fldr,
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionFoldersPermissionsRead,
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should not be able to admin with folder write and folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to admin folder with folder write and folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsWrite,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should not be able to admin with folder read and write and incorrect dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to admin folder with folder read and write and incorrect dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
@@ -775,17 +718,16 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should not be able to admin with folder read and write and incorrect folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to admin folder with folder read and write and incorrect folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersPermissionsRead,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 				{
 					Action: dashboards.ActionFoldersPermissionsWrite,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
@@ -794,7 +736,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil, nil, tt.dashIsFolder)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
 
 			can, err := guardian.CanAdmin()
 			require.NoError(t, err)
@@ -806,8 +748,8 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 	tests := []accessControlGuardianTestCase{
 		{
-			desc:    "should be able to delete with dashboard wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to delete dashboard with dashboard wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
@@ -817,8 +759,8 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to delete with folder wildcard scope",
-			dashUID: "1",
+			desc:      "should be able to delete dashboard with folder wildcard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
@@ -828,8 +770,8 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to delete with dashboard scope",
-			dashUID: "1",
+			desc:      "should be able to delete dashboard with dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
@@ -839,32 +781,19 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:    "should be able to delete with folder general scope",
-			dashUID: "1",
+			desc:      "should be able to delete dashboard with folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
-					Scope:  "folders:uid:general",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
-		/*
-			{
-				desc:    "should be able to delete with folder scope",
-				dashUID: "1",
-				permissions: []accesscontrol.Permission{
-					{
-						Action: dashboards.ActionDashboardsDelete,
-						Scope:  "folders:uid:1",
-					},
-				},
-				expected: true,
-			},
-		*/
 		{
-			desc:    "should not be able to delete with incorrect dashboard scope",
-			dashUID: "1",
+			desc:      "should not be able to delete dashboard with incorrect dashboard scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
@@ -874,20 +803,19 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:    "should not be able to delete with incorrect folder scope",
-			dashUID: "1",
+			desc:      "should not be able to delete dashboard with incorrect folder scope",
+			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionDashboardsDelete,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
 		},
 		{
-			desc:         "should not be able to delete with folder delete and dashboard wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to delete folder with folder delete and dashboard wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersDelete,
@@ -897,9 +825,8 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to delete with folder deletea and folder wildcard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to delete folder with folder deletea and folder wildcard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersDelete,
@@ -909,9 +836,8 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc:         "should not be able to delete with folder delete and dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to delete folder with folder delete and dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersDelete,
@@ -921,21 +847,19 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should be able to delete with folder delete and folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should be able to delete folder with folder delete and folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersDelete,
-					Scope:  "folders:uid:1",
+					Scope:  folderUIDScope,
 				},
 			},
 			expected: true,
 		},
 		{
-			desc:         "should not be able to delete with folder delete and incorrect dashboard scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to delete folder with folder delete and incorrect dashboard scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersDelete,
@@ -945,13 +869,12 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc:         "should not be able to delete with folder delete and incorrect folder scope",
-			dashUID:      "1",
-			dashIsFolder: true,
+			desc:      "should not be able to delete folder with folder delete and incorrect folder scope",
+			dashboard: fldr,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: dashboards.ActionFoldersDelete,
-					Scope:  "folders:uid:10",
+					Scope:  invalidFolderUIDScope,
 				},
 			},
 			expected: false,
@@ -960,7 +883,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil, nil, tt.dashIsFolder)
+			guardian := setupAccessControlGuardianTest(t, tt.dashboard, tt.permissions, nil, nil, nil)
 
 			can, err := guardian.CanDelete()
 			require.NoError(t, err)
@@ -1024,7 +947,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, "0", tt.permissions, nil, nil, nil, tt.isFolder)
+			guardian := setupAccessControlGuardianTest(t, &dashboards.Dashboard{OrgID: orgID, UID: "0", IsFolder: tt.isFolder}, tt.permissions, nil, nil, nil)
 
 			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
@@ -1072,7 +995,7 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 			mocked := accesscontrolmock.NewMockedPermissionsService()
 			mocked.On("MapActions", mock.Anything).Return("View")
 			mocked.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
-			guardian := setupAccessControlGuardianTest(t, "1", nil, nil, mocked, mocked, tt.isFolder)
+			guardian := setupAccessControlGuardianTest(t, &dashboards.Dashboard{OrgID: orgID, UID: "1", IsFolder: tt.isFolder}, nil, nil, mocked, mocked)
 
 			cfg := setting.NewCfg()
 			cfg.HiddenUsers = tt.hiddenUsers
@@ -1090,44 +1013,25 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	}
 }
 
-func setupAccessControlGuardianTest(t *testing.T, uid string,
+func setupAccessControlGuardianTest(t *testing.T, d *dashboards.Dashboard,
 	permissions []accesscontrol.Permission,
 	cfg *setting.Cfg,
-	dashboardPermissions accesscontrol.DashboardPermissionsService, folderPermissions accesscontrol.FolderPermissionsService, isFolder bool) DashboardGuardian {
+	dashboardPermissions accesscontrol.DashboardPermissionsService, folderPermissions accesscontrol.FolderPermissionsService) DashboardGuardian {
 	t.Helper()
 	store := db.InitTestDB(t)
 
-	toSave := dashboards.NewDashboard(uid)
-	toSave.SetUID(uid)
+	toSave := dashboards.NewDashboard(d.UID)
+	toSave.SetUID(d.UID)
 
-	// seed dashboard
-	quotaService := quotatest.New(false, nil)
-	dashStore, err := dashdb.ProvideDashboardStore(store, store.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg), quotaService)
-	require.NoError(t, err)
-	dash, err := dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-		Dashboard: toSave.Data,
-		UserID:    1,
-		OrgID:     1,
-		IsFolder:  isFolder,
-	})
-	require.NoError(t, err)
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
-	qResult := &dashboards.Dashboard{}
-	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		qResult = &dashboards.Dashboard{
-			ID:       q.ID,
-			UID:      q.UID,
-			OrgID:    q.OrgID,
-			IsFolder: isFolder,
-		}
-	}).Maybe().Return(qResult, nil)
+	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
-	ac := accesscontrolmock.New().WithPermissions(permissions)
-	// TODO replace with actual folder store implementation after resolving import cycles
-	//folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashStore, folderimpl.ProvideDashboardFolderStore(store), store, featuremgmt.WithFeatures())
+	ac := acimpl.ProvideAccessControl(cfg)
 	folderSvc := foldertest.NewFakeService()
+
 	folderStore := foldertest.NewFakeFolderStore(t)
+	folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(&folder.Folder{ID: folderID, UID: folderUID, OrgID: orgID}, nil)
+
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, folderSvc))
@@ -1138,18 +1042,27 @@ func setupAccessControlGuardianTest(t *testing.T, uid string,
 	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
+	acSvc := acimpl.ProvideOSSService(cfg, acdb.ProvideService(store), localcache.ProvideService(), featuremgmt.WithFeatures())
 	if folderPermissions == nil {
 		folderPermissions, err = ossaccesscontrol.ProvideFolderPermissions(
-			cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, ac, teamSvc, userSvc)
+			cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
 		require.NoError(t, err)
 	}
 	if dashboardPermissions == nil {
 		dashboardPermissions, err = ossaccesscontrol.ProvideDashboardPermissions(
-			cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, ac, teamSvc, userSvc)
+			cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
 		require.NoError(t, err)
 	}
 
-	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, dash, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, fakeDashboardService)
+	userPermissions := map[int64]map[string][]string{}
+	for _, p := range permissions {
+		if _, ok := userPermissions[orgID]; !ok {
+			userPermissions[orgID] = map[string][]string{}
+		}
+		userPermissions[orgID][p.Action] = append(userPermissions[orgID][p.Action], p.Scope)
+	}
+
+	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, d, &user.SignedInUser{OrgID: orgID, Permissions: userPermissions}, store, ac, folderPermissions, dashboardPermissions, fakeDashboardService)
 	require.NoError(t, err)
 	return g
 }
