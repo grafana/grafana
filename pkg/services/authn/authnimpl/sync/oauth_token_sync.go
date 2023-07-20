@@ -2,7 +2,10 @@ package sync
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -85,8 +89,12 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	}
 
 	expires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+	idTokenHasExpired, err := hasIDTokenExpired(token)
+	if err != nil {
+		s.log.FromContext(ctx).Error("Failed to check expiry of ID token", "id", identity.ID, "error", err)
+	}
 	// token has not expired, so we don't have to refresh it
-	if !expires.Before(time.Now()) {
+	if !expires.Before(time.Now()) && !idTokenHasExpired {
 		// cache the token check, so we don't perform it on every request
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(expires))
 		return nil
@@ -124,4 +132,31 @@ func getOAuthTokenCacheTTL(t time.Time) time.Duration {
 	}
 
 	return ttl
+}
+
+// hasIDTokenExpired checks if the exp field in the ID token has expired. It does not validate the ID token.
+func hasIDTokenExpired(token *login.UserAuth) (bool, error) {
+	if token.OAuthIdToken == "" {
+		return false, nil
+	}
+
+	seperatedIDToken := strings.Split(token.OAuthIdToken, ".")
+	if len(seperatedIDToken) != 3 {
+		return false, fmt.Errorf("id token is of invalid format")
+	}
+
+	payload, err := base64.RawURLEncoding.DecodeString(seperatedIDToken[1])
+	if err != nil {
+		return false, fmt.Errorf("unable to base64 decode id token payload: %w", err)
+	}
+
+	p := struct {
+		Exp int64 `json:"exp"`
+	}{}
+	if err = json.Unmarshal(payload, &p); err != nil {
+		return false, fmt.Errorf("unable to json unmarshal id token payload: %w", err)
+	}
+
+	expiry := time.Unix(p.Exp, 0)
+	return expiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(time.Now()), nil
 }

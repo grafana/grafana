@@ -2,21 +2,25 @@ package contexthandler
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
@@ -76,6 +80,46 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	assert.True(t, foundLoginCookie, "Could not find cookie")
 }
 
+func TestHasIDTokenExpired(t *testing.T) {
+	tests := []struct {
+		Name          string
+		IDToken       string
+		ExpectExpired bool
+		ExpectError   error
+	}{
+		{
+			Name:          "id token has not expired",
+			IDToken:       fakeIDToken(t, time.Now().Add(5*time.Minute)),
+			ExpectExpired: false,
+			ExpectError:   nil,
+		},
+		{
+			Name:          "id token has expired",
+			IDToken:       fakeIDToken(t, time.Now().Add(-5*time.Minute)),
+			ExpectExpired: true,
+			ExpectError:   nil,
+		},
+		{
+			Name:          "id token does not exists",
+			IDToken:       "",
+			ExpectExpired: false,
+			ExpectError:   nil,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.Name, func(t *testing.T) {
+			ctxHdlr := getContextHandler(t)
+			idTokenExpired, err := ctxHdlr.hasIDTokenExpired(&login.UserAuth{OAuthIdToken: tc.IDToken})
+			if tc.ExpectError == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, tc.ExpectError.Error())
+			}
+			assert.Equal(t, tc.ExpectExpired, idTokenExpired)
+		})
+	}
+}
+
 func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *ContextHandler) (
 	*contextmodel.ReqContext, *httptest.ResponseRecorder, error) {
 	t.Helper()
@@ -120,4 +164,27 @@ func (mw mockWriter) CloseNotify() <-chan bool {
 }
 func (mw mockWriter) Unwrap() http.ResponseWriter {
 	return mw
+}
+
+// fakeIDToken is used to create a fake invalid token to verify expiry logic
+func fakeIDToken(t *testing.T, expiryDate time.Time) string {
+	type Header struct {
+		Kid string `json:"kid"`
+		Alg string `json:"alg"`
+	}
+	type Payload struct {
+		Iss string `json:"iss"`
+		Sub string `json:"sub"`
+		Exp int64  `json:"exp"`
+	}
+
+	header, err := json.Marshal(Header{Kid: "123", Alg: "none"})
+	require.NoError(t, err)
+	u := expiryDate.UTC().Unix()
+	payload, err := json.Marshal(Payload{Iss: "fake", Sub: "a-sub", Exp: u})
+	require.NoError(t, err)
+
+	fakeSignature := "6ICJm"
+
+	return fmt.Sprintf("%s.%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload), fakeSignature)
 }

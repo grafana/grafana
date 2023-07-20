@@ -2,11 +2,15 @@ package sync
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -95,6 +99,13 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
 			oauthInfo:                   &social.OAuthInfo{UseRefreshToken: false},
 		},
+		{
+			desc:                        "should refresh access token when ID token has expired",
+			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}},
+			expectHasEntryCalled:        true,
+			expectTryRefreshTokenCalled: true,
+			expectedHasEntryToken:       &login.UserAuth{OAuthExpiry: time.Now().Add(10 * time.Minute), OAuthIdToken: fakeIDToken(t, time.Now().Add(-10*time.Minute))},
+		},
 	}
 
 	for _, tt := range tests {
@@ -154,4 +165,27 @@ func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			assert.Equal(t, tt.expectRevokeTokenCalled, revokeTokenCalled)
 		})
 	}
+}
+
+// fakeIDToken is used to create a fake invalid token to verify expiry logic
+func fakeIDToken(t *testing.T, expiryDate time.Time) string {
+	type Header struct {
+		Kid string `json:"kid"`
+		Alg string `json:"alg"`
+	}
+	type Payload struct {
+		Iss string `json:"iss"`
+		Sub string `json:"sub"`
+		Exp int64  `json:"exp"`
+	}
+
+	header, err := json.Marshal(Header{Kid: "123", Alg: "none"})
+	require.NoError(t, err)
+	u := expiryDate.UTC().Unix()
+	payload, err := json.Marshal(Payload{Iss: "fake", Sub: "a-sub", Exp: u})
+	require.NoError(t, err)
+
+	fakeSignature := "6ICJm"
+
+	return fmt.Sprintf("%s.%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload), fakeSignature)
 }
