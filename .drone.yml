@@ -761,7 +761,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -774,7 +774,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -1940,7 +1940,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -1971,7 +1971,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -1984,7 +1984,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -2001,7 +2001,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -2027,7 +2027,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -2069,7 +2069,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2626,7 +2626,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -2639,7 +2639,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -2758,7 +2758,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2774,7 +2774,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2992,7 +2992,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -3057,7 +3057,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: fetch-images
   volumes:
@@ -3074,7 +3074,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -3097,7 +3097,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -3326,7 +3326,7 @@ steps:
   - publish-linux-packages-rpm
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3540,7 +3540,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -3605,7 +3605,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -3847,7 +3847,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -3860,7 +3860,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -3983,7 +3983,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -4353,7 +4353,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -5019,6 +5019,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 167670c0d4d875110f2d6268cc301b131e5e530fedf79fe80157ebd90e13813d
+hmac: e88a3047df33738d302db2e0e4357cc4e1abbda7416cfbd9c5aa8c6ece08c596
 
 ...

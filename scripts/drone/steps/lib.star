@@ -331,7 +331,7 @@ def store_storybook_step(ver_mode, trigger = None):
                       ] +
                       end_to_end_tests_deps(),
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": commands,
@@ -370,7 +370,7 @@ def e2e_tests_artifacts():
             ],
         },
         "environment": {
-            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret("gcp_upload_artifacts_key"),
+            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
             "E2E_TEST_ARTIFACTS_BUCKET": "releng-pipeline-artifacts-dev",
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -955,7 +955,7 @@ def build_docker_images_step(archs = None, ubuntu = False, publish = False):
         cmd += " -archs {}".format(",".join(archs))
 
     environment = {
-        "GCP_KEY": from_secret("gcp_key"),
+        "GCP_KEY": from_secret(gcp_upload_artifacts_key),
     }
 
     return {
@@ -975,7 +975,7 @@ def fetch_images_step():
         "name": "fetch-images",
         "image": images["cloudsdk_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
         },
@@ -1002,7 +1002,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
     docker_repo = "grafana/{}".format(docker_repo)
 
     environment = {
-        "GCP_KEY": from_secret("gcp_key"),
+        "GCP_KEY": from_secret(gcp_upload_artifacts_key),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
         "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
@@ -1178,7 +1178,7 @@ def upload_packages_step(ver_mode, trigger = None):
         "image": images["publish_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -1220,7 +1220,7 @@ def publish_grafanacom_step(ver_mode):
         ],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
         },
         "commands": [
             cmd,
@@ -1369,7 +1369,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss")
                     "windows-init",
                 ],
                 "environment": {
-                    "GCP_KEY": from_secret("gcp_key"),
+                    "GCP_KEY": from_secret(gcp_upload_artifacts_key),
                     "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },
