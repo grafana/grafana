@@ -107,6 +107,6 @@ _Generally available in all editions of Grafana._
 
 Grafana's Tempo data source latest upgrade includes support for streaming responses of TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for those long queries that take a long time to return a response.
 
-To use this feature, toggle on the "Streaming" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
 
-{{< figure src="/media/docs/grafana/data-sources/tempo-streaming.png" max-width="750px" caption="TraceQL Search streaming" >}}
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
