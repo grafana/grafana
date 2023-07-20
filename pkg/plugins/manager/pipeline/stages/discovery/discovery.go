@@ -11,62 +11,44 @@ import (
 )
 
 type Discoverer interface {
-	Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
+	Run(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 }
 
-type FindFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
-
-type FindFilterFunc func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
+type FindStep func(ctx context.Context, prev []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
 
 type Discovery struct {
-	findStep       FindFunc
-	findFilterStep FindFilterFunc
-	log            log.Logger
+	// Services
+	pluginFinder   finder.Finder
+	pluginRegistry registry.Service
+	// Assets
+	src plugins.PluginSource
+	// Misc
+	devMode bool
+	steps   []FindStep
+	log     log.Logger
 }
 
-type Opts struct {
-	FindFunc       FindFunc
-	FindFilterFunc FindFilterFunc
-}
-
-func New(cfg *config.Cfg, opts Opts) *Discovery {
-	if opts.FindFunc == nil {
-		opts.FindFunc = DefaultFindFunc(cfg)
-	}
-
-	if opts.FindFilterFunc == nil {
-		opts.FindFilterFunc = DefaultFindFilterFunc
-	}
-
-	return &Discovery{
-		findStep:       opts.FindFunc,
-		findFilterStep: opts.FindFilterFunc,
+func New(cfg *config.Cfg, pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery {
+	d := &Discovery{
+		pluginFinder:   pluginFinder,
+		pluginRegistry: pluginRegistry,
 		log:            log.New("plugins.discovery"),
+		devMode:        cfg.DevMode,
 	}
+	return d
 }
 
-func NewDiscoveryStage(pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery {
-	return &Discovery{
-		findStep: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-			return pluginFinder.Find(ctx, src)
-		},
-		findFilterStep: func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-			return NewDuplicatePluginFilterStep(pluginRegistry).Filter(ctx, bundles)
-		},
-		log: log.New("plugins.discovery"),
+func (d *Discovery) Run(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+	// Init
+	d.src = src
+	// Run
+	res := []*plugins.FoundBundle{}
+	for _, step := range d.steps {
+		ps, err := step(ctx, res)
+		if err != nil {
+			return nil, err
+		}
+		res = ps
 	}
-}
-
-func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-	found, err := d.findStep(ctx, src)
-	if err != nil {
-		return nil, err
-	}
-
-	found, err = d.findFilterStep(ctx, found)
-	if err != nil {
-		return nil, err
-	}
-
-	return found, nil
+	return res, nil
 }

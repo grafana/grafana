@@ -7,68 +7,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-type DefaultConstructor struct {
-	pluginFactoryFunc   pluginFactoryFunc
-	signatureCalculator plugins.SignatureCalculator
-	log                 log.Logger
-}
-
-var DefaultConstructFunc = func(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
-	return NewDefaultConstructor(signatureCalculator, assetPath).Bootstrap
-}
+type DecorateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
 
 var DefaultDecorateFuncs = []DecorateFunc{
 	AliasDecorateFunc,
 	AppDefaultNavURLDecorateFunc,
 	AppChildDecorateFunc,
-}
-
-func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *DefaultConstructor {
-	f := NewDefaultPluginFactory(assetPath)
-	return &DefaultConstructor{
-		pluginFactoryFunc:   f.createPlugin,
-		signatureCalculator: signatureCalculator,
-		log:                 log.New("bootstrap"),
-	}
-}
-
-func (c *DefaultConstructor) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	res := make([]*plugins.Plugin, 0, len(bundles))
-
-	for _, bundle := range bundles {
-		sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
-		if err != nil {
-			c.log.Warn("Could not calculate plugin signature state", "pluginID", bundle.Primary.JSONData.ID, "err", err)
-			continue
-		}
-		plugin, err := c.pluginFactoryFunc(bundle.Primary, src.PluginClass(ctx), sig)
-		if err != nil {
-			c.log.Error("Could not create primary plugin base", "pluginID", bundle.Primary.JSONData.ID, "err", err)
-			continue
-		}
-		res = append(res, plugin)
-
-		children := make([]*plugins.Plugin, 0, len(bundle.Children))
-		for _, child := range bundle.Children {
-			cp, err := c.pluginFactoryFunc(*child, plugin.Class, sig)
-			if err != nil {
-				c.log.Error("Could not create child plugin base", "pluginID", child.JSONData.ID, "err", err)
-				continue
-			}
-			cp.Parent = plugin
-			plugin.Children = append(plugin.Children, cp)
-
-			children = append(children, cp)
-		}
-		res = append(res, children...)
-	}
-
-	return res, nil
 }
 
 // AliasDecorateFunc is a DecorateFunc that sets the alias for the plugin.
@@ -137,4 +84,57 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	} else {
 		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
 	}
+}
+
+func (b *Bootstrap) bootstrapStep(ctx context.Context, prev []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	// First step, plugin list is empty
+	res := make([]*plugins.Plugin, 0, len(b.found))
+
+	for _, bundle := range b.found {
+		sig, err := b.signatureCalculator.Calculate(ctx, b.src, bundle.Primary)
+		if err != nil {
+			b.log.Warn("Could not calculate plugin signature state", "pluginID", bundle.Primary.JSONData.ID, "err", err)
+			continue
+		}
+		plugin, err := b.pluginFactoryFunc(bundle.Primary, b.src.PluginClass(ctx), sig)
+		if err != nil {
+			b.log.Error("Could not create primary plugin base", "pluginID", bundle.Primary.JSONData.ID, "err", err)
+			continue
+		}
+		res = append(res, plugin)
+
+		children := make([]*plugins.Plugin, 0, len(bundle.Children))
+		for _, child := range bundle.Children {
+			cp, err := b.pluginFactoryFunc(*child, plugin.Class, sig)
+			if err != nil {
+				b.log.Error("Could not create child plugin base", "pluginID", child.JSONData.ID, "err", err)
+				continue
+			}
+			cp.Parent = plugin
+			plugin.Children = append(plugin.Children, cp)
+
+			children = append(children, cp)
+		}
+		res = append(res, children...)
+	}
+
+	return res, nil
+}
+
+func (b *Bootstrap) decorateStep(ctx context.Context, prev []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	res := make([]*plugins.Plugin, 0, len(prev))
+
+	for _, plugin := range prev {
+		// This can be different steps
+		for _, decorateFunc := range DefaultDecorateFuncs {
+			decoratedPlugin, err := decorateFunc(ctx, plugin)
+			if err != nil {
+				b.log.Error("Could not decorate plugin", "pluginID", plugin.ID, "err", err)
+				continue
+			}
+			res = append(res, decoratedPlugin)
+		}
+	}
+
+	return res, nil
 }

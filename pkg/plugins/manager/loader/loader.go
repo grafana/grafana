@@ -49,8 +49,8 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		roleRegistry, assetPath, angularInspector, externalServiceRegistry,
-		discovery.NewDiscoveryStage(pluginFinder, pluginRegistry),
-		bootstrap.NewBootstrapStage(signatureCalculator, assetPath))
+		discovery.New(cfg, pluginFinder, pluginRegistry),
+		bootstrap.New(signatureCalculator, assetPath))
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
@@ -78,14 +78,14 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 // nolint:gocyclo
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	// <DISCOVERY STAGE>
-	discoveredPlugins, err := l.discovery.Discover(ctx, src)
+	discoveredPlugins, err := l.discovery.Run(ctx, src)
 	if err != nil {
 		return nil, err
 	}
 	// </DISCOVERY STAGE>
 
 	// <BOOTSTRAP STAGE>
-	bootstrappedPlugins, err := l.bootstrap.Bootstrap(ctx, src, discoveredPlugins)
+	bootstrappedPlugins, err := l.bootstrap.Run(ctx, src, discoveredPlugins)
 	if err != nil {
 		return nil, err
 	}

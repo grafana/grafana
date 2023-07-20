@@ -1420,8 +1420,8 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assets, angularInspector, &fakes.FakeOauthService{},
-		discovery.NewDiscoveryStage(finder.NewLocalFinder(cfg.DevMode), reg),
-		bootstrap.NewBootstrapStage(signature.ProvideService(statickey.New()), assets))
+		discovery.New(cfg, finder.NewLocalFinder(cfg.DevMode), reg),
+		bootstrap.New(signature.ProvideService(statickey.New()), assets))
 
 	for _, cb := range cbs {
 		cb(l)
