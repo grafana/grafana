@@ -92,14 +92,17 @@ export function ExploreGraph({
   const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
 
-  const timeRange = {
-    from: dateTime(absoluteRange.from),
-    to: dateTime(absoluteRange.to),
-    raw: {
+  const timeRange = useMemo(
+    () => ({
       from: dateTime(absoluteRange.from),
       to: dateTime(absoluteRange.to),
-    },
-  };
+      raw: {
+        from: dateTime(absoluteRange.from),
+        to: dateTime(absoluteRange.to),
+      },
+    }),
+    [absoluteRange.from, absoluteRange.to]
+  );
 
   const fieldConfigRegistry = useMemo(
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),

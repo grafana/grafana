@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { AbsoluteTimeRange, DataFrame, dateTime, EventBus, LoadingState, SplitOpen } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
@@ -31,14 +31,17 @@ export function CustomContainer({
   splitOpenFn,
   eventBus,
 }: Props) {
-  const timeRange = {
-    from: dateTime(absoluteRange.from),
-    to: dateTime(absoluteRange.to),
-    raw: {
+  const timeRange = useMemo(
+    () => ({
       from: dateTime(absoluteRange.from),
       to: dateTime(absoluteRange.to),
-    },
-  };
+      raw: {
+        from: dateTime(absoluteRange.from),
+        to: dateTime(absoluteRange.to),
+      },
+    }),
+    [absoluteRange.from, absoluteRange.to]
+  );
 
   const plugin = getPanelPluginMeta(pluginId);
 
