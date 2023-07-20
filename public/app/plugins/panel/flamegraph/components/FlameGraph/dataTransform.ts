@@ -1,4 +1,12 @@
-import { createTheme, DataFrame, DisplayProcessor, Field, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import {
+  createTheme,
+  DataFrame,
+  DisplayProcessor,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+} from '@grafana/data';
 
 import { SampleUnit } from '../types';
 
@@ -99,6 +107,7 @@ export class FlameGraphDataContainer {
     // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
     // users to use this panel with correct query from data sources that do not return profiles natively.
     if (enumConfig) {
+      this.labelField.type = FieldType.enum;
       this.labelDisplayProcessor = getDisplayProcessor({ field: this.labelField, theme });
       this.uniqueLabels = enumConfig.text || [];
     } else {
