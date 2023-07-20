@@ -29,11 +29,9 @@ function Trigger({ isLoading, label, ...rest }: TriggerProps, ref: React.Forward
           {isLoading ? (
             <Skeleton width={100} />
           ) : label ? (
-            <Text as="span" truncate>
-              {label}
-            </Text>
+            <Text truncate>{label}</Text>
           ) : (
-            <Text as="span" truncate color="secondary">
+            <Text truncate color="secondary">
               <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>
             </Text>
           )}
