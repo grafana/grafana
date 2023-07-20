@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode, useState } from 'react';
-import { useMeasure } from 'react-use';
+import React, { CSSProperties, ReactElement, ReactNode } from 'react';
+import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -115,7 +115,7 @@ export function PanelChrome({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, toggleOpen] = useToggle(true);
 
   const hasHeader = !hoverHeader;
 
@@ -153,7 +153,7 @@ export function PanelChrome({
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const collapsibleHeader = (
-    <button type="button" className={styles.clearButtonStyles} onClick={() => setIsOpen(!isOpen)}>
+    <button type="button" className={styles.clearButtonStyles} onClick={toggleOpen}>
       <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
       <h6 title={title} className={styles.title}>
         {title}
