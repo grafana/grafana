@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useId, useMemo, useState } from 'react';
-import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/components/Text/Text';
-import { t, Trans } from 'app/core/internationalization';
+import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import {
@@ -208,6 +206,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       <Input
         ref={setTriggerRef}
         autoFocus
+        prefix={<Icon name="folder" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         className={styles.search}

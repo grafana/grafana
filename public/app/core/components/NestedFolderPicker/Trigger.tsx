@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -25,7 +25,7 @@ function Trigger({ isLoading, label, ...rest }: TriggerProps, ref: React.Forward
           </div>
         ) : undefined}
 
-        <button className={styles.fakeInput} {...rest} ref={ref}>
+        <button className={cx(styles.fakeInput, label ? styles.hasPrefix : undefined)} {...rest} ref={ref}>
           {isLoading ? (
             <Skeleton width={100} />
           ) : (
@@ -51,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: baseStyles.wrapper,
     inputWrapper: baseStyles.inputWrapper,
+
     prefix: css([
       baseStyles.prefix,
       {
@@ -58,17 +59,20 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.text.primary,
       },
     ]),
+
     suffix: css([
       baseStyles.suffix,
       {
         pointerEvents: 'none',
       },
     ]),
+
     fakeInput: css([
       baseStyles.input,
       {
         textAlign: 'left',
-        paddingLeft: 28,
+
+        letterSpacing: 'normal',
 
         // We want the focus styles to appear only when tabbing through, not when clicking the button
         // (and when focus is restored after command palette closes)
@@ -82,5 +86,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         `,
       },
     ]),
+
+    hasPrefix: css({
+      paddingLeft: 28,
+    }),
   };
 };
