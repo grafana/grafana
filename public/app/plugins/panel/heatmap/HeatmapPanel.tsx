@@ -210,7 +210,7 @@ export const HeatmapPanel = ({
                     <HeatmapTooltip
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
-                      data={info}
+                      dataRef={dataRef}
                       isPinned={isPinned}
                       dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}

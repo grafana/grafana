@@ -25,7 +25,7 @@ import { ColorIndicator, formatMilliseconds, getHoverCellColor, LabelValue, xDis
 interface Props {
   dataIdxs: Array<number | null>;
   seriesIdx: number | null | undefined;
-  data: HeatmapData;
+  dataRef: React.MutableRefObject<HeatmapData>;
   showHistogram?: boolean;
   showColorScale?: boolean;
   isPinned: boolean;
@@ -37,20 +37,23 @@ interface Props {
 export const HeatmapTooltip = (props: Props) => {
   // exemplars
   if (props.seriesIdx === 2) {
-    return <DataHoverView data={props.data.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />;
+    return <DataHoverView data={props.dataRef.current!.exemplars} rowIndex={props.dataIdxs[2]} header={'Exemplar'} />;
   }
 
   return <HeatmapTooltipHover {...props} />;
 };
+
 const HeatmapTooltipHover = ({
   dataIdxs,
-  data,
+  dataRef,
   showHistogram,
   isPinned,
   canAnnotate,
   panelData,
   showColorScale = false,
 }: Props) => {
+  const data = dataRef.current;
+
   const styles = useStyles2(getStyles);
 
   const index = dataIdxs[1]!;
