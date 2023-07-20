@@ -3,9 +3,10 @@ package eval
 
 import (
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"hash/fnv"
 	"sort"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type fingerprint uint64
