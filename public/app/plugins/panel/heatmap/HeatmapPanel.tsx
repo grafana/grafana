@@ -8,6 +8,7 @@ import {
   Portal,
   ScaleDistribution,
   TooltipPlugin4,
+  ZoomXPlugin,
   UPlotChart,
   usePanelContext,
   useStyles2,
@@ -27,6 +28,8 @@ import { quantizeScheme } from './palettes';
 import { HeatmapTooltip } from './tooltip/HeatmapTooltip';
 import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
+import { AnnotationXEditorPlugin } from '../timeseries/plugins/AnnotationXEditorPlugin';
 
 interface HeatmapPanelProps extends PanelProps<Options> {}
 
@@ -133,12 +136,13 @@ export const HeatmapPanel = ({
       eventBus,
       // onhover: onhover,
       // onclick: options.tooltip.show ? onclick : null,
-      onzoom: (evt) => {
-        const delta = evt.xMax - evt.xMin;
-        if (delta > 1) {
-          onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
-        }
-      },
+      // onzoom: (evt) => {
+      //   console.log(evt);
+      //   const delta = evt.xMax - evt.xMin;
+      //   if (delta > 1) {
+      //     onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
+      //   }
+      // },
       // isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
@@ -202,15 +206,21 @@ export const HeatmapPanel = ({
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
+            <ZoomXPlugin
+              builder={builder}
+              onZoom={(from, to) => {
+                onChangeTimeRange({ from, to });
+              }}
+            />
             {options.tooltip.show && (
               <TooltipPlugin4
                 config={builder}
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss: () => void) => {
+                render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (
                     <HeatmapTooltip
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
-                      data={info}
+                      dataRef={dataRef}
                       isPinned={isPinned}
                       dismiss={dismiss}
                       showHistogram={options.tooltip.yHistogram}
@@ -225,6 +235,10 @@ export const HeatmapPanel = ({
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
             )}
+            {enableAnnotationCreation && (
+              <AnnotationXEditorPlugin timeRange={null} builder={builder} timeZone={timeZone} />
+            )}
+
             {/*{enableAnnotationCreation && (*/}
             {/*  <AnnotationEditorPlugin data={alignedDataFrame!} timeZone={timeZone} config={builder}>*/}
             {/*    {({ startAnnotating }) => {*/}

@@ -143,15 +143,6 @@ export function prepConfig(opts: PrepConfigOpts) {
       );
   });
 
-  onzoom &&
-    builder.addHook('setSelect', (u) => {
-      onzoom({
-        xMin: u.posToVal(u.select.left, xScaleKey),
-        xMax: u.posToVal(u.select.left + u.select.width, xScaleKey),
-      });
-      u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
-    });
-
   if (isTime) {
     // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
     // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
