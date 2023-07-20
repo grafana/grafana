@@ -2069,7 +2069,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2758,7 +2758,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3983,7 +3983,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -5031,6 +5031,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 83e7d1f1b972e8e6f956271e1586153a3a80e4ddcdc84cb9107db3e1d84e58eb
+hmac: ea32500f4c7c72fe5b95a1617dd43935becbbc4c8bc2cbbf87b87c512afcca0a
 
 ...

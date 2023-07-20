@@ -1180,7 +1180,7 @@ def upload_packages_step(ver_mode, trigger = None):
         "image": images["publish_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "GCP_KEY": from_secret(gcp_grafanauploads),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
