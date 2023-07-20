@@ -298,7 +298,6 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 		return "no-data", mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
 
-	vals := make([]mathexp.Value, 0)
 	var dt data.FrameType
 	dt, useDataplane, _ := shouldUseDataplane(frames, logger, s.features.IsEnabled(featuremgmt.FlagDisableSSEDataplane))
 	if useDataplane {
@@ -328,6 +327,7 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			if err != nil {
 				return "", mathexp.Results{}, err
 			}
+			vals := make([]mathexp.Value, 0, len(numberSet))
 			for _, n := range numberSet {
 				vals = append(vals, n)
 			}
@@ -337,15 +337,30 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 		}
 	}
 
+	filtered := make([]*data.Frame, 0, len(frames))
+	totalLen := 0
 	for _, frame := range frames {
+		schema := frame.TimeSeriesSchema()
 		// Check for TimeSeriesTypeNot in InfluxDB queries. A data frame of this type will cause
 		// the WideToMany() function to error out, which results in unhealthy alerts.
 		// This check should be removed once inconsistencies in data source responses are solved.
-		if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && datasourceType == datasources.DS_INFLUXDB {
+		if schema.Type == data.TimeSeriesTypeNot && datasourceType == datasources.DS_INFLUXDB {
 			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
 			continue
 		}
-		var series []mathexp.Series
+		if schema.Type != data.TimeSeriesTypeWide {
+			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
+		}
+		filtered = append(filtered, frame)
+		totalLen += len(schema.ValueIndices)
+	}
+
+	if len(filtered) == 0 {
+		return "no data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frames[0]}}}, nil
+	}
+
+	vals := make([]mathexp.Value, 0, totalLen)
+	for _, frame := range filtered {
 		series, err := WideToMany(frame)
 		if err != nil {
 			return "", mathexp.Results{}, err
@@ -354,9 +369,12 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			vals = append(vals, ser)
 		}
 	}
-
-	return "series set", mathexp.Results{
-		Values: vals, // TODO vals can be empty. Should we replace with no-data?
+	dataType := "single frame series"
+	if len(filtered) > 1 {
+		dataType = "multi frame series"
+	}
+	return dataType, mathexp.Results{
+		Values: vals,
 	}, nil
 }
 
