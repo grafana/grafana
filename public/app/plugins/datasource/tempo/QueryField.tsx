@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -10,25 +9,22 @@ import {
   HorizontalGroup,
   InlineField,
   InlineFieldRow,
-  InlineLabel,
   Modal,
   RadioButtonGroup,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 
-import { LokiQueryField } from '../../loki/components/LokiQueryField';
-import { LokiDatasource } from '../../loki/datasource';
-import { LokiQuery } from '../../loki/types';
-import TraceQLSearch from '../SearchTraceQLEditor/TraceQLSearch';
-import { TempoQueryType } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
-import { QueryEditor } from '../traceql/QueryEditor';
-import { TempoQuery } from '../types';
+import { LokiQuery } from '../loki/types';
 
-import NativeSearch from './NativeSearch';
+import NativeSearch from './DeprecatedSearch/NativeSearch';
+import { LokiSearch } from './LokiSearch';
+import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
-import { getDS } from './utils';
+import { TempoQueryType } from './dataquery.gen';
+import { TempoDatasource } from './datasource';
+import { QueryEditor } from './traceql/QueryEditor';
+import { TempoQuery } from './types';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 interface State {
@@ -162,7 +158,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
           </InlineField>
         </InlineFieldRow>
         {query.queryType === 'search' && (
-          <SearchSection
+          <LokiSearch
             logsDatasourceUid={logsDatasourceUid}
             query={query}
             onRunQuery={this.onRunLinkedQuery}
@@ -200,51 +196,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       </>
     );
   }
-}
-
-interface SearchSectionProps {
-  logsDatasourceUid?: string;
-  onChange: (value: LokiQuery) => void;
-  onRunQuery: () => void;
-  query: TempoQuery;
-}
-function SearchSection({ logsDatasourceUid, onChange, onRunQuery, query }: SearchSectionProps) {
-  const dsState = useAsync(() => getDS(logsDatasourceUid), [logsDatasourceUid]);
-  if (dsState.loading) {
-    return null;
-  }
-
-  const ds = dsState.value as LokiDatasource;
-
-  if (ds) {
-    return (
-      <>
-        <InlineLabel>Tempo uses {ds.name} to find traces.</InlineLabel>
-        <LokiQueryField
-          datasource={ds}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          query={query.linkedQuery ?? ({ refId: 'linked' } as LokiQuery)}
-          history={[]}
-        />
-      </>
-    );
-  }
-
-  if (!logsDatasourceUid) {
-    return <div className="text-warning">Please set up a Loki search datasource in the datasource settings.</div>;
-  }
-
-  if (logsDatasourceUid && !ds) {
-    return (
-      <div className="text-warning">
-        Loki search datasource is configured but the data source no longer exists. Please configure existing data source
-        to use the search.
-      </div>
-    );
-  }
-
-  return null;
 }
 
 export const TempoQueryField = withTheme2(TempoQueryFieldComponent);
