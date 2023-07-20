@@ -21,7 +21,6 @@ interface AnnotationXEditorPluginProps {
 export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: AnnotationXEditorPluginProps) => {
   // set ref here?
 
-  console.log('timeRange', timeRange);
   const domRef = useRef<HTMLDivElement>(null);
   const [plot, setPlot] = useState<uPlot>();
   const [selection, setSelection] = useState<PlotSelection | null>(null);
