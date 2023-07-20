@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/collector/model/otlp"
 )
 
 func TestTraceToFrame(t *testing.T) {
@@ -23,7 +22,8 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		pbUnmarshaler := ptrace.ProtoUnmarshaler{}
+		otTrace, err := pbUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		frame, err := TraceToFrame(otTrace)
@@ -58,7 +58,8 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		pbUnmarshaler := ptrace.ProtoUnmarshaler{}
+		otTrace, err := pbUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		var index int
@@ -66,10 +67,10 @@ func TestTraceToFrame(t *testing.T) {
 			rsp.ScopeSpans().RemoveIf(func(sp ptrace.ScopeSpans) bool {
 				sp.Spans().RemoveIf(func(span ptrace.Span) bool {
 					if index == 0 {
-						span.SetTraceID(pcommon.NewTraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
+						span.SetTraceID(pcommon.TraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}
 					if index == 1 {
-						span.SetTraceID(pcommon.NewTraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
+						span.SetTraceID(pcommon.TraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}
 					index++
 					return false
@@ -125,7 +126,7 @@ func (f *BetterFrame) FindRowWithValue(fieldName string, value interface{}) Row 
 }
 
 func rootSpan(frame *BetterFrame) Row {
-	return frame.FindRowWithValue("parentSpanID", "")
+	return frame.FindRowWithValue("parentSpanID", "0000000000000000")
 }
 
 func fieldNames(frame *data.Frame) []string {

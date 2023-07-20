@@ -142,7 +142,7 @@ describe('DataSourceDropdown', () => {
       );
     });
 
-    it('should dispaly the current selected DS in the selector', async () => {
+    it('should display the current selected DS in the selector', async () => {
       getInstanceSettingsMock.mockReturnValue(mockDS2);
       render(<DataSourceDropdown onChange={jest.fn()} current={mockDS2}></DataSourceDropdown>);
       expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', mockDS2.name);
@@ -163,7 +163,7 @@ describe('DataSourceDropdown', () => {
       expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
     });
 
-    it('should dispaly the default DS as selected when `current` is not set', async () => {
+    it('should display the default DS as selected when `current` is not set', async () => {
       getInstanceSettingsMock.mockReturnValue(mockDS2);
       render(<DataSourceDropdown onChange={jest.fn()} current={undefined}></DataSourceDropdown>);
       expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', mockDS2.name);
@@ -214,6 +214,14 @@ describe('DataSourceDropdown', () => {
       await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(onChange.mock.lastCall[0]['name']).toEqual(mockDS2.name);
       expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
+    });
+
+    it('should not call onChange when the currently selected data source is clicked', async () => {
+      const onChange = jest.fn();
+      await setupOpenDropdown(user, { onChange });
+
+      await user.click(await screen.findByText(mockDS1.name, { selector: 'span' }));
+      expect(onChange).not.toBeCalled();
     });
 
     it('should push recently used datasources when a data source is clicked', async () => {
