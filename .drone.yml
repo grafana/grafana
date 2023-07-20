@@ -710,7 +710,7 @@ steps:
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
@@ -1886,7 +1886,7 @@ steps:
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
@@ -2715,7 +2715,7 @@ steps:
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
@@ -3936,7 +3936,7 @@ steps:
   environment:
     E2E_TEST_ARTIFACTS_BUCKET: releng-pipeline-artifacts-dev
     GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_upload_artifacts_key
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
@@ -5031,6 +5031,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 3a0a9e8b170635dc219e8fa1692555d6d552418f1cc7ec4390a952df25083067
+hmac: 83e7d1f1b972e8e6f956271e1586153a3a80e4ddcdc84cb9107db3e1d84e58eb
 
 ...

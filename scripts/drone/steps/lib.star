@@ -7,6 +7,7 @@ load(
     "from_secret",
     "gcp_grafanauploads",
     "gcp_grafanauploads_base64",
+    "gcp_upload_artifacts_key",
     "prerelease_bucket",
 )
 load(
@@ -371,7 +372,7 @@ def e2e_tests_artifacts():
             ],
         },
         "environment": {
-            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_grafanauploads),
+            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
             "E2E_TEST_ARTIFACTS_BUCKET": "releng-pipeline-artifacts-dev",
             "GITHUB_TOKEN": from_secret("github_token"),
         },
