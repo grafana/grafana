@@ -77,21 +77,11 @@ export const exportPanel = (
   parentHtml: HTMLElement | null,
   data?: PanelData | null
 ) => {
-  // add exportType?
-  console.log('panel', panel);
-  console.log('htmlEl', htmlElement);
-  console.log('exportType', format);
-
   if (!htmlElement) {
-    console.log('AAAAAAAA, no HTML element');
-    //TODO: throw error
-    return;
+    throw new Error('No canvas found to export'); // CHANGE THIS
   }
 
-  exportStartup(new PanelExportEvent({ panel, data, htmlElement, format, parentHtml }));
-  /*appEvents.publish(
-    new PanelExportEvent({ panel, htmlElement, format }) // exportType not in ExportPanelPayload
-  );*/
+  exportStartup(new PanelExportEvent({ panel, data, htmlElement, format, parentHtml })); //  fix up the parentHtml nonsense
 };
 
 export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {

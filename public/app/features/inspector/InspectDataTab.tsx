@@ -94,7 +94,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
-
+    console.log('inspectData', dataFrame);
     downloadDataFrameAsCsv(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', csvConfig, transformId);
   };
 
@@ -164,9 +164,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }));
   };
 
-  getProcessedData(): DataFrame[] {
+  /*  getProcessedData(): DataFrame[] {
     const { options, panel, timeZone } = this.props;
+    console.log("options", this.props.options);
     const data = this.state.transformedData;
+    console.log("preProcessedData", data);
 
     if (!options.withFieldConfig || !panel) {
       return applyRawFieldOverrides(data);
@@ -180,7 +182,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       data,
       theme: config.theme2,
       fieldConfig,
-      timeZone,
+      timeZone, // NO NEED FOR TIMEZONE
       replaceVariables: (value: string) => {
         return value;
       },
@@ -208,11 +210,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     return fieldConfig;
-  }
+  } */
 
   render() {
     const { isLoading, options, data, panel, onOptionsChange, app } = this.props;
-    const { dataFrameIndex, transformId, transformationOptions, selectedDataFrame, downloadForExcel } = this.state;
+    const { dataFrameIndex, transformId, transformedData, transformationOptions, selectedDataFrame, downloadForExcel } =
+      this.state;
     const styles = getPanelInspectorStyles();
 
     if (isLoading) {
@@ -223,7 +226,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
       );
     }
 
-    const dataFrames = this.getProcessedData();
+    const dataFrames = getProcessedData(options, transformedData, panel);
+    console.log('postProcessed', dataFrames);
 
     if (!dataFrames || !dataFrames.length) {
       return <div>No Data</div>;
@@ -320,6 +324,51 @@ export class InspectDataTab extends PureComponent<Props, State> {
       </div>
     );
   }
+}
+
+export function getProcessedData(options: GetDataOptions, data: DataFrame[], panel?: PanelModel): DataFrame[] {
+  console.log('optionsIN', options);
+  console.log('preProcessedDataIN', data);
+
+  if (!options.withFieldConfig || !panel) {
+    return applyRawFieldOverrides(data);
+  }
+
+  const fieldConfig = cleanTableConfigFromFieldConfig(panel.type, panel.fieldConfig);
+
+  // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
+  // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
+  return applyFieldOverrides({
+    data,
+    theme: config.theme2,
+    fieldConfig,
+    replaceVariables: (value: string) => {
+      return value;
+    },
+  });
+}
+
+// Because we visualize this data in a table we have to remove any custom table display settings
+function cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: FieldConfigSource): FieldConfigSource {
+  if (panelPluginId !== 'table') {
+    return fieldConfig;
+  }
+
+  fieldConfig = cloneDeep(fieldConfig);
+  // clear all table specific options
+  fieldConfig.defaults.custom = {};
+
+  // clear all table override properties
+  for (const override of fieldConfig.overrides) {
+    for (const prop of override.properties) {
+      if (prop.id.startsWith('custom.')) {
+        const index = override.properties.indexOf(prop);
+        override.properties.slice(index, 1);
+      }
+    }
+  }
+
+  return fieldConfig;
 }
 
 function buildTransformationOptions() {

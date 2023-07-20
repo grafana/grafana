@@ -1,6 +1,6 @@
 import domtoimage from 'dom-to-image';
 
-import { CSVConfig, DataFrame, DataTransformerID } from '@grafana/data';
+import { getProcessedData } from 'app/features/inspector/InspectDataTab';
 import { downloadAsJson, downloadDataFrameAsCsv, downloadTraceAsJson } from 'app/features/inspector/utils/download';
 
 import { ExportPanelPayload, PanelExportEvent } from '../../types/events';
@@ -16,7 +16,10 @@ export enum ExportType {
 }
 
 function exportSelect(e: ExportPanelPayload) {
-  const dataFrames = e.data?.series || [];
+  console.log('zone', Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const preData = e.data?.series || [];
+  const dataFrames = getProcessedData({ withTransforms: true, withFieldConfig: true }, preData, e.panel);
+  console.log('exportData', dataFrames[0]);
   switch (e.format) {
     case ExportType.jpeg:
     case ExportType.png:
@@ -24,17 +27,17 @@ function exportSelect(e: ExportPanelPayload) {
       exportImage(e); // works with jpeg but not jpg
       break;
     case ExportType.csv:
-      downloadDataFrameAsCsv(dataFrames[0], 'hi'); //FIGURE OUT INDEX
+      downloadDataFrameAsCsv(dataFrames[0], e.panel.title); //FIGURE OUT INDEX - should just be 0 because with transforms applied it's only 1
       break;
     case ExportType.xls:
-      console.log('xls');
+      downloadDataFrameAsCsv(dataFrames[0], e.panel.title, { useExcelHeader: true }); // how does Inspect do xls? SEEMINGLY just add    sep=,     at the front
       break;
     case ExportType.numbers:
-      console.log('numbers');
+      downloadDataFrameAsCsv(dataFrames[0], e.panel.title); // seems to
       break;
-    case ExportType.json:
-      downloadAsJson(dataFrames, 'howdy');
-      downloadTraceAsJson(dataFrames[0], 'woah');
+    case ExportType.json: // Panel JSON, Panel Data, DataFrame JSON (from Query)
+      downloadAsJson(dataFrames[0], e.panel.title);
+      downloadTraceAsJson(dataFrames[0], e.panel.title);
     default:
       console.log('default');
       break;
@@ -42,16 +45,14 @@ function exportSelect(e: ExportPanelPayload) {
 }
 
 async function exportImage(e: ExportPanelPayload) {
-  console.log('exportPNG', e);
   //todo avoid as     DONE?
   const canvas = e.htmlElement;
 
-  const b = await domtoimage.toBlob(e.parentHtml ?? new Node());
+  const b = await domtoimage.toBlob(e.parentHtml ?? new Node()); //html-to-image instead?!?
   console.log('b', b);
 
-  //TODO FIX
   const link = document.createElement('a');
-  link.download = 'asdasd.' + e.format; // Do we want custom names or nah?
+  link.download = e.panel.title + '.' + e.format;
   canvas.toBlob((blob) => {
     link.href = URL.createObjectURL(blob!);
     link.click();
@@ -59,7 +60,7 @@ async function exportImage(e: ExportPanelPayload) {
   }, 'image/' + e.format);
 
   const link2 = document.createElement('a');
-  link2.download = 'bobobo.' + e.format;
+  link2.download = e.panel.title + '_B.' + e.format;
   link2.href = URL.createObjectURL(b);
   link2.click();
   URL.revokeObjectURL(link2.href);
@@ -68,36 +69,8 @@ async function exportImage(e: ExportPanelPayload) {
 export function exportStartup(e: PanelExportEvent) {
   // right now holding no type
   //appEvents.subscribe(PanelExportEvent, (e) => {
-  //const { data, isLoading, error } = usePanelLatestData(e.payload.panel, dataOptions, true); // this is a hook
-  console.log('the e', e);
-  // console.log(data, isLoading, error)
-  // this.exportSelector(e.payload);
   exportSelect(e.payload);
-  // }); // Binds PanelExportEvent to exportPNG method
 }
-
-/* function getProcessedData(e:ExportPanelPayload): DataFrame[] {
-  // const { options, panel, timeZone } = this.props;
-  //const data = this.state.transformedData;
-
-  if (!e.panel) {
-    return applyRawFieldOverrides(e.data);
-  }
-
-  const fieldConfig = this.cleanTableConfigFromFieldConfig(e.panel.type, e.panel.fieldConfig);
-
-  // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
-  // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
-  return applyFieldOverrides({
-    data,
-    theme: config.theme2,
-    fieldConfig,
-    timeZone,
-    replaceVariables: (value: string) => {
-      return value;
-    },
-  });
-} */
 
 export class PanelExporterService {
   init() {}
@@ -105,7 +78,6 @@ export class PanelExporterService {
   exportSelector(e: ExportPanelPayload) {}
 
   /*exportPNG(e: ExportPanelPayload) {
-    console.log('exportPNG', e);
     //todo avoid as     DONE?
     const canvas = e.htmlElement;
 
@@ -118,12 +90,5 @@ export class PanelExporterService {
       URL.revokeObjectURL(link.href);
     }, 'image/png');
   } */
-
-  exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
-    // const { panel } = this.props;
-    const transformId = DataTransformerID.noop;
-
-    downloadDataFrameAsCsv(dataFrame, 'OHNO', csvConfig, transformId);
-  }; // FROM InspectDataTab.tsx
   // [ download.ts ALSO HAS DownloadAsJson() ]
 }

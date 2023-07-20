@@ -66,7 +66,6 @@ export function getPanelMenu(
   //=================
 
   const onExportPanel = (event: React.MouseEvent, exportType: ExportType) => {
-    console.log('e', event);
     event.preventDefault();
     //todo avoid as   DONE? (or maybe causes problems elsewhere) // NOW UNDONE
     const exportHtmlElement: HTMLElement = event.target as HTMLElement;
@@ -75,7 +74,7 @@ export function getPanelMenu(
       item: 'createExportPanel',
       exportType: exportType ?? ExportType.jpeg,
     });
-    console.log('ee', document.getElementById('pageContent')); // we may need to add ID to find individual panels?
+
     exportPanel(
       exportHtmlElement.closest('[id="reactRoot"]')?.querySelector('canvas')!,
       panel,
@@ -182,8 +181,6 @@ export function getPanelMenu(
     exportDataMenu = [];
   }
 
-  console.log(exportImageMenu);
-
   exportImageMenu.push({
     text: `PNG`,
     iconClassName: 'camera',
@@ -234,8 +231,6 @@ export function getPanelMenu(
     iconClassName: 'book',
     onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.json),
   });
-
-  console.log('2', exportImageMenu);
 
   if (subMenuEnable) {
     exportMenu.push({

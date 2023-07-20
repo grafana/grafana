@@ -20,15 +20,9 @@ interface Props {
 }
 
 export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, children }: Props) {
-  // GO ALL THE WAY BACK HERE FOR HOOKS?!?!
-  const dataOptions = {
-    withTransforms: false,
-    withFieldConfig: true,
-  };
   const [items, setItems] = useState<PanelMenuItem[]>([]);
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
-  const { data } = usePanelLatestData(panel, dataOptions);
-  console.log('data', data);
+  const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: true });
 
   useEffect(() => {
     setItems(getPanelMenu(dashboard, panel, angularComponent, data));
