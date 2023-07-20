@@ -5,6 +5,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -201,15 +202,73 @@ func TestBuilder_RBAC(t *testing.T) {
 				2,
 			},
 		},
+	}
+
+	user := &user.SignedInUser{
+		UserID:  1,
+		OrgID:   1,
+		OrgRole: org.RoleViewer,
+	}
+
+	store := setupTestEnvironment(t)
+	createDashboards(t, store, 0, 1, user.OrgID)
+
+	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+	require.NoError(t, err)
+
+	for _, tc := range testsCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			if len(tc.userPermissions) > 0 {
+				user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
+			}
+
+			level := dashboards.PERMISSION_EDIT
+
+			builder := &searchstore.Builder{
+				Filters: []interface{}{
+					searchstore.OrgFilter{OrgId: user.OrgID},
+					searchstore.TitleSorter{},
+					permissions.NewAccessControlDashboardPermissionFilter(
+						user,
+						level,
+						"",
+						tc.features,
+						recursiveQueriesAreSupported,
+					),
+				},
+				Dialect: store.GetDialect(),
+			}
+
+			res := []dashboards.DashboardSearchProjection{}
+			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+				sql, params := builder.ToSQL(limit, page)
+				// TODO: replace with a proper test
+				assert.Equal(t, tc.expectedParams, params)
+				return sess.SQL(sql, params...).Find(&res)
+			})
+			require.NoError(t, err)
+
+			assert.Len(t, res, 0)
+		})
+	}
+}
+
+func TestBuilder_RefactoredRBAC(t *testing.T) {
+	testsCases := []struct {
+		desc            string
+		userPermissions []accesscontrol.Permission
+		features        featuremgmt.FeatureToggles
+		expectedParams  []interface{}
+	}{
 		{
-			desc:     "no user permissions with refactored query",
+			desc:     "no user permissions",
 			features: featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
 			expectedParams: []interface{}{
 				int64(1),
 			},
 		},
 		{
-			desc: "user with view permission with refactored query",
+			desc: "user with view permission",
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
@@ -246,7 +305,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			},
 		},
 		{
-			desc: "user with view permission with nesting with refactored query",
+			desc: "user with view permission with nesting",
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
@@ -322,6 +381,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			res := []dashboards.DashboardSearchProjection{}
 			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 				sql, params := builder.ToSQL(limit, page)
+				spew.Dump(sql, params)
 				// TODO: replace with a proper test
 				assert.Equal(t, tc.expectedParams, params)
 				return sess.SQL(sql, params...).Find(&res)
