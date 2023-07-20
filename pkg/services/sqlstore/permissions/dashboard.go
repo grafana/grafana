@@ -22,6 +22,13 @@ type clause struct {
 	params []interface{}
 }
 
+type permissionsFilter interface {
+	With() (string, []interface{})
+	Where() (string, []interface{})
+
+	buildClauses()
+}
+
 type accessControlDashboardPermissionFilter struct {
 	user             *user.SignedInUser
 	dashboardActions []string
@@ -35,7 +42,7 @@ type accessControlDashboardPermissionFilter struct {
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) *accessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) permissionsFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
@@ -71,13 +78,16 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		}
 	}
 
-	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
+	var f permissionsFilter = &accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
 		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+	}
+	if features.IsEnabled(featuremgmt.FlagRefactoredSearchPermissionFilter) {
+		f = refactoredDashboardPermissionFilter{accessControlDashboardPermissionFilter: f.(*accessControlDashboardPermissionFilter)}
 	}
 
 	f.buildClauses()
 
-	return &f
+	return f
 }
 
 // Where returns:

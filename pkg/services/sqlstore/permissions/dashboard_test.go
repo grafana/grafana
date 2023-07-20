@@ -42,6 +42,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		permission     dashboards.PermissionType
 		permissions    []accesscontrol.Permission
 		expectedResult int
+		features       featuremgmt.FeatureToggles
 	}
 
 	tests := []testCase{
@@ -159,16 +160,144 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			},
 			expectedResult: 2,
 		},
+		{
+			desc:       "Should be able to view all dashboards with wildcard scope with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+			},
+			expectedResult: 100,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view all dashboards with folder wildcard scope with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+			},
+			expectedResult: 100,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view a subset of dashboards with dashboard scopes with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99"},
+			},
+			expectedResult: 6,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view a subset of dashboards with dashboard action and folder scope with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:10"},
+			},
+			expectedResult: 20,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view all folders with folder wildcard with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
+			},
+			expectedResult: 10,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view a subset folders with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9"},
+			},
+			expectedResult: 3,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return folders and dashboard with 'edit' permission with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 2,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return folders that users can read alerts from with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return folders that users can read alerts when user has read wildcard with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "*"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			if tt.features == nil {
+				tt.features = featuremgmt.WithFeatures()
+			}
 			store := setupTest(t, 10, 100, tt.permissions)
 			recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 			require.NoError(t, err)
 
 			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
-			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures(), recursiveQueriesAreSupported)
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, tt.features, recursiveQueriesAreSupported)
 
 			var result int
 			err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -196,6 +325,7 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 		permission              dashboards.PermissionType
 		signedInUserPermissions []accesscontrol.Permission
 		expectedResult          int
+		features                featuremgmt.FeatureToggles
 	}
 
 	tests := []testCase{
@@ -320,16 +450,152 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 			},
 			expectedResult: 2,
 		},
+		{
+			desc:       "Should be able to view all dashboards with wildcard scope with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+			},
+			expectedResult: 100,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view all dashboards with folder wildcard scope with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
+			},
+			expectedResult: 100,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:                    "Should not be able to view any dashboards or folders without any permissions with refactored filter",
+			permission:              dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{},
+			expectedResult:          0,
+			features:                featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view a subset of dashboards with dashboard scopes with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99"},
+			},
+			expectedResult: 6,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view a subset of dashboards with dashboard action and folder scope with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:10"},
+			},
+			expectedResult: 20,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view all folders with folder wildcard with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
+			},
+			expectedResult: 10,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should be able to view a subset folders with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9"},
+			},
+			expectedResult: 3,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return folders and dashboard with 'edit' permission with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 2,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
+			},
+			expectedResult: 1,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return folders that users can read alerts from with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
+		{
+			desc:       "Should return folders that users can read alerts when user has read wildcard with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			queryType:  searchstore.TypeAlertFolder,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "*"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
+				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
+			},
+			expectedResult: 2,
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			if tt.features == nil {
+				tt.features = featuremgmt.WithFeatures()
+			}
 			store := setupTest(t, 10, 100, []accesscontrol.Permission{})
 			recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
 			require.NoError(t, err)
 
 			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.signedInUserPermissions)}}
-			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures(), recursiveQueriesAreSupported)
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, tt.features, recursiveQueriesAreSupported)
 
 			var result int
 			err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -413,6 +679,66 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
 			features:       featuremgmt.WithFeatures(),
+			expectedResult: []string{"parent", "dashboard under parent folder"},
+		},
+		{
+			desc:       "Should be able to view dashboards under inherited folders if nested folders are enabled with refactored filter",
+			queryType:  searchstore.TypeDashboard,
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should not be able to view dashboards under inherited folders if nested folders are not enabled with refactored filter",
+			queryType:  searchstore.TypeDashboard,
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"dashboard under parent folder"},
+		},
+		{
+			desc:       "Should be able to view inherited folders if nested folders are enabled with refactored filter",
+			queryType:  searchstore.TypeFolder,
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent", "subfolder"},
+		},
+		{
+			desc:       "Should not be able to view inherited folders if nested folders are not enabled with refactored filter",
+			queryType:  searchstore.TypeFolder,
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent"},
+		},
+		{
+			desc:       "Should be able to view inherited dashboards and folders if nested folders are enabled with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should not be able to view inherited dashboards and folders if nested folders are not enabled with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
 			expectedResult: []string{"parent", "dashboard under parent folder"},
 		},
 	}
@@ -533,6 +859,80 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 				{Action: dashboards.ActionDashboardsWrite, Scope: "folders:uid:parent"},
 			},
 			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedResult: []string{"subfolder", "dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should be able to view dashboards under inherited folders if nested folders are enabled with refactored filter",
+			queryType:  searchstore.TypeDashboard,
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should not be able to view dashboards under inherited folders if nested folders are not enabled with refactored filter",
+			queryType:  searchstore.TypeDashboard,
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"dashboard under parent folder"},
+		},
+		{
+			desc:       "Should be able to view inherited folders if nested folders are enabled with refactored filter",
+			queryType:  searchstore.TypeFolder,
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent", "subfolder"},
+		},
+		{
+			desc:       "Should not be able to view inherited folders if nested folders are not enabled with refactored filter",
+			queryType:  searchstore.TypeFolder,
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent"},
+		},
+		{
+			desc:       "Should be able to view inherited dashboards and folders if nested folders are enabled with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should not be able to view inherited dashboards and folders if nested folders are not enabled with refactored filter",
+			permission: dashboards.PERMISSION_VIEW,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagRefactoredSearchPermissionFilter),
+			expectedResult: []string{"parent", "dashboard under parent folder"},
+		},
+		{
+			desc:       "Should be able to edit inherited dashboards and folders if nested folders are enabled with refactored filter",
+			permission: dashboards.PERMISSION_EDIT,
+			signedInUserPermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "folders:uid:subfolder"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsWrite, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagRefactoredSearchPermissionFilter),
 			expectedResult: []string{"subfolder", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 	}

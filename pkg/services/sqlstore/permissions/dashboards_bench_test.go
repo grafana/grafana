@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, numFolders, nestingLevel int) {
+func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, numFolders, nestingLevel int, enabledFeatures ...interface{}) {
 	usr := user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{
 		1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 			{
@@ -43,7 +43,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 		}),
 	}}
 
-	features := featuremgmt.WithFeatures()
+	features := featuremgmt.WithFeatures(enabledFeatures...)
 	// if nestingLevel > 0 enable nested folders
 	if nestingLevel > 0 {
 		features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
@@ -223,52 +223,100 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 	return store
 }
 
+func BenchmarkDashboardRefactoredPermissionFilter_100_100_0_0(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 0, 0, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_100_10_2(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 2, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_100_10_4(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 4, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_100_10_8(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 8, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_1000_0_0(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 8, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_1000_10_2(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 2, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_1000_10_4(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 4, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_100_1000_10_8(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 8, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_300_10000_0_0(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 0, 0, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_300_10000_10_2(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 2, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboardRefactoredPermissionFilter_300_10000_10_4(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 4, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
+func BenchmarkDashboadRefactoredPermissionFilter_300_10000_10_8(b *testing.B) {
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 8, featuremgmt.FlagRefactoredSearchPermissionFilter)
+}
+
 func BenchmarkDashboardPermissionFilter_100_100_0_0(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 100, 0, 0)
+	benchmarkDashboardPermissionFilter(b, 100, 100, 0, 0, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_100_10_2(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 2)
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 2, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_100_10_4(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 4)
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 4, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_100_10_8(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 8)
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 8, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_1000_0_0(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 1000, 0, 0)
+	benchmarkDashboardPermissionFilter(b, 100, 100, 10, 8, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_1000_10_2(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 2)
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 2, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_1000_10_4(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 4)
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 4, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_100_1000_10_8(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 8)
+	benchmarkDashboardPermissionFilter(b, 100, 1000, 10, 8, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_300_10000_0_0(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 300, 10000, 0, 0)
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 0, 0, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_300_10000_10_2(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 2)
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 2, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_300_10000_10_4(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 4)
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 4, nil)
 }
 
 func BenchmarkDashboardPermissionFilter_300_10000_10_8(b *testing.B) {
-	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 8)
+	benchmarkDashboardPermissionFilter(b, 300, 10000, 10, 8, nil)
 }
 
 func batch(count, batchSize int, eachFn func(start, end int) error) error {
