@@ -18,7 +18,7 @@ title: Grafana Alerting vs Legacy dashboard alerting
 weight: 108
 ---
 
-# What's new in Grafana Alerting
+# Grafana Alerting vs Legacy dashboard alerting
 
 Introduced in Grafana 8.0, and the only system since Grafana 10.0, Grafana Alerting has several enhancements over legacy dashboard alerting.
 
