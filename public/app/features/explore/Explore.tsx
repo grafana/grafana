@@ -186,6 +186,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   /**
    * Used by Logs details.
+   * Returns true if all queries have the filter, otherwise false.
+   * @alpha
    */
   isFilterLabelActive = async (key: string, value: string) => {
     if (!config.featureToggles.toggleLabelsInLogsUI) {
