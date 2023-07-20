@@ -206,7 +206,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       <Input
         ref={setTriggerRef}
         autoFocus
-        prefix={<Icon name="folder" />}
+        prefix={label ? <Icon name="folder" /> : null}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
         className={styles.search}

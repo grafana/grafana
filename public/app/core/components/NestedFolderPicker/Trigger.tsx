@@ -28,9 +28,13 @@ function Trigger({ isLoading, label, ...rest }: TriggerProps, ref: React.Forward
         <button className={cx(styles.fakeInput, label ? styles.hasPrefix : undefined)} {...rest} ref={ref}>
           {isLoading ? (
             <Skeleton width={100} />
-          ) : (
+          ) : label ? (
             <Text as="span" truncate>
-              {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
+              {label}
+            </Text>
+          ) : (
+            <Text as="span" truncate color="secondary">
+              <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>
             </Text>
           )}
         </button>
