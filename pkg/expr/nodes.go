@@ -381,7 +381,7 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 }
 
 func isAllFrameVectors(datasourceType string, frames data.Frames) bool {
-	if datasourceType != "prometheus" {
+	if datasourceType != datasources.DS_PROMETHEUS {
 		return false
 	}
 	allVector := false
