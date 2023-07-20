@@ -12,7 +12,9 @@ import {
   DataFrameSchema,
   DataFrameData,
 } from '@grafana/data';
+// eslint-disable-next-line no-restricted-imports -- In the process from being removed
 import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
+// eslint-disable-next-line no-restricted-imports -- In the process from being removed
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { getRandomLine } from './LogIpsum';
