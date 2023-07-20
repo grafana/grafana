@@ -2083,7 +2083,7 @@ steps:
   - grafana-server
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2744,7 +2744,7 @@ steps:
   - grafana-server
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3966,7 +3966,7 @@ steps:
   - grafana-server
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -5019,6 +5019,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: dcee2beb794d3fc77f00566756f0519c4bb7acc5c231e5f81b32616670f9ae8b
+hmac: 167670c0d4d875110f2d6268cc301b131e5e530fedf79fe80157ebd90e13813d
 
 ...

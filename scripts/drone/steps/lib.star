@@ -5,6 +5,7 @@ This module is a library of Drone steps and other pipeline components.
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "gcp_upload_artifacts_key",
     "prerelease_bucket",
 )
 load(
@@ -407,7 +408,7 @@ def upload_cdn_step(ver_mode, trigger = None):
             "grafana-server",
         ],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": [
