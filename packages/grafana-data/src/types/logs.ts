@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, QueryFixAction } from './datasource';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -264,32 +264,29 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
   return withLogsSupport.getLogRowContextUi !== undefined;
 };
 
-export interface AnalyzeQueryOptions {
-  check: string;
-  attributes: KeyValue<string>;
+export interface QueryFilterOptions extends KeyValue<string> {}
+export interface ToggleFilterAction {
+  type: 'ADD_FILTER' | 'ADD_FILTER_OUT';
+  options: QueryFilterOptions;
 }
-
 /**
  * Data sources that support query manipulation through `modifyQuery` and `analyzeQuery` in Explore.
  * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
+ * @alpha
  */
-export interface DataSourceToggleableQueryFiltersSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
+export interface DataSourceToggleableQueryFiltersSupport<TQuery extends DataQuery> {
   /**
-   * Modify the query with a given action.
-   * To support toggleable filters, `ADD_FILTER` or `ADD_FILTER_OUT` should be implemented.
+   * Toggle filters on and off from query.
    * If the filter is already present, it should be removed.
-   * If the opposite filter is present, it should be replaceted.
+   * If the opposite filter is present, it should be replaced.
    */
-  modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
+  toggleFilter(query: TQuery, action: ToggleFilterAction): TQuery;
 
   /**
-   * Analyze the query to determine if it meets a given criteria.
-   * Should minimally support `HAS_FILTER` to support the display of filter status.
-   *
-   * @alpha
+   * Given a query, determine if it has a filter that matches the options.
    */
-  analyzeQuery(query: TQuery, options: AnalyzeQueryOptions): TAnalyzeQueryResult;
+  queryHasFilter(query: TQuery, options: QueryFilterOptions): boolean;
 }
 
 /**
@@ -299,6 +296,9 @@ export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceToggleableQueryFiltersSupport<TQuery> => {
   return (
-    datasource !== null && typeof datasource === 'object' && 'modifyQuery' in datasource && 'analyzeQuery' in datasource
+    datasource !== null &&
+    typeof datasource === 'object' &&
+    'toggleFilter' in datasource &&
+    'queryHasFilter' in datasource
   );
 };
