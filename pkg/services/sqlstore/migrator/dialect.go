@@ -73,6 +73,8 @@ type Dialect interface {
 	Unlock(LockCfg) error
 
 	GetDBName(string) (string, error)
+
+	Concat(...string) string
 }
 
 type LockCfg struct {
@@ -343,4 +345,8 @@ func (b *BaseDialect) OrderBy(order string) string {
 
 func (b *BaseDialect) GetDBName(_ string) (string, error) {
 	return "", nil
+}
+
+func (b *BaseDialect) Concat(s ...string) string {
+	return "CONCAT(" + strings.Join(s, ",") + ")"
 }
