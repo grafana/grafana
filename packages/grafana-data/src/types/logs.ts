@@ -281,12 +281,12 @@ export interface DataSourceToggleableQueryFiltersSupport<TQuery extends DataQuer
    * If the filter is already present, it should be removed.
    * If the opposite filter is present, it should be replaced.
    */
-  toggleQueryFilter(query: TQuery, action: ToggleFilterAction): TQuery;
+  toggleQueryFilter(query: TQuery, filter: ToggleFilterAction): TQuery;
 
   /**
    * Given a query, determine if it has a filter that matches the options.
    */
-  queryHasFilter(query: TQuery, options: QueryFilterOptions): boolean;
+  queryHasFilter(query: TQuery, filter: QueryFilterOptions): boolean;
 }
 
 /**
