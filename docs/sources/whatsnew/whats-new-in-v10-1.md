@@ -245,7 +245,7 @@ of full read API access.
 
 To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/" >}}).
 
-### Google OIDC and teamsync support
+### Google OIDC and Team Sync support
 
 <!-- AuthNZ -->
 
@@ -255,4 +255,4 @@ This allows Grafana to reduce the access scope to only the required scopes for a
 
 This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by utilizing their Google groups.
 
-To learn how to migrate your Google OAuth2 setup to OIDC and how to setup teamsync, refer to our [Google authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/google/" >}}).
+To learn how to migrate your Google OAuth2 setup to OIDC and how to setup Team Sync, refer to our [Google authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/google/" >}}).
