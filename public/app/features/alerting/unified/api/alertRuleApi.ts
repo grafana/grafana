@@ -34,7 +34,10 @@ export interface Datasource {
 
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
-export const PROVISIONING_URL = '/api/v1/provisioning/alert-rules/{UID}/export';
+
+function getProvisioningUrl(ruleUid: string, format: 'yaml' | 'json' = 'yaml') {
+  return `/api/v1/provisioning/alert-rules/${ruleUid}/export?format=${format}`;
+}
 
 export interface Data {
   refId: string;
@@ -130,7 +133,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     }),
 
     exportRule: build.query<string, { uid: string; format: 'yaml' | 'json' }>({
-      query: ({ uid, format }) => ({ url: `${PROVISIONING_URL.replace('{UID}', uid)}?format=${format}` }),
+      query: ({ uid, format }) => ({ url: getProvisioningUrl(uid, format) }),
     }),
   }),
 });

@@ -1,5 +1,5 @@
 import { dump } from 'js-yaml';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { CodeEditor, Drawer, useStyles2 } from '@grafana/ui';
@@ -33,7 +33,7 @@ export const GrafanaRuleInspector = ({ onClose, alertUid }: Props) => {
   );
 };
 
-const { useLazyExportRuleQuery } = alertRuleApi;
+const { useExportRuleQuery } = alertRuleApi;
 
 interface YamlTabProps {
   alertUid: string;
@@ -42,17 +42,13 @@ interface YamlTabProps {
 const GrafanaInspectorYamlTab = ({ alertUid }: YamlTabProps) => {
   const styles = useStyles2(yamlTabStyle);
 
-  const [exportRule] = useLazyExportRuleQuery();
+  const { currentData: ruleYamlConfig, isLoading } = useExportRuleQuery({ uid: alertUid, format: 'yaml' });
 
-  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState('');
+  const yamlRule = useMemo(() => dump(ruleYamlConfig), [ruleYamlConfig]);
 
-  useEffect(() => {
-    exportRule({ uid: alertUid, format: 'yaml' })
-      .unwrap()
-      .then((result) => {
-        setAlertRuleAsYaml(dump(result));
-      });
-  }, [exportRule, alertUid]);
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -63,8 +59,7 @@ const GrafanaInspectorYamlTab = ({ alertUid }: YamlTabProps) => {
               width="100%"
               height={height}
               language="yaml"
-              value={alertRuleAsYaml}
-              onBlur={setAlertRuleAsYaml}
+              value={yamlRule}
               monacoOptions={{
                 minimap: {
                   enabled: false,
