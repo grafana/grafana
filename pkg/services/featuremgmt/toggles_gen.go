@@ -398,4 +398,8 @@ const (
 	// FlagSplitScopes
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
+
+	// FlagInfluxdbSqlSupport
+	// Enable InfluxDB SQL query language support with new querying UI
+	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
 )

@@ -671,5 +671,13 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "influxdbSqlSupport",
+			Description:     "Enable InfluxDB SQL query language support with new querying UI",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaObservabilityMetricsSquad,
+			RequiresRestart: false,
+		},
 	}
 )
