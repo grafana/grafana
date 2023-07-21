@@ -73,7 +73,7 @@ In this guide you will set up [Verdaccio](https://verdaccio.org/) registry local
 From your terminal:
 
 1. Navigate to `devenv/local-npm` directory.
-2. Run `docker-compose up`. This will start your local npm registry, available at http://localhost:4873/. Note the verdaccio config allows
+2. Run `docker-compose up`. This will start your local npm registry, available at http://localhost:4873/.
 3. To test `@grafana` packages published to your local npm registry uncomment `npmScopes` and `unsafeHttpWhitelist` properties in the `.yarnrc` file.
 
 #### Publishing packages to local npm registry
@@ -111,4 +111,3 @@ To use your local published package in another package you'll have to create an 
 ```
 
 Make sure there is no other line already defined for `@grafana`.
-
