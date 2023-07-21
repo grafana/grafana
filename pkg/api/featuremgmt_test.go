@@ -74,7 +74,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/featuremgmt"), userWithPermissions(1, tt.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			defer res.Body.Close()
+			defer func() { require.NoError(t, res.Body.Close()) }()
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 
 			if tt.expectedCode == http.StatusOK {
@@ -92,7 +92,6 @@ func TestGetFeatureToggles(t *testing.T) {
 				}
 				assert.Equal(t, 3-len(tt.hiddenTogles), len(result), tt.desc)
 			}
-			require.NoError(t, res.Body.Close())
 		})
 	}
 }
