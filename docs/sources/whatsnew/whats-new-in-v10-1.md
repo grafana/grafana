@@ -110,3 +110,29 @@ Grafana's Tempo data source latest upgrade includes support for streaming respon
 To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
+
+<!-- Matías Wenceslao Chomicki -->
+
+### Configuration page redesign for Loki and Elasticsearch
+
+Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages and tooltips to assist you with configuring and customizing data sources.
+
+### Lucene query parser for Elasticsearch
+
+Adding and removing filters from Elasticsearch queries has now become smarter with the introduction of a Lucene query parser to modify queries using the "Filter for value" and "Filter out value" icons displayed in the Log Details component in Explore.
+
+### Loki query splitting
+
+In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
+
+## Explore
+
+<!-- Matías Wenceslao Chomicki -->
+
+### Logs: Log rows menu when using displayed fields
+
+When you're browsing logs in Explore you can use the Log Details component, that is displayed when you click on a row, to replace the log lines contents with the value of one or more of the log fields or labels by using the "eye" icon. When this feature is in use, you now have access to the menu displayed on mouse-over with options such as show context (if available), copy log to clipboard, or copy shortlink.
+
+### Logs: Improved rendering performance of log lines
+
+With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
