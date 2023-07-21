@@ -327,6 +327,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagLokiFormatQuery
+	// Enables the ability to format Loki queries
+	FlagLokiFormatQuery = "lokiFormatQuery"
+
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"

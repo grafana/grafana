@@ -547,6 +547,13 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
+			Name:         "lokiFormatQuery",
+			Description:  "Enables the ability to format Loki queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "cloudWatchLogsMonacoEditor",
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
 			Stage:        FeatureStageExperimental,

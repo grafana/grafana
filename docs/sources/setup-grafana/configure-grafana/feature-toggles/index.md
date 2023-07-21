@@ -111,6 +111,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                         |
 | `dashboardEmbed`                            | Allow embedding dashboard for external use in Code editors                                                   |
 | `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
+| `lokiFormatQuery`                           | Enables the ability to format Loki queries                                                                   |
 | `cloudWatchLogsMonacoEditor`                | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
