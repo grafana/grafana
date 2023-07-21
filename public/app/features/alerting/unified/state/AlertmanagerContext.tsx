@@ -17,9 +17,10 @@ const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
 
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
+  context?: Partial<Context>;
 }
 
-const AlertmanagerProvider = ({ children, accessType }: Props) => {
+const AlertmanagerProvider = ({ children, accessType, context }: Props) => {
   const [queryParams, updateQueryParams] = useQueryParams();
   const availableAlertManagers = useAlertManagersByPermission(accessType);
 
@@ -54,6 +55,7 @@ const AlertmanagerProvider = ({ children, accessType }: Props) => {
     selectedAlertmanager,
     availableAlertManagers,
     setSelectedAlertmanager: updateSelectedAlertmanager,
+    ...context,
   };
 
   return <AlertmanagerContext.Provider value={value}>{children}</AlertmanagerContext.Provider>;

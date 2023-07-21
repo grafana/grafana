@@ -11,6 +11,7 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
+import setupMimirFlavoredServer from './__mocks__/mimirFlavoredServer';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -43,9 +44,9 @@ describe('ContactPoints', () => {
       );
 
       await waitFor(async () => {
-        await expect(screen.getByText('Loading...')).toBeInTheDocument();
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
         await waitForElementToBeRemoved(screen.getByText('Loading...'));
-        await expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
       });
 
       expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
@@ -53,7 +54,27 @@ describe('ContactPoints', () => {
     });
   });
 
-  describe('Mimir-flavored alertmanager', () => {});
+  describe.skip('Mimir-flavored alertmanager', () => {
+    setupMimirFlavoredServer();
+
+    it('should show / hide loading states', async () => {
+      render(
+        <AlertmanagerProvider accessType={'notification'} context={{ selectedAlertmanager: 'mimir' }}>
+          <ContactPoints />
+        </AlertmanagerProvider>,
+        { wrapper: TestProvider }
+      );
+
+      await waitFor(async () => {
+        expect(screen.getByText('Loading...')).toBeInTheDocument();
+        await waitForElementToBeRemoved(screen.getByText('Loading...'));
+        expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
+      });
+
+      expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
+      expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
+    });
+  });
 });
 
 describe('ContactPoint', () => {
