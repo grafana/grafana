@@ -328,7 +328,7 @@ func (e *EnumField) Append(value string) {
 		e.field.Append(valueIndex)
 	} else {
 		e.valuesMap[value] = e.counter
-		e.field.Append(e.counter)
+		e.field.Append(data.EnumItemIndex(e.counter))
 		e.counter++
 	}
 }
