@@ -635,7 +635,7 @@ var (
 		},
 		{
 			Name:         "toggleLabelsInLogsUI",
-			Description:  "Based on the current query show the active labels in log details",
+			Description:  "Enable toggleable filters in log details view",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,

@@ -380,7 +380,7 @@ const (
 	FlagTransformationsRedesign = "transformationsRedesign"
 
 	// FlagToggleLabelsInLogsUI
-	// Based on the current query show the active labels in log details
+	// Enable toggleable filters in log details view
 	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
 
 	// FlagMlExpressions
