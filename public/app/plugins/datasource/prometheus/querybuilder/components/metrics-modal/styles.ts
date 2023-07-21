@@ -18,18 +18,43 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     labelsWrapper: css`
       display: flex;
       flex-direction: column;
-      max-height: 80vh;
       overflow-y: scroll;
       overflow-x: hidden;
     `,
     labelsTitle: css`
+      font-weight: ${theme.typography.fontWeightBold};
+      font-size: ${theme.typography.fontSize}px;
       padding: 5px 8px 5px 32px;
-      border-bottom: 1px solid var(${theme.colors.border.weak});
+      border-bottom: 1px solid ${theme.colors.border.weak};
     `,
-    inputWrapper: css`
+
+    metricsStickyHeader: css`
+      border-bottom: 1px solid ${theme.colors.border.weak};
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      top: -24px;
+      background: ${theme.colors.background.primary};
+      @media only screen and (min-width: 768px) {
+        top: 0;
+      }
+    `,
+
+    labelsSearchWrapper: css`
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      position: sticky;
+      left: 0;
+      top: -24px;
+      //@todo fix all the styles
+      z-index: 3;
+      @media only screen and (min-width: 768px) {
+        top: 0;
+      }
     `,
     wrapper: css`
       display: flex;
@@ -37,12 +62,17 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       justify-content: space-between;
       flex-wrap: nowrap;
       @media only screen and (min-width: 768px) {
-        flex-direction: row;
+        display: grid;
+        grid-template-columns: 33.334% 66.667%;
       }
     `,
     modalMetricsWrapper: css`
       width: 100%;
       @media only screen and (min-width: 768px) {
+        padding-left: 16px;
+      }
+      @media only screen and (min-width: 1024px) {
+        padding-left: 40px;
       }
     `,
     exprButtons: css`
@@ -54,6 +84,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       align-items: center;
       align-content: center;
       align-self: stretch;
+      width: 100%;
     `,
     exprPreviewTitle: css`
       color: ${theme.colors.text.secondary};
@@ -62,6 +93,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     exprPreviewText: css`
       font-family: ${theme.typography.fontFamilyMonospace};
       color: ${theme.colors.text.primary};
+    `,
+    exprPreviewTextWrap: css`
+      display: flex;
     `,
     exprPreviewWrap: css`
       display: flex;
@@ -76,15 +110,54 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       border-radius: 4px;
       border: 1px solid ${theme.colors.border.weak};
     `,
+    tabletPlus: css`
+      display: none;
+      @media only screen and (min-width: 768px) {
+        display: block;
+      }
+    `,
+    mobileOnly: css`
+      @media only screen and (min-width: 768px) {
+        display: none;
+      }
+    `,
+    stickyMobileFooter: css`
+      position: sticky;
+      bottom: 59px;
+      left: 0;
+      background: ${theme.colors.background.primary};
+    `,
+
+    footer: css`
+      border-top: 1px solid ${theme.colors.border.weak};
+      position: sticky;
+      bottom: -24px;
+      padding-bottom: 12px;
+      left: 0;
+      width: 100%;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      background: ${theme.colors.background.primary};
+      z-index: 1;
+    `,
     selectorValidMessage: css``,
     submitQueryButton: css`
       gap: 4px;
+      align-self: flex-end;
     `,
     modalLabelsWrapper: css`
       width: 100%;
+      height: auto;
+
       @media only screen and (min-width: 768px) {
-        max-width: 250px;
-        width: 40%;
+        height: calc(80vh - 310px);
+        overflow-y: scroll;
+        padding-right: 16px;
+        border-right: 1px solid ${theme.colors.border.weak};
+      }
+      @media only screen and (min-width: 1024px) {
+        padding-right: 40px;
       }
     `,
     inputItemFirst: css`
@@ -93,6 +166,13 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
 
       ${theme.breakpoints.down('md')} {
         padding-right: 0px;
+        padding-bottom: 16px;
+      }
+    `,
+    labelInputItem: css`
+      width: 100%;
+
+      ${theme.breakpoints.down('md')} {
         padding-bottom: 16px;
       }
     `,
@@ -106,11 +186,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     selectWrapper: css`
       margin-bottom: ${theme.spacing(1)};
-    `,
-    resultsAmount: css`
-      color: ${theme.colors.text.secondary};
-      font-size: 0.85rem;
-      padding: 0 0 4px 0;
     `,
     resultsData: css`
       margin: 4px 0 ${theme.spacing(2)} 0;
@@ -129,18 +204,16 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       vertical-align: text-top;
     `,
     results: css`
-      height: calc(80vh - 310px);
+      @media only screen and (min-width: 768px) {
+        height: calc(80vh - 410px);
+      }
+      @media only screen and (min-width: 1024px) {
+        height: calc(80vh - 310px);
+      }
+
       overflow-y: scroll;
     `,
-    resultsFooter: css`
-      margin-top: 24px;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-    `,
+
     currentlySelected: css`
       color: grey;
       opacity: 75%;
@@ -158,19 +231,8 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     noBorder: css`
       border: none;
     `,
-    resultsPerPageLabel: css`
-      color: ${theme.colors.text.secondary};
-      opacity: 75%;
-      padding-top: 5px;
-      font-size: 0.85rem;
-      margin-right: 8px;
-    `,
-    resultsPerPageWrapper: css`
-      display: flex;
-    `,
     labelName: css``,
     labelNamesCollapsableSection: css`
-      margin-bottom: 8px;
       padding: 0;
     `,
   };

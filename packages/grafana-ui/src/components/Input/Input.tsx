@@ -48,7 +48,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
     <div className={cx(styles.wrapper, className)} data-testid={'input-wrapper'}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
-      <div className={styles.inputWrapper}>
+      <div className={styles.metricsStickyHeader}>
         {prefix && (
           <div className={styles.prefix} ref={prefixRef}>
             {prefix}
@@ -130,7 +130,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
       `
     ),
     // Wraps input and prefix/suffix
-    inputWrapper: css`
+    metricsStickyHeader: css`
       label: input-inputWrapper;
       position: relative;
       flex-grow: 1;

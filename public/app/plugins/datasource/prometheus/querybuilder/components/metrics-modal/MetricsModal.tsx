@@ -1,19 +1,22 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
 import debounce from 'debounce-promise';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import React, { FormEvent, useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Checkbox, CollapsableSection, Input, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, Input, Modal, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../../language_utils';
 import { promQueryModeller } from '../../PromQueryModeller';
 import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
+import { ExplorerMetricPaginationFooter } from './ExplorerMetricPaginationFooter';
 import { FeedbackLink } from './FeedbackLink';
 import { MetricsWrapper } from './MetricsWrapper';
+import { PromCollapsableSection } from './PromCollapsableSection';
 import {
   displayedMetrics,
   getBackendSearchMetrics,
@@ -89,10 +92,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
     // *** Loading Gif
     dispatch(setIsLoading(true));
     // console.log('query', state.query)
-    console.log('initialMetrics', state.initialMetrics);
+    console.log('initialMetrics', state.lastBackendResultMetrics);
     const data: MetricsModalMetadata = await setMetrics(
       datasource,
-      state.initialMetrics.map((metric) => metric.value)
+      state.lastBackendResultMetrics.map((metric) => metric.value)
     );
     console.log('MetricsModalMetadata', data);
     dispatch(
@@ -106,7 +109,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         filteredMetricCount: data.metrics.length,
       })
     );
-  }, [datasource, state.initialMetrics]);
+  }, [datasource, state.lastBackendResultMetrics]);
 
   useEffect(() => {
     if (state.metricsStale) {
@@ -119,9 +122,24 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   useEffect(() => {
     if (state.labelNamesStale) {
-      const expr = promQueryModeller.renderLabels(state.query.labels);
+      const expr = promQueryModeller.renderLabels(
+        state.query.labels?.map((label) => {
+          if (label.op === '=' || label.op === '!=') {
+            return {
+              ...label,
+              value: escapeLabelValueInExactSelector(label.value),
+            };
+          }
+
+          return {
+            ...label,
+            value: escapeLabelValueInRegexSelector(label.value),
+          };
+        })
+      );
       console.log('getLabelNames', state.query.metric + expr);
       dispatch(setIsLoading(true));
+      // @todo escape the
       getLabelNames(state.query.metric + expr, datasource).then((data) => {
         dispatch(
           buildLabels({
@@ -309,16 +327,32 @@ export const MetricsModal = (props: MetricsModalProps) => {
     });
   };
 
-  const isLabelValueSelected = (label: QueryBuilderLabelFilter, labelValue: string) => {
+  const isLabelValueSelected = (label: QueryBuilderLabelFilter, labelValue: string, labelName: string) => {
     if (label.op === '=') {
-      return label.value === labelValue;
+      return label.value === labelValue && labelName === label.label;
     }
     if (label.op === '=~') {
-      return label.value.split('|').some((value) => value === labelValue);
+      return label.value.split('|').some((value) => value === labelValue && labelName === label.label);
     }
     // @todo need to impelemnt for all operators
     console.warn('Non-implemented label operator', label.op);
-    return label.value === labelValue;
+    return label.value === labelValue && label.label === labelName;
+  };
+
+  const onChangePageNum = (e: FormEvent<HTMLInputElement>) => {
+    // cast as number
+    const value = +e.currentTarget.value;
+
+    if (isNaN(value) || value >= MAXIMUM_RESULTS_PER_PAGE) {
+      return;
+    }
+
+    dispatch(setResultsPerPage(value));
+  };
+
+  const onNavigate = (val: number) => {
+    const page = val ?? 1;
+    dispatch(setPageNum(page));
   };
 
   /* Settings switches */
@@ -376,54 +410,57 @@ export const MetricsModal = (props: MetricsModalProps) => {
       <div className={styles.wrapper}>
         {/* LABELS */}
         <div className={styles.modalLabelsWrapper}>
-          <div className={styles.inputWrapper}>
-            <div className={cx(styles.inputItem, styles.inputItemFirst)}>
+          <div className={styles.labelsSearchWrapper}>
+            <div className={cx(styles.labelInputItem)}>
               <Input
                 autoFocus={true}
-                data-testid={testIds.searchMetric}
-                placeholder={placeholders.browse}
+                data-testid={testIds.searchLabels}
+                placeholder={placeholders.labelSearch}
                 value={state.labelSearchQuery}
                 onInput={(e) => {
                   const value = e.currentTarget.value ?? '';
                   dispatch(setLabelSearchQuery(value));
-                  metricsSearchCallback(value, state.fullMetaSearch);
                 }}
               />
             </div>
           </div>
+
+          {/* @TODO this needs to be a virtualized list */}
           <div className={styles.labelsWrapper}>
-            <div className={styles.labelsTitle}>Label name</div>
-            {state.labelNames
-              .filter((label) => label !== '__name__')
-              .map((labelName, index) => (
-                <CollapsableSection
-                  className={styles.labelNamesCollapsableSection}
-                  key={'label_names_' + labelName}
-                  label={<LabelNameLabel labelName={labelName} />}
-                  onToggle={(isOpen: boolean) => {
-                    if (isOpen) {
-                      fetchValuesForLabelName(labelName);
-                    }
-                  }}
-                  isOpen={query.labels.some((label) => label.label === labelName) ?? false}
-                >
-                  {state.labelValues[labelName]?.map((labelValue) => (
-                    <LabelNameValue
-                      key={'label_values_' + labelValue}
-                      onChange={(e) => {
-                        setLabelValueSelected(labelName, labelValue, e.currentTarget.checked);
-                      }}
-                      labelName={labelName}
-                      labelValue={labelValue}
-                      checked={
-                        state.query.labels.some((label: QueryBuilderLabelFilter) =>
-                          isLabelValueSelected(label, labelValue)
-                        ) ?? false
+            <>
+              <div className={styles.labelsTitle}>Label name</div>
+              {state.labelNames
+                .filter((label) => label !== '__name__')
+                .map((labelName, index) => (
+                  <PromCollapsableSection
+                    className={styles.labelNamesCollapsableSection}
+                    key={'label_names_' + labelName}
+                    label={<LabelNameLabel labelName={labelName} />}
+                    onToggle={(isOpen: boolean) => {
+                      if (isOpen) {
+                        fetchValuesForLabelName(labelName);
                       }
-                    />
-                  ))}
-                </CollapsableSection>
-              ))}
+                    }}
+                    isOpen={query.labels.some((label) => label.label === labelName) ?? false}
+                  >
+                    {state.labelValues[labelName]?.map((labelValue) => (
+                      <LabelNameValue
+                        key={'label_values_' + labelValue}
+                        onChange={(e) => {
+                          setLabelValueSelected(labelName, labelValue, e.currentTarget.checked);
+                        }}
+                        labelName={labelName}
+                        labelValue={labelValue}
+                        checked={
+                          state.query.labels.some((label: QueryBuilderLabelFilter) =>
+                            isLabelValueSelected(label, labelValue, labelName)
+                          ) ?? false
+                        }
+                      />
+                    ))}
+                  </PromCollapsableSection>
+                ))}
+            </>
           </div>
         </div>
 
@@ -445,47 +482,49 @@ export const MetricsModal = (props: MetricsModalProps) => {
             onSetSelectedTypes={(v) => dispatch(setSelectedTypes(v))}
             onShowAdditionalSettings={() => dispatch(showAdditionalSettings())}
             displayedMetrics={displayedMetrics(state, dispatch)}
-            onNavigate={(val: number) => {
-              const page = val ?? 1;
-              dispatch(setPageNum(page));
-            }}
-            onChangePageNumber={(e) => {
-              const value = +e.currentTarget.value;
-
-              if (isNaN(value) || value >= MAXIMUM_RESULTS_PER_PAGE) {
-                return;
-              }
-
-              dispatch(setResultsPerPage(value));
-            }}
+            onNavigate={onNavigate}
+            onChangePageNumber={onChangePageNum}
             clearQuery={() => dispatch(clear())}
           />
+          {/* We want this to be sticky to the metrics section, not the entire mobile, so we have a slightly different DOM structure to accomodate a better mobile UX */}
+          <div className={cx(styles.mobileOnly, styles.stickyMobileFooter)}>
+            <ExplorerMetricPaginationFooter state={state} onNavigate={onNavigate} onInput={onChangePageNum} />
+          </div>
         </div>
       </div>
 
-      <div className={styles.exprPreviewWrap}>
-        <span className={styles.exprPreview}>
-          <span className={styles.exprPreviewTitle}>RESULT</span>
-          <span className={styles.exprPreviewText}>{expression}</span>
-        </span>
-        <span className={styles.exprButtons}>
-          <Button onClick={() => dispatch(clear())} type={'button'} variant={'destructive'}>
-            Clear
-          </Button>
-          <Button onClick={() => validateQuery()} type={'button'} variant={'secondary'}>
-            Validate
-          </Button>
-        </span>
-      </div>
+      {/* FOOTER */}
+      <div className={styles.footer}>
+        <div className={styles.tabletPlus}>
+          <ExplorerMetricPaginationFooter state={state} onNavigate={onNavigate} onInput={onChangePageNum} />
+        </div>
 
-      <div className={styles.selectorValidMessage}>
-        {state.numberOfSeriesForQuery !== undefined
-          ? `Selector is valid (${state.numberOfSeriesForQuery} series found)`
-          : ''}
-      </div>
+        <div className={styles.exprPreviewWrap}>
+          <span className={styles.exprPreview}>
+            <div className={styles.exprPreviewTextWrap}>
+              <span className={styles.exprPreviewTitle}>RESULT</span>
+              <span className={styles.exprPreviewText}>{expression}</span>
+            </div>
+          </span>
+          <span className={styles.exprButtons}>
+            <Button onClick={() => dispatch(clear())} type={'button'} variant={'destructive'}>
+              Clear
+            </Button>
+            <Button onClick={() => validateQuery()} type={'button'} variant={'secondary'}>
+              Validate
+            </Button>
+          </span>
+        </div>
 
-      <div className={styles.submitQueryButton}>
-        <Button onClick={submitQuery}>Use query</Button>
+        <div className={styles.selectorValidMessage}>
+          {state.numberOfSeriesForQuery !== undefined
+            ? `Selector is valid (${state.numberOfSeriesForQuery} series found)`
+            : ''}
+        </div>
+
+        <div className={styles.submitQueryButton}>
+          <Button onClick={submitQuery}>Use query</Button>
+        </div>
       </div>
     </Modal>
   );
@@ -501,7 +540,8 @@ export const LabelNameLabel = (props: { labelName: string }) => {
 export const getLabelNameLabelStyles = (theme: GrafanaTheme2) => {
   return {
     labelName: css`
-      padding: 5px 8px;
+      font-size: ${theme.typography.fontSize}px;
+      padding: 5px 8px 5px 16px;
     `,
   };
 };
@@ -531,6 +571,7 @@ export const getLabelValueLabelStyles = (theme: GrafanaTheme2) => {
 };
 
 export const testIds = {
+  searchLabels: 'search-labels',
   metricModal: 'metric-modal',
   searchMetric: 'search-metric',
   searchWithMetadata: 'search-with-metadata',

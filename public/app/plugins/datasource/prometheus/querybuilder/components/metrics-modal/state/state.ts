@@ -24,7 +24,10 @@ export const stateSlice = createSlice({
     ) => {
       state.metrics = action.payload.metrics;
       state.filteredMetricCount = action.payload.filteredMetricCount;
+      state.totalMetricCount = action.payload.metrics.length;
       state.isLoading = action.payload.isLoading;
+      state.lastBackendResultMetrics = action.payload.metrics;
+
       if (action.payload.metricsStale !== undefined) {
         state.metricsStale = action.payload.metricsStale;
         if (action.payload.metricsStale) {
@@ -230,7 +233,7 @@ export function initialState(query: PromVisualQuery): MetricsModalState {
     labelNamesStale: false,
     query: query,
     initialQuery: query,
-    initialMetrics: [],
+    lastBackendResultMetrics: [],
     staleLabelValues: Object.keys(initialLabelValues),
     numberOfSeriesForQuery: undefined,
   };
@@ -252,7 +255,7 @@ export interface MetricsModalState {
    */
   metrics: MetricsData;
   /** The initial metrics state, needed for reset */
-  initialMetrics: MetricsData;
+  lastBackendResultMetrics: MetricsData;
   /** List of label names */
   labelNames: string[];
   /** Record of label values, index is the label name */

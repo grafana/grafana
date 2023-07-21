@@ -42,7 +42,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   return (
     <>
       <div className={cx(styles.actionBar, 'page-action-bar')}>
-        <div className={cx(styles.inputWrapper, 'gf-form gf-form--grow m-r-2')}>
+        <div className={cx(styles.metricsStickyHeader, 'gf-form gf-form--grow m-r-2')}>
           <FilterInput
             value={state.query ?? ''}
             onChange={(e) => stateManager.onQueryChange(e)}
@@ -84,7 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       flex-wrap: wrap;
     }
   `,
-  inputWrapper: css`
+  metricsStickyHeader: css`
     ${theme.breakpoints.down('sm')} {
       margin-right: 0 !important;
     }

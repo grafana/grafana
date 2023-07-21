@@ -23,7 +23,7 @@ type ResultsTableProps = {
 
 export function ResultsTable(props: ResultsTableProps) {
   const { metrics, onChange, query, state, disableTextWrap } = props;
-
+  console.log('metrics', metrics);
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
 
@@ -112,7 +112,7 @@ export function ResultsTable(props: ResultsTableProps) {
 
     return (
       <tr className={styles.noResults}>
-        <td colSpan={3}>{message}</td>
+        <td colSpan={4}>{message}</td>
       </tr>
     );
   }

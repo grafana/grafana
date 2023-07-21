@@ -2,24 +2,14 @@ import cx from 'classnames';
 import React, { FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data/src';
-import {
-  Button,
-  ButtonGroup,
-  Icon,
-  Input,
-  MultiSelect,
-  Pagination,
-  Spinner,
-  Toggletip,
-  useTheme2,
-} from '@grafana/ui/src';
+import { Button, ButtonGroup, Icon, Input, MultiSelect, Spinner, Toggletip, useTheme2 } from '@grafana/ui/src';
 
 import { PromVisualQuery } from '../../types';
 
 import { testIds } from './MetricsModal';
 import { ResultsTable } from './ResultsTable';
-import { calculatePageList, calculateResultsPerPage, placeholders } from './state/helpers';
-import { DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE, MetricsModalState } from './state/state';
+import { placeholders } from './state/helpers';
+import { MetricsModalState } from './state/state';
 import { getStyles } from './styles';
 import { MetricData } from './types';
 
@@ -46,7 +36,7 @@ export const MetricsWrapper = (props: {
 
   return (
     <>
-      <div className={styles.inputWrapper}>
+      <div className={styles.metricsStickyHeader}>
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
           <Input
             autoFocus={true}
@@ -86,7 +76,7 @@ export const MetricsWrapper = (props: {
                 data-testid={testIds.showAdditionalSettings}
                 className={styles.noBorder}
               >
-                Additional Settings
+                Settings
               </Button>
               <Button
                 className={styles.noBorder}
@@ -119,28 +109,6 @@ export const MetricsWrapper = (props: {
             disableTextWrap={state.disableTextWrap}
           />
         )}
-      </div>
-      <div className={styles.resultsFooter}>
-        <div className={styles.resultsAmount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} results
-        </div>
-        <Pagination
-          currentPage={state.pageNum ?? 1}
-          numberOfPages={calculatePageList(state).length}
-          onNavigate={props.onNavigate}
-        />
-        <div className={styles.resultsPerPageWrapper}>
-          <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
-          <Input
-            data-testid={testIds.resultsPerPage}
-            value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-            placeholder="results per page"
-            width={10}
-            title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
-            type="number"
-            onInput={props.onChangePageNumber}
-          />
-        </div>
       </div>
     </>
   );

@@ -59,7 +59,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.inputWrapper}>
+      <div className={styles.metricsStickyHeader}>
         <div className={styles.prefix}>
           <Icon name="search" />
         </div>
@@ -82,7 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     wrapper: baseStyles.wrapper,
-    inputWrapper: baseStyles.inputWrapper,
+    metricsStickyHeader: baseStyles.metricsStickyHeader,
     prefix: baseStyles.prefix,
     suffix: css([
       baseStyles.suffix,

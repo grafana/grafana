@@ -1,8 +1,16 @@
 import { AnyAction } from '@reduxjs/toolkit';
 
 import { reportInteraction } from '@grafana/runtime';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
+import {
+  PrometheusDatasource,
+  prometheusRegularEscape,
+  prometheusSpecialRegexEscape,
+} from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
+import {
+  escapeLabelValueInExactSelector,
+  escapeLabelValueInRegexSelector,
+} from 'app/plugins/datasource/prometheus/language_utils';
 
 import { regexifyLabelValuesQueryString } from '../../../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
@@ -119,7 +127,12 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
     if (state.fullMetaSearch) {
       filteredMetrics = state.metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
     } else {
-      filteredMetrics = state.nameHaystackOrder.map((needle: string) => state.nameHaystackDictionary[needle]);
+      console.log('nameHaystackOrder', state.nameHaystackOrder);
+      console.log('state.nameHaystackDictionary', state.nameHaystackDictionary);
+      filteredMetrics = state.nameHaystackOrder
+        .map((needle: string) => state.nameHaystackDictionary[needle])
+        .filter((v) => v !== undefined);
+      console.log('filteredMetrics', filteredMetrics);
     }
   }
 
@@ -200,10 +213,23 @@ export async function getBackendSearchMetrics(
   const queryString = metricText !== '' ? regexifyLabelValuesQueryString(metricText) : '';
 
   const labelsParams = labels.map((label) => {
-    return `,${label.label}${label.op}"${label.value}"`;
+    if (label.op === '=' || label.op === '!=') {
+      return `,${label.label}${label.op}"${escapeLabelValueInExactSelector(label.value)}"`;
+    }
+    return `,${label.label}${label.op}"${label.value
+      .split('|')
+      .map((v) => escapeLabelValueInRegexSelector(v))
+      .join('|')}"`;
   });
 
-  const params = `label_values({__name__=~".+${queryString}"${labels ? labelsParams.join('') : ''}},__name__)`;
+  let params;
+
+  if (queryString || labels.length) {
+    params = `label_values({__name__=~".*${queryString}"${labels ? labelsParams.join('') : ''}},__name__)`;
+  } else {
+    // If there's no querystring, fetch all metric names from backend
+    params = `label_values({__name__=~".+"},__name__)`;
+  }
 
   const results = datasource.metricFindQuery(params);
 
@@ -265,6 +291,7 @@ export const promTypes: PromFilterOption[] = [
 ];
 
 export const placeholders = {
+  labelSearch: 'Search for label or value',
   browse: 'Search metrics by name',
   metadataSearchSwitch: 'Include description in search',
   type: 'Filter by type',
