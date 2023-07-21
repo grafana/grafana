@@ -78,8 +78,9 @@ func TestCallResource(t *testing.T) {
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
 
-	ps.StartAsync(context.Background())
-	ps.AwaitRunning(context.Background())
+	_ = ps.StartAsync(context.Background())
+	_ = ps.AwaitRunning(context.Background())
+	defer ps.StopAsync()
 
 	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeDataSourceService{},
 		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()))

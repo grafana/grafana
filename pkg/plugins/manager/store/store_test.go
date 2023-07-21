@@ -43,7 +43,10 @@ func TestStore_ProvideService(t *testing.T) {
 		}}
 
 		s, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
-		s.starting(context.Background())
+		_ = s.StartAsync(context.Background())
+		_ = s.AwaitRunning(context.Background())
+		defer s.StopAsync()
+
 		require.NoError(t, err)
 		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
 	})
