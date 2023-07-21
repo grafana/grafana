@@ -15,7 +15,7 @@ weight: 800
 
 # Loki data source
 
-Grafana Loki is a set of components that can be composed into a fully featured logging stack.
+Grafana Loki is a set of components that can be combined into a fully featured logging stack.
 Unlike other logging systems, Loki is built around the idea of only indexing metadata about your logs: labels (just like Prometheus labels). Log data itself is then compressed and stored in chunks in object stores such as S3 or GCS, or even locally on a filesystem.
 
 The following guides will help you get started with Loki:
