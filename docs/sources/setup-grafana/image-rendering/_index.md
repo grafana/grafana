@@ -26,11 +26,11 @@ While an image is being rendered, the PNG image is temporarily written to the fi
 
 A background job runs every 10 minutes and removes temporary images. You can configure how long an image should be stored before being removed by configuring the [temp_data_lifetime]({{< relref "../configure-grafana#temp_data_lifetime" >}}) setting.
 
-You can also render a PNG by clicking hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
+You can also render a PNG by hovering over the panel to display the actions menu in the top right corner, and then clicking **Share > Direct link rendered image** in the Link tab.
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana#concurrent_render_limit" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#concurrent_render_limit" >}}).
 
 ## Install Grafana Image Renderer plugin
 
@@ -38,13 +38,13 @@ Alert notifications can include images, but rendering many images at the same ti
 Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use the Grafana Image Renderer plugin or remote rendering service.
 {{% /admonition %}}
 
-To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer#installation).
+To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
 
 ## Configuration
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana#plugingrafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#plugingrafana-image-renderer" >}}).
 
 In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
@@ -88,7 +88,7 @@ AUTH_TOKEN=-
 }
 ```
 
-See the [Grafana configuration]({{< relref "../configure-grafana#renderer_token" >}}) for how to configure the token in Grafana.
+See the [Grafana configuration]({{< relref "https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
 
 ### Rendering mode
 
@@ -311,7 +311,7 @@ CHROME_BIN="/usr/bin/chromium-browser"
 
 #### Start browser with additional arguments
 
-Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found [here](https://peter.sh/experiments/chromium-command-line-switches/) and the list of flags used as defaults by Puppeteer can be found [there](https://github.com/puppeteer/puppeteer/blob/main/src/node/Launcher.ts#L172). Multiple arguments is separated with comma-character.
+Additional arguments to pass to the headless browser instance. Defaults are `--no-sandbox,--disable-gpu`. The list of Chromium flags can be found [here](https://peter.sh/experiments/chromium-command-line-switches/) and the list of flags used as defaults by Puppeteer can be found [there](https://cri.dev/posts/2020-04-04-Full-list-of-Chromium-Puppeteer-flags/). Multiple arguments is separated with comma-character.
 
 ```bash
 RENDERING_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-accelerated-2d-canvas,--disable-gpu,--window-size=1280x758
