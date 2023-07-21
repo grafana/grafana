@@ -128,11 +128,10 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         const { text: enumText, color: enumColor } = config.type.enum;
 
         text = enumText ? enumText[enumIndex] : `${value}`;
-        // If no color specified in enum field config this will fallback to series color
+        // If no color specified in enum field config we will fallback to iterating through the theme palette
         color = enumColor ? enumColor[enumIndex] : undefined;
 
         if (color == null) {
-          // constant color for index
           const { palette } = options.theme.visualization;
           const namedColor = palette[enumIndex % palette.length];
           color = options.theme.visualization.getColorByName(namedColor);
