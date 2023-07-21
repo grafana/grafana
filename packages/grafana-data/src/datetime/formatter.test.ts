@@ -68,16 +68,16 @@ describe('dateTimeFormat', () => {
 
   describe('when time zone have been set', () => {
     it.each([
-      [1587126975779, { timeZone: 'Africa/Djibouti' }, '2020-04-17 15:36:15'],
-      [1587126975779, { timeZone: 'Europe/London' }, '2020-04-17 13:36:15'],
-      [1587126975779, { timeZone: 'Europe/Berlin' }, '2020-04-17 14:36:15'],
-      [1587126975779, { timeZone: 'Europe/Moscow' }, '2020-04-17 15:36:15'],
-      [1587126975779, { timeZone: 'Europe/Madrid' }, '2020-04-17 14:36:15'],
-      [1587126975779, { timeZone: 'America/New_York' }, '2020-04-17 08:36:15'],
-      [1587126975779, { timeZone: 'America/Chicago' }, '2020-04-17 07:36:15'],
-      [1587126975779, { timeZone: 'America/Denver' }, '2020-04-17 06:36:15'],
-    ])('should format with default formatting in correct time zone', (dateInUtc, options, expected) => {
-      expect(dateTimeFormat(dateInUtc, options)).toBe(expected);
+      ['Africa/Djibouti', '2020-04-17 15:36:15'],
+      ['Europe/London', '2020-04-17 13:36:15'],
+      ['Europe/Berlin', '2020-04-17 14:36:15'],
+      ['Europe/Moscow', '2020-04-17 15:36:15'],
+      ['Europe/Madrid', '2020-04-17 14:36:15'],
+      ['America/New_York', '2020-04-17 08:36:15'],
+      ['America/Chicago', '2020-04-17 07:36:15'],
+      ['America/Denver', '2020-04-17 06:36:15'],
+    ])('should format with default formatting in correct time zone', (timeZone, expected) => {
+      expect(dateTimeFormat(1587126975779, { timeZone })).toBe(expected);
     });
   });
 
