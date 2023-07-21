@@ -25,7 +25,7 @@ The following guides will help you get started with Loki:
 - [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
 - [Configure the Loki data source](/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
 - [LogQL](/docs/loki/latest/logql/)
-- [Loki query editor](/docs/grafana/latest/datasources/loki/query-editor/)
+- [Loki query editor]({{< relref "./query-editor" >}})
 
 ## Adding a data source
 
