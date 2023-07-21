@@ -1,7 +1,6 @@
 package accesscontrol
 
 import (
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -172,25 +171,19 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "hidden", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
 
-	if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
-		mg.AddMigration("permission kind migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
-			Name: "kind", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
-		}))
+	mg.AddMigration("permission kind migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "kind", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
+	}))
 
-		mg.AddMigration("permission attribute migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
-			Name: "attribute", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
-		}))
+	mg.AddMigration("permission attribute migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "attribute", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
+	}))
 
-		mg.AddMigration("permission identifier migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
-			Name: "identifier", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
-		}))
+	mg.AddMigration("permission identifier migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "identifier", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
+	}))
 
-		mg.AddMigration("add unique index role_id_action_kind_attribute_identifier", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
-			Cols: []string{"role_id", "action", "kind", "attribute", "identifier"}, Type: migrator.UniqueIndex,
-		}))
-
-		mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
-			Cols: []string{"identifier"},
-		}))
-	}
+	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"identifier"},
+	}))
 }
