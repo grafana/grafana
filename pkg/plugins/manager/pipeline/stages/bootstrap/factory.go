@@ -8,23 +8,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 )
 
-type pluginFactoryFunc func(p plugins.FoundPlugin, pluginClass plugins.Class, sig plugins.Signature) (*plugins.Plugin, error)
-
-type DefaultPluginFactory struct {
-	assetPath *assetpath.Service
-}
-
-func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory {
-	return &DefaultPluginFactory{assetPath: assetPath}
-}
-
-func (f *DefaultPluginFactory) createPlugin(p plugins.FoundPlugin, class plugins.Class,
+func (b *Bootstrap) createPlugin(p plugins.FoundPlugin, class plugins.Class,
 	sig plugins.Signature) (*plugins.Plugin, error) {
-	baseURL, err := f.assetPath.Base(p.JSONData, class, p.FS.Base())
+	baseURL, err := b.assetPath.Base(p.JSONData, class, p.FS.Base())
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
 	}
-	moduleURL, err := f.assetPath.Module(p.JSONData, class, p.FS.Base())
+	moduleURL, err := b.assetPath.Module(p.JSONData, class, p.FS.Base())
 	if err != nil {
 		return nil, fmt.Errorf("module url: %w", err)
 	}
@@ -41,7 +31,7 @@ func (f *DefaultPluginFactory) createPlugin(p plugins.FoundPlugin, class plugins
 	}
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 
-	if err = setImages(plugin, f.assetPath); err != nil {
+	if err = setImages(plugin, b.assetPath); err != nil {
 		return nil, err
 	}
 

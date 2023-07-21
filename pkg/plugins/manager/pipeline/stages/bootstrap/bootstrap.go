@@ -23,21 +23,14 @@ type Bootstrap struct {
 	src   plugins.PluginSource
 	found []*plugins.FoundBundle
 	// Misc
-	steps             []BootstrapStep
-	pluginFactoryFunc pluginFactoryFunc
-	log               log.Logger
+	log log.Logger
 }
 
 func New(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *Bootstrap {
 	b := &Bootstrap{
 		assetPath:           assetPath,
 		signatureCalculator: signatureCalculator,
-		pluginFactoryFunc:   NewDefaultPluginFactory(assetPath).createPlugin,
 		log:                 log.New("plugins.bootstrap"),
-	}
-	b.steps = []BootstrapStep{
-		b.bootstrapStep,
-		b.decorateStep,
 	}
 	return b
 }
@@ -48,7 +41,7 @@ func (b *Bootstrap) Run(ctx context.Context, src plugins.PluginSource, found []*
 	b.found = found
 	// Run
 	res := []*plugins.Plugin{}
-	for _, step := range b.steps {
+	for _, step := range b.steps() {
 		ps, err := step(ctx, res)
 		if err != nil {
 			return nil, err
@@ -56,4 +49,11 @@ func (b *Bootstrap) Run(ctx context.Context, src plugins.PluginSource, found []*
 		res = ps
 	}
 	return res, nil
+}
+
+func (b *Bootstrap) steps() []BootstrapStep {
+	return []BootstrapStep{
+		b.bootstrapStep,
+		b.decorateStep,
+	}
 }

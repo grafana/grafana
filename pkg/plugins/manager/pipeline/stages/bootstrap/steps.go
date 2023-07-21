@@ -96,7 +96,7 @@ func (b *Bootstrap) bootstrapStep(ctx context.Context, prev []*plugins.Plugin) (
 			b.log.Warn("Could not calculate plugin signature state", "pluginID", bundle.Primary.JSONData.ID, "err", err)
 			continue
 		}
-		plugin, err := b.pluginFactoryFunc(bundle.Primary, b.src.PluginClass(ctx), sig)
+		plugin, err := b.createPlugin(bundle.Primary, b.src.PluginClass(ctx), sig)
 		if err != nil {
 			b.log.Error("Could not create primary plugin base", "pluginID", bundle.Primary.JSONData.ID, "err", err)
 			continue
@@ -105,7 +105,7 @@ func (b *Bootstrap) bootstrapStep(ctx context.Context, prev []*plugins.Plugin) (
 
 		children := make([]*plugins.Plugin, 0, len(bundle.Children))
 		for _, child := range bundle.Children {
-			cp, err := b.pluginFactoryFunc(*child, plugin.Class, sig)
+			cp, err := b.createPlugin(*child, plugin.Class, sig)
 			if err != nil {
 				b.log.Error("Could not create child plugin base", "pluginID", child.JSONData.ID, "err", err)
 				continue

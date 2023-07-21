@@ -22,8 +22,7 @@ type Discovery struct {
 	// Assets
 	src plugins.PluginSource
 	// Misc
-	steps []FindStep
-	log   log.Logger
+	log log.Logger
 }
 
 func New(pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery {
@@ -31,10 +30,6 @@ func New(pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery
 		pluginFinder:   pluginFinder,
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugins.discovery"),
-	}
-	d.steps = []FindStep{
-		d.findStep,
-		d.filterStep,
 	}
 	return d
 }
@@ -44,7 +39,7 @@ func (d *Discovery) Run(ctx context.Context, src plugins.PluginSource) ([]*plugi
 	d.src = src
 	// Run
 	res := []*plugins.FoundBundle{}
-	for _, step := range d.steps {
+	for _, step := range d.steps() {
 		ps, err := step(ctx, res)
 		if err != nil {
 			return nil, err
@@ -52,4 +47,11 @@ func (d *Discovery) Run(ctx context.Context, src plugins.PluginSource) ([]*plugi
 		res = ps
 	}
 	return res, nil
+}
+
+func (d *Discovery) steps() []FindStep {
+	return []FindStep{
+		d.findStep,
+		d.filterStep,
+	}
 }
