@@ -154,10 +154,10 @@ To learn more, start with the [overview]({{< relref "../developers/plugins/backe
 
 To help you get started with Grafana, we’ve launched a brand new tutorials platform. We’ll continue to expand the platform with more tutorials, but here are some of the ones you can try out now:
 
-- [Grafana fundamentals](https://grafana.com/tutorials/grafana-fundamentals/)
-- [Create users and teams](https://grafana.com/tutorials/create-users-and-teams/)
-- [Build a panel plugin](https://grafana.com/tutorials/build-a-panel-plugin/)
-- [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
+- [Grafana fundamentals](/tutorials/grafana-fundamentals/)
+- [Create users and teams](/tutorials/create-users-and-teams/)
+- [Build a panel plugin](/tutorials/build-a-panel-plugin/)
+- [Build a data source plugin](/tutorials/build-a-data-source-plugin/)
 
 ## Rollup indicator for Metrictank queries
 
