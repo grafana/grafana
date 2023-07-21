@@ -1,4 +1,9 @@
-import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
+import {
+  PanelMenuItem,
+  PluginExtensionLink,
+  PluginExtensionPoints,
+  type PluginExtensionPanelContext,
+} from '@grafana/data';
 import {
   AngularComponent,
   getDataSourceSrv,
@@ -281,57 +286,11 @@ export function getPanelMenu(
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
-    const categorized: Record<string, PanelMenuItem[]> = {};
-    const uncategorized: PanelMenuItem[] = [];
-
-    for (const extension of extensions) {
-      const category = extension.category;
-
-      if (!category) {
-        uncategorized.push({
-          text: truncateTitle(extension.title, 25),
-          href: extension.path,
-          onClick: extension.onClick,
-        });
-        continue;
-      }
-
-      if (!Array.isArray(categorized[category])) {
-        categorized[category] = [];
-      }
-
-      categorized[category].push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-      });
-    }
-
-    const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
-      subMenu.push({
-        text: category,
-        type: 'group',
-        subMenu: categorized[category],
-      });
-      return subMenu;
-    }, []);
-
-    if (uncategorized.length > 0) {
-      if (subMenu.length > 0) {
-        subMenu.push({
-          text: 'divider',
-          type: 'divider',
-        });
-      }
-
-      Array.prototype.push.apply(subMenu, uncategorized);
-    }
-
     menu.push({
       text: 'Extensions',
       iconClassName: 'plug',
       type: 'submenu',
-      subMenu: subMenu,
+      subMenu: createExtensionSubMenu(extensions),
     });
   }
 
@@ -375,4 +334,54 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     scopedVars: panel.scopedVars,
     data: panel.getQueryRunner().getLastResult(),
   };
+}
+
+function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
+  const categorized: Record<string, PanelMenuItem[]> = {};
+  const uncategorized: PanelMenuItem[] = [];
+
+  for (const extension of extensions) {
+    const category = extension.category;
+
+    if (!category) {
+      uncategorized.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+        onClick: extension.onClick,
+      });
+      continue;
+    }
+
+    if (!Array.isArray(categorized[category])) {
+      categorized[category] = [];
+    }
+
+    categorized[category].push({
+      text: truncateTitle(extension.title, 25),
+      href: extension.path,
+      onClick: extension.onClick,
+    });
+  }
+
+  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
+    subMenu.push({
+      text: category,
+      type: 'group',
+      subMenu: categorized[category],
+    });
+    return subMenu;
+  }, []);
+
+  if (uncategorized.length > 0) {
+    if (subMenu.length > 0) {
+      subMenu.push({
+        text: 'divider',
+        type: 'divider',
+      });
+    }
+
+    Array.prototype.push.apply(subMenu, uncategorized);
+  }
+
+  return subMenu;
 }
