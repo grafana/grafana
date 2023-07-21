@@ -205,11 +205,11 @@ func (p Permission) SplitScope() (string, string, string) {
 
 	fragments := strings.Split(p.Scope, ":")
 	switch l := len(fragments); l {
-	case 1:
-		return "", "", fragments[0]
-	case 2:
-		return fragments[0], "", fragments[1]
-	default:
+	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[0], fragments[0]
+	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[1], fragments[1]
+	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
 		return fragments[0], fragments[1], fragments[2]
 	}
 }
