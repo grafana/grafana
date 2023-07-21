@@ -8,6 +8,7 @@ keywords:
   - loki
   - logging
   - guide
+  - data source
 menuTitle: Configure Loki
 title: Configure the Loki data source
 weight: 200
@@ -82,7 +83,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 ### Queries
 
-- **Maximum lines** - Toggle on to set the maximum number of log lines returned by Loki. Increase the limit to have a bigger results set for ad-hoc analysis. Decrease the limit if your browser is sluggish when displaying log results. The default is `1000`.
+- **Maximum lines** - Sets the maximum number of log lines returned by Loki. Increase the limit to have a bigger results set for ad-hoc analysis. Decrease the limit if your browser is sluggish when displaying log results. The default is `1000`.
 
 <!-- {{% admonition type="note" %}}
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.

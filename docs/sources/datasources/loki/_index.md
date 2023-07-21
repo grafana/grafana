@@ -9,7 +9,7 @@ keywords:
   - logging
   - guide
 menuTitle: Loki
-title: Loki data source
+title: Configure the Loki data source
 weight: 800
 ---
 
