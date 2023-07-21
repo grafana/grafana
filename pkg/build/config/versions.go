@@ -189,12 +189,9 @@ var Versions = VersionMap{
 			ShouldSave: true,
 			Architectures: []Architecture{
 				ArchAMD64,
-				ArchARM64,
-				ArchARMv7,
 			},
 			Distribution: []Distribution{
 				Alpine,
-				Ubuntu,
 			},
 			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
