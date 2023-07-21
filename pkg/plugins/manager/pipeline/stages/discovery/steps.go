@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func (d *Discovery) findStep(ctx context.Context, _ []*plugins.Plugin) ([]*plugins.FoundBundle, error) {
+func (d *Discovery) findStep(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	// First step, plugin list is empty
 	return d.pluginFinder.Find(ctx, d.src)
 }

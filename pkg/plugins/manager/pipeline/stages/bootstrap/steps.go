@@ -124,7 +124,8 @@ func (b *Bootstrap) bootstrapStep(ctx context.Context, prev []*plugins.Plugin) (
 func (b *Bootstrap) decorateStep(ctx context.Context, prev []*plugins.Plugin) ([]*plugins.Plugin, error) {
 	res := make([]*plugins.Plugin, 0, len(prev))
 
-	for _, plugin := range prev {
+	for i := range prev {
+		plugin := prev[i]
 		// This can be different steps
 		for _, decorateFunc := range DefaultDecorateFuncs {
 			decoratedPlugin, err := decorateFunc(ctx, plugin)
@@ -132,8 +133,9 @@ func (b *Bootstrap) decorateStep(ctx context.Context, prev []*plugins.Plugin) ([
 				b.log.Error("Could not decorate plugin", "pluginID", plugin.ID, "err", err)
 				continue
 			}
-			res = append(res, decoratedPlugin)
+			plugin = decoratedPlugin
 		}
+		res = append(res, plugin)
 	}
 
 	return res, nil

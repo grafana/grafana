@@ -32,6 +32,7 @@ func New(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.S
 	b := &Bootstrap{
 		assetPath:           assetPath,
 		signatureCalculator: signatureCalculator,
+		pluginFactoryFunc:   NewDefaultPluginFactory(assetPath).createPlugin,
 		log:                 log.New("plugins.bootstrap"),
 	}
 	b.steps = []BootstrapStep{

@@ -32,6 +32,10 @@ func New(pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugins.discovery"),
 	}
+	d.steps = []FindStep{
+		d.findStep,
+		d.filterStep,
+	}
 	return d
 }
 
