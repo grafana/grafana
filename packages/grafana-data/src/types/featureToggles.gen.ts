@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  newTraceViewHeader?: boolean;
   correlations?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
@@ -56,7 +55,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
-  showTraceId?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
@@ -100,6 +98,7 @@ export interface FeatureToggles {
   dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  lokiFormatQuery?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
@@ -115,4 +114,5 @@ export interface FeatureToggles {
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
+  splitScopes?: boolean;
 }

@@ -30,6 +30,7 @@ type ProvisioningApi interface {
 	RouteGetAlertRules(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRulesExport(*contextmodel.ReqContext) response.Response
 	RouteGetContactpoints(*contextmodel.ReqContext) response.Response
+	RouteGetContactpointsExport(*contextmodel.ReqContext) response.Response
 	RouteGetMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteGetMuteTimings(*contextmodel.ReqContext) response.Response
 	RouteGetPolicyTree(*contextmodel.ReqContext) response.Response
@@ -97,6 +98,9 @@ func (f *ProvisioningApiHandler) RouteGetAlertRulesExport(ctx *contextmodel.ReqC
 }
 func (f *ProvisioningApiHandler) RouteGetContactpoints(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetContactpoints(ctx)
+}
+func (f *ProvisioningApiHandler) RouteGetContactpointsExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetContactpointsExport(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetMuteTiming(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -313,6 +317,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodGet,
 				"/api/v1/provisioning/contact-points",
 				api.Hooks.Wrap(srv.RouteGetContactpoints),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/contact-points/export"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/contact-points/export"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/contact-points/export",
+				api.Hooks.Wrap(srv.RouteGetContactpointsExport),
 				m,
 			),
 		)

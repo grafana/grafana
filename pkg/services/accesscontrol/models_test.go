@@ -121,9 +121,10 @@ func TestPermission_ScopeSplit(t *testing.T) {
 
 	tests := []testCase{
 		{desc: "all fields should be empty for empty scope", scope: "", kind: "", attribute: "", identifier: ""},
-		{desc: "only identifier should not be empty for wildcard", scope: "*", kind: "", attribute: "", identifier: "*"},
-		{desc: "kind and identifier should not be empty for a wildcard with kind prefix", scope: "dashboards:*", kind: "dashboards", attribute: "", identifier: "*"},
+		{desc: "all fields should be set to * for wildcard", scope: "*", kind: "*", attribute: "*", identifier: "*"},
+		{desc: "kind should be specified and attribute and identifier should be * for a wildcard with kind prefix", scope: "dashboards:*", kind: "dashboards", attribute: "*", identifier: "*"},
 		{desc: "all fields should be set correctly", scope: "dashboards:uid:123", kind: "dashboards", attribute: "uid", identifier: "123"},
+		{desc: "can handle a case with : in the uid", scope: "datasources:uid:weird:name", kind: "datasources", attribute: "uid", identifier: "weird:name"},
 	}
 
 	for _, tt := range tests {

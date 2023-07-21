@@ -34,6 +34,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `disablePrometheusExemplarSampling`              | Disable Prometheus exemplar sampling                                                                                                                                                                |                    |
 | `logsSampleInExplore`                            | Enables access to the logs sample feature in Explore                                                                                                                                                | Yes                |
 | `logsContextDatasourceUi`                        | Allow datasource to provide custom UI for context view                                                                                                                                              | Yes                |
+| `lokiQuerySplitting`                             | Split large interval queries into subqueries with smaller time intervals                                                                                                                            | Yes                |
 | `prometheusMetricEncyclopedia`                   | Adds the metrics explorer component to the Prometheus query builder as an option in metric select                                                                                                   | Yes                |
 | `prometheusDataplane`                            | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. | Yes                |
 | `lokiMetricDataplane`                            | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
@@ -66,6 +67,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
+| `splitScopes`                        | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 
 ## Experimental feature toggles
 
@@ -78,7 +80,6 @@ Experimental features might be changed or removed without prior notice.
 | `queryOverLive`                             | Use Grafana Live WebSocket to execute backend queries                                                        |
 | `lokiExperimentalStreaming`                 | Support new streaming approach for loki (prototype, needs special loki build)                                |
 | `storage`                                   | Configurable storage for dashboards, datasources, and resources                                              |
-| `newTraceViewHeader`                        | Shows the new trace view header                                                                              |
 | `datasourceQueryMultiStatus`                | Introduce HTTP 207 Multi Status for api/ds/query                                                             |
 | `traceToMetrics`                            | Enable trace to metrics links                                                                                |
 | `prometheusWideSeries`                      | Enable wide series responses in the Prometheus datasource                                                    |
@@ -89,10 +90,8 @@ Experimental features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
 | `nestedFolderPicker`                        | Enables the still in-development new folder picker to support nested folders                                 |
-| `showTraceId`                               | Show trace ids for requests                                                                                  |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                |
-| `lokiQuerySplitting`                        | Split large interval queries into subqueries with smaller time intervals                                     |
 | `lokiQuerySplittingConfig`                  | Give users the option to configure split durations for Loki queries                                          |
 | `individualCookiePreferences`               | Support overriding cookie preferences per user                                                               |
 | `onlyExternalOrgRoleSync`                   | Prohibits a user from changing organization roles synced with external auth providers                        |
@@ -113,6 +112,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                         |
 | `dashboardEmbed`                            | Allow embedding dashboard for external use in Code editors                                                   |
 | `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
+| `lokiFormatQuery`                           | Enables the ability to format Loki queries                                                                   |
 | `cloudWatchLogsMonacoEditor`                | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
