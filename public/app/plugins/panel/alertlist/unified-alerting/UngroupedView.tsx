@@ -90,10 +90,10 @@ const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstance
                       <Spacer />
                       {href && (
                         <a href={href} target="__blank" className={styles.link} rel="noopener">
-                          <Stack alignItems="center" gap={1}>
-                            View alert rule
-                            <Icon name={'external-link-alt'} size="sm" />
-                          </Stack>
+                          {/* <Stack alignItems="center" gap={1}> */}
+                          <span className={styles.viewRuleLinkText}>View alert rule</span>
+                          <Icon name={'external-link-alt'} size="sm" />
+                          {/* </Stack> */}
                         </a>
                       )}
                     </Stack>

@@ -407,6 +407,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    container: instance / inline-size;
   `,
   customGroupDetails: css`
     margin-bottom: ${theme.spacing(0.5)};
@@ -414,5 +415,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   link: css`
     word-break: break-all;
     color: ${theme.colors.primary.text};
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing(1)};
+  `,
+  viewRuleLinkText: css`
+    @container (max-width: ${theme.spacing(40)}) {
+      display: none;
+    }
   `,
 });
