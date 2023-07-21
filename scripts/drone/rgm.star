@@ -99,7 +99,7 @@ def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_build(script = "publish/drone_publish_tag_oss.sh"),
+        steps = rgm_build(script = "drone_publish_tag_grafana.sh"),
         depends_on = [],
     )
 
