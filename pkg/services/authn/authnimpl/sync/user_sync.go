@@ -129,6 +129,11 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 }
 
 func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if r.GetMeta(authn.MetaKeyIsLogin) != "" {
+		// Do not sync last seen for login requests
+		return nil
+	}
+
 	namespace, id := identity.NamespacedID()
 
 	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {

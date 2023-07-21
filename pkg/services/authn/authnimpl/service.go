@@ -270,6 +270,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
