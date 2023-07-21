@@ -126,10 +126,6 @@ const addAzureMonitorVariable = (
         .input()
         .find('input')
         .type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.region
-        .input()
-        .find('input')
-        .type(`${options?.region}{enter}`);
       break;
     case AzureQueryType.MetricNamesQuery:
       e2eSelectors.variableEditor.subscription
@@ -211,6 +207,7 @@ e2e.scenario({
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
@@ -305,14 +302,10 @@ e2e.scenario({
       subscription: '$subscription',
       resourceGroup: '$resourceGroups',
     });
-    addAzureMonitorVariable('region', AzureQueryType.LocationsQuery, false, {
-      subscription: '$subscription',
-    });
     addAzureMonitorVariable('resource', AzureQueryType.ResourceNamesQuery, false, {
       subscription: '$subscription',
       resourceGroup: '$resourceGroups',
       namespace: '$namespace',
-      region: '$region',
     });
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('subscription').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('grafanalabs-datasources-dev').click();
@@ -326,8 +319,6 @@ e2e.scenario({
       .parent()
       .find('input')
       .type('microsoft.storage/storageaccounts{downArrow}{enter}');
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('region').parent().find('button').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('region').parent().find('input').type('uk south{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
       .parent()
@@ -342,7 +333,6 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.advanced.subscription.input().find('input').type('$subscription');
         e2eSelectors.queryEditor.resourcePicker.advanced.resourceGroup.input().find('input').type('$resourceGroups');
         e2eSelectors.queryEditor.resourcePicker.advanced.namespace.input().find('input').type('$namespaces');
-        e2eSelectors.queryEditor.resourcePicker.advanced.region.input().find('input').type('$region');
         e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
