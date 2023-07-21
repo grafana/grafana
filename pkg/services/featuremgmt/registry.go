@@ -657,5 +657,13 @@ var (
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "splitScopes",
+			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
+			Stage:           FeatureStagePublicPreview,
+			FrontendOnly:    false,
+			Owner:           grafanaAuthnzSquad,
+			RequiresRestart: true,
+		},
 	}
 )

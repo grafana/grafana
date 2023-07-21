@@ -67,6 +67,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
+| `splitScopes`                        | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 
 ## Experimental feature toggles
 

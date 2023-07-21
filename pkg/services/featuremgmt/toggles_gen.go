@@ -390,4 +390,8 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagSplitScopes
+	// Support faster dashboard and folder search by splitting permission scopes into parts
+	FlagSplitScopes = "splitScopes"
 )
