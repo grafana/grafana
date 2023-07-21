@@ -13,7 +13,11 @@ interface AnnotationsPluginProps {
   timeZone: TimeZone;
 }
 
-export const AnnotationsPlugin = ({ annotations, timeZone, config }: AnnotationsPluginProps) => {
+export const AnnotationsPlugin = ({
+  annotations: annotationsWithHistory,
+  timeZone,
+  config,
+}: AnnotationsPluginProps) => {
   const theme = useTheme2();
   const plotInstance = useRef<uPlot>();
 
@@ -23,7 +27,7 @@ export const AnnotationsPlugin = ({ annotations, timeZone, config }: Annotations
   useEffect(() => {
     const views: Array<DataFrameView<AnnotationsDataFrameViewDTO>> = [];
 
-    for (const frame of annotations) {
+    for (const frame of annotationsWithHistory) {
       views.push(new DataFrameView(frame));
     }
 
@@ -33,7 +37,7 @@ export const AnnotationsPlugin = ({ annotations, timeZone, config }: Annotations
       // clear on unmount
       annotationsRef.current = [];
     };
-  }, [annotations]);
+  }, [annotationsWithHistory]);
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -148,7 +152,7 @@ export const AnnotationsPlugin = ({ annotations, timeZone, config }: Annotations
     <EventsCanvas
       id="annotations"
       config={config}
-      events={annotations}
+      events={annotationsWithHistory}
       renderEventMarker={renderMarker}
       mapEventToXYCoords={mapAnnotationToXYCoords}
     />

@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 
-import { Field, PanelProps, DataFrameType } from '@grafana/data';
+import { DataFrameType, Field, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { useGetAnnotationsWithHistory } from 'app/features/alerting/unified/components/rules/state-history/useGetAnnotationsWithHistory';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
 import { Options } from './panelcfg.gen';
@@ -40,6 +41,9 @@ export const TimeSeriesPanel = ({
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
+
+  const annotationsWithHistory = useGetAnnotationsWithHistory({ timeRange, annotations: data.annotations });
+
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
       const s = getPrepareTimeseriesSuggestion(id);
@@ -99,8 +103,8 @@ export const TimeSeriesPanel = ({
               />
             )}
             {/* Renders annotation markers*/}
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
+            {annotationsWithHistory && (
+              <AnnotationsPlugin annotations={annotationsWithHistory} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
             {enableAnnotationCreation ? (

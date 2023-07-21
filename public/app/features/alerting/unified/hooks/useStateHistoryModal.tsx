@@ -9,17 +9,12 @@ import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
 
-enum StateHistoryImplementation {
+export enum StateHistoryImplementation {
   Loki = 'loki',
   Annotations = 'annotations',
 }
 
-function useStateHistoryModal() {
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [rule, setRule] = useState<RulerGrafanaRuleDTO | undefined>();
-
-  const styles = useStyles2(getStyles);
-
+export const useHistoryImplementation = () => {
   // can be "loki", "multiple" or "annotations"
   const stateHistoryBackend = config.unifiedAlerting.alertStateHistoryBackend;
   // can be "loki" or "annotations"
@@ -32,6 +27,16 @@ function useStateHistoryModal() {
   const implementation = usingNewAlertStateHistory
     ? StateHistoryImplementation.Loki
     : StateHistoryImplementation.Annotations;
+  return implementation;
+};
+
+function useStateHistoryModal() {
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [rule, setRule] = useState<RulerGrafanaRuleDTO | undefined>();
+
+  const styles = useStyles2(getStyles);
+
+  const implementation = useHistoryImplementation();
 
   const dismissModal = useCallback(() => {
     setRule(undefined);
