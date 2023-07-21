@@ -330,6 +330,41 @@ describe('getPanelMenu()', () => {
       );
     });
 
+    it('should truncate category to 25 chars', () => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            category: 'Declare incident when pressing this amazing menu item',
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Declare incident',
+                href: '/a/grafana-basic-app/declare-incident',
+              }),
+            ]),
+          }),
+        ])
+      );
+    });
+
     it('should contain menu item with category and append items without category after divider', () => {
       getPluginLinkExtensionsMock.mockReturnValue({
         extensions: [
