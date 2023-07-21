@@ -116,6 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-container',
       flexGrow: 1,
       minHeight: 0,
+      minWidth: 0,
     }),
     skipLink: css({
       position: 'absolute',

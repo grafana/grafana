@@ -15,7 +15,7 @@ describe('QueryField', () => {
       <ZipkinQueryField
         history={[]}
         datasource={ds}
-        query={{ query: '1234' } as ZipkinQuery}
+        query={{ query: '1234', queryType: 'traceID' } as ZipkinQuery}
         onRunQuery={() => {}}
         onChange={() => {}}
       />

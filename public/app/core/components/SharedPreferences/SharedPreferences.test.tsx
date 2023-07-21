@@ -7,19 +7,6 @@ import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/prefe
 
 import SharedPreferences from './SharedPreferences';
 
-jest.mock('@grafana/runtime', () => {
-  const originalModule = jest.requireActual('@grafana/runtime');
-  return {
-    ...originalModule,
-    config: {
-      ...originalModule.config,
-      featureToggles: {
-        internationalization: true,
-      },
-    },
-  };
-});
-
 jest.mock('app/core/services/backend_srv', () => {
   return {
     backendSrv: {

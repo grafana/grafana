@@ -83,7 +83,7 @@ export class MssqlDatasource extends SqlDatasource {
       validateQuery: (query) =>
         Promise.resolve({ isError: false, isValid: true, query, error: '', rawSql: query.rawSql }),
       dsID: () => this.id,
-      dispose: (dsID?: string) => {},
+      dispose: (_dsID?: string) => {},
       toRawSql,
       lookup: async (path?: string) => {
         if (!path) {

@@ -18,3 +18,17 @@ export function arrayLabelsToObject(labels: Label[]): Labels {
   });
   return labelsObject;
 }
+
+export function arrayKeyValuesToObject(
+  labels: Array<{
+    key: string;
+    value: string;
+  }>
+): Labels {
+  const labelsObject: Labels = {};
+  labels.forEach((label) => {
+    label.key && (labelsObject[label.key] = label.value);
+  });
+
+  return labelsObject;
+}

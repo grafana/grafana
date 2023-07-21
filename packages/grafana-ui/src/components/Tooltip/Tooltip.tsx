@@ -42,7 +42,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
     }, [controlledVisible]);
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
-      visible: controlledVisible,
+      visible: show ?? controlledVisible,
       placement: placement,
       interactive: interactive,
       delayHide: interactive ? 100 : 0,

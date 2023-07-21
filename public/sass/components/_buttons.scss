@@ -1,3 +1,5 @@
+@use 'sass:color';
+@use 'sass:map';
 //
 // Buttons
 // --------------------------------------------------
@@ -177,8 +179,8 @@ $btn-service-icon-width: 35px;
 }
 
 @each $service, $data in $external-services {
-  $serviceBgColor: map-get($data, bgColor);
-  $serviceBorderColor: map-get($data, borderColor);
+  $serviceBgColor: map.get($data, bgColor);
+  $serviceBorderColor: map.get($data, borderColor);
 
   .btn-service--#{$service} {
     background-color: $serviceBgColor;
@@ -251,7 +253,7 @@ $btn-service-icon-width: 35px;
   }
 
   &.active {
-    background-color: lighten($input-label-bg, 5%);
+    background-color: color.adjust($input-label-bg, $lightness: 5%);
     color: $link-color;
     &:hover {
       cursor: default;

@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '9.4'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v9.4
 weight: -35
 ---

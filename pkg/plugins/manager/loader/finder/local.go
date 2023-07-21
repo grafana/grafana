@@ -28,15 +28,15 @@ type Local struct {
 	production bool
 }
 
-func NewLocalFinder(cfg *config.Cfg) *Local {
+func NewLocalFinder(devMode bool) *Local {
 	return &Local{
-		production: !cfg.DevMode,
+		production: !devMode,
 		log:        log.New("local.finder"),
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg)
+	return NewLocalFinder(cfg.DevMode)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -44,8 +44,9 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		return []*plugins.FoundBundle{}, nil
 	}
 
-	var pluginJSONPaths []string
-	for _, path := range src.PluginURIs(ctx) {
+	pluginURIs := src.PluginURIs(ctx)
+	pluginJSONPaths := make([]string, 0, len(pluginURIs))
+	for _, path := range pluginURIs {
 		exists, err := fs.Exists(path)
 		if err != nil {
 			l.log.Warn("Skipping finding plugins as an error occurred", "path", path, "err", err)
@@ -78,14 +79,10 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			continue
 		}
 
-		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
-			continue
-		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
-	var res = make(map[string]*plugins.FoundBundle)
+	res := make(map[string]*plugins.FoundBundle)
 	for pluginDir, data := range foundPlugins {
 		var pluginFs plugins.FS
 		pluginFs = plugins.NewLocalFS(pluginDir)
@@ -106,7 +103,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		}
 	}
 
-	var result []*plugins.FoundBundle
+	result := make([]*plugins.FoundBundle, 0, len(foundPlugins))
 	for dir := range foundPlugins {
 		ancestors := strings.Split(dir, string(filepath.Separator))
 		ancestors = ancestors[0 : len(ancestors)-1]

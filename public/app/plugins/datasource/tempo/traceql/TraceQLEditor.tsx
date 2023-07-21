@@ -28,6 +28,10 @@ export function TraceQLEditor(props: Props) {
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+  // work around the problem that `onEditorDidMount` is called once
+  // and wouldn't get new version of onRunQuery
+  const onRunQueryRef = useRef(onRunQuery);
+  onRunQueryRef.current = onRunQuery;
 
   return (
     <CodeEditor
@@ -56,7 +60,7 @@ export function TraceQLEditor(props: Props) {
       onEditorDidMount={(editor, monaco) => {
         if (!props.readOnly) {
           setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
-          setupActions(editor, monaco, onRunQuery);
+          setupActions(editor, monaco, () => onRunQueryRef.current());
           setupPlaceholder(editor, monaco, styles);
         }
         setupAutoSize(editor);

@@ -24,11 +24,9 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"canvas":      true,
-	"candlestick": true,
-	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":       true, // plugin.json fails validation (mixed)
-	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"influxdb": true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":    true, // plugin.json fails validation (mixed)
+	"opentsdb": true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
@@ -56,9 +54,15 @@ func main() {
 		kind2pd(rt, corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		)),
+		codegen.PluginTSEachMajor(rt),
 	)
 
-	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
+	schifs := kindsys.SchemaInterfaces(rt.Context())
+	schifnames := make([]string, 0, len(schifs))
+	for _, schif := range schifs {
+		schifnames = append(schifnames, strings.ToLower(schif.Name()))
+	}
+	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
 
 	declParser := pfs.NewDeclParser(rt, skipPlugins)
 	decls, err := declParser.Parse(os.DirFS(cwd))
@@ -98,4 +102,21 @@ func kind2pd(rt *thema.Runtime, j codejen.OneToOne[kindsys.Kind]) codejen.OneToO
 		}
 		return kd
 	})
+}
+
+func splitSchiffer(names []string) codejen.FileMapper {
+	for i := range names {
+		names[i] = names[i] + "/"
+	}
+	return func(f codejen.File) (codejen.File, error) {
+		// TODO it's terrible that this has to exist, CODEJEN NEEDS TO BE BETTER
+		path := filepath.ToSlash(f.RelativePath)
+		for _, name := range names {
+			if idx := strings.Index(path, name); idx != -1 {
+				f.RelativePath = fmt.Sprintf("%s/%s", path[:idx], path[idx:])
+				break
+			}
+		}
+		return f, nil
+	}
 }

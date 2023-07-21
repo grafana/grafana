@@ -6,20 +6,28 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrating plugins from Grafana version 8.x to 9.x
-menutitle: v8.x to v9.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v8.x to v9.x
+title: Migrate plugins from Grafana version 8.x to 9.x
 weight: 2300
 ---
 
-# Migrating plugins from Grafana version 8.x to 9.x
+# Migrate plugins from Grafana version 8.x to 9.x
+
+Follow the instructions in this section to migrate plugins from version 8.x to 9.x.
 
 ## 9.0 breaking changes
 
-### theme.visualization.getColorByName replaces getColorForTheme
+The following breaking changes are introduced in version 9.0 of Grafana.
 
-`getColorForTheme` was removed, use `theme.visualization.getColorByName` instead
+### `theme.visualization.getColorByName` replaces `getColorForTheme`
 
-Example:
+The `getColorForTheme` was removed, so you should use `theme.visualization.getColorByName` instead.
+
+**Example:**
 
 ```ts
 // before
@@ -29,11 +37,11 @@ fillColor: getColorForTheme(panel.sparkline.fillColor, config.theme)
 fillColor: config.theme.visualization.getColorByName(panel.sparkline.fillColor),
 ```
 
-### VizTextDisplayOptions replaces TextDisplayOptions
+### `VizTextDisplayOptions` replaces `TextDisplayOptions`
 
-`TextDisplayOptions` was removed, use `VizTextDisplayOptions` instead
+The `TextDisplayOptions` was removed, so you should use `VizTextDisplayOptions` instead.
 
-Example:
+**Example:**
 
 ```ts
 // before
@@ -53,7 +61,7 @@ text?: VizTextDisplayOptions;
 
 ### Changes in the internal of `backendSrv.fetch()`
 
-We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods)
+We have changed the internals of `backendSrv.fetch()` to throw an error when the response is an incorrect JSON. Make sure to handle possible errors on the callsite where using `backendSrv.fetch()` (or any other `backendSrv` methods).
 
 ```ts
 // PREVIOUSLY: this was returning with an empty object {} - in case the response is an invalid JSON
@@ -63,17 +71,17 @@ return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
 return await getBackendSrv().post(`${API_ROOT}/${id}/install`);
 ```
 
-### GrafanaTheme2 and useStyles2 replaces getFormStyles
+### `GrafanaTheme2` and `useStyles2` replaces `getFormStyles`
 
-We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead
+We have removed the deprecated `getFormStyles` function from [grafana-ui](https://www.npmjs.com/package/@grafana/ui). Use `GrafanaTheme2` and the `useStyles2` hook instead.
 
-### /api/ds/query replaces /api/tsdb/query
+### `/api/ds/query` replaces `/api/tsdb/query`
 
-We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../../../http_api/data_source/#query-a-data-source" >}}) instead
+We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../../../http_api/data_source#query-a-data-source" >}}) instead.
 
-### selectOptionInTest has been removed
+### `selectOptionInTest` has been removed
 
-The `@grafana/ui` package helper function `selectOptionInTest` used in frontend tests has been removed as it caused testing libraries to be bundled in the production code of Grafana. If you were using this helper function in your tests please update your code accordingly:
+The `@grafana/ui` package helper function `selectOptionInTest` used in frontend tests has been removed because it caused testing libraries to be bundled in the production code of Grafana. If you were using this helper function in your tests, then update your code accordingly:
 
 ```ts
 // before
@@ -89,9 +97,9 @@ await select(selectEl, 'Option 2', { container: document.body });
 
 ### Toolkit 9 and webpack
 
-Plugins using custom Webpack configs could potentially break due to the changes between webpack@4 and webpack@5. Please refer to the [official migration guide](https://webpack.js.org/migrate/5/) for assistance.
+Plugins using custom Webpack configs could potentially break due to the changes between webpack@4 and webpack@5. Please refer to the [official webpack migration guide](https://webpack.js.org/migrate/5/) for assistance.
 
-Webpack 5 does not include polyfills for node.js core modules by default (e.g. `buffer`, `stream`, `os`). This can result in failed builds for plugins. If polyfills are required it is recommended to create a custom webpack config in the root of the plugin repo and add the required fallbacks:
+Webpack 5 does not include polyfills for node.js core modules by default (for example, `buffer`, `stream`, `os`). This can result in failed builds for plugins. If polyfills are required, then it is recommended to create a custom webpack config in the root of the plugin repo and add the required fallbacks:
 
 ```js
 // webpack.config.js

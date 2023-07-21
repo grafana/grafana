@@ -15,7 +15,10 @@ export class TablePanelEditorCtrl {
 
   static $inject = ['$scope', 'uiSegmentSrv'];
 
-  constructor($scope: any, private uiSegmentSrv: any) {
+  constructor(
+    $scope: any,
+    private uiSegmentSrv: any
+  ) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;

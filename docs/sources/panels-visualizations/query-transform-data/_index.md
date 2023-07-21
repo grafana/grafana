@@ -13,6 +13,11 @@ aliases:
   - ../panels/share-query-results/
   - manage-queries/
   - query-options/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Query and transform data
 weight: 200
 ---
@@ -101,6 +106,9 @@ When you create a panel, Grafana automatically selects the default data source.
 1. Edit the panel to which you're adding a query.
 1. Click the **Query** tab.
 1. Click the **Data source** drop-down menu and select a data source.
+
+   If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
+
 1. Click **Query options** to configure the maximum number of data points you need.
    For more information about query options, refer to [Query options]({{< relref "#query-options" >}}).
 1. Write the query using the query editor.

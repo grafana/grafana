@@ -110,15 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.5, 0.5, 0.5, 1),
       display: 'flex',
       alignItems: 'center',
-      '&:hover .operation-header-show-on-hover': css({
-        opacity: 1,
-      }),
     }),
     operationHeaderButtons: css({
-      opacity: 0,
-      transition: theme.transitions.create(['opacity'], {
-        duration: theme.transitions.duration.short,
-      }),
+      opacity: 1,
     }),
     selectWrapper: css({
       paddingRight: theme.spacing(2),

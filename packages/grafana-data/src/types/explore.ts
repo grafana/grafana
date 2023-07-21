@@ -1,25 +1,29 @@
+import { DataQuery } from '@grafana/schema';
+
 import { PreferredVisualisationType } from './data';
-import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
 
 /** @internal */
 export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
-  datasource: string;
+  datasource: string | null;
   queries: T[];
   range: RawTimeRange;
-  context?: string;
   panelsState?: ExplorePanelsState;
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
   trace?: ExploreTracePanelState;
+  logs?: ExploreLogsPanelState;
 }
 
 export interface ExploreTracePanelState {
   spanId?: string;
+}
+
+export interface ExploreLogsPanelState {
+  id?: string;
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

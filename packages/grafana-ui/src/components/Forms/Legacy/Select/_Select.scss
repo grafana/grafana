@@ -11,6 +11,7 @@ $select-input-bg-disabled: $input-bg-disabled;
 @mixin select-control-focus() {
   border-color: $input-border-focus;
   outline: none;
+  // prettier-ignore
   $shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px $input-box-shadow-focus;
   @include box-shadow($shadow);
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/kinds/role"
 	"github.com/grafana/grafana/pkg/kinds/rolebinding"
-	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
@@ -53,7 +52,6 @@ type Base struct {
 	publicdashboard *publicdashboard.Kind
 	role            *role.Kind
 	rolebinding     *rolebinding.Kind
-	serviceaccount  *serviceaccount.Kind
 	team            *team.Kind
 }
 
@@ -68,7 +66,6 @@ var (
 	_ kindsys.Core = &publicdashboard.Kind{}
 	_ kindsys.Core = &role.Kind{}
 	_ kindsys.Core = &rolebinding.Kind{}
-	_ kindsys.Core = &serviceaccount.Kind{}
 	_ kindsys.Core = &team.Kind{}
 )
 
@@ -115,11 +112,6 @@ func (b *Base) Role() *role.Kind {
 // RoleBinding returns the [kindsys.Interface] implementation for the rolebinding kind.
 func (b *Base) RoleBinding() *rolebinding.Kind {
 	return b.rolebinding
-}
-
-// ServiceAccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
-func (b *Base) ServiceAccount() *serviceaccount.Kind {
-	return b.serviceaccount
 }
 
 // Team returns the [kindsys.Interface] implementation for the team kind.
@@ -184,12 +176,6 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the rolebinding Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.rolebinding)
-
-	reg.serviceaccount, err = serviceaccount.NewKind(rt)
-	if err != nil {
-		panic(fmt.Sprintf("error while initializing the serviceaccount Kind: %s", err))
-	}
-	reg.all = append(reg.all, reg.serviceaccount)
 
 	reg.team, err = team.NewKind(rt)
 	if err != nil {

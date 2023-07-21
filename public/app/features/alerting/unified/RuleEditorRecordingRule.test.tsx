@@ -39,6 +39,10 @@ jest.mock('./components/rule-editor/RecordingRuleEditor', () => ({
   },
 }));
 
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
+
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
@@ -127,10 +131,9 @@ describe('RuleEditor recording rules', () => {
       },
     });
 
-    renderRuleEditor();
+    renderRuleEditor(undefined, true);
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
-    await userEvent.click(await ui.buttons.lotexRecordingRule.get());
 
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));

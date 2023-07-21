@@ -16,6 +16,11 @@ keywords:
   - format tables
   - table filter
   - filter columns
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Table
 title: Table
 weight: 1000
@@ -27,9 +32,9 @@ The table panel visualization is very flexible, supporting multiple modes for ti
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
-## Annotation support
+## Annotation and alert support
 
-Annotations are not currently supported in the new table panel. This might be added back in a future release.
+Annotations and alerts are not currently supported in the new table panel.
 
 ## Sort column
 

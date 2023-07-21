@@ -33,9 +33,7 @@ func TestService(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
 
 	encProvider := encryptionprovider.ProvideEncryptionProvider()
-	settings := &setting.OSSImpl{Cfg: setting.NewCfg()}
-
-	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, setting.NewCfg())
 	require.NoError(t, err)
 
 	s := ProvideService(sqlStore.db, encService, nil)

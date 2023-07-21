@@ -159,7 +159,7 @@ describe('MetricsModal', () => {
     });
   });
 
-  it('searches by all metric metadata with a fuzzy search', async () => {
+  it('searches by name and description with a fuzzy search when setting is turned on', async () => {
     // search for a_bucket by metadata type counter but only type countt
     setup(defaultQuery, listOfMetrics);
     let metricABucket: HTMLElement | null;
@@ -179,7 +179,7 @@ describe('MetricsModal', () => {
 
     const searchMetric = screen.getByTestId(testIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
-    await userEvent.type(searchMetric, 'countt');
+    await userEvent.type(searchMetric, 'functions');
 
     await waitFor(() => {
       metricABucket = screen.getByText('a_bucket');

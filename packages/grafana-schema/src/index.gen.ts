@@ -22,6 +22,7 @@ export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen
 export type {
   AnnotationTarget,
   AnnotationPanelFilter,
+  VariableOption,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -37,7 +38,6 @@ export type {
   SpecialValueMap,
   ValueMappingResult,
   LibraryPanelRef,
-  RowPanel,
   GraphPanel,
   HeatmapPanel
 } from './raw/dashboard/x/dashboard_types.gen';
@@ -46,6 +46,8 @@ export type {
 export {
   defaultAnnotationTarget,
   defaultAnnotationPanelFilter,
+  VariableRefresh,
+  VariableSort,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -55,8 +57,7 @@ export {
   MappingType,
   SpecialValueMatch,
   DashboardCursorSync,
-  defaultDashboardCursorSync,
-  defaultRowPanel
+  defaultDashboardCursorSync
 } from './raw/dashboard/x/dashboard_types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -78,7 +79,8 @@ export type {
   Panel,
   FieldConfigSource,
   MatcherConfig,
-  FieldConfig
+  FieldConfig,
+  RowPanel
 } from './veneer/dashboard.types';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -99,7 +101,8 @@ export {
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,
-  defaultFieldConfig
+  defaultFieldConfig,
+  defaultRowPanel
 } from './veneer/dashboard.types';
 
 // Raw generated types from Folder kind.
@@ -150,15 +153,6 @@ export type {
   BuiltinRoleRef,
   RoleBindingSubject
 } from './raw/rolebinding/x/rolebinding_types.gen';
-
-// Raw generated types from ServiceAccount kind.
-export type {
-  ServiceAccount,
-  OrgRole
-} from './raw/serviceaccount/x/serviceaccount_types.gen';
-
-// Raw generated enums and default consts from serviceaccount kind.
-export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';

@@ -34,19 +34,17 @@ func (ss *sqlxStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQue
 
 	where = append(where, "service_account_id IS NULL")
 
-	if !accesscontrol.IsDisabled(ss.cfg) {
-		filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
-		if err != nil {
-			return nil, err
-		}
-		where = append(where, filter.Where)
-		args = append(args, filter.Args...)
+	filter, err := accesscontrol.Filter(query.User, "id", "apikeys:id:", accesscontrol.ActionAPIKeyRead)
+	if err != nil {
+		return nil, err
 	}
+	where = append(where, filter.Where)
+	args = append(args, filter.Args...)
 
 	ws := fmt.Sprint(strings.Join(where[:], " AND "))
 	qr := fmt.Sprintf(`SELECT * FROM api_key WHERE %s ORDER BY name ASC LIMIT 100`, ws)
 	keys := make([]*apikey.APIKey, 0)
-	err := ss.sess.Select(ctx, &keys, qr, args...)
+	err = ss.sess.Select(ctx, &keys, qr, args...)
 	return keys, err
 }
 

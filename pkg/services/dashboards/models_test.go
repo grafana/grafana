@@ -77,9 +77,9 @@ func TestSlugifyTitle(t *testing.T) {
 	testCases := map[string]string{
 		"Grafana Play Home": "grafana-play-home",
 		"snöräv-över-ån":    "snorav-over-an",
-		"漢字":                "5ryi5a2X",    // "han-zi",      // Hanzi for hanzi
-		"🇦🇶":                "8J-HpvCfh7Y", // flag of Antarctica-emoji, using fallback
-		"𒆠":                 "8JKGoA",      // cuneiform Ki, using fallback
+		"漢字":                "%e6%bc%a2%e5%ad%97",       // "han-zi",      // Hanzi for hanzi
+		"🇦🇶":                "%f0%9f%87%a6%f0%9f%87%b6", // flag of Antarctica-emoji, using fallback
+		"𒆠":                 "%f0%92%86%a0",             // cuneiform Ki, using fallback
 	}
 
 	for input, expected := range testCases {

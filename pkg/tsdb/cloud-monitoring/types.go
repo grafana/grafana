@@ -208,7 +208,7 @@ func (ts timeSeriesData) getLabels(labelDescriptors []LabelDescriptor) (data.Lab
 			seriesLabels[key] = labelValue.StringValue
 		}
 
-		if strings.Contains(key, "metric.label") || strings.Contains(key, "resource.label") {
+		if strings.Contains(key, "metric.label") || strings.Contains(key, "resource.label") || strings.Contains(key, "metadata.label") {
 			defaultMetricName += seriesLabels[key] + " "
 		}
 	}

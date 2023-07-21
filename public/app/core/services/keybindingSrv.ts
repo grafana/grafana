@@ -29,7 +29,10 @@ import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
-  constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
+  constructor(
+    private locationService: LocationService,
+    private chromeService: AppChromeService
+  ) {}
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();

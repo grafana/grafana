@@ -38,7 +38,7 @@ type service interface {
 	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
+	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error)
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	// Service account tokens
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
@@ -110,17 +110,15 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	if !api.accesscontrol.IsDisabled() {
-		if c.SignedInUser.IsRealUser() {
-			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
-			}
+	if c.SignedInUser.IsRealUser() {
+		if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 		}
-
-		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
+
+	// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
@@ -317,11 +315,12 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 
 // POST /api/serviceaccounts/migrate
 func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
-	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
+	results, err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID)
+	if err != nil {
+		return response.JSON(http.StatusInternalServerError, results)
 	}
 
-	return response.Success("API keys migrated to service accounts")
+	return response.JSON(http.StatusOK, results)
 }
 
 // POST /api/serviceaccounts/migrate/:keyId
@@ -339,7 +338,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
-	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return map[string]accesscontrol.Metadata{}
 	}
 

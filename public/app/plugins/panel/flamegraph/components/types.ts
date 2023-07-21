@@ -1,16 +1,11 @@
+import { LevelItem } from './FlameGraph/dataTransform';
+
 export type ClickedItemData = {
   posX: number;
   posY: number;
-  itemIndex: number;
   label: string;
-  start: number;
-};
-
-export type Metadata = {
-  percentValue: number;
-  unitTitle: string;
-  unitValue: string;
-  samples: string;
+  item: LevelItem;
+  level: number;
 };
 
 export enum SampleUnit {
@@ -46,5 +41,10 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export enum ColorScheme {
+  ValueBased = 'valueBased',
+  PackageBased = 'packageBased',
+}
 
 export type TextAlign = 'left' | 'right';

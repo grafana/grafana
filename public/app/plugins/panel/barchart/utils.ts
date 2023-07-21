@@ -1,4 +1,3 @@
-import { orderBy } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -8,10 +7,10 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  cacheFieldDisplayNames,
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
-  reduceField,
   TimeZone,
   VizOrientation,
 } from '@grafana/data';
@@ -364,6 +363,8 @@ export function prepareBarChartDisplayValues(
     return { warn: 'No data in response' };
   }
 
+  cacheFieldDisplayNames(series);
+
   // Bar chart requires a single frame
   const frame =
     series.length === 1
@@ -474,22 +475,10 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  if (isLegendOrdered(options.legend)) {
-    const sortKey = options.legend.sortBy!.toLowerCase();
-    const reducers = options.legend.calcs ?? [sortKey];
-    fields = orderBy(
-      fields,
-      (field) => {
-        return reduceField({ field, reducers })[sortKey];
-      },
-      options.legend.sortDesc ? 'desc' : 'asc'
-    );
-  }
-
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
     legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+      const alignedFrameField = frame.fields.find((f) => f.state?.displayName === field.state?.displayName)!;
 
       const copy = {
         ...field,
