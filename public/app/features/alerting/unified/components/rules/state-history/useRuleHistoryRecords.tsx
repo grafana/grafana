@@ -243,7 +243,7 @@ export function logRecordsToDataFrameForPanel(
   const timeField: DataFrameField = {
     name: 'time',
     type: FieldType.time,
-    values: [...records.map((record) => record.timestamp), Date.now()],
+    values: records.map((record) => record.timestamp),
     config: { displayName: 'Time', custom: { fillOpacity: 100 } },
   };
 
@@ -259,7 +259,7 @@ export function logRecordsToDataFrameForPanel(
       {
         name: 'alertId',
         type: FieldType.string,
-        values: [...records.map((_) => 1)],
+        values: records.map((_) => 1),
         //not sure what id to put here, we need to have a value i here so it's shown in the notation tooltip as alert annotation
         config: {
           displayName: 'AlertId',
@@ -269,7 +269,7 @@ export function logRecordsToDataFrameForPanel(
       {
         name: 'newState',
         type: FieldType.string,
-        values: [...records.map((record) => record.line.current)],
+        values: records.map((record) => record.line.current),
         config: {
           displayName: 'newState',
           custom: { fillOpacity: 100 },
@@ -278,7 +278,7 @@ export function logRecordsToDataFrameForPanel(
       {
         name: 'prevState',
         type: FieldType.string,
-        values: [...records.map((record) => record.line.previous)],
+        values: records.map((record) => record.line.previous),
         config: {
           displayName: 'prevState',
           custom: { fillOpacity: 100 },
@@ -287,27 +287,25 @@ export function logRecordsToDataFrameForPanel(
       {
         name: 'color',
         type: FieldType.string,
-        values: [
-          ...records.map((record) => {
-            const normalizedState = normalizeAlertState(record.line.current);
-            switch (normalizedState) {
-              case 'firing':
-              case 'alerting':
-              case 'error':
-                return theme.colors.error.main;
-              case 'pending':
-                return theme.colors.warning.main;
-              case 'normal':
-                return OK_COLOR; // I did not find the color for normal state(green) in Grafana theme
-              case 'nodata':
-                return theme.colors.info.main;
-              case 'paused':
-                return theme.colors.text.disabled;
-              default:
-                return theme.colors.info.main;
-            }
-          }),
-        ],
+        values: records.map((record) => {
+          const normalizedState = normalizeAlertState(record.line.current);
+          switch (normalizedState) {
+            case 'firing':
+            case 'alerting':
+            case 'error':
+              return theme.colors.error.main;
+            case 'pending':
+              return theme.colors.warning.main;
+            case 'normal':
+              return OK_COLOR; // I did not find the color for normal state(green) in Grafana theme
+            case 'nodata':
+              return theme.colors.info.main;
+            case 'paused':
+              return theme.colors.text.disabled;
+            default:
+              return theme.colors.info.main;
+          }
+        }),
         config: {
           // not sure if is there something missing here
         },
@@ -315,11 +313,9 @@ export function logRecordsToDataFrameForPanel(
       {
         name: 'data',
         type: FieldType.other,
-        values: [
-          ...records.map((record) => {
-            return logRecordToData(record);
-          }),
-        ],
+        values: records.map((record) => {
+          return logRecordToData(record);
+        }),
         config: {},
       },
     ],

@@ -23,7 +23,7 @@ export const useGetAnnotationsWithHistory = ({ timeRange, annotations }: UseGetA
   //todo: by dashboard id and panelid
   const { currentData: stateHistory } = useGetRuleHistoryQuery(
     {
-      ruleUid: `ea7421dc-28ed-4f4a-8c71-1f42dbba6365`,
+      ruleUid: `b6a0008b-a29e-46f6-b3dc-d9eac6c8ce2a`,
       from: timeRange.from.unix(),
       to: timeRange.to.unix(),
       limit: 250,
@@ -37,10 +37,6 @@ export const useGetAnnotationsWithHistory = ({ timeRange, annotations }: UseGetA
   const records = useRuleHistoryRecordsForPanel(stateHistory);
 
   useEffect(() => {
-    if (records?.dataFrames && annotations) {
-      console.log('annotations already added', annotations);
-      console.log('records?.dataFrames to be added', records?.dataFrames);
-    }
     records?.dataFrames &&
       setAnnotationsWithHistory(annotations ? annotations.concat(records.dataFrames) : records.dataFrames);
   }, [annotations, records?.dataFrames]);
