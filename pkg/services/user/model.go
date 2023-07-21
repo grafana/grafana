@@ -27,7 +27,7 @@ var (
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
 	ErrNoUniqueID        = errors.New("identifying id not found")
-	ErrLastSeenUpToDate  = errors.New("Last seen is already up to date")
+	ErrLastSeenUpToDate  = errors.New("last seen is already up to date")
 )
 
 type User struct {
