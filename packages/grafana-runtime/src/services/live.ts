@@ -7,8 +7,9 @@ import {
   LiveChannelAddress,
   LiveChannelEvent,
   LiveChannelPresenceStatus,
-  StreamingFrameAction as dataStreamingFrameAction,
-  StreamingFrameOptions as dataStreamingFrameOptions,
+  StreamingFrameOptions,
+  // StreamingFrameAction as dataStreamingFrameAction,
+  // StreamingFrameOptions as dataStreamingFrameOptions,
 } from '@grafana/data';
 
 /**
@@ -18,13 +19,8 @@ export interface LiveDataFilter {
   fields?: string[];
 }
 
-// StreamingFrameAction definition lives in @grafana/data now
-// kept it here for backwards compatibility
-export const StreamingFrameAction = dataStreamingFrameAction;
-
-// StreamingFrameOptions definition lives in @grafana/data now
-// kept it here for backwards compatibility
-export type StreamingFrameOptions = dataStreamingFrameOptions;
+// StreamingFrameAction and StreamingFrameOptions are now in @grafana/data
+export { StreamingFrameAction, type StreamingFrameOptions } from '@grafana/data';
 
 /**
  * @alpha
