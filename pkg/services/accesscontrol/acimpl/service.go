@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -31,13 +32,23 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
+	}
+
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
+		// This will be removed once we've:
+		// 1) removed the feature toggle and
+		// 2) have released enough versions not to support a version without split scopes
+		if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+			return nil, err
+		}
 	}
 
 	return service, nil

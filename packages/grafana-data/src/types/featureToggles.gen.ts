@@ -98,6 +98,7 @@ export interface FeatureToggles {
   dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  lokiFormatQuery?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
@@ -113,5 +114,7 @@ export interface FeatureToggles {
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
+  awsAsyncQueryCaching?: boolean;
+  splitScopes?: boolean;
   reportingRetries?: boolean;
 }
