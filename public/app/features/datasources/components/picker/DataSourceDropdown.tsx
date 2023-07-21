@@ -78,13 +78,12 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   // Used to position the popper correctly
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
-  const [adv, setAdv] = useState<HTMLElement | null>();
+  const [focusedElementManually, setFocusedElementManually] = useState<HTMLElement | null>();
 
   const openDropdown = () => {
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
     setOpen(true);
     markerElement?.focus();
-    console.log('openDropdown is called!');
   };
   const currentDataSourceInstanceSettings = useDatasource(current);
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
@@ -118,7 +117,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const grafanaDS = useDatasource('-- Grafana --');
 
   const onClickAddCSV = () => {
-    console.log('onclickCSV is called!');
     if (!grafanaDS) {
       return;
     }
@@ -127,20 +125,19 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   };
 
   // useEffect(() => {
-  //   adv?.addEventListener("onkeydown", onKeyDownInput)
-  // }, [adv])
+  //   focusedElementManually?.addEventListener("onkeydown", onKeyDownInput)
+  // }, [focusedElementManually])
 
   function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
     if (keyEvent.key === 'Tab') {
       console.log('Tab keyEvent is called!');
-      console.log('It is cancelable: ' + keyEvent.cancelable);
-      // setOpen(true);
       keyEvent.preventDefault();
+      // setOpen(true);
       // keyEvent.stopImmediatePropagation();
       // setInputHasFocus(true);
       // markerElement?.focus();
       // openDropdown();
-      adv?.focus();
+      focusedElementManually?.focus();
       return false;
     } else {
       onKeyDown(keyEvent);
@@ -162,7 +159,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   });
 
   const onClose = useCallback(() => {
-    console.log('onCLOSE is called!');
+    console.log('onClose is called!');
 
     setFilterTerm('');
     setOpen(false);
@@ -204,7 +201,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           onClick={openDropdown}
           onFocus={() => {
             console.log('onFocus is called!');
-
             setInputHasFocus(true);
           }}
           onBlur={() => {
@@ -254,7 +250,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               {...restProps}
               onDismiss={onClose}
               {...popper.attributes.popper}
-              advancedButtonRef={setAdv}
+              advancedButtonRef={setFocusedElementManually}
             />
           </div>
         </Portal>
