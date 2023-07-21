@@ -10,6 +10,7 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
+    "ignore_failure",
     "pipeline",
 )
 load(
@@ -107,9 +108,11 @@ def rgm_windows():
     return pipeline(
         name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
-        steps = get_windows_steps(
-            ver_mode = "release",
-            bucket = "grafana-prerelease-dev",
+        steps = ignore_failure(
+            get_windows_steps(
+                ver_mode = "release",
+                bucket = "grafana-prerelease-dev",
+            ),
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
