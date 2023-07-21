@@ -1,12 +1,13 @@
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 import { useDispatch } from 'app/types';
@@ -20,7 +21,7 @@ const saveDashboard = async (
   dashboard: DashboardModel,
   saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]
 ) => {
-  if (config.featureToggles.nestedFolders) {
+  if (newBrowseDashboardsEnabled()) {
     const query = await saveDashboardRtkQuery({
       dashboard: saveModel,
       folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta.folderUid,

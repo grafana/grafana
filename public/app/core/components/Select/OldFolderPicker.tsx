@@ -5,11 +5,12 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncVirtualizedSelect } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { createFolder, getFolderByUid, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, PermissionLevelString, SearchQueryType } from 'app/types';
@@ -80,7 +81,7 @@ export function OldFolderPicker(props: Props) {
     folderWarning,
   } = props;
 
-  const rootName = rootNameProp ?? config.featureToggles.nestedFolders ? 'Dashboards' : 'General';
+  const rootName = rootNameProp ?? newBrowseDashboardsEnabled() ? 'Dashboards' : 'General';
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);

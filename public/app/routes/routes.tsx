@@ -10,6 +10,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
@@ -153,7 +154,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
     },
-    !config.featureToggles.nestedFolders && {
+    !newBrowseDashboardsEnabled() && {
       path: '/dashboards/f/:uid/:slug/permissions',
       component: config.rbacEnabled
         ? SafeDynamicImport(
@@ -476,7 +477,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboards/f/:uid/:slug/library-panels',
       component: SafeDynamicImport(
-        config.featureToggles.nestedFolders
+        newBrowseDashboardsEnabled()
           ? () =>
               import(
                 /* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/browse-dashboards/BrowseFolderLibraryPanelsPage'
@@ -490,7 +491,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
-        config.featureToggles.nestedFolders
+        newBrowseDashboardsEnabled()
           ? () =>
               import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage')
           : () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
