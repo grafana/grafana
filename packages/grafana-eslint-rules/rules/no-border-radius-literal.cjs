@@ -20,7 +20,7 @@ const borderRadiusRule = createRule({
               property.value.type === AST_NODE_TYPES.Literal
             ) {
               context.report({
-                node: property
+                node: property,
                 messageId: 'borderRadiusId',
               });
             }
