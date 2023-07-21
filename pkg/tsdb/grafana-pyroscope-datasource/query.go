@@ -318,7 +318,7 @@ type EnumField struct {
 
 func NewEnumField(name string, labels data.Labels) *EnumField {
 	return &EnumField{
-		field:     data.NewField(name, labels, []int64{}),
+		field:     data.NewField(name, labels, []data.EnumItemIndex{}),
 		valuesMap: make(map[string]int64),
 	}
 }
