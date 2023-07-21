@@ -13,8 +13,6 @@ import {
   DataFrameData,
 } from '@grafana/data';
 // eslint-disable-next-line no-restricted-imports -- In the process from being removed
-import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
-// eslint-disable-next-line no-restricted-imports -- In the process from being removed
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { getRandomLine } from './LogIpsum';
@@ -104,18 +102,13 @@ export function runSignalStream(
     }
 
     const pushNextEvent = () => {
-      addNextRow(Date.now());
-
-      const elapsed = liveTimer.lastUpdate - lastSent;
-      if (elapsed > 1000 || liveTimer.ok) {
-        subscriber.next({
-          data: [frame],
-          key: streamId,
-          state: LoadingState.Streaming,
-        });
-        lastSent = liveTimer.lastUpdate;
-      }
-
+      lastSent = Date.now();
+      addNextRow(lastSent);
+      subscriber.next({
+        data: [frame],
+        key: streamId,
+        state: LoadingState.Streaming,
+      });
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 
