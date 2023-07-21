@@ -208,6 +208,7 @@ export abstract class BigValueLayout {
       </div>
     );
   }
+  
   getChartStyles(): CSSProperties {
     return {
       position: 'absolute',
