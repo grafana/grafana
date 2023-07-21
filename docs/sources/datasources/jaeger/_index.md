@@ -327,7 +327,7 @@ To configure this feature, see the [Derived fields]({{< relref "../loki#configur
 
 You can link to Jaeger traces from metrics in Prometheus data sources by configuring an exemplar.
 
-To configure this feature, see the [introduction to exemplars][expemplars] documentation.
+To configure this feature, see the [introduction to exemplars][exemplars] documentation.
 
 {{% docs/reference %}}
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
