@@ -88,7 +88,7 @@ AUTH_TOKEN=-
 }
 ```
 
-See [Grafana configuration]({{< relref "../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
+See [Grafana configuration]({{< relref "../configure-grafana#renderer_token" >}}) for how to configure the token in Grafana.
 
 ### Rendering mode
 
