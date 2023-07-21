@@ -130,3 +130,8 @@ def with_deps(steps, deps = []):
     for step in steps:
         step["depends_on"] = deps
     return steps
+
+def ignore_failure(steps):
+    for step in steps:
+        step["failure"] = "ignore"
+    return steps
