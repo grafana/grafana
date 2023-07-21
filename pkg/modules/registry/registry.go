@@ -62,8 +62,5 @@ func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...servi
 	logger.Debug("Registering module", "name", modules.All)
 	r.moduleManager.RegisterModule(modules.All, nil)
 
-	logger.Debug("Registering module", "name", modules.GrafanaAPIServer)
-	r.moduleManager.RegisterModule(modules.GrafanaAPIServer, nil)
-
 	return r
 }

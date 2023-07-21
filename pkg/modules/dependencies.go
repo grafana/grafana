@@ -27,5 +27,5 @@ var dependencyMap = map[string][]string{
 	KubernetesRegistration: {GrafanaAPIServer},
 	KubernetesClientset:    {KubernetesRegistration},
 
-	All: {Provisioning, HTTPServer, BackgroundServices, KubernetesClientset},
+	All: {KubernetesClientset, BackgroundServices},
 }
