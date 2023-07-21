@@ -270,8 +270,8 @@ export interface ToggleFilterAction {
   options: QueryFilterOptions;
 }
 /**
- * Data sources that support query manipulation through `modifyQuery` and `analyzeQuery` in Explore.
- * Allows for interactions such as changing the query from logs details, or displaying filter status.
+ * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active
+ * state of filters through `queryHasFilter`, in the Log Details component in Explore.
  * @internal
  * @alpha
  */
