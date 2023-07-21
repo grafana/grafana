@@ -1,3 +1,13 @@
+import { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
+import { unByKey } from 'ol/Observable';
+import GeoJSON from 'ol/format/GeoJSON';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import { Style } from 'ol/style';
+import { ReplaySubject } from 'rxjs';
+import { map as rxjsmap, first } from 'rxjs/operators';
+
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
@@ -5,25 +15,18 @@ import {
   PluginState,
   EventBus,
 } from '@grafana/data';
-import Map from 'ol/Map';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import GeoJSON from 'ol/format/GeoJSON';
-import { unByKey } from 'ol/Observable';
-import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
-import { Style } from 'ol/style';
-import { FeatureLike } from 'ol/Feature';
+import { ComparisonOperation } from '@grafana/schema';
+
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
+import { StyleEditor } from '../../editor/StyleEditor';
+import { polyStyle } from '../../style/markers';
 import { defaultStyleConfig, StyleConfig, StyleConfigState } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
-import { polyStyle } from '../../style/markers';
-import { StyleEditor } from '../../editor/StyleEditor';
-import { ReplaySubject } from 'rxjs';
-import { map as rxjsmap, first } from 'rxjs/operators';
+import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';
-import { ComparisonOperation } from '@grafana/schema';
+
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file
@@ -81,7 +84,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     const key = source.on('change', () => {
       //one geojson loads
-      if (source.getState() == 'ready') {
+      if (source.getState() === 'ready') {
         unByKey(key);
         features.next(source.getFeatures());
       }

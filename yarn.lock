@@ -3802,14 +3802,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:canary":
-  version: 9.5.0-109075pre
-  resolution: "@grafana/e2e-selectors@npm:9.5.0-109075pre"
+"@grafana/e2e-selectors@npm:10.0.2":
+  version: 10.0.2
+  resolution: "@grafana/e2e-selectors@npm:10.0.2"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     tslib: 2.5.0
     typescript: 4.8.4
-  checksum: 46b7853aeaab0ac2823a0add250c421632eb324f4f74e3633e0db58bf68920ef8bcbdc3666b17dbb4ac0af7c1d52777016fc7796a1b0a19bf5d3451945aca270
+  checksum: d8fc1ad3d9142d6fd9cd95fc54b825033565ad722145ab38dd922425a441d96b5c62866b4c17043dfc5a46c7f40050d81ba7e2847b1538abac51092e7358fbff
   languageName: node
   linkType: hard
 
@@ -3887,24 +3887,6 @@ __metadata:
     "@typescript-eslint/utils": ^5.46.1
   languageName: unknown
   linkType: soft
-
-"@grafana/experimental@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@grafana/experimental@npm:1.0.1"
-  dependencies:
-    "@types/uuid": ^8.3.3
-    uuid: ^8.3.2
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    "@grafana/data": ^9.2.0
-    "@grafana/runtime": ^9.2.0
-    "@grafana/ui": ^9.2.0
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-select: ^5.2.1
-  checksum: 126042201975927516248c182045c130fbad069c353846810490729cad0db0062dd98d58cfadc0134e9fc0236ba8ce76b2db2ac25ca98b164cb3ca7205f2c39f
-  languageName: node
-  linkType: hard
 
 "@grafana/experimental@npm:1.1.0":
   version: 1.1.0
@@ -4038,17 +4020,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:0.20.0":
-  version: 0.20.0
-  resolution: "@grafana/scenes@npm:0.20.0"
+"@grafana/scenes@npm:0.22.0":
+  version: 0.22.0
+  resolution: "@grafana/scenes@npm:0.22.0"
   dependencies:
-    "@grafana/e2e-selectors": canary
-    "@grafana/experimental": 1.0.1
+    "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 0e60d8917a2e6fec88a3f0a846f918728ddab30852d586ba13f7ec109fbc26896929211a819b0ae86e9b3b11bd9436393fa0fce38a66aa7afca6b0f38e3b71ca
+  peerDependencies:
+    "@grafana/data": 10.0.2
+    "@grafana/runtime": 10.0.2
+    "@grafana/schema": 10.0.2
+    "@grafana/ui": 10.0.2
+  checksum: 94eac2f9ba92722a9d1a23c43d48f3ee8300f0c3cd8631c38770438debc8a8c874a00ba8f2901db634cd1c0bd57f4c9366a7a8d2b060023e4635e839142566b7
   languageName: node
   linkType: hard
 
@@ -19287,7 +19273,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": 0.20.0
+    "@grafana/scenes": 0.22.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
@@ -19569,7 +19555,7 @@ __metadata:
     style-loader: 3.3.1
     stylelint: 15.10.1
     stylelint-config-prettier: 9.0.5
-    stylelint-config-sass-guidelines: 9.0.1
+    stylelint-config-sass-guidelines: 10.0.0
     symbol-observable: 4.0.0
     terser-webpack-plugin: 5.3.6
     test: "link:./public/test"
@@ -24235,21 +24221,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.1.30, nanoid@npm:^3.3.4":
-  version: 3.3.4
-  resolution: "nanoid@npm:3.3.4"
-  bin:
-    nanoid: bin/nanoid.cjs
-  checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
-  languageName: node
-  linkType: hard
-
 "nanoid@npm:^3.3.1":
   version: 3.3.1
   resolution: "nanoid@npm:3.3.1"
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 4ef0969e1bbe866fc223eb32276cbccb0961900bfe79104fa5abe34361979dead8d0e061410a5c03bc3d47455685adf32c09d6f27790f4a6898fb51f7df7ec86
+  languageName: node
+  linkType: hard
+
+"nanoid@npm:^3.3.4":
+  version: 3.3.4
+  resolution: "nanoid@npm:3.3.4"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
   languageName: node
   linkType: hard
 
@@ -26178,21 +26164,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-scss@npm:4.0.6":
+"postcss-scss@npm:4.0.6, postcss-scss@npm:^4.0.6":
   version: 4.0.6
   resolution: "postcss-scss@npm:4.0.6"
   peerDependencies:
     postcss: ^8.4.19
   checksum: 133a1cba31e2e167f4e841e66ec6a798eaf44c7911f9182ade0b5b1e71a8198814aa390b8c9d5db6b01358115232e5b15b1a4f8c5198acfccfb1f3fdbd328cdf
-  languageName: node
-  linkType: hard
-
-"postcss-scss@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "postcss-scss@npm:4.0.2"
-  peerDependencies:
-    postcss: ^8.3.3
-  checksum: b6506c1d9bc86f056e34c537447a35d2a90bc9f6afcffea9c5a8bf265334234592150c862351db9334e9b9109209ada023783ce22e56ca51221c1106591423d4
   languageName: node
   linkType: hard
 
@@ -26206,22 +26183,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-selector-parser@npm:^6.0.2, postcss-selector-parser@npm:^6.0.4, postcss-selector-parser@npm:^6.0.5, postcss-selector-parser@npm:^6.0.6":
+"postcss-selector-parser@npm:^6.0.2, postcss-selector-parser@npm:^6.0.4, postcss-selector-parser@npm:^6.0.5":
   version: 6.0.6
   resolution: "postcss-selector-parser@npm:6.0.6"
   dependencies:
     cssesc: ^3.0.0
     util-deprecate: ^1.0.2
   checksum: 3602758798048bffbd6a97d6f009b32a993d6fd2cc70775bb59593e803d7fa8738822ecffb2fafc745edf7fad297dad53c30d2cfe78446a7d3f4a4a258cb15b2
-  languageName: node
-  linkType: hard
-
-"postcss-sorting@npm:^7.0.1":
-  version: 7.0.1
-  resolution: "postcss-sorting@npm:7.0.1"
-  peerDependencies:
-    postcss: ^8.3.9
-  checksum: 79cca6703ef7c60ea913c3bfb91f85bd7adce35e60b834a40cadd1c7e18f37961d63f0e641387651ee3bf1df1996e952d8fe443f93a271aa2d23f239ea3145bc
   languageName: node
   linkType: hard
 
@@ -26270,17 +26238,6 @@ __metadata:
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
   checksum: e39ac60ccd1542d4f9d93d894048aac0d686b3bb38e927d8386005718e6793dbbb46930f0a523fe382f1bbd843c6d980aaea791252bf5e176180e5a4336d9679
-  languageName: node
-  linkType: hard
-
-"postcss@npm:^8.3.11":
-  version: 8.3.11
-  resolution: "postcss@npm:8.3.11"
-  dependencies:
-    nanoid: ^3.1.30
-    picocolors: ^1.0.0
-    source-map-js: ^0.6.2
-  checksum: 1a230553d74c66aa9585c90781ed8ea75f19cefea405d2117b67fbeb24b5b5e0e17be2e0c5a07db31dd085643a13394127ab2222e940771b70498331bf20f35e
   languageName: node
   linkType: hard
 
@@ -29994,13 +29951,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:^0.6.2":
-  version: 0.6.2
-  resolution: "source-map-js@npm:0.6.2"
-  checksum: 9c8151a29e00fd8d3ba87709fdf9a9ce48313d653f4a29a39b4ae53d346ac79e005de624796ff42eff55cbaf26d2e87f4466001ca87831d400d818c5cf146a0e
-  languageName: node
-  linkType: hard
-
 "source-map-js@npm:^1.0.1, source-map-js@npm:^1.0.2":
   version: 1.0.2
   resolution: "source-map-js@npm:1.0.2"
@@ -30750,44 +30700,30 @@ __metadata:
   languageName: node
   linkType: hard
 
-"stylelint-config-sass-guidelines@npm:9.0.1":
-  version: 9.0.1
-  resolution: "stylelint-config-sass-guidelines@npm:9.0.1"
+"stylelint-config-sass-guidelines@npm:10.0.0":
+  version: 10.0.0
+  resolution: "stylelint-config-sass-guidelines@npm:10.0.0"
   dependencies:
-    postcss-scss: ^4.0.2
-    stylelint-order: ^5.0.0
-    stylelint-scss: ^4.0.0
+    postcss-scss: ^4.0.6
+    stylelint-scss: ^4.4.0
   peerDependencies:
-    postcss: ^8.3.3
-    stylelint: ^14.0.1
-  checksum: 9844e0858b1175b30786cbca873cc5856313475de4b3cf3e4a8504d19f2673899f0fe4d56bef5cf73c93d0ed6c7c8c3d5a3dd91b7a9586aa52ddab12ef52a64b
+    postcss: ^8.4.21
+    stylelint: ^15.2.0
+  checksum: 1fbd55d780bc60c46ee9bdd9f2bb8097ff890791704faaaaecf6a0542250006a94d6726fd781d7fee68c831cd33093953d1f441c73b27471e76828d100446597
   languageName: node
   linkType: hard
 
-"stylelint-order@npm:^5.0.0":
-  version: 5.0.0
-  resolution: "stylelint-order@npm:5.0.0"
+"stylelint-scss@npm:^4.4.0":
+  version: 4.7.0
+  resolution: "stylelint-scss@npm:4.7.0"
   dependencies:
-    postcss: ^8.3.11
-    postcss-sorting: ^7.0.1
-  peerDependencies:
-    stylelint: ^14.0.0
-  checksum: fa3ace3cc65486b9f94165603bd04983636fda5ac959cd29bf87847a95b32f366b16faf612bd49e3b9f96073f8fe28a22a5c5727cc08c8f9d7327c89084b3f30
-  languageName: node
-  linkType: hard
-
-"stylelint-scss@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "stylelint-scss@npm:4.0.0"
-  dependencies:
-    lodash: ^4.17.15
     postcss-media-query-parser: ^0.2.3
     postcss-resolve-nested-selector: ^0.1.1
-    postcss-selector-parser: ^6.0.6
-    postcss-value-parser: ^4.1.0
+    postcss-selector-parser: ^6.0.11
+    postcss-value-parser: ^4.2.0
   peerDependencies:
-    stylelint: ^14.0.0
-  checksum: 98f835547b7f60dcd1f3725d4d67dafaae89fd38e7fb62fb59afba5e8511b8552ca658908ced7421a83b2a6ef4174f575625e4e56113ec9a54aa42435ceae5cc
+    stylelint: ^14.5.1 || ^15.0.0
+  checksum: 7818e7dd402864ae27dda9ea28213e0b25454f3dbe1524abf894050e677686614f7ca26437d45db1af9a352cc78466320741e91cc8694f9271a672db609319d9
   languageName: node
   linkType: hard
 
