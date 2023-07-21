@@ -133,7 +133,7 @@ func IsProviderEnabled(cfg *setting.Cfg, authModule string) bool {
 	case GithubAuthModule:
 		return cfg.GitHubAuthEnabled
 	case GrafanaComAuthModule:
-		return cfg.GrafanaComAuthEnabled
+		return cfg.GrafanaComAuthEnabled || cfg.GrafanaNetAuthEnabled
 	case GenericOAuthModule:
 		return cfg.GenericOAuthAuthEnabled
 	}

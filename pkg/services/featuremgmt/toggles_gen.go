@@ -327,6 +327,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagLokiFormatQuery
+	// Enables the ability to format Loki queries
+	FlagLokiFormatQuery = "lokiFormatQuery"
+
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
@@ -386,4 +390,8 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagSplitScopes
+	// Support faster dashboard and folder search by splitting permission scopes into parts
+	FlagSplitScopes = "splitScopes"
 )
