@@ -90,26 +90,15 @@ For the logs where a `level` label is specified, we use the value of the label t
 
 **Supported log levels and mapping of log level abbreviation and expressions:**
 
-| Supported expressions | Log level |      Color |
-| --------------------- | :-------: | ---------: |
-| emerg                 | critical  |     purple |
-| fatal                 | critical  |     purple |
-| alert                 | critical  |     purple |
-| crit                  | critical  |     purple |
-| critical              | critical  |     purple |
-| err                   |   error   |        red |
-| eror                  |   error   |        red |
-| error                 |   error   |        red |
-| warn                  |  warning  |     yellow |
-| warning               |  warning  |     yellow |
-| info                  |   info    |      green |
-| information           |   info    |      green |
-| informational         |   info    |      green |
-| notice                |   info    |      green |
-| dbug                  |   debug   |       blue |
-| debug                 |   debug   |       blue |
-| trace                 |   trace   | light blue |
-| \*                    |  unknown  |       grey |
+| Log level | Color      | Supported expressions                    |
+| :-------- | :--------- | ---------------------------------------- |
+| critical  | purple     | emerg, fatal, alert, crit, critical      |
+| error     | red        | err, eror, error                         |
+| warning   | yellow     | warn, warning                            |
+| info      | green      | info, information, informational, notice |
+| debug     | blue       | dbug, debug                              |
+| trace     | light blue | trace                                    |
+| unknown   | grey       | \*                                       |
 
 ### Highlight searched words
 
