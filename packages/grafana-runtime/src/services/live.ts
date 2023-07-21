@@ -8,8 +8,6 @@ import {
   LiveChannelEvent,
   LiveChannelPresenceStatus,
   StreamingFrameOptions,
-  // StreamingFrameAction as dataStreamingFrameAction,
-  // StreamingFrameOptions as dataStreamingFrameOptions,
 } from '@grafana/data';
 
 /**
