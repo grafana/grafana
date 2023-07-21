@@ -6,15 +6,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
+	// nolint:depguard // Lint exception can be removed once we move testdata to a separate module
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
 )
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService() *Service {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
@@ -29,8 +29,7 @@ func ProvideService(cfg *setting.Cfg) *Service {
 			data.NewField("Time", nil, make([]time.Time, 1)),
 			data.NewField("Value", nil, make([]float64, 1)),
 		),
-		logger: log.New("tsdb.testdata"),
-		cfg:    cfg,
+		logger: backend.NewLoggerWith("logger", "tsdb.testdata"),
 	}
 
 	var err error
@@ -46,7 +45,6 @@ func ProvideService(cfg *setting.Cfg) *Service {
 }
 
 type Service struct {
-	cfg             *setting.Cfg
 	logger          log.Logger
 	scenarios       map[string]*Scenario
 	frame           *data.Frame

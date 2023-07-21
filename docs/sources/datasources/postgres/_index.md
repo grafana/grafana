@@ -7,6 +7,11 @@ keywords:
   - grafana
   - postgresql
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: PostgreSQL
 title: PostgreSQL data source
 weight: 1200
@@ -227,7 +232,7 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 

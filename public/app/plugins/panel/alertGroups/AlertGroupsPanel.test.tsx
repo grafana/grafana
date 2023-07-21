@@ -123,7 +123,7 @@ describe('AlertGroupsPanel', () => {
     expect(groups).toHaveLength(2);
 
     expect(groups[0]).toHaveTextContent('No grouping');
-    expect(groups[1]).toHaveTextContent('severity=warningregion=US-Central');
+    expect(groups[1]).toHaveTextContent('severitywarning regionUS-Central');
 
     const alerts = ui.alert.queryAll();
     expect(alerts).toHaveLength(0);

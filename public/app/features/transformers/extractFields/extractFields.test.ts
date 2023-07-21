@@ -187,6 +187,52 @@ describe('Fields from JSON', () => {
       }
     `);
   });
+
+  it('skips null values', async () => {
+    const cfg: ExtractFieldsOptions = {
+      source: 'line',
+      replace: false,
+    };
+    const ctx = { interpolate: (v: string) => v };
+
+    const testDataFrame: DataFrame = {
+      fields: [
+        { config: {}, name: 'Time', type: FieldType.time, values: [1, 2] },
+        { config: {}, name: 'line', type: FieldType.other, values: ['{"foo":"bar"}', null] },
+      ],
+      length: 2,
+    };
+
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrame]);
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toEqual({
+      fields: [
+        {
+          config: {},
+          name: 'Time',
+          type: 'time',
+          values: [1, 2],
+          state: {
+            displayName: 'Time',
+            multipleFrames: false,
+          },
+        },
+        {
+          config: {},
+          name: 'line',
+          type: 'other',
+          values: ['{"foo":"bar"}', null],
+        },
+        {
+          name: 'foo',
+          values: ['bar', undefined],
+          type: 'string',
+          config: {},
+        },
+      ],
+      length: 2,
+    });
+  });
 });
 
 const testFieldTime: Field = {

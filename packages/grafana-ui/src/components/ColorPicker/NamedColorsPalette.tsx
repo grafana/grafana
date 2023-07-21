@@ -45,20 +45,20 @@ export const NamedColorsPalette = ({ color, onChange }: NamedColorsPaletteProps)
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    extraColors: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      gap: ${theme.spacing(1)};
-      padding: ${theme.spacing(1, 0)};
-    `,
-    swatches: css`
-      display: grid;
-      flex-grow: 1;
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    extraColors: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 0),
+    }),
+    swatches: css({
+      display: 'grid',
+      flexGrow: 1,
+    }),
   };
 };

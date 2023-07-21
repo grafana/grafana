@@ -47,9 +47,10 @@ type OrgUser struct {
 type RoleType = roletype.RoleType
 
 const (
-	RoleViewer RoleType = "Viewer"
-	RoleEditor RoleType = "Editor"
-	RoleAdmin  RoleType = "Admin"
+	RoleNone   RoleType = roletype.RoleNone
+	RoleViewer RoleType = roletype.RoleViewer
+	RoleEditor RoleType = roletype.RoleEditor
+	RoleAdmin  RoleType = roletype.RoleAdmin
 )
 
 type CreateOrgCommand struct {

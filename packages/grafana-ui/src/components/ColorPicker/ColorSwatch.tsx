@@ -34,7 +34,7 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
     return (
       <div ref={ref} className={styles.wrapper} data-testid={selectors.components.ColorSwatch.name} {...otherProps}>
         {hasLabel && <span className={styles.label}>{label}</span>}
-        <button className={styles.swatch} {...focusProps} aria-label={colorLabel} />
+        <button className={styles.swatch} {...focusProps} aria-label={colorLabel} type="button" />
       </div>
     );
   }
@@ -81,6 +81,9 @@ const getStyles = (
       }),
       '&:hover': {
         transform: 'scale(1.1)',
+      },
+      '@media (forced-colors: active)': {
+        forcedColorAdjust: 'none',
       },
     }),
   };

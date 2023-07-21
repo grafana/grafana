@@ -6,7 +6,7 @@ import {
   isLogsQuery,
   isQueryWithLabelFormat,
   isQueryWithParser,
-  isValidQuery,
+  isQueryWithError,
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
@@ -188,12 +188,12 @@ describe('getLokiQueryType', () => {
   });
 });
 
-describe('isValidQuery', () => {
+describe('isQueryWithError', () => {
   it('returns false if invalid query', () => {
-    expect(isValidQuery('{job="grafana')).toBe(false);
+    expect(isQueryWithError('{job="grafana')).toBe(true);
   });
   it('returns true if valid query', () => {
-    expect(isValidQuery('{job="grafana"}')).toBe(true);
+    expect(isQueryWithError('{job="grafana"}')).toBe(false);
   });
 });
 

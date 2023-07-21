@@ -197,6 +197,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             id={props.id ?? 'groupBy'}
             defaultValue={props.value.map((value: string) => ({ label: value, value }))}
             onChange={props.onChange}
+            dataSource={props.context.options.datasource}
           />
         );
       },

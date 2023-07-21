@@ -6,8 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v8.x to v9.x
 title: Migrate plugins from Grafana version 8.x to 9.x
-menutitle: v8.x to v9.x
 weight: 2300
 ---
 
@@ -73,7 +77,7 @@ We have removed the deprecated `getFormStyles` function from [grafana-ui](https:
 
 ### `/api/ds/query` replaces `/api/tsdb/query`
 
-We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../../../http_api/data_source/#query-a-data-source" >}}) instead.
+We have removed the deprecated `/api/tsdb/query` metrics endpoint. Use [/api/ds/query]({{< relref "../../../http_api/data_source#query-a-data-source" >}}) instead.
 
 ### `selectOptionInTest` has been removed
 

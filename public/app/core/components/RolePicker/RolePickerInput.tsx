@@ -52,6 +52,8 @@ export const RolePickerInput = ({
   const numberOfRoles = appliedRoles.length;
 
   return !isFocused ? (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
       {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
       <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
@@ -99,9 +101,7 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
         <Tooltip
           content={
             <div className={styles.tooltip}>
-              {appliedRoles?.map((role) => (
-                <p key={role.uid}>{role.displayName}</p>
-              ))}
+              {appliedRoles?.map((role) => <p key={role.uid}>{role.displayName}</p>)}
             </div>
           }
         >

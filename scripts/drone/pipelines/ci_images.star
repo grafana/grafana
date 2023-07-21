@@ -9,10 +9,15 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "gcp_download_build_container_assets_key",
 )
 load(
     "scripts/drone/utils/windows_images.star",
     "windows_images",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
 )
 
 def publish_ci_windows_test_image_pipeline():
@@ -23,7 +28,6 @@ def publish_ci_windows_test_image_pipeline():
     pl = pipeline(
         name = "publish-ci-windows-test-image",
         trigger = trigger,
-        edition = "",
         platform = "windows",
         steps = [
             {
@@ -63,5 +67,52 @@ def publish_ci_windows_test_image_pipeline():
     pl["clone"] = {
         "disable": True,
     }
+
+    return [pl]
+
+def publish_ci_build_container_image_pipeline():
+    trigger = {
+        "event": ["promote"],
+        "target": ["ci-build-container-image"],
+    }
+    pl = pipeline(
+        name = "publish-ci-build-container-image",
+        trigger = trigger,
+        steps = [
+            {
+                "name": "validate-version",
+                "image": images["alpine_image"],
+                "commands": [
+                    "if [ -z \"${BUILD_CONTAINER_VERSION}\" ]; then echo Missing BUILD_CONTAINER_VERSION; false; fi",
+                ],
+            },
+            {
+                "name": "download-macos-sdk",
+                "image": images["cloudsdk_image"],
+                "environment": {
+                    "GCP_KEY": from_secret(gcp_download_build_container_assets_key),
+                },
+                "commands": [
+                    "printenv GCP_KEY > /tmp/key.json",
+                    "gcloud auth activate-service-account --key-file=/tmp/key.json",
+                    "gsutil cp gs://grafana-private-downloads/MacOSX10.15.sdk.tar.xz ./scripts/build/ci-build/MacOSX10.15.sdk.tar.xz",
+                ],
+            },
+            {
+                "name": "build-and-publish",  # Consider splitting the build and the upload task.
+                "image": images["cloudsdk_image"],
+                "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+                "environment": {
+                    "DOCKER_USERNAME": from_secret("docker_username"),
+                    "DOCKER_PASSWORD": from_secret("docker_password"),
+                },
+                "commands": [
+                    "printenv DOCKER_PASSWORD | docker login -u \"$DOCKER_USERNAME\" --password-stdin",
+                    "docker build -t \"grafana/build-container:${BUILD_CONTAINER_VERSION}\" ./scripts/build/ci-build",
+                    "docker push \"grafana/build-container:${BUILD_CONTAINER_VERSION}\"",
+                ],
+            },
+        ],
+    )
 
     return [pl]

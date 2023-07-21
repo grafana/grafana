@@ -8,6 +8,10 @@ keywords:
   - grafana
   - jaeger
   - tracing
+labels:
+  products:
+    - enterprise
+    - oss
 title: Set up Grafana monitoring
 weight: 800
 ---
@@ -111,7 +115,7 @@ These instructions assume you have already added Graphite as a data source in Gr
 
 ### Pull metrics from Grafana backend plugin into Prometheus
 
-Any installed [backend plugin]({{< relref "../developers/plugins/backend" >}}) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
+Any installed [backend plugin]({{< relref "../developers/plugins/introduction-to-plugin-development/backend" >}}) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 

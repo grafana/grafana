@@ -124,49 +124,49 @@ export const TimeRangeInput = ({
 const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
   const inputStyles = getInputStyles({ theme, invalid: false });
   return {
-    container: css`
-      display: flex;
-      position: relative;
-    `,
-    content: css`
-      margin-left: 0;
-      position: absolute;
-      top: 116%;
-      z-index: ${theme.zIndex.dropdown};
-    `,
+    container: css({
+      display: 'flex',
+      position: 'relative',
+    }),
+    content: css({
+      marginLeft: 0,
+      position: 'absolute',
+      top: '116%',
+      zIndex: theme.zIndex.dropdown,
+    }),
     pickerInput: cx(
       inputStyles.input,
       disabled && inputStyles.inputDisabled,
       inputStyles.wrapper,
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        padding-right: 0;
-        line-height: ${theme.spacing.gridSize * 4 - 2}px;
-      `
+      css({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        cursor: 'pointer',
+        paddingRight: 0,
+        lineHeight: `${theme.spacing.gridSize * 4 - 2}px`,
+      })
     ),
     caretIcon: cx(
       inputStyles.suffix,
-      css`
-        position: relative;
-        top: -1px;
-        margin-left: ${theme.spacing(0.5)};
-      `
+      css({
+        position: 'relative',
+        top: '-1px',
+        marginLeft: theme.spacing(0.5),
+      })
     ),
-    clearIcon: css`
-      margin-right: ${theme.spacing(0.5)};
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
-    `,
-    placeholder: css`
-      color: ${theme.colors.text.disabled};
-      opacity: 1;
-    `,
-    icon: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
+    clearIcon: css({
+      marginRight: theme.spacing(0.5),
+      '&:hover': {
+        color: theme.colors.text.maxContrast,
+      },
+    }),
+    placeholder: css({
+      color: theme.colors.text.disabled,
+      opacity: 1,
+    }),
+    icon: css({
+      marginRight: theme.spacing(0.5),
+    }),
   };
 });

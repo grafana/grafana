@@ -7,6 +7,11 @@ keywords:
   - grafana
   - mysql
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: MySQL
 title: MySQL data source
 weight: 1000
@@ -276,9 +281,23 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
+The examples in this section query the following table:
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+```text
++---------------------+--------------+---------------------+----------+
+| time_date_time      | value_double | CreatedAt           | hostname |
++---------------------+--------------+---------------------+----------+
+| 2020-01-02 03:05:00 | 3.0          | 2020-01-02 03:05:00 | 10.0.1.1 |
+| 2020-01-02 03:06:00 | 4.0          | 2020-01-02 03:06:00 | 10.0.1.2 |
+| 2020-01-02 03:10:00 | 6.0          | 2020-01-02 03:10:00 | 10.0.1.1 |
+| 2020-01-02 03:11:00 | 7.0          | 2020-01-02 03:11:00 | 10.0.1.2 |
+| 2020-01-02 03:20:00 | 5.0          | 2020-01-02 03:20:00 | 10.0.1.2 |
++---------------------+--------------+---------------------+----------+
+```
+
+If the `Format as` query option is set to `Time Series` then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
+
+A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
@@ -307,6 +326,7 @@ Data frame result:
 +---------------------+-----------------+
 | 2020-01-02 03:05:00 | 3               |
 | 2020-01-02 03:10:00 | 6               |
+| 2020-01-02 03:20:00 | 5               |
 +---------------------+-----------------+
 ```
 
@@ -336,6 +356,8 @@ Data frame result:
 +---------------------+---------------------------+---------------------------+
 | 2020-01-02 03:05:00 | 3                         | 4                         |
 | 2020-01-02 03:10:00 | 6                         | 7                         |
+| 2020-01-02 03:15:00 | 0                         | 0                         |
+| 2020-01-02 03:20:00 | 0                         | 5                         |
 +---------------------+---------------------------+---------------------------+
 ```
 
@@ -360,8 +382,9 @@ Data frame result:
 | Labels:             | Labels:         | Labels:         |
 | Type: []time.Time   | Type: []float64 | Type: []float64 |
 +---------------------+-----------------+-----------------+
-| 2020-01-02 03:04:00 | 3               | 4               |
-| 2020-01-02 03:05:00 | 6               | 7               |
+| 2020-01-02 03:05:00 | 3               | 4               |
+| 2020-01-02 03:10:00 | 6               | 7               |
+| 2020-01-02 03:20:00 | 5               | 5               |
 +---------------------+-----------------+-----------------+
 ```
 

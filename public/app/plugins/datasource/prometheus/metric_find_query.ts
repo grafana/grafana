@@ -18,7 +18,10 @@ import { PromQueryRequest } from './types';
 export default class PrometheusMetricFindQuery {
   range: TimeRange;
 
-  constructor(private datasource: PrometheusDatasource, private query: string) {
+  constructor(
+    private datasource: PrometheusDatasource,
+    private query: string
+  ) {
     this.datasource = datasource;
     this.query = query;
     this.range = getTimeSrv().timeRange();

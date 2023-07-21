@@ -56,7 +56,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       ? () => {
           onClickFn({
             datasourceUid: internalLink.datasourceUid,
-            query: interpolatedQuery,
+            queries: [interpolatedQuery],
             panelsState: interpolatedPanelsState,
             range,
           });

@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -179,9 +179,9 @@ export const generateColumns = (
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
                       <Icon name={getIconForKind(info.kind)} />
-                      <Span variant="body" truncate>
+                      <Text variant="body" truncate>
                         {info.name}
-                      </Span>
+                      </Text>
                     </a>
                   ) : (
                     <span key={p}>{p}</span>
@@ -246,6 +246,8 @@ export const generateColumns = (
       Header: () => <div className={styles.sortedHeader}>Score</div>,
       Cell: (p) => {
         return (
+          // TODO: fix keyboard a11y
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div
             {...p.cellProps}
             className={cx(styles.cell, styles.explainItem)}
@@ -298,6 +300,8 @@ function makeDataSourceColumn(
             const icon = settings?.meta?.info?.logos?.small;
             if (icon) {
               return (
+                // TODO: fix keyboard a11y
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                 <span
                   key={i}
                   onClick={(e) => {

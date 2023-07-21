@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import React, { ComponentType, FC } from 'react';
 
-import { PluginConfigPage, PluginExtensionConfig, PluginMeta } from '@grafana/data';
+import { PluginConfigPage, PluginExtensionConfig, PluginMeta, PluginType } from '@grafana/data';
 
 import { SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';
@@ -40,21 +40,21 @@ export async function sandboxPluginComponents(
 
   // wrap panel component
   if (Reflect.has(pluginObject, 'panel')) {
-    Reflect.set(pluginObject, 'panel', withSandboxWrapper(Reflect.get(pluginObject, 'panel'), meta.id));
+    Reflect.set(pluginObject, 'panel', withSandboxWrapper(Reflect.get(pluginObject, 'panel'), meta));
   }
 
   // wrap datasource components
   if (Reflect.has(pluginObject, 'components')) {
     const components: Record<string, ComponentType> = Reflect.get(pluginObject, 'components');
     Object.entries(components).forEach(([key, value]) => {
-      Reflect.set(components, key, withSandboxWrapper(value, meta.id));
+      Reflect.set(components, key, withSandboxWrapper(value, meta));
     });
     Reflect.set(pluginObject, 'components', components);
   }
 
   // wrap app components
   if (Reflect.has(pluginObject, 'root')) {
-    Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root'), meta.id));
+    Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root'), meta));
   }
 
   // extension components
@@ -62,7 +62,7 @@ export async function sandboxPluginComponents(
     const extensions: PluginExtensionConfig[] = Reflect.get(pluginObject, 'extensionConfigs');
     for (const extension of extensions) {
       if (Reflect.has(extension, 'component')) {
-        Reflect.set(extension, 'component', withSandboxWrapper(Reflect.get(extension, 'component'), meta.id));
+        Reflect.set(extension, 'component', withSandboxWrapper(Reflect.get(extension, 'component'), meta));
       }
     }
     Reflect.set(pluginObject, 'extensionConfigs', extensions);
@@ -77,7 +77,7 @@ export async function sandboxPluginComponents(
       }
       Reflect.set(configPages, key, {
         ...value,
-        body: withSandboxWrapper(value.body, meta.id),
+        body: withSandboxWrapper(value.body, meta),
       });
     }
     Reflect.set(pluginObject, 'configPages', configPages);
@@ -88,11 +88,11 @@ export async function sandboxPluginComponents(
 
 const withSandboxWrapper = <P extends object>(
   WrappedComponent: ComponentType<P>,
-  pluginId: string
+  pluginMeta: PluginMeta
 ): React.MemoExoticComponent<FC<P>> => {
   const WithWrapper = React.memo((props: P) => {
     return (
-      <div data-plugin-sandbox={pluginId}>
+      <div data-plugin-sandbox={pluginMeta.id} style={{ height: pluginMeta.type === PluginType.app ? '100%' : 'auto' }}>
         <WrappedComponent {...props} />
       </div>
     );

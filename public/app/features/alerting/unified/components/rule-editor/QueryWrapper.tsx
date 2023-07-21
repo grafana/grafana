@@ -6,7 +6,6 @@ import {
   CoreApp,
   DataSourceApi,
   DataSourceInstanceSettings,
-  getDefaultRelativeTimeRange,
   GrafanaTheme2,
   LoadingState,
   PanelData,
@@ -15,20 +14,13 @@ import {
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import {
-  GraphTresholdsStyleMode,
-  Icon,
-  InlineFormLabel,
-  Input,
-  RelativeTimeRangePicker,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { GraphTresholdsStyleMode, Icon, InlineFormLabel, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
 
+import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
 export const DEFAULT_MAX_DATA_POINTS = 43200;
@@ -123,18 +115,14 @@ export const QueryWrapper = ({
     return (
       <Stack direction="row" alignItems="baseline" gap={1}>
         <SelectingDataSourceTooltip />
-        {onChangeTimeRange && (
-          <RelativeTimeRangePicker
-            timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-            onChange={(range) => onChangeTimeRange(range, index)}
-          />
-        )}
-        <div className={styles.queryOptions}>
-          <MaxDataPointsOption
-            options={alertQueryOptions}
-            onChange={(options) => onChangeQueryOptions(options, index)}
-          />
-        </div>
+        <QueryOptions
+          onChangeTimeRange={onChangeTimeRange}
+          query={query}
+          queryOptions={alertQueryOptions}
+          onChangeQueryOptions={onChangeQueryOptions}
+          index={index}
+        />
+
         <AlertConditionIndicator
           onSetCondition={() => onSetCondition(query.refId)}
           enabled={condition === query.refId}
@@ -187,7 +175,7 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-function MaxDataPointsOption({
+export function MaxDataPointsOption({
   options,
   onChange,
 }: {
@@ -240,6 +228,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.weak};
     border-radius: ${theme.shape.borderRadius(1)};
+
+    button {
+      overflow: visible;
+    }
   `,
   queryOptions: css`
     margin-bottom: -${theme.spacing(2)};

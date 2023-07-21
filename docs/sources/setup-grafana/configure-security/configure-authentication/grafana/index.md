@@ -2,8 +2,13 @@
 aliases:
   - ../../../auth/grafana/
 description: Grafana OAuthentication Guide
-title: Configure Grafana authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Basic auth
+title: Configure Grafana authentication
 weight: 200
 ---
 

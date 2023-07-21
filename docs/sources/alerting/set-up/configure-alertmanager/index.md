@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../configure-alertmanager/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/
 description: Configure Alertmanager
 keywords:
   - grafana
@@ -8,6 +9,10 @@ keywords:
   - set up
   - configure
   - external Alertmanager
+labels:
+  products:
+    - enterprise
+    - oss
 title: Add an external Alertmanager
 weight: 200
 ---
@@ -16,10 +21,15 @@ weight: 200
 
 Set up Grafana to use an external Alertmanager as a single Alertmanager to receive all of your alerts. This external Alertmanager can then be configured and administered from within Grafana itself.
 
+{{% admonition type="note" %}}
+Grafana Alerting does not support sending alerts to the AWS Managed Service for Prometheus due to the lack of sigv4 support in Prometheus.
+{{% /admonition %}}
+
 Once you have added the Alertmanager, you can use the Grafana Alerting UI to manage silences, contact points, and notification policies. A drop-down option in these pages allows you to switch between alertmanagers.
 
-**Note:**
+{{% admonition type="note" %}}
 Starting with Grafana 9.2, the URL configuration of external alertmanagers from the Admin tab on the Alerting page is deprecated. It will be removed in a future release.
+{{% /admonition %}}
 
 External alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials that were previously visible when configuring external alertmanagers by URL.
 

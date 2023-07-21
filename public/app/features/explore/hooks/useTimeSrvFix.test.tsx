@@ -25,12 +25,6 @@ describe('useTimeSrvFix', () => {
           grafanaContext={{
             ...context,
             location,
-            config: {
-              ...context.config,
-              featureToggles: {
-                exploreMixedDatasource: true,
-              },
-            },
           }}
         >
           {children}

@@ -7,6 +7,11 @@ keywords:
   - grafana
   - prometheus
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Prometheus
 title: Prometheus data source
 weight: 1300
@@ -66,10 +71,8 @@ httpMethod: POST
 manageAlerts: true
 prometheusType: Prometheus
 prometheusVersion: 2.44.0
-incrementalQuerying: true
-incrementalQueryOverlapWindow: 10m
 cacheLevel: 'High'
-incrementalQuerying: true
+disableRecordingRules: false
 incrementalQueryOverlapWindow: 10m
 exemplarTraceIdDestinations:
 # Field with internal link pointing to data source in Grafana.
@@ -117,6 +120,22 @@ To connect the Prometheus data source to Amazon Managed Service for Prometheus u
 
 If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).
 
+## Azure authentication settings
+
+The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication](/docs/grafana/latest/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
+
+In Grafana Enterprise, update the .ini configuration file: [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/). Depending on your setup, the .ini file is located [here](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location).
+Add the following setting in the **[auth]** section :
+
+```bash
+[auth]
+azure_auth_enabled = true
+```
+
+{{% admonition type="note" %}}
+If you are using Azure authentication settings do not enable `Forward OAuth identity`. Both use the same HTTP authorization headers. Azure settings will get overwritten by the Oauth token.
+{{% /admonition %}}
+
 ## Exemplars
 
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars]({{< relref "../../fundamentals/exemplars/" >}}) in Prometheus documentation for detailed information on how they work.
@@ -141,3 +160,7 @@ This can be toggled on or off in the data source configuration or provisioning f
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is `10m` (10 minutes).
 
 Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
+
+## Recording Rules (beta)
+
+The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
