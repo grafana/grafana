@@ -109,10 +109,12 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 		Scope:        c.Query("scope"),
 		UserID:       userID,
 	}
-	// Validate inputs
-	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
-		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
-	}
+
+	// FIXME for the PoC no need to provide a filter
+	// // Validate inputs
+	// if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
+	// 	return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
+	// }
 
 	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
 	if err != nil {
