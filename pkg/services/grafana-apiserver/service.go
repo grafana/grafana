@@ -11,19 +11,23 @@ import (
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	grafanaapiserver "github.com/grafana/grafana-apiserver/pkg/apiserver"
+	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
-
-	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -57,17 +61,21 @@ type service struct {
 	restConfig *rest.Config
 	rr         routing.RouteRegister
 
+	restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter
+
 	handler   web.Handler
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error) {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter) (*service, error) {
 	s := &service{
 		rr:       rr,
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
+
+		restOptionsGetter: restOptionsGetter,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -99,7 +107,7 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	logger := logr.New(newLogAdapter())
-	logger.V(9)
+	logger.V(10)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := grafanaapiserveroptions.NewGrafanaAPIServerOptions(os.Stdout, os.Stderr)
@@ -140,6 +148,10 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	serverConfig.ExtraConfig.RESTOptionsGetter = s.restOptionsGetter(unstructured.UnstructuredJSONScheme)
+	serverConfig.GenericConfig.RESTOptionsGetter = s.restOptionsGetter(grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+	serverConfig.GenericConfig.Config.RESTOptionsGetter = s.restOptionsGetter(grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	authenticator, err := newAuthenticator(rootCert)
 	if err != nil {
