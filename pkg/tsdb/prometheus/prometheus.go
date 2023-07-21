@@ -78,6 +78,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	logger := log.New("tsdb.prometheus").FromContext(ctx)
+	logger.Error(fmt.Sprintf("QueryData() traceID: %s", tracing.TraceIDFromContext(ctx, false)))
+
 	if len(req.Queries) == 0 {
 		err := fmt.Errorf("query contains no queries")
 		instrumentation.UpdateQueryDataMetrics(err, nil)
