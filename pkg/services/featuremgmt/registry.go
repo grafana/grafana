@@ -80,13 +80,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:         "newTraceViewHeader",
-			Description:  "Shows the new trace view header",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			Stage:       FeatureStagePublicPreview,
@@ -257,12 +250,6 @@ var (
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:        "showTraceId",
-			Description: "Show trace ids for requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "emptyDashboardPage",

@@ -63,6 +63,8 @@ export const TooltipPlugin = ({
 
   const pluginId = `TooltipPlugin`;
 
+  const style = useStyles2(getStyles);
+
   // Debug logs
   useEffect(() => {
     pluginLog(pluginId, true, `Focused series: ${focusedSeriesIdx}, focused point: ${focusedPointIdx}`);
@@ -274,8 +276,6 @@ export const TooltipPlugin = ({
     tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
   }
 
-  const style = useStyles2(getStyles);
-
   return (
     <Portal className={isActive ? style.tooltipWrapper : undefined}>
       {tooltip && coords && (
@@ -327,7 +327,7 @@ export function positionTooltip(u: uPlot, bbox: DOMRect) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tooltipWrapper: css`
-    z-index: ${theme.zIndex.portal + 1} !important;
-  `,
+  tooltipWrapper: css({
+    'z-index': theme.zIndex.portal + 1 + ' !important',
+  }),
 });
