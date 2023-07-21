@@ -44,6 +44,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const field = options.field as Field;
   const config = field.config ?? {};
+  const { palette } = options.theme.visualization;
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
@@ -132,7 +133,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         color = enumColor ? enumColor[enumIndex] : undefined;
 
         if (color == null) {
-          const { palette } = options.theme.visualization;
           const namedColor = palette[enumIndex % palette.length];
           color = options.theme.visualization.getColorByName(namedColor);
         }
