@@ -10,6 +10,11 @@ keywords:
   - guide
   - Azure SQL Database
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Microsoft SQL Server query editor
 weight: 300
@@ -93,6 +98,8 @@ In the **Dataset** dropdown, select the MSSQL database to query. Grafana populat
 Once you select a database, Grafana populates the dropdown with all available tables.
 
 **Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
+
+We don't include `tempdb`,`model`,`msdb`,`master` databases in the query editor dropdown.
 
 ### Select columns and aggregation functions (SELECT)
 
@@ -220,7 +227,7 @@ The resulting table panel:
 If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
 Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/data-frames#wide-format" >}}).
+A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}).
 Any column except time or of type string transforms into value fields in the data frame query result.
 Any string column transforms into field labels in the data frame query result.
 

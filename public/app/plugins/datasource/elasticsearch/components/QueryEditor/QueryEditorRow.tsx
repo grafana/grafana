@@ -34,7 +34,7 @@ export const QueryEditorRow = ({
                 size="sm"
                 aria-pressed={hidden}
                 className={styles.icon}
-                tooltip="Hide metric"
+                tooltip="Hide row"
               />
             )}
             <IconButton
@@ -43,7 +43,7 @@ export const QueryEditorRow = ({
               className={styles.icon}
               onClick={onRemoveClick || noop}
               disabled={!onRemoveClick}
-              tooltip="Remove metric"
+              tooltip="Remove row"
             />
           </span>
         </InlineLabel>

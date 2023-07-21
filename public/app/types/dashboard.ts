@@ -10,6 +10,15 @@ export interface DashboardDTO {
   meta: DashboardMeta;
 }
 
+export interface SaveDashboardResponseDTO {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
+}
+
 export interface DashboardMeta {
   slug?: string;
   uid?: string;
@@ -71,6 +80,7 @@ export enum DashboardRoutes {
   Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
+  Embedded = 'embedded-dashboard',
 }
 
 export enum DashboardInitPhase {

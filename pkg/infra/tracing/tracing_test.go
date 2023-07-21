@@ -110,7 +110,7 @@ func TestTracingConfig(t *testing.T) {
 			ExpectedAttrs:    []attribute.KeyValue{},
 		},
 		{
-			Name: "legacy env variables are supproted",
+			Name: "legacy env variables are supported",
 			Cfg:  `[tracing.jaeger]`,
 			Env: map[string]string{
 				"JAEGER_AGENT_HOST": "example.com",
@@ -137,7 +137,7 @@ func TestTracingConfig(t *testing.T) {
 		},
 	} {
 		t.Run(test.Name, func(t *testing.T) {
-			// export envioronment variables
+			// export environment variables
 			if test.Env != nil {
 				for k, v := range test.Env {
 					t.Setenv(k, v)

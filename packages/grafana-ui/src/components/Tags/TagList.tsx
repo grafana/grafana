@@ -19,29 +19,40 @@ export interface Props {
   className?: string;
   /** aria-label for the `i`-th Tag component */
   getAriaLabel?: (name: string, i: number) => string;
+  //** Should return an index of a color defined in the TAG_COLORS array */
+  getColorIndex?: (name: string, i: number) => number;
   /** Icon to show next to tag label */
   icon?: IconName;
 }
 
 const TagListComponent = memo(
-  forwardRef<HTMLUListElement, Props>(({ displayMax, tags, icon, onClick, className, getAriaLabel }, ref) => {
-    const theme = useTheme2();
-    const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
-    const numTags = tags.length;
-    const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
-    return (
-      <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
-        {tagsToDisplay.map((tag, i) => (
-          <li className={styles.li} key={tag}>
-            <Tag name={tag} icon={icon} onClick={onClick} aria-label={getAriaLabel?.(tag, i)} data-tag-id={i} />
-          </li>
-        ))}
-        {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-          <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
-        )}
-      </ul>
-    );
-  })
+  forwardRef<HTMLUListElement, Props>(
+    ({ displayMax, tags, icon, onClick, className, getAriaLabel, getColorIndex }, ref) => {
+      const theme = useTheme2();
+      const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
+      const numTags = tags.length;
+      const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
+      return (
+        <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
+          {tagsToDisplay.map((tag, i) => (
+            <li className={styles.li} key={tag}>
+              <Tag
+                name={tag}
+                icon={icon}
+                onClick={onClick}
+                aria-label={getAriaLabel?.(tag, i)}
+                data-tag-id={i}
+                colorIndex={getColorIndex?.(tag, i)}
+              />
+            </li>
+          ))}
+          {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
+            <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
+          )}
+        </ul>
+      );
+    }
+  )
 );
 TagListComponent.displayName = 'TagList';
 
@@ -72,20 +83,20 @@ const getSkeletonStyles = (theme: GrafanaTheme2) => ({
 
 const getStyles = (theme: GrafanaTheme2, isTruncated: boolean) => {
   return {
-    wrapper: css`
-      position: relative;
-      align-items: ${isTruncated ? 'center' : 'unset'};
-      display: flex;
-      flex: 1 1 auto;
-      flex-wrap: wrap;
-      flex-shrink: ${isTruncated ? 0 : 1};
-      justify-content: flex-end;
-      gap: 6px;
-    `,
-    moreTagsLabel: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.size.sm};
-    `,
+    wrapper: css({
+      position: 'relative',
+      alignItems: isTruncated ? 'center' : 'unset',
+      display: 'flex',
+      flex: '1 1 auto',
+      flexWrap: 'wrap',
+      flexShrink: isTruncated ? 0 : 1,
+      justifyContent: 'flex-end',
+      gap: '6px',
+    }),
+    moreTagsLabel: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+    }),
     li: css({
       listStyle: 'none',
     }),

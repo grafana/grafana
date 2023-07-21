@@ -33,7 +33,7 @@ export interface ConvertFieldTypeOptions {
 export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<ConvertFieldTypeTransformerOptions> = {
   id: DataTransformerID.convertFieldType,
   name: 'Convert field type',
-  description: 'Convert a field to a specified field type',
+  description: 'Convert a field to a specified field type.',
   defaultOptions: {
     fields: {},
     conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined }],

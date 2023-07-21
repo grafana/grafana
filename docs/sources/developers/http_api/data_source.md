@@ -10,6 +10,10 @@ keywords:
   - documentation
   - api
   - data source
+labels:
+  products:
+    - enterprise
+    - oss
 title: Data source HTTP API
 ---
 

@@ -3,27 +3,36 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { FolderDTO } from 'app/types';
+
+import { mockFolderDTO } from '../fixtures/folder.fixture';
+
 import CreateNewButton from './CreateNewButton';
+
+const mockParentFolder = mockFolderDTO();
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
 }
 
-async function renderAndOpen(folderUID?: string) {
-  render(<CreateNewButton canCreateDashboard canCreateFolder parentFolderUid={folderUID} />);
+async function renderAndOpen(folder?: FolderDTO) {
+  render(<CreateNewButton canCreateDashboard canCreateFolder parentFolder={folder} />);
   const newButton = screen.getByText('New');
   await userEvent.click(newButton);
 }
 
 describe('NewActionsButton', () => {
-  it('should display the correct urls with a given folderUID', async () => {
-    await renderAndOpen('123');
+  it('should display the correct urls with a given parent folder', async () => {
+    await renderAndOpen(mockParentFolder);
 
-    expect(screen.getByText('New dashboard')).toHaveAttribute('href', '/dashboard/new?folderUid=123');
-    expect(screen.getByText('Import')).toHaveAttribute('href', '/dashboard/import?folderUid=123');
+    expect(screen.getByText('New dashboard')).toHaveAttribute(
+      'href',
+      `/dashboard/new?folderUid=${mockParentFolder.uid}`
+    );
+    expect(screen.getByText('Import')).toHaveAttribute('href', `/dashboard/import?folderUid=${mockParentFolder.uid}`);
   });
 
-  it('should display urls without params when there is no folderUID', async () => {
+  it('should display urls without params when there is no parent folder', async () => {
     await renderAndOpen();
 
     expect(screen.getByText('New dashboard')).toHaveAttribute('href', '/dashboard/new');
@@ -31,8 +40,7 @@ describe('NewActionsButton', () => {
   });
 
   it('clicking the "New folder" button opens the drawer', async () => {
-    const mockParentFolderTitle = 'mockParentFolderTitle';
-    render(<CreateNewButton canCreateDashboard canCreateFolder parentFolderTitle={mockParentFolderTitle} />);
+    render(<CreateNewButton canCreateDashboard canCreateFolder parentFolder={mockParentFolder} />);
 
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
@@ -41,7 +49,7 @@ describe('NewActionsButton', () => {
     const drawer = screen.getByRole('dialog', { name: 'Drawer title New folder' });
     expect(drawer).toBeInTheDocument();
     expect(within(drawer).getByRole('heading', { name: 'New folder' })).toBeInTheDocument();
-    expect(within(drawer).getByText(`Location: ${mockParentFolderTitle}`)).toBeInTheDocument();
+    expect(within(drawer).getByText(`Location: ${mockParentFolder.title}`)).toBeInTheDocument();
   });
 
   it('should only render dashboard items when folder creation is disabled', async () => {

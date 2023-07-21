@@ -36,12 +36,12 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
+import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
@@ -51,6 +51,7 @@ import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -65,6 +66,8 @@ import {
   addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  queryHasFilter,
+  removeLabelFromQuery,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -74,7 +77,7 @@ import {
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
-  isValidQuery,
+  isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
 import { doLokiChannelStream } from './streaming';
@@ -263,7 +266,11 @@ export class LokiDatasource
     };
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
-    if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+    if (
+      config.featureToggles.lokiExperimentalStreaming &&
+      streamQueries.length > 0 &&
+      fixedRequest.rangeRaw?.to === 'now'
+    ) {
       // this is still an in-development feature,
       // we do not support mixing stream-queries with normal-queries for now.
       const streamRequest = {
@@ -290,7 +297,11 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
+    return this.runQuery(fixedRequest).pipe(
+      tap((response) =>
+        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
+      )
+    );
   }
 
   runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {
@@ -441,7 +452,7 @@ export class LokiDatasource
 
   async getQueryStats(query: string): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    if (!isValidQuery(query)) {
+    if (isQueryWithError(this.interpolateString(query, placeHolderScopedVars))) {
       return undefined;
     }
 
@@ -560,7 +571,7 @@ export class LokiDatasource
 
   async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
     // Currently works only for logs sample
-    if (!isValidQuery(query.expr) || !isLogsQuery(query.expr)) {
+    if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
     }
 
@@ -606,13 +617,27 @@ export class LokiDatasource
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '=', value);
+
+          // This gives the user the ability to toggle a filter on and off.
+          expression = queryHasFilter(expression, action.options.key, '=', value)
+            ? removeLabelFromQuery(expression, action.options.key, '=', value)
+            : addLabelToQuery(expression, action.options.key, '=', value);
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
+
+          /**
+           * If there is a filter with the same key and value, remove it.
+           * This prevents the user from seeing no changes in the query when they apply
+           * this filter.
+           */
+          if (queryHasFilter(expression, action.options.key, '=', value)) {
+            expression = removeLabelFromQuery(expression, action.options.key, '=', value);
+          }
+
           expression = addLabelToQuery(expression, action.options.key, '!=', value);
         }
         break;

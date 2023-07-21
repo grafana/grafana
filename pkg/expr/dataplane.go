@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 )
 
-func shouldUseDataplane(frames data.Frames, logger *log.ConcreteLogger, disable bool) (dt data.FrameType, b bool, e error) {
+func shouldUseDataplane(frames data.Frames, logger log.Logger, disable bool) (dt data.FrameType, b bool, e error) {
 	if disable {
 		return
 	}

@@ -14,12 +14,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -94,8 +96,9 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 
 		driverName := "mssql"
 		// register a new proxy driver if the secure socks proxy is enabled
-		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
-			driverName, err = createMSSQLProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
+		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
+			driverName, err = createMSSQLProxyDriver(cnnstr, proxyOpts)
 			if err != nil {
 				return nil, err
 			}
@@ -109,9 +112,11 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := mssqlQueryResultTransformer{}
+		queryResultTransformer := mssqlQueryResultTransformer{
+			userError: cfg.UserFacingDefaultError,
+		}
 
-		return sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+		return sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
 }
 
@@ -197,14 +202,16 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	return connStr, nil
 }
 
-type mssqlQueryResultTransformer struct{}
+type mssqlQueryResultTransformer struct {
+	userError string
+}
 
 func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
 	// go-mssql overrides source error, so we currently match on string
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
 		logger.Error("Query error", "error", err)
-		return sqleng.ErrConnectionFailed
+		return sqleng.ErrConnectionFailed.Errorf("failed to connect to server - %s", t.userError)
 	}
 
 	return err

@@ -1,4 +1,5 @@
 import { DataQueryResponseData, isDataFrame } from '@grafana/data';
+
 import { StreamingDataFrame } from './StreamingDataFrame';
 
 /**

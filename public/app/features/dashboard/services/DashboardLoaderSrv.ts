@@ -34,18 +34,18 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: any, uid: any): Promise<DashboardDTO> {
+  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
     let promise;
 
-    if (type === 'script') {
+    if (type === 'script' && slug) {
       promise = this._loadScriptedDashboard(slug);
-    } else if (type === 'snapshot') {
+    } else if (type === 'snapshot' && slug) {
       promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
-    } else if (type === 'ds') {
+    } else if (type === 'ds' && slug) {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
-    } else if (type === 'public') {
+    } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
         .then((result) => {
@@ -70,7 +70,7 @@ export class DashboardLoaderSrv {
             },
           };
         });
-    } else {
+    } else if (uid) {
       promise = backendSrv
         .getDashboardByUid(uid)
         .then((result) => {
@@ -83,6 +83,8 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Not found', true);
         });
+    } else {
+      throw new Error('Dashboard uid or slug required');
     }
 
     promise.then((result: DashboardDTO) => {

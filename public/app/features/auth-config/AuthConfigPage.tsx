@@ -12,6 +12,7 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
+import { AuthProviderInfo } from './types';
 import { getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
@@ -70,6 +71,9 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   const onCTAClick = () => {
     reportInteraction('authentication_ui_created', { provider: firstAvailableProvider?.type });
   };
+  const onProviderCardClick = (provider: AuthProviderInfo) => {
+    reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
+  };
 
   return (
     <Page navId="authentication" subTitle={subTitle}>
@@ -86,6 +90,9 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 enabled={providerStatuses[provider.id]?.enabled}
                 configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
+                onClick={() => {
+                  onProviderCardClick(provider);
+                }}
               />
             ))}
           </div>

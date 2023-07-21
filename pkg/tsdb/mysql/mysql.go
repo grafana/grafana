@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 const (
@@ -85,10 +87,11 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		}
 
 		// register the secure socks proxy dialer context, if enabled
-		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
+		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
 			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
 			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
-			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, uniqueIdentifier)
+			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, proxyOpts)
 			if err != nil {
 				return nil, err
 			}
@@ -141,9 +144,11 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		rowTransformer := mysqlQueryResultTransformer{}
+		rowTransformer := mysqlQueryResultTransformer{
+			userError: cfg.UserFacingDefaultError,
+		}
 
-		return sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+		return sqleng.NewQueryDataHandler(cfg, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
 	}
 }
 
@@ -184,6 +189,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 type mysqlQueryResultTransformer struct {
+	userError string
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
@@ -192,14 +198,12 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR &&
 			driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
 			logger.Error("Query error", "error", err)
-			return errQueryFailed
+			return fmt.Errorf(("query failed - %s"), t.userError)
 		}
 	}
 
 	return err
 }
-
-var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")
 
 func (t *mysqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {
 	// For the MySQL driver , we have these possible data types:

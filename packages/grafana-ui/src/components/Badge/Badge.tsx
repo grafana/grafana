@@ -55,18 +55,18 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   }
 
   return {
-    wrapper: css`
-      display: inline-flex;
-      padding: 1px 4px;
-      border-radius: ${theme.shape.radius.default};
-      background: ${bgColor};
-      border: 1px solid ${borderColor};
-      color: ${textColor};
-      font-weight: ${theme.typography.fontWeightRegular};
-      gap: 2px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      line-height: ${theme.typography.bodySmall.lineHeight};
-      align-items: center;
-    `,
+    wrapper: css({
+      display: 'inline-flex',
+      padding: '1px 4px',
+      borderRadius: theme.shape.radius.default,
+      background: bgColor,
+      border: `1px solid ${borderColor}`,
+      color: textColor,
+      fontWeight: theme.typography.fontWeightRegular,
+      gap: '2px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      alignItems: 'center',
+    }),
   };
 };

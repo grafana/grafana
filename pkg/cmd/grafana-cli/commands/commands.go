@@ -6,15 +6,12 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,18 +38,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
 
-		tracer, err := tracing.ProvideService(runner.Cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
-		}
-
-		bus := bus.ProvideBus(tracer)
-
-		sqlStore, err := db.ProvideService(runner.Cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
-		}
-
+		sqlStore := runner.SQLStore
 		if err := command(cmd, sqlStore); err != nil {
 			return err
 		}

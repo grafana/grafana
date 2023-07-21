@@ -19,9 +19,9 @@ import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const { datasourceInstance } = explore.panes[exploreId]!;
   return {
@@ -403,14 +403,13 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
   );
 };
 
-const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
-  css`
-    display: flex;
-    align-items: center;
-    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-    white-space: nowrap;
-  `;
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
+  display: flex;
+  align-items: center;
+  font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+  font-weight: ${theme.typography.fontWeightMedium};
+  white-space: nowrap;
+`;
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);

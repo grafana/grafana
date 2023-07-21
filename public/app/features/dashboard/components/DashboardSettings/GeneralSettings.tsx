@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { Page } from 'app/core/components/Page/Page';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -28,10 +30,18 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { uid: string; title: string }) => {
-    dashboard.meta.folderUid = folder.uid;
-    dashboard.meta.folderTitle = folder.title;
+  const onFolderChange = (newFolder: { uid: string; title: string }) => {
+    dashboard.meta.folderUid = newFolder.uid;
+    dashboard.meta.folderTitle = newFolder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
+    setRenderCounter(renderCounter + 1);
+  };
+
+  const onNestedFolderChange = (newUID: string, newTitle: string) => {
+    dashboard.meta.folderUid = newUID;
+    dashboard.meta.folderTitle = newTitle;
+    dashboard.meta.hasUnsavedFolderChange = true;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -103,16 +113,21 @@ export function GeneralSettingsUnconnected({
           <Field label="Tags">
             <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
+
           <Field label="Folder">
-            <FolderPicker
-              inputId="dashboard-folder-input"
-              initialTitle={dashboard.meta.folderTitle}
-              initialFolderUid={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              enableCreateNew={true}
-              dashboardId={dashboard.id}
-              skipInitialLoad={true}
-            />
+            {config.featureToggles.nestedFolderPicker ? (
+              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onNestedFolderChange} />
+            ) : (
+              <OldFolderPicker
+                inputId="dashboard-folder-input"
+                initialTitle={dashboard.meta.folderTitle}
+                initialFolderUid={dashboard.meta.folderUid}
+                onChange={onFolderChange}
+                enableCreateNew={true}
+                dashboardId={dashboard.id}
+                skipInitialLoad={true}
+              />
+            )}
           </Field>
 
           <Field

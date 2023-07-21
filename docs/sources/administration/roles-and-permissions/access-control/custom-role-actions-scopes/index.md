@@ -3,6 +3,10 @@ aliases:
   - ../../../enterprise/access-control/custom-role-actions-scopes/
   - ../../../enterprise/access-control/permissions/
 description: Learn about Grafana RBAC permissions, actions, and scopes.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
 weight: 80
@@ -11,7 +15,7 @@ weight: 80
 # RBAC permissions, actions, and scopes
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.

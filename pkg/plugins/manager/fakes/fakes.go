@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -231,16 +233,16 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 }
 
 type FakePluginStorage struct {
-	ExtractFunc func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+	ExtractFunc func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 }
 
 func NewFakePluginStorage() *FakePluginStorage {
 	return &FakePluginStorage{}
 }
 
-func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 	if s.ExtractFunc != nil {
-		return s.ExtractFunc(ctx, pluginID, z)
+		return s.ExtractFunc(ctx, pluginID, dirNameFunc, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
 }
@@ -421,4 +423,43 @@ func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename strin
 		return f.FileFunc(ctx, pluginID, filename)
 	}
 	return nil, nil
+}
+
+type FakeOauthService struct {
+	Result *oauth.ExternalService
+}
+
+func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+	return f.Result, nil
+}
+
+type FakePluginStore struct {
+	PluginList []plugins.PluginDTO
+}
+
+func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	for _, v := range pr.PluginList {
+		if v.ID == pluginID {
+			return v, true
+		}
+	}
+
+	return plugins.PluginDTO{}, false
+}
+
+func (pr *FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	var result []plugins.PluginDTO
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
+	}
+
+	for _, v := range pr.PluginList {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
+	}
+
+	return result
 }

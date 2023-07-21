@@ -67,6 +67,8 @@ export const LayerDragDropList = <T extends LayerElement>({
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         onMouseDown={() => onSelect(element)}
+                        role="button"
+                        tabIndex={0}
                       >
                         <LayerName
                           name={uid}
@@ -81,7 +83,6 @@ export const LayerDragDropList = <T extends LayerElement>({
                               <IconButton
                                 name="copy"
                                 tooltip="Duplicate"
-                                ariaLabel="Duplicate button"
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
                               />
@@ -90,7 +91,6 @@ export const LayerDragDropList = <T extends LayerElement>({
                             <IconButton
                               name="trash-alt"
                               tooltip="Remove"
-                              ariaLabel="Remove button"
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
                             />

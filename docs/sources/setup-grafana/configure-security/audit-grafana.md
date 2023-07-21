@@ -7,6 +7,10 @@ keywords:
   - auditing
   - audit
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Audit a Grafana instance
 weight: 800
 ---
@@ -18,7 +22,7 @@ Auditing allows you to track important changes to your Grafana instance. By defa
 Only API requests or UI actions that trigger an API request generate an audit log.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 ## Audit logs

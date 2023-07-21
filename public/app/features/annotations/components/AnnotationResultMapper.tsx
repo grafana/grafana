@@ -130,7 +130,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     let value = first ? first[row.key] : '';
     if (value && row.key.startsWith('time')) {
       const fmt = getValueFormat('dateTimeAsIso');
-      value = formattedValueToString(fmt(value as number));
+      value = formattedValueToString(fmt(value));
     }
     if (value === null || value === undefined) {
       value = ''; // empty string

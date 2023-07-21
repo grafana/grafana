@@ -46,7 +46,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
         color: ${theme.colors.text.secondary};
         padding: 0;
         justify-content: center;
-        border-radius: 50%;
+        border-radius: ${theme.shape.radius.circle};
         height: ${theme.spacing(theme.components.height.sm)};
         width: ${theme.spacing(theme.components.height.sm)};
         svg {

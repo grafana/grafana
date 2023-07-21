@@ -147,6 +147,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
+			rule.GrafanaManagedAlert.Condition = data2.RefID
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
 				Rule:           rule,
 				NamespaceUID:   "test-folder",
@@ -180,6 +181,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
+			rule.GrafanaManagedAlert.Condition = data2.RefID
 			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
 				Rule:           rule,
 				NamespaceUID:   "test-folder",

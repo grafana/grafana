@@ -7,6 +7,10 @@ aliases:
   - ../features/datasources/add-a-data-source/
   - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+labels:
+  products:
+    - enterprise
+    - oss
 title: Data source management
 weight: 100
 ---
@@ -32,7 +36,7 @@ Only users with the organization admin role can add data sources.
 1. Click the data source you want to add.
 1. Configure the data source following instructions specific to that data source.
 
-   For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
+For links to data source-specific documentation, see [Data sources]({{< relref "../../datasources" >}}).
 
 ## Data source permissions
 
@@ -81,29 +85,33 @@ You can assign data source permissions to users, teams, and roles which will all
 
 <div class="clearfix"></div>
 
-## Query caching
+## Query and resource caching
 
-When query caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the exact same query again, the results will come back from the cache instead of from the data source (like Splunk or ServiceNow) itself.
+When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results will come back from the cache instead of from the data source.
 
-Query caching works for all backend data sources. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL).
+When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend/" >}}).
+
+The caching feature works for **all** backend data sources. You can enable the cache globally in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-The following cache backends are available: in-memory, Redis, and Memcached.
+The following cache backend options are available: in-memory, Redis, and Memcached.
 
 {{% admonition type="note" %}}
 Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 {{% /admonition %}}
 
-When a panel queries a cached data source, the time until this query fetches fresh data is determined by the panel's **interval.** This means that wider panels and dashboards with shorter time ranges fetch new data more frequently than narrower panels and dashboards with longer time ranges.
+When a panel queries a data source with cached data, it will either fetch fresh data or use cached data depending on the panel's **interval.** The interval is used to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
 
-Interval is visible in a panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}). It is calculated like this: `(max data points) / time range`. Max data points are calculated based on the width of the panel. For example, a full-width panel on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes. In this example, cached data for this panel will be served for up to 10 minutes before Grafana queries the data source again and returns new data.
+A panel's interval is visible in the [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}). It is calculated as follows: `time range / max data points`. Max data points are calculated based on the width of the panel. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, cached data for this panel will be served for up to 10 minutes before Grafana needs to query the data source again for new data.
 
-You can make a panel retrieve fresh data more frequently by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
+You can configure a panel to retrieve data more often by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
 
-### Query caching benefits
+### Caching benefits
+
+By reducing the number of queries and requests sent to data sources, caching can provide the following benefits:
 
 - Faster dashboard load times, especially for popular dashboards.
 - Reduced API costs.
@@ -111,21 +119,13 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 ### Data sources that work with query caching
 
-Query caching works for all [Enterprise data sources](/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
+Query caching works for Grafana's [built-in data sources]({{< relref "../../datasources/#built-in-core-data-sources" >}}), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in the plugins SDK.
 
-- CloudWatch Metrics
-- Google Cloud Monitoring
-- InfluxDB
-- Microsoft SQL Server
-- MySQL
-- Postgres
-- Tempo
+To verify that a data source works with query caching, follow the [instructions below](#enable-and-configure-query-caching) to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
 
-Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not improve performance.
-
-Query caching also works for all data sources that include a backend. More specifically, caching works with data sources that extend the `DataSourceWithBackend` class in the plugins SDK.
-
-To tell if a data source works with query caching, follow the instructions below to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
+{{% admonition type="note" %}}
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend/#resources" >}}) for details.
+{{% /admonition %}}
 
 ### Enable and configure query caching
 
@@ -140,7 +140,7 @@ By default, data source queries are not cached. To enable query caching for a si
 1. Click **Enable**.
 1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
 
-You can optionally override a data source's configured TTL for individual dashboard panels. This can be be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand the Query options, and enter your the TTL in milliseconds.
+You can optionally override a data source's configured TTL for individual dashboard panels. This can be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand the Query options, and enter your the TTL in milliseconds.
 
 {{< figure max-width="500px" src="/media/docs/grafana/per-panel-cache-ttl-9-4.png" caption="Set Cache TTL for a single panel" >}}
 
@@ -148,7 +148,7 @@ You can optionally override a data source's configured TTL for individual dashbo
 If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 {{% /admonition %}}
 
-To configure global settings for query caching, refer to the [Query caching section of Enterprise Configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}).
+To configure global settings for query caching, refer to the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}).
 
 ### Disable query caching
 
@@ -159,7 +159,7 @@ To disable query caching for a single data source:
 1. In the data source list, click the data source that you want to turn off caching for.
 1. On the Cache tab, click **Disable**.
 
-To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the [Query caching section of Enterprise Configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
+To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
 ### Clear cache
 

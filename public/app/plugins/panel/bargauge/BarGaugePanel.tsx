@@ -61,7 +61,9 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
     if (hasLinks && getLinks) {
       return (
         <div style={{ width: '100%', display: orientation === VizOrientation.Vertical ? 'flex' : 'initial' }}>
-          <DataLinksContextMenu links={getLinks}>{(api) => this.renderComponent(valueProps, api)}</DataLinksContextMenu>
+          <DataLinksContextMenu style={{ height: '100%' }} links={getLinks}>
+            {(api) => this.renderComponent(valueProps, api)}
+          </DataLinksContextMenu>
         </div>
       );
     }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useId, useMemo } from 'react';
+import React, { useEffect, useId, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
@@ -53,6 +53,16 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const { datasource } = props;
   const { measurement, policy } = query;
   const { retentionPolicies } = useRetentionPolicies(datasource);
+
+  useEffect(() => {
+    if (!policy) {
+      props.onChange({
+        ...query,
+        policy: retentionPolicies[0],
+      });
+      props.onRunQuery();
+    }
+  }, [policy, props, query, retentionPolicies]);
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(datasource, [], measurement, policy)).map(
@@ -121,7 +131,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
     <div>
       <SegmentSection label="FROM" fill={true}>
         <FromSection
-          policy={policy ?? retentionPolicies[0]}
+          policy={policy}
           measurement={measurement}
           getPolicyOptions={() =>
             withTemplateVariableOptions(
