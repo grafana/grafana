@@ -78,6 +78,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   // Used to position the popper correctly
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
+
+  // Used to handle tabbing inside the dropdown before closing it
   const [focusedElementManually, setFocusedElementManually] = useState<HTMLElement | null>();
 
   const openDropdown = () => {
