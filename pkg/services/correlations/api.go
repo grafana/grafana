@@ -55,11 +55,6 @@ func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response
 		if errors.Is(err, ErrSourceDataSourceDoesNotExists) || errors.Is(err, ErrTargetDataSourceDoesNotExists) {
 			return response.Error(http.StatusNotFound, "Data source not found", err)
 		}
-
-		if errors.Is(err, ErrCorrelationReadOnly) {
-			return response.Error(http.StatusForbidden, "Correlation is read only", err)
-		}
-
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
 	}
 
