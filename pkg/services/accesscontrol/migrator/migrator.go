@@ -16,7 +16,7 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	err := db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		var permissions []accesscontrol.Permission
 
-		err := sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND kind = '' AND attribute = '' AND identifier = ''").Find(&permissions)
+		err := sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND identifier = ''").Find(&permissions)
 		if err != nil {
 			return err
 		}
