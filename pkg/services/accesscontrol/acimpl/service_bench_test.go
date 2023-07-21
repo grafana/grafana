@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -45,7 +44,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	require.NoError(b, err)
 
 	// Populate users, roles and assignments
-	if errInsert := actest.ConcurrentBatch(actest.Concurrency, usersCount, actest.BatchSize, func(start, end int) error {
+	if errInsert := accesscontrol.ConcurrentBatch(accesscontrol.Concurrency, usersCount, accesscontrol.BatchSize, func(start, end int) error {
 		n := end - start
 		users := make([]user.User, 0, n)
 		orgUsers := make([]org.OrgUser, 0, n)
@@ -106,7 +105,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 
 	// Populate permissions
 	action2 := "resources:action2"
-	if errInsert := actest.ConcurrentBatch(actest.Concurrency, resourceCount*usersCount, actest.BatchSize, func(start, end int) error {
+	if errInsert := accesscontrol.ConcurrentBatch(accesscontrol.Concurrency, resourceCount*usersCount, accesscontrol.BatchSize, func(start, end int) error {
 		permissions := make([]accesscontrol.Permission, 0, end-start)
 		for i := start; i < end; i++ {
 			permissions = append(permissions, accesscontrol.Permission{
