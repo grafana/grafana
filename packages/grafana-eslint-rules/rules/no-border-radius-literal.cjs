@@ -16,7 +16,8 @@ const borderRadiusRule = createRule({
             if (
               property.type === AST_NODE_TYPES.Property &&
               property.key.type === AST_NODE_TYPES.Identifier &&
-              property.key.name === 'borderRadius'
+              property.key.name === 'borderRadius' &&
+              property.value.type === AST_NODE_TYPES.Literal
             ) {
               context.report({
                 node: node.arguments[0],
