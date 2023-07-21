@@ -44,6 +44,32 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
 
     builder.addHook('init', (u) => {
       setPlot((_plot = u));
+
+      u.over.addEventListener('click', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          setIsAddingAnnotation(true);
+
+          if (u.select.width === 0) {
+            u.select.left = u.cursor.left!;
+            u.select.height = u.bbox.height / window.devicePixelRatio;
+            u.select.width = 1;
+          }
+
+          setSelection({
+            min: u.posToVal(u.select.left, 'x'),
+            max: u.posToVal(u.select.left + u.select.width, 'x'),
+            bbox: {
+              left: u.select.left,
+              top: 0,
+              height: u.select.height,
+              width: u.select.width,
+            },
+          });
+
+          u.over.querySelector<HTMLDivElement>('.u-select')!.classList.add(styles.overlay);
+          forceRender(Math.random());
+        }
+      });
     });
 
     builder.addHook('setSelect', (u) => {
@@ -76,7 +102,7 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
           left: `${plot.select.left + plot.select.width / 2}px`,
         }}
       >
-        {isAddingAnnotation && selection && (
+        {selection && (
           <AnnotationEditor2
             selection={selection}
             timeZone={timeZone}

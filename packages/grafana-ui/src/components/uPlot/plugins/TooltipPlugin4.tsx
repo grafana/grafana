@@ -151,6 +151,12 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
       // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
       u.over.addEventListener('click', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          dismiss();
+          // @TODO lock?
+          return;
+        }
+
         if (_isHovering) {
           if (e.target === u.over) {
             _isPinned = !_isPinned;
