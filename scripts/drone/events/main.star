@@ -59,6 +59,9 @@ trigger = {
             "latest.json",
         ],
     },
+    "repo": [
+        "grafana/grafana",
+    ],
 }
 
 def main_pipelines():

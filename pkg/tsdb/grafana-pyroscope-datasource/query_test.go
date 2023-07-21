@@ -135,7 +135,7 @@ func Test_profileToDataFrame(t *testing.T) {
 	require.Equal(t, data.NewField("value", nil, []int64{20, 10, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[1])
 	require.Equal(t, data.NewField("self", nil, []int64{1, 3, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[2])
 	require.Equal(t, "label", frame.Fields[3].Name)
-	require.Equal(t, []int64{0, 1, 2}, fieldValues[int64](frame.Fields[3]))
+	require.Equal(t, []data.EnumItemIndex{0, 1, 2}, fieldValues[data.EnumItemIndex](frame.Fields[3]))
 	require.Equal(t, []string{"func1", "func2", "func3"}, frame.Fields[3].Config.TypeConfig.Enum.Text)
 }
 
@@ -214,7 +214,7 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 				data.NewField("level", nil, []int64{0, 1, 1, 2}),
 				data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
 				data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
-				data.NewField("label", nil, []int64{0, 1, 2, 3}).SetConfig(labelConfig),
+				data.NewField("label", nil, []data.EnumItemIndex{0, 1, 2, 3}).SetConfig(labelConfig),
 			}, frame.Fields)
 	})
 

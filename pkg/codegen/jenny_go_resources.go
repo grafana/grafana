@@ -49,7 +49,7 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
 		PackageName:      mname,
 		KindName:         kind.Props().Common().Name,
-		Version:          "0", // HARDCODED for now (dot not supported in agregated mode) sch.Version().String(),
+		Version:          strings.Replace(sfg.Schema.Version().String(), ".", "-", -1),
 		SubresourceNames: subr,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core resource template: %w", err)
