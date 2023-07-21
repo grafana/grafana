@@ -603,8 +603,8 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('modifyQuery', () => {
-    describe('when called with ADD_FILTER', () => {
+  describe('toggleQueryFilter', () => {
+    describe('when called with FILTER', () => {
       let ds: LokiDatasource;
       beforeEach(() => {
         ds = createLokiDatasource(templateSrvStub);
@@ -613,8 +613,8 @@ describe('LokiDatasource', () => {
       describe('and query has no parser', () => {
         it('then the correct label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz", job="grafana"}');
@@ -622,8 +622,8 @@ describe('LokiDatasource', () => {
 
         it('then the correctly escaped label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { options: { key: 'job', value: '\\test' }, type: 'ADD_FILTER' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: '\\test' }, type: 'FILTER' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz", job="\\\\test"}');
@@ -631,8 +631,8 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('rate({bar="baz", job="grafana"}[5m])');
@@ -641,8 +641,8 @@ describe('LokiDatasource', () => {
         describe('and the filter is already present', () => {
           it('then it should remove the filter', () => {
             const query: LokiQuery = { refId: 'A', expr: '{bar="baz", job="grafana"}' };
-            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-            const result = ds.modifyQuery(query, action);
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER' };
+            const result = ds.toggleQueryFilter(query, action);
 
             expect(result.refId).toEqual('A');
             expect(result.expr).toEqual('{bar="baz"}');
@@ -650,8 +650,8 @@ describe('LokiDatasource', () => {
 
           it('then it should remove the filter with escaped value', () => {
             const query: LokiQuery = { refId: 'A', expr: '{place="luna", job="\\"grafana/data\\""}' };
-            const action = { options: { key: 'job', value: '"grafana/data"' }, type: 'ADD_FILTER' };
-            const result = ds.modifyQuery(query, action);
+            const action = { options: { key: 'job', value: '"grafana/data"' }, type: 'FILTER' };
+            const result = ds.toggleQueryFilter(query, action);
 
             expect(result.refId).toEqual('A');
             expect(result.expr).toEqual('{place="luna"}');
@@ -662,8 +662,8 @@ describe('LokiDatasource', () => {
       describe('and query has parser', () => {
         it('then the correct label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz"} | logfmt | job=`grafana`');
@@ -671,8 +671,8 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('rate({bar="baz"} | logfmt | job=`grafana` [5m])');
@@ -681,8 +681,8 @@ describe('LokiDatasource', () => {
         describe('and the filter is already present', () => {
           it('then it should remove the filter', () => {
             const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt | job="grafana"' };
-            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-            const result = ds.modifyQuery(query, action);
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER' };
+            const result = ds.toggleQueryFilter(query, action);
 
             expect(result.refId).toEqual('A');
             expect(result.expr).toEqual('{bar="baz"} | logfmt');
@@ -691,7 +691,7 @@ describe('LokiDatasource', () => {
       });
     });
 
-    describe('when called with ADD_FILTER_OUT', () => {
+    describe('when called with FILTER_OUT', () => {
       describe('and query has no parser', () => {
         let ds: LokiDatasource;
         beforeEach(() => {
@@ -700,8 +700,8 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz", job!="grafana"}');
@@ -709,8 +709,8 @@ describe('LokiDatasource', () => {
 
         it('then the correctly escaped label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
-          const action = { options: { key: 'job', value: '"test' }, type: 'ADD_FILTER_OUT' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: '"test' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz", job!="\\"test"}');
@@ -718,8 +718,8 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('rate({bar="baz", job!="grafana"}[5m])');
@@ -728,8 +728,8 @@ describe('LokiDatasource', () => {
         describe('and the opposite filter is present', () => {
           it('then it should remove the filter', () => {
             const query: LokiQuery = { refId: 'A', expr: '{bar="baz", job="grafana"}' };
-            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
-            const result = ds.modifyQuery(query, action);
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+            const result = ds.toggleQueryFilter(query, action);
 
             expect(result.refId).toEqual('A');
             expect(result.expr).toEqual('{bar="baz", job!="grafana"}');
@@ -745,8 +745,8 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for logs query', () => {
           const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('{bar="baz"} | logfmt | job!=`grafana`');
@@ -754,8 +754,8 @@ describe('LokiDatasource', () => {
 
         it('then the correct label should be added for metrics query', () => {
           const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
-          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
-          const result = ds.modifyQuery(query, action);
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
 
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('rate({bar="baz"} | logfmt | job!=`grafana` [5m])');
@@ -764,8 +764,8 @@ describe('LokiDatasource', () => {
         describe('and the filter is already present', () => {
           it('then it should remove the filter', () => {
             const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt | job="grafana"' };
-            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
-            const result = ds.modifyQuery(query, action);
+            const action = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+            const result = ds.toggleQueryFilter(query, action);
 
             expect(result.refId).toEqual('A');
             expect(result.expr).toEqual('{bar="baz"} | logfmt | job!=`grafana`');
@@ -1371,25 +1371,17 @@ describe('showContextToggle()', () => {
   });
 });
 
-describe('analyzeQuery()', () => {
+describe('queryHasFilter()', () => {
   let ds: LokiDatasource;
   beforeEach(() => {
     ds = createLokiDatasource(templateSrvStub);
   });
-  it('returns false for unsupported inspections', () => {
-    const query = { refId: 'A', expr: '{a="b"}' };
-    expect(ds.analyzeQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
-  });
   it('inspects queries for filter presence', () => {
     const query = { refId: 'A', expr: '{grafana="awesome"}' };
     expect(
-      ds.analyzeQuery(query, {
-        check: 'HAS_FILTER',
-        attributes: {
-          key: 'grafana',
-          operator: '=',
-          value: 'awesome',
-        },
+      ds.queryHasFilter(query, {
+        key: 'grafana',
+        value: 'awesome',
       })
     ).toBe(true);
   });
