@@ -12,7 +12,7 @@ Previously we hijacked the aria-label property to use as E2E selectors as an att
 
 Now, we prefer using data-testid for E2E selectors.
 
-### `@grafana/no-aria-label-selectors`
+### `@grafana/no-border-radius-literal`
 
 Check if border-radius theme tokens are used.
 
