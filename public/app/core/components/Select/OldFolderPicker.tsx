@@ -58,7 +58,7 @@ export interface Props {
 export type SelectedFolder = SelectableValue<string>;
 const VALUE_FOR_ADD = '-10';
 
-export function FolderPicker(props: Props) {
+export function OldFolderPicker(props: Props) {
   const {
     dashboardId,
     allowEmpty,
