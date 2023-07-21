@@ -117,10 +117,6 @@ To use this feature, toggle on the "Stream response" option in either the Search
 
 Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages and tooltips to assist you with configuring and customizing data sources.
 
-### Lucene query parser for Elasticsearch
-
-Adding and removing filters from Elasticsearch queries has now become smarter with the introduction of a Lucene query parser to modify queries using the "Filter for value" and "Filter out value" icons displayed in the Log Details component in Explore.
-
 ### Loki query splitting
 
 In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
