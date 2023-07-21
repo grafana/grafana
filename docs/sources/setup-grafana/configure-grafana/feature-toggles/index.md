@@ -60,6 +60,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `accessControlOnCall`                | Access control primitives for OnCall                                                                                                                                                         |
 | `nestedFolders`                      | Enable folder nesting                                                                                                                                                                        |
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
+| `prometheusResourceBrowserCache`     | Displays browser caching options in Prometheus data source configuration                                                                                                                     |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `refactorVariablesTimeRange`         | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                                       |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
@@ -96,7 +97,6 @@ Experimental features might be changed or removed without prior notice.
 | `onlyExternalOrgRoleSync`                   | Prohibits a user from changing organization roles synced with external auth providers                        |
 | `traceqlSearch`                             | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries    |
 | `timeSeriesTable`                           | Enable time series table transformer & sparkline cell type                                                   |
-| `prometheusResourceBrowserCache`            | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`                  | Query InfluxDB InfluxQL without the proxy                                                                    |
 | `clientTokenRotation`                       | Replaces the current in-request token rotation so that the client initiates the rotation                     |
 | `lokiLogsDataplane`                         | Changes logs responses from Loki to be compliant with the dataplane specification.                           |
