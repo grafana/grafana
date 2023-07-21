@@ -1,3 +1,16 @@
+import Feature from 'ol/Feature';
+import Map from 'ol/Map';
+import { Coordinate } from 'ol/coordinate';
+import { MultiLineString } from 'ol/geom';
+import Point from 'ol/geom/Point';
+import { Group as LayerGroup } from 'ol/layer';
+import VectorLayer from 'ol/layer/Vector';
+import { fromLonLat } from 'ol/proj';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
+import DayNight from 'ol-ext/source/DayNight';
+import { Subscription } from 'rxjs';
+
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
@@ -7,19 +20,6 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
 } from '@grafana/data';
-import Map from 'ol/Map';
-import VectorLayer from 'ol/layer/Vector';
-import VectorSource from 'ol/source/Vector';
-import { Fill, Stroke, Style, Circle } from 'ol/style';
-import { Group as LayerGroup } from 'ol/layer';
-import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
-
-import DayNight from 'ol-ext/source/DayNight';
-import { fromLonLat } from 'ol/proj';
-import { Subscription } from 'rxjs';
-import { MultiLineString } from 'ol/geom';
-import { Coordinate } from 'ol/coordinate';
 
 export enum ShowTime {
   From = 'from',

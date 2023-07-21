@@ -252,12 +252,6 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
-			Name:        "showTraceId",
-			Description: "Show trace ids for requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "emptyDashboardPage",
 			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
 			Stage:        FeatureStageGeneralAvailability,
@@ -311,9 +305,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -550,6 +545,13 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "lokiFormatQuery",
+			Description:  "Enables the ability to format Loki queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "cloudWatchLogsMonacoEditor",

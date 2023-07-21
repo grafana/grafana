@@ -286,6 +286,12 @@
      "format": "int64",
      "type": "integer"
     },
+    "contactPoints": {
+     "items": {
+      "$ref": "#/definitions/ContactPointExport"
+     },
+     "type": "array"
+    },
     "groups": {
      "items": {
       "$ref": "#/definitions/AlertRuleGroupExport"
@@ -535,6 +541,25 @@
     }
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
+   "type": "object"
+  },
+  "ContactPointExport": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/ReceiverExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
   "ContactPoints": {
@@ -2851,6 +2876,24 @@
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
    "type": "object"
   },
+  "ReceiverExport": {
+   "properties": {
+    "disableResolveMessage": {
+     "type": "boolean"
+    },
+    "settings": {
+     "$ref": "#/definitions/Json"
+    },
+    "type": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+   "type": "object"
+  },
   "Regexp": {
    "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
    "title": "Regexp is the representation of a compiled regular expression.",
@@ -3681,6 +3724,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3716,7 +3760,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "Userinfo": {
@@ -3896,6 +3940,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3919,7 +3964,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4079,13 +4123,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4141,6 +4185,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4284,7 +4329,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4322,6 +4366,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4632,13 +4677,6 @@
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
      {
-      "description": "Alert rule UID",
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     },
-     {
       "default": false,
       "description": "Whether to initiate a download of the file or not.",
       "in": "query",
@@ -4650,6 +4688,13 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Alert rule UID",
+      "in": "path",
+      "name": "UID",
+      "required": true,
       "type": "string"
      }
     ],
@@ -4728,6 +4773,58 @@
      }
     },
     "summary": "Create a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/contact-points/export": {
+   "get": {
+    "operationId": "RouteGetContactpointsExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+      "in": "query",
+      "name": "decrypt",
+      "type": "boolean"
+     },
+     {
+      "description": "Filter by name",
+      "in": "query",
+      "name": "name",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all contact points in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -4883,18 +4980,6 @@
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
      {
-      "in": "path",
-      "name": "FolderUID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "path",
-      "name": "Group",
-      "required": true,
-      "type": "string"
-     },
-     {
       "default": false,
       "description": "Whether to initiate a download of the file or not.",
       "in": "query",
@@ -4906,6 +4991,18 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
       "type": "string"
      }
     ],

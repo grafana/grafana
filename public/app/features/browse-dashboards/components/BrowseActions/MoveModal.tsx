@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Alert, Button, Field, Modal } from '@grafana/ui';
-import { P } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -51,9 +51,9 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         />
       )}
 
-      <P>
+      <Text element="p">
         <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
-      </P>
+      </Text>
 
       <DescendantCount selectedItems={selectedItems} />
 
@@ -61,7 +61,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
         {config.featureToggles.nestedFolderPicker ? (
-          <NestedFolderPicker value={moveTarget} onChange={handleFolderChange} />
+          <NestedFolderPicker value={moveTarget} onChange={handleFolderChange} excludeUIDs={selectedFolders} />
         ) : (
           <FolderPicker allowEmpty onChange={handleFolderChange} />
         )}
