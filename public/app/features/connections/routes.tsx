@@ -5,17 +5,13 @@ import { RouteDescriptor } from 'app/core/navigation/types';
 import { ROUTE_BASE_ID } from './constants';
 
 export function getRoutes(): RouteDescriptor[] {
-  if (config.featureToggles.dataConnectionsConsole) {
-    return [
-      {
-        path: `/${ROUTE_BASE_ID}`,
-        exact: false,
-        component: SafeDynamicImport(
-          () => import(/* webpackChunkName: "Connections"*/ 'app/features/connections/Connections')
-        ),
-      },
-    ];
-  }
-
-  return [];
+  return [
+    {
+      path: `/${ROUTE_BASE_ID}`,
+      exact: false,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "Connections"*/ 'app/features/connections/Connections')
+      ),
+    },
+  ];
 }

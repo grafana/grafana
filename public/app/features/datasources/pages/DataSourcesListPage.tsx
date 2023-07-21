@@ -16,7 +16,7 @@ export function DataSourcesListPage() {
   return (
     <Page navId="datasources" actions={actions}>
       <Page.Contents>
-        {config.featureToggles.dataConnectionsConsole && <ConnectionsRedirectNotice />}
+        <ConnectionsRedirectNotice />
         <DataSourcesList />
       </Page.Contents>
     </Page>

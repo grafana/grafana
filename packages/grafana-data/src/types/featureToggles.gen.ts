@@ -41,7 +41,6 @@ export interface FeatureToggles {
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
-  dataConnectionsConsole?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
