@@ -4,7 +4,8 @@ import { useToggle } from 'react-use';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Collapse, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryStats } from 'app/plugins/datasource/loki/types';
 
 export interface Props {
@@ -45,6 +46,11 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
       >
         <div className={styles.body}>{children}</div>
       </Collapse>
+      {queryStats && config.featureToggles.lokiQuerySplitting && (
+        <Tooltip content="Note: the query will be split into multiple parts and executed in sequence. Query limits will only apply each individual part.">
+          <Icon tabIndex={0} name="info-circle" className={styles.tooltip} size="sm" />
+        </Tooltip>
+      )}
       {queryStats && <p className={styles.stats}>This query will process approximately {convertUnits()}.</p>}
     </div>
   );
@@ -91,6 +97,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: '0px',
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    tooltip: css({
+      marginRight: theme.spacing(0.25),
     }),
   };
 };

@@ -91,7 +91,6 @@ describe('Prometheus Result Transformer', () => {
         fields: [
           { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'Value',
             type: FieldType.number,
             values: [4, 5, 6],
             config: {
@@ -108,7 +107,6 @@ describe('Prometheus Result Transformer', () => {
         fields: [
           { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'Value',
             type: FieldType.number,
             values: [7, 8, 9],
             config: {
@@ -362,7 +360,7 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
-    it('results with heatmap format should be correctly transformed', () => {
+    it('results with deprecated heatmap format should be correctly transformed', () => {
       const options = {
         targets: [
           {
@@ -422,6 +420,63 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[2].name).toEqual('2');
       expect(series.data[0].fields[3].name).toEqual('+Inf');
     });
+    it('results with heatmap format should be correctly transformed', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
+    });
 
     it('results with heatmap format from multiple queries should be correctly transformed', () => {
       const options = {
@@ -444,7 +499,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -456,7 +510,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
@@ -468,7 +521,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
@@ -480,7 +532,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -492,7 +543,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
@@ -504,7 +554,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
@@ -539,7 +588,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1', additionalProperty: '10' },
@@ -551,7 +599,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2', additionalProperty: '10' },
@@ -563,7 +610,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf', additionalProperty: '10' },
@@ -576,7 +622,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [0, 10, 10],
                 labels: { le: '1', additionalProperty: '20' },
@@ -588,7 +633,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 40],
                 labels: { le: '2', additionalProperty: '20' },
@@ -600,7 +644,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 60],
                 labels: { le: '+Inf', additionalProperty: '20' },
@@ -613,7 +656,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 30, 60],
                 labels: { le: '1', additionalProperty: '30' },
@@ -625,7 +667,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 40, 60],
                 labels: { le: '2', additionalProperty: '30' },
@@ -637,7 +678,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [40, 40, 60],
                 labels: { le: '+Inf', additionalProperty: '30' },
@@ -679,7 +719,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -697,7 +736,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40, 90, 14, 21],
                 labels: { le: '6' },
@@ -729,7 +767,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
@@ -747,7 +784,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40, 90, 14, 21],
                 labels: { le: '6' },

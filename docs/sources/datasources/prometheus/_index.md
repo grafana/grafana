@@ -122,7 +122,7 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 ## Azure authentication settings
 
-The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication](docs/grafana/latest/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
+The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication](/docs/grafana/latest/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
 
 In Grafana Enterprise, update the .ini configuration file: [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/). Depending on your setup, the .ini file is located [here](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location).
 Add the following setting in the **[auth]** section :

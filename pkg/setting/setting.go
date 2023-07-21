@@ -494,6 +494,9 @@ type Cfg struct {
 	// skip the org roles coming from GrafanaCom
 	GrafanaComSkipOrgRoleSync bool
 
+	// Grafana.com Auth enabled through [auth.grafananet] config section
+	GrafanaNetAuthEnabled bool
+
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
 	GeomapEnableCustomBaseLayers bool
@@ -1452,6 +1455,11 @@ func readAuthGrafanaComSettings(cfg *Cfg) {
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthGrafanaNetSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.grafananet")
+	cfg.GrafanaNetAuthEnabled = sec.Key("enabled").MustBool(false)
+}
+
 func readAuthGithubSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.github")
 	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
@@ -1559,6 +1567,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// GrafanaCom
 	readAuthGrafanaComSettings(cfg)
+	readAuthGrafanaNetSettings(cfg)
 
 	// Github
 	readAuthGithubSettings(cfg)
