@@ -46,6 +46,11 @@ func FetchImages(c *cli.Context) error {
 
 	edition := fmt.Sprintf("-%s", cfg.Edition)
 
+	if cfg.Edition == "enterprise2" {
+		cfg.Archs = []config.Architecture{config.ArchAMD64}
+		cfg.Distribution = []config.Distribution{config.Alpine}
+	}
+
 	err = gcloud.ActivateServiceAccount()
 	if err != nil {
 		return err
