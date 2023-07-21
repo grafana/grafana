@@ -1,7 +1,8 @@
 import { AlignedData } from 'uplot';
 
-import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta, renderLegendFormat } from '..';
+import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta } from '..';
 import { join } from '../transformations/transformers/joinDataFrames';
+import { renderLegendFormat } from '../utils/legend';
 
 import {
   DataFrameJSON,

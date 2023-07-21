@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../http_api/correlations/
-canonical: /docs/grafana/latest/developers/http_api/correlation/
+canonical: /docs/grafana/latest/developers/http_api/correlations/
 description: Grafana Correlations HTTP API
 keywords:
   - grafana
