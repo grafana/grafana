@@ -294,6 +294,90 @@ describe('getPanelMenu()', () => {
 
       expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
     });
+
+    it('should contain menu item with category', () => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            category: 'Incident',
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Incident',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Declare incident',
+                href: '/a/grafana-basic-app/declare-incident',
+              }),
+            ]),
+          }),
+        ])
+      );
+    });
+
+    it('should contain menu item with category and append items without category after divider', () => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            category: 'Incident',
+          },
+          {
+            id: '2',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Create forecast',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Incident',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Declare incident',
+                href: '/a/grafana-basic-app/declare-incident',
+              }),
+            ]),
+          }),
+          expect.objectContaining({
+            type: 'divider',
+          }),
+          expect.objectContaining({
+            text: 'Create forecast',
+          }),
+        ])
+      );
+    });
   });
 
   describe('when panel is in view mode', () => {
