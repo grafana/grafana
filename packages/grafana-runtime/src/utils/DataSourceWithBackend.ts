@@ -112,7 +112,7 @@ class DataSourceWithBackend<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
-  private dataSourceApi: DataSourceApi<DataQuery, DataSourceJsonData>;
+  private readonly dataSourceApi: DataSourceApi<DataQuery, DataSourceJsonData>;
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
     this.dataSourceApi = instanceSettings.isPublicDashboard

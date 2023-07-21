@@ -30,6 +30,9 @@ import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/Dashboa
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
+import { AnnotationsRunner } from './AnnotationsRunner';
+import { AuthorizedAnnotationsRunner } from './AuthorizedAnnotationsRunner';
+import { UnauthorizedAnnotationsRunner } from './UnauthorizedAnnotationsRunner';
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { doTimeRegionQuery } from './timeRegions';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
@@ -37,8 +40,12 @@ import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQue
 let counter = 100;
 
 export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
+  private readonly annotationsRunner: AnnotationsRunner;
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
+    this.annotationsRunner = instanceSettings.isPublicDashboard
+      ? new UnauthorizedAnnotationsRunner()
+      : new AuthorizedAnnotationsRunner();
     this.annotations = {
       QueryEditor: AnnotationQueryEditor,
       prepareAnnotation(json: any): AnnotationQuery<GrafanaAnnotationQuery> {
@@ -84,7 +91,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
     for (const target of request.targets) {
       if (target.queryType === GrafanaQueryType.Annotations) {
         return from(
-          this.getAnnotations({
+          this.annotationsRunner.getAnnotations(request, {
             range: request.range,
             rangeRaw: request.range.raw,
             annotation: target as unknown as AnnotationQuery<GrafanaAnnotationQuery>,
