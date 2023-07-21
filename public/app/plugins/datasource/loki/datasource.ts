@@ -618,7 +618,7 @@ export class LokiDatasource
   toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
     switch (filter.type) {
-      case 'FILTER': {
+      case 'FILTER_FOR': {
         if (filter.options?.key && filter.options?.value) {
           const value = escapeLabelValueInSelector(filter.options.value);
 

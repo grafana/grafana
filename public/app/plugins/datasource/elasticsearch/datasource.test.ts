@@ -1246,14 +1246,14 @@ describe('toggleQueryFilter', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.toggleQueryFilter(query, { type: 'FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'foo:"bar"'
       );
     });
 
     it('should toggle the filter', () => {
       query.query = 'foo:"bar"';
-      expect(ds.toggleQueryFilter(query, { type: 'FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe('');
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe('');
     });
 
     it('should add the negative filter', () => {
@@ -1277,7 +1277,7 @@ describe('toggleQueryFilter', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.toggleQueryFilter(query, { type: 'FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'test:"value" AND foo:"bar"'
       );
     });

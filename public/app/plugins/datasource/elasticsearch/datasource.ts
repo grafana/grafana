@@ -899,7 +899,7 @@ export class ElasticDatasource
   toggleQueryFilter(query: ElasticsearchQuery, filter: ToggleFilterAction): ElasticsearchQuery {
     let expression = query.query ?? '';
     switch (filter.type) {
-      case 'FILTER': {
+      case 'FILTER_FOR': {
         // This gives the user the ability to toggle a filter on and off.
         expression = queryHasFilter(expression, filter.options.key, filter.options.value)
           ? removeFilterFromQuery(expression, filter.options.key, filter.options.value)
