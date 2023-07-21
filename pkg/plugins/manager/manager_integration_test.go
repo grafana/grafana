@@ -10,9 +10,10 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -127,6 +128,10 @@ func TestIntegrationPluginManager(t *testing.T) {
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
+
+	_ = ps.StartAsync(context.Background())
+	_ = ps.AwaitRunning(context.Background())
+	defer ps.StopAsync()
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, ps)
