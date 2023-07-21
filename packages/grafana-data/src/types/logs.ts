@@ -275,7 +275,7 @@ export interface ToggleFilterAction {
  * @internal
  * @alpha
  */
-export interface DataSourceToggleableQueryFiltersSupport<TQuery extends DataQuery> {
+export interface DataSourceWithToggleableQueryFiltersSupport<TQuery extends DataQuery> {
   /**
    * Toggle filters on and off from query.
    * If the filter is already present, it should be removed.
@@ -294,7 +294,7 @@ export interface DataSourceToggleableQueryFiltersSupport<TQuery extends DataQuer
  */
 export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
   datasource: unknown
-): datasource is DataSourceToggleableQueryFiltersSupport<TQuery> => {
+): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
   return (
     datasource !== null &&
     typeof datasource === 'object' &&

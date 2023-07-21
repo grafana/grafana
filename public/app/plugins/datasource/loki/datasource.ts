@@ -33,7 +33,7 @@ import {
   SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
-  DataSourceToggleableQueryFiltersSupport,
+  DataSourceWithToggleableQueryFiltersSupport,
   ToggleFilterAction,
   QueryFilterOptions,
 } from '@grafana/data';
@@ -135,7 +135,7 @@ export class LokiDatasource
     DataSourceWithSupplementaryQueriesSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
     DataSourceWithQueryExportSupport<LokiQuery>,
-    DataSourceToggleableQueryFiltersSupport<LokiQuery>
+    DataSourceWithToggleableQueryFiltersSupport<LokiQuery>
 {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;

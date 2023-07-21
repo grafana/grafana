@@ -32,7 +32,7 @@ import {
   toUtc,
   AnnotationEvent,
   FieldType,
-  DataSourceToggleableQueryFiltersSupport,
+  DataSourceWithToggleableQueryFiltersSupport,
   QueryFilterOptions,
   ToggleFilterAction,
 } from '@grafana/data';
@@ -94,7 +94,7 @@ export class ElasticDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
     DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
-    DataSourceToggleableQueryFiltersSupport<ElasticsearchQuery>
+    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
