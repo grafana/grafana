@@ -137,7 +137,8 @@ export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 // Raw generated types from Preferences kind.
 export type {
   Preferences,
-  QueryHistoryPreference
+  QueryHistoryPreference,
+  CookiePreferences
 } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated types from PublicDashboard kind.
