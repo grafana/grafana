@@ -17,9 +17,11 @@ import (
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -34,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -120,6 +124,16 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
 	o.RecommendedOptions.CoreAPI = nil
 
+	// this currently only will work for standalone mode. we are removing all default enabled plugins
+	// and replacing them with our internal admission plugins. this avoids issues with the default admission
+	// plugins that depend on the Core V1 APIs and informers.
+	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
+	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
+	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
 		K8sDataPath: s.dataPath,
@@ -157,8 +171,13 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	serverConfig.GenericConfig.Authentication.Authenticator = authenticator
+
+	authorizer, err := newAuthorizer()
+	if err != nil {
+		return err
+	}
+	serverConfig.GenericConfig.Authorization.Authorizer = authorizer
 
 	server, err := serverConfig.Complete().New(genericapiserver.NewEmptyDelegate())
 	if err != nil {
@@ -240,6 +259,10 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		AuthInfos:      authinfos,
 	}
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
+}
+
+func newAuthorizer() (authorizer.Authorizer, error) {
+	return authorization.NewGrafanaAuthorizer(), nil
 }
 
 func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
