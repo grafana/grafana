@@ -11,3 +11,9 @@ Require aria-label JSX properties to not include selectors from the `@grafana/e2
 Previously we hijacked the aria-label property to use as E2E selectors as an attempt to "improve accessibility" while making this easier for testing. However, this lead to many elements having poor, verbose, and unnecessary labels.
 
 Now, we prefer using data-testid for E2E selectors.
+
+### `@grafana/no-aria-label-selectors`
+
+Check if border-radius theme tokens are used.
+
+To improve the consistensy accross Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropiate token such as `theme.shape.borderRadius()` or `theme.shape.radius.circle`.
