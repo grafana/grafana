@@ -123,7 +123,7 @@ In same cases the query editor can detect which operations would be most appropr
 
 ## Code mode
 
-In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
+In **Code mode**, you can write complex queries using a text editor with autocompletion feature, syntax highlighting, and query validation.
 It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
 
 For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
