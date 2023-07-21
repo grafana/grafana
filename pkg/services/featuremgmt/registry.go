@@ -671,5 +671,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "newBrowseDashboards",
+			Description:  "New browse/manage dashboards UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
 	}
 )
