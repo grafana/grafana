@@ -106,7 +106,7 @@ To define hard limits of the y-axis, You can set standard min/max options. For m
 
 Options under this section change the styling of the graph.
 
-## Style
+### Style
 
 Use this option to define how to display your time series data. You can use overrides to combine multiple styles in the same graph.
 
@@ -264,10 +264,10 @@ There are other common configuration options for visualizations:
 
 <!--above can be a bit of shared content to ensure wording is consistent with guidance indicating that you should create an alphabetical list of other relevant options linked to that content-->
 
-- [Data links]({{< relref "../panels-visualizations/configure-data-links/">}})
-- [Field overrides]({{< relref "../panels-visualizations/configure-overrides/">}})
-- [Legends]({{< relref "../panels-visualizations/configure-legend/">}})
-- [Standard options]({{< relref "../panels-visualizations/configure-standard-options/">}})
-- [Thresholds]({{< relref "../panels-visualizations/configure-thresholds/">}})
-- [Tooltips]({{< relref "../panels-visualizations/configure-tooltips/">}})
-- [Value mappings]({{< relref "../panels-visualizations/configure-value mappings/">}})
+- [Data links]({{< relref "../../../panels-visualizations/configure-data-links/" >}})
+- [Field overrides]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
+- [Legends]({{< relref "../../../panels-visualizations/configure-legend/" >}})
+- [Standard options]({{< relref "../../../panels-visualizations/configure-standard-options/" >}})
+- [Thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}})
+- [Tooltips]({{< relref "../../../panels-visualizations/configure-tooltips/" >}})
+- [Value mappings]({{< relref "../../../panels-visualizations/configure-value mappings/" >}})
