@@ -658,6 +658,12 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:        "awsAsyncQueryCaching",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:            "splitScopes",
 			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
 			Stage:           FeatureStagePublicPreview,
