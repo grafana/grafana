@@ -55,4 +55,5 @@ func benchScopeSplit(b *testing.B, count int) {
 }
 
 func BenchmarkMigrateScopeSplit_1K(b *testing.B)   { benchScopeSplit(b, 1000) }
-func BenchmarkMigrateScopeSplit_100K(b *testing.B) { benchScopeSplit(b, 100000) }
+func BenchmarkMigrateScopeSplit_50K(b *testing.B)  { benchScopeSplit(b, 50000) }
+func BenchmarkMigrateScopeSplit_100K(b *testing.B) { benchScopeSplit(b, 100000) } // pg: ~1.8s/op, mysql8: ~6,7s/op
