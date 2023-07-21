@@ -163,6 +163,10 @@ Using the Live tailing feature, you can keep a close eye on the latest logs as t
 
 {{< video-embed src="/static/img/docs/v95/explore_live_tailing.mp4" >}}
 
+### Logs sample
+
+If the selected data source implements logs sample, and supports both log and metric queries, then for metric queries you will be able to automatically see samples of log lines that contributed to visualized metrics. This feature is currently supported by Loki data sources.
+
 ### Switch from metrics to logs
 
 If you are coming from a metrics data source that implements `DataSourceWithQueryExportSupport` (such as Prometheus) to logging data source that supports `DataSourceWithQueryImportSupport` (such as Loki), then it will keep the labels from your query that exist in the logs and use those to query the log streams.
