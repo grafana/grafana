@@ -7,6 +7,8 @@ import {
   LiveChannelAddress,
   LiveChannelEvent,
   LiveChannelPresenceStatus,
+  StreamingFrameAction as dataStreamingFrameAction,
+  StreamingFrameOptions as dataStreamingFrameOptions,
 } from '@grafana/data';
 
 /**
@@ -16,27 +18,13 @@ export interface LiveDataFilter {
   fields?: string[];
 }
 
-/**
- * Indicate if the frame is appened or replace
- *
- * @alpha
- */
-export enum StreamingFrameAction {
-  Append = 'append',
-  Replace = 'replace',
-}
+// StreamingFrameAction definition lives in @grafana/data now
+// kept it here for backwards compatibility
+export const StreamingFrameAction = dataStreamingFrameAction;
 
-/**
- * @alpha
- */
-export interface StreamingFrameOptions {
-  maxLength: number; // 1000
-  maxDelta: number; // how long to keep things
-  action: StreamingFrameAction; // default will append
-
-  /** optionally format field names based on labels */
-  displayNameFormat?: string;
-}
+// StreamingFrameOptions definition lives in @grafana/data now
+// kept it here for backwards compatibility
+export type StreamingFrameOptions = dataStreamingFrameOptions;
 
 /**
  * @alpha

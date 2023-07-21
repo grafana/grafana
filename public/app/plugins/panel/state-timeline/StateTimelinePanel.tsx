@@ -1,13 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import {
-  CartesianCoords2D,
-  DashboardCursorSync,
-  DataFrame,
-  FieldType,
-  PanelProps,
-  getLastStreamingDataFramePacket,
-} from '@grafana/data';
+import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import {
   Portal,
   TooltipDisplayMode,
