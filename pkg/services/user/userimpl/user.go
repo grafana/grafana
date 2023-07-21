@@ -219,7 +219,7 @@ func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswo
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
-	user, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	u, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
 		UserID: cmd.UserID,
 		OrgID:  cmd.OrgID,
 	})
@@ -228,8 +228,8 @@ func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLast
 		return err
 	}
 
-	if !shouldUpdateLastSeen(user.LastSeenAt) {
-		return nil
+	if !shouldUpdateLastSeen(u.LastSeenAt) {
+		return user.ErrLastSeenUpToDate
 	}
 
 	return s.store.UpdateLastSeenAt(ctx, cmd)

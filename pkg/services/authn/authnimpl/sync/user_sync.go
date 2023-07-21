@@ -149,7 +149,8 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 		}()
 
 		if err := s.userService.UpdateLastSeenAt(context.Background(),
-			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil {
+			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
+			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
 	}(id)
