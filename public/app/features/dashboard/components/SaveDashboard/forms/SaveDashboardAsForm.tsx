@@ -112,7 +112,11 @@ export const SaveDashboardAsForm = ({
             <InputControl
               render={({ field: { ref, ...field } }) =>
                 config.featureToggles.nestedFolderPicker ? (
-                  <NestedFolderPicker {...field} value={field.value?.uid} />
+                  <NestedFolderPicker
+                    {...field}
+                    onChange={(uid: string, title: string) => field.onChange({ uid, title })}
+                    value={field.value?.uid}
+                  />
                 ) : (
                   <OldFolderPicker
                     {...field}
