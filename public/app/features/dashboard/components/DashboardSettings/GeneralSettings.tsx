@@ -7,7 +7,7 @@ import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
 import { Page } from 'app/core/components/Page/Page';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -112,7 +112,7 @@ export function GeneralSettingsUnconnected({
             {config.featureToggles.nestedFolderPicker ? (
               <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
             ) : (
-              <FolderPicker
+              <OldFolderPicker
                 inputId="dashboard-folder-input"
                 initialTitle={dashboard.meta.folderTitle}
                 initialFolderUid={dashboard.meta.folderUid}

@@ -6,7 +6,7 @@ import { Alert, Button, Field, Modal } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/unstable';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderChange } from 'app/core/components/NestedFolderPicker/types';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
@@ -63,7 +63,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         {config.featureToggles.nestedFolderPicker ? (
           <NestedFolderPicker value={moveTarget} onChange={handleFolderChange} excludeUIDs={selectedFolders} />
         ) : (
-          <FolderPicker allowEmpty onChange={handleFolderChange} />
+          <OldFolderPicker allowEmpty onChange={handleFolderChange} />
         )}
       </Field>
 
