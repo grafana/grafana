@@ -61,7 +61,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
         {config.featureToggles.nestedFolderPicker ? (
-          <NestedFolderPicker value={moveTarget} onChange={handleFolderChange} />
+          <NestedFolderPicker value={moveTarget} onChange={handleFolderChange} excludeUIDs={selectedFolders} />
         ) : (
           <FolderPicker allowEmpty onChange={handleFolderChange} />
         )}
