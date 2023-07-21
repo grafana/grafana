@@ -30,7 +30,7 @@ You can also render a PNG by hovering over the panel to display the actions menu
 
 ## Alerting and render limits
 
-Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../../configure-grafana#concurrent_render_limit" >}}).
+Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana#concurrent_render_limit" >}}).
 
 ## Install Grafana Image Renderer plugin
 
@@ -44,7 +44,7 @@ To install the plugin, refer to the [Grafana Image Renderer Installation instruc
 
 The Grafana Image Renderer plugin has a number of configuration options that are used in plugin or remote rendering modes.
 
-In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../../configure-grafana#plugingrafana-image-renderer" >}}).
+In plugin mode, you can specify them directly in the [Grafana configuration file]({{< relref "../configure-grafana#plugingrafana-image-renderer" >}}).
 
 In remote rendering mode, you can specify them in a `.json` [configuration file](#configuration-file) or, for some of them, you can override the configuration defaults using environment variables.
 
@@ -88,7 +88,7 @@ AUTH_TOKEN=-
 }
 ```
 
-See [Grafana configuration]({{< relref "../../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
+See [Grafana configuration]({{< relref "../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
 
 ### Rendering mode
 
