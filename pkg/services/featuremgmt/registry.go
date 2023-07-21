@@ -356,6 +356,7 @@ var (
 			Description:  "Displays browser caching options in Prometheus data source configuration",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
+			Expression:  "true", // turned on by default
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
