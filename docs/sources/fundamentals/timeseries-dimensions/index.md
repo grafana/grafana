@@ -11,6 +11,11 @@ keywords:
   - concepts
   - timeseries
   - labels
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Time series dimensions
 weight: 500
 ---
@@ -108,5 +113,3 @@ Additional technical information on tabular time series formats and how dimensio
 [time-series-databases]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 [time-series-databases]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 {{% /docs/reference %}}
-
-> > > > > > > main

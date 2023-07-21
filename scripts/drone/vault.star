@@ -30,6 +30,7 @@ def vault_secret(name, path, key):
 
 def secrets():
     return [
+        vault_secret("grafana_api_key", "infra/data/ci/drone-plugins", "grafana_api_key"),
         vault_secret(pull_secret, "secret/data/common/gcr", ".dockerconfigjson"),
         vault_secret("github_token", "infra/data/ci/github/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
@@ -89,21 +90,6 @@ def secrets():
             "packages_secret_access_key",
             "infra/data/ci/packages-publish/bucket-credentials",
             "Secret",
-        ),
-        vault_secret(
-            "aws_region",
-            "secret/data/common/aws-marketplace",
-            "aws_region",
-        ),
-        vault_secret(
-            "aws_access_key_id",
-            "secret/data/common/aws-marketplace",
-            "aws_access_key_id",
-        ),
-        vault_secret(
-            "aws_secret_access_key",
-            "secret/data/common/aws-marketplace",
-            "aws_secret_access_key",
         ),
         vault_secret(
             "static_asset_editions",

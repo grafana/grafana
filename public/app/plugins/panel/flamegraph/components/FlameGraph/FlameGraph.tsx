@@ -83,7 +83,6 @@ const FlameGraph = ({
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipItem, setTooltipItem] = useState<LevelItem>();
 
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
@@ -132,10 +131,12 @@ const FlameGraph = ({
     [data, rangeMin, rangeMax, totalTicks, levels]
   );
 
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>();
   const onGraphMouseMove = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
-      if (tooltipRef.current && clickedItemData === undefined) {
+      if (clickedItemData === undefined) {
         setTooltipItem(undefined);
+        setMousePosition(undefined);
         const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
           { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
@@ -146,30 +147,12 @@ const FlameGraph = ({
         );
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          // tooltip has a set number of lines of text so 200 should be good enough (with some buffer) without going
-          // into measuring rendered sizes
-          if (e.clientY < document.documentElement.clientHeight - 200) {
-            tooltipRef.current.style.top = e.clientY + 'px';
-            tooltipRef.current.style.bottom = 'auto';
-          } else {
-            tooltipRef.current.style.bottom = document.documentElement.clientHeight - e.clientY + 'px';
-            tooltipRef.current.style.top = 'auto';
-          }
-
-          // 400 is max width of the tooltip
-          if (e.clientX < document.documentElement.clientWidth - 400) {
-            tooltipRef.current.style.left = e.clientX + 15 + 'px';
-            tooltipRef.current.style.right = 'auto';
-          } else {
-            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
-            tooltipRef.current.style.left = 'auto';
-          }
-
+          setMousePosition({ x: e.clientX, y: e.clientY });
           setTooltipItem(levels[levelIndex][barIndex]);
         }
       }
     },
-    [rangeMin, rangeMax, totalTicks, clickedItemData, levels]
+    [rangeMin, rangeMax, totalTicks, clickedItemData, levels, setMousePosition]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -224,7 +207,7 @@ const FlameGraph = ({
           />
         </div>
       </div>
-      <FlameGraphTooltip tooltipRef={tooltipRef} item={tooltipItem} data={data} totalTicks={totalTicks} />
+      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalTicks} />
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}

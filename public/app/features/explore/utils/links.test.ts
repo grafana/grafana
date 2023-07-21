@@ -111,7 +111,7 @@ describe('explore links utils', () => {
 
       expect(splitfn).toBeCalledWith({
         datasourceUid: 'uid_1',
-        query: { query: 'query_1' },
+        queries: [{ query: 'query_1' }],
         range,
         panelsState: {
           trace: {
