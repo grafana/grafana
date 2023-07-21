@@ -1550,7 +1550,7 @@ exports[`better eslint`] = {
     "public/app/core/components/QueryOperationRow/QueryOperationAction.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
-    "public/app/core/components/Select/FolderPicker.tsx:5381": [
+    "public/app/core/components/Select/OldFolderPicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/core/components/TagFilter/TagFilter.tsx:5381": [
