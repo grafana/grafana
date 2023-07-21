@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -23,17 +22,15 @@ type Discovery struct {
 	// Assets
 	src plugins.PluginSource
 	// Misc
-	devMode bool
-	steps   []FindStep
-	log     log.Logger
+	steps []FindStep
+	log   log.Logger
 }
 
-func New(cfg *config.Cfg, pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery {
+func New(pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery {
 	d := &Discovery{
 		pluginFinder:   pluginFinder,
 		pluginRegistry: pluginRegistry,
 		log:            log.New("plugins.discovery"),
-		devMode:        cfg.DevMode,
 	}
 	return d
 }

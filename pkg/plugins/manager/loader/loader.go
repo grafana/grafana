@@ -49,7 +49,7 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		roleRegistry, assetPath, angularInspector, externalServiceRegistry,
-		discovery.New(cfg, pluginFinder, pluginRegistry),
+		discovery.New(pluginFinder, pluginRegistry),
 		bootstrap.New(signatureCalculator, assetPath))
 }
 
