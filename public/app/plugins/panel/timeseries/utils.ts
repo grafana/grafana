@@ -216,11 +216,28 @@ export function prepareGraphableFields(
 
   if (frames.length) {
     setClassicPaletteIdxs(frames, theme, 0);
+    matchEnumColorToSeriesColor(frames, theme);
     return frames;
   }
 
   return null;
 }
+
+const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) => {
+  const { palette } = theme.visualization;
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.enum) {
+        const namedColor = palette[field.state?.seriesIndex! % palette.length];
+        const hexColor = theme.visualization.getColorByName(namedColor);
+        const enumConfig = field.config.type!.enum!;
+
+        enumConfig.color = Array(enumConfig.text!.length).fill(hexColor);
+        field.display = getDisplayProcessor({ field, theme });
+      }
+    }
+  }
+};
 
 const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
