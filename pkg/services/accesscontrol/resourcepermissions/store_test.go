@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type setUserResourcePermissionTest struct {
@@ -521,7 +521,7 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
 	sql := db.InitTestDB(t)
-	return NewStore(sql, setting.NewCfg()), sql
+	return NewStore(sql, featuremgmt.WithFeatures()), sql
 }
 
 func TestStore_IsInherited(t *testing.T) {

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -22,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type getUserPermissionsTestCase struct {
@@ -315,7 +315,7 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	cfg.AutoAssignOrgRole = "Viewer"
 	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
-	permissionStore := rs.NewStore(sql, setting.NewCfg())
+	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures())
 	teamService := teamimpl.ProvideService(sql, cfg)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)

@@ -12,17 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB, cfg *setting.Cfg) *store {
-	return &store{sql, cfg}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
+	return &store{sql, features}
 }
 
 type store struct {
-	sql db.DB
-	cfg *setting.Cfg
+	sql      db.DB
+	features featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -651,7 +650,7 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
-		if s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+		if s.features.IsEnabled(featuremgmt.FlagSplitScopes) {
 			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 		}
 		permissions = append(permissions, p)
