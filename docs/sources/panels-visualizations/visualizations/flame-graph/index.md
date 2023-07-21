@@ -36,15 +36,19 @@ You can hover over a specific function to view a tooltip that shows you addition
 
 ### Drop-down actions
 
-{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-dropdown.png" max-width="500px" caption="Dropdown actions" >}}
+You can click a function to show a drop-down menu with additional actions:
 
-You can click on a function to show a dropdown menu with additional actions.
+- Focus block
+- Copy function name
+- Sandwich view
+
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-dropdown.png" max-width="500px" caption="Dropdown actions" >}}
 
 #### Focus block
 
-{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-focus.png" max-width="500px" caption="Focus block" >}}
+The focused block, or function, is set to 100% of the flame graph's width and all its children functions are shown with their widths updated relative to the width of the parent function. This makes it easier to drill down into smaller parts of the flame graph.
 
-The focused block or function is set to 100% of the flame graph's width and all its children functions are shown with their widths updated relative to the width of the parent function, so you can better drill down into smaller parts of the flame graph.
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-focus.png" max-width="500px" caption="Focus block" >}}
 
 #### Copy function name
 
@@ -52,27 +56,29 @@ When you click **Copy function name**, the full name of the function that the bl
 
 #### Sandwich view
 
+The sandwich view allows you to show the context of the clicked function. It shows all the function's callers on the top and all the callees at the bottom. This shows the aggregated context of the function so if the function exists in multiple places in the flame graph, all the contexts are shown and aggregated in the sandwich view.
+
 {{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-sandwich.png" max-width="500px" caption="Sandwich view">}}
-Sandwich view allows you to show the context of the clicked function. It shows all the function's callers on the top and all the callees to the bottom. This shows aggregated context of the function so if the function exists in multiple places in the flame graph, all the contexts are shown and aggregated in the sandwich view.
 
 ### Status bar
 
+The status bar shows metadata about the flame graph and currently applied modifications, like what part of the graph is in focus or what function is shown in sandwich view. Click the **X** in the status bar pill to remove that modification.
+
 ![<Status bar>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-status.png)
-Status bar shows metadata about the flame graph and currently applied modifications like what part of the graph is focused or what function is shown in sandwich view. By clicking on X btton in the status bar pill you can remove the modification.
 
 ## Toolbar
 
 ### Search
 
-![<Searching for function name>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-search.png)
+You can use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions are grayed-out.
 
-You can use the search field to find functions with particular name. All the functions in the flame graph which match the search will remain colored, while the rest of the functions are grayed-out.
+![<Searching for function name>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-search.png)
 
 ### Color schema picker
 
-![<Different color scheme>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-color.png)
-
 You can switch between coloring functions by their value or by their package name to visually tie functions from the same package together.
+
+![<Different color scheme>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-color.png)
 
 ### Text align
 
