@@ -19,9 +19,16 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 
 	// Search for the permissions to update
 	var permissions []ac.Permission
-	err := db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	if errFind := db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		return sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND identifier = ''").Find(&permissions)
-	})
+	}); errFind != nil {
+		log.Error("could not search for permissions to update", "error", errFind)
+	}
+
+	if len(permissions) == 0 {
+		log.Debug("no permission require a scope split")
+		return nil
+	}
 
 	// Use multiple workers to update the permissions new fields by batch
 	errConcurrentUpdate := ac.ConcurrentBatch(ac.Concurrency, len(permissions), ac.BatchSize, func(start, end int) error {
@@ -73,7 +80,6 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		return errConcurrentUpdate
 	}
 
-	log.Debug("Migrated permissions ", "count", cnt, "in", time.Since(t))
-
-	return err
+	log.Debug("split scope migration, migrated permissions", "total", len(permissions), "succeeded", cnt, "in", time.Since(t))
+	return nil
 }
