@@ -22,11 +22,11 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	if errFind := db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		return sess.SQL("SELECT * FROM permission WHERE NOT scope = '' AND identifier = ''").Find(&permissions)
 	}); errFind != nil {
-		log.Error("could not search for permissions to update", "error", errFind)
+		log.Error("could not search for permissions to update", "migration", "scopeSplit", "error", errFind)
 	}
 
 	if len(permissions) == 0 {
-		log.Debug("no permission require a scope split")
+		log.Debug("no permission require a scope split", "migration", "scopeSplit")
 		return nil
 	}
 
@@ -43,28 +43,31 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 			ids = append(ids, permissions[i].ID)
 			kind, attribute, identifier := permissions[i].SplitScope()
 			batch = append(batch, ac.Permission{
+				RoleID:     permissions[i].RoleID,
 				Action:     permissions[i].Action,
 				Scope:      permissions[i].Scope,
 				Kind:       kind,
 				Attribute:  attribute,
 				Identifier: identifier,
+				Created:    permissions[i].Created,
+				Updated:    t,
 			})
 		}
 
 		// Batch update the permissions
 		if errBatchUpdate := db.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			if _, errDel := sess.SQL("id", ids...).Delete(&ac.Permission{}); errDel != nil {
-				log.Error("error deleting permissions before reinsert", errDel)
+			if _, errDel := sess.In("id", ids...).Delete(&ac.Permission{}); errDel != nil {
+				log.Error("error deleting permissions before reinsert", "migration", "scopeSplit", "error", errDel)
 				return errDel
 			}
 
 			if _, errInsert := sess.Insert(&batch); errInsert != nil {
-				log.Error("error reinserting permissions", errInsert)
+				log.Error("error reinserting permissions", "migration", "scopeSplit", "error", errInsert)
 				return errInsert
 			}
 			return nil
 		}); errBatchUpdate != nil {
-			log.Error("error updating permission batch", "start", start, "end", end)
+			log.Error("error updating permission batch", "migration", "scopeSplit", "start", start, "end", end)
 			return errBatchUpdate
 		}
 
@@ -76,10 +79,10 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		return nil
 	})
 	if errConcurrentUpdate != nil {
-		log.Error("could not migrate permissions", "total", len(permissions), "succeeded", cnt, "left", len(permissions)-cnt, "error", errConcurrentUpdate)
+		log.Error("could not migrate permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "left", len(permissions)-cnt, "error", errConcurrentUpdate)
 		return errConcurrentUpdate
 	}
 
-	log.Debug("split scope migration, migrated permissions", "total", len(permissions), "succeeded", cnt, "in", time.Since(t))
+	log.Debug("migrated permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "in", time.Since(t))
 	return nil
 }

@@ -49,7 +49,8 @@ func benchScopeSplit(b *testing.B, count int) {
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
-		MigrateScopeSplit(store, logger)
+		err := MigrateScopeSplit(store, logger)
+		require.NoError(b, err)
 	}
 }
 
