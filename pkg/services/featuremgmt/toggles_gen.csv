@@ -50,7 +50,7 @@ onlyExternalOrgRoleSync,experimental,@grafana/grafana-authnz-team,false,false,fa
 traceqlSearch,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,experimental,@grafana/app-o11y,false,false,false,true
-prometheusResourceBrowserCache,preview,@grafana/observability-metrics,false,false,false,true
+prometheusResourceBrowserCache,GA,@grafana/observability-metrics,false,false,false,true
 influxdbBackendMigration,experimental,@grafana/observability-metrics,false,false,false,true
 clientTokenRotation,experimental,@grafana/grafana-authnz-team,false,false,false,false
 prometheusDataplane,GA,@grafana/observability-metrics,false,false,false,false
