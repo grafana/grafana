@@ -1181,7 +1181,7 @@ describe('enhanceDataFrame', () => {
   });
 });
 
-describe('modifyQuery', () => {
+describe('toggleQueryFilter', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
@@ -1194,31 +1194,27 @@ describe('modifyQuery', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'foo:"bar"'
       );
     });
 
     it('should toggle the filter', () => {
       query.query = 'foo:"bar"';
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe('');
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe('');
     });
 
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         '-foo:"bar"'
       );
     });
 
     it('should remove a positive filter to add a negative filter', () => {
       query.query = 'foo:"bar"';
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         '-foo:"bar"'
       );
-    });
-
-    it('should do nothing on unknown type', () => {
-      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
     });
   });
 
@@ -1229,61 +1225,30 @@ describe('modifyQuery', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'test:"value" AND foo:"bar"'
       );
     });
 
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         'test:"value" AND -foo:"bar"'
       );
-    });
-
-    it('should do nothing on unknown type', () => {
-      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
-    });
-  });
-
-  describe('legacy behavior', () => {
-    beforeEach(() => {
-      config.featureToggles.elasticToggleableFilters = false;
-    });
-    it('should not modify other filters in the query', () => {
-      expect(
-        ds.modifyQuery(
-          { query: 'test:"value"', refId: 'A' },
-          { type: 'ADD_FILTER', options: { key: 'test', value: 'value' } }
-        ).query
-      ).toBe('test:"value"');
-      expect(
-        ds.modifyQuery(
-          { query: 'test:"value"', refId: 'A' },
-          { type: 'ADD_FILTER_OUT', options: { key: 'test', value: 'value' } }
-        ).query
-      ).toBe('test:"value" AND -test:"value"');
     });
   });
 });
 
-describe('analyzeQuery()', () => {
+describe('queryHasFilter()', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
   });
-  it('returns false for unsupported inspections', () => {
-    const query = { refId: 'A', query: '{a="b"}' };
-    expect(ds.analyzeQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
-  });
   it('inspects queries for filter presence', () => {
     const query = { refId: 'A', query: 'grafana:"awesome"' };
     expect(
-      ds.analyzeQuery(query, {
-        check: 'HAS_FILTER',
-        attributes: {
-          key: 'grafana',
-          value: 'awesome',
-        },
+      ds.queryHasFilter(query, {
+        key: 'grafana',
+        value: 'awesome',
       })
     ).toBe(true);
   });
