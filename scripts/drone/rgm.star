@@ -10,6 +10,7 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
+    "ignore_failure",
     "pipeline",
 )
 load(
@@ -99,38 +100,36 @@ def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_build(script = "drone_publish_tag.sh"),
+        steps = rgm_build(script = "drone_publish_tag_grafana.sh"),
         depends_on = [],
     )
 
-def rgm_windows(edition = "oss"):
+def rgm_windows():
     return pipeline(
-        name = "rgm-tag-prerelease-windows-{}".format(edition),
+        name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
-        steps = get_windows_steps(
-            ver_mode = "release",
-            bucket = "grafana-prerelease-dev",
-            edition = edition,
+        steps = ignore_failure(
+            get_windows_steps(
+                ver_mode = "release",
+                bucket = "grafana-prerelease-dev",
+            ),
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
-        environment = {"EDITION": edition},
     )
 
 def rgm():
     return [
         rgm_main(),
         rgm_tag(),
-        rgm_windows(edition = "oss"),
-        rgm_windows(edition = "enterprise"),
+        rgm_windows(),
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
             bucket = "grafana-prerelease-dev",
             depends_on = [
                 "rgm-tag-prerelease",
-                "rgm-tag-prerelease-windows-oss",
-                "rgm-tag-prerelease-windows-enterprise",
+                "rgm-tag-prerelease-windows",
             ],
         ),
     ]
