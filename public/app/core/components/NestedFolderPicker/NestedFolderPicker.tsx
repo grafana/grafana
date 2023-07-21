@@ -43,7 +43,7 @@ export interface NestedFolderPickerProps {
 
 const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
-export function NestedFolderPicker({ value, showRootFolder, excludeUIDs, onChange }: NestedFolderPickerProps) {
+export function NestedFolderPicker({ value, showRootFolder = true, excludeUIDs, onChange }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);

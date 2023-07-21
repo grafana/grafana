@@ -119,10 +119,7 @@ describe('NestedFolderPicker', () => {
     await userEvent.click(button);
 
     await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
-    expect(mockOnChange).toHaveBeenCalledWith({
-      uid: folderA.item.uid,
-      title: folderA.item.title,
-    });
+    expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
   });
 
   it('can expand and collapse a folder to show its children', async () => {
