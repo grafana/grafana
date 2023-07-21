@@ -14,7 +14,7 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-jest.mock('app/core/components/Select/FolderPicker', () => {
+jest.mock('app/core/components/Select/OldFolderPicker', () => {
   return {
     FolderPicker: () => null,
   };
