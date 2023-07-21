@@ -153,7 +153,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Correlation is read only", response.Message)
-		require.Equal(t, correlations.ErrCorrelationsReadOnly.Error(), response.Error)
+		require.Equal(t, correlations.ErrCorrelationReadOnly.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())
 	})

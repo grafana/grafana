@@ -56,8 +56,8 @@ func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response
 			return response.Error(http.StatusNotFound, "Data source not found", err)
 		}
 
-		if errors.Is(err, ErrCorrelationsReadOnly) {
-			return response.Error(http.StatusForbidden, "Correlations is read only", err)
+		if errors.Is(err, ErrCorrelationReadOnly) {
+			return response.Error(http.StatusForbidden, "Correlation is read only", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to add correlation", err)
@@ -109,7 +109,7 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
 		}
 
-		if errors.Is(err, ErrCorrelationsReadOnly) {
+		if errors.Is(err, ErrCorrelationReadOnly) {
 			return response.Error(http.StatusForbidden, "Correlation is read only", err)
 		}
 
@@ -170,7 +170,7 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 			return response.Error(http.StatusNotFound, "Correlation not found", err)
 		}
 
-		if errors.Is(err, ErrCorrelationsReadOnly) {
+		if errors.Is(err, ErrCorrelationReadOnly) {
 			return response.Error(http.StatusForbidden, "Correlation is read only", err)
 		}
 

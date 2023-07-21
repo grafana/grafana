@@ -75,7 +75,7 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 		}
 
 		if correlation.Provisioned {
-			return ErrCorrelationsReadOnly
+			return ErrCorrelationReadOnly
 		}
 
 		deletedCount, err := session.Delete(&Correlation{UID: cmd.UID, SourceUID: cmd.SourceUID})
@@ -110,7 +110,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			return err
 		}
 		if correlation.Provisioned {
-			return ErrCorrelationsReadOnly
+			return ErrCorrelationReadOnly
 		}
 
 		if cmd.Label != nil {
