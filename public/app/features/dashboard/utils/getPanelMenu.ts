@@ -365,7 +365,7 @@ function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuIte
 
   const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
     subMenu.push({
-      text: category,
+      text: truncateTitle(category, 25),
       type: 'group',
       subMenu: categorized[category],
     });
