@@ -5003,6 +5003,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 1eb4671cf92fa08539a22e82cfcf1a58573fa410df4d9512063a95e0c746fe97
+hmac: 3595a9f5bebcdc7743f5da6dfd93aa419ebde94d2845a9caa718503a682747a6
 
 ...
