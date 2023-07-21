@@ -37,7 +37,7 @@ const borderRadiusRule = createRule({
       recommended: false,
     },
     messages: {
-      borderRadiusId: 'Custom values are not allowed for borderRadius. Use theme.shape tokens instead.',
+      borderRadiusId: 'Prefer using theme.shape tokens instead of literal values.',
     },
     schema: [],
   },
