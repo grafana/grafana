@@ -649,5 +649,13 @@ var (
 			Owner:           grafanaOperatorExperienceSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "reportingRetries",
+			Description:     "Enable rendering retries for the reporting feature",
+			Stage:           FeatureStagePublicPreview,
+			FrontendOnly:    false,
+			Owner:           grafanaAsCodeSquad,
+			RequiresRestart: true,
+		},
 	}
 )

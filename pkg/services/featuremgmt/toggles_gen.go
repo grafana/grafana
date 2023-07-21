@@ -386,4 +386,8 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagReportingRetries
+	// Enable rendering retries for the reporting feature
+	FlagReportingRetries = "reportingRetries"
 )
