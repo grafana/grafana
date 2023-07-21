@@ -164,6 +164,8 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
+  "description": "Folder belonging to the ABC team",
+  "parentUid": "d80b18c0266a",  
   "uid": "nErXDvCkzz",
   "title": "Department ABC"
 }
@@ -171,6 +173,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
+- **description** – Optional description of the folder.
+- **parentUid** – Optional [unique identifier]({{< relref "#identifier-id-vs-unique-identifier-uid" >}}) of the parent folder. If this is empty, then the folder is created under the root.
 - **uid** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **title** – The title of the folder.
 
