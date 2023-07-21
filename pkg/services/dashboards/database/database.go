@@ -961,7 +961,7 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	var filters []interface{}
-	if d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+	if !d.features.IsEnabled(featuremgmt.FlagSplitScopes) || d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
 		if err != nil {
 			return nil, err

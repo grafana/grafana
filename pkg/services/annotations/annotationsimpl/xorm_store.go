@@ -377,7 +377,7 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (ac
 		if t == annotations.Dashboard.String() {
 			var filter string
 
-			if r.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			if !r.features.IsEnabled(featuremgmt.FlagSplitScopes) || r.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 				recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
 				if err != nil {
 					return acFilter{}, err

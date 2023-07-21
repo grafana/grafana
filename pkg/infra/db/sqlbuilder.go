@@ -60,28 +60,13 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 }
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
-	if sb.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		var (
-			sql          string
-			params       []interface{}
-			recQry       string
-			recQryParams []interface{}
-		)
-
-		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
-		sql, params = filterRBAC.Where()
-		recQry, recQryParams = filterRBAC.With()
-
-		sb.sql.WriteString(" AND ")
-		sb.sql.WriteString(sql)
-		sb.params = append(sb.params, params...)
-		sb.recQry = recQry
-		sb.recQryParams = recQryParams
-	} else {
+	// Search logic with improved performance
+	// Currently not supported for nested folders
+	if sb.features.IsEnabled(featuremgmt.FlagSplitScopes) && !sb.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		sb.sql.WriteString(" AND ")
 
-		filterRBAC := permissions.NewDashboardFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
-		where, filterParams := filterRBAC.Where()
+		filter := permissions.NewDashboardFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+		where, filterParams := filter.Where()
 
 		sb.sql.WriteString(`
 			dashboard.id IN(
@@ -89,7 +74,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 				LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id
 		`)
 
-		join := filterRBAC.LeftJoin()
+		join := filter.LeftJoin()
 		if join != "" {
 			sb.sql.WriteString("LEFT OUTER JOIN " + join)
 		}
@@ -99,5 +84,23 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		sb.sql.WriteByte(')')
 
 		sb.params = append(sb.params, filterParams...)
+		return
 	}
+
+	var (
+		sql          string
+		params       []interface{}
+		recQry       string
+		recQryParams []interface{}
+	)
+
+	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+	sql, params = filterRBAC.Where()
+	recQry, recQryParams = filterRBAC.With()
+
+	sb.sql.WriteString(" AND ")
+	sb.sql.WriteString(sql)
+	sb.params = append(sb.params, params...)
+	sb.recQry = recQry
+	sb.recQryParams = recQryParams
 }

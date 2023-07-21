@@ -95,7 +95,7 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 		return
 	}
 
-	// user has wildcard for both folders and dashboard we can skip performing access check
+	// if user has wildcard for both folders and dashboard we can skip performing access check
 	if f.hasNoActionsToCheck() {
 		f.join = clause{string: ""}
 		f.where = clause{string: "(1 = 1)"}
@@ -533,13 +533,15 @@ func needToCheckAction(action string, permissions map[string][]string, wildcards
 	}
 	var hasWildcard bool
 
-outer:
 	for _, scope := range permissions[action] {
 		for _, w := range wildcards {
 			if w.Contains(scope) {
 				hasWildcard = true
-				break outer
+				break
 			}
+		}
+		if hasWildcard {
+			break
 		}
 	}
 
