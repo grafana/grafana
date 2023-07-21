@@ -116,6 +116,10 @@ If the value is an empty string after rendering the expression for a particular 
 
 The color options and their effect on the visualization depends on the visualization you are working with. Some visualizations have different color options.
 
+By default, visualizations use the standard color scheme option to assign series colors.
+You can also use the legend to open the color picker by clicking the legend series color icon.
+Setting color this way automatically creates an override rule that set's a specific color for a specific series.
+
 You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 Continuous color interpolates a color using the percentage of a value relative to min and max.
 
@@ -142,6 +146,42 @@ Select one of the following palettes:
 | **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                               |
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}}
+
+### Classic palette
+
+The most common setup is to use the **Classic palette** for graphs. This scheme automatically assigns a color for each field or series based on its order. If the order of a field changes in your query, the color also changes. You can manually configure a color for a specific field using an override rule.
+
+### Single color
+
+Use this mode to specify a color. You can also click the colored line icon next to each series in the Legend to open the color picker. This automatically creates a new override that sets the color scheme to single color and the selected color.
+
+### By value color schemes
+
+If you select a by value color scheme like **From thresholds (by value)** or **Green-Yellow-Red (by value)**, the **Color series by** option appears. This option controls which value (Last, Min, Max) to use to assign the series its color.
+
+### Scheme gradient mode
+
+The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the line or bar receives a gradient color defined from the selected **Color scheme**.
+
+#### From thresholds
+
+If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the line or bar color changes as they cross the defined thresholds.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_line.png" max-width="1200px" caption="Colors scheme: From thresholds" >}}
+
+The following image shows bars mode enabled.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
+
+#### Gradient color schemes
+
+The following image shows a line chart with the **Green-Yellow-Red (by value)** color scheme option selected.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_line.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+
+The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}} -->
 
 ### No value
 
