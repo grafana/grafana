@@ -74,7 +74,7 @@ export function useRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON, filt
   const theme = useTheme2();
   return useMemo(() => {
     if (!stateHistory) {
-      return null;
+      return { dataFrames: [] };
     }
     // merge timestamp with "line"
     const tsValues = stateHistory?.data?.values[0] ?? [];

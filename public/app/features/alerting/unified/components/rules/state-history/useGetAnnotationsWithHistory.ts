@@ -14,7 +14,7 @@ type UseGetAnnotationsWithHistoryOptions = {
 
 export const useGetAnnotationsWithHistory = ({ timeRange, annotations }: UseGetAnnotationsWithHistoryOptions) => {
   // Getting annotations from Loki state history in case we are in new alerting state history mode
-  const [annotationsWithHistory, setAnnotationsWithHistory] = useState<DataFrame[]>(annotations ?? []);
+  const [annotationsWithHistory, setAnnotationsWithHistory] = useState<DataFrame[]>([]);
 
   const historyImplementation = useHistoryImplementation();
   const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
@@ -37,8 +37,13 @@ export const useGetAnnotationsWithHistory = ({ timeRange, annotations }: UseGetA
   const records = useRuleHistoryRecordsForPanel(stateHistory);
 
   useEffect(() => {
-    records?.dataFrames && setAnnotationsWithHistory((prevAnnotations) => prevAnnotations.concat(records.dataFrames));
-  }, [records?.dataFrames]);
+    if (records?.dataFrames && annotations) {
+      console.log('annotations already added', annotations);
+      console.log('records?.dataFrames to be added', records?.dataFrames);
+    }
+    records?.dataFrames &&
+      setAnnotationsWithHistory(annotations ? annotations.concat(records.dataFrames) : records.dataFrames);
+  }, [annotations, records?.dataFrames]);
 
   return annotationsWithHistory;
 };
