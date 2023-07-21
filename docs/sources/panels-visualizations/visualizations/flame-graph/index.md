@@ -18,7 +18,7 @@ weight: 850
 
 # Flame graph panel
 
-Flame graph panel is a visualization that allows you to visualize profiling data. It can represent the profile as a flame graph, table or both
+Flame graph panel is a visualization that allows you to visualize profiling data. It can represent the profile as a flame graph, table, or both
 
 ![<Flame graph panel>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1.png)
 
@@ -28,13 +28,13 @@ The flame graph takes advantage of the hierarchical nature of profiling data. It
 
 ![<Flame graph>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-flamegraph.png)
 
-Grayed-out sections are a set of functions that represent a relatively small value and were collapsed together into one section for performance reasons.
+Grayed-out sections are a set of functions that represent a relatively small value and they've been collapsed together into one section for performance reasons.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-tooltip.png" max-width="500px" caption="Hover tooltip" >}}
 
-You can hover over a specific function to view a tooltip that shows you what the additional data about that function, like function's value, function's % of total value, and the number of samples with that function.
+You can hover over a specific function to view a tooltip that shows you additional data about that function, like the function's value, percentage of total value, and the number of samples with that function.
 
-### Dropdown actions
+### Drop-down actions
 
 {{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-dropdown.png" max-width="500px" caption="Dropdown actions" >}}
 
@@ -48,7 +48,7 @@ The focused block or function is set to 100% of the flame graph's width and all 
 
 #### Copy function name
 
-This action copies the full name of the function that the block represents.
+When you click **Copy function name**, the full name of the function that the block represents is copied.
 
 #### Sandwich view
 
@@ -80,15 +80,15 @@ Align text either to the left or to the right to show more important parts of th
 
 ### Visualization picker
 
-You can choose to show only the flame graph, only table or both at the same time
+You can choose to show only the flame graph, only table, or both at the same time
 
 ## Top table
 
-The top table shows the functions from the profile in a table format. The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
+The top table shows the functions from the profile in table format. The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
 
 ![Table view](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-table.png)
 
-There aer also action buttons on the left for each row. The first button searches for the function name while second button shows the sandwich view of the function.
+There are also action buttons on the left for each row. The first button searches for the function name while second button shows the sandwich view of the function.
 
 ## Data API
 
