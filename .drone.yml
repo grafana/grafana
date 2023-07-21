@@ -723,7 +723,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -736,7 +736,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -1601,7 +1601,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -1632,7 +1632,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -1645,7 +1645,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -1662,7 +1662,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -1688,7 +1688,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -1727,7 +1727,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -1741,7 +1741,7 @@ steps:
   - grafana-server
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2208,7 +2208,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -2221,7 +2221,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -2326,7 +2326,7 @@ steps:
   - grafana-server
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2340,7 +2340,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2356,7 +2356,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2371,7 +2371,7 @@ steps:
   - build-frontend-packages
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_upload_artifacts_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/build-container:1.7.4
@@ -2629,7 +2629,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: fetch-images
   volumes:
@@ -2646,7 +2646,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -2669,7 +2669,7 @@ steps:
     DOCKER_USER:
       from_secret: docker_username
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -2898,7 +2898,7 @@ steps:
   - publish-linux-packages-rpm
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3084,7 +3084,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_tag.sh
+  - cd /src && ./scripts/drone_publish_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3125,12 +3125,10 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-environment:
-  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease-windows-oss
+name: rgm-tag-prerelease-windows
 platform:
   arch: amd64
   os: windows
@@ -3139,12 +3137,14 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
+  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.40/windows/grabpl.exe
     -OutFile grabpl.exe
+  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3169,6 +3169,7 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3190,73 +3191,7 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-tag-prerelease-windows-enterprise
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - echo $env:DRONE_RUNNER_NAME
-  image: mcr.microsoft.com/windows:1809
-  name: identify-runner
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.40/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
-  - dos2unix gcpkey.json
-  - gcloud auth activate-service-account --key-file=gcpkey.json
-  - rm gcpkey.json
-  - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/grafana-enterprise-${DRONE_TAG:1}.windows-amd64.zip
-    --edition enterprise ${DRONE_TAG}
-  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/
-  depends_on:
-  - windows-init
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-  image: grafana/ci-wix:0.1.1
-  name: build-windows-installer
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- rgm-tag-prerelease
-- rgm-tag-prerelease-windows-oss
-- rgm-tag-prerelease-windows-enterprise
+- rgm-tag-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3417,7 +3352,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
@@ -3430,7 +3365,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
   image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
@@ -3536,7 +3471,7 @@ steps:
   - grafana-server
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3553,7 +3488,7 @@ steps:
   - end-to-end-tests-various-suite
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -4286,6 +4221,24 @@ trigger:
 type: docker
 ---
 get:
+  name: credentials.json
+  path: infra/data/ci/grafana-release-eng/grafanauploads
+kind: secret
+name: gcp_grafanauploads
+---
+get:
+  name: credentials_base64
+  path: infra/data/ci/grafana-release-eng/grafanauploads
+kind: secret
+name: gcp_grafanauploads_base64
+---
+get:
+  name: grafana_api_key
+  path: infra/data/ci/drone-plugins
+kind: secret
+name: grafana_api_key
+---
+get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
@@ -4448,6 +4401,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d26e49a6edd156bb96eca6e6c0616b130a85b2e1d3a91379569bde88f122ef0b
+hmac: 23f23fe28bd849ba19e2213f1a60da1f82aa609e97e7d174e0faf979b096721b
 
 ...
