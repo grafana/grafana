@@ -187,6 +187,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    * Returns true if all queries have the filter, otherwise false.
+   * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
   isFilterLabelActive = async (key: string, value: string) => {
