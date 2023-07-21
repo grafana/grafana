@@ -9,9 +9,9 @@ import * as api from 'app/features/manage-dashboards/state/actions';
 
 import { DashboardSearchHit } from '../../../features/search/types';
 
-import { FolderPicker, getInitialValues } from './FolderPicker';
+import { OldFolderPicker, getInitialValues } from './OldFolderPicker';
 
-describe('FolderPicker', () => {
+describe('OldFolderPicker', () => {
   it('should render', async () => {
     jest
       .spyOn(api, 'searchFolders')
@@ -20,7 +20,7 @@ describe('FolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    render(<FolderPicker onChange={jest.fn()} />);
+    render(<OldFolderPicker onChange={jest.fn()} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
   });
 
@@ -33,7 +33,7 @@ describe('FolderPicker', () => {
         { title: 'Dash 3', uid: '7MeksYbmk' } as DashboardSearchHit,
       ]);
 
-    render(<FolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.uid !== 'wfTJJL5Wz')} />);
+    render(<OldFolderPicker onChange={jest.fn()} filter={(hits) => hits.filter((h) => h.uid !== 'wfTJJL5Wz')} />);
 
     const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
@@ -59,7 +59,7 @@ describe('FolderPicker', () => {
 
     const create = jest.spyOn(api, 'createFolder').mockResolvedValue(newFolder);
 
-    render(<FolderPicker onChange={onChangeFn} enableCreateNew={true} allowEmpty={true} />);
+    render(<OldFolderPicker onChange={onChangeFn} enableCreateNew={true} allowEmpty={true} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
 
     await userEvent.type(screen.getByLabelText('Select a folder'), newFolder.title);
@@ -87,7 +87,7 @@ describe('FolderPicker', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
-    render(<FolderPicker onChange={onChangeFn} />);
+    render(<OldFolderPicker onChange={onChangeFn} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
     const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
@@ -108,7 +108,7 @@ describe('FolderPicker', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
-    render(<FolderPicker onChange={onChangeFn} showRoot={false} />);
+    render(<OldFolderPicker onChange={onChangeFn} showRoot={false} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
     const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
@@ -129,7 +129,7 @@ describe('FolderPicker', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
 
     const onChangeFn = jest.fn();
-    render(<FolderPicker onChange={onChangeFn} />);
+    render(<OldFolderPicker onChange={onChangeFn} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
     const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
     selectEvent.openMenu(pickerContainer);
@@ -150,7 +150,7 @@ describe('FolderPicker', () => {
     });
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     const onChangeFn = jest.fn();
-    render(<FolderPicker onChange={onChangeFn} />);
+    render(<OldFolderPicker onChange={onChangeFn} />);
 
     const pickerContainer = screen.getByLabelText(selectors.components.FolderPicker.input);
     await userEvent.type(pickerContainer, 'Test');
