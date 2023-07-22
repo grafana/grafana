@@ -2992,7 +2992,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -3460,7 +3460,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_tag.sh
+  - cd /src && ./scripts/drone_publish_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3501,12 +3501,10 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-environment:
-  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease-windows-oss
+name: rgm-tag-prerelease-windows
 platform:
   arch: amd64
   os: windows
@@ -3515,12 +3513,14 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
+  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.40/windows/grabpl.exe
     -OutFile grabpl.exe
+  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3540,11 +3540,12 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3566,73 +3567,7 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-tag-prerelease-windows-enterprise
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - echo $env:DRONE_RUNNER_NAME
-  image: mcr.microsoft.com/windows:1809
-  name: identify-runner
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.40/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - $$gcpKey = $$env:GCP_KEY
-  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
-    > gcpkey.json'
-  - dos2unix gcpkey.json
-  - gcloud auth activate-service-account --key-file=gcpkey.json
-  - rm gcpkey.json
-  - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/grafana-enterprise-${DRONE_TAG:1}.windows-amd64.zip
-    --edition enterprise ${DRONE_TAG}
-  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/enterprise/release/
-  depends_on:
-  - windows-init
-  environment:
-    GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-  image: grafana/ci-wix:0.1.1
-  name: build-windows-installer
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- rgm-tag-prerelease
-- rgm-tag-prerelease-windows-oss
-- rgm-tag-prerelease-windows-enterprise
+- rgm-tag-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4353,7 +4288,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads_base64
+      from_secret: gcp_key
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -5031,6 +4966,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: ea32500f4c7c72fe5b95a1617dd43935becbbc4c8bc2cbbf87b87c512afcca0a
+hmac: 890baa48e98285eda1bae3f18bf605b9f887fd64206a1f048789c403282305fb
 
 ...
