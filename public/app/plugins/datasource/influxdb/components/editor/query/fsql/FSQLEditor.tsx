@@ -97,9 +97,9 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
             icon="external-link-alt"
             variant="secondary"
             target="blank"
-            href="https://docs.influxdata.com/influxdb/latest/query-data/get-started/"
+            href="https://docs.influxdata.com/influxdb/cloud-serverless/query-data/sql/"
           >
-            SQL language syntax (fix link)
+            SQL language syntax
           </LinkButton>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow"></div>
