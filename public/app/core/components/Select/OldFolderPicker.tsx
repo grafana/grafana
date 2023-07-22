@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncVirtualizedSelect } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
@@ -55,6 +55,7 @@ export interface Props {
   /** The id of the search input. Use this to set a matching label with htmlFor */
   inputId?: string;
 }
+
 export type SelectedFolder = SelectableValue<string>;
 const VALUE_FOR_ADD = '-10';
 
@@ -95,6 +96,12 @@ export function OldFolderPicker(props: Props) {
       const searchHits = await searchFolders(query, permissionLevel, searchQueryType);
       const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
       const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
+
+      reportInteraction('grafana_folder_picker_results_loaded', {
+        results: options.length,
+        searchTermLength: query.length,
+        enableCreateNew: Boolean(enableCreateNew),
+      });
 
       const hasAccess =
         contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
@@ -224,18 +231,22 @@ export function OldFolderPicker(props: Props) {
   const createNewFolder = useCallback(
     async (folderName: string) => {
       if (folderWarning?.warningCondition(folderName)) {
+        reportInteraction('grafana_folder_picker_folder_created', { status: 'failed_condition' });
         return false;
       }
+
       const newFolder = await createFolder({ title: folderName });
       let folder: SelectableValue<string> = { value: '', label: 'Not created' };
 
       if (newFolder.uid) {
+        reportInteraction('grafana_folder_picker_folder_created', { status: 'success' });
         appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
         folder = { value: newFolder.uid, label: newFolder.title };
 
         setFolder(newFolder);
         onFolderChange(folder, { action: 'create-option', option: folder });
       } else {
+        reportInteraction('grafana_folder_picker_folder_created', { status: 'failed' });
         appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
       }
 
@@ -311,7 +322,6 @@ export function OldFolderPicker(props: Props) {
         <FolderWarningWhenCreating />
         <div className={styles.newFolder}>Press enter to create the new folder.</div>
         <Input
-          aria-label={'aria-label'}
           width={30}
           autoFocus={true}
           value={newFolderValue}
