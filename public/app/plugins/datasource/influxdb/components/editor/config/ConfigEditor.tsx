@@ -102,13 +102,13 @@ export class ConfigEditor extends PureComponent<Props, State> {
   getQueryLanguageDropdownValue = (v?: InfluxVersion) => {
     switch (v) {
       case InfluxVersion.InfluxQL:
-        return versions[0];
+        return versionsWithSQL[0];
       case InfluxVersion.Flux:
-        return versions[1];
+        return versionsWithSQL[1];
       case InfluxVersion.SQL:
-        return versions[2];
+        return versionsWithSQL[2];
       default:
-        return versions[0];
+        return versionsWithSQL[0];
     }
   };
 
