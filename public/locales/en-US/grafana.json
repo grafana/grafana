@@ -26,6 +26,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
+      "cannot-move-folders": "Folders can not be moved",
       "delete-button": "Delete",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
