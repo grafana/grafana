@@ -173,8 +173,8 @@ export const browseDashboardsAPI = createApi({
         };
 
         for (const folderCounts of results) {
-          totalCounts.folder += folderCounts.folder;
-          totalCounts.dashboard += folderCounts.dashboard;
+          totalCounts.folder += folderCounts.folder ?? 0;
+          totalCounts.dashboard += folderCounts.dashboard ?? 0;
           totalCounts.alertRule += folderCounts.alertrule ?? 0;
 
           // TODO enable these once the backend correctly returns them

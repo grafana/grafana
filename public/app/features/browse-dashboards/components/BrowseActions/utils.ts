@@ -6,7 +6,20 @@ export function buildBreakdownString(
   libraryPanelCount: number,
   alertRuleCount: number
 ) {
+  console.log({
+    folderCount,
+    dashboardCount,
+    libraryPanelCount,
+    alertRuleCount,
+  });
+  console.log({
+    folderCount: folderCount ?? 0,
+    dashboardCount: dashboardCount ?? 0,
+    libraryPanelCount: libraryPanelCount ?? 0,
+    alertRuleCount: alertRuleCount ?? 0,
+  });
   const total = folderCount + dashboardCount + libraryPanelCount + alertRuleCount;
+
   const parts = [];
   if (folderCount) {
     parts.push(t('browse-dashboards.counts.folder', '{{count}} folder', { count: folderCount }));

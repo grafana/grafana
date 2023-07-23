@@ -35,9 +35,9 @@ export interface FolderState {
 }
 
 export interface DescendantCountDTO {
-  folder: number;
-  dashboard: number;
-  libraryPanel: number;
+  folder?: number;
+  dashboard?: number;
+  libraryPanel?: number;
   alertrule?: number;
 }
 
