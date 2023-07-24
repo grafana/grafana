@@ -184,15 +184,29 @@ _This feature is for Grafana-managed alert rules only._
 
 Preview how your alert instances will be routed if they fire while you are creating your alert rule. View routing for each Alertmanager you have configured to receive Grafana-managed alerts and if required, you can easily make adjustments to your custom labels to change the way your alert instances are routed.
 
+{{< figure src="/media/docs/alerting/alert-routing-preview.png" max-width="750px" caption="Alert instance routing preview" >}}
+
 #### Alert rule types
 
 Enables you to switch to a data source-managed alert rule if your data source is configured to support alert rule creation (Ruler API enabled). By default, the alert rule type is Grafana-managed.
+
+{{< figure src="/media/docs/alerting/alert-rule-types.png" max-width="750px" caption="Alert rule types" >}}
 
 #### In-app guidance for alert rule creation
 
 Learn about how to create your alert rules interactively with in-app guidance for additional context and links out to our Alerting documentation from each of the steps in alert rule creation.
 
 #### UI improvements
+
+- **Alert evaluation behavior**: New UI components for creating a folder and adding an evaluation group along with improved text and validation.
+- **Alert Rule list page**: the process of creating recording rules (More drop down) is now separate from Grafana-managed and data source-managed alert rules (**+New alert rule**)
+  .
+- **Annotations display**: Adding a summary, description, and runbook URL as annotations are now optional. The dashboard and panel names are now also linked directly, making it easier to access.
+- **View YAML button**: Displays alert rule configuration in YAML format on the Grafana-managed alert rules form as well as Grafana-managed provisioned and non-provisioned Alert Rule detail view.
+- **Queries and expressions**: Several improvements have been made to the display of queries and expressions, including making Add expression a dropdown and moving Conditions to the header.
+- **Min interval option**: Improves control over query costs and performance by enabling you to adjust the minimum resolution of the data used in your alerting queries.
+- **In-app guidance for alert rule creation**: Learn about how to create your alert rules interactively with in-app guidance for additional context and links out to our Alerting documentation.
+- **Support for toggling common labels**: Toggle between showing or hiding labels for each individual alert instance.
 
 ### Contact points
 
@@ -218,6 +232,8 @@ We’ve made the following changes to alert management.
 #### Support for timezones in mute timings
 
 Adds support for different time zones and locations as well as a visual selector for week days, improvement to loading and error handling, and better validation for time ranges.
+
+{{< figure src="/media/docs/alerting/timezone-support.png" max-width="750px" caption="Time zone support" >}}
 
 #### Adds support for toggling common labels
 
