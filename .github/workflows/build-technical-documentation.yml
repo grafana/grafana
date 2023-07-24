@@ -27,16 +27,16 @@ jobs:
   generate-token:
     runs-on: ubuntu-latest
     outputs:
-      token: ${{ steps.generate-token.outputs.token }}
+      token: ${{ steps.generate.outputs.token }}
     steps:
       - name: Generate GitHub token
-        id: generate-token
+        id: generate
         uses: tibdex/github-app-token@v1
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
-  build-technical-documentation:
+  with-hugo:
     runs-on: ubuntu-latest
     container:
       image: grafana/docs-base:latest
@@ -72,17 +72,12 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: grafana/doc-validator:v3.2.1
-    needs: docs-target
+    needs:
+      - docs-target
+      - generate-token
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Generate GitHub token
-        id: generate-token
-        uses: tibdex/github-app-token@v1
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
       - name: Sparse clone website repository
         run: |
@@ -90,7 +85,7 @@ jobs:
           git -C website sparse-checkout set content/docs
           git -C website checkout master
         env:
-          TOKEN: ${{ steps.generate-token.outputs.token }}
+          TOKEN: ${{ needs.generate-token.outputs.token }}
 
       - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
