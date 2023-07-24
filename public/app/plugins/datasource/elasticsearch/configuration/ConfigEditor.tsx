@@ -2,8 +2,15 @@ import React, { useEffect, useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
-import { Alert, DataSourceHttpSettings } from '@grafana/ui';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+  DataSourceDescription,
+} from '@grafana/experimental';
+import { Alert, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 import { config } from 'app/core/config';
 
@@ -17,12 +24,6 @@ import { coerceOptions, isValidOptions } from './utils';
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 
 export const ConfigEditor = (props: Props) => {
-  // we decide on whether to show access options or not at the point when the config page opens.
-  // whatever happens while the page is open, this decision does not change.
-  // (we do this to avoid situations where you switch access-mode and suddenly
-  // the access-mode-select-box vanishes)
-  const showAccessOptions = useRef(props.options.access === 'direct');
-
   const { options, onOptionsChange } = props;
 
   useEffect(() => {
@@ -30,6 +31,29 @@ export const ConfigEditor = (props: Props) => {
       onOptionsChange(coerceOptions(options));
     }
   }, [onOptionsChange, options]);
+
+  config.sigV4AuthEnabled = true;
+
+  const authProps = convertLegacyAuthProps({
+    config: options,
+    onChange: onOptionsChange,
+  });
+  if (config.sigV4AuthEnabled) {
+    authProps.customMethods = [
+      {
+        id: 'custom-sigv4',
+        label: 'SigV4 auth',
+        description: 'AWS Signature Version 4 authentication',
+        component: <SIGV4ConnectionConfig {...props} />,
+      },
+    ];
+    authProps.onAuthMethodSelect = (method) => {
+      authProps.onAuthMethodSelect(method);
+      options.jsonData.sigV4Auth = method === 'custom-sigv4';
+      onOptionsChange(options);
+    };
+    authProps.selectedMethod = options.jsonData.sigV4Auth ? 'custom-sigv4' : authProps.selectedMethod;
+  }
 
   return (
     <>
@@ -43,27 +67,22 @@ export const ConfigEditor = (props: Props) => {
         docsLink="https://grafana.com/docs/grafana/latest/datasources/elasticsearch"
         hasRequiredFields={false}
       />
-
       <Divider />
-
-      <DataSourceHttpSettings
-        defaultUrl="http://localhost:9200"
-        dataSourceConfig={options}
-        showAccessOptions={showAccessOptions.current}
-        onChange={onOptionsChange}
-        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-        renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
-      />
-
+      <ConnectionSettings config={options} onChange={onOptionsChange} />
       <Divider />
-
+      <Auth {...authProps} />
+      <Divider />
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
         isCollapsible={true}
         isInitiallyOpen
       >
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+        <Divider hideLine />
+        {config.secureSocksDSProxyEnabled && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
         <ElasticDetails value={options} onChange={onOptionsChange} />
         <Divider hideLine />
         <LogsConfig
