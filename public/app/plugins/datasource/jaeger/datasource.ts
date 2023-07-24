@@ -22,6 +22,7 @@ import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
+import { mapJaegerDependenciesResponse } from './dependencyGraphTransform';
 import { createGraphFrames } from './graphTransform';
 import { createTableFrame, createTraceFrame } from './responseTransform';
 import { JaegerQuery } from './types';
@@ -63,6 +64,14 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    // Use the internal Jaeger /dependencies API for rendering the dependency graph.
+    if (target.queryType === 'dependencyGraph') {
+      const timeRange = this.timeSrv.timeRange();
+      const endTs = getTime(timeRange.to, true) / 1000;
+      const lookback = endTs - getTime(timeRange.from, false) / 1000;
+      return this._request('/api/dependencies', { endTs, lookback }).pipe(map(mapJaegerDependenciesResponse));
     }
 
     if (target.queryType === 'search' && !this.isSearchFormValid(target)) {

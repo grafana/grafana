@@ -369,3 +369,7 @@ To configure this feature, see the [introduction to exemplars][exemplars] docume
 [variable-syntax]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
 [variable-syntax]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
 {{% /docs/reference %}}
+
+## Visualizing the dependency graph
+If service dependency information is available in Jaeger, it can be visualized in Grafana.
+Use the Jaeger data source with the "Dependency Graph" query type on a Node Graph panel for this.
