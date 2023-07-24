@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { config } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
 import { StoreState, useSelector } from 'app/types';

@@ -1,5 +1,4 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { config } from 'app/core/config';
 import { RouteDescriptor } from 'app/core/navigation/types';
 
 import { ROUTE_BASE_ID } from './constants';
