@@ -21,7 +21,8 @@
       "require": "./dist/index.js"
     },
     "./cypress.config.js": "./cypress.config.js",
-    "./cypress/support": "./cypress/support/e2e.js"
+    "./cypress/support": "./cypress/support/e2e.js",
+    "./legacy-cypress.json": "./legacy-cypress.json"
   },
   "types": "src/index.ts",
   "bin": {
@@ -36,6 +37,7 @@
     "cypress",
     "dist",
     "cli.js",
+    "legacy-cypress.json",
     "cypress.config.js",
     "./README.md",
     "./CHANGELOG.md",
