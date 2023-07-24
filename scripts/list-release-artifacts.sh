@@ -5,8 +5,11 @@ VERSION="${1:-v9.5.2}"
 ERSION="${VERSION#*v}"
 ERSION_DEB="${ERSION//-/\~}"
 
+# Unused assets:
+# gs://${BUCKET}/artifacts/static-assets/grafana/${ERSION}/public/robots.txt
+# gs://${BUCKET}/artifacts/static-assets/grafana-oss/${ERSION}/public/robots.txt
+
 ASSETS=$(cat << EOF
-gs://${BUCKET}/artifacts/static-assets/grafana-oss/${ERSION}/public/robots.txt
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.aarch64.rpm
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.aarch64.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.armhfp.rpm
