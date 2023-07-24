@@ -17,6 +17,7 @@ vendor/
 /docs/menu.yaml
 /requests
 tsconfig.tsbuildinfo
+__debug_bin*
 
 # Yarn
 .yarn/*

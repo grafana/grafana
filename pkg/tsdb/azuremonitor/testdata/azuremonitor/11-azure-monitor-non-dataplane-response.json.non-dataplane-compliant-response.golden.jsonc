@@ -1,12 +1,6 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {
-//      "type": "timeseries-multi",
-//      "typeVersion": [
-//          0,
-//          1
-//      ]
-//  }
+//  Frame[0] 
 //  Name: 
 //  Dimensions: 2 Fields by 5 Rows
 //  +-------------------------------+----------------------+
@@ -28,13 +22,6 @@
   "frames": [
     {
       "schema": {
-        "meta": {
-          "type": "timeseries-multi",
-          "typeVersion": [
-            0,
-            1
-          ]
-        },
         "fields": [
           {
             "name": "Time",

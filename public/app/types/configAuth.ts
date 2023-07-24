@@ -12,6 +12,7 @@ export interface AuthProviderStatus {
   enabled: boolean;
   configured: boolean;
   configFoundInIniFile?: boolean;
+  hide?: boolean;
 }
 
 export interface SettingsError {
