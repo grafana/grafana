@@ -1214,12 +1214,12 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name          | Type                                               | Go type                   | Required | Default | Description | Example |
-| ------------- | -------------------------------------------------- | ------------------------- | :------: | ------- | ----------- | ------- |
-| apiVersion    | int64 (formatted integer)                          | `int64`                   |          |         |             |         |
-| contactPoints | [][ContactPointExport](#contact-point-export)      | `[]*ContactPointExport`   |          |         |             |         |
-| groups        | [][AlertRuleGroupExport](#alert-rule-group-export) | `[]*AlertRuleGroupExport` |          |         |             |         |
-| policies   | [][NotificationPolicyExport](#notification-policy-export) | `[]*NotificationPolicyExport` |          |         |             |         |
+| Name          | Type                                                      | Go type                       | Required | Default | Description | Example |
+| ------------- | --------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
+| apiVersion    | int64 (formatted integer)                                 | `int64`                       |          |         |             |         |
+| contactPoints | [][ContactPointExport](#contact-point-export)             | `[]*ContactPointExport`       |          |         |             |         |
+| groups        | [][AlertRuleGroupExport](#alert-rule-group-export)        | `[]*AlertRuleGroupExport`     |          |         |             |         |
+| policies      | [][NotificationPolicyExport](#notification-policy-export) | `[]*NotificationPolicyExport` |          |         |             |         |
 
 {{% /responsive-table %}}
 
@@ -1408,16 +1408,20 @@ Status: Accepted
 
 [][ProvisionedAlertRule](#provisioned-alert-rule)
 
+### <span id="raw-message"></span> RawMessage
+
+[interface{}](#interface)
+
 ### <span id="receiver-export"></span> ReceiverExport
 
 **Properties**
 
-| Name                  | Type          | Go type  | Required | Default | Description | Example |
-| --------------------- | ------------- | -------- | :------: | ------- | ----------- | ------- |
-| disableResolveMessage | boolean       | `bool`   |          |         |             |         |
-| settings              | [JSON](#json) | `JSON`   |          |         |             |         |
-| type                  | string        | `string` |          |         |             |         |
-| uid                   | string        | `string` |          |         |             |         |
+| Name                  | Type                       | Go type      | Required | Default | Description | Example |
+| --------------------- | -------------------------- | ------------ | :------: | ------- | ----------- | ------- |
+| disableResolveMessage | boolean                    | `bool`       |          |         |             |         |
+| settings              | [RawMessage](#raw-message) | `RawMessage` |          |         |             |         |
+| type                  | string                     | `string`     |          |         |             |         |
+| uid                   | string                     | `string`     |          |         |             |         |
 
 ### <span id="regexp"></span> Regexp
 
