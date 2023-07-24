@@ -3,6 +3,8 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"net"
 	"os"
 	"path"
@@ -67,19 +69,24 @@ type service struct {
 
 	restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter
 
+	pluginsClient plugins.Client
+	pCtxProvider  *plugincontext.Provider
+
 	handler   web.Handler
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter) (*service, error) {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter, pluginsClient plugins.Client, pCtxProvider *plugincontext.Provider) (*service, error) {
 	s := &service{
 		rr:       rr,
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
 
 		restOptionsGetter: restOptionsGetter,
+		pluginsClient:     pluginsClient,
+		pCtxProvider:      pCtxProvider,
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -130,9 +137,11 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
 	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	grafanaAdmission.RegisterGrpcCalloutPluginValidate(o.RecommendedOptions.Admission.Plugins, s.pluginsClient, s.pCtxProvider)
+
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields, grafanaAdmission.PluginNameGrpcCalloutPluginValidate}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields, grafanaAdmission.PluginNameGrpcCalloutPluginValidate}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
