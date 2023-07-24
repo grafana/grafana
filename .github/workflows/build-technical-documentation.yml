@@ -50,4 +50,5 @@ jobs:
           mkdir -p /hugo/content/docs/grafana/latest
           ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
           cd /hugo
+          unset WEBSITE_SKIP_MOUNTS
           make prod HUGO_ENV=docs
