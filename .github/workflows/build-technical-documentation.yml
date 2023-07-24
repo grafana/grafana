@@ -31,9 +31,8 @@ jobs:
         run: |
           rm -rf /hugo/content/docs
           ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
-          mkdir -p /hugo/content/docs/grafana/latest
+          ln -sn "$(pwd)/website/scripts/versions.js" /hugo/scripts/versions.js
           ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
           cd /hugo
-          npm install
           unset WEBSITE_SKIP_MOUNTS
           make prod HUGO_ENV=docs
