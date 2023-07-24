@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/contact-points/
   - /docs/grafana/latest/alerting/unified-alerting/contact-points/
   - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/contact-points/
 description: Create or edit contact point
 keywords:
   - grafana

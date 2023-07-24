@@ -53,7 +53,7 @@ We have continued to improve how you manage your plugins within Grafana. The new
 
 ### Grafana Alerting
 
-We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This update includes the addition of a UI to edit the Cortex/Loki namespace, edit the alert group name, and edit the alert group evaluation interval. We've also added a Test button to test an alert notification contact point. There's even more to explore here including custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](/docs/grafana/latest/alerting/unified-alerting/) for more details and information on how you can enable the unified alerting system in your instance of Grafana.
+We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This update includes the addition of a UI to edit the Cortex/Loki namespace, edit the alert group name, and edit the alert group evaluation interval. We've also added a Test button to test an alert notification contact point. There's even more to explore here including custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](/docs/grafana/v8.2/alerting/unified-alerting/) for more details and information on how you can enable the unified alerting system in your instance of Grafana.
 
 ### Image Renderer performance improvements and measurement
 
