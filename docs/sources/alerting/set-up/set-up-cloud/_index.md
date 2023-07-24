@@ -48,7 +48,7 @@ To set up Alerting, you need to:
    - [Optional] Add additional nested policies
    - [Optional] Add labels and label matchers to control alert routing
 
-4. [Optional] Integrate with [Grafana OnCall]({{< relref "/docs/oncall/latest/integrations/grafana-alerting" >}}) and [Grafana Incident]({{< relref "/docs/grafana-cloud/incident/set-up" >}})
+4. [Optional] Integrate with [Grafana OnCall][oncall] and [Grafana Incident]({{< relref "/docs/grafana-cloud/alerting-and-irm/incident" >}})
 
 ## Advanced set up options
 
@@ -252,6 +252,9 @@ After you upload a working Alertmanager configuration file, you can access the A
 For information on how to provision alert rule using Terraform, see [Provision alert rules using Terraform][terraform-provisioning].
 
 {{% docs/reference %}}
+[oncall]: "/docs/grafana/ -> /docs/oncall/latest/integrations/grafana-alerting"
+[oncall]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/integrations/grafana-alerting"
+
 [set-up]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up"
 [set-up]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up"
 

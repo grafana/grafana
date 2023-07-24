@@ -28,7 +28,7 @@ There are three options to choose from:
 
 1. Provision your alerting resources using the Alerting Provisioning HTTP API.
 
-   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning API]({{< relref "../../../developers/http_api/alerting_provisioning" >}}).
+   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning API][alerting_provisioning].
 
 1. Provision your alerting resources using [Terraform](https://www.terraform.io/).
 
@@ -40,7 +40,7 @@ Currently, provisioning for Grafana Alerting supports alert rules, contact point
 
 [Grafana provisioning][provisioning]
 
-[Terraform provisioning]({{< relref "/docs/grafana-cloud/infrastructure-as-code/terraform" >}})
+[Terraform provisioning]({{< relref "/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform" >}})
 
 [Grafana Alerting provisioning API][alerting_provisioning]
 

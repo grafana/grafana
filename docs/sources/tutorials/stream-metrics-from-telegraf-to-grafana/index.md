@@ -36,7 +36,7 @@ In this tutorial, you'll:
 
 ## Run Grafana and create admin token
 
-1. Run Grafana following [installation instructions]({{< relref "/docs/grafana/latest/installation" >}}) for your operating system.
+1. Run Grafana following [installation instructions]({{< relref "/docs/grafana/latest/setup-grafana/installation" >}}) for your operating system.
 1. Log in and go to Configuration -> API Keys.
 1. Press "Add API key" button and create a new API token with **Admin** role.
 

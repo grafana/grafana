@@ -138,7 +138,7 @@ deleteRules:
 Create or delete contact points in your Grafana instance(s).
 
 1. Create a contact point in Grafana.
-1. Use the [Alerting provisioning API]({{< relref "../../../../developers/http_api/alerting_provisioning" >}}) export endpoints to download a provisioning file for your contact point.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your contact point.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.

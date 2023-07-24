@@ -143,7 +143,7 @@ Each linked query consists of:
 
 ### Service Graph
 
-The **Service Graph** setting configures the [Service Graph]({{< relref "/docs/tempo/latest/grafana-agent/service-graphs" >}}) feature.
+The **Service Graph** setting configures the [Service Graph]({{< relref "/docs/tempo/latest/configuration/grafana-agent/service-graphs" >}}) feature.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
@@ -318,7 +318,7 @@ You use the Service Graph to detect performance issues; track increases in error
 
 **To display the Service Graph:**
 
-1. [Configure Grafana Agent]({{< relref "/docs/tempo/latest/grafana-agent/service-graphs#quickstart" >}}) or [Tempo or GET]({{< relref "/docs/tempo/latest/metrics-generator/service_graphs#tempo" >}}) to generate Service Graph data.
+1. [Configure Grafana Agent]({{< relref "/docs/tempo/latest/configuration/grafana-agent/service-graphs#quickstart" >}}) or [Tempo or GET]({{< relref "/docs/tempo/latest/metrics-generator/service_graphs#tempo" >}}) to generate Service Graph data.
 1. Link a Prometheus data source in the Tempo data source's [Service Graph](#configure-service-graph) settings.
 1. Navigate to [Explore]({{< relref "../../explore" >}}).
 1. Select the Tempo data source.

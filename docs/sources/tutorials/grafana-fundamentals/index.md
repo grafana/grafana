@@ -325,9 +325,9 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`, and set **Rule type** to **Grafana Managed Alert**. For **Folder** type `fundamentals` and in the box that appears, press **Create: fundamentals**.
 1. For **Section 2**, find the **query A** box. Choose your Prometheus datasource and enter the same query that we used in our earlier panel: `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`. Press **Run queries**. You should see some data in the graph.
-1. Now scroll down to the **query B** box. For **Operation** choose `Classic condition`. [You can read more about classic and multi-dimensional conditions here]({{< relref "/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule" >}}). For conditions enter the following: `WHEN last() OF A IS ABOVE 0.2`
+1. Now scroll down to the **query B** box. For **Operation** choose `Classic condition`. [You can read more about classic and multi-dimensional conditions here]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule" >}}). For conditions enter the following: `WHEN last() OF A IS ABOVE 0.2`
 1. In **Section 3**, enter `30s` for the **Evaluate every** field. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. In the **for** field, enter `0m`. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
-1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here]({{< relref "/docs/grafana/latest/alerting/unified-alerting/message-templating" >}}).
+1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here]({{< relref "/docs/grafana/latest/alerting/fundamentals/alert-rules/message-templating" >}}).
 1. Click **Save and exit** at the top of the page.
 1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Notification policies**.
 1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** to **RequestBin**.
@@ -355,9 +355,9 @@ docker-compose down -v
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus]({{< relref "/docs/grafana/latest/features/datasources/prometheus" >}})
-- [Loki]({{< relref "/docs/grafana/latest/features/datasources/loki" >}})
-- [Explore]({{< relref "/docs/grafana/latest/features/explore" >}})
+- [Prometheus]({{< relref "/docs/grafana/latest/datasources/prometheus" >}})
+- [Loki]({{< relref "/docs/grafana/latest/datasources/loki" >}})
+- [Explore]({{< relref "/docs/grafana/latest/explore" >}})
 - [Alerting Overview]({{< relref "/docs/grafana/latest/alerting" >}})
-- [Alert rules]({{< relref "/docs/grafana/latest/alerting/create-alerts" >}})
-- [Contact Points]({{< relref "/docs/grafana/latest/alerting/notifications" >}})
+- [Alert rules]({{< relref "/docs/grafana/latest/alerting/alerting-rules" >}})
+- [Contact Points]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-notification-policy" >}})

@@ -110,7 +110,7 @@ Grafana now uses envelope encryption to encrypt secrets in the database. Envelop
 
 The dashboard previews initially came to life during our internal [Grafana Labs Hackathon](/blog/2022/01/14/all-about-the-grafana-labs-hackathon-2.0/?), and are now ready for an opt-in beta release. The previews provide an overview of all available dashboards and help you quickly find the right dashboard when the dashboard names aren’t enough.
 
-Refer to the [Dashboard previews topic]({{< relref "/docs/grafana/next/dashboards/previews" >}}) for instructions on how to enable the feature and current limitations.
+Refer to the [Dashboard previews topic](/docs/grafana/next/dashboards/previews/) for instructions on how to enable the feature and current limitations.
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
@@ -161,7 +161,7 @@ Query history is a panel that keeps track of all queries that are run in Explore
 
 ### RBAC is generally available
 
-Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs]({{< relref "/docs/grafana/next/enterprise/access-control" >}}).
+Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs](/docs/grafana/next/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/rbac-ga.png" max-width="755px" caption="RBAC is GA" >}}
 
@@ -169,11 +169,11 @@ Fine-grained access control is now called role-based access control, or RBAC. It
 
 ### Add multiple dashboards to a single report
 
-If you have information spread across several dashboards that you’d like to send out to a group of recipients periodically, you can now add multiple dashboards to a single report and send it all in one email. Learn more about Reporting in the [Reporting docs]({{< relref "/docs/grafana/latest/enterprise/reporting#reporting" >}}).
+If you have information spread across several dashboards that you’d like to send out to a group of recipients periodically, you can now add multiple dashboards to a single report and send it all in one email. Learn more about Reporting in the [Reporting docs](/docs/grafana/latest/enterprise/reporting/#reporting).
 
 ### Embed an image of a dashboard in a report
 
-Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs]({{< relref "/docs/grafana/latest/enterprise/reporting#reporting" >}}).
+Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs](/docs/grafana/latest/enterprise/reporting/#reporting).
 
 {{< figure src="/static/img/docs/dashboards/report-embedded-image.png" max-width="750px" caption="Embed report" >}}
 

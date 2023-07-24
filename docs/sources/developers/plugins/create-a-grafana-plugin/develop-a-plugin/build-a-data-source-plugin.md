@@ -374,7 +374,7 @@ In this tutorial you built a complete data source plugin for Grafana that uses a
 
 Learn how you can improve your plugin even further, by reading our advanced guides:
 
-- [Add support for variables]({{< relref "/docs/grafana/latest/developers/plugins/add-support-for-variables" >}})
-- [Add support for annotations]({{< relref "/docs/grafana/latest/developers/plugins/add-support-for-annotations" >}})
-- [Add support for Explore queries]({{< relref "/docs/grafana/latest/developers/plugins/add-support-for-explore-queries" >}})
-- [Build a logs data source]({{< relref "/docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin" >}})
+- [Add support for variables](/docs/grafana/latest/developers/plugins/add-support-for-variables/)
+- [Add support for annotations](/docs/grafana/latest/developers/plugins/add-support-for-annotations/)
+- [Add support for Explore queries](/docs/grafana/latest/developers/plugins/add-support-for-explore-queries/)
+- [Build a logs data source](/docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin/)

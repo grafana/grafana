@@ -39,7 +39,7 @@ For release highlights and deprecations, refer to our [v10.0 What’s new]({{< r
 <!--
 ## Feature
 
-You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references]({{< relref "/docs/writers-toolkit/writing-guide/references" >}}).-->
+You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references]({{< relref "/docs/writers-toolkit/write/references" >}}).-->
 
 ## General breaking changes
 

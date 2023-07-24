@@ -23,8 +23,8 @@ A correlation defines how data in one [data source]({{< relref "/docs/grafana/la
 
 Explore visualizations that currently support showing links based on correlations:
 
-- [Logs Panel]({{< relref "./use-correlations-in-visualizations#correlations-in-logs-panel">}})
-- [Table]({{< relref "./use-correlations-in-visualizations#correlations-in-table">}})
+- [Logs Panel]({{< relref "./use-correlations-in-visualizations#correlations-in-logs-panel" >}})
+- [Table]({{< relref "./use-correlations-in-visualizations#correlations-in-table" >}})
 
 You can configure correlations using [Administration > Correlation page]({{< relref "/docs/grafana/latest/administration" >}}) or with [provisioning]({{< relref "/docs/grafana/latest/administration/provisioning" >}}).
 

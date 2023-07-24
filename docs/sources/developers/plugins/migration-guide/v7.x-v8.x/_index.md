@@ -160,7 +160,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin]({{< relref "../../publish-a-plugin/sign-a-plugin.md" >}}).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode]({{< relref "/docs/grafana/latest/administration/configuration#app_mode" >}}). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../../setup-grafana/configure-grafana#allow_loading_unsigned_plugins" >}}) configuration setting.
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../../setup-grafana/configure-grafana#allow_loading_unsigned_plugins" >}}) configuration setting.
 
 ## Update react-hook-form from v6 to v7
 

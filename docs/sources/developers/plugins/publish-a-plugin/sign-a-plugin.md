@@ -38,7 +38,7 @@ To verify ownership of your plugin, generate an API key that you'll use every ti
 
    You can find the plugin ID in the `plugin.json` file inside your plugin directory. For example, if your account slug is `acmecorp`, you need to prefix the plugin ID with `acmecorp-`.
 
-1. [Create a Grafana Cloud API key]({{< relref "/docs/grafana-cloud/reference/create-api-key" >}}) with the **PluginPublisher** role.
+1. [Create a Grafana Cloud API key](/docs/grafana-cloud/reference/create-api-key/) with the **PluginPublisher** role.
 
 ## Sign a public plugin
 

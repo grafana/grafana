@@ -27,13 +27,13 @@ For even more detail about all the changes in this release, refer to the [change
 <!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 {{% admonition type="note" %}}
-You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references]({{< relref "/docs/writers-toolkit/writing-guide/references" >}}).
+You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
 {{% /admonition %}}
 -->
 
 ## Breaking changes
 
-For Grafana v10.0, we've also provided a list of [breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-0" >}}) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0]({{< relref "../breaking-changes/breaking-changes-v10-0" >}}).
+For Grafana v10.0, we've also provided a list of [breaking changes]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0]({{< relref "../breaking-changes/breaking-changes-v10-0/" >}}).
 
 ## Correlations
 
@@ -120,7 +120,7 @@ Currently, the Datagrid Panel supports the following features in Grafana version
 - Draggable columns and rows
 - Series selection when pulling data from a data source
 
-To learn more, refer to the [Datagrid documentation]({{< relref "../panels-visualizations/visualizations/datagrid" >}}).
+To learn more, refer to the [Datagrid documentation]({{< relref "../panels-visualizations/visualizations/datagrid/" >}}).
 
 In subsequent releases, we’ll continue adding features to the Datagrid panel to further improve the user experience.
 
@@ -163,7 +163,7 @@ _Generally available in all editions of Grafana._
 
 We've implemented support for adding time regions to the Time series panel. Time regions provide a more contextualized experience, enabling you to highlight certain days of the week, such as Monday to Friday to display work weeks, right alongside your data. Time regions are also a useful way to highlight specific parts of a day like night, work hours, or whatever you want to define for each day. They allow you to quickly orient yourself in parts of the day or ignore highlighted parts of the time series.
 
-To learn more, refer to our [time region documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations#add-time-regions" >}}).
+To learn more, refer to our [time region documentation]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-time-regions" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-time-regions.png" max-width="750px" caption="Time regions" >}}
 
@@ -175,7 +175,7 @@ _Generally available in all editions of Grafana._
 
 You can now filter dashboard annotations to apply annotations to all panels or selected panels, or use them to exclude selected panels.
 
-To learn more, refer to our [documentation about adding annotation queries]({{< relref "../dashboards/build-dashboards/annotate-visualizations#add-new-annotation-queries" >}}).
+To learn more, refer to our [documentation about adding annotation queries]({{< relref "../dashboards/build-dashboards/annotate-visualizations/#add-new-annotation-queries" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-annotation-filtering.png" max-width="750px" caption="Annotation filtering" >}}
 
@@ -266,11 +266,11 @@ To learn more, refer to our [public dashboards documentation]({{< relref "../das
 _Generally available in Grafana Enterprise, Cloud Pro, and Cloud Advanced._
 
 You can now configure SAML using our new user interface, making the process easier and more convenient than ever before.
-With the new user interface (UI), you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control" >}}), which makes the process much faster and more efficient.
+With the new user interface (UI), you can now configure SAML without needing to restart Grafana and you can control access to the configuration UI by using [role-based access control (RBAC)]({{< relref "../administration/roles-and-permissions/access-control/" >}}), which makes the process much faster and more efficient.
 
 The SAML UI is available in Grafana Enterprise, Cloud Pro, and Advanced. It's user-friendly, with clear instructions and helpful prompts to guide you through the process.
 
-For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../setup-grafana/configure-security/configure-authentication/saml-ui" >}}).
+For more information on how to set up SAML using the Grafana UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../setup-grafana/configure-security/configure-authentication/saml-ui/" >}}).
 
 ### Case-insensitive usernames and email addresses
 
@@ -417,4 +417,4 @@ Some data sources, like MySQL databases, Prometheus instances or Elasticsearch c
 
 To query these data sources from Grafana Cloud, you've had to open your private network to a range of IP addresses, a non-starter for many IT Security teams. The challenge is, how do you connect to your private data from Grafana Cloud, without exposing your network?
 
-The answer is Private Data Source Connect (PDC), available now in public preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [Private data source connect documentation]({{< relref "/docs/grafana-cloud/data-configuration/configure-private-datasource-connect" >}}).
+The answer is Private Data Source Connect (PDC), available now in public preview in Grafana Cloud Pro and Advanced. PDC uses SOCKS over SSH to establish a secure connection between a lightweight PDC agent you deploy on your network and your Grafana Cloud stack. PDC keeps the network connection totally under your control. It’s easy to set up and manage, uses industry-standard security protocols, and works across public cloud vendors and a wide variety of secure networks. Learn more in our [Private data source connect documentation](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect).

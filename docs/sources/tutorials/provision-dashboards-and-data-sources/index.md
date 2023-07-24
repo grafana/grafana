@@ -59,7 +59,7 @@ You can set a different path by setting the `paths.provisioning` property in the
 provisioning = <path to config files>
 ```
 
-For more information about configuration files, refer to [Configuration]({{< relref "/docs/grafana/latest/installation/configuration" >}}) in the [Grafana documentation]({{< relref "/docs/grafana/latest" >}}).
+For more information about configuration files, refer to [Configuration]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana" >}}) in the [Grafana documentation]({{< relref "/docs/grafana/latest" >}}).
 
 The provisioning directory assumes the following structure:
 
@@ -81,7 +81,7 @@ Each data source provisioning config file contains a _manifest_ that specifies t
 
 At startup, Grafana loads the configuration files and provisions the data sources listed in the manifests.
 
-Let's configure a [TestData]({{< relref "/docs/grafana/latest/features/datasources/testdata" >}}) data source that you can use for your dashboards.
+Let's configure a [TestData]({{< relref "/docs/grafana/latest/datasources/testdata" >}}) data source that you can use for your dashboards.
 
 #### Create a data source manifest
 

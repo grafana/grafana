@@ -158,7 +158,7 @@ And here is a preview of our alerts:
 This will display as follows:
 ![grafana alerts from flux queries](/media/tutorials/screenshot-flux-tip-significant-figures.png))
 
-You can reference our documentation on [alert message templating]({{< relref "/docs/grafana/latest/alerting/contact-points/message-templating" >}}) to learn more about this powerful feature.
+You can reference our documentation on [alert message templating]({{< relref "/docs/grafana/latest/alerting/fundamentals/alert-rules/message-templating" >}}) to learn more about this powerful feature.
 
 ### Conclusion
 
