@@ -97,3 +97,4 @@ grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,fa
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,experimental,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/grafana-authnz-team,false,false,true,false
+azureMonitorDataplane,GA,@grafana/partner-datasources,false,false,false,false

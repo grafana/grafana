@@ -116,4 +116,5 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
 }

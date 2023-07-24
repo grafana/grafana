@@ -41,6 +41,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `alertingNotificationsPoliciesMatchingInstances` | Enables the preview of matching instances for notification policies                                                                                                                                 | Yes                |
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
+| `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 
 ## Preview feature toggles
 
