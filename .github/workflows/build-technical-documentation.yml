@@ -1,6 +1,5 @@
 name: Build technical documentation
 on:
-  push:
   pull_request:
     paths: ["docs/sources/**"]
   workflow_dispatch:
@@ -46,6 +45,7 @@ jobs:
 
       - name: Build website
         run: |
+          ls -al /hugo/content/docs
           rm -rf /hugo/content/docs
           ln -sn "$$(pwd)/website/content/docs" /hugo/content/docs
           mkdir -p /hugo/content/docs/grafana/latest
