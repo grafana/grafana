@@ -172,6 +172,14 @@ The Metrics Explorer is a new feature to enhance metric browsing in the Promethe
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Metrics explorer" >}}
 
+### CloudWatch Logs Monaco query editor
+
+<!-- Isabella Siu, Kevin Yu -->
+
+_Experimental in all editions of Grafana_
+
+The CloudWatch Logs query editor is moving from being a Slate-based editor to a Monaco-based editor. This new Monaco-based editor will provide improved syntax highlighting, and auto-completion. Enable the `cloudWatchLogsMonacoEditor` feature toggle to use the Monaco-based query editor. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+
 ## Explore
 
 ### Elasticsearch logs sample
