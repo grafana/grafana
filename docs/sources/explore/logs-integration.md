@@ -23,7 +23,7 @@ Explore is a powerful tool for logging and log analysis. It allows you to invest
 
 With Explore, you can efficiently monitor, troubleshoot, and respond to incidents by analyzing your logs and identifying root causes of issues. It also helps you to correlate logs with other telemetry signals such as metrics, traces or profiles, by viewing them side-by-side.
 
-The results of log queries are displayed both as a logs volume on the graph and as individual log lines.
+The results of log queries are displayed as individual log lines and as a graph showing the logs volume for the selected time period.
 
 ## Logs volume
 
