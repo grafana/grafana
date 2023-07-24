@@ -63,7 +63,7 @@ func ProvideService(
 // AwaitHealthy waits for all registered modules to be healthy.
 func (m *service) AwaitHealthy(ctx context.Context) error {
 	if m.serviceManager == nil {
-		return fmt.Errorf("service manager has not been initialized")
+		return errors.New("service manager has not been initialized")
 	}
 	return m.serviceManager.AwaitHealthy(ctx)
 }
