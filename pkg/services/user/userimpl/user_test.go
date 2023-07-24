@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -287,4 +288,30 @@ func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery
 
 func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 	return 0, nil
+}
+
+func TestUpdateLastSeenAt(t *testing.T) {
+	userStore := newUserStoreFake()
+	orgService := orgtest.NewOrgServiceFake()
+	userService := Service{
+		store:        userStore,
+		orgService:   orgService,
+		cacheService: localcache.ProvideService(),
+		teamService:  &teamtest.FakeService{},
+	}
+	userService.cfg = setting.NewCfg()
+
+	t.Run("update last seen at", func(t *testing.T) {
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-10 * time.Minute)}
+		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
+		require.NoError(t, err)
+	})
+
+	userService.cacheService.Flush()
+
+	t.Run("do not update last seen at", func(t *testing.T) {
+		userStore.ExpectedSignedInUser = &user.SignedInUser{UserID: 1, OrgID: 1, Email: "email", Login: "login", Name: "name", LastSeenAt: time.Now().Add(-1 * time.Minute)}
+		err := userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: 1, OrgID: 1})
+		require.ErrorIs(t, err, user.ErrLastSeenUpToDate, err)
+	})
 }
