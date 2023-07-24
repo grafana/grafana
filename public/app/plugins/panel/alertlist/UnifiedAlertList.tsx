@@ -14,7 +14,6 @@ import {
   CustomScrollbar,
   LoadingPlaceholder,
   useStyles2,
-  useTheme2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
