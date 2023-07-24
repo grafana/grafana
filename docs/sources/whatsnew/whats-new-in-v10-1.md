@@ -192,10 +192,6 @@ Enables you to switch to a data source-managed alert rule if your data source is
 
 {{< figure src="/media/docs/alerting/alert-rule-types.png" max-width="750px" caption="Alert rule types" >}}
 
-#### In-app guidance for alert rule creation
-
-Learn about how to create your alert rules interactively with in-app guidance for additional context and links out to our Alerting documentation from each of the steps in alert rule creation.
-
 #### UI improvements
 
 - **Alert evaluation behavior**: New UI components for creating a folder and adding an evaluation group along with improved text and validation.
@@ -234,10 +230,6 @@ We’ve made the following changes to alert management.
 Adds support for different time zones and locations as well as a visual selector for week days, improvement to loading and error handling, and better validation for time ranges.
 
 {{< figure src="/media/docs/alerting/timezone-support.png" max-width="750px" caption="Time zone support" >}}
-
-#### Adds support for toggling common labels
-
-Adds support for toggling common labels that are shared between all alert instances. You can toggle between showing or hiding them for each individual alert instance.
 
 ## Authentication and authorization
 
