@@ -89,8 +89,10 @@ jobs:
 
       - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
+        # doc-validator doesn't support walking symlinks yet.
         run: |
-          ln -Fsn "$(pwd)/docs/sources" "$(pwd)/website/content/docs/grafana/${TARGET}"
+          rm -rf "$(pwd)/website/content/docs/grafana/${TARGET}"
+          mv "$(pwd)/docs/sources" "$(pwd)/website/content/docs/grafana/${TARGET}"
           doc-validator \
             "--include=^$(pwd)/website/content/docs/grafana/${TARGET}/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$" \
             '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$' \
