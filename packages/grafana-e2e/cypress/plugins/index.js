@@ -1,13 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const packageJson = require('../../package.json');
-
-// Only run this plugin if the version of Cypress is 9.x.x
-if (!packageJson?.dependencies?.cypress?.match(/\b9\b\./)) {
-  return;
-}
-
 const benchmarkPlugin = require('./benchmark');
 const compareScreenshots = require('./compareScreenshots');
 const extendConfig = require('./extendConfig');

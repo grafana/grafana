@@ -37,6 +37,7 @@
     "cypress",
     "dist",
     "cli.js",
+    "cli.utils.js",
     "legacy-cypress.json",
     "cypress.config.js",
     "./README.md",
