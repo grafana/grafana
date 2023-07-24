@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
