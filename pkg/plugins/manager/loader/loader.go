@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -369,7 +370,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if parent.IsCorePlugin() {
 		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
 	} else {
-		child.Module = util.JoinURLFragments("/public/plugins/"+parent.ID, appSubPath) + "/module.js"
+		child.Module = util.JoinURLFragments(setting.AppSubUrl+"/public/plugins/"+parent.ID, appSubPath) + "/module.js"
 	}
 }
 
