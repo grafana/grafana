@@ -135,17 +135,19 @@ func getOAuthTokenCacheTTL(accessTokenExpiry, idTokenExpiry time.Time) time.Dura
 		accessTokenTTL = maxOAuthTokenCacheTTL
 	}
 
-	if !idTokenExpiry.IsZero() {
-		idTokenTTL := time.Until(idTokenExpiry)
-		if idTokenTTL > maxOAuthTokenCacheTTL {
-			idTokenTTL = maxOAuthTokenCacheTTL
-		}
-		if idTokenTTL < accessTokenTTL {
-			return idTokenTTL
-		}
+	if idTokenExpiry.IsZero() {
+		return accessTokenTTL
 	}
 
-	return accessTokenTTL
+	idTokenTTL := time.Until(idTokenExpiry)
+	if idTokenTTL > maxOAuthTokenCacheTTL {
+		idTokenTTL = maxOAuthTokenCacheTTL
+	}
+
+	if accessTokenTTL <= idTokenTTL {
+		return accessTokenTTL
+	}
+  return idTokenTTL
 }
 
 // getIDTokenExpiry extracts the expiry time from the ID token
