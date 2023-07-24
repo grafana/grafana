@@ -35,4 +35,4 @@ jobs:
           ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
           cd /hugo
           unset WEBSITE_SKIP_MOUNTS
-          make hugo HUGO_ENV=docs
+          make hugo HUGO_ENV=docs | grep docs/grafana/
