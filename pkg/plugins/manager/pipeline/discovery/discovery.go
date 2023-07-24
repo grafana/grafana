@@ -6,8 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
 type Discoverer interface {
@@ -42,18 +40,6 @@ func New(cfg *config.Cfg, opts Opts) *Discovery {
 		findStep:       opts.FindFunc,
 		findFilterStep: opts.FindFilterFunc,
 		log:            log.New("plugins.discovery"),
-	}
-}
-
-func NewDiscoveryStage(pluginFinder finder.Finder, pluginRegistry registry.Service) *Discovery {
-	return &Discovery{
-		findStep: func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-			return pluginFinder.Find(ctx, src)
-		},
-		findFilterStep: func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-			return NewDuplicatePluginFilterStep(pluginRegistry).Filter(ctx, bundles)
-		},
-		log: log.New("plugins.discovery"),
 	}
 }
 

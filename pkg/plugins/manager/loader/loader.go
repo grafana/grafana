@@ -11,10 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/bootstrap"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -44,13 +43,12 @@ type Loader struct {
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, angularInspector, externalServiceRegistry,
-		discovery.NewDiscoveryStage(pluginFinder, pluginRegistry),
-		bootstrap.NewBootstrapStage(signatureCalculator, assetPath))
+		roleRegistry, assetPath, angularInspector, externalServiceRegistry, discovery, bootstrap)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,

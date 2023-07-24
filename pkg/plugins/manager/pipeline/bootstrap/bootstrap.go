@@ -45,14 +45,6 @@ func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 	}
 }
 
-func NewBootstrapStage(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *Bootstrap {
-	return &Bootstrap{
-		constructStep: DefaultConstructFunc(signatureCalculator, assetPath),
-		decorateSteps: DefaultDecorateFuncs,
-		log:           log.New("plugins.bootstrap"),
-	}
-}
-
 func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	ps, err := b.constructStep(ctx, src, found)
 	if err != nil {

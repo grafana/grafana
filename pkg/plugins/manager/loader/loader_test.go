@@ -18,13 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/bootstrap"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1210,6 +1208,11 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.discovery = discovery.New(l.cfg, discovery.Opts{
+				FindFilterFunc: func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+					return discovery.NewDuplicatePluginFilterStep(l.pluginRegistry).Filter(ctx, bundles)
+				}},
+			)
 		})
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1420,8 +1423,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assets, angularInspector, &fakes.FakeOauthService{},
-		discovery.NewDiscoveryStage(finder.NewLocalFinder(cfg.DevMode), reg),
-		bootstrap.NewBootstrapStage(signature.ProvideService(statickey.New()), assets))
+		discovery.New(cfg, discovery.Opts{}), bootstrap.New(cfg, bootstrap.Opts{}))
 
 	for _, cb := range cbs {
 		cb(l)
