@@ -64,7 +64,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
-	github.com/grafana/grafana-aws-sdk v0.15.0 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v0.16.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.171.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
@@ -209,7 +209,7 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect

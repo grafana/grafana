@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
-import { H5 } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 import { useDispatch } from 'app/types';
@@ -435,8 +435,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             onClickSwitch={onClickSwitch}
           />
           {/* Expression Queries */}
-          <H5>Expressions</H5>
-          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
+          <Text element="h5">Expressions</Text>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}

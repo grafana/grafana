@@ -9,37 +9,37 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type middlewareTestCase struct {
-	desc           string
-	expectEndpoint bool
-	evaluator      accesscontrol.Evaluator
-	ac             accesscontrol.AccessControl
+	desc            string
+	expectEndpoint  bool
+	evaluator       accesscontrol.Evaluator
+	ctxSignedInUser *user.SignedInUser
 }
 
 func TestMiddleware(t *testing.T) {
+	cfg := setting.NewCfg()
+	ac := acimpl.ProvideAccessControl(cfg)
+
 	tests := []middlewareTestCase{
 		{
-			desc: "should pass middleware for correct permissions",
-			ac: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			),
-			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
-			expectEndpoint: true,
+			desc:            "should pass middleware for correct permissions",
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:*"}}}},
+			expectEndpoint:  true,
 		},
 		{
-			desc: "should not reach endpoint when missing permissions",
-			ac: mock.New().WithPermissions(
-				[]accesscontrol.Permission{{Action: "users:read", Scope: "users:1"}},
-			),
-			evaluator:      accesscontrol.EvalPermission("users:read", "users:*"),
-			expectEndpoint: false,
+			desc:            "should not reach endpoint when missing permissions",
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:read": {"users:1"}}}},
+			evaluator:       accesscontrol.EvalPermission("users:read", "users:*"),
+			expectEndpoint:  false,
 		},
 	}
 
@@ -48,8 +48,12 @@ func TestMiddleware(t *testing.T) {
 			server := web.New()
 			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 
-			server.Use(contextProvider())
-			server.Use(accesscontrol.Middleware(test.ac)(test.evaluator))
+			server.Use(contextProvider(
+				func(c *contextmodel.ReqContext) {
+					c.SignedInUser = test.ctxSignedInUser
+				},
+			))
+			server.Use(accesscontrol.Middleware(ac)(test.evaluator))
 
 			endpointCalled := false
 			server.Get("/", func(c *contextmodel.ReqContext) {
@@ -78,39 +82,49 @@ func TestMiddleware_forceLogin(t *testing.T) {
 		{url: "/endpoint"},
 	}
 
+	cfg := setting.NewCfg()
+	ac := acimpl.ProvideAccessControl(cfg)
+
 	for _, tc := range tests {
-		var endpointCalled bool
+		t.Run(tc.url, func(t *testing.T) {
+			var endpointCalled bool
 
-		server := web.New()
-		server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
+			server := web.New()
+			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 
-		server.Get("/endpoint", func(c *contextmodel.ReqContext) {
-			endpointCalled = true
-			c.Resp.WriteHeader(http.StatusOK)
+			server.Get("/endpoint", func(c *contextmodel.ReqContext) {
+				endpointCalled = true
+				c.Resp.WriteHeader(http.StatusOK)
+			})
+
+			user := &user.SignedInUser{UserID: 1,
+				OrgID:       1,
+				IsAnonymous: true,
+				Permissions: map[int64]map[string][]string{1: {"endpoint:read": {"endpoint:1"}}}}
+
+			server.Use(contextProvider(func(c *contextmodel.ReqContext) {
+				c.AllowAnonymous = true
+				c.SignedInUser = user
+				c.IsSignedIn = false
+			}))
+
+			server.Use(
+				accesscontrol.Middleware(ac)(accesscontrol.EvalPermission("endpoint:read", "endpoint:1")),
+			)
+
+			request, err := http.NewRequest(http.MethodGet, tc.url, nil)
+			assert.NoError(t, err)
+			recorder := httptest.NewRecorder()
+
+			server.ServeHTTP(recorder, request)
+
+			expectedCode := http.StatusOK
+			if tc.redirectToLogin {
+				expectedCode = http.StatusFound
+			}
+			assert.Equal(t, expectedCode, recorder.Code)
+			assert.Equal(t, !tc.redirectToLogin, endpointCalled, "/endpoint should be called")
 		})
-
-		ac := mock.New().WithPermissions([]accesscontrol.Permission{{Action: "endpoint:read", Scope: "endpoint:1"}})
-		server.Use(contextProvider(func(c *contextmodel.ReqContext) {
-			c.AllowAnonymous = true
-			c.SignedInUser.IsAnonymous = true
-			c.IsSignedIn = false
-		}))
-		server.Use(
-			accesscontrol.Middleware(ac)(accesscontrol.EvalPermission("endpoint:read", "endpoint:1")),
-		)
-
-		request, err := http.NewRequest(http.MethodGet, tc.url, nil)
-		assert.NoError(t, err)
-		recorder := httptest.NewRecorder()
-
-		server.ServeHTTP(recorder, request)
-
-		expectedCode := http.StatusOK
-		if tc.redirectToLogin {
-			expectedCode = http.StatusFound
-		}
-		assert.Equal(t, expectedCode, recorder.Code)
-		assert.Equal(t, !tc.redirectToLogin, endpointCalled, "/endpoint should be called?")
 	}
 }
 
