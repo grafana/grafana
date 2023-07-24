@@ -19,27 +19,11 @@ jobs:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
-      - name: Cache website repository
-        uses: actions/cache@v3
-        with:
-          path: website
-          key: build-technical-documentation-website
-
       - name: Sparse clone website repository
-        if: steps.cache-primes.outputs.cache-hit != 'true'
         run: |
           git clone --filter=blob:none --no-checkout --sparse --depth 1 https://x-access-token:${TOKEN}@github.com/grafana/website.git website
           git -C website sparse-checkout set content/docs
           git -C website checkout master
-        env:
-          TOKEN: ${{ steps.generate-token.outputs.token }}
-
-      - name: Update branch
-        if: steps.cache-primes.outputs.cache-hit == 'true'
-        run: |
-          git -C website remote set-url origin https://x-access-token:${TOKEN}@github.com/grafana/website.git website
-          git -C website fetch
-          git -C website reset --hard origin/master
         env:
           TOKEN: ${{ steps.generate-token.outputs.token }}
 
@@ -50,5 +34,6 @@ jobs:
           mkdir -p /hugo/content/docs/grafana/latest
           ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
           cd /hugo
+          npm install
           unset WEBSITE_SKIP_MOUNTS
           make prod HUGO_ENV=docs
