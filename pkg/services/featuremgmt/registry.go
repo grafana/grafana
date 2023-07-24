@@ -610,8 +610,9 @@ var (
 		{
 			Name:         "transformationsRedesign",
 			Description:  "Enables the transformations redesign",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
