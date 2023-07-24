@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { Auth, convertLegacyAuthProps } from '@grafana/experimental';
@@ -56,6 +56,16 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
   if (sigV4AuthToggleEnabled) {
     customMethods.push(sigV4Option);
   }
+
+  const onSettingsChange = useCallback(
+    (change: Partial<DataSourceSettings<PromOptions, {}>>) => {
+      onOptionsChange({
+        ...options,
+        ...change,
+      });
+    },
+    [options, onOptionsChange]
+  );
 
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(options)) || false;
@@ -141,8 +151,13 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
           newAuthProps.onAuthMethodSelect(method);
 
           // handle selecting of custom methods
+          // sigV4Id
           setSigV4Selected(method === sigV4Id);
+          onSettingsChange({
+            jsonData: { ...options.jsonData, sigV4Auth: method === sigV4Id },
+          });
 
+          // Azure
           setAzureAuthSelected(method === azureAuthId);
           azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
         }}
