@@ -1,12 +1,14 @@
 name: Build technical documentation
 on:
+  push:
   pull_request:
     paths: ["docs/sources/**"]
   workflow_dispatch:
 jobs:
   main:
     runs-on: ubuntu-latest
-    image: grafana/docs-base:latest
+    container:
+      image: grafana/docs-base:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -27,7 +29,7 @@ jobs:
       - name: Sparse clone website repository
         if: steps.cache-primes.outputs.cache-hit != 'true'
         run: |
-          git clone --filter=blob:none --no-checkout --sparse --depth 1 https://x-access-token:${TOKEN}github.com/grafana/website.git website
+          git clone --filter=blob:none --no-checkout --sparse --depth 1 https://x-access-token:${TOKEN}@github.com/grafana/website.git website
           git -C website sparse-checkout set content/docs
           git -C website checkout master
         env:
@@ -36,7 +38,7 @@ jobs:
       - name: Update branch
         if: steps.cache-primes.outputs.cache-hit == 'true'
         run: |
-          git -C website remote set-url origin https://x-access-token:${TOKEN}github.com/grafana/website.git website
+          git -C website remote set-url origin https://x-access-token:${TOKEN}@github.com/grafana/website.git website
           git -C website fetch
           git -C website reset --hard origin/master
         env:
