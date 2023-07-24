@@ -98,6 +98,7 @@ jobs:
             '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$' \
             "$(pwd)/website/content/docs/grafana/${TARGET}" \
             /docs/grafana/latest \
+            | sed "s,$(pwd)/website/content/docs/grafana/${TARGET},docs/sources,g" \
             | reviewdog \
                 -f=rdjsonl \
                 --fail-on-error \
