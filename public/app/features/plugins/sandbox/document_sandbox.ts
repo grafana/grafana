@@ -1,5 +1,6 @@
 import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 
+import { DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
@@ -78,13 +79,9 @@ export function isDomElement(obj: unknown): obj is Element {
  * This is necessary for plugins working with style attributes to work in Chrome
  */
 export function markDomElementStyleAsALiveTarget(el: Element) {
-  if (
-    // only HTMLElement's (extends Element) have a style attribute
-    el instanceof HTMLElement &&
-    // do not define it twice
-    !Object.hasOwn(el.style, SANDBOX_LIVE_VALUE)
-  ) {
-    Reflect.defineProperty(el.style, SANDBOX_LIVE_VALUE, {});
+  const style = Reflect.get(el, 'style');
+  if (!Object.hasOwn(style, SANDBOX_LIVE_VALUE)) {
+    Reflect.defineProperty(style, SANDBOX_LIVE_VALUE, {});
   }
 }
 
@@ -107,7 +104,7 @@ export function patchObjectAsLiveTarget(obj: unknown) {
     !(obj instanceof Function) &&
     // conditions for allowed objects
     // react class components
-    isReactClassComponent(obj)
+    (isReactClassComponent(obj) || obj instanceof DataSourceApi)
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   }

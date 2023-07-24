@@ -36,7 +36,6 @@ def enterprise_downstream_pipeline():
     ]
     return pipeline(
         name = "main-trigger-downstream",
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,

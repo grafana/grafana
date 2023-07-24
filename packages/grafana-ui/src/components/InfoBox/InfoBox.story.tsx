@@ -49,7 +49,7 @@ const InfoBoxTemplate: StoryFn<typeof InfoBox> = (args) => {
   return (
     <VerticalGroup>
       <div>Deprecrated component, use Alert with info severity</div>
-      <InfoBox {...args} />;
+      <InfoBox {...args} />
     </VerticalGroup>
   );
 };

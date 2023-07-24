@@ -131,7 +131,7 @@ function getTextWidth(text: string, font: string): number | null {
 const getStylesSlider = (theme: GrafanaTheme2, width: number) => {
   return {
     numberInputWrapper: css`
-      margin-left: 10px;
+      margin-left: ${theme.spacing(3)};
       max-height: 32px;
       max-width: ${width}px;
       min-width: ${width}px;

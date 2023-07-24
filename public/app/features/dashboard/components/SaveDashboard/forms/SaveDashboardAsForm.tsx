@@ -1,8 +1,6 @@
 import React from 'react';
 
-import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -40,7 +38,14 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
+export const SaveDashboardAsForm = ({
+  dashboard,
+  isLoading,
+  isNew,
+  onSubmit,
+  onCancel,
+  onSuccess,
+}: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
@@ -73,7 +78,7 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
 
         const clone = getSaveAsDashboardClone(dashboard);
         clone.title = data.title;
-        if (!data.copyTags) {
+        if (!isNew && !data.copyTags) {
           clone.tags = [];
         }
 
@@ -103,19 +108,17 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
           </Field>
           <Field label="Folder">
             <InputControl
-              render={({ field: { ref, ...field } }) =>
-                config.featureToggles.nestedFolderPicker ? (
-                  <NestedFolderPicker {...field} value={field.value?.uid} />
-                ) : (
-                  <FolderPicker
-                    {...field}
-                    dashboardId={dashboard.id}
-                    initialFolderUid={dashboard.meta.folderUid}
-                    initialTitle={dashboard.meta.folderTitle}
-                    enableCreateNew
-                  />
-                )
-              }
+              render={({ field: { ref, ...field } }) => (
+                <FolderPicker
+                  {...field}
+                  onChange={(uid: string, title: string) => field.onChange({ uid, title })}
+                  value={field.value?.uid}
+                  // Old folder picker fields
+                  initialTitle={dashboard.meta.folderTitle}
+                  dashboardId={dashboard.id}
+                  enableCreateNew
+                />
+              )}
               control={control}
               name="$folder"
             />
@@ -129,8 +132,8 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
-            <Button type="submit" aria-label="Save dashboard button">
-              Save
+            <Button disabled={isLoading} type="submit" aria-label="Save dashboard button">
+              {isLoading ? 'Saving...' : 'Save'}
             </Button>
           </HorizontalGroup>
         </>

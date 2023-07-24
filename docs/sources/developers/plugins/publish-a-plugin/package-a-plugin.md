@@ -1,5 +1,7 @@
 ---
-title: Package a plugin
+aliases:
+  - ../package-a-plugin/
+description: How to package a plugin
 keywords:
   - grafana
   - plugins
@@ -8,7 +10,11 @@ keywords:
   - package
   - packaging
   - packages
-description: How to package a plugin
+labels:
+  products:
+    - enterprise
+    - oss
+title: Package a plugin
 weight: 100
 ---
 

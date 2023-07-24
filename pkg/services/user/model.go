@@ -27,6 +27,7 @@ var (
 	ErrLastGrafanaAdmin  = errors.New("cannot remove last grafana admin")
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
 	ErrNoUniqueID        = errors.New("identifying id not found")
+	ErrLastSeenUpToDate  = errors.New("last seen is already up to date")
 )
 
 type User struct {
@@ -95,6 +96,7 @@ type ChangeUserPasswordCommand struct {
 
 type UpdateUserLastSeenAtCommand struct {
 	UserID int64
+	OrgID  int64
 }
 
 type SetUsingOrgCommand struct {
@@ -206,6 +208,7 @@ type SignedInUser struct {
 	Login            string
 	Name             string
 	Email            string
+	AuthenticatedBy  string
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
 	OrgCount         int

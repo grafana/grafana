@@ -10,6 +10,11 @@ keywords:
   - queries
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: InfluxDB template variables
 weight: 300

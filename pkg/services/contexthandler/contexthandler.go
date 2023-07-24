@@ -185,7 +185,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.UserToken = identity.SessionToken
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
-				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
+				reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -242,7 +242,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			// update last seen every 5min
 			if reqContext.ShouldUpdateLastSeenAt() {
 				reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
-				if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
+				err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID, OrgID: reqContext.OrgID})
+				if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 					reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 				}
 			}

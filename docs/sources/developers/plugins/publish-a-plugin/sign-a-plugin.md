@@ -1,8 +1,6 @@
 ---
-title: Sign a plugin
 aliases:
-  - ../../sign-a-plugin
-  - ../../sign-a-plugin/
+  - ../sign-a-plugin/
 description: How to sign a Grafana plugin.
 keywords:
   - grafana
@@ -10,6 +8,11 @@ keywords:
   - plugin
   - sign plugin
   - signing plugin
+labels:
+  products:
+    - enterprise
+    - oss
+title: Sign a plugin
 weight: 400
 ---
 

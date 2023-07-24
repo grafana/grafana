@@ -8,6 +8,11 @@ keywords:
   - tempo
   - guide
   - tracing
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Tempo
 title: Tempo data source
 weight: 1400
@@ -223,7 +228,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
       serviceMap:
         datasourceUid: 'prometheus'
       nodeGraph:
@@ -364,11 +369,6 @@ To open a query in Prometheus with the span name of that row automatically set i
 To open a query in Tempo with the span name of that row automatically set in the query, click a row in the **links** column.
 
 ## Span Filters
-
-{{% admonition type="note" %}}
-This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
