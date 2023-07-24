@@ -68,10 +68,15 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
+	idTokenExpires, err := getIDTokenExpiry(token)
+	if err != nil {
+		s.log.FromContext(ctx).Error("Failed to extract expiry of ID token", "id", identity.ID, "error", err)
+	}
+
 	// token has no expire time configured, so we don't have to refresh it
 	if token.OAuthExpiry.IsZero() {
 		// cache the token check, so we don't perform it on every request
-		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, time.Time{}))
+		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, idTokenExpires))
 		return nil
 	}
 
@@ -89,10 +94,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	}
 
 	accessTokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
-	idTokenExpires, err := getIDTokenExpiry(token)
-	if err != nil {
-		s.log.FromContext(ctx).Error("Failed to extract expiry of ID token", "id", identity.ID, "error", err)
-	}
+
 	var idTokenHasExpired bool
 	if !idTokenExpires.IsZero() {
 		idTokenHasExpired = idTokenExpires.Round(0).Add(-oauthtoken.ExpiryDelta).Before(time.Now())
@@ -126,28 +128,26 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 const maxOAuthTokenCacheTTL = 10 * time.Minute
 
 func getOAuthTokenCacheTTL(accessTokenExpiry, idTokenExpiry time.Time) time.Duration {
-	if accessTokenExpiry.IsZero() {
+	if accessTokenExpiry.IsZero() && idTokenExpiry.IsZero() {
 		return maxOAuthTokenCacheTTL
 	}
 
-	accessTokenTTL := time.Until(accessTokenExpiry)
-	if accessTokenTTL > maxOAuthTokenCacheTTL {
-		accessTokenTTL = maxOAuthTokenCacheTTL
+	min := func(a, b time.Duration) time.Duration {
+		if a <= b {
+			return a
+		}
+		return b
 	}
 
-	if idTokenExpiry.IsZero() {
-		return accessTokenTTL
+	if accessTokenExpiry.IsZero() && !idTokenExpiry.IsZero() {
+		return min(time.Until(idTokenExpiry), maxOAuthTokenCacheTTL)
 	}
 
-	idTokenTTL := time.Until(idTokenExpiry)
-	if idTokenTTL > maxOAuthTokenCacheTTL {
-		idTokenTTL = maxOAuthTokenCacheTTL
+	if !accessTokenExpiry.IsZero() && idTokenExpiry.IsZero() {
+		return min(time.Until(accessTokenExpiry), maxOAuthTokenCacheTTL)
 	}
 
-	if accessTokenTTL <= idTokenTTL {
-		return accessTokenTTL
-	}
-  return idTokenTTL
+	return min(min(time.Until(accessTokenExpiry), time.Until(idTokenExpiry)), maxOAuthTokenCacheTTL)
 }
 
 // getIDTokenExpiry extracts the expiry time from the ID token
