@@ -142,7 +142,7 @@ describe('QueryGroup', () => {
       });
     });
 
-    it('Should not render angular deprecation notice for angular plugins', async () => {
+    it('Should not render angular deprecation notice for non-angular plugins', async () => {
       mockDS.angularDetected = false;
       config.datasources[mockDS.name] = mockDS;
       renderScenario({});
