@@ -2,6 +2,7 @@
 aliases:
   - ../notifications/mute-timings/
   - ../unified-alerting/notifications/mute-timings/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/mute-timings/
 description: Mute timings
 keywords:
   - grafana
@@ -10,6 +11,11 @@ keywords:
   - mute
   - mute timings
   - mute time interval
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create mute timings
 weight: 420
 ---
@@ -57,7 +63,11 @@ A time interval is a definition for a moment in time. If an alert fires during t
 
 Supported time interval options are:
 
-- Time range: The time inclusive of the starting time and exclusive of the end time in UTC. - Days of the week: The day or range of days of the week. Example: `monday:thursday`. - Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month. - Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`. - Years: The year or years for the interval. For example: `2021:2024`.
+- Time range: The time inclusive of the starting time and exclusive of the end time in UTC.
+- Days of the week: The day or range of days of the week. Example: `monday:thursday`.
+- Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month.
+- Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`.
+- Years: The year or years for the interval. For example: `2021:2024`.
 
 If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 

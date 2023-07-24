@@ -27,10 +27,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPrometheusAzureOverrideAudience
-	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
-	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
@@ -54,14 +50,6 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
-
-	// FlagExploreMixedDatasource
-	// Enable mixed datasource in Explore
-	FlagExploreMixedDatasource = "exploreMixedDatasource"
-
-	// FlagNewTraceViewHeader
-	// Shows the new trace view header
-	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
@@ -166,10 +154,6 @@ const (
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
-
-	// FlagShowTraceId
-	// Show trace ids for requests
-	FlagShowTraceId = "showTraceId"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -343,6 +327,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagLokiFormatQuery
+	// Enables the ability to format Loki queries
+	FlagLokiFormatQuery = "lokiFormatQuery"
+
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
@@ -387,7 +375,31 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
+	// FlagToggleLabelsInLogsUI
+	// Enable toggleable filters in log details view
+	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
+
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
+
+	// FlagDisableTraceQLStreaming
+	// Disables the option to stream the response of TraceQL queries of the Tempo data source
+	FlagDisableTraceQLStreaming = "disableTraceQLStreaming"
+
+	// FlagGrafanaAPIServer
+	// Enable Kubernetes API Server for Grafana resources
+	FlagGrafanaAPIServer = "grafanaAPIServer"
+
+	// FlagFeatureToggleAdminPage
+	// Enable admin page for managing feature toggles from the Grafana front-end
+	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagAwsAsyncQueryCaching
+	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
+	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
+
+	// FlagSplitScopes
+	// Support faster dashboard and folder search by splitting permission scopes into parts
+	FlagSplitScopes = "splitScopes"
 )

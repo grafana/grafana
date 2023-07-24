@@ -36,7 +36,11 @@ export class FrameState extends ElementState {
   elements: ElementState[] = [];
   scene: Scene;
 
-  constructor(public options: CanvasFrameOptions, scene: Scene, public parent?: FrameState) {
+  constructor(
+    public options: CanvasFrameOptions,
+    scene: Scene,
+    public parent?: FrameState
+  ) {
     super(frameItemDummy, options, parent);
 
     this.scene = scene;

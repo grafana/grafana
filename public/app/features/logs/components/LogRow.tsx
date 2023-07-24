@@ -42,6 +42,7 @@ interface Props extends Themeable2 {
   styles: LogRowStyles;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
@@ -239,6 +240,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
+              mouseIsOver={this.state.mouseIsOver}
             />
           ) : (
             <LogRowMessage
@@ -273,6 +275,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             displayedFields={displayedFields}
             app={app}
             styles={styles}
+            isFilterLabelActive={this.props.isFilterLabelActive}
           />
         )}
       </>

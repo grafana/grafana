@@ -5,6 +5,11 @@ keywords:
   - panel
   - dashboard
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Create a dashboard
 title: Create a dashboard
 weight: 1

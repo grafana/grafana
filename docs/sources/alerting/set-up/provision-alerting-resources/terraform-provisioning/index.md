@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../provision-alerting-resources/terraform-provisioning/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/
 description: Create and manage alerting resources using Terraform
 keywords:
   - grafana
@@ -8,6 +9,10 @@ keywords:
   - alerting resources
   - provisioning
   - Terraform
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create and manage alerting resources using Terraform
 weight: 200
 ---
@@ -96,6 +101,29 @@ EOT
 }
 ```
 
+You can create multiple external integrations in a single contact point. Notifications routed to this contact point will be sent to all integrations. This example shows multiple integrations in the same Terraform resource.
+
+```
+resource "grafana_contact_point" "my_multi_contact_point" {
+    name = "Send to Many Places"
+
+    slack {
+        url = "webhook1"
+        ...
+    }
+    slack {
+        url = "webhook2"
+        ...
+    }
+    teams {
+        ...
+    }
+    email {
+        ...
+    }
+}
+```
+
 2. Enter text for your notification in the text field.
 
 The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting notification templates directly in Terraform.
@@ -104,7 +132,7 @@ The `text` field supports [Go-style templating](https://pkg.go.dev/text/template
 
 4. Go to the Grafana UI and check the details of your contact point.
 
-You cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+By default, you cannot edit resources provisioned via Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 5. Click **Test** to verify that the contact point works correctly.
 
@@ -129,13 +157,13 @@ EOT
 
 ## Provision notification policies and routing
 
-Notification policies tell Grafana how to route alert instances, as opposed to where. They connect firing alerts to your previously defined contact points using a system of labels and matchers.
+Notification policies tell Grafana how to route alert instances to your contact points. They connect firing alerts to your previously defined contact points using a system of labels and matchers.
 
 To provision notification policies and routing, complete the following steps.
 
 1. Copy this code block into a .tf file on your local machine.
 
-In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message.
+In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message. You can provide any set of label keys here, or you can use the special label `"..."` to route by all label keys, sending each alert in a separate notification.
 
 If you want to route specific notifications differently, you can add sub-policies. Sub-policies allow you to apply routing to different alerts based on label matching. In this example, we apply a mute timing to all alerts with the label a=b.
 
@@ -179,7 +207,9 @@ resource "grafana_notification_policy" "my_policy" {
 
 **Note:**
 
-You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
+
+By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 5. Click **Test** to verify that the notification point is working correctly.
 
@@ -216,7 +246,7 @@ resource "grafana_mute_timing" "my_mute_timing" {
 
 **Note:**
 
-You cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
+By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code.
 
 5. Click **Test** to verify that the mute timing is working correctly.
 

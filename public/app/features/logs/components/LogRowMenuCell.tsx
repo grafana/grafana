@@ -102,7 +102,7 @@ export const LogRowMenuCell = React.memo(
                 aria-label="Pin line"
               />
             )}
-            {onPermalinkClick && row.uid && (
+            {onPermalinkClick && row.rowId !== undefined && row.uid && (
               <IconButton
                 tooltip="Copy shortlink"
                 aria-label="Copy shortlink"

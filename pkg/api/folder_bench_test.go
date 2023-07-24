@@ -425,10 +425,10 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		sc.cfg, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		sc.cfg, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(

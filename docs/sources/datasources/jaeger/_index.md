@@ -8,6 +8,11 @@ keywords:
   - jaeger
   - guide
   - tracing
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Jaeger
 title: Jaeger data source
 weight: 800
@@ -193,7 +198,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
       nodeGraph:
         enabled: true
       traceQuery:
@@ -298,11 +303,6 @@ If the file has multiple traces, Grafana visualizes its first trace.
 ```
 
 ## Span Filters
-
-{{% admonition type="note" %}}
-This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
