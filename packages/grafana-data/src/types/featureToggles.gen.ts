@@ -66,6 +66,7 @@ export interface FeatureToggles {
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
+  gcomOnlyExternalOrgRoleSync?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;

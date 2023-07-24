@@ -199,6 +199,10 @@ const (
 	// Prohibits a user from changing organization roles synced with external auth providers
 	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
 
+	// FlagGcomOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
+	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
+
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
 	FlagTraceqlSearch = "traceqlSearch"

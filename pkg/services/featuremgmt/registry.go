@@ -330,6 +330,12 @@ var (
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
+			Name:        "gcomOnlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
 			Name:         "traceqlSearch",
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			Stage:        FeatureStageExperimental,
