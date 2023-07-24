@@ -6,6 +6,7 @@ ERSION="${VERSION#*v}"
 ERSION_DEB="${ERSION//-/\~}"
 
 ASSETS=$(cat << EOF
+gs://${BUCKET}/artifacts/static-assets/grafana/${ERSION}/public/robots.txt
 gs://${BUCKET}/artifacts/static-assets/grafana-oss/${ERSION}/public/robots.txt
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.aarch64.rpm
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.aarch64.rpm.sha256
