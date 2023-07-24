@@ -46,7 +46,6 @@ def shellcheck_pipeline():
     ]
     return pipeline(
         name = "pr-shellcheck",
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,

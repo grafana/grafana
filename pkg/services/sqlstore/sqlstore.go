@@ -316,12 +316,14 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 			return "", fmt.Errorf("invalid host specifier '%s': %w", ss.dbCfg.Host, err)
 		}
 
-		if ss.dbCfg.User == "" {
-			ss.dbCfg.User = "''"
+		args := []any{ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
+			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath}
+		for i, arg := range args {
+			if arg == "" {
+				args[i] = "''"
+			}
 		}
-		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s",
-			ss.dbCfg.User, addr.Host, addr.Port, ss.dbCfg.Name, ss.dbCfg.SslMode, ss.dbCfg.ClientCertPath,
-			ss.dbCfg.ClientKeyPath, ss.dbCfg.CaCertPath)
+		cnnstr = fmt.Sprintf("user=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", args...)
 		if ss.dbCfg.Pwd != "" {
 			cnnstr += fmt.Sprintf(" password=%s", ss.dbCfg.Pwd)
 		}

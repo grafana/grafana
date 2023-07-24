@@ -42,6 +42,7 @@ export const PanelTypeCard = ({
     <div
       className={cssClass}
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
+      data-testid={selectors.components.PluginVisualization.item(plugin.name)}
       onClick={isDisabled ? undefined : onClick}
       title={isCurrent ? 'Click again to close this section' : plugin.name}
     >

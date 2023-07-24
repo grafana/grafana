@@ -34,6 +34,11 @@ describe('normalizeFormValues', () => {
 
     expect(normalizeFormValues(config)).toEqual(createContactPoint({ bearer_token_file: 'file' }));
   });
+
+  it('should normalize even if authorization is not defined', () => {
+    const config = createContactPoint({});
+    expect(normalizeFormValues(config)).toEqual(createContactPoint({}));
+  });
 });
 
 function createContactPoint(httpConfig: DeprecatedAuthHTTPConfig | HTTPAuthConfig) {

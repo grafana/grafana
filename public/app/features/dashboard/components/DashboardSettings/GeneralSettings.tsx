@@ -5,9 +5,8 @@ import { TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
 import { Page } from 'app/core/components/Page/Page';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -31,9 +30,16 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (newFolder: FolderChange) => {
-    dashboard.meta.folderUid = newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid;
+  const onFolderChange = (newFolder: { uid: string; title: string }) => {
+    dashboard.meta.folderUid = newFolder.uid;
     dashboard.meta.folderTitle = newFolder.title;
+    dashboard.meta.hasUnsavedFolderChange = true;
+    setRenderCounter(renderCounter + 1);
+  };
+
+  const onNestedFolderChange = (newUID: string, newTitle: string) => {
+    dashboard.meta.folderUid = newUID;
+    dashboard.meta.folderTitle = newTitle;
     dashboard.meta.hasUnsavedFolderChange = true;
     setRenderCounter(renderCounter + 1);
   };
@@ -110,9 +116,9 @@ export function GeneralSettingsUnconnected({
 
           <Field label="Folder">
             {config.featureToggles.nestedFolderPicker ? (
-              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
+              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onNestedFolderChange} />
             ) : (
-              <FolderPicker
+              <OldFolderPicker
                 inputId="dashboard-folder-input"
                 initialTitle={dashboard.meta.folderTitle}
                 initialFolderUid={dashboard.meta.folderUid}
