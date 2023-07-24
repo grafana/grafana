@@ -61,6 +61,22 @@ The transformations tab has gotten an improved user experience and visual redesi
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
 
+### Logs: Log rows menu when using displayed fields
+
+<!-- Matías Wenceslao Chomicki -->
+
+_Generally available in all editions of Grafana._
+
+When you're browsing logs you can use the Log Details component, that is displayed when you click on a row, to replace the log lines contents with the value of one or more of the log fields or labels by using the "eye" icon. When this feature is in use, you now have access to the menu displayed on mouse-over with options such as show context (if available), copy log to clipboard, or copy shortlink.
+
+### Logs: Improved rendering performance of log lines
+
+<!-- Matías Wenceslao Chomicki -->
+
+_Generally available in all editions of Grafana._
+
+With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
+
 ## Authentication and authorization
 
 ### Configure refresh token handling separately for OAuth providers
@@ -144,11 +160,15 @@ To only show the spans you have matched, you can press the `Show matches only` t
 
 <!-- Matías Wenceslao Chomicki -->
 
+_Generally available in all editions of Grafana._
+
 Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages and tooltips to assist you with configuring and customizing data sources.
 
 ### Loki query splitting
 
 <!-- Matías Wenceslao Chomicki -->
+
+_Generally available in all editions of Grafana._
 
 In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
 
@@ -159,18 +179,6 @@ The Metrics Explorer is a new feature to enhance metric browsing in the Promethe
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Metrics explorer" >}}
 
 ## Explore
-
-### Logs: Log rows menu when using displayed fields
-
-<!-- Matías Wenceslao Chomicki -->
-
-When you're browsing logs in Explore you can use the Log Details component, that is displayed when you click on a row, to replace the log lines contents with the value of one or more of the log fields or labels by using the "eye" icon. When this feature is in use, you now have access to the menu displayed on mouse-over with options such as show context (if available), copy log to clipboard, or copy shortlink.
-
-### Logs: Improved rendering performance of log lines
-
-<!-- Matías Wenceslao Chomicki -->
-
-With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
 
 ### Elasticsearch logs sample
 
