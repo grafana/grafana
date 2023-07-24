@@ -67,17 +67,19 @@ export class TableContainer extends PureComponent<Props> {
       for (const frame of dataFrames) {
         for (const field of frame.fields) {
           if (field.config.nested) {
-            for (const frame of field.values) {
-              for (const valueField of frame.fields) {
-                valueField.getLinks = (config: ValueLinkConfig) => {
-                  return getFieldLinksForExplore({
-                    field: valueField,
-                    rowIndex: config.valueRowIndex!,
-                    splitOpenFn,
-                    range,
-                    dataFrame: frame!,
-                  });
-                };
+            for (const nestedFrames of field.values) {
+              for (const nf of nestedFrames) {
+                for (const valueField of nf.fields) {
+                  valueField.getLinks = (config: ValueLinkConfig) => {
+                    return getFieldLinksForExplore({
+                      field: valueField,
+                      rowIndex: config.valueRowIndex!,
+                      splitOpenFn,
+                      range,
+                      dataFrame: nf!,
+                    });
+                  };
+                }
               }
             }
           } else {

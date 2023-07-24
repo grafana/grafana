@@ -21,7 +21,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, ReducerID } from '@grafana/data';
+import { DataFrame, Field, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -116,6 +116,10 @@ export const Table = memo((props: Props) => {
   );
 
   const nestedFields = useMemo(() => data.fields.filter((f) => f.config.nested), [data]);
+  const nestedFrames = useMemo(
+    () => (nestedFields && nestedFields[0] && nestedFields[0].values ? nestedFields[0].values : []),
+    [nestedFields]
+  );
 
   // React-table column definitions
   const memoizedColumns = useMemo(
@@ -222,13 +226,13 @@ export const Table = memo((props: Props) => {
     (rowIndex: number) => {
       const subTables: ReactElement[] = [];
 
-      nestedFields?.forEach((nf, nfIndex) => {
-        if (rowIndex === nfIndex && state.expanded[rowIndex]) {
-          // rowIndex === nfIndex so we get appropriate nestedFields based on row
+      nestedFrames?.forEach((nfs: DataFrame[], nfsIndex) => {
+        if (rowIndex === nfsIndex && state.expanded[rowIndex]) {
+          // rowIndex === nfsIndex so we get appropriate nestedFields based on row
           let top = tableStyles.rowHeight; // initial height for row that expands above sub tables
-          nf.values.forEach((rowSubData, rowSubDataIndex) => {
-            const noHeader = !!rowSubData.meta?.custom?.noHeader;
-            const height = tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)); // account for the header with + 1
+          nfs.forEach((nf, nfIndex) => {
+            const noHeader = !!nf.meta?.custom?.noHeader;
+            const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
 
             const subTableStyle: CSSProperties = {
               height: height,
@@ -240,11 +244,11 @@ export const Table = memo((props: Props) => {
             top += height;
 
             subTables.push(
-              <div style={subTableStyle} key={`${nf.name}_${rowSubDataIndex}`}>
+              <div style={subTableStyle} key={`subTable_${nfsIndex}_${nfIndex}`}>
                 <Table
-                  data={rowSubData}
+                  data={nf}
                   width={width - EXPANDER_WIDTH}
-                  height={tableStyles.rowHeight * (rowSubData.length + 1)}
+                  height={tableStyles.rowHeight * (nf.length + 1)}
                   noHeader={noHeader}
                   cellHeight={cellHeight}
                 />
@@ -256,7 +260,7 @@ export const Table = memo((props: Props) => {
 
       return subTables;
     },
-    [cellHeight, nestedFields, state.expanded, tableStyles.rowHeight, theme.colors, width]
+    [cellHeight, state.expanded, nestedFrames, tableStyles.rowHeight, theme.colors, width]
   );
 
   const rowIndexForPagination = useCallback(
@@ -344,10 +348,10 @@ export const Table = memo((props: Props) => {
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
     if (state.expanded[indexForPagination]) {
-      const height = nestedFields[indexForPagination]?.values.reduce((acc, field) => {
-        if (field.length) {
-          const noHeader = !!field.meta?.custom?.noHeader;
-          return acc + tableStyles.rowHeight * (field.length + (noHeader ? 0 : 1)); // account for the header with + 1
+      const height = nestedFrames[indexForPagination]?.reduce((acc: number, frame: DataFrame) => {
+        if (frame.length) {
+          const noHeader = !!frame.meta?.custom?.noHeader;
+          return acc + tableStyles.rowHeight * (frame.length + (noHeader ? 0 : 1)); // account for the header with + 1
         }
         return acc;
       }, tableStyles.rowHeight); // initial height for row that expands above sub tables

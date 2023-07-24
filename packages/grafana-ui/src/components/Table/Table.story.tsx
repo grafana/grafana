@@ -101,9 +101,10 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, ro
 
 function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, rows: number): DataFrame {
   const data = buildData(theme, {}, rows);
+  const allNestedFrames: DataFrame[][] = [];
 
   for (let i = 0; i < rows; i++) {
-    const nestedDataFrames: DataFrame[] = [];
+    const nestedFrames: DataFrame[] = [];
 
     for (let i = 0; i < Math.random() * 3; i++) {
       const nestedData = new MutableDataFrame({
@@ -147,21 +148,23 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
         ]);
       }
 
-      nestedDataFrames.push(nestedData);
+      nestedFrames.push(nestedData);
     }
 
-    data.fields = [
-      ...data.fields,
-      {
-        name: 'nested',
-        type: FieldType.trace,
-        values: prepDataForStorybook(nestedDataFrames, theme),
-        config: {
-          nested: true,
-        },
-      },
-    ];
+    allNestedFrames.push(prepDataForStorybook(nestedFrames, theme));
   }
+
+  data.fields = [
+    ...data.fields,
+    {
+      name: 'nested',
+      type: FieldType.trace,
+      values: allNestedFrames,
+      config: {
+        nested: true,
+      },
+    },
+  ];
 
   return data;
 }
