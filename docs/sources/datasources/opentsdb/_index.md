@@ -8,6 +8,11 @@ keywords:
   - grafana
   - opentsdb
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: OpenTSDB
 title: OpenTSDB data source
 weight: 1100

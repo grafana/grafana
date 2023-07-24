@@ -5,6 +5,11 @@ keywords:
   - explore
   - loki
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Explore
 weight: 90
 ---

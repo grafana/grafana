@@ -57,6 +57,7 @@
       "move": ""
     },
     "folder-picker": {
+      "accessible-label": "",
       "button-label": "",
       "empty-message": "",
       "error-title": "",

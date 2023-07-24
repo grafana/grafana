@@ -14,6 +14,10 @@ keywords:
   - group
   - member
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: Team Sync HTTP API
 ---
 

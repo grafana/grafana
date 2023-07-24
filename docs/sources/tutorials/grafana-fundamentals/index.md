@@ -1,13 +1,20 @@
 ---
-title: Grafana fundamentals
-summary: Get familiar with Grafana
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grafana_labs
+categories:
+  - fundamentals
 description: Get familiar with Grafana
 id: grafana-fundamentals
-categories: ['fundamentals']
-tags: ['beginner']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Get familiar with Grafana
+tags:
+  - beginner
+title: Grafana fundamentals
 weight: 10
 ---
 

@@ -8,6 +8,10 @@ keywords:
   - rendering
   - plugin
   - monitoring
+labels:
+  products:
+    - enterprise
+    - oss
 title: Monitor the image renderer
 weight: 100
 ---

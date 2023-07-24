@@ -1,14 +1,20 @@
 ---
 aliases:
   - ../../provision-alerting-resources/view-provisioned-resources/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/view-provisioned-resources/
 description: View provisioned resources in Grafana
 keywords:
   - grafana
   - alerting
   - alerting resources
   - provisioning
-title: View provisioned alerting resources in Grafana
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: View provisioned resources in Grafana
+title: View provisioned alerting resources in Grafana
 weight: 300
 ---
 
