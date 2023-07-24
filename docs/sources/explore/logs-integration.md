@@ -62,7 +62,7 @@ To download log results in either `txt` or `json` format, simply use the **Downl
 
 ### Log result meta information
 
-Above the received log lines, you can find essential meta information, including:
+Above the received log lines you can find essential meta information, including:
 
 - **Number of received logs**: Indicates the total count of logs received for the current query or time range.
 - **Error**: Displays possible error in your log results
