@@ -24,7 +24,7 @@ You've just built your plugin; now you want to share it with the world.
 
 In this guide, you'll learn how to package and share your plugin with others.
 
-The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog]{{< relref "/plugins" >}}).
+The best way to share your plugin with the world is to publish it in the [Grafana plugin catalog](/plugins/).
 By having your plugin published on Grafana.com, more users will be able to discover your plugin.
 
 ## Before you begin

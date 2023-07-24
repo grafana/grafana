@@ -27,7 +27,7 @@ This topic is relevant for the [legacy dashboard alerts](/docs/grafana/v8.5/aler
 
 If you are using Grafana Alerting, refer to [Alerting provisioning API]({{< relref "./alerting_provisioning" >}})
 
-You can find Grafana Alerting API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana Alerting alerts documentation]({{< relref "../../alerting" >}}) for details on how to create and manage new alerts.
+You can find Grafana Alerting API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana Alerting alerts documentation][alerting] for details on how to create and manage new alerts.
 
 You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert.
 To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.
@@ -174,3 +174,8 @@ Content-Type: application/json
 ## Pause all alerts
 
 See [Admin API]({{< relref "/docs/grafana/latest/developers/http_api/admin#pause-all-alerts" >}}).
+
+{{% docs/reference %}}
+[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
+{{% /docs/reference %}}
