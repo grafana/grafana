@@ -4,7 +4,7 @@ import debounce from 'debounce-promise';
 import React, { FormEvent, useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Checkbox, Input, Modal, Switch, useTheme2 } from '@grafana/ui';
+import { Button, Input, Modal, Switch, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../../language_utils';
@@ -18,7 +18,6 @@ import { LabelFilters } from './LabelFilters';
 import { MetricsWrapper } from './MetricsWrapper';
 import {
   displayedMetrics,
-  formatQueryForExecution,
   getBackendSearchMetrics,
   getLabelNames,
   placeholders,
@@ -125,10 +124,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   const fetchMetrics = useCallback(
     async (metricText: string) => {
-      console.log('metricText', metricText);
-      console.log('state.query.labels', state.query.labels);
       const metrics = await getBackendSearchMetrics(metricText, state.query.labels, datasource);
-      console.log('metrics', metrics);
+
       dispatch(
         filterMetricsBackend({
           metrics: metrics,
@@ -164,12 +161,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
   }
 
   async function getLabelValues(labelName: string): Promise<string[]> {
-    const expr = promQueryModeller.renderLabels(state.query.labels);
-    console.log('current expr', state.query.metric);
-    console.log('pending expr', expr);
-    console.log('state.query.metric + expr', state.query.metric + expr);
+    const { metric } = formatQueryForExecution();
     // No expression needed for label values, as that would filter any values that aren't already selected, and the logic for multiple selected values is boolean OR
-    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, state.query.metric);
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, metric);
   }
 
   function metricsSearchCallback(query: string, fullMetaSearchVal: boolean) {
@@ -190,8 +184,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
   }
 
   const validateQuery = async () => {
-    // this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
-
     datasource.languageProvider
       .fetchSeriesValuesWithMatch('__name__', queryString)
       .then((result) => {
@@ -209,7 +201,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
           validMetrics: undefined,
         });
 
-        // let the panel show error?
+        // let the panel show error if query is invalid?
         throw err;
       });
   };
@@ -278,8 +270,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
     dispatch(setPageNum(page));
   };
 
-  // Gets the raw query string we'll send to the API
-  const { expr, query: queryString } = formatQueryForExecution();
+  // Gets the raw query string we'll send to the APIs
+  const { query: queryString } = formatQueryForExecution();
 
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
@@ -481,7 +473,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
             searchCallback={metricsSearchCallback}
             options={typeOptions}
             content={additionalSettings}
-            query={state.query} /* @todo fix the hack */
+            query={state.query}
             onChange={onChange}
             onClose={onClose}
             onFuzzySearchQuery={(e) => {
@@ -556,22 +548,6 @@ export const getLabelNameLabelStyles = (theme: GrafanaTheme2) => {
       padding: 5px 8px 5px 16px;
     `,
   };
-};
-
-export const LabelNameValue = (props: {
-  labelName: string;
-  labelValue: string;
-  onChange: React.FormEventHandler<HTMLInputElement>;
-  checked: boolean;
-}) => {
-  const { labelValue, onChange, checked } = props;
-  const theme = useTheme2();
-  const styles = getLabelValueLabelStyles(theme);
-  return (
-    <div className={styles.labelName}>
-      <Checkbox onChange={onChange} label={labelValue} checked={checked} />
-    </div>
-  );
 };
 
 export const getLabelValueLabelStyles = (theme: GrafanaTheme2) => {

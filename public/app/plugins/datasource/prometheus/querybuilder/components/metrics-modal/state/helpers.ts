@@ -8,7 +8,6 @@ import {
   escapeLabelValueInRegexSelector,
 } from 'app/plugins/datasource/prometheus/language_utils';
 
-import { promQueryModeller } from '../../../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../../../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
@@ -124,12 +123,9 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
     if (state.fullMetaSearch) {
       filteredMetrics = state.metaHaystackOrder.map((needle: string) => state.metaHaystackDictionary[needle]);
     } else {
-      console.log('nameHaystackOrder', state.nameHaystackOrder);
-      console.log('state.nameHaystackDictionary', state.nameHaystackDictionary);
       filteredMetrics = state.nameHaystackOrder
         .map((needle: string) => state.nameHaystackDictionary[needle])
         .filter((v) => v !== undefined);
-      console.log('filteredMetrics', filteredMetrics);
     }
   }
 
@@ -197,6 +193,7 @@ export const calculateResultsPerPage = (results: number, defaultResults: number,
  * The backend query that replaces the uFuzzy search when the option 'useBackend' has been selected
  * this is a regex search either to the series or labels Prometheus endpoint
  * depending on which the Prometheus type or version supports
+ *
  * @param metricText
  * @param labels
  * @param datasource

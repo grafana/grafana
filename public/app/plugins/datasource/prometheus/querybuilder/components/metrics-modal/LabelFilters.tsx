@@ -7,7 +7,8 @@ import { useTheme2 } from '@grafana/ui/src';
 import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
-import { LabelNameLabel, LabelNameValue } from './MetricsModal';
+import { LabelNameValue } from './LabelNameValue';
+import { LabelNameLabel } from './MetricsModal';
 import { PromCollapsableSection } from './PromCollapsableSection';
 import { MetricsModalState } from './state/state';
 

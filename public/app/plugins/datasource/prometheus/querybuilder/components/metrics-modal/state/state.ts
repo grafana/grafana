@@ -206,8 +206,6 @@ export function initialState(query: PromVisualQuery): MetricsModalState {
     return labelValues;
   };
 
-  console.log('initial state');
-
   const initialLabelValues = getInitialLabelValues(query.labels);
   return {
     isLoading: true,
