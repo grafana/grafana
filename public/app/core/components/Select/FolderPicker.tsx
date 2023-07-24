@@ -13,6 +13,9 @@ interface FolderPickerProps extends NestedFolderPickerProps {
   initialTitle?: string;
 
   /** @deprecated */
+  inputId?: string;
+
+  /** @deprecated */
   dashboardId?: number | string;
 
   /** @deprecated */
