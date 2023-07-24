@@ -2292,8 +2292,6 @@ func TestProcessEvalResults(t *testing.T) {
 						"__alert_rule_uid__":           "test_alert_rule_uid",
 						"alertname":                    "test_title",
 						"label":                        "test",
-						"datasource_uid":               "test-datasource-uid", // this is the bug
-						"ref_id":                       "A",                   // this is the bug
 					},
 					Values: make(map[string]float64),
 					State:  eval.Alerting,
