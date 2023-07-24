@@ -81,19 +81,36 @@ The Geomap visualization supports showing multiple layers. Each layer determines
 
 ### Types
 
-There are three map layer types to choose from in the Geomap visualization.
+There are six map layer types to choose from in the Geomap visualization.
 
 - [Markers]({{< relref "#markers-layer" >}}) renders a marker at each data point.
 - [Heatmap]({{< relref "#heatmap-layer" >}}) visualizes a heatmap of the data.
 - [GeoJSON]({{< relref "#geojson-layer" >}}) renders static data from a GeoJSON file.
-
-There are also five alpha layer types.
-
 - [Night / Day layer]({{< relref "#night--day-layer" >}}) renders a night / day region.
+- [Route layer (Beta)]({{< relref "#route-layer" >}}) render data points as a route.
+- [Photos layer (Beta)]({{< relref "#photos-layer" >}}) renders a photo at each data point.
+
+There are also two alpha layer types.
+
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
-- [Route layer (Alpha)]({{< relref "#route-layer-alpha" >}}) render data points as a route.
-- [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders a photo at each data point.
+
+{{% admonition type="note" %}}
+To enable alpha layers:
+Set `enable_alpha` to `true` in your configuration file:
+
+```
+[panels]
+enable_alpha = true
+```
+
+To enable the alpha layers using Docker, run the following command:
+
+```
+docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
+```
+
+{{% /admonition %}}
 
 {{% admonition type="note" %}}
 [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
@@ -251,6 +268,74 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
   - **Opacity** configures the transparency level for the current rule
 - **Add style rule** creates additional style rules.
 
+## Night / Day layer
+
+The Night / Day layer displays night and day regions based on the current time range.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
+
+### Options
+
+- **Show** toggles time source from panel time range
+- **Night region color** picks color for night region
+- **Display sun** toggles sun icon
+- **Opacity** from 0 (transparent) to 1 (opaque)
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
+
+## Route layer (Beta)
+
+The Route layer renders data points as a route.
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
+
+### Options
+
+- **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
+- **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
+- **Arrow** sets the arrow styling to display along route, in order of data.
+  - **None**
+  - **Forward**
+  - **Reverse**
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
+
+## Photos layer (Beta)
+
+The Photos layer renders a photo at each data point.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
+
+### Options
+
+- **Image Source Field** select a string field containing image data in either of the following formats
+  - **Image URLs**
+  - **Base64 encoded** image binary ("data:image/png;base64,...")
+- **Kind** select the frame style around the images
+  - **Square**
+  - **Circle**
+  - **Anchored**
+  - **Folio**
+- **Crop** toggle if the images are cropped to fit
+- **Shadow** toggle a box shadow behind the images
+- **Border** set the border size around images
+- **Border color** set the border color around images
+- **Radius** set the overall size of images in pixels
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
+
 ## CARTO layer
 
 A CARTO layer is from CARTO Raster basemaps.
@@ -340,100 +425,6 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
-
-## Night / Day layer
-
-The Night / Day layer displays night and day regions based on the current time range.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
-
-### Options
-
-- **Show** toggles time source from panel time range
-- **Night region color** picks color for night region
-- **Display sun** toggles sun icon
-- **Opacity** from 0 (transparent) to 1 (opaque)
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
-
-### More information
-
-- [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
-
-## Route layer (Alpha)
-
-The Route layer renders data points as a route.
-
-{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
-
-To enable the Route layer, set `enable_alpha` to `true` in your configuration file:
-
-```
-[panels]
-enable_alpha = true
-```
-
-To enable the Route layer using Docker, run the following command:
-
-```
-docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
-```
-
-### Options
-
-- **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
-- **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
-- **Arrow** sets the arrow styling to display along route, in order of data.
-  - **None**
-  - **Forward**
-  - **Reverse**
-
-{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
-
-### More information
-
-- [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
-
-## Photos layer (Alpha)
-
-The Photos layer renders a photo at each data point.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
-
-To enable the Photos layer, set `enable_alpha` to `true` in your configuration file:
-
-```
-[panels]
-enable_alpha = true
-```
-
-To enable the Photos layer using Docker, run the following command:
-
-```
-docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
-```
-
-### Options
-
-- **Image Source Field** select a string field containing image data in either of the following formats
-  - **Image URLs**
-  - **Base64 encoded** image binary ("data:image/png;base64,...")
-- **Kind** select the frame style around the images
-  - **Square**
-  - **Circle**
-  - **Anchored**
-  - **Folio**
-- **Crop** toggle if the images are cropped to fit
-- **Shadow** toggle a box shadow behind the images
-- **Border** set the border size around images
-- **Border color** set the border color around images
-- **Radius** set the overall size of images in pixels
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
-
-### More information
-
-- [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
 
 ## Map Controls
 
