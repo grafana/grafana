@@ -1,12 +1,15 @@
+import { xor } from 'lodash';
 import { ValidateResult } from 'react-hook-form';
 
-import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames } from '@grafana/data';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames, PanelData } from '@grafana/data';
+import { GraphTresholdsStyleMode, LoadingState } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { RuleFormType } from '../../types/rule-form';
 
 import { createDagFromQueries, getOriginOfRefId } from './dag';
 
@@ -114,13 +117,12 @@ export function warningFromSeries(series: DataFrame[]): Error | undefined {
   return warning ? new Error(warning) : undefined;
 }
 
-export type ThresholdDefinitions = Record<
-  string,
-  {
-    config: ThresholdsConfig;
-    mode: GraphTresholdsStyleMode;
-  }
->;
+export type ThresholdDefinition = {
+  config: ThresholdsConfig;
+  mode: GraphTresholdsStyleMode;
+};
+
+export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
 
 /**
  * This function will retrieve threshold definitions for the given array of data and expression queries.
@@ -147,11 +149,17 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     // the time series panel does not support both.
     const hasRangeThreshold = query.model.conditions.some(isRangeCondition);
 
-    query.model.conditions.forEach((condition, index) => {
+    query.model.conditions.forEach((condition) => {
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query.params[0] ?? query.model.expression;
+      const refId = condition.query?.params[0] ?? query.model.expression;
+
+      // if an expression hasn't been linked to a data query yet, it won't have a refId
+      if (!refId) {
+        return;
+      }
+
       const isRangeThreshold = isRangeCondition(condition);
 
       try {
@@ -261,6 +269,9 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     // now also sort the threshold values, if we don't then they will look weird in the time series panel
     // TODO this doesn't work for negative values for now, those need to be sorted inverse
     thresholds[refId].config.steps.sort((a, b) => a.value - b.value);
+
+    // also make sure we remove any "undefined" values from our steps in case the threshold config is incomplete
+    thresholds[refId].config.steps = thresholds[refId].config.steps.filter((step) => step.value !== undefined);
   }
 
   return thresholds;
@@ -270,4 +281,51 @@ function isRangeCondition(condition: ClassicCondition) {
   return (
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange
   );
+}
+
+export function getStatusMessage(data: PanelData): string | undefined {
+  const genericErrorMessage = 'Failed to fetch data';
+  if (data.state !== LoadingState.Error) {
+    return;
+  }
+
+  const errors = data.errors;
+  if (errors?.length) {
+    return errors.map((error) => error.message ?? genericErrorMessage).join(', ');
+  }
+
+  return data.error?.message ?? genericErrorMessage;
+}
+
+export function translateRouteParamToRuleType(param = ''): RuleFormType {
+  if (param === 'recording') {
+    return RuleFormType.cloudRecording;
+  }
+
+  return RuleFormType.grafana;
+}
+
+/**
+ * This function finds what refIds have been updated given the previous Array of queries and an Array of updated data queries.
+ * All expression queries are discarded from the arrays, since we have separate handlers for those (see "onUpdateRefId") of the ExpressionEditor
+ *
+ * This code assumes not more than 1 query refId has changed per "onChangeQueries",
+ */
+export function findRenamedDataQueryReferences(
+  previousQueries: AlertQuery[],
+  updatedQueries: AlertQuery[]
+): [string, string] {
+  const updatedDataQueries = updatedQueries
+    .filter((query) => !isExpressionQuery(query.model))
+    .map((query) => query.refId);
+  const previousDataQueries = previousQueries
+    .filter((query) => !isExpressionQuery(query.model))
+    .map((query) => query.refId);
+
+  // given the following two arrays
+  // ['A', 'B', 'C'] and ['FOO', 'B' 'C']
+  // the "xor" function will return ['A', 'FOO'] because those are not in both arrays
+  const [oldRefId, newRefId] = xor(previousDataQueries, updatedDataQueries);
+
+  return [oldRefId, newRefId];
 }

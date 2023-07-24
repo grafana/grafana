@@ -1,5 +1,6 @@
 import { DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID } from '@grafana/data';
 import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
+
 import { closestIdx, getStreamingFrameOptions, StreamingDataFrame } from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {

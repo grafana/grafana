@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
@@ -14,7 +14,7 @@ import { Menu } from '../Menu/Menu';
 
 import mdx from './PanelChrome.mdx';
 
-const meta: ComponentMeta<typeof PanelChrome> = {
+const meta: Meta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
   decorators: [withCenteredStory],
@@ -300,7 +300,18 @@ export const ExamplesHoverHeader = () => {
   );
 };
 
-export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
+export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChromeProps>) => {
+  const args = {
+    width: 400,
+    height: 200,
+    title: 'Very long title that should get ellipsis when there is no more space',
+    description,
+    menu,
+    children: () => undefined,
+  };
+
+  merge(args, overrides);
+
   const contentStyle = getContentStyle();
 
   return (
@@ -343,14 +354,6 @@ Basic.argTypes = {
       },
     },
   },
-};
-
-Basic.args = {
-  width: 400,
-  height: 200,
-  title: 'Very long title that should get ellipsis when there is no more space',
-  description,
-  menu,
 };
 
 export default meta;

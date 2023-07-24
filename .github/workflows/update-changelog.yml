@@ -4,22 +4,30 @@ on:
     inputs:
       version:
         required: true
-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+      skip_pr:
+        required: false
+        default: "0"
+      skip_community_post:
+        required: false
+        default: "0"
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v3
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run update changelog (manually invoked)        
-        uses: ./actions/update-changelog
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Run update changelog (manually invoked)
+        uses: grafana/grafana-github-actions-go/update-changelog@main
         with:
-          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
-          metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-          grafanabotForumKey: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+          token: ${{ steps.generate_token.outputs.token }}
+          version: ${{ inputs.version }}
+          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+          community_api_username: grafanabot
+          skip_pr: ${{ inputs.skip_pr }}
+          skip_community_post: ${{ inputs.skip_community_post }}

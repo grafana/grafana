@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
-import { DataQuery, AnnotationQuery as SchemaAnnotationQuery } from '@grafana/schema';
+import { AnnotationQuery as SchemaAnnotationQuery, DataQuery } from '@grafana/schema';
 
 import { DataFrame } from './dataFrame';
 import { QueryEditorProps } from './datasource';
@@ -103,7 +103,7 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
   processEvents?(anno: TAnno, data: DataFrame[]): Observable<AnnotationEvent[] | undefined>;
 
   /**
-   * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used
+   * Specify a custom QueryEditor for the annotation page. If not specified, the standard one will be used
    */
   QueryEditor?: ComponentType<AnnotationQueryEditorProps<TQuery>>;
 

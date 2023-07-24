@@ -7,13 +7,13 @@ import { Dropdown, Button, useTheme2, Icon } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 
-import { AddPanelMenu } from './AddPanelMenu';
+import AddPanelMenu from './AddPanelMenu';
 
-interface Props {
+export interface Props {
   dashboard: DashboardModel;
 }
 
-export const AddPanelButton = ({ dashboard }: Props) => {
+const AddPanelButton = ({ dashboard }: Props) => {
   const styles = getStyles(useTheme2());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -27,9 +27,9 @@ export const AddPanelButton = ({ dashboard }: Props) => {
       <Button
         icon="panel-add"
         size="lg"
-        fill="outline"
+        fill="text"
         className={cx(styles.button, styles.buttonIcon, styles.buttonText)}
-        data-testid={selectors.components.PageToolbar.itemButton('Add panel button')}
+        data-testid={selectors.components.PageToolbar.itemButton('Add button')}
       >
         <Trans i18nKey="dashboard.toolbar.add">Add</Trans>
         <Icon name={isMenuOpen ? 'angle-up' : 'angle-down'} size="lg" />
@@ -37,6 +37,8 @@ export const AddPanelButton = ({ dashboard }: Props) => {
     </Dropdown>
   );
 };
+
+export default AddPanelButton;
 
 function getStyles(theme: GrafanaTheme2) {
   return {

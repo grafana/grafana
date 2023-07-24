@@ -2,25 +2,39 @@
 aliases:
   - ../features/dashboard/dashboards/
   - dashboard-manage/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Public dashboards
 weight: 8
 ---
 
 # Public dashboards
 
-> **Note:** This is an opt-in alpha feature.
+{{% admonition type="note" %}}
 
-> **Caution:** Making your dashboard public could result in a large number of queries to the datasources used by your dashboard.
-> This can be mitigated by utilizing the enterprise [caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) and/or rate limiting features.
+This feature is in [public preview](/docs/release-life-cycle/).
 
-Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to expose your
-dashboard to the world.
+{{% /admonition %}}
+
+{{% admonition type="caution" %}}
+
+Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
+This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-and-resource-caching" >}}) and/or rate limiting features.
+
+{{% /admonition %}}
+
+Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing]({{< relref "../share-dashboards-panels" >}}), which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
+
+You can see a list of all your public dashboards in one place by navigating to **Dashboards > Public dashboards**. For each dashboard in the list, the page displays the status, a link to view the dashboard, a link to the public dashboard configuration, and the option to revoke the public URL.
 
 ## Security implications of making your dashboard public
 
 - Anyone with the URL can access the dashboard.
 - Public dashboards are read-only.
-- Arbitrary queries **cannot** be run against your datasources through public dashboards. Public dashboards can only execute the
+- Arbitrary queries **cannot** be run against your data sources through public dashboards. Public dashboards can only execute the
   queries stored on the original dashboard.
 
 ## Enable the feature
@@ -38,19 +52,25 @@ If you are using Docker, use an environment variable to enable public dashboards
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
 
-> **Note:** For Grafana Cloud, contact support to have the feature enabled.
+{{% admonition type="note" %}}
+
+For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
+
+{{% /admonition %}}
 
 ## Make a dashboard public
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
-1. Acknowledge the implications of making the dashboard public by checking all the checkboxes.
+1. Acknowledge the implications of making the dashboard public by selecting all the checkboxes.
 1. Click **Generate public URL** to make the dashboard public and make your link live.
 1. Copy the public dashboard link if you'd like to share it. You can always come back later for it.
 
+Once you've made the dashboard public, a **Public** tag is displayed in the header of the dashboard.
+
 ## Pause access
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Enable the **Pause sharing dashboard** toggle.
 
@@ -58,37 +78,34 @@ The dashboard is no longer accessible, even with the link, until you make it sha
 
 ## Revoke access
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Click **Revoke public URL** to delete the public dashboard.
 
-The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
+The link no longer works. You must create a new public URL, as in [Make a dashboard public](#make-a-dashboard-public).
 
 ## Email sharing
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
 
-Email sharing allows you to share your public dashboard with only specific people via email, instead of having it accessible to anyone with the URL.
+Available in [private preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
 
-### Enable email sharing
+Please contact support to have the feature enabled.
 
-> **Note:** For Grafana Cloud, contact support to have the feature enabled.
+{{% /admonition %}}
 
-Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboardsEmailSharing = true
-```
+Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the public dashboard for **30 days**.
 
 ### Invite a viewer
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
-1. Click **Only specified people**.
+1. Acknowledge the implications of making the dashboard public by selecting all the checkboxes.
+1. Click **Generate public URL** to make the dashboard public and make your link live.
+1. Under Can view dashboard, click **Only specified people**.
 1. Enter the email you want to share the public dashboard with.
 1. Click **Invite**.
-1. The recipient(s) will receive an email with a one-time use link. This link must be used within **one hour** or it expires. Once the link is used, the viewer has access to the public dashboard for **30 days**.
+1. The recipient will receive an email with a one-time use link.
 
 ### Viewers requesting access
 
@@ -98,7 +115,7 @@ If the viewer doesn't have an invitation or it's been revoked, you won't be noti
 
 ### Revoke access for a viewer
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Click **Revoke** on the viewer you'd like to revoke access for.
 
@@ -106,24 +123,46 @@ Immediately, the viewer no longer has access to the public dashboard, nor can th
 
 ### Reinvite a viewer
 
-1. Click the sharing icon to the right of the dashboard title.
+1. Click the sharing icon in the dashboard header.
 1. Click the **Public dashboard** tab.
 1. Click **Resend** on the viewer you'd like to re-share the public dashboard with.
 
 The viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
 
+### View public dashboard users
+
+To see a list of users who have accessed your dashboard by way of email sharing, take the following steps:
+
+1. In the main sidebar navigation, click **Administration**.
+1. Click **Users**.
+1. Click the **Public dashboard users** tab.
+
+From here, you can see the earliest time a user has been active in a dashboard, which public dashboards they have access to, and their role.
+
 ### Access limitations
 
-One-time use links use browser cookies, so when a viewer is granted access via one of these links, they will only have access through the browser they used to claim the link.
+One-time use links use browser cookies, so when a viewer is granted access through one of these links, they will only have access on the browser they used to claim the link.
 
 A single viewer cannot generate multiple valid one-time use links. When a new one-time use link is issued for a viewer, all previous ones are invalidated.
 
 If a Grafana user has read access to the parent dashboard, they can view the public dashboard without needing to have access granted.
 
+## Assess public dashboard usage
+
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
+
+You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
+
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
+
+Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage/#dashboard-insights" >}}).
+
 ## Supported data sources
 
-Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
-guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work but have not been confirmed as compatible.
+Public dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `plugin.json`. However, this can't always be
+guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work, but have not been confirmed as compatible.
 
 ### Confirmed:
 
@@ -158,7 +197,11 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ### Unconfirmed:
 
-> **Note:** If you've confirmed one of these datasources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
+{{% admonition type="note" %}}
+
+If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
+
+{{% /admonition %}}
 
 <table>
   <tr>
@@ -206,13 +249,13 @@ guaranteed because plugin developers can override this functionality. The follow
         <li>Snowflake</li>
         <li>Splunk</li>
         <li>Splunk Infrastructure Monitoring</li>
-        <li>Sqlyze Datasource</li>
+        <li>Sqlyze data source</li>
         <li>TDengine</li>
         <li>Vertica</li>
         <li>Wavefront</li>
         <li>X-Ray</li>
         <li>kdb+</li>
-        <li>simple grpc datasource</li>
+        <li>simple grpc data source</li>
       </ul>
     </td>
   </tr>
@@ -220,17 +263,17 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ## Limitations
 
-- Panels that use frontend datasources will fail to fetch data.
-- Template variables are currently not supported, but are planned to be in the future.
+- Panels that use frontend data sources will fail to fetch data.
+- Template variables are not currently supported, but support is planned in the future.
 - Exemplars will be omitted from the panel.
-- Only annotations that query the `-- Grafana --` datasource are supported.
+- Only annotations that query the `-- Grafana --` data source are supported.
 - Organization annotations are not supported.
 - Grafana Live and real-time event streams are not supported.
-- Library panels are currently not supported, but are planned to be in the future.
-- Datasources using Reverse Proxy functionality are not supported.
+- Library panels are currently not supported, but support is planned in the future.
+- Data sources using Reverse Proxy functionality are not supported.
 
-We are excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
+We're excited to share this enhancement with you and we’d love your feedback! Please check out the [Github](https://github.com/grafana/grafana/discussions/49253) discussion and join the conversation.
 
 ## Custom branding
 
-If you are a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).
+If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).

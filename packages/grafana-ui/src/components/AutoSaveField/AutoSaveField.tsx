@@ -1,20 +1,12 @@
+import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useCallback, useMemo, useRef } from 'react';
 
+import { useStyles2 } from '../../themes';
 import { Field, FieldProps } from '../Forms/Field';
 import { InlineToast } from '../InlineToast/InlineToast';
 
-/**
-1.- Use the Input component as a base
-2.- Just save if there is any change and when it loses focus
-3.- Set the loading to true while the backend is saving
-4.- Be aware of the backend response. If there is an error show a proper message and return the focus to the input.
-5.- Add aria-live="polite" and check how it works in a screen-reader.
-Debounce instead of working with onBlur?
-import debouncePromise from 'debounce-promise';
-or
-import { debounce} from 'lodash';
- */
+import { EllipsisAnimated } from './EllipsisAnimated';
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
@@ -88,20 +80,22 @@ export function AutoSaveField<T = string>(props: Props<T>) {
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
   //We never want to pass false to field, because it won't be deleted with deleteUndefinedProps() being false
   const isInvalid = invalid || fieldState.showError || undefined;
-  const isLoading = loading || fieldState.isLoading || undefined;
   /**
    * use Field around input to pass the error message
    * use InlineToast.tsx to show the save message
    */
+  const styles = useStyles2(getStyles);
+
   return (
     <>
       <Field
         {...restProps}
-        loading={isLoading}
+        loading={loading || undefined}
         invalid={isInvalid}
         disabled={disabled}
         error={error || (fieldState.showError && saveErrorMessage)}
         ref={fieldRef}
+        className={styles.widthFitContent}
       >
         {React.cloneElement(
           children((newValue) => {
@@ -109,6 +103,11 @@ export function AutoSaveField<T = string>(props: Props<T>) {
           })
         )}
       </Field>
+      {fieldState.isLoading && (
+        <InlineToast referenceElement={fieldRef.current} placement="right" alternativePlacement="bottom">
+          Saving <EllipsisAnimated />
+        </InlineToast>
+      )}
       {fieldState.showSuccess && (
         <InlineToast
           suffixIcon={'check'}
@@ -124,3 +123,11 @@ export function AutoSaveField<T = string>(props: Props<T>) {
 }
 
 AutoSaveField.displayName = 'AutoSaveField';
+
+const getStyles = () => {
+  return {
+    widthFitContent: css({
+      width: 'fit-content',
+    }),
+  };
+};

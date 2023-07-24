@@ -1,7 +1,6 @@
 import { e2e } from '..';
 import { getScenarioContext } from '../support/scenarioContext';
 
-import { selectOption } from './selectOption';
 import { setDashboardTimeRange } from './setDashboardTimeRange';
 import { TimeRangeConfig } from './setTimeRange';
 
@@ -93,12 +92,12 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       e2e.components.Panels.Panel.headerItems('Edit').click();
     } else {
       try {
-        e2e.components.PageToolbar.itemButton('Add panel button').should('be.visible');
-        e2e.components.PageToolbar.itemButton('Add panel button').click();
+        e2e.components.PageToolbar.itemButton('Add button').should('be.visible');
+        e2e.components.PageToolbar.itemButton('Add button').click();
       } catch (e) {
-        // Depending on the screen size, the "Add panel" button might be hidden
+        // Depending on the screen size, the "Add" button might be hidden
         e2e.components.PageToolbar.item('Show more items').click();
-        e2e.components.PageToolbar.item('Add panel button').last().click();
+        e2e.components.PageToolbar.item('Add button').last().click();
       }
       e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
       e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
@@ -113,10 +112,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e().intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
-      selectOption({
-        container: e2e.components.DataSourcePicker.container(),
-        optionText: dataSourceName,
-      });
+      e2e.components.DataSourcePicker.container().click().type(`${dataSourceName}{downArrow}{enter}`);
     }
 
     // @todo instead wait for '@pluginModule' if not already loaded

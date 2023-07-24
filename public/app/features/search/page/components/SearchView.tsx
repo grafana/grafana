@@ -8,6 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { Trans } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 
 import { getGrafanaSearcher } from '../../service';
@@ -75,10 +76,12 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
 
       return (
         <div className={styles.noResults}>
-          <div>No results found for your query.</div>
+          <div>
+            <Trans i18nKey="search-view.no-results.text">No results found for your query.</Trans>
+          </div>
           <br />
           <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
-            Clear search and filters
+            <Trans i18nKey="search-view.no-results.clear">Clear search and filters</Trans>
           </Button>
         </div>
       );
@@ -115,7 +118,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     }
 
     return (
-      <div style={{ content: 'auto-sizer-wrapper', height: '100%', width: '100%' }}>
+      <div style={{ height: '100%', width: '100%' }}>
         <AutoSizer>
           {({ width, height }) => {
             const props: SearchResultsProps = {

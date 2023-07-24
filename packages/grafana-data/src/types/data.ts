@@ -59,6 +59,13 @@ export interface QueryResultMeta {
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
 
+  /** Set the panel plugin id to use to render the data when using Explore. If the plugin cannot be found
+   * will fall back to {@link preferredVisualisationType}.
+   *
+   * @alpha
+   */
+  preferredVisualisationPluginId?: string;
+
   /** The path for live stream updates for this frame */
   channel?: string;
 
@@ -146,6 +153,8 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
+
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
@@ -153,6 +162,7 @@ export interface Column {
   custom?: Record<string, any>;
 }
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface TableData extends QueryResultBase {
   name?: string;
   columns: Column[];
@@ -160,10 +170,13 @@ export interface TableData extends QueryResultBase {
   type?: string;
 }
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export type TimeSeriesValue = number | null;
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface TimeSeries extends QueryResultBase {
   target: string;
   /**

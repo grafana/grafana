@@ -1,9 +1,14 @@
+import { SyntaxNode } from '@lezer/common';
+
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
   addNoPipelineErrorToQuery,
   addParserToQuery,
+  NodePosition,
+  queryHasFilter,
   removeCommentsFromQuery,
+  removeLabelFromQuery,
 } from './modifyQuery';
 
 describe('addLabelToQuery()', () => {
@@ -156,6 +161,7 @@ describe('removeCommentsFromQuery', () => {
     ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
     ${`#sum(rate(\n{host="containers"}\n#[1m]))`}                                     | ${`\n{host="containers"}\n`}
     ${`#sum(rate(\n{host="containers"}\n#| logfmt\n#[1m]))`}                          | ${`\n{host="containers"}\n\n`}
+    ${'{job="grafana"}\n#hello\n| logfmt'}                                            | ${'{job="grafana"}\n\n| logfmt'}
   `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
@@ -185,5 +191,105 @@ describe('removeCommentsFromQuery', () => {
     ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}     | ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}
   `('returns original query if no comments in metrics query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
+  });
+});
+
+describe('NodePosition', () => {
+  describe('contains', () => {
+    it('should return true if the position is contained within the current position', () => {
+      const position = new NodePosition(5, 10);
+      const containedPosition = new NodePosition(6, 9);
+      const result = position.contains(containedPosition);
+      expect(result).toBe(true);
+    });
+
+    it('should return false if the position is not contained within the current position', () => {
+      const position = new NodePosition(5, 10);
+      const outsidePosition = new NodePosition(11, 15);
+      const result = position.contains(outsidePosition);
+      expect(result).toBe(false);
+    });
+
+    it('should return true if the position is the same as the current position', () => {
+      const position = new NodePosition(5, 10);
+      const samePosition = new NodePosition(5, 10);
+      const result = position.contains(samePosition);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('getExpression', () => {
+    it('should return the substring of the query within the given position', () => {
+      const position = new NodePosition(7, 12);
+      const query = 'Hello, world!';
+      const result = position.getExpression(query);
+      expect(result).toBe('world');
+    });
+
+    it('should return an empty string if the position is out of range', () => {
+      const position = new NodePosition(15, 20);
+      const query = 'Hello, world!';
+      const result = position.getExpression(query);
+      expect(result).toBe('');
+    });
+  });
+
+  describe('fromNode', () => {
+    it('should create a new NodePosition instance from a SyntaxNode', () => {
+      const syntaxNode = {
+        from: 5,
+        to: 10,
+        type: 'identifier',
+      } as unknown as SyntaxNode;
+      const result = NodePosition.fromNode(syntaxNode);
+      expect(result).toBeInstanceOf(NodePosition);
+      expect(result.from).toBe(5);
+      expect(result.to).toBe(10);
+      expect(result.type).toBe('identifier');
+    });
+  });
+});
+
+describe('queryHasFilter', () => {
+  it.each([
+    ['{job="grafana"}', 'grafana'],
+    ['{job="grafana", foo="bar"}', 'grafana'],
+    ['{foo="bar", job="grafana"}', 'grafana'],
+    ['{job="\\"grafana\\""}', '"grafana"'],
+    ['{foo="bar"} | logfmt | job=`grafana`', 'grafana'],
+  ])('should return true if query has a positive filter', (query: string, value: string) => {
+    expect(queryHasFilter(query, 'job', '=', value)).toBe(true);
+  });
+
+  it.each([
+    ['{job!="grafana"}', 'grafana'],
+    ['{job!="grafana", foo="bar"}', 'grafana'],
+    ['{foo="bar", job!="grafana"}', 'grafana'],
+    ['{job!="\\"grafana\\""}', '"grafana"'],
+    ['{foo="bar"} | logfmt | job!=`grafana`', 'grafana'],
+  ])('should return true if query has a negative filter', (query: string, value: string) => {
+    expect(queryHasFilter(query, 'job', '!=', value)).toBe(true);
+  });
+});
+
+describe('removeLabelFromQuery', () => {
+  it.each([
+    ['{job="grafana"}', 'grafana', '{}'],
+    ['{job="grafana", foo="bar"}', 'grafana', '{foo="bar"}'],
+    ['{foo="bar", job="grafana"}', 'grafana', '{foo="bar"}'],
+    ['{job="\\"grafana\\""}', '"grafana"', '{}'],
+    ['{foo="bar"} | logfmt | job=`grafana`', 'grafana', '{foo="bar"} | logfmt'],
+  ])('should remove a positive label matcher from the query', (query: string, value: string, expected: string) => {
+    expect(removeLabelFromQuery(query, 'job', '=', value)).toBe(expected);
+  });
+
+  it.each([
+    ['{job!="grafana"}', 'grafana', '{}'],
+    ['{job!="grafana", foo="bar"}', 'grafana', '{foo="bar"}'],
+    ['{foo="bar", job!="grafana"}', 'grafana', '{foo="bar"}'],
+    ['{job!="\\"grafana\\""}', '"grafana"', '{}'],
+    ['{foo="bar"} | logfmt | job!=`grafana`', 'grafana', '{foo="bar"} | logfmt'],
+  ])('should remove a negative label matcher from the query', (query: string, value: string, expected: string) => {
+    expect(removeLabelFromQuery(query, 'job', '!=', value)).toBe(expected);
   });
 });

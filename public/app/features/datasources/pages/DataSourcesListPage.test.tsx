@@ -44,10 +44,7 @@ describe('Render', () => {
   it('should render component', async () => {
     setup({ isSortAscending: true });
 
-    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Data sources' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
 
     // Should not show button in page header when the list is empty
@@ -62,10 +59,7 @@ describe('Render', () => {
     it('should disable the "Add data source" button if user has no permissions', async () => {
       setup({ isSortAscending: true });
 
-      expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: 'Data sources' })).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: 'Add data source' })).toHaveStyle('pointer-events: none');
     });
 
@@ -129,7 +123,7 @@ describe('Render', () => {
       const dataSourceItems = await screen.findAllByRole('heading');
 
       expect(dataSourceItems).toHaveLength(6);
-      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[0]).toHaveTextContent('Data sources');
       expect(dataSourceItems[1]).toHaveTextContent('dataSource-0');
       expect(dataSourceItems[2]).toHaveTextContent('dataSource-1');
     });
@@ -141,7 +135,7 @@ describe('Render', () => {
       const dataSourceItems = await screen.findAllByRole('heading');
 
       expect(dataSourceItems).toHaveLength(6);
-      expect(dataSourceItems[0]).toHaveTextContent('Configuration');
+      expect(dataSourceItems[0]).toHaveTextContent('Data sources');
       expect(dataSourceItems[1]).toHaveTextContent('dataSource-4');
       expect(dataSourceItems[2]).toHaveTextContent('dataSource-3');
     });

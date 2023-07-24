@@ -130,6 +130,7 @@ export enum AccessControlAction {
 
   // Settings
   SettingsRead = 'settings:read',
+  SettingsWrite = 'settings:write',
 }
 
 export interface Role {

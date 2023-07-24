@@ -9,9 +9,14 @@ aliases:
   - ../panels/working-with-panels/format-standard-fields/
 keywords:
   - panel
-  - dasboard
+  - dashboard
   - standard
   - option
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure standard options
 title: Configure standard options
 weight: 2
@@ -19,7 +24,7 @@ weight: 2
 
 # Configure standard options
 
-The data model used in Grafana, namely the [data frame]({{< relref "../../developers/plugins/data-frames/" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+The data model used in Grafana, namely the [data frame]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames/" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
@@ -44,7 +49,9 @@ You can apply standard options to most built-in Grafana panels. Some older panel
 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
-> **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+{{% admonition type="note" %}}
+We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
+{{% /admonition %}}
 
 ### Unit
 
@@ -124,11 +131,15 @@ Select one of the following palettes:
 | **Classic palette**                  | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
 | **Classic palette (by series name)** | Grafana will assign color based on the name of the series. Useful when the series names to be visualized depend on the available data.                   |
 | **Green-Yellow-Red (by value)**      | Continuous color scheme                                                                                                                                  |
+| **Red-Yellow-Green (by value)**      | Continuous color scheme                                                                                                                                  |
 | **Blue-Yellow-Red (by value)**       | Continuous color scheme                                                                                                                                  |
+| **Yellow-Red (by value)**            | Continuous color scheme                                                                                                                                  |
+| **Blue-Purple (by value)**           | Continuous color scheme                                                                                                                                  |
+| **Yellow-Blue (by value)**           | Continuous color scheme                                                                                                                                  |
 | **Blues (by value)**                 | Continuous color scheme (panel background to blue)                                                                                                       |
-| **Reds (by value)**                  | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Greens (by value)**                | Continuous color scheme (panel background color to blue)                                                                                                 |
-| **Purple (by value)**                | Continuous color scheme (panel background color to blue)                                                                                                 |
+| **Reds (by value)**                  | Continuous color scheme (panel background color to red)                                                                                                  |
+| **Greens (by value)**                | Continuous color scheme (panel background color to green)                                                                                                |
+| **Purples (by value)**               | Continuous color scheme (panel background color to purple)                                                                                               |
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" >}}
 

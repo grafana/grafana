@@ -32,8 +32,8 @@ export function CheatSheet() {
       </ul>
       Macros:
       <ul className={styles.ulPadding}>
-        <li>$__time(column) -&gt; column as &quote;time&quote;</li>
-        <li>$__timeEpoch -&gt; extract(epoch from column) as &quote;time&quote;</li>
+        <li>$__time(column) -&gt; column as &quot;time&quot;</li>
+        <li>$__timeEpoch -&gt; extract(epoch from column) as &quot;time&quot;</li>
         <li>
           $__timeFilter(column) -&gt; column BETWEEN &apos;2017-04-21T05:01:17Z&apos; AND
           &apos;2017-04-21T05:01:17Z&apos;
@@ -49,10 +49,10 @@ export function CheatSheet() {
         </li>
         <li>
           $__timeGroupAlias(column,&apos;5m&apos;) -&gt; (extract(epoch from column)/300)::bigint*300 AS
-          &quote;time&quote;
+          &quot;time&quot;
         </li>
         <li>$__unixEpochGroup(column,&apos;5m&apos;) -&gt; floor(column/300)*300</li>
-        <li>$__unixEpochGroupAlias(column,&apos;5m&apos;) -&gt; floor(column/300)*300 AS &quote;time&quote;</li>
+        <li>$__unixEpochGroupAlias(column,&apos;5m&apos;) -&gt; floor(column/300)*300 AS &quot;time&quot;</li>
       </ul>
       <p>Example of group by and order by with $__timeGroup:</p>
       <pre>

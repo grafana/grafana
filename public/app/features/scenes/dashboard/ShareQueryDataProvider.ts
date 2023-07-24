@@ -20,7 +20,7 @@ export class ShareQueryDataProvider extends SceneObjectBase<ShareQueryDataProvid
   private _querySub: Unsubscribable | undefined;
   private _sourceDataDeactivationHandler?: SceneDeactivationHandler;
 
-  public constructor(state: ShareQueryDataProviderState) {
+  constructor(state: ShareQueryDataProviderState) {
     super(state);
 
     this.addActivationHandler(() => {

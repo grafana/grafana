@@ -9,9 +9,10 @@ interface PanelHeaderMenuTriggerApi {
 
 interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   children: (props: PanelHeaderMenuTriggerApi) => ReactElement;
+  onOpenMenu?: () => void;
 }
 
-export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
+export function PanelHeaderMenuTrigger({ children, onOpenMenu, ...divProps }: Props) {
   const clickCoordinates = useRef<CartesianCoords2D>({ x: 0, y: 0 });
   const [panelMenuOpen, setPanelMenuOpen] = useState<boolean>(false);
 
@@ -22,8 +23,11 @@ export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
       }
 
       setPanelMenuOpen(!panelMenuOpen);
+      if (panelMenuOpen) {
+        onOpenMenu?.();
+      }
     },
-    [panelMenuOpen, setPanelMenuOpen]
+    [panelMenuOpen, setPanelMenuOpen, onOpenMenu]
   );
 
   const onMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {
@@ -31,6 +35,8 @@ export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
   }, []);
 
   return (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <header {...divProps} className="panel-title-container" onClick={onMenuToggle} onMouseDown={onMouseDown}>
       {children({ panelMenuOpen, closeMenu: () => setPanelMenuOpen(false) })}
     </header>

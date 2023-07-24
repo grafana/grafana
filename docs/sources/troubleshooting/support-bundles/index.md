@@ -5,8 +5,13 @@ keywords:
   - troubleshooting
   - support
   - bundles
-title: Send a support bundle to Grafana Labs support
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menutitle: Send a support bundle to support
+title: Send a support bundle to Grafana Labs support
 weight: 200
 ---
 
@@ -18,6 +23,8 @@ When you encounter problems with your Grafana instance, you can send us a suppor
 - Installed plugins
 - Grafana configuration
 - Deployed database information and migrations
+
+> **Note**: The Support Bundle is available on Grafana instances running 9.5 and above.
 
 ## Available support bundle components
 
@@ -32,6 +39,15 @@ A support bundle can include any of the following components:
 - **SAML**: Healthcheck connection and metadata for SAML (only displayed if SAML is enabled)
 - **LDAP**: Healthcheck connection and metadata for LDAP (only displayed if LDAP is enabled)
 - **OAuth2**: Healthcheck connection and metadata for each OAuth2 Provider supporter (only displayed if OAuth provider is enabled)
+
+## Before you begin
+
+To follow these instructions, you need the following permissions:
+
+- In Grafana Cloud, you need the organization administrator role.
+- In Grafana on-premises, you need the Grafana server administrator role.
+
+  Note that you can set `server_admin_only` configuration option to `false` to allow organization administrators to access support bundles in Grafana on-premises.
 
 ## Steps
 
@@ -57,9 +73,10 @@ To generate a support bundle and send the support bundle to Grafana Labs via a s
 
 ## Support bundle configuration
 
-You can configure the following settings for support bundles:
+You can configure the following settings for support bundles in the Grafana configuration file:
 
 ```ini
+[support_bundles]
 # Enable support bundle creation (default: true)
 enabled = true
 # Only server admins can generate and view support bundles. When set to false, organization admins can generate and view support bundles (default: true)
@@ -70,7 +87,7 @@ public_keys = ""
 
 ## Encrypting a support bundle
 
-Support bundles can be encrypted with [age](age-encryption.org) before they are sent to
+Support bundles can be encrypted with [age](https://age-encryption.org) before they are sent to
 recipients. This is useful when you want to send a support bundle to Grafana through a
 channel that is not private.
 

@@ -508,8 +508,25 @@ function createEmptyDisplayOptions(extend = {}): GetFieldDisplayValuesOptions {
 }
 
 function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}): GetFieldDisplayValuesOptions {
-  const options: GetFieldDisplayValuesOptions = {
-    data: [
+  const options = merge(
+    {
+      replaceVariables: (value: string) => {
+        return value;
+      },
+      reduceOptions: {
+        calcs: [],
+      },
+      fieldConfig: {
+        overrides: [],
+        defaults: {},
+      },
+      theme: createTheme(),
+    },
+    extend
+  );
+
+  if (!options.data?.length) {
+    options.data = [
       toDataFrame({
         name: 'Series Name',
         fields: [
@@ -518,21 +535,9 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
           { name: 'Field 3', values: [2, 4, 6] },
         ],
       }),
-    ],
-    replaceVariables: (value: string) => {
-      return value;
-    },
-    reduceOptions: {
-      calcs: [],
-    },
-    fieldConfig: {
-      overrides: [],
-      defaults: {},
-    },
-    theme: createTheme(),
-  };
-
-  return merge(options, extend);
+    ];
+  }
+  return options;
 }
 
 describe('fixCellTemplateExpressions', () => {

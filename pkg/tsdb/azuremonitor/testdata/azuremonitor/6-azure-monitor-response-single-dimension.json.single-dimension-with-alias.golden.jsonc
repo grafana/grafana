@@ -1,0 +1,253 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 2 Fields by 6 Rows
+//  +-------------------------------+---------------------------+
+//  | Name: Time                    | Name: Blob Count          |
+//  | Labels:                       | Labels: blobtype=PageBlob |
+//  | Type: []time.Time             | Type: []*float64          |
+//  +-------------------------------+---------------------------+
+//  | 2019-02-09 15:21:00 +0000 UTC | 3                         |
+//  | 2019-02-09 16:21:00 +0000 UTC | 3                         |
+//  | 2019-02-09 17:21:00 +0000 UTC | 3                         |
+//  | 2019-02-09 18:21:00 +0000 UTC | 3                         |
+//  | 2019-02-09 19:21:00 +0000 UTC | 3                         |
+//  | 2019-02-09 20:21:00 +0000 UTC | null                      |
+//  +-------------------------------+---------------------------+
+//  
+//  
+//  
+//  Frame[1] 
+//  Name: 
+//  Dimensions: 2 Fields by 6 Rows
+//  +-------------------------------+----------------------------+
+//  | Name: Time                    | Name: Blob Count           |
+//  | Labels:                       | Labels: blobtype=BlockBlob |
+//  | Type: []time.Time             | Type: []*float64           |
+//  +-------------------------------+----------------------------+
+//  | 2019-02-09 15:21:00 +0000 UTC | 1                          |
+//  | 2019-02-09 16:21:00 +0000 UTC | 1                          |
+//  | 2019-02-09 17:21:00 +0000 UTC | 1                          |
+//  | 2019-02-09 18:21:00 +0000 UTC | 1                          |
+//  | 2019-02-09 19:21:00 +0000 UTC | 1                          |
+//  | 2019-02-09 20:21:00 +0000 UTC | null                       |
+//  +-------------------------------+----------------------------+
+//  
+//  
+//  
+//  Frame[2] 
+//  Name: 
+//  Dimensions: 2 Fields by 6 Rows
+//  +-------------------------------+------------------------------------------+
+//  | Name: Time                    | Name: Blob Count                         |
+//  | Labels:                       | Labels: blobtype=Azure Data Lake Storage |
+//  | Type: []time.Time             | Type: []*float64                         |
+//  +-------------------------------+------------------------------------------+
+//  | 2019-02-09 15:21:00 +0000 UTC | 0                                        |
+//  | 2019-02-09 16:21:00 +0000 UTC | 0                                        |
+//  | 2019-02-09 17:21:00 +0000 UTC | 0                                        |
+//  | 2019-02-09 18:21:00 +0000 UTC | 0                                        |
+//  | 2019-02-09 19:21:00 +0000 UTC | 0                                        |
+//  | 2019-02-09 20:21:00 +0000 UTC | null                                     |
+//  +-------------------------------+------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Blob Count",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "blobtype": "PageBlob"
+            },
+            "config": {
+              "displayName": "blobtype=PageBlob",
+              "unit": "short",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1549725660000,
+            1549729260000,
+            1549732860000,
+            1549736460000,
+            1549740060000,
+            1549743660000
+          ],
+          [
+            3,
+            3,
+            3,
+            3,
+            3,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Blob Count",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "blobtype": "BlockBlob"
+            },
+            "config": {
+              "displayName": "blobtype=BlockBlob",
+              "unit": "short",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1549725660000,
+            1549729260000,
+            1549732860000,
+            1549736460000,
+            1549740060000,
+            1549743660000
+          ],
+          [
+            1,
+            1,
+            1,
+            1,
+            1,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Blob Count",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "blobtype": "Azure Data Lake Storage"
+            },
+            "config": {
+              "displayName": "blobtype=Azure Data Lake Storage",
+              "unit": "short",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1549725660000,
+            1549729260000,
+            1549732860000,
+            1549736460000,
+            1549740060000,
+            1549743660000
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

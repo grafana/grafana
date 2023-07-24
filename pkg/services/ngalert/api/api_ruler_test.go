@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -14,8 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -24,8 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -68,67 +68,15 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		return ruleStore
 	}
 
-	t.Run("when fine-grained access is disabled", func(t *testing.T) {
-		ac := acMock.New().WithDisabled()
-		t.Run("viewer should not be authorized", func(t *testing.T) {
-			ruleStore := initFakeRuleStore(t)
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-
-			request := createRequestContext(orgID, org.RoleViewer, nil)
-			response := createService(ac, ruleStore).RouteDeleteAlertRules(request, folder.Title, "")
-			require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
-
-			require.Empty(t, getRecordedCommand(ruleStore))
-		})
-		t.Run("editor should be able to delete all non-provisioned rules in folder", func(t *testing.T) {
-			ruleStore := initFakeRuleStore(t)
-			rulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
-			ruleStore.PutRule(context.Background(), rulesInFolder...)
-
-			request := createRequestContext(orgID, org.RoleEditor, nil)
-			response := createService(ac, ruleStore).RouteDeleteAlertRules(request, folder.Title, "")
-
-			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-		})
-		t.Run("editor should be able to delete rules group if it is not provisioned", func(t *testing.T) {
-			groupName := util.GenerateShortUID()
-			rulesInFolderInGroup := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
-
-			ruleStore := initFakeRuleStore(t)
-			ruleStore.PutRule(context.Background(), rulesInFolderInGroup...)
-			// rules in different groups but in the same namespace
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-			// rules in the same group but different folder
-			ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withGroup(groupName)))...)
-
-			request := createRequestContext(orgID, org.RoleEditor, nil)
-			response := createService(ac, ruleStore).RouteDeleteAlertRules(request, folder.Title, groupName)
-
-			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-			assertRulesDeleted(t, rulesInFolderInGroup, ruleStore)
-		})
-		t.Run("should return 202 if folder is empty", func(t *testing.T) {
-			ruleStore := initFakeRuleStore(t)
-
-			requestCtx := createRequestContext(orgID, org.RoleEditor, nil)
-			response := createService(ac, ruleStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
-
-			require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
-			require.Empty(t, getRecordedCommand(ruleStore))
-		})
-	})
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		requestCtx := createRequestContext(orgID, "None", nil)
-
 		t.Run("and group argument is empty", func(t *testing.T) {
 			t.Run("return 401 if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
 
-				ac := acMock.New()
-				request := createRequestContext(orgID, "None", nil)
+				request := createRequestContextWithPerms(orgID, map[int64]map[string][]string{}, nil)
 
-				response := createService(ac, ruleStore).RouteDeleteAlertRules(request, folder.Title, "")
+				response := createService(ruleStore).RouteDeleteAlertRules(request, folder.Title, "")
 				require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
 
 				require.Empty(t, getRecordedCommand(ruleStore))
@@ -148,9 +96,10 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				// more rules in the same namespace but user does not have access to them
 				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("unauthz"+util.GenerateShortUID())))...)
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...)))
+				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
-				response := createServiceWithProvenanceStore(ac, ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
 
 				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
@@ -167,11 +116,21 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				// more rules in the same namespace but user does not have access to them
 				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))...)
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(provisionedRulesInFolder))
+				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
-				response := createServiceWithProvenanceStore(ac, ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
 
 				require.Equalf(t, 400, response.Status(), "Expected 400 but got %d: %v", response.Status(), string(response.Body()))
+				require.Empty(t, getRecordedCommand(ruleStore))
+			})
+			t.Run("should return 202 if folder is empty", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+
+				requestCtx := createRequestContext(orgID, nil)
+				response := createService(ruleStore).RouteDeleteAlertRules(requestCtx, folder.Title, "")
+
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
 				require.Empty(t, getRecordedCommand(ruleStore))
 			})
 		})
@@ -185,9 +144,10 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				// more rules in the same group but user is not authorized to access them
 				ruleStore.PutRule(context.Background(), models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))...)
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(authorizedRulesInGroup))
+				permissions := createPermissionsForRules(authorizedRulesInGroup, orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
-				response := createService(ac, ruleStore).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
+				response := createService(ruleStore).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
 
 				require.Equalf(t, 401, response.Status(), "Expected 401 but got %d: %v", response.Status(), string(response.Body()))
 				deleteCommands := getRecordedCommand(ruleStore)
@@ -203,9 +163,10 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
 
-				ac := acMock.New().WithPermissions(createPermissionsForRules(provisionedRulesInFolder))
+				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
-				response := createServiceWithProvenanceStore(ac, ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.Title, groupName)
 
 				require.Equalf(t, 400, response.Status(), "Expected 400 but got %d: %v", response.Status(), string(response.Body()))
 				deleteCommands := getRecordedCommand(ruleStore)
@@ -225,45 +186,11 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
 			ruleStore.PutRule(context.Background(), models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))...)
-			ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
 
-			req := createRequestContext(orgID, "", nil)
-			response := createService(ac, ruleStore).RouteGetNamespaceRulesConfig(req, folder.Title)
+			permissions := createPermissionsForRules(expectedRules, orgID)
+			req := createRequestContextWithPerms(orgID, permissions, nil)
 
-			require.Equal(t, http.StatusAccepted, response.Status())
-			result := &apimodels.NamespaceConfigResponse{}
-			require.NoError(t, json.Unmarshal(response.Body(), result))
-			require.NotNil(t, result)
-			for namespace, groups := range *result {
-				require.Equal(t, folder.Title, namespace)
-				for _, group := range groups {
-				grouploop:
-					for _, actualRule := range group.Rules {
-						for i, expected := range expectedRules {
-							if actualRule.GrafanaManagedAlert.UID == expected.UID {
-								expectedRules = append(expectedRules[:i], expectedRules[i+1:]...)
-								continue grouploop
-							}
-						}
-						assert.Failf(t, "rule in a group was not found in expected", "rule %s group %s", actualRule.GrafanaManagedAlert.Title, group.Name)
-					}
-				}
-			}
-			assert.Emptyf(t, expectedRules, "not all expected rules were returned")
-		})
-	})
-	t.Run("fine-grained access is disabled", func(t *testing.T) {
-		t.Run("should return all rules from folder", func(t *testing.T) {
-			orgID := rand.Int63()
-			folder := randFolder()
-			ruleStore := fakes.NewRuleStore(t)
-			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
-			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
-			ruleStore.PutRule(context.Background(), expectedRules...)
-			ac := acMock.New().WithDisabled()
-
-			req := createRequestContext(orgID, org.RoleViewer, nil)
-			response := createService(ac, ruleStore).RouteGetNamespaceRulesConfig(req, folder.Title)
+			response := createService(ruleStore).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 			require.Equal(t, http.StatusAccepted, response.Status())
 			result := &apimodels.NamespaceConfigResponse{}
@@ -294,9 +221,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withOrgID(orgID), withNamespace(folder)))
 		ruleStore.PutRule(context.Background(), expectedRules...)
-		ac := acMock.New().WithDisabled()
 
-		svc := createService(ac, ruleStore)
+		svc := createService(ruleStore)
 
 		// add provenance to the first generated rule
 		rule := &models.AlertRule{
@@ -305,7 +231,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		err := svc.provenanceStore.SetProvenance(context.Background(), rule, orgID, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		req := createRequestContext(orgID, org.RoleViewer, nil)
+		req := createRequestContext(orgID, nil)
 		response := svc.RouteGetNamespaceRulesConfig(req, folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
@@ -338,9 +264,9 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
-		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore).RouteGetNamespaceRulesConfig(createRequestContext(orgID, org.RoleViewer, nil), folder.Title)
+		req := createRequestContext(orgID, nil)
+		response := createService(ruleStore).RouteGetNamespaceRulesConfig(req, folder.Title)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -389,10 +315,11 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			group2 := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(group2Key)))
 			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
 
-			request := createRequestContext(orgID, "", nil)
 			t.Run("and do not return group if user does not have access to one of rules", func(t *testing.T) {
-				ac := acMock.New().WithPermissions(createPermissionsForRules(append(group1, group2[1:]...)))
-				response := createService(ac, ruleStore).RouteGetRulesConfig(request)
+				permissions := createPermissionsForRules(append(group1, group2[1:]...), orgID)
+				request := createRequestContextWithPerms(orgID, permissions, nil)
+
+				response := createService(ruleStore).RouteGetRulesConfig(request)
 				require.Equal(t, http.StatusOK, response.Status())
 
 				result := &apimodels.NamespaceConfigResponse{}
@@ -420,9 +347,9 @@ func TestRouteGetRulesConfig(t *testing.T) {
 
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
-		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore).RouteGetRulesConfig(createRequestContext(orgID, org.RoleViewer, nil))
+		req := createRequestContext(orgID, nil)
+		response := createService(ruleStore).RouteGetRulesConfig(req)
 
 		require.Equal(t, http.StatusOK, response.Status())
 		result := &apimodels.NamespaceConfigResponse{}
@@ -466,20 +393,23 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
 
-			request := createRequestContext(orgID, "", map[string]string{
-				":Namespace": folder.Title,
-				":Groupname": groupKey.RuleGroup,
-			})
-
 			t.Run("and return 401 if user does not have access one of rules", func(t *testing.T) {
-				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules[1:]))
-				response := createService(ac, ruleStore).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
+				permissions := createPermissionsForRules(expectedRules[1:], orgID)
+				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
+					":Namespace": folder.Title,
+					":Groupname": groupKey.RuleGroup,
+				})
+				response := createService(ruleStore).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
 				require.Equal(t, http.StatusUnauthorized, response.Status())
 			})
 
 			t.Run("and return rules if user has access to all of them", func(t *testing.T) {
-				ac := acMock.New().WithPermissions(createPermissionsForRules(expectedRules))
-				response := createService(ac, ruleStore).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
+				permissions := createPermissionsForRules(expectedRules, orgID)
+				request := createRequestContextWithPerms(orgID, permissions, map[string]string{
+					":Namespace": folder.Title,
+					":Groupname": groupKey.RuleGroup,
+				})
+				response := createService(ruleStore).RouteGetRulesGroupConfig(request, folder.Title, groupKey.RuleGroup)
 
 				require.Equal(t, http.StatusAccepted, response.Status())
 				result := &apimodels.RuleGroupConfigResponse{}
@@ -500,9 +430,9 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
-		ac := acMock.New().WithDisabled()
 
-		response := createService(ac, ruleStore).RouteGetRulesGroupConfig(createRequestContext(orgID, org.RoleViewer, nil), folder.Title, groupKey.RuleGroup)
+		req := createRequestContext(orgID, nil)
+		response := createService(ruleStore).RouteGetRulesGroupConfig(req, folder.Title, groupKey.RuleGroup)
 
 		require.Equal(t, http.StatusAccepted, response.Status())
 		result := &apimodels.RuleGroupConfigResponse{}
@@ -589,13 +519,78 @@ func TestVerifyProvisionedRulesNotAffected(t *testing.T) {
 	})
 }
 
-func createServiceWithProvenanceStore(ac *acMock.Mock, store *fakes.RuleStore, provenanceStore provisioning.ProvisioningStore) *RulerSrv {
-	svc := createService(ac, store)
+func TestValidateQueries(t *testing.T) {
+	delta := store.GroupDelta{
+		New: []*models.AlertRule{
+			models.AlertRuleGen(func(rule *models.AlertRule) {
+				rule.Condition = "New"
+			})(),
+		},
+		Update: []store.RuleDelta{
+			{
+				Existing: models.AlertRuleGen(func(rule *models.AlertRule) {
+					rule.Condition = "Update_Existing"
+				})(),
+				New: models.AlertRuleGen(func(rule *models.AlertRule) {
+					rule.Condition = "Update_New"
+				})(),
+				Diff: nil,
+			},
+		},
+		Delete: []*models.AlertRule{
+			models.AlertRuleGen(func(rule *models.AlertRule) {
+				rule.Condition = "Deleted"
+			})(),
+		},
+	}
+
+	t.Run("should validate New and Updated only", func(t *testing.T) {
+		validator := &recordingConditionValidator{}
+		err := validateQueries(context.Background(), &delta, validator, nil)
+		require.NoError(t, err)
+		for _, condition := range validator.recorded {
+			if condition.Condition == "New" || condition.Condition == "Update_New" {
+				continue
+			}
+			assert.Failf(t, "validated unexpected condition", "condition '%s' was validated but should not", condition.Condition)
+		}
+	})
+	t.Run("should return rule validate error if fails on new rule", func(t *testing.T) {
+		validator := &recordingConditionValidator{
+			hook: func(c models.Condition) error {
+				if c.Condition == "New" {
+					return errors.New("test")
+				}
+				return nil
+			},
+		}
+		err := validateQueries(context.Background(), &delta, validator, nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+	})
+	t.Run("should return rule validate error with UID if fails on updated rule", func(t *testing.T) {
+		validator := &recordingConditionValidator{
+			hook: func(c models.Condition) error {
+				if c.Condition == "Update_New" {
+					return errors.New("test")
+				}
+				return nil
+			},
+		}
+		err := validateQueries(context.Background(), &delta, validator, nil)
+		require.Error(t, err)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, delta.Update[0].New.UID)
+	})
+}
+
+func createServiceWithProvenanceStore(store *fakes.RuleStore, provenanceStore provisioning.ProvisioningStore) *RulerSrv {
+	svc := createService(store)
 	svc.provenanceStore = provenanceStore
 	return svc
 }
 
-func createService(ac *acMock.Mock, store *fakes.RuleStore) *RulerSrv {
+func createService(store *fakes.RuleStore) *RulerSrv {
 	return &RulerSrv{
 		xactManager:     store,
 		store:           store,
@@ -603,11 +598,16 @@ func createService(ac *acMock.Mock, store *fakes.RuleStore) *RulerSrv {
 		provenanceStore: provisioning.NewFakeProvisioningStore(),
 		log:             log.New("test"),
 		cfg:             nil,
-		ac:              ac,
+		ac:              acimpl.ProvideAccessControl(setting.NewCfg()),
 	}
 }
 
-func createRequestContext(orgID int64, role org.RoleType, params map[string]string) *contextmodel.ReqContext {
+func createRequestContext(orgID int64, params map[string]string) *contextmodel.ReqContext {
+	defaultPerms := map[int64]map[string][]string{orgID: {datasources.ActionQuery: []string{datasources.ScopeAll}}}
+	return createRequestContextWithPerms(orgID, defaultPerms, params)
+}
+
+func createRequestContextWithPerms(orgID int64, permissions map[int64]map[string][]string, params map[string]string) *contextmodel.ReqContext {
 	uri, _ := url.Parse("http://localhost")
 	ctx := web.Context{Req: &http.Request{
 		URL: uri,
@@ -619,23 +619,21 @@ func createRequestContext(orgID int64, role org.RoleType, params map[string]stri
 	return &contextmodel.ReqContext{
 		IsSignedIn: true,
 		SignedInUser: &user.SignedInUser{
-			OrgRole: role,
-			OrgID:   orgID,
+			Permissions: permissions,
+			OrgID:       orgID,
 		},
 		Context: &ctx,
 	}
 }
 
-func createPermissionsForRules(rules []*models.AlertRule) []accesscontrol.Permission {
-	var permissions []accesscontrol.Permission
+func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64]map[string][]string {
+	permissions := map[string][]string{}
 	for _, rule := range rules {
 		for _, query := range rule.Data {
-			permissions = append(permissions, accesscontrol.Permission{
-				Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID),
-			})
+			permissions[datasources.ActionQuery] = append(permissions[datasources.ActionQuery], datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
 		}
 	}
-	return permissions
+	return map[int64]map[string][]string{orgID: permissions}
 }
 
 func withOrgID(orgId int64) func(rule *models.AlertRule) {

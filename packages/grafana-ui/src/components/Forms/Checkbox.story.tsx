@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { VerticalGroup } from '../Layout/Layout';
@@ -7,7 +7,7 @@ import { Checkbox } from './Checkbox';
 import mdx from './Checkbox.mdx';
 import { Field } from './Field';
 
-const meta: ComponentMeta<typeof Checkbox> = {
+const meta: Meta<typeof Checkbox> = {
   title: 'Forms/Checkbox',
   component: Checkbox,
   parameters: {
@@ -20,7 +20,7 @@ const meta: ComponentMeta<typeof Checkbox> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Checkbox> = (args) => {
+export const Basic: StoryFn<typeof Checkbox> = (args) => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
@@ -37,6 +37,8 @@ Basic.args = {
   label: 'Skip TLS cert validation',
   description: 'Set to true if you want to skip TLS cert validation',
   disabled: false,
+  indeterminate: false,
+  invalid: false,
 };
 
 export const StackedList = () => {
@@ -63,7 +65,7 @@ export const StackedList = () => {
   );
 };
 
-export const InAField: ComponentStory<typeof Checkbox> = (args) => {
+export const InAField: StoryFn<typeof Checkbox> = (args) => {
   return (
     <div>
       <Field {...args}>
@@ -78,6 +80,37 @@ InAField.args = {
   description:
     'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
   disabled: false,
+  indeterminate: false,
+  invalid: false,
+};
+
+export const AllStates: StoryFn<typeof Checkbox> = (args) => {
+  const [checked, setChecked] = useState(false);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
+
+  return (
+    <div>
+      <VerticalGroup>
+        <Checkbox value={checked} onChange={onChange} {...args} />
+        <Checkbox value={true} label="Checked" />
+        <Checkbox value={false} label="Unchecked" />
+        <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+        <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
+        <Checkbox value={true} invalid={true} label="Invalid and checked" />
+      </VerticalGroup>
+    </div>
+  );
+};
+
+AllStates.args = {
+  label: 'Props set from controls',
+  description: 'Set to true if you want to skip TLS cert validation',
+  disabled: false,
+  indeterminate: false,
+  invalid: false,
 };
 
 export default meta;

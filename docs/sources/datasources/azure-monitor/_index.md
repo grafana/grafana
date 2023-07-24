@@ -15,6 +15,11 @@ keywords:
   - log
   - analytics
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Azure Monitor
 title: Azure Monitor data source
 weight: 300
@@ -140,7 +145,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 ## Query the data source
 
-The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, and the Azure Resource Graph, each with its own specialized query editor.
+The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
 
 For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
 

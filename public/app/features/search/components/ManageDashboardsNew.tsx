@@ -3,13 +3,13 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, FilterInput } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO, AccessControlAction } from 'app/types';
 
 import { useKeyNavigationListener } from '../hooks/useSearchKeyboardSelection';
 import { SearchView } from '../page/components/SearchView';
 import { getSearchStateManager } from '../state/SearchStateManager';
+import { getSearchPlaceholder } from '../tempI18nPhrases';
 
 import { DashboardActions } from './DashboardActions';
 
@@ -50,11 +50,7 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             spellCheck={false}
-            placeholder={
-              state.includePanels
-                ? t('search.search-input.include-panels-placeholder', 'Search for dashboards and panels')
-                : t('search.search-input.placeholder', 'Search for dashboards')
-            }
+            placeholder={getSearchPlaceholder(state.includePanels)}
             escapeRegex={false}
             className={styles.searchInput}
           />

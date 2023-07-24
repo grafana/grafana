@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -37,7 +38,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app1",
 			Name: "Test app1 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
@@ -60,7 +61,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app2",
 			Name: "Test app2 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Hello",
@@ -77,7 +78,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app3",
 			Name: "Test app3 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Default page",
@@ -93,8 +94,8 @@ func TestAddAppLinks(t *testing.T) {
 					AddToNav: true,
 				},
 				{
-					Name:     "Connect data",
-					Path:     "/connections/connect-data",
+					Name:     "Add new connection",
+					Path:     "/connections/add-new-connection",
 					Type:     "page",
 					AddToNav: false,
 				},
@@ -114,7 +115,7 @@ func TestAddAppLinks(t *testing.T) {
 		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
-		pluginStore: plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{testApp1, testApp2, testApp3},
 		},
 	}
@@ -203,7 +204,7 @@ func TestAddAppLinks(t *testing.T) {
 		require.Equal(t, "plugin-page-test-app3", appsNode.Children[1].Id)
 	})
 
-	t.Run("Should only add a 'Monitoring' section if a plugin exists that wants to live there", func(t *testing.T) {
+	t.Run("Should only add an 'Observability' section if a plugin exists that wants to live there", func(t *testing.T) {
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 
 		// Check if the Monitoring section is not there if no apps try to register to it
@@ -296,7 +297,7 @@ func TestAddAppLinks(t *testing.T) {
 		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{
-			"/connections/connect-data": {SectionID: "connections"},
+			"/connections/add-new-connection": {SectionID: "connections"},
 		}
 
 		// Build nav-tree and check if the "Connections" page is there
@@ -306,10 +307,10 @@ func TestAddAppLinks(t *testing.T) {
 		require.NotNil(t, connectionsNode)
 		require.Equal(t, "Connections", connectionsNode.Text)
 
-		// Check if the original "Connect data" page (served by core) is there until we add the standalone plugin page
+		// Check if the original "Add new connection" page (served by core) is there until we add the standalone plugin page
 		connectDataNode := connectionsNode.Children[0]
-		require.Equal(t, "Connect data", connectDataNode.Text)
-		require.Equal(t, "connections-connect-data", connectDataNode.Id)
+		require.Equal(t, "Add new connection", connectDataNode.Text)
+		require.Equal(t, "connections-add-new-connection", connectDataNode.Id)
 		require.Equal(t, "", connectDataNode.PluginID)
 
 		// Check if the standalone plugin page appears under the section where we registered it and if it overrides the original page
@@ -317,8 +318,8 @@ func TestAddAppLinks(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect data", connectDataNode.Text)
-		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectDataNode.Id) // Overridden "Connect data" page
+		require.Equal(t, "Add new connection", connectDataNode.Text)
+		require.Equal(t, "standalone-plugin-page-/connections/add-new-connection", connectDataNode.Id) // Overridden "Add new connection" page
 		require.Equal(t, "test-app3", connectDataNode.PluginID)
 
 		// Check if the standalone plugin page does not appear under the app section anymore
@@ -342,12 +343,12 @@ func TestAddAppLinks(t *testing.T) {
 		require.NoError(t, err)
 
 		// The original core page should exist under the section
-		connectDataNode := treeRoot.FindById("connections-connect-data")
-		require.Equal(t, "connections-connect-data", connectDataNode.Id)
+		connectDataNode := treeRoot.FindById("connections-add-new-connection")
+		require.Equal(t, "connections-add-new-connection", connectDataNode.Id)
 		require.Equal(t, "", connectDataNode.PluginID)
 
 		// The standalone plugin page should not be found in the navtree at all (as we didn't configure it)
-		standaloneConnectDataNode := treeRoot.FindById("standalone-plugin-page-/connections/connect-data")
+		standaloneConnectDataNode := treeRoot.FindById("standalone-plugin-page-/connections/add-new-connection")
 		require.Nil(t, standaloneConnectDataNode)
 
 		// Only the pages that have `AddToNav=true` appear under the plugin navigation
@@ -386,7 +387,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(0), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(1), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
@@ -402,7 +403,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 	testApp1 := plugins.PluginDTO{
 		JSONData: plugins.JSONData{
-			ID: "test-app1", Name: "Test app1 name", Type: plugins.App,
+			ID: "test-app1", Name: "Test app1 name", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
@@ -436,7 +437,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		accessControl:  acimpl.ProvideAccessControl(cfg),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
-		pluginStore: plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{testApp1},
 		},
 	}

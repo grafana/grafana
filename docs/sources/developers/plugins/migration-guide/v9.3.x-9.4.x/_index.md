@@ -6,14 +6,20 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrating plugins from Grafana 9.3.x to 9.4.x
-menutitle: v9.3.x to v9.4.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v9.3.x to v9.4.x
+title: Migrate plugins from Grafana 9.3.x to 9.4.x
 weight: 2000
 ---
 
-# Migrating plugins from Grafana 9.3.x to 9.4.x
+# Migrate plugins from Grafana 9.3.x to 9.4.x
 
-## Supporting new navigation layout
+Follow the instructions in this section to migrate from Grafana 9.3.x to 9.4.x.
+
+## New navigation layout is supported
 
 First, enable the `topnav` feature flag in `custom.ini` to check how your plugin renders in the new navigation layout:
 
@@ -24,15 +30,17 @@ enable = topnav
 
 ### Migrate from `onNavChanged`
 
-If your plugin uses the `onNavChanged` callback to inform Grafana of its nav model & sub pages, you should see that this results in duplicated navigation elements. If you disable `topnav` it should look just as before.
+If your plugin uses the `onNavChanged` callback to inform Grafana of its navigation model and child pages, you should see that this results in duplicated navigation elements. If you disable `topnav`, then it should look just like before.
 
-When `topnav` is enabled we need to update the plugin to take advantage of the new `PluginPage` component and not call `onNavChanged`. `onNavChanged` is now deprecated.
+If `topnav` is enabled, then we need to update the plugin to take advantage of the new `PluginPage` component. In this case, we do not call `onNavChanged`, which is now deprecated.
 
 ### Switch to `PluginPage` component
 
-Grafana now exposes a new `PluginPage` component from `@grafana/runtime` that hooks into the new navigation and page layouts and supports the old page layouts when the `topnav` feature is disabled. This new component will also handle rendering the section navigation. The section navigation can include other core sections and other plugins. To control what pages are displayed in the section navigation for a specific plugin, Grafana will use the pages added in `plugin.json` that have `addToNav` set to `true`.
+Grafana now exposes a new `PluginPage` component from `@grafana/runtime` that hooks into the new navigation and page layouts. This new component also supports the old page layouts when the `topnav` feature is disabled.
 
-This component is very easy to use. Simply wrap it around your page content:
+The new `PluginPage` component will also handle rendering the section navigation. The section navigation can include other core sections and other plugins. To control what pages are displayed in the section navigation for a specific plugin, Grafana uses the pages that have been added in `plugin.json` in which `addToNav` was set to `true`.
+
+To use this component, simply wrap it around your page content:
 
 ```tsx
 import { PluginPage } from '@grafana/runtime';
@@ -46,13 +54,13 @@ return (
 );
 ```
 
-Grafana will look at the URL to know what plugin and page should be active in the section nav, so this only works for pages you have specified in `plugin.json`. `PluginPage` will then render a page header based on the page name specified in `plugin.json`.
+Grafana looks at the URL to know what plugin and page should be active in the section nav. Accordingly, this component only works for pages that you have specified in `plugin.json`. The `PluginPage` will then render a page header based on the page name specified in `plugin.json`.
 
-### Using `PluginPage` for pages not defined in `plugin.json`
+### Use `PluginPage` for pages not defined in `plugin.json`
 
-The `PluginPage` component also exposes a `pageNav` property that is a `NavModelItem`. This `pageNav` property is useful for pages that are not defined in `plugin.json` (e.g. individual item pages). The `text` and `description` you specify in the `pageNav` model will be used to populate the breadcrumbs and page header.
+The `PluginPage` component also exposes a `pageNav` property that is a `NavModelItem`. This `pageNav` property is useful for pages that are not defined in `plugin.json` (for example, individual item pages). The `text` and `description` that you specify in the `pageNav` model are used to populate the breadcrumbs and the page header.
 
-Example:
+**Example:**
 
 ```tsx
 const pageNav = {
@@ -67,13 +75,15 @@ return (
 );
 ```
 
-The way the active page is matched in the breadcrumbs and section nav relies on the page routes being hierarchical. If you have a list page and an item page, the item page needs to be a subroute of the list page and the list page url needs to be specified in your `plugin.json`. For example, you might have a list of users at `/users`. This means that the item page for a specific user needs to be at `/users/:id`. This may require some refactoring of your routes.
+The way the active page is matched in the breadcrumbs and section nav relies on the page routes being hierarchical. If you have a list page and an item page, then you need to make the item page into a subroute of the list page. Furthermore, you also need to specify the list page URL in your `plugin.json`.
 
-### Using `PluginPage` with tabs
+For example, you might have a list of users at `/users`. This means that the item page for a specific user needs to be at `/users/:id`. This may require some refactoring of your routes.
 
-You can also create a further layer of hierarchy by specifying `children` in the `pageNav` model to created a page with tabbed navigation.
+### Use `PluginPage` with tabs
 
-Example:
+You can also create a further layer of hierarchy by specifying `children` in the `pageNav` model to create a page with tabbed navigation.
+
+**Example:**
 
 ```tsx
 const pageNav = {
@@ -100,11 +110,11 @@ return (
 );
 ```
 
-### Using `PluginPage` in a backwards-compatible way
+### Use `PluginPage` in a backwards-compatible way
 
-If you want to maintain backwards-compatibility with older versions of Grafana, one way is to implement a `PluginPage` wrapper. If `PluginPage` is available and the `topnav` feature is enabled then use the real `PluginPage`, otherwise fallback to whatever each plugin is doing today (including calling `onNavChanged`).
+If you want to maintain backwards-compatibility with older versions of Grafana, one way is to implement a `PluginPage` wrapper. If `PluginPage` is available and the `topnav` feature is enabled, then use the real `PluginPage`. In other scenarios, fall back to whatever each plugin is doing today (such as making a call to `onNavChanged`).
 
-Example:
+**Example:**
 
 ```tsx
 import { PluginPageProps, PluginPage as RealPluginPage, config } from '@grafana/runtime';
@@ -116,7 +126,7 @@ function PluginPageFallback(props: PluginPageProps) {
 }
 ```
 
-There’s an additional step (and if block) needed to hide/show tabs depending on if `config.features.topnav` is `true`. These changes will need to be made in the `useNavModel.ts` file in your plugin:
+There’s an additional step (and `if` block) that is needed to hide or show tabs depending on whether `config.features.topnav` is `true`. Your plugin needs to include these changes in the `useNavModel.ts` file:
 
 ```tsx
 // useNavModel.ts
@@ -136,13 +146,15 @@ useEffect(() => {
 ...
 ```
 
-## Forwarded HTTP headers in grafana-plugin-sdk-go
+## Forwarded HTTP headers in the plugin SDK for Go
 
-It's recommended to use the `<request>.GetHTTPHeader` or `<request>.GetHTTPHeaders` methods when retrieving forwarded HTTP headers. See [Forward OAuth identity for the logged-in user]({{< relref "add-authentication-for-data-source-plugins.md#forward-oauth-identity-for-the-logged-in-user" >}}), [Forward cookies for the logged-in user
-]({{< relref "add-authentication-for-data-source-plugins.md#forward-cookies-for-the-logged-in-user" >}}) or [Forward user header for the logged-in user]({{< relref "add-authentication-for-data-source-plugins.md#forward-user-header-for-the-logged-in-user" >}}) for example usages.
+We recommended to use the `<request>.GetHTTPHeader` or `<request>.GetHTTPHeaders` methods when retrieving forwarded HTTP headers. See [Forward OAuth identity for the logged-in user]({{< relref "../../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md#forward-oauth-identity-for-the-logged-in-user" >}}), [Forward cookies for the logged-in user
+]({{< relref "../../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md#forward-user-header-for-the-logged-in-user" >}}) or [Forward user header for the logged-in user]({{< relref "../../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md#forward-user-header-for-the-logged-in-user" >}}) for example usages.
 
 ### Technical details
 
-The grafana-plugin-sdk-go [v0.147.0](https://github.com/grafana/grafana-plugin-sdk-go/releases/tag/v0.147.0) introduces a new interface [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) that `QueryDataRequest`, `CheckHealthRequest` and `CallResourceRequest` implements.
+The Grafana SDK for Go [v0.147.0](https://github.com/grafana/grafana-plugin-sdk-go/releases/tag/v0.147.0) introduces a new interface [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) that `QueryDataRequest`, `CheckHealthRequest` and `CallResourceRequest` implements.
 
-Newly introduced forwarded HTTP headers in Grafana v9.4.0 are `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`. Internally these are prefixed with `http_` and sent as `http_<HTTP header name>` in [CheckHealthRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#CheckHealthRequest) and [QueryDataRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#QueryDataRequest). By using the [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) methods you're guaranteed to be able to operate on HTTP headers without using the prefix, i.e. `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`.
+Newly introduced forwarded HTTP headers in Grafana v9.4.0 are `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`. Internally, we prefix these with `http_` and they are sent as `http_<HTTP header name>` in [CheckHealthRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#CheckHealthRequest) and [QueryDataRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#QueryDataRequest).
+
+We recommend using the [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) methods so that you're guaranteed to be able to operate on HTTP headers without using the prefix. That is, you can operate on `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`.

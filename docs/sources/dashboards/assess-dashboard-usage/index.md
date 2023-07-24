@@ -12,6 +12,10 @@ keywords:
   - presence-indicator
   - search
   - sort
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Assess dashboard usage
 weight: 200
 ---
@@ -20,7 +24,9 @@ weight: 200
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/). Grafana Cloud insights logs include additional fields with their own dashboards. Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/). Grafana Cloud insights logs include additional fields with their own dashboards. Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
+{{% /admonition %}}
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
@@ -43,11 +49,9 @@ For every dashboard and data source, you can access usage information.
 
 ### Dashboard insights
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+To see dashboard usage information, click the dashboard insights icon in the header.
 
-To see dashboard usage information, click **Dashboard insights** in the top bar.
-
-{{< figure src="/static/img/docs/enterprise/dashboard_insights_button.png" max-width="400px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" >}}
 
 Dashboard insights show the following information:
 
@@ -56,9 +60,13 @@ Dashboard insights show the following information:
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-### Data source insights
+{{% admonition type="note" %}}
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+If you've enabled the `publicDashboards` feature toggle, you'll also see a Public dashboards tab in your analytics.
+
+{{% /admonition %}}
+
+### Data source insights
 
 Data source insights provides information about how a data source has been used in the past 30 days, such as:
 
@@ -68,17 +76,16 @@ Data source insights provides information about how a data source has been used 
 
 To find data source insights:
 
-1. Go to the Data source list view.
-1. Click on a data source.
+1. Click **Connections** in the main navigation.
+1. Under Your connections, click **Data sources**.
+1. Click a data source.
 1. Click the **Insights** tab.
 
-{{< figure src="/static/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-data-source-insights-9.5.png" max-width="650px" class="docs-image--no-shadow" >}}
 
 ## Presence indicator
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
-
-When you are signed in and looking at a dashboard, you can know who is looking at the same dashboard as you are via a presence indicator, which displays avatars of users who have recently interacted with the dashboard. The default timeframe is 10 minutes. To see the user's name, hover over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
+When you are signed in and looking at a dashboard, you can know who is looking at the same dashboard as you are via a presence indicator, which displays avatars of users who have recently interacted with the dashboard. The default time frame is 10 minutes. To see the user's name, hover over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
 When there are more active users on a dashboard than can fit within the presence indicator, click the **+X** icon. Doing so opens [dashboard insights]({{< relref "#dashboard-and-data-source-insights" >}}), which contains more details about recent user activity.
 
@@ -94,22 +101,18 @@ recent_users_age = 10m
 
 ## Sort dashboards by using insights data
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
-
-In the search view, you can use insights data to help you find most-used, broken, and unused dashbaords.
+In the search view, you can use insights data to help you find most-used, broken, and unused dashboards.
 
 You can sort the dashboards by:
 
 - Errors total
-- Errors 30 days
+- Errors 30 days (most and least)
 - Views total
-- Views 30 days
+- Views 30 days (most and least)
 
-{{< figure src="/static/img/docs/enterprise/improved-search-7-5.png" max-width="650px" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-sort-9.5.png" max-width="650px" class="docs-image--no-shadow" >}}
 
 ## Visualize usage insights data
-
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 If you set up your installation to [export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}), we've created two dashboards to help you take advantage of this data.
 

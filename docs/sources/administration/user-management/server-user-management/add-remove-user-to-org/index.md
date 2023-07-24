@@ -4,6 +4,10 @@ aliases:
   - ../../manage-users-and-permissions/manage-server-users/add-user-to-org/
 description: Describes how a Grafana server administrator can add or remove users
   in an organization
+labels:
+  products:
+    - enterprise
+    - oss
 title: Add or remove a user in an organization
 weight: 30
 ---
@@ -38,7 +42,9 @@ You are required to specify an Admin role for each organization. The first user 
 
 The next time the user signs in, they will be able to navigate to their new organization using the Switch Organizations option in the user profile menu.
 
-> **Note:** If you have [organization administrator]({{< relref "../../../roles-and-permissions#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../../roles-and-permissions#grafana-server-administrators" >}}) permissions, you can still [invite a user to join an organization]({{< relref "../../manage-org-users#invite-a-user-to-join-an-organization" >}}).
+{{% admonition type="note" %}}
+If you have [organization administrator]({{< relref "../../../roles-and-permissions#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../../roles-and-permissions#grafana-server-administrators" >}}) permissions, you can still [invite a user to join an organization]({{< relref "../../manage-org-users#invite-a-user-to-join-an-organization" >}}).
+{{% /admonition %}}
 
 ## Remove a user from an organization
 

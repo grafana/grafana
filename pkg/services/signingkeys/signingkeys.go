@@ -26,7 +26,9 @@ type Service interface {
 	// GetPrivateKey returns the private key with the specified key ID
 	GetPrivateKey(keyID string) (crypto.PrivateKey, error)
 	// GetServerPrivateKey returns the private key used to sign tokens
-	GetServerPrivateKey() (crypto.PrivateKey, error)
+	GetServerPrivateKey() crypto.PrivateKey
+	// GetServerPublicKey returns the public key used to verify tokens
+	GetServerPublicKey() crypto.PublicKey
 	// AddPrivateKey adds a private key to the service
 	AddPrivateKey(keyID string, privateKey crypto.PrivateKey) error
 }

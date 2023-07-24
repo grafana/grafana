@@ -53,7 +53,7 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 		currentConfig, err := Load([]byte(amConfig.AlertmanagerConfiguration))
 		// If the current config is un-loadable, treat it as if it never existed. Providing a new, valid config should be able to "fix" this state.
 		if err != nil {
-			c.log.Warn("last known alertmanager configuration was invalid. Overwriting...")
+			c.log.Warn("Last known alertmanager configuration was invalid. Overwriting...")
 		} else {
 			currentReceiverMap = currentConfig.GetGrafanaReceiverMap()
 		}
@@ -74,19 +74,13 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 
 			// Frontend sends only the secure settings that have to be updated
 			// Therefore we have to copy from the last configuration only those secure settings not included in the request
-			for key := range cgmr.SecureSettings {
+			for key, encryptedValue := range cgmr.SecureSettings {
 				_, ok := gr.SecureSettings[key]
 				if !ok {
-					decryptedValue, err := c.getDecryptedSecret(cgmr, key)
-					if err != nil {
-						return fmt.Errorf("failed to decrypt stored secure setting: %s: %w", key, err)
-					}
-
 					if receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings == nil {
 						receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings = make(map[string]string, len(cgmr.SecureSettings))
 					}
-
-					receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = decryptedValue
+					receivers[i].PostableGrafanaReceivers.GrafanaManagedReceivers[j].SecureSettings[key] = encryptedValue
 				}
 			}
 		}

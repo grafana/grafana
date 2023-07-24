@@ -33,7 +33,7 @@ export interface ConvertFieldTypeOptions {
 export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<ConvertFieldTypeTransformerOptions> = {
   id: DataTransformerID.convertFieldType,
   name: 'Convert field type',
-  description: 'Convert a field to a specified field type',
+  description: 'Convert a field to a specified field type.',
   defaultOptions: {
     fields: {},
     conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined }],
@@ -147,7 +147,7 @@ function fieldToNumberField(field: Field): Field {
   for (let n = 0; n < numValues.length; n++) {
     let toBeConverted = numValues[n];
 
-    if (valuesAsStrings && toBeConverted != null) {
+    if (valuesAsStrings && toBeConverted != null && typeof toBeConverted === 'string') {
       // some numbers returned from datasources have commas
       // strip the commas, coerce the string to a number
       toBeConverted = toBeConverted.replace(/,/g, '');

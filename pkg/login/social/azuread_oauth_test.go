@@ -2,6 +2,8 @@ package social
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -29,9 +32,11 @@ func falseBoolPtr() *bool {
 
 func TestSocialAzureAD_UserInfo(t *testing.T) {
 	type fields struct {
-		SocialBase       *SocialBase
-		allowedGroups    []string
-		forceUseGraphAPI bool
+		SocialBase           *SocialBase
+		allowedGroups        []string
+		allowedOrganizations []string
+		forceUseGraphAPI     bool
+		usGovURL             bool
 	}
 	type args struct {
 		client *http.Client
@@ -56,7 +61,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -69,6 +74,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name: "No email",
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+			},
 			claims: &azureClaims{
 				Email:             "",
 				PreferredUsername: "",
@@ -86,6 +94,28 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "US Government domain",
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+				usGovURL:   true,
+			},
+			want: &BasicUserInfo{
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{},
+			},
+		},
+		{
 			name: "Email in preferred_username claim",
 			claims: &azureClaims{
 				Email:             "",
@@ -95,7 +125,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -108,6 +138,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name: "Admin role",
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -126,6 +159,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name: "Lowercase Admin role",
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -145,7 +181,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Only other roles",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -173,7 +209,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				ID:                "1234",
 			},
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "Editor", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Editor", false, *featuremgmt.WithFeatures()),
 			},
 			want: &BasicUserInfo{
 				Id:     "1234",
@@ -193,6 +229,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:              "My Name",
 				ID:                "1234",
 			},
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Editor", false, *featuremgmt.WithFeatures()),
+			},
 			want: &BasicUserInfo{
 				Id:     "1234",
 				Name:   "My Name",
@@ -204,6 +243,9 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name: "Admin and Editor roles in claim",
+			fields: fields{
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "Editor", false, *featuremgmt.WithFeatures()),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -222,7 +264,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 		{
 			name:   "Grafana Admin but setting is disabled",
-			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor", false, *featuremgmt.WithFeatures())},
+			fields: fields{SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor", false, *featuremgmt.WithFeatures())},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -244,7 +286,8 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			name: "Editor roles in claim and GrafanaAdminAssignment enabled",
 			fields: fields{
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures())},
+					&oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
+			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -265,7 +308,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim",
 			fields: fields{SocialBase: newSocialBase("azuread",
-				&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures())},
+				&oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures())},
 			claims: &azureClaims{
 				Email:             "me@example.com",
 				PreferredUsername: "",
@@ -286,6 +329,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Error if user is not a member of allowed_groups",
 			fields: fields{
+				SocialBase:    newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor", false, *featuremgmt.WithFeatures()),
 				allowedGroups: []string{"dead-beef"},
 			},
 			claims: &azureClaims{
@@ -300,11 +344,52 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Error if user is a member of allowed_groups",
+			name: "Error if user is not a member of allowed_organizations",
+			fields: fields{
+				SocialBase:           newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Editor", false, *featuremgmt.WithFeatures()),
+				allowedOrganizations: []string{"uuid-1234"},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				TenantID:          "uuid-5678",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"foo", "bar"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want:    nil,
+			wantErr: true,
+		}, {
+			name: "No error if user is a member of allowed_organizations",
+			fields: fields{
+				allowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			},
+			claims: &azureClaims{
+				Email:             "me@example.com",
+				TenantID:          "uuid-5678",
+				PreferredUsername: "",
+				Roles:             []string{},
+				Groups:            []string{"foo", "bar"},
+				Name:              "My Name",
+				ID:                "1234",
+			},
+			want: &BasicUserInfo{
+				Id:     "1234",
+				Name:   "My Name",
+				Email:  "me@example.com",
+				Login:  "me@example.com",
+				Role:   "Viewer",
+				Groups: []string{"foo", "bar"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "No Error if user is a member of allowed_groups",
 			fields: fields{
 				allowedGroups: []string{"foo", "bar"},
 				SocialBase: newSocialBase("azuread",
-					&oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Viewer", false, *featuremgmt.WithFeatures()),
+					&oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{AllowAssignGrafanaAdmin: false}, "Viewer", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -326,7 +411,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when ClaimsNames and ClaimsSources is set",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				ID:                "1",
@@ -351,7 +436,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch groups when forceUseGraphAPI is set",
 			fields: fields{
-				SocialBase:       newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures()),
+				SocialBase:       newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures()),
 				forceUseGraphAPI: true,
 			},
 			claims: &azureClaims{
@@ -378,7 +463,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no match",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, "", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{RoleAttributeStrict: true}, "", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -394,7 +479,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		{
 			name: "Fetch empty role when strict attribute role is true and no role claims returned",
 			fields: fields{
-				SocialBase: newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{RoleAttributeStrict: true}, "", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{RoleAttributeStrict: true}, "", false, *featuremgmt.WithFeatures()),
 			},
 			claims: &azureClaims{
 				Email:             "me@example.com",
@@ -409,33 +494,68 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 		},
 	}
 
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	// Instantiate a signer using RSASSA-PSS (SHA256) with the given private key.
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS256, Key: privateKey}, (&jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{"kid": "1"},
+	}).WithType("JWT"))
+	require.NoError(t, err)
+
+	// generate JWKS
+	jwks := &jose.JSONWebKeySet{
+		Keys: []jose.JSONWebKey{
+			{
+				Key:       privateKey.Public(),
+				KeyID:     "1",
+				Algorithm: "PS256",
+				Use:       "sig",
+			},
+		},
+	}
+
+	authURL := "https://login.microsoftonline.com/1234/oauth2/v2.0/authorize"
+	usGovAuthURL := "https://login.microsoftonline.us/1234/oauth2/v2.0/authorize"
+
+	cache := remotecache.NewFakeCacheStorage()
+	// put JWKS in cache
+	jwksDump, err := json.Marshal(jwks)
+	require.NoError(t, err)
+
+	err = cache.Set(context.Background(), azureCacheKeyPrefix+"client-id-example", jwksDump, 0)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
-				SocialBase:       tt.fields.SocialBase,
-				allowedGroups:    tt.fields.allowedGroups,
-				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
+				SocialBase:           tt.fields.SocialBase,
+				allowedGroups:        tt.fields.allowedGroups,
+				allowedOrganizations: tt.fields.allowedOrganizations,
+				forceUseGraphAPI:     tt.fields.forceUseGraphAPI,
+				cache:                cache,
 			}
 
 			if tt.fields.SocialBase == nil {
-				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
 			}
 
-			key := []byte("secret")
-			sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
-			if err != nil {
-				panic(err)
+			if tt.fields.usGovURL {
+				s.SocialBase.Endpoint.AuthURL = usGovAuthURL
+			} else {
+				s.SocialBase.Endpoint.AuthURL = authURL
 			}
 
 			cl := jwt.Claims{
+				Audience:  jwt.Audience{"client-id-example"},
 				Subject:   "subject",
 				Issuer:    "issuer",
 				NotBefore: jwt.NewNumericDate(time.Date(2016, 1, 1, 0, 0, 0, 0, time.UTC)),
-				Audience:  jwt.Audience{"leela", "fry"},
 			}
 
 			var raw string
 			if tt.claims != nil {
+				tt.claims.Audience = "client-id-example"
 				if tt.claims.ClaimNames.Groups != "" {
 					server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 						tokenParts := strings.Split(request.Header.Get("Authorization"), " ")
@@ -473,7 +593,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				tt.args.client = s.Client(context.Background(), token)
 			}
 
-			got, err := s.UserInfo(tt.args.client, token)
+			got, err := s.UserInfo(context.Background(), tt.args.client, token)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -507,7 +627,9 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should get roles, skipOrgRoleSyncBase disabled",
 			fields: fields{
-				SocialBase:      newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread",
+					&oauth2.Config{ClientID: "client-id-example"},
+					&OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
 				skipOrgRoleSync: false,
 			},
 			claims: &azureClaims{
@@ -530,7 +652,9 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		{
 			name: "Grafana Admin and Editor roles in claim, skipOrgRoleSync disabled should not get roles",
 			fields: fields{
-				SocialBase:      newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
+				SocialBase: newSocialBase("azuread",
+					&oauth2.Config{ClientID: "client-id-example"},
+					&OAuthInfo{AllowAssignGrafanaAdmin: true}, "", false, *featuremgmt.WithFeatures()),
 				skipOrgRoleSync: false,
 			},
 			claims: &azureClaims{
@@ -552,6 +676,36 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 		},
 	}
 
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	// Instantiate a signer using RSASSA-PSS (SHA256) with the given private key.
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS256, Key: privateKey}, (&jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{"kid": "1"},
+	}).WithType("JWT"))
+	require.NoError(t, err)
+
+	// generate JWKS
+	jwks := &jose.JSONWebKeySet{
+		Keys: []jose.JSONWebKey{
+			{
+				Key:       privateKey.Public(),
+				KeyID:     "1",
+				Algorithm: string(jose.PS256),
+				Use:       "sig",
+			},
+		},
+	}
+
+	authURL := "https://login.microsoftonline.com/1234/oauth2/v2.0/authorize"
+	cache := remotecache.NewFakeCacheStorage()
+	// put JWKS in cache
+	jwksDump, err := json.Marshal(jwks)
+	require.NoError(t, err)
+
+	err = cache.Set(context.Background(), azureCacheKeyPrefix+"client-id-example", jwksDump, 0)
+	require.NoError(t, err)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &SocialAzureAD{
@@ -559,17 +713,14 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				allowedGroups:    tt.fields.allowedGroups,
 				forceUseGraphAPI: tt.fields.forceUseGraphAPI,
 				skipOrgRoleSync:  tt.fields.skipOrgRoleSync,
+				cache:            cache,
 			}
 
 			if tt.fields.SocialBase == nil {
-				s.SocialBase = newSocialBase("azuread", &oauth2.Config{}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
+				s.SocialBase = newSocialBase("azuread", &oauth2.Config{ClientID: "client-id-example"}, &OAuthInfo{}, "", false, *featuremgmt.WithFeatures())
 			}
 
-			key := []byte("secret")
-			sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
-			if err != nil {
-				panic(err)
-			}
+			s.SocialBase.Endpoint.AuthURL = authURL
 
 			cl := jwt.Claims{
 				Subject:   "subject",
@@ -580,6 +731,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 
 			var raw string
 			if tt.claims != nil {
+				tt.claims.Audience = "client-id-example"
 				if tt.claims.ClaimNames.Groups != "" {
 					server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 						tokenParts := strings.Split(request.Header.Get("Authorization"), " ")
@@ -617,7 +769,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				tt.args.client = s.Client(context.Background(), token)
 			}
 
-			got, err := s.UserInfo(tt.args.client, token)
+			got, err := s.UserInfo(context.Background(), tt.args.client, token)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -9,6 +9,7 @@ import (
 	amConfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -21,7 +22,7 @@ func (srv AlertmanagerSrv) provenanceGuard(currentConfig apimodels.GettableUserC
 	if err := checkTemplates(currentConfig, newConfig); err != nil {
 		return err
 	}
-	if err := checkContactPoints(currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers); err != nil {
+	if err := checkContactPoints(srv.log, currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers); err != nil {
 		return err
 	}
 	if err := checkMuteTimes(currentConfig, newConfig); err != nil {
@@ -67,7 +68,7 @@ func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimod
 	return nil
 }
 
-func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newReceivers []*apimodels.PostableApiReceiver) error {
+func checkContactPoints(l log.Logger, currReceivers []*apimodels.GettableApiReceiver, newReceivers []*apimodels.PostableApiReceiver) error {
 	newCPs := make(map[string]*apimodels.PostableGrafanaReceiver)
 	for _, postedReceiver := range newReceivers {
 		for _, postedContactPoint := range postedReceiver.GrafanaManagedReceivers {
@@ -104,21 +105,14 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 				return err
 			}
 			newSettings := map[string]interface{}{}
-			err = json.Unmarshal(contactPoint.Settings, &newSettings)
+			err = json.Unmarshal(postedContactPoint.Settings, &newSettings)
 			if err != nil {
 				return err
 			}
-			if err != nil {
-				return err
-			}
-			for key, val := range existingSettings {
-				if newVal, present := newSettings[key]; present {
-					if val != newVal {
-						return editErr
-					}
-				} else {
-					return editErr
-				}
+			d := cmp.Diff(existingSettings, newSettings)
+			if len(d) > 0 {
+				l.Warn("Settings of contact point with provenance status cannot be changed via regular API.", "contactPoint", postedContactPoint.Name, "settingsDiff", d, "error", editErr)
+				return editErr
 			}
 		}
 	}

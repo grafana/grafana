@@ -11,7 +11,7 @@ export function DataSourcesListPage() {
 
   const actions = dataSourcesCount > 0 ? <DataSourceAddButton /> : undefined;
   return (
-    <Page navId={'connections-your-connections-datasources'} actions={actions}>
+    <Page navId={'connections-datasources'} actions={actions}>
       <Page.Contents>
         <DataSourcesList />
       </Page.Contents>

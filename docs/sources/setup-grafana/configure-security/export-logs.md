@@ -10,14 +10,16 @@ keywords:
 labels:
   products:
     - cloud
-    - oss
+    - enterprise
 title: Export logs of usage insights
 weight: 900
 ---
 
 # Export logs of usage insights
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.4 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+{{% /admonition %}}
 
 By exporting usage logs to Loki, you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries. This configuration is done for you in Grafana Cloud, with provisioned dashboards. Read about them in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
 
@@ -60,7 +62,7 @@ Logs of usage insights contain the following fields, where the fields followed b
 
 ## Configuration
 
-To export your logs, enable the usage insights feature and [configure]({{< relref "../../setup-grafana/configure-grafana/" >}}) an export location in the configuration file:
+To export your logs, enable the usage insights feature and [configure]({{< relref "../../setup-grafana/configure-grafana" >}}) an export location in the configuration file:
 
 ```ini
 [usage_insights.export]
@@ -90,7 +92,7 @@ tls = true
 tenant_id =
 ```
 
-Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../setup-grafana/configure-grafana/#log" >}}).
+Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../setup-grafana/configure-grafana#log" >}}).
 There is no option for configuring the `logger` storage type.
 
 ## Visualize Loki usage insights in Grafana

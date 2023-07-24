@@ -20,7 +20,7 @@ const (
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
 	logger := logger.FromContext(ctx)
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return getHealthCheckMessage(logger, "error getting datasource info", err)
 	}
@@ -93,10 +93,7 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *
 		}
 	}()
 
-	if res.StatusCode/100 != 2 {
-		return getHealthCheckMessage(logger, "", fmt.Errorf("error reading InfluxDB. Status Code: %d", res.StatusCode))
-	}
-	resp := s.responseParser.Parse(res.Body, []Query{{
+	resp := s.responseParser.Parse(res.Body, res.StatusCode, []Query{{
 		RefID:       refID,
 		UseRawQuery: true,
 		RawQuery:    queryString,

@@ -2,19 +2,31 @@ package clientmiddleware
 
 import (
 	"context"
+	"strconv"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+// needed to mock the function for testing
+var shouldCacheQuery = awsds.ShouldCacheQuery
 
 // NewCachingMiddleware creates a new plugins.ClientMiddleware that will
 // attempt to read and write query results to the cache
 func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientMiddleware {
+	return NewCachingMiddlewareWithFeatureManager(cachingService, nil)
+}
+
+// NewCachingMiddlewareWithFeatureManager creates a new plugins.ClientMiddleware that will
+// attempt to read and write query results to the cache with a feature manager
+func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features *featuremgmt.FeatureManager) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
 	if err := prometheus.Register(QueryCachingRequestHistogram); err != nil {
 		log.Error("error registering prometheus collector 'QueryRequestHistogram'", "error", err)
@@ -24,17 +36,19 @@ func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientM
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CachingMiddleware{
-			next:    next,
-			caching: cachingService,
-			log:     log,
+			next:     next,
+			caching:  cachingService,
+			log:      log,
+			features: features,
 		}
 	})
 }
 
 type CachingMiddleware struct {
-	next    plugins.Client
-	caching caching.CachingService
-	log     log.Logger
+	next     plugins.Client
+	caching  caching.CachingService
+	log      log.Logger
+	features *featuremgmt.FeatureManager
 }
 
 // QueryData receives a data request and attempts to access results already stored in the cache for that request.
@@ -56,16 +70,17 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// First look in the query cache if enabled
 	hit, cr := m.caching.HandleQueryRequest(ctx, req)
 
-	defer func() {
-		// record request duration if caching was used
-		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+	// record request duration if caching was used
+	ch := reqCtx.Resp.Header().Get(caching.XCacheHeader)
+	if ch != "" {
+		defer func() {
 			QueryCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
 				"query_type":      getQueryType(reqCtx),
 			}).Observe(time.Since(start).Seconds())
-		}
-	}()
+		}()
+	}
 
 	// Cache hit; return the response
 	if hit {
@@ -77,7 +92,25 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 
 	// Update the query cache with the result for this metrics request
 	if err == nil && cr.UpdateCacheFn != nil {
-		cr.UpdateCacheFn(ctx, resp)
+		// If AWS async caching is not enabled, use the old code path
+		if m.features == nil || !m.features.IsEnabled(featuremgmt.FlagAwsAsyncQueryCaching) {
+			cr.UpdateCacheFn(ctx, resp)
+		} else {
+			// time how long shouldCacheQuery takes
+			startShouldCacheQuery := time.Now()
+			shouldCache := shouldCacheQuery(resp)
+			ShouldCacheQueryHistogram.With(prometheus.Labels{
+				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
+				"cache":           ch,
+				"shouldCache":     strconv.FormatBool(shouldCache),
+				"query_type":      getQueryType(reqCtx),
+			}).Observe(time.Since(startShouldCacheQuery).Seconds())
+
+			// If AWS async caching is enabled and resp is for a running async query, don't cache it
+			if shouldCache {
+				cr.UpdateCacheFn(ctx, resp)
+			}
+		}
 	}
 
 	return resp, err
@@ -100,27 +133,35 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	start := time.Now()
 
 	// First look in the resource cache if enabled
-	hit, resp := m.caching.HandleResourceRequest(ctx, req)
+	hit, cr := m.caching.HandleResourceRequest(ctx, req)
 
-	defer func() {
-		// record request duration if caching was used
-		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+	// record request duration if caching was used
+	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
+		defer func() {
 			ResourceCachingRequestHistogram.With(prometheus.Labels{
 				"plugin_id": req.PluginContext.PluginID,
 				"cache":     ch,
 			}).Observe(time.Since(start).Seconds())
-		}
-	}()
+		}()
+	}
 
 	// Cache hit; send the response and return
 	if hit {
-		return sender.Send(resp)
+		return sender.Send(cr.Response)
 	}
 
 	// Cache miss; do the actual request
-	// The call to update the cache happens in /pkg/api/plugin_resource.go in the flushStream() func
-	// TODO: Implement updating the cache from this method
-	return m.next.CallResource(ctx, req, sender)
+	// If there is no update cache func, just pass in the original sender
+	if cr.UpdateCacheFn == nil {
+		return m.next.CallResource(ctx, req, sender)
+	}
+	// Otherwise, intercept the responses in a wrapped sender so we can cache them first
+	cacheSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		cr.UpdateCacheFn(ctx, res)
+		return sender.Send(res)
+	})
+
+	return m.next.CallResource(ctx, req, cacheSender)
 }
 
 func (m *CachingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

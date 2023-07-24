@@ -1,6 +1,8 @@
 import React from 'react';
 
-import { Input, InlineField, FieldSet } from '@grafana/ui';
+import { ConfigSubSection } from '@grafana/experimental';
+import { Input, InlineField } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { ElasticsearchOptions } from '../types';
 
@@ -19,7 +21,16 @@ export const LogsConfig = (props: Props) => {
     };
 
   return (
-    <FieldSet label="Logs">
+    <ConfigSubSection
+      title="Logs"
+      description={
+        <ConfigDescriptionLink
+          description="Configure which fields the data source uses for log messages and log levels."
+          suffix="elasticsearch/#logs"
+          feature="Elasticsearch log fields"
+        />
+      }
+    >
       <InlineField label="Message field name" labelWidth={22}>
         <Input
           id="es_logs-config_logMessageField"
@@ -38,6 +49,6 @@ export const LogsConfig = (props: Props) => {
           width={24}
         />
       </InlineField>
-    </FieldSet>
+    </ConfigSubSection>
   );
 };

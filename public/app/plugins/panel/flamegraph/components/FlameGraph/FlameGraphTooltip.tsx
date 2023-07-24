@@ -1,53 +1,47 @@
 import { css } from '@emotion/css';
-import React, { LegacyRef } from 'react';
+import React from 'react';
 
-import { useStyles2, Tooltip } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
   totalTicks: number;
+  position?: { x: number; y: number };
   item?: LevelItem;
-  tooltipRef?: LegacyRef<HTMLDivElement>;
 };
 
-const FlameGraphTooltip = ({ data, tooltipRef, item, totalTicks }: Props) => {
+const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
   const styles = useStyles2(getStyles);
 
-  let content = null;
-  if (item) {
-    const tooltipData = getTooltipData(data, item, totalTicks);
-    content = (
-      <Tooltip
-        content={
-          <div>
-            <p>{data.getLabel(item.itemIndex)}</p>
-            <p className={styles.lastParagraph}>
-              {tooltipData.unitTitle}
-              <br />
-              Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
-              <br />
-              Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
-              <br />
-              Samples: <b>{tooltipData.samples}</b>
-            </p>
-          </div>
-        }
-        placement={'right'}
-        show={true}
-      >
-        <span></span>
-      </Tooltip>
-    );
+  if (!(item && position)) {
+    return null;
   }
 
-  // Even if we don't show tooltip we need this div so the ref is consistently attached. Would need some refactor in
-  // FlameGraph.tsx to make it work without it.
-  return (
-    <div ref={tooltipRef} className={styles.tooltip}>
-      {content}
+  const tooltipData = getTooltipData(data, item, totalTicks);
+  const content = (
+    <div className={styles.tooltipContent}>
+      <p>{data.getLabel(item.itemIndexes[0])}</p>
+      <p className={styles.lastParagraph}>
+        {tooltipData.unitTitle}
+        <br />
+        Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
+        <br />
+        Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
+        <br />
+        Samples: <b>{tooltipData.samples}</b>
+      </p>
     </div>
+  );
+
+  return (
+    <Portal>
+      <VizTooltipContainer position={position} offset={{ x: 15, y: 0 }}>
+        {content}
+      </VizTooltipContainer>
+    </Portal>
   );
 };
 
@@ -62,8 +56,8 @@ type TooltipData = {
 };
 
 export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
-  const displayValue = data.getValueDisplay(item.itemIndex);
-  const displaySelf = data.getSelfDisplay(item.itemIndex);
+  const displayValue = data.valueDisplayProcessor(item.value);
+  const displaySelf = data.getSelfDisplay(item.itemIndexes);
 
   const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;
   const percentSelf = Math.round(10000 * (displaySelf.numeric / totalTicks)) / 100;
@@ -83,7 +77,7 @@ export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, t
   }
 
   return {
-    name: data.getLabel(item.itemIndex),
+    name: data.getLabel(item.itemIndexes[0]),
     percentValue,
     percentSelf,
     unitTitle,
@@ -93,14 +87,17 @@ export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, t
   };
 };
 
-const getStyles = () => ({
-  tooltip: css`
-    position: fixed;
+const getStyles = (theme: GrafanaTheme2) => ({
+  tooltipContent: css`
+    title: tooltipContent;
+    font-size: ${theme.typography.bodySmall.fontSize};
   `,
   lastParagraph: css`
+    title: lastParagraph;
     margin-bottom: 0;
   `,
   name: css`
+    title: name;
     margin-bottom: 10px;
   `,
 });

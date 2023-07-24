@@ -9,7 +9,7 @@ import {
   dateTime,
   FieldType,
   LoadingState,
-  MutableDataFrame,
+  createDataFrame,
 } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -113,7 +113,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'A',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'time', values: [1599643351085] },
                     { name: 'metric', values: [30.226249741223704], labels: { metric: 'America' } },
@@ -204,7 +204,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'A',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'time', values: [1599643351085] },
                     { name: 'metric', values: ['America'] },
@@ -349,7 +349,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tables',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'table', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
                 })
               ),
@@ -372,7 +372,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'meta',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'version', type: FieldType.string, values: ['test1'] }],
                 })
               ),
@@ -394,7 +394,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'meta',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'extversion', type: FieldType.string, values: ['test1'] }],
                 })
               ),
@@ -416,7 +416,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'columns',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'column', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
                     { name: 'type', type: FieldType.string, values: ['int', 'char', 'bool'] },
@@ -458,7 +458,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tempvar',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                     { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -491,7 +491,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tempvar',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                     { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -533,7 +533,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tempvar',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                     { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -573,7 +573,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tempvar',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: '__value', values: ['value1', 'value2', 'value3'] },
                     { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
@@ -607,7 +607,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tempvar',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'id', values: [1, 2, 3] },
                     { name: 'values', values: ['test1', 'test2', 'test3'] },
@@ -644,7 +644,7 @@ describe('PostgreSQLDatasource', () => {
             refId: 'tempvar',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
                     { name: '__value', values: ['same', 'same', 'diff'] },

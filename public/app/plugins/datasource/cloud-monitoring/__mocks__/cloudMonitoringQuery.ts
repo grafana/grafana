@@ -1,4 +1,11 @@
-import { AlignmentTypes, CloudMonitoringQuery, QueryType, SLOQuery, TimeSeriesList, TimeSeriesQuery } from '../types';
+import {
+  AlignmentTypes,
+  CloudMonitoringQuery,
+  QueryType,
+  SLOQuery,
+  TimeSeriesList,
+  TimeSeriesQuery,
+} from '../types/query';
 
 type Subset<K> = {
   [attr in keyof K]?: K[attr] extends object ? Subset<K[attr]> : K[attr];

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -154,6 +155,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 
 	// always expose the dashboard store sequential ID
 	f.ID = dashFolder.ID
+	f.Version = dashFolder.Version
 
 	return f, err
 }
@@ -161,6 +163,22 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if cmd.UID != "" {
+		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+
+		canView, err := g.CanView()
+		if err != nil {
+			return nil, err
+		}
+
+		if !canView {
+			return nil, dashboards.ErrFolderAccessDenied
+		}
 	}
 
 	children, err := s.store.GetChildren(ctx, *cmd)
@@ -176,15 +194,25 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
 			continue
 		}
+		// always expose the dashboard store sequential ID
+		f.ID = dashFolder.ID
+
+		if cmd.UID != "" {
+			// parent access has been checked already
+			// the subfolder must be accessible as well (due to inheritance)
+			filtered = append(filtered, f)
+			continue
+		}
 
 		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
 		canView, err := g.CanView()
-		if err != nil || canView {
-			// always expose the dashboard store sequential ID
-			f.ID = dashFolder.ID
+		if err != nil {
+			return nil, err
+		}
+		if canView {
 			filtered = append(filtered, f)
 		}
 	}
@@ -222,7 +250,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if !s.accessControl.IsDisabled() && s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) && cmd.ParentUID != "" {
 		// Check that the user is allowed to create a subfolder in this folder
 		evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.ParentUID))
 		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
@@ -347,6 +375,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 
 	// always expose the dashboard store sequential ID
 	foldr.ID = dashFolder.ID
+	foldr.Version = dashFolder.Version
 
 	return foldr, nil
 }
@@ -448,8 +477,21 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	if cmd.OrgID < 1 {
 		return folder.ErrBadRequest.Errorf("invalid orgID")
 	}
+
+	guard, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return err
+	}
+
+	if canSave, err := guard.CanDelete(); err != nil || !canSave {
+		if err != nil {
+			return toFolderError(err)
+		}
+		return dashboards.ErrFolderAccessDenied
+	}
+
 	result := []string{cmd.UID}
-	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			subfolders, err := s.nestedFolderDelete(ctx, cmd)
 
@@ -466,20 +508,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return err
 			}
 
-			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-			if err != nil {
-				return err
-			}
-
-			if canSave, err := guard.CanDelete(); err != nil || !canSave {
-				if err != nil {
-					return toFolderError(err)
+			if cmd.ForceDeleteRules {
+				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
+					return err
 				}
-				return dashboards.ErrFolderAccessDenied
-			}
-
-			if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
-				return err
 			}
 
 			err = s.legacyDelete(ctx, cmd, dashFolder)
@@ -493,9 +525,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, UID); err != nil {
+		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
 			return err
 		}
 	}
@@ -517,32 +549,19 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	}
 
 	// Check that the user is allowed to move the folder to the destination folder
-	if !s.accessControl.IsDisabled() {
-		var evaluator accesscontrol.Evaluator
-		if cmd.NewParentUID != "" {
-			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
-		} else {
-			// Evaluate folder creation permission when moving folder to the root level
-			evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
-		}
-		hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
-		if evalErr != nil {
-			return nil, evalErr
-		}
-		if !hasAccess {
-			return nil, dashboards.ErrFolderAccessDenied
-		}
+	var evaluator accesscontrol.Evaluator
+	if cmd.NewParentUID != "" {
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(cmd.NewParentUID))
 	} else {
-		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return nil, err
-		}
-		if canSave, err := g.CanSave(); err != nil || !canSave {
-			if err != nil {
-				return nil, toFolderError(err)
-			}
-			return nil, dashboards.ErrFolderAccessDenied
-		}
+		// Evaluate folder creation permission when moving folder to the root level
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersCreate)
+	}
+	hasAccess, evalErr := s.accessControl.Evaluate(ctx, cmd.SignedInUser, evaluator)
+	if evalErr != nil {
+		return nil, evalErr
+	}
+	if !hasAccess {
+		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	// here we get the folder, we need to get the height of current folder
@@ -619,6 +638,61 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return result, err
+	}
+	return result, nil
+}
+
+func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	logger := s.log.FromContext(ctx)
+	if cmd.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
+	}
+	if *cmd.UID == "" {
+		return nil, folder.ErrBadRequest.Errorf("missing UID")
+	}
+	if cmd.OrgID < 1 {
+		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
+	}
+
+	result := []string{*cmd.UID}
+	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
+		if err != nil {
+			logger.Error("failed to get subfolders", "error", err)
+			return nil, err
+		}
+		result = append(result, subfolders...)
+		countsMap[entity.StandardKindFolder] = int64(len(subfolders))
+	}
+
+	for _, v := range s.registry {
+		for _, folder := range result {
+			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
+			if err != nil {
+				logger.Error("failed to count folder descendants", "error", err)
+				return nil, err
+			}
+			countsMap[v.Kind()] += c
+		}
+	}
+	return countsMap, nil
+}
+
+func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string) ([]string, error) {
+	result := []string{}
+	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range folders {
+		result = append(result, f.UID)
+		subfolders, err := s.getNestedFolders(ctx, f.OrgID, f.UID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, subfolders...)
 	}
 	return result, nil
 }
@@ -824,11 +898,6 @@ func toFolderError(err error) error {
 func (s *Service) RegisterService(r folder.RegistryService) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-
-	_, ok := s.registry[r.Kind()]
-	if ok {
-		return folder.ErrTargetRegistrySrvConflict.Errorf("target registry service: %s already exists", r.Kind())
-	}
 
 	s.registry[r.Kind()] = r
 

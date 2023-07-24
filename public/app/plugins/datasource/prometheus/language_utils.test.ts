@@ -303,7 +303,7 @@ describe('getRangeSnapInterval', () => {
   it('will snap range to closest 10 minute', () => {
     const queryDurationMinutes = 60;
     const intervalSeconds = queryDurationMinutes * 60; // 10 minutes
-    const now = new Date().valueOf();
+    const now = 1680901009826;
     const nowPlusOneMinute = now + 1000 * 60;
     const nowPlusTwoMinute = now + 1000 * 60 * 2;
 
@@ -380,7 +380,7 @@ describe('getRangeSnapInterval', () => {
   it('will snap range to closest 60 minute', () => {
     const queryDurationMinutes = 120;
     const intervalSeconds = queryDurationMinutes * 60;
-    const now = new Date().valueOf();
+    const now = 1680901009826;
     const nowPlusOneMinute = now + 1000 * 60;
     const nowPlusTwoMinute = now + 1000 * 60 * 2;
 

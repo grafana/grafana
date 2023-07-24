@@ -1,25 +1,25 @@
 import { css } from '@emotion/css';
 import { isNumber } from 'lodash';
-import React, { PureComponent, ChangeEvent } from 'react';
+import React, { ChangeEvent, PureComponent } from 'react';
 
 import {
-  Threshold,
+  GrafanaTheme2,
+  SelectableValue,
   sortThresholds,
+  Threshold,
   ThresholdsConfig,
   ThresholdsMode,
-  SelectableValue,
-  GrafanaTheme2,
 } from '@grafana/data';
 import {
-  Input,
-  colors,
-  ColorPicker,
-  ThemeContext,
   Button,
+  ColorPicker,
+  colors,
+  IconButton,
+  Input,
   Label,
   RadioButtonGroup,
   stylesFactory,
-  IconButton,
+  ThemeContext,
 } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -199,10 +199,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         }
         suffix={
           <IconButton
-            aria-label={`Remove ${ariaLabel}`}
             className={styles.trashIcon}
             name="trash-alt"
             onClick={() => this.onRemoveThreshold(threshold)}
+            tooltip={`Remove ${ariaLabel}`}
           />
         }
       />

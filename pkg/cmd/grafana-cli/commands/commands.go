@@ -6,16 +6,12 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/datamigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/secretsmigrations"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,18 +38,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
 
-		tracer, err := tracing.ProvideService(runner.Cfg)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize tracer service", err)
-		}
-
-		bus := bus.ProvideBus(tracer)
-
-		sqlStore, err := db.ProvideService(runner.Cfg, nil, &migrations.OSSMigrations{}, bus, tracer)
-		if err != nil {
-			return fmt.Errorf("%v: %w", "failed to initialize SQL store", err)
-		}
-
+		sqlStore := runner.SQLStore
 		if err := command(cmd, sqlStore); err != nil {
 			return err
 		}
@@ -91,47 +76,38 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 	}
 }
 
-// Command contains command state.
-type Command struct {
-	Client utils.ApiClient
-}
-
-var cmd Command = Command{
-	Client: &services.GrafanaComClient{},
-}
-
 var pluginCommands = []*cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin id> <plugin version (optional)>",
-		Action: runPluginCommand(cmd.installCommand),
+		Action: runPluginCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runPluginCommand(cmd.listRemoteCommand),
+		Action: runPluginCommand(listRemoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",
-		Action: runPluginCommand(cmd.listVersionsCommand),
+		Action: runPluginCommand(listVersionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
 		Aliases: []string{"upgrade"},
-		Action:  runPluginCommand(cmd.upgradeCommand),
+		Action:  runPluginCommand(upgradeCommand),
 	}, {
 		Name:    "update-all",
 		Aliases: []string{"upgrade-all"},
 		Usage:   "update all your installed plugins",
-		Action:  runPluginCommand(cmd.upgradeAllCommand),
+		Action:  runPluginCommand(upgradeAllCommand),
 	}, {
 		Name:   "ls",
 		Usage:  "list installed plugins (excludes core plugins)",
-		Action: runPluginCommand(cmd.lsCommand),
+		Action: runPluginCommand(lsCommand),
 	}, {
 		Name:    "uninstall",
 		Aliases: []string{"remove"},
 		Usage:   "uninstall <plugin id>",
-		Action:  runPluginCommand(cmd.removeCommand),
+		Action:  runPluginCommand(removeCommand),
 	},
 }
 

@@ -1,31 +1,37 @@
 ---
-description: Guide for migrating plugins from Grafana v7.x to v8.x
+description: Guide for migrating plugins from Grafana v7.x to v8.x.
 keywords:
   - grafana
   - plugins
   - migration
   - plugin
   - documentation
-title: Migrating plugins from Grafana version 7.x to 8.x
-menutitle: v7.x to v8.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v7.x to v8.x
+title: Migrate plugins from Grafana version 7.x.x to 8.x.x
 weight: 2400
 ---
 
-# Migrating plugins from Grafana version 7.x.x to 8.x.x
+# Migrate plugins from Grafana version 7.x.x to 8.x.x
 
-This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps. We have documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
+This section explains how to migrate Grafana v7.x.x plugins to the updated plugin system available in Grafana v8.x.x. Depending on your plugin, you need to perform one or more of the following steps.
+
+In this section, we've documented the breaking changes in Grafana v8.x.x and the steps you need to take to upgrade your plugin.
 
 ## Backend plugin v1 support has been dropped
 
-Use the new [plugin sdk](https://github.com/grafana/grafana-plugin-sdk-go) to run your backend plugin running in Grafana 8.
+Use the new [plugin SDK for Go](https://github.com/grafana/grafana-plugin-sdk-go) to run your backend plugin running in Grafana 8.
 
 ### 1. Add dependency on grafana-plugin-sdk-go
 
-Add a dependency on the `https://github.com/grafana/grafana-plugin-sdk-go`. We recommend using [go modules](https://go.dev/blog/using-go-modules) to manage your dependencies.
+Add a dependency on the `https://github.com/grafana/grafana-plugin-sdk-go`. We recommend using [Go modules](https://go.dev/blog/using-go-modules) to manage your dependencies.
 
 ### 2. Update the way you bootstrap your plugin
 
-Update your `main` package to bootstrap via the new plugin sdk.
+Update your `main` package to bootstrap via the new plugin Go SDK.
 
 ```go
 // before
@@ -84,7 +90,7 @@ func main() {
 
 ### 3. Update the plugin package
 
-Update your `plugin` package to use the new plugin sdk.
+Update your `plugin` package to use the new plugin Go SDK:
 
 ```go
 // before
@@ -150,11 +156,11 @@ func (d *SampleDatasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 
 ## Sign and load backend plugins
 
-We strongly recommend that you not allow unsigned plugins in your Grafana installation. By allowing unsigned plugins, we cannot guarantee the authenticity of the plugin, which could compromise the security of your Grafana installation.
+We strongly recommend that you not allow unsigned plugins in your Grafana installation. By allowing unsigned plugins, we can't guarantee the authenticity of the plugin, which could compromise the security of your Grafana installation.
 
-To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
+To sign your plugin, see [Sign a plugin]({{< relref "../../publish-a-plugin/sign-a-plugin.md" >}}).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}) configuration setting.
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../../setup-grafana/configure-grafana#allow_loading_unsigned_plugins" >}}) configuration setting.
 
 ## Update react-hook-form from v6 to v7
 
@@ -184,7 +190,7 @@ The property that defines which Grafana version your plugin supports has been re
 
 ## Update imports to match emotion 11
 
-Grafana uses Emotion library to manage frontend styling. We have updated the Emotion package and this can affect your frontend plugin if you have custom styling. You only need to update the import statements to get it working in Grafana 8.
+Grafana uses the Emotion library to manage frontend styling. We've updated the Emotion package and this can affect your frontend plugin if you have custom styling. You only need to update the `import` statements to get it working in Grafana 8.
 
 ```ts
 // before
@@ -196,7 +202,7 @@ import { cx, css } from '@emotion/css';
 
 ## Update needed for app plugins using dashboards
 
-To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "../../metadata/#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
+To make side navigation work properly - app plugins targeting Grafana `8.+` and integrating into the side menu via [addToNav]({{< relref "../../metadata#properties-4" >}}) property need to adjust their `plugin.json` and all dashboard json files to have a matching `uid`.
 
 **`plugin.json`**
 
@@ -232,15 +238,17 @@ To make side navigation work properly - app plugins targeting Grafana `8.+` and 
 
 ## 8.0 deprecations
 
+The following features have been deprecated in version 8.0.
+
 ### Grafana theme v1
 
 In Grafana 8 we have introduced a new improved version of our theming system. The previous version of the theming system is still available but is deprecated and will be removed in the next major version of Grafana.
 
 You can find more detailed information on how to apply the v2 theme [here](https://github.com/grafana/grafana/blob/main/contribute/style-guides/themes.md#theming-grafana).
 
-**How to style a functional component**
+#### How to style a functional component
 
-The `useStyles` hook is the preferred way to access the theme when styling. It provides basic memoization and access to the theme object.
+The `useStyles` hook is the preferred way to access the theme when styling. It provides basic memoization and access to the theme object:
 
 ```ts
 // before
@@ -278,7 +286,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 ```
 
-**How to use the theme in a functional component**
+#### How to use the theme in a functional component
+
+This example shows how to use the theme in a functional component:
 
 ```ts
 // before
@@ -299,7 +309,9 @@ function Component(): ReactElement | null {
 }
 ```
 
-**How to use the theme in a class component**
+#### How to use the theme in a class component
+
+This example shows how to use the theme in a class:
 
 ```ts
 // before
@@ -333,9 +345,11 @@ class Component extends React.Component<Props> {
 export default withTheme2(Component);
 ```
 
-**Gradually migrating components**
+## Gradual migration of components
 
-If you need to use both the v1 and v2 themes due to using migrated and non-migrated components in the same context, use the `v1` property on the `v2` theme as described in the following example.
+If you need to use both the v1 and v2 themes because you've used both migrated and non-migrated components in the same context, then use the `v1` property on the `v2` theme.
+
+**Example:**
 
 ```ts
 function Component(): ReactElement | null {

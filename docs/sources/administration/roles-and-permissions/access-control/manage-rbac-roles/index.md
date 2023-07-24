@@ -5,6 +5,10 @@ aliases:
   - ../../../enterprise/access-control/provisioning/
 description: Learn how to view permissions associated with roles, create custom roles,
   and update and delete roles in Grafana.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Manage RBAC roles
 title: Manage Grafana RBAC roles
 weight: 50
@@ -12,7 +16,9 @@ weight: 50
 
 # Manage RBAC roles
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
@@ -192,7 +198,9 @@ roles:
 
 The following examples show you how to create a custom role using the Grafana HTTP API. For more information about the HTTP API, refer to [Create a new custom role]({{< relref "../../../../developers/http_api/access_control/#create-a-new-custom-role" >}}).
 
-> **Note:** You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
+{{% admonition type="note" %}}
+You cannot create a custom role with permissions that you do not have. For example, if you only have `users:create` permissions, then you cannot create a role that includes other permissions.
+{{% /admonition %}}
 
 The following example creates a `custom:users:admin` role and assigns the `users:create` action to it.
 
@@ -301,8 +309,10 @@ roles:
         scope: 'folder:*'
 ```
 
-> **Note**: You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
-> <br/> **Note**: Make sure to **increment** the role version for the changes to be accounted for.
+{{% admonition type="note" %}}
+You can add multiple `fixed`, `basic` or `custom` roles to the `from` section. Their permissions will be copied and added to the basic role.
+Make sure to **increment** the role version for the changes to be accounted for.
+{{% /admonition %}}
 
 You can also change basic roles' permissions using the API. Refer to the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}) for more details.
 

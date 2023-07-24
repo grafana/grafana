@@ -226,7 +226,7 @@ function getTermCountsFrom(frame: DataFrame): TermCount[] {
   const vals = frame.fields[1].values;
   const counts: TermCount[] = [];
   for (let i = 0; i < frame.length; i++) {
-    counts.push({ term: keys.get(i), count: vals.get(i) });
+    counts.push({ term: keys[i], count: vals[i] });
   }
   return counts;
 }

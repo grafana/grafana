@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { stripIndent, stripIndents } from 'common-tags';
 import Prism from 'prismjs';
-import React, { PureComponent } from 'react';
+import React, { useState } from 'react';
 
-import { QueryEditorHelpProps } from '@grafana/data';
+import { Collapse } from '@grafana/ui';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
 import tokenizer from '../language/cloudwatch-logs/syntax';
@@ -12,12 +12,13 @@ import { CloudWatchQuery } from '../types';
 interface QueryExample {
   category: string;
   examples: Array<{
-    title: string;
+    title?: string;
+    description?: string;
     expr: string;
   }>;
 }
 
-const CLIQ_EXAMPLES: QueryExample[] = [
+const QUERIES: QueryExample[] = [
   {
     category: 'Lambda',
     examples: [
@@ -28,19 +29,19 @@ const CLIQ_EXAMPLES: QueryExample[] = [
       },
       {
         title: 'Determine the amount of overprovisioned memory',
-        expr: stripIndent`
-        filter @type = "REPORT" |
-        stats max(@memorySize / 1024 / 1024) as provisonedMemoryMB,
-              min(@maxMemoryUsed / 1024 / 1024) as smallestMemoryRequestMB,
-              avg(@maxMemoryUsed / 1024 / 1024) as avgMemoryUsedMB,
-              max(@maxMemoryUsed / 1024 / 1024) as maxMemoryUsedMB,
-              provisonedMemoryMB - maxMemoryUsedMB as overProvisionedMB`,
+        expr: stripIndent`filter @type = "REPORT"
+        | stats max(@memorySize / 1000 / 1000) as provisionedMemoryMB,
+          min(@maxMemoryUsed / 1000 / 1000) as smallestMemoryRequestMB,
+          avg(@maxMemoryUsed / 1000 / 1000) as avgMemoryUsedMB,
+          max(@maxMemoryUsed / 1000 / 1000) as maxMemoryUsedMB,
+          provisionedMemoryMB - maxMemoryUsedMB as overProvisionedMB
+        `,
       },
       {
         title: 'Find the most expensive requests',
-        expr: stripIndents`filter @type = "REPORT" |
-                           fields @requestId, @billedDuration |
-                           sort by @billedDuration desc`,
+        expr: stripIndents`filter @type = "REPORT"
+        | fields @requestId, @billedDuration
+        | sort by @billedDuration desc`,
       },
     ],
   },
@@ -69,6 +70,18 @@ const CLIQ_EXAMPLES: QueryExample[] = [
                            sort numRejections desc |
                            limit 20`,
       },
+      {
+        title: 'Find the top 15 packet transfers across hosts',
+        expr: stripIndents`stats sum(packets) as packetsTransferred by srcAddr, dstAddr
+        | sort packetsTransferred  desc
+        | limit 15`,
+      },
+      {
+        title: 'Find the IP addresses where flow records were skipped during the capture window',
+        expr: stripIndents`filter logStatus="SKIPDATA"
+        | stats count(*) by bin(1h) as t
+        | sort t`,
+      },
     ],
   },
   {
@@ -91,6 +104,26 @@ const CLIQ_EXAMPLES: QueryExample[] = [
         expr: stripIndents`filter eventName="CreateUser" |
                            fields awsRegion, requestParameters.userName, responseElements.user.arn`,
       },
+      {
+        title: 'Find EC2 hosts that were started or stopped in a given AWS Region',
+        expr: stripIndents`filter (eventName="StartInstances" or eventName="StopInstances") and region="us-east-2"`,
+      },
+      {
+        title: 'Find the number of records where an exception occurred while invoking the UpdateTrail API',
+        expr: stripIndents`filter eventName="UpdateTrail" and ispresent(errorCode) | stats count(*) by errorCode, errorMessage`,
+      },
+      {
+        title: 'Find log entries where TLS 1.0 or 1.1 was used',
+        expr: stripIndents`filter tlsDetails.tlsVersion in [ "TLSv1", "TLSv1.1" ]
+        | stats count(*) as numOutdatedTlsCalls by userIdentity.accountId, recipientAccountId, eventSource, eventName, awsRegion, tlsDetails.tlsVersion, tlsDetails.cipherSuite, userAgent
+        | sort eventSource, eventName, awsRegion, tlsDetails.tlsVersion`,
+      },
+      {
+        title: 'Find the number of calls per service that used TLS versions 1.0 or 1.1',
+        expr: stripIndents`filter tlsDetails.tlsVersion in [ "TLSv1", "TLSv1.1" ]
+        | stats count(*) as numOutdatedTlsCalls by eventSource
+        | sort numOutdatedTlsCalls desc`,
+      },
     ],
   },
   {
@@ -112,6 +145,49 @@ const CLIQ_EXAMPLES: QueryExample[] = [
         title: 'List of log events that are not exceptions',
         expr: 'fields @message | filter @message not like /Exception/',
       },
+      {
+        title: 'To parse and count fields',
+        expr: stripIndents`fields @timestamp, @message
+        | filter @message like /User ID/
+        | parse @message "User ID: *" as @userId
+        | stats count(*) by @userId`,
+      },
+      {
+        title: 'To Identify faults on any API calls',
+        expr: stripIndents`filter Operation = <operation> AND Fault > 0
+        | fields @timestamp, @logStream as instanceId, ExceptionMessage`,
+      },
+      {
+        title:
+          'To get the number of exceptions logged every 5 minutes using regex where exception is not case sensitive',
+        expr: stripIndents`filter @message like /(?i)Exception/
+        | stats count(*) as exceptionCount by bin(5m)
+        | sort exceptionCount desc`,
+      },
+      {
+        title: 'To parse ephemeral fields using a glob expression',
+        expr: stripIndents`parse @message "user=*, method:*, latency := *" as @user, @method, @latency
+        | stats avg(@latency) by @method, @user`,
+      },
+      {
+        title: 'To parse ephemeral fields using a glob expression using regular expression',
+        expr: stripIndents`parse @message /user=(?<user2>.*?), method:(?<method2>.*?), latency := (?<latency2>.*?)/
+        | stats avg(latency2) by @method2, @user2`,
+      },
+      {
+        title: 'To extract ephemeral fields and display field for events that contain an ERROR string',
+        expr: stripIndents`fields @message
+        | parse @message "* [*] *" as loggingTime, loggingType, loggingMessage
+        | filter loggingType IN ["ERROR"]
+        | display loggingMessage, loggingType = "ERROR" as isError`,
+      },
+      {
+        title: 'To trim whitespaces from query results',
+        expr: stripIndents`fields trim(@message) as trimmedMessage
+        | parse trimmedMessage "[*] * * Retrieving CloudWatch Metrics for AccountID : *, CloudWatch Metric : *, Resource Type : *, ResourceID : *" as level, time, logId, accountId, metric, type, resourceId
+        | display level, time, logId, accountId, metric, type, resourceId
+        | filter level like "INFO"`,
+      },
     ],
   },
   {
@@ -126,7 +202,7 @@ const CLIQ_EXAMPLES: QueryExample[] = [
         expr: 'filter responseCode="SERVFAIL" | stats count(*) by queryName',
       },
       {
-        title: 'Number of requests received every 10  minutes by edge location',
+        title: 'Top 10 DNS resolver IPs with highest number of requests',
         expr: 'stats count(*) as numRequests by resolverIp | sort numRequests desc | limit 10',
       },
     ],
@@ -193,6 +269,68 @@ const CLIQ_EXAMPLES: QueryExample[] = [
   },
 ];
 
+const COMMANDS: QueryExample[] = [
+  {
+    category: 'fields',
+    examples: [
+      {
+        description:
+          'Retrieve one or more log fields. You can also use functions and operations such as abs(a+b), sqrt(a/b), log(a)+log(b), strlen(trim()), datefloor(), isPresent(), and others in this command.',
+        expr: 'fields @log, @logStream, @message, @timestamp',
+      },
+    ],
+  },
+  {
+    category: 'filter',
+    examples: [
+      {
+        description:
+          'Retrieve log fields based on one or more conditions. You can use comparison operators such as =, !=, >, >=, <, <=, boolean operators such as and, or, and not, and regular expressions in this command.',
+        expr: 'filter @message like /(?i)(Exception|error|fail|5dd)/',
+      },
+    ],
+  },
+  {
+    category: 'stats',
+    examples: [
+      {
+        description: 'Calculate aggregate statistics such as sum(), avg(), count(), min() and max() for log fields.',
+        expr: 'stats count() by bin(5m)',
+      },
+    ],
+  },
+  {
+    category: 'sort',
+    examples: [
+      {
+        description: 'Sort the log fields in ascending or descending order.',
+        expr: 'sort @timestamp asc',
+      },
+    ],
+  },
+  {
+    category: 'limit',
+    examples: [
+      {
+        description: 'Limit the number of log events returned by a query.',
+        expr: 'limit 10',
+      },
+    ],
+  },
+  {
+    category: 'parse',
+    examples: [
+      {
+        description:
+          'Create one or more ephemeral fields, which can be further processed by the query. The following example will extract the ephemeral fields host, identity, dateTimeString, httpVerb, url, protocol, statusCode, bytes from @message, and return the url, max(bytes), and avg(bytes) fields sorted by max(bytes) in descending order.',
+        expr: stripIndents`parse '* - * [*] "* * *" * *' as host, identity, dateTimeString, httpVerb, url, protocol, statusCode, bytes
+        | stats max(bytes) as maxBytes, avg(bytes) by url
+        | sort maxBytes desc`,
+      },
+    ],
+  },
+];
+
 function renderHighlightedMarkup(code: string, keyPrefix: string) {
   const grammar = tokenizer;
   const tokens = flattenTokens(Prism.tokenize(code, grammar));
@@ -220,83 +358,104 @@ const link = css`
   text-decoration: underline;
 `;
 
-export default class LogsCheatSheet extends PureComponent<
-  QueryEditorHelpProps<CloudWatchQuery>,
-  { userExamples: string[] }
-> {
-  onClickExample(query: CloudWatchQuery) {
-    this.props.onClickExample(query);
-  }
-  renderExpression(expr: string, keyPrefix: string) {
-    return (
-      <button
-        type="button"
-        className="cheat-sheet-item__example"
-        key={expr}
-        onClick={() =>
-          this.onClickExample({
-            refId: this.props.query.refId ?? 'A',
-            expression: expr,
-            queryMode: 'Logs',
-            region: this.props.query.region,
-            id: this.props.query.refId ?? 'A',
-            logGroupNames: 'logGroupNames' in this.props.query ? this.props.query.logGroupNames : [],
-            logGroups: 'logGroups' in this.props.query ? this.props.query.logGroups : [],
-          })
-        }
+type Props = {
+  onClickExample: (query: CloudWatchQuery) => void;
+  query: CloudWatchQuery;
+};
+
+const LogsCheatSheet = (props: Props) => {
+  const [isCommandsOpen, setIsCommandsOpen] = useState(false);
+  const [isQueriesOpen, setIsQueriesOpen] = useState(false);
+
+  return (
+    <div>
+      <h3>CloudWatch Logs cheat sheet</h3>
+      <Collapse
+        label="Commands"
+        collapsible={true}
+        isOpen={isCommandsOpen}
+        onToggle={(isOpen) => setIsCommandsOpen(isOpen)}
       >
-        <pre>{renderHighlightedMarkup(expr, keyPrefix)}</pre>
-      </button>
-    );
-  }
-
-  renderLogsCheatSheet() {
-    return (
-      <div>
-        <h2>CloudWatch Logs Cheat Sheet</h2>
-        {CLIQ_EXAMPLES.map((cat, i) => (
-          <div key={`${cat.category}-${i}`}>
-            <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>
-            {cat.examples.map((item, j) => (
-              <div className="cheat-sheet-item" key={`item-${j}`}>
-                <h4>{item.title}</h4>
-                {this.renderExpression(item.expr, `item-${j}`)}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  render() {
-    return (
-      <div>
-        <h3>CloudWatch Logs cheat sheet</h3>
-        {CLIQ_EXAMPLES.map((cat, i) => (
+        <>
+          {COMMANDS.map((cat, i) => (
+            <div key={`cat-${i}`}>
+              <h5>{cat.category}</h5>
+              {cat.examples.map((item, j) => (
+                <div key={`item-${j}`}>
+                  <p>{item.description}</p>
+                  <button
+                    type="button"
+                    className="cheat-sheet-item__example"
+                    key={item.expr}
+                    onClick={() =>
+                      props.onClickExample({
+                        refId: props.query.refId ?? 'A',
+                        expression: item.expr,
+                        queryMode: 'Logs',
+                        region: props.query.region,
+                        id: props.query.refId ?? 'A',
+                        logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
+                        logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
+                      })
+                    }
+                  >
+                    <pre>{renderHighlightedMarkup(item.expr, `item-${j}`)}</pre>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ))}
+        </>
+      </Collapse>
+      <Collapse
+        label="Queries"
+        collapsible={true}
+        isOpen={isQueriesOpen}
+        onToggle={(isOpen) => setIsQueriesOpen(isOpen)}
+      >
+        {QUERIES.map((cat, i) => (
           <div key={`cat-${i}`}>
             <div className={`cheat-sheet-item__title ${cx(exampleCategory)}`}>{cat.category}</div>
             {cat.examples.map((item, j) => (
               <div className="cheat-sheet-item" key={`item-${j}`}>
                 <h4>{item.title}</h4>
-                {this.renderExpression(item.expr, `item-${j}`)}
+                <button
+                  type="button"
+                  className="cheat-sheet-item__example"
+                  key={item.expr}
+                  onClick={() =>
+                    props.onClickExample({
+                      refId: props.query.refId ?? 'A',
+                      expression: item.expr,
+                      queryMode: 'Logs',
+                      region: props.query.region,
+                      id: props.query.refId ?? 'A',
+                      logGroupNames: 'logGroupNames' in props.query ? props.query.logGroupNames : [],
+                      logGroups: 'logGroups' in props.query ? props.query.logGroups : [],
+                    })
+                  }
+                >
+                  <pre>{renderHighlightedMarkup(item.expr, `item-${j}`)}</pre>
+                </button>
               </div>
             ))}
           </div>
         ))}
-        <div>
-          If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
-          <a
-            className={cx(link)}
-            href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cloudwatch-logs-data-protection"
-            target="_blank"
-            rel="noreferrer"
-          >
-            See documentation for details
-          </a>
-          .
-        </div>
+      </Collapse>
+      <div>
+        Note: If you are seeing masked data, you may have CloudWatch logs data protection enabled.{' '}
+        <a
+          className={cx(link)}
+          href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/#cloudwatch-logs-data-protection"
+          target="_blank"
+          rel="noreferrer"
+        >
+          See documentation for details
+        </a>
+        .
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
+
+export default LogsCheatSheet;

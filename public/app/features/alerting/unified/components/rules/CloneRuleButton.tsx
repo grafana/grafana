@@ -7,7 +7,6 @@ import { ConfirmModal, LinkButton, useStyles2 } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
-import { createUrl } from '../../utils/url';
 
 interface CloneRuleButtonProps {
   ruleIdentifier: RuleIdentifier;
@@ -20,10 +19,10 @@ export const CloneRuleButton = React.forwardRef<HTMLAnchorElement, CloneRuleButt
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     // For provisioned rules an additional confirmation step is required
     // Users have to be aware that the cloned rule will NOT be marked as provisioned
-    const [provRuleCloneUrl, setProvRuleCloneUrl] = useState<string | undefined>(undefined);
+    const [showModal, setShowModal] = useState(false);
 
     const styles = useStyles2(getStyles);
-    const cloneUrl = createUrl('/alerting/new', { copyFrom: ruleId.stringifyIdentifier(ruleIdentifier) });
+    const cloneUrl = '/alerting/new?copyFrom=' + ruleId.stringifyIdentifier(ruleIdentifier);
 
     return (
       <>
@@ -35,14 +34,14 @@ export const CloneRuleButton = React.forwardRef<HTMLAnchorElement, CloneRuleButt
           variant="secondary"
           icon="copy"
           href={isProvisioned ? undefined : cloneUrl}
-          onClick={isProvisioned ? () => setProvRuleCloneUrl(cloneUrl) : undefined}
+          onClick={isProvisioned ? () => setShowModal(true) : undefined}
           ref={ref}
         >
           {text}
         </LinkButton>
 
         <ConfirmModal
-          isOpen={!!provRuleCloneUrl}
+          isOpen={showModal}
           title="Copy provisioned alert rule"
           body={
             <div>
@@ -56,8 +55,10 @@ export const CloneRuleButton = React.forwardRef<HTMLAnchorElement, CloneRuleButt
             </div>
           }
           confirmText="Copy"
-          onConfirm={() => provRuleCloneUrl && locationService.push(provRuleCloneUrl)}
-          onDismiss={() => setProvRuleCloneUrl(undefined)}
+          onConfirm={() => {
+            locationService.push(cloneUrl);
+          }}
+          onDismiss={() => setShowModal(false)}
         />
       </>
     );

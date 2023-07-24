@@ -191,4 +191,6 @@ public/api-spec.json
 deployment_tools_config.json
 
 .betterer.cache
-/docs/make-docs
+
+# Temporary file for backporting PRs
+.pr-body.txt

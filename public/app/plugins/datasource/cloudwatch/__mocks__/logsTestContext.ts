@@ -12,10 +12,10 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import { GetDataSourceListFilters, setDataSourceSrv } from '@grafana/runtime';
 
-import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQueryStatus } from '../types';
 
 import { meta, setupMockedDataSource } from './CloudWatchDataSource';
@@ -62,7 +62,7 @@ export function setupForLogs() {
         ): Observable<DataQueryResponse> | Promise<DataQueryResponse> {
           throw new Error('Function not implemented.');
         },
-        testDatasource: function (): Promise<CloudWatchDatasource> {
+        testDatasource: function (): Promise<TestDataSourceResponse> {
           throw new Error('Function not implemented.');
         },
         meta: meta,

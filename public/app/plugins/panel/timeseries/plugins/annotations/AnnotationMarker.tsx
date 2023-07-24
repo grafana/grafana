@@ -127,7 +127,7 @@ export function AnnotationMarker({ annotation, timeZone, width }: Props) {
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={!isRegionAnnotation ? styles.markerWrapper : undefined}
-        data-testid={selectors.pages.SoloPanel.Annotations.marker}
+        data-testid={selectors.pages.Dashboard.Annotations.marker}
       >
         {marker}
       </div>

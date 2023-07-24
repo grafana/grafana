@@ -9,6 +9,11 @@ keywords:
   - panels
   - node graph
   - directed graph
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Node graph
 weight: 850
 ---
@@ -32,7 +37,9 @@ Both nodes and edges can have associated metadata or statistics. The data source
 
 ### Nodes
 
-> **Note:** Node graph can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+{{% admonition type="note" %}}
+Node graph can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+{{% /admonition %}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
 

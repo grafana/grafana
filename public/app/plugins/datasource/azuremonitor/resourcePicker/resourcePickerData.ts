@@ -32,7 +32,7 @@ const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-ver
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
 
-export type ResourcePickerQueryType = 'logs' | 'metrics';
+export type ResourcePickerQueryType = 'logs' | 'metrics' | 'traces';
 
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;

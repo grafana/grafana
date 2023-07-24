@@ -41,7 +41,7 @@ export const StateTimelineTooltip = ({
   const linkLookup = new Set<string>();
 
   if (field.getLinks) {
-    const v = field.values.get(datapointIdx);
+    const v = field.values[datapointIdx];
     const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
     field.getLinks({ calculatedValue: disp, valueRowIndex: datapointIdx }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
@@ -57,7 +57,7 @@ export const StateTimelineTooltip = ({
 
   const dataFrameFieldIndex = field.state?.origin;
   const fieldFmt = field.display || getDisplayProcessor({ field, timeZone, theme });
-  const value = field.values.get(datapointIdx!);
+  const value = field.values[datapointIdx!];
   const display = fieldFmt(value);
   const fieldDisplayName = dataFrameFieldIndex
     ? getFieldDisplayName(
@@ -70,10 +70,10 @@ export const StateTimelineTooltip = ({
   const nextStateIdx = findNextStateIndex(field, datapointIdx!);
   let nextStateTs;
   if (nextStateIdx) {
-    nextStateTs = xField.values.get(nextStateIdx!);
+    nextStateTs = xField.values[nextStateIdx!];
   }
 
-  const stateTs = xField.values.get(datapointIdx!);
+  const stateTs = xField.values[datapointIdx!];
 
   let toFragment = null;
   let durationFragment = null;
@@ -88,7 +88,7 @@ export const StateTimelineTooltip = ({
     );
     toFragment = (
       <>
-        {' to'} <strong>{xFieldFmt(xField.values.get(nextStateIdx!)).text}</strong>
+        {' to'} <strong>{xFieldFmt(xField.values[nextStateIdx!]).text}</strong>
       </>
     );
   }
@@ -99,7 +99,7 @@ export const StateTimelineTooltip = ({
         {fieldDisplayName}
         <br />
         <SeriesTableRow label={display.text} color={display.color || FALLBACK_COLOR} isActive />
-        From <strong>{xFieldFmt(xField.values.get(datapointIdx!)).text}</strong>
+        From <strong>{xFieldFmt(xField.values[datapointIdx!]).text}</strong>
         {toFragment}
         {durationFragment}
       </div>

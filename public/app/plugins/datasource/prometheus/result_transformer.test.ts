@@ -1,13 +1,14 @@
 import {
+  cacheFieldDisplayNames,
+  createDataFrame,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   FieldType,
-  MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
 
-import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
+import { parseSampleValue, sortSeriesByLabel, transform, transformDFToTable, transformV2 } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -80,6 +81,52 @@ describe('Prometheus Result Transformer', () => {
 
     it('-infinity', () => {
       expect(parseSampleValue('-infinity')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+  });
+
+  describe('sortSeriesByLabel() should use frame.fields[1].state?.displayName when available', () => {
+    let frames = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            type: FieldType.number,
+            values: [4, 5, 6],
+            config: {
+              displayNameFromDS: '2',
+            },
+            labels: {
+              offset_days: '2',
+            },
+          },
+        ],
+      }),
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+          {
+            type: FieldType.number,
+            values: [7, 8, 9],
+            config: {
+              displayNameFromDS: '1',
+            },
+            labels: {
+              offset_days: '1',
+            },
+          },
+        ],
+      }),
+    ];
+
+    it('sorts by displayNameFromDS', () => {
+      cacheFieldDisplayNames(frames);
+
+      let sorted = frames.slice().sort(sortSeriesByLabel);
+
+      expect(sorted[0]).toEqual(frames[1]);
+      expect(sorted[1]).toEqual(frames[0]);
     });
   });
 
@@ -191,7 +238,7 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -226,7 +273,7 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -238,7 +285,7 @@ describe('Prometheus Result Transformer', () => {
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [2, 3, 7] },
@@ -280,7 +327,7 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -292,7 +339,7 @@ describe('Prometheus Result Transformer', () => {
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'B',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -313,6 +360,66 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
+    it('results with deprecated heatmap format should be correctly transformed', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
+    });
     it('results with heatmap format should be correctly transformed', () => {
       const options = {
         targets: [
@@ -325,36 +432,33 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
@@ -390,72 +494,66 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'B',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'B',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'B',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
@@ -485,36 +583,33 @@ describe('Prometheus Result Transformer', () => {
         state: 'Done',
         data: [
           // 10
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1', additionalProperty: '10' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 30],
                 labels: { le: '2', additionalProperty: '10' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf', additionalProperty: '10' },
@@ -522,36 +617,33 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
           // 20
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [0, 10, 10],
                 labels: { le: '1', additionalProperty: '20' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [20, 10, 40],
                 labels: { le: '2', additionalProperty: '20' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 60],
                 labels: { le: '+Inf', additionalProperty: '20' },
@@ -559,36 +651,33 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
           // 30
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 30, 60],
                 labels: { le: '1', additionalProperty: '30' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 40, 60],
                 labels: { le: '2', additionalProperty: '30' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [40, 40, 60],
                 labels: { le: '+Inf', additionalProperty: '30' },
@@ -625,19 +714,18 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             name: 'exemplar',
             meta: {
@@ -648,7 +736,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40, 90, 14, 21],
                 labels: { le: '6' },
@@ -675,19 +762,18 @@ describe('Prometheus Result Transformer', () => {
       const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [10, 10, 0],
                 labels: { le: '1' },
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             name: 'exemplar',
             meta: {
@@ -698,7 +784,6 @@ describe('Prometheus Result Transformer', () => {
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
               {
-                name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40, 90, 14, 21],
                 labels: { le: '6' },
@@ -741,7 +826,7 @@ describe('Prometheus Result Transformer', () => {
 
   describe('transformDFToTable', () => {
     it('transforms dataFrame with response length 1 to table dataFrame', () => {
-      const df = new MutableDataFrame({
+      const df = createDataFrame({
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -765,7 +850,7 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('transforms dataFrame with response length 2 to table dataFrame', () => {
-      const df = new MutableDataFrame({
+      const df = createDataFrame({
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -794,7 +879,7 @@ describe('Prometheus Result Transformer', () => {
       const value2 = 'value2';
 
       const dataframes = [
-        new MutableDataFrame({
+        createDataFrame({
           refId: 'A',
           fields: [
             { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -806,7 +891,7 @@ describe('Prometheus Result Transformer', () => {
             },
           ],
         }),
-        new MutableDataFrame({
+        createDataFrame({
           refId: 'B',
           fields: [],
         }),
@@ -827,6 +912,60 @@ describe('Prometheus Result Transformer', () => {
       expect(transformedTableDataFrames[1].fields[1].name).toBe('Value #B');
       expect(transformedTableDataFrames[1].fields[1].values).toEqual([]);
       expect(transformedTableDataFrames[1].fields[0].values).toEqual([]);
+    });
+
+    it('transforms dataframes with metadata resolving from their refIds', () => {
+      const value1 = 'value1';
+      const value2 = 'value2';
+      const executedQueryForRefA = 'Expr: avg_over_time(access_evaluation_duration_bucket[15s])\nStep: 15s';
+      const executedQueryForRefB = 'Expr: avg_over_time(access_evaluation_duration_bucket[5m])\nStep: 15s';
+
+      const dataframes = [
+        createDataFrame({
+          refId: 'A',
+          meta: {
+            typeVersion: [0, 1],
+            custom: {
+              resultType: 'vector',
+            },
+            executedQueryString: executedQueryForRefA,
+          },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+        createDataFrame({
+          refId: 'B',
+          meta: {
+            typeVersion: [0, 1],
+            custom: {
+              resultType: 'vector',
+            },
+            executedQueryString: executedQueryForRefB,
+          },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+      ];
+
+      const transformedTableDataFrames = transformDFToTable(dataframes);
+      expect(transformedTableDataFrames[0].meta).toBeTruthy();
+      expect(transformedTableDataFrames[1].meta).toBeTruthy();
+      expect(transformedTableDataFrames[0].meta?.executedQueryString).toEqual(executedQueryForRefA);
+      expect(transformedTableDataFrames[1].meta?.executedQueryString).toEqual(executedQueryForRefB);
     });
   });
 

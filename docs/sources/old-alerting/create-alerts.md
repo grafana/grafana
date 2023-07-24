@@ -8,6 +8,10 @@ keywords:
   - alerting
   - guide
   - rules
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create alerts
 weight: 200
 ---
@@ -18,7 +22,7 @@ Grafana Alerting allows you to attach rules to your dashboard panels. When you s
 
 ![Alerting overview](/static/img/docs/alerting/drag_handles_gif.gif)
 
-In the Alert tab of the graph panel you can configure how often the alert rule should be evaluated and the conditions that need to be met for the alert to change state and trigger its [notifications]({{< relref "notifications/" >}}).
+In the Alert tab of the graph panel you can configure how often the alert rule should be evaluated and the conditions that need to be met for the alert to change state and trigger its [notifications]({{< relref "./notifications" >}}).
 
 Currently only the graph panel supports alert rules.
 
@@ -40,13 +44,15 @@ This section describes the fields you fill out to create an alert.
 
 ### Rule
 
-- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list. This field supports [templating]({{< relref "add-notification-template/" >}}).
+- **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list. This field supports [templating]({{< relref "./add-notification-template" >}}).
 - **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
-You can set a minimum evaluation interval in the `alerting.min_interval_seconds` configuration field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../../administration/configuration/" >}}#min-interval-seconds) for more information.
+You can set a minimum evaluation interval in the `alerting.min_interval_seconds` configuration field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../setup-grafana/configure-grafana#min_interval_seconds" >}}) for more information.
 
-> **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
+{{% admonition type="caution" %}}
+Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -Pending -OK`.
+{{% /admonition %}}
 
 If an alert rule has a configured `For` and the query violates the configured threshold, then it will first go from `OK` to `Pending`. Going from `OK` to `Pending` Grafana will not send any notifications. Once the alert rule has been firing for more than `For` duration, it will change to `Alerting` and send alert notifications.
 
@@ -121,11 +127,11 @@ If you have an unreliable time series store from which queries sometime timeout 
 In alert tab you can also specify alert rule notifications along with a detailed message about the alert rule. The message can contain anything, information about how you might solve the issue, link to runbook, and so on.
 
 The actual notifications are configured and shared between multiple alerts. Read
-[Alert notifications]({{< relref "notifications/" >}}) for information on how to configure and set up notifications.
+[Alert notifications]({{< relref "./notifications" >}}) for information on how to configure and set up notifications.
 
 - **Send to -** Select an alert notification channel if you have one set up.
-- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats. This field supports [templating]({{< relref "add-notification-template/" >}}).
-- **Tags -** Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
+- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats. This field supports [templating]({{< relref "./add-notification-template" >}}).
+- **Tags -** Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "./notifications#list-of-supported-notifiers" >}}).
 
 ## Alert state history and annotations
 

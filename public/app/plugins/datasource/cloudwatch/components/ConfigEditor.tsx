@@ -74,9 +74,9 @@ export const ConfigEditor = (props: Props) => {
       <h3 className="page-heading">CloudWatch Logs</h3>
       <div className="gf-form-group">
         <InlineField
-          label="Timeout"
+          label="Retry Timeout"
           labelWidth={28}
-          tooltip='Custom timeout for CloudWatch Logs insights queries which have max concurrency limits. Default is 15 minutes. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
+          tooltip='Cloudwatch Logs allows for a maximum of 30 concurrent queries. If Grafana hits a concurrent max query error from Cloudwatch Logs it will auto-retry requesting a query for up to 30min. This retry timeout strategy is configurable. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
           invalid={Boolean(logsTimeoutError)}
         >
           <Input
