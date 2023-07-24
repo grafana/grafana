@@ -6,7 +6,7 @@ import React, { ReactNode } from 'react';
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
@@ -129,7 +129,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Span variant="body">{name}</Span>
+          <Text variant="body">{name}</Text>
         </Stack>
         {policies.length > 0 ? (
           <MetaText>
@@ -214,14 +214,14 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
           <Stack direction="row" alignItems="center" gap={1}>
             <Stack direction="row" alignItems="center" gap={0.5}>
               {iconName && <Icon name={iconName} />}
-              <Span variant="body" color="primary">
+              <Text variant="body" color="primary">
                 {receiverName}
-              </Span>
+              </Text>
             </Stack>
             {description && (
-              <Span variant="bodySmall" color="secondary">
+              <Text variant="bodySmall" color="secondary">
                 {description}
-              </Span>
+              </Text>
             )}
           </Stack>
         </div>
@@ -252,7 +252,7 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
         {failedToSend ? (
           <>
             {/* TODO we might need an error variant for MetaText, dito for success */}
-            <Span color="error" variant="bodySmall" weight="bold">
+            <Text color="error" variant="bodySmall" weight="bold">
               <Stack direction="row" alignItems={'center'} gap={0.5}>
                 <Tooltip content={diagnostics.lastNotifyAttemptError!}>
                   <span>
@@ -260,7 +260,7 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
                   </span>
                 </Tooltip>
               </Stack>
-            </Span>
+            </Text>
           </>
         ) : (
           <>

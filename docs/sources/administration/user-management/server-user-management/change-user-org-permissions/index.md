@@ -1,6 +1,10 @@
 ---
 aliases:
   - ../../manage-users-and-permissions/manage-server-users/change-user-org-permissions/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Change a user's organization permissions
 weight: 50
 ---

@@ -1,0 +1,22 @@
+name: Auto-milestone
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Run auto-milestone
+        uses: grafana/grafana-github-actions-go/auto-milestone@main
+        with:
+          pr: ${{ github.event.pull_request.number }}
+          token: ${{ steps.generate_token.outputs.token }}
