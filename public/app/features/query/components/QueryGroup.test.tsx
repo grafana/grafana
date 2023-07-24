@@ -125,6 +125,8 @@ describe('QueryGroup', () => {
   });
 
   describe('Angular deprecation', () => {
+    const deprecationText = /legacy platform based on AngularJS/i;
+
     const oldAngularDetected = mockDS.angularDetected;
     const oldDatasources = config.datasources;
 
@@ -138,7 +140,7 @@ describe('QueryGroup', () => {
       config.datasources[mockDS.name] = mockDS;
       renderScenario({});
       await waitFor(async () => {
-        expect(await screen.findByText(/legacy platform based on AngularJS/i)).toBeInTheDocument();
+        expect(await screen.findByText(deprecationText)).toBeInTheDocument();
       });
     });
 
@@ -147,7 +149,7 @@ describe('QueryGroup', () => {
       config.datasources[mockDS.name] = mockDS;
       renderScenario({});
       await waitFor(async () => {
-        expect(await screen.queryByText(/legacy platform based on AngularJS/i)).not.toBeInTheDocument();
+        expect(await screen.queryByText(deprecationText)).not.toBeInTheDocument();
       });
     });
   });
