@@ -1097,6 +1097,10 @@
      "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
      "type": "string"
     },
+    "preferredVisualisationPluginId": {
+     "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+     "type": "string"
+    },
     "preferredVisualisationType": {
      "$ref": "#/definitions/VisType"
     },
@@ -2882,7 +2886,7 @@
      "type": "boolean"
     },
     "settings": {
-     "$ref": "#/definitions/Json"
+     "$ref": "#/definitions/RawMessage"
     },
     "type": {
      "type": "string"
@@ -3940,6 +3944,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3963,6 +3968,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
