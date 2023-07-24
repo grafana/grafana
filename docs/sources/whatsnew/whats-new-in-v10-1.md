@@ -136,3 +136,58 @@ When you're browsing logs in Explore you can use the Log Details component, that
 <!-- Matías Wenceslao Chomicki -->
 
 With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
+
+## Alerting
+
+_All Alerting features are generally available in all editions of Grafana._
+
+We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our Alerting documentation.
+
+### Alert rules
+
+We’ve made the following changes to alert rules.
+
+#### Alert instance routing preview
+
+_This feature is for Grafana-managed alert rules only._
+
+Preview how your alert instances will be routed if they fire while you are creating your alert rule. View routing for each Alertmanager you have configured to receive Grafana-managed alerts and if required, you can easily make adjustments to your custom labels to change the way your alert instances are routed.
+
+#### Alert rule types
+
+Enables you to switch to a data source-managed alert rule if your data source is configured to support alert rule creation (Ruler API enabled). By default, the alert rule type is Grafana-managed.
+
+#### In-app guidance for alert rule creation
+
+Learn about how to create your alert rules interactively with in-app guidance for additional context and links out to our Alerting documentation from each of the steps in alert rule creation.
+
+#### UI improvements
+
+### Contact points
+
+We’ve made the following changes to contact points.
+
+#### Additional contact points for external Alertmanager
+
+Adds support for the following contact points when using an external Alertmanager:
+
+- WeChat
+- Amazon SNS
+- Telegram
+- Cisco Webex Teams
+
+#### Contact point provisioning file export
+
+Facilitates file provisioning and maintenance for contact points.This feature implements the provisioning API export endpoints for exporting contact points as well as adding export buttons to the contact point list in the UI.
+
+### Alert management
+
+We’ve made the following changes to alert management.
+
+#### Support for timezones in mute timings
+
+Adds support for different time zones and locations as well as a visual selector for week days, improvement to loading and error handling, and better validation for time ranges.
+
+#### Adds support for toggling common labels
+
+Adds support for toggling common labels that are shared between all alert instances. You can toggle between showing or hiding them for each individual alert instance.
