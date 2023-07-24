@@ -20,11 +20,11 @@ export interface TempoQuery extends common.DataQuery {
    */
   limit?: number;
   /**
-   * Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
   /**
-   * Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   minDuration?: string;
   /**
@@ -32,7 +32,7 @@ export interface TempoQuery extends common.DataQuery {
    */
   query: string;
   /**
-   * Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+   * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */
   search?: string;
   /**
@@ -44,11 +44,11 @@ export interface TempoQuery extends common.DataQuery {
    */
   serviceMapQuery?: string;
   /**
-   * Query traces by service name
+   * @deprecated Query traces by service name
    */
   serviceName?: string;
   /**
-   * Query traces by span name
+   * @deprecated Query traces by span name
    */
   spanName?: string;
   /**

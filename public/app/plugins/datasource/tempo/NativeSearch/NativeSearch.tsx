@@ -107,6 +107,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   return (
     <>
       <div className={styles.container}>
+        <Alert title="Deprecated query type" severity="warning">
+          This query type has been deprecated and will be removed in Grafana v10.3. Please migrate to another Tempo
+          query type.
+        </Alert>
         <InlineFieldRow>
           <InlineField label="Service Name" labelWidth={14} grow>
             <Select
