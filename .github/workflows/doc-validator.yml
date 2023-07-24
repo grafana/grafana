@@ -42,7 +42,7 @@ jobs:
         with:
           ref_name: ${{ github.base_ref }}
 
-xb      - name: Run doc-validator tool
+      - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
         run: >
           doc-validator
