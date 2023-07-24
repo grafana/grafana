@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -122,6 +122,34 @@ describe('QueryGroup', () => {
     await screen.findByTestId('query-tab-add-query');
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
+  });
+
+  describe('Angular deprecation', () => {
+    const oldAngularDetected = mockDS.angularDetected;
+    const oldDatasources = config.datasources;
+
+    afterEach(() => {
+      mockDS.angularDetected = oldAngularDetected;
+      config.datasources = oldDatasources;
+    });
+
+    it('Should render angular deprecation notice for angular plugins', async () => {
+      mockDS.angularDetected = true;
+      config.datasources[mockDS.name] = mockDS;
+      renderScenario({});
+      await waitFor(async () => {
+        expect(await screen.findByText(/legacy platform based on AngularJS/i)).toBeInTheDocument();
+      });
+    });
+
+    it('Should not render angular deprecation notice for angular plugins', async () => {
+      mockDS.angularDetected = false;
+      config.datasources[mockDS.name] = mockDS;
+      renderScenario({});
+      await waitFor(async () => {
+        expect(await screen.queryByText(/legacy platform based on AngularJS/i)).not.toBeInTheDocument();
+      });
+    });
   });
 });
 
