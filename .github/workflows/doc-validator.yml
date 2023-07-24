@@ -33,9 +33,6 @@ jobs:
           repository: grafana/grafana-github-actions
           path: ./actions
 
-      - name: Install Actions from library
-        run: npm install --production --prefix ./actions
-
       - name: Determine technical documentation version
         uses: ./actions/docs-target
         id: target
