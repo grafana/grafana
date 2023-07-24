@@ -551,7 +551,9 @@ describe('Table', () => {
               type: FieldType.other,
               values: [[nestedFrame(0), nestedFrame(1)]],
               config: {
-                nested: true,
+                custom: {
+                  nested: true,
+                },
               },
             },
           ],

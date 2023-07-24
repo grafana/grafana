@@ -115,7 +115,7 @@ export const Table = memo((props: Props) => {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const nestedFields = useMemo(() => data.fields.filter((f) => f.config.nested), [data]);
+  const nestedFields = useMemo(() => data.fields.filter((f) => f.config.custom?.nested), [data]);
   const nestedFrames = useMemo(
     () => (nestedFields && nestedFields[0] && nestedFields[0].values ? nestedFields[0].values : []),
     [nestedFields]
@@ -282,7 +282,7 @@ export const Table = memo((props: Props) => {
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {renderSubTables(rowIndexForPagination(rowIndex))}
+          {nestedFields.length > 0 && renderSubTables(rowIndexForPagination(rowIndex))}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -303,6 +303,7 @@ export const Table = memo((props: Props) => {
       enablePagination,
       prepareRow,
       tableStyles,
+      nestedFields.length,
       renderSubTables,
       rowIndexForPagination,
       page,

@@ -98,9 +98,6 @@ export interface FieldConfig<TOptions = any> {
   // The field type may map to specific config
   type?: FieldTypeConfig;
 
-  /** @alpha Whether we should treat this field as nested data */
-  nested?: boolean;
-
   // Panel Specific Values
   custom?: TOptions;
 }

@@ -161,7 +161,9 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
       type: FieldType.trace,
       values: allNestedFrames,
       config: {
-        nested: true,
+        custom: {
+          nested: true,
+        },
       },
     },
   ];

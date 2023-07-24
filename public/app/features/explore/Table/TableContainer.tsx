@@ -34,7 +34,7 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.config.nested);
+  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.config.custom?.nested);
 
   getTableHeight(rowCount: number, hasSubFrames: boolean) {
     if (rowCount === 0) {
@@ -66,7 +66,7 @@ export class TableContainer extends PureComponent<Props> {
       // differently and sidestep this getLinks API on a dataframe
       for (const frame of dataFrames) {
         for (const field of frame.fields) {
-          if (field.config.nested) {
+          if (field.config.custom?.nested) {
             for (const nestedFrames of field.values) {
               for (const nf of nestedFrames) {
                 for (const valueField of nf.fields) {
