@@ -1543,7 +1543,7 @@ Uploads screenshots to the local Grafana server or remote storage such as Azure,
 
 ## [unified_alerting.reserved_labels]
 
-For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting](/docs/grafana/next/alerting/fundamentals/annotation-label/how-to-use-labels/)
+For more information about Grafana Reserved Labels, refer to [Labels in Grafana Alerting]({{< relref "/docs/grafana/next/alerting/fundamentals/annotation-label/how-to-use-labels" >}})
 
 ### disabled_labels
 
@@ -1555,7 +1555,7 @@ For example: `disabled_labels=grafana_folder`
 
 ## [alerting]
 
-For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](/docs/grafana/v8.5/alerting/old-alerting/).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts]({{< relref "/docs/grafana/v8.5/alerting/old-alerting" >}}).
 
 ### enabled
 

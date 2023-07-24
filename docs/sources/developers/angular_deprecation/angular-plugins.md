@@ -42,7 +42,7 @@ Plugins were updated to include signatures in 2021, so whilst a plugin may show 
 
 We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. A plugin being listed below is no reflection on its quality, and is purely to help users understand the impact of the removal of Angular support in Grafana.
 
-Guidance on migrating a plugin to React can be found in our [migration guide]({{< relref "../plugins/migration-guide/angular-react/" >}}). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
+Guidance on migrating a plugin to React can be found in our [migration guide]({{< relref "../plugins/migration-guide/angular-react" >}}). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
 
 # Current AngularJS based plugins
 
@@ -544,7 +544,7 @@ Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/algenty/grafana-flowcharting) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
+> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas" >}}) panel.
 
 ### [HTML](https://grafana.com/grafana/plugins/aidanmountford-html-panel/)
 
@@ -662,13 +662,13 @@ Unknown whether migration to React will be undertaken - [migration issue](https:
 
 Latest Version: 2.0.0 | Signature: Grafana | Last Updated: 2022
 
-> **Migration available - plugin superseded:** Singlestat plugin was replaced by the [Stat]({{< relref "../../panels-visualizations/visualizations/stat/" >}})panel included in Grafana.
+> **Migration available - plugin superseded:** Singlestat plugin was replaced by the [Stat]({{< relref "../../panels-visualizations/visualizations/stat" >}})panel included in Grafana.
 
 ### [Worldmap Panel](https://grafana.com/grafana/plugins/grafana-worldmap-panel/)
 
 Latest Version: 1.0.3 | Signature: Grafana | Last Updated: 2023
 
-> **Migration available - plugin superseded:** Worldmap plugin was replaced by [Geomap]({{< relref "../../panels-visualizations/visualizations/geomap/" >}}) panel included in Grafana.
+> **Migration available - plugin superseded:** Worldmap plugin was replaced by [Geomap]({{< relref "../../panels-visualizations/visualizations/geomap" >}}) panel included in Grafana.
 
 ### [Topology Panel](https://grafana.com/grafana/plugins/gretamosa-topology-panel/)
 
@@ -712,7 +712,7 @@ Latest Version: 0.1.8 | Signature: Community | Last Updated: 2021
 Plugin advises caution as not stable; [project repository](https://github.com/mtanda/grafana-heatmap-epoch-panel) has not been updated in 7 years.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** Other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
+> **Migration available - potential alternative:** Other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap" >}}).
 
 ### [Histogram](https://grafana.com/grafana/plugins/mtanda-histogram-panel/)
 
@@ -722,7 +722,7 @@ Latest Version: 0.1.7 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-histogram-panel) in the past 7 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** other Histogram panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/histogram/" >}}).
+> **Migration available - potential alternative:** other Histogram panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/histogram" >}}).
 
 ### [Separator](https://grafana.com/grafana/plugins/mxswat-separator-panel/)
 
@@ -768,7 +768,7 @@ Latest Version: 0.0.4 | Signature: Community | Last Updated: 2021
 Plugin advises caution as not stable; [project repository](https://github.com/NeoCat/grafana-cal-heatmap-panel) has not been updated in 7 years.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
+> **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap" >}}).
 
 ### [Annotation Panel](https://grafana.com/grafana/plugins/novalabs-annotations-panel/)
 
@@ -806,7 +806,7 @@ Lack of recent activity in the [project repository](https://github.com/ryantxu/a
 
 Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 
-> **Migration available - plugin superseded:** [Project repository](https://github.com/ryantxu/annotations-panel) for the plugin was archived on July 13th, 2019 in favour of native [annotations]({{< relref "../../panels-visualizations/visualizations/annotations/" >}}).
+> **Migration available - plugin superseded:** [Project repository](https://github.com/ryantxu/annotations-panel) for the plugin was archived on July 13th, 2019 in favour of native [annotations]({{< relref "../../panels-visualizations/visualizations/annotations" >}}).
 
 ### [3D Globe Panel](https://grafana.com/grafana/plugins/satellogic-3d-globe-panel/)
 
@@ -824,7 +824,7 @@ Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/savantly-net/grafana-heatmap) in the past 6 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
+> **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap" >}}).
 
 ### [SCADAvis Synoptic Panel](https://grafana.com/grafana/plugins/scadavis-synoptic-panel/)
 

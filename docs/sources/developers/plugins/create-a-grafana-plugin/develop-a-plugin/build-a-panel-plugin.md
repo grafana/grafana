@@ -20,7 +20,7 @@ weight: 100
 
 Panels are the building blocks of Grafana. They allow you to visualize data in different ways. While Grafana has several types of panels already built-in, you can also build your own panel, to add support for other visualizations.
 
-For more information about panels, refer to the documentation on [Panels](/docs/grafana/latest/panels/).
+For more information about panels, refer to the documentation on [Panels]({{< relref "/docs/grafana/latest/panels" >}}).
 
 {{% class "prerequisite-section" %}}
 
@@ -192,7 +192,7 @@ Now, when you change the color in the panel editor, the fill color of the circle
 
 Most panels visualize dynamic data from a Grafana data source. In this step, you'll create one circle per series, each with a radius equal to the last value in the series.
 
-> To use data from queries in your panel, you need to set up a data source. If you don't have one available, you can use the [TestData](/docs/grafana/latest/features/datasources/testdata) data source while developing.
+> To use data from queries in your panel, you need to set up a data source. If you don't have one available, you can use the [TestData]({{< relref "/docs/grafana/latest/features/datasources/testdata" >}}) data source while developing.
 
 The results from a data source query within your panel are available in the `data` property inside your panel component.
 
@@ -257,7 +257,7 @@ Let's see how you can retrieve data from a data frame and use it in your visuali
 
 1. Rebuild your plugin and try it out by adding multiple queries to the panel. Refresh the dashboard.
 
-If you want to know more about data frames, check out our introduction to [Data frames](/docs/grafana/latest/developers/plugins/data-frames/).
+If you want to know more about data frames, check out our introduction to [Data frames]({{< relref "/docs/grafana/latest/developers/plugins/data-frames" >}}).
 
 ## Summary
 

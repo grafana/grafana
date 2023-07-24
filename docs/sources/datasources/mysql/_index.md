@@ -23,7 +23,7 @@ weight: 1000
 
 Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
@@ -174,7 +174,7 @@ datasources:
 The MySQL query builder is available when editing a panel using a MySQL data source.
 
 This topic explains querying specific to the MySQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 You can run the built query by pressing the `Run query` button in the top right corner of the editor.
 

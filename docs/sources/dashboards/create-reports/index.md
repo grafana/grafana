@@ -23,7 +23,7 @@ weight: 85
 
 Reporting enables you to automatically generate PDFs from any of your dashboards and have Grafana email them to interested parties on a schedule. This is available in Grafana Cloud Pro and Advanced and in Grafana Enterprise.
 
-> If you have [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) enabled, for some actions you would need to have relevant permissions.
+> If you have [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) enabled, for some actions you would need to have relevant permissions.
 > Refer to specific guides to understand what permissions are required.
 
 <!--
@@ -36,16 +36,16 @@ For information about recent improvements to the reporting UI, refer to [Grafana
 
 ## Requirements
 
-- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../../setup-grafana/configure-grafana/#smtp" >}}) in [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for more information.
-- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering/" >}}) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../../setup-grafana/configure-grafana/#smtp" >}}) in [Configuration]({{< relref "../../setup-grafana/configure-grafana" >}}) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering" >}}) for more information.
 
 ## Access control
 
-When [RBAC]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/" >}}) to create and manage reports.
+When [RBAC]({{< relref "../../administration/roles-and-permissions/access-control" >}}) is enabled, you need to have the relevant [Permissions]({{< relref "../../administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions" >}}) to create and manage reports.
 
 ## Create or update a report
 
-Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}).
+Only organization administrators can create reports by default. You can customize who can create reports with [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}).
 
 1. Click **Dashboards > Reports** in the side navigation menu.
 
@@ -76,7 +76,7 @@ Only organization administrators can create reports by default. You can customiz
 ### Save as draft
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.1.0 and later and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 9.1.0 and later and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
@@ -84,10 +84,10 @@ You can save a report as a draft at any point during the report creation or upda
 ### Choose template variables
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.5 and later behind the `reportVariables` feature flag, Grafana Enterprise version 8.0 and later without a feature flag, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
-You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables/" >}}) section.
+You can configure report-specific template variables for the dashboard on the report page. The variables that you select will override the variables from the dashboard, and they are used when rendering a PDF file of the report. For detailed information about using template variables, refer to the [Templates and variables]({{< relref "../variables" >}}) section.
 
 {{% admonition type="note" %}}
 The query variables saved with a report might become of date if the results of that query change. For example, if your template variable queries for a list of hostnames and a new hostname is added, then it will not be included in the report. If that occurs, the selected variables must be manually updated in the report. If you select the `All` value for the template variable or if you keep the dashboard's original variable selection, then the report stays up-to-date as new values are added.
@@ -96,7 +96,7 @@ The query variables saved with a report might become of date if the results of t
 ### Render a report with panels or rows set to repeat by a variable
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels" >}}).
@@ -113,7 +113,7 @@ You can include dynamic dashboards with panels or rows, set to repeat by a varia
 ### Report time range
 
 {{% admonition type="note" %}}
-You can set custom report time ranges in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 7.2+ and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+You can set custom report time ranges in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) 7.2+ and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 By default, reports use the saved time range of the dashboard. You can change the time range of the report by:
@@ -139,12 +139,12 @@ If the time zone is set differently between your Grafana server and its remote i
 ### CSV export
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) 8+ with the [Grafana image renderer plugin](/grafana/plugins/grafana-image-renderer) v3.0+, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can attach a CSV file to the report email for each table panel on the selected dashboard, along with the PDF report. By default, CSVs larger than 10Mb are not sent which keeps email servers from rejecting the email. You can increase or decrease this limit in the [reporting configuration]({{< relref "#rendering-configuration" >}}).
 
-This feature relies on the same plugin that supports the [image rendering]({{< relref "../../setup-grafana/image-rendering/" >}}) features.
+This feature relies on the same plugin that supports the [image rendering]({{< relref "../../setup-grafana/image-rendering" >}}) features.
 
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
@@ -153,7 +153,7 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 ### Scheduling
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 The scheduler was significantly changed in Grafana Enterprise version 8.1.
 {{% /admonition %}}
 
@@ -176,7 +176,7 @@ When you schedule a report with a monthly frequency, and set the start date betw
 #### Send a test email
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 1. In the report, click **Send test email**.
@@ -189,7 +189,7 @@ The last saved version of the report will be sent to selected emails. You can us
 ### Pause a report
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can pause sending reports from the report list view by clicking the pause icon. The report will not be sent according to its schedule until it is resumed by clicking the resume button on the report row.
@@ -197,7 +197,7 @@ You can pause sending reports from the report list view by clicking the pause ic
 ### Add multiple dashboards to a report
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can add more than one dashboard to a report. Additional dashboards will be rendered as new pages in the same PDF file, or additional images if you chose to embed images in your report email. You cannot add the same dashboard to a report multiple times.
@@ -205,7 +205,7 @@ You can add more than one dashboard to a report. Additional dashboards will be r
 ### Embed a dashboard as an image into a report
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 9.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can send a report email with an image of the dashboard embedded in the email instead of attached as a PDF. In this case, the email recipients can see the dashboard at a glance instead of having to open the PDF.
@@ -215,7 +215,7 @@ You can send a report email with an image of the dashboard embedded in the email
 You can generate and save PDF files of any dashboard.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 6.7 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 6.7 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 1. In the dashboard that you want to export as PDF, click the **Share dashboard** icon.
@@ -226,7 +226,7 @@ Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterpr
 
 ## Send a report via the API
 
-You can send reports programmatically with the [send report]({{< relref "../../developers/http_api/reporting/#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../../developers/http_api/" >}}).
+You can send reports programmatically with the [send report]({{< relref "../../developers/http_api/reporting/#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../../developers/http_api" >}}).
 
 ## Rendering configuration
 
@@ -236,7 +236,7 @@ To make a panel more legible, you can set a scale factor for the rendered images
 
 You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
-These options are available in the [configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) file.
+These options are available in the [configuration]({{< relref "../../setup-grafana/configure-grafana" >}}) file.
 
 ```ini
 [reporting]
@@ -263,7 +263,7 @@ font_italic = DejaVuSansCondensed-Oblique.ttf
 
 ## Report settings
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.2 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.2 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 
 You can configure organization-wide report settings in the **Settings** under **Dashboards > Reporting**. Settings are applied to all the reports for current organization.
 

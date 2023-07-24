@@ -16,7 +16,7 @@ weight: 40
 # Assign RBAC roles
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.
@@ -34,10 +34,10 @@ In both cases, the assignment applies only to the user, team or service account 
 
 **Before you begin:**
 
-- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy/" >}}).
+- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy" >}}).
 - Identify the fixed roles that you want to assign to the user, team or service account.
 
-  For more information about available fixed roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
+  For more information about available fixed roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions" >}}).
 
 - Ensure that your own user account has the correct permissions:
   - If you are assigning permissions to a user, team or service account within an organization, you must have organization administrator or server administrator permissions.
@@ -73,8 +73,8 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 **Before you begin:**
 
-- Refer to [Role provisioning]({{< relref "./rbac-grafana-provisioning/" >}})
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../team-management/" >}})
+- Refer to [Role provisioning]({{< relref "./rbac-grafana-provisioning" >}})
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../team-management" >}})
 
 **To assign a role to a team:**
 
@@ -88,7 +88,7 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
    | `roles > name`           | Enter the name of the custom role.                                                                                                                                                                             |
    | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                                             |
    | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                                           |
-   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes/" >}}) |
+   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes" >}}) |
    | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                                               |
    | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                         |
    | `teams > name`           | Enter the name of the team.                                                                                                                                                                                    |

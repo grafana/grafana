@@ -19,7 +19,7 @@ weight: 300
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL]({{< relref "/docs/loki/latest/logql" >}}).
 
 This topic explains querying specific to the Loki data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
@@ -36,7 +36,7 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 To run a query, select **Run queries** located at the top of the editor.
 
 {{% admonition type="note" %}}
-To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
+To run Loki queries in [Explore]({{< relref "../../../explore" >}}), select **Run query**.
 {{% /admonition %}}
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations.
@@ -45,14 +45,14 @@ Builder mode doesn't yet support some complex queries.
 When you switch from Code mode to Builder mode with such a query, the editor displays a popup that explains how you might lose parts of the query if you continue.
 You can then decide whether you still want to switch to Builder mode.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ## Code mode
 
 In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
 It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
 
-For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
+For more information about Loki's query language, refer to the [Loki documentation]({{< relref "/docs/loki/latest/logql" >}}).
 
 ### Use autocompletion
 
@@ -87,7 +87,7 @@ Each operation's header displays its name, and additional action buttons appear 
 | {{< figure src="/static/img/docs/v95/loki_operation_remove.png" class="docs-image--no-shadow" max-width="30px" >}}      | Removes the operation.                                            |
 
 Some operations have additional parameters under the operation header.
-For details about each operation, use the `info` button to view the operation's description, or refer to the [Loki documentation](/docs/loki/latest/operations/).
+For details about each operation, use the `info` button to view the operation's description, or refer to the [Loki documentation]({{< relref "/docs/loki/latest/operations" >}}).
 
 Some operations make sense only when used in a specific order.
 If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
@@ -104,7 +104,7 @@ You can query and display log data from Loki via [Explore]({{< relref "../../../
 
 To display the results of a log query, select the Loki data source, then enter a LogQL query.
 
-For more information about log queries and LogQL, refer to the [Loki log queries documentation](/docs/loki/latest/logql/log_queries/).
+For more information about log queries and LogQL, refer to the [Loki log queries documentation]({{< relref "/docs/loki/latest/logql/log_queries" >}}).
 
 ### Show log context
 
@@ -180,7 +180,7 @@ Available in Grafana v6.3 and higher.
 
 You can use LogQL to wrap a log query with functions that create metrics from your logs.
 
-For more information about metric queries, refer to the [Loki metric queries documentation](/docs/loki/latest/logql/metric_queries/).
+For more information about metric queries, refer to the [Loki metric queries documentation]({{< relref "/docs/loki/latest/logql/metric_queries" >}}).
 
 ## Review toolbar features
 

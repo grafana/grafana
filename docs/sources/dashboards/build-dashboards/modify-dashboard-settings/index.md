@@ -56,7 +56,7 @@ icon you can hover over to see the event information.
 1. Enter a name and select a data source.
 1. Complete the rest of the form to build a query and annotation.
 
-The query editor UI changes based on the data source you select. Refer to the [Data source]({{< relref "../../../datasources/" >}}) documentation for details on how to construct a query.
+The query editor UI changes based on the data source you select. Refer to the [Data source]({{< relref "../../../datasources" >}}) documentation for details on how to construct a query.
 
 ## Add a variable
 
@@ -64,7 +64,7 @@ Variables enable you to create more interactive and dynamic dashboards. Instead 
 and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-For more information about variables, refer to [Variables]({{< relref "../../variables/" >}}).
+For more information about variables, refer to [Variables]({{< relref "../../variables" >}}).
 
 1. On the **Dashboard settings** page, click **Variable** in the left side section menu and then the **Add variable** button.
 1. In the **General** section, the name of the variable. This is the name that you will later use in queries.

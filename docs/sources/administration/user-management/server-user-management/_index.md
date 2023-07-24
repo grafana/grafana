@@ -24,9 +24,9 @@ If you have [server administrator]({{< relref "../../roles-and-permissions/#graf
 
 {{< section >}}
 
-If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, refer to [Manage users in a organization]({{< relref "../manage-org-users/" >}}).
+If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, refer to [Manage users in a organization]({{< relref "../manage-org-users" >}}).
 
-For more information about user roles and permissions, refer to [Roles and permissions]({{< relref "../../roles-and-permissions/" >}}). For more information about managing users in general, see [User management]({{< relref "../" >}}).
+For more information about user roles and permissions, refer to [Roles and permissions]({{< relref "../../roles-and-permissions" >}}). For more information about managing users in general, see [User management]({{< relref ".." >}}).
 
 ## View a list of users
 
@@ -119,7 +119,7 @@ When you configure advanced authentication using Oauth, SAML, LDAP, or the Auth 
 1. Click **New user**.
 1. Complete the fields and click **Create user**.
 
-When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "add-remove-user-to-org/" >}}).
+When you create a user, the system assigns the user viewer permissions in a default organization, which you can change. You can now [add a user to a second organization]({{< relref "add-remove-user-to-org" >}}).
 
 {{% admonition type="note" %}}
 If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still add users by [inviting a user to join an organization]({{< relref "../manage-org-users#invite-a-user-to-join-an-organization" >}}).

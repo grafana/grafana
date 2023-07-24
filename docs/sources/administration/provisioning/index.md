@@ -19,7 +19,7 @@ In previous versions of Grafana, you could only use the API for provisioning dat
 
 ## Config File
 
-See [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) for more information on what you can configure in `grafana.ini`.
+See [Configuration]({{< relref "../../setup-grafana/configure-grafana" >}}) for more information on what you can configure in `grafana.ini`.
 
 ### Config File Locations
 
@@ -675,5 +675,5 @@ Secure settings is supported since Grafana v7.2.
 
 Grafana Enterprise supports:
 
-- [Provisioning role-based access control with Grafana]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning/" >}})
-- [Provisioning role-based access control with Terraform]({{< relref "../roles-and-permissions/access-control/rbac-terraform-provisioning/" >}})
+- [Provisioning role-based access control with Grafana]({{< relref "../roles-and-permissions/access-control/rbac-grafana-provisioning" >}})
+- [Provisioning role-based access control with Terraform]({{< relref "../roles-and-permissions/access-control/rbac-terraform-provisioning" >}})

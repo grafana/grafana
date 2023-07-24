@@ -23,7 +23,7 @@ weight: 1100
 Grafana ships with advanced support for OpenTSDB.
 This topic explains configuration, variables, querying, and other features specific to the OpenTSDB data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
@@ -93,7 +93,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../dashboards/variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable

@@ -132,7 +132,7 @@ role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 
 ## Configure team synchronization
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}).
 
 By using Team Sync, you can map teams from your GitHub organization to teams within Grafana. This will automatically assign users to the appropriate teams.
 Teams for each user are synchronized when the user logs in.

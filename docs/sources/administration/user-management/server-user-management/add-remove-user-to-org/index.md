@@ -14,7 +14,7 @@ weight: 30
 
 # Add or remove a user in an organization
 
-Server administrators can add and remove users in organizations. To do this as an organization administrator, see [Manage users in an organization]({{< relref "../../manage-org-users/" >}}).
+Server administrators can add and remove users in organizations. To do this as an organization administrator, see [Manage users in an organization]({{< relref "../../manage-org-users" >}}).
 
 ## Add a user to an organization
 

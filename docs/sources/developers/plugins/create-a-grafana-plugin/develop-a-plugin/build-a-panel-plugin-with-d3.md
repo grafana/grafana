@@ -20,7 +20,7 @@ weight: 200
 
 Panels are the building blocks of Grafana, and allow you to visualize data in different ways. This tutorial gives you a hands-on walkthrough of creating your own panel using [D3.js](https://d3js.org/).
 
-For more information about panels, refer to the documentation on [Panels](/docs/grafana/latest/features/panels/panels/).
+For more information about panels, refer to the documentation on [Panels]({{< relref "/docs/grafana/latest/features/panels/panels" >}}).
 
 In this tutorial, you'll:
 

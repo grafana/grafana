@@ -65,7 +65,7 @@ Organization roles sync from the authentication provider on user sign-in. To pre
 1. Click **Update**.
 
 {{% admonition type="note" %}}
-If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [change a user's organization permissions]({{< relref "../server-user-management/change-user-org-permissions/" >}}) in the Server Admin section.
+If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also [change a user's organization permissions]({{< relref "../server-user-management/change-user-org-permissions" >}}) in the Server Admin section.
 {{% /admonition %}}
 
 ## Invite a user to join an organization
@@ -76,7 +76,7 @@ When you invite users to join an organization, you assign the **Admin**, **Edito
 - If the user is new to Grafana, then use their email address to issue an invitation. The system automatically creates the user account on first sign in.
 
 {{% admonition type="note" %}}
-If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also manually [add a user to an organization]({{< relref "../server-user-management/add-remove-user-to-org/" >}}).
+If you have [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can also manually [add a user to an organization]({{< relref "../server-user-management/add-remove-user-to-org" >}}).
 {{% /admonition %}}
 
 ### Before you begin

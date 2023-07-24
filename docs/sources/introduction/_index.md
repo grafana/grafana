@@ -72,10 +72,10 @@ When organizations have one Grafana and multiple teams, they often want the abil
 
 In addition to Grafana, Grafana Labs also provides the following open source projects:
 
-**Grafana Loki:** Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Grafana Loki documentation](/docs/loki/latest/).
+**Grafana Loki:** Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Grafana Loki documentation]({{< relref "/docs/loki/latest" >}}).
 
-**Grafana Tempo:** Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Grafana Tempo documentation](/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
+**Grafana Tempo:** Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Grafana Tempo documentation]({{< relref "/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt" >}}).
 
-**Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](/docs/mimir/latest/).
+**Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation]({{< relref "/docs/mimir/latest" >}}).
 
-**Grafana Phlare:** Grafana Phlare is an open-source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that enables you to understand your workload's resource (CPU, memory, etc.) usage to the exact line number. For more information about using Grafana Phlare, refer to [Grafana Phlare documentation](/docs/phlare/latest/).
+**Grafana Phlare:** Grafana Phlare is an open-source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that enables you to understand your workload's resource (CPU, memory, etc.) usage to the exact line number. For more information about using Grafana Phlare, refer to [Grafana Phlare documentation]({{< relref "/docs/phlare/latest" >}}).

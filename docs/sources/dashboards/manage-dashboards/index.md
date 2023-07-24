@@ -32,7 +32,7 @@ weight: 8
 
 # Manage dashboards
 
-A dashboard is a set of one or more [panels]({{< relref "../../panels-visualizations/" >}}) that visually presents your data in one or more rows.
+A dashboard is a set of one or more [panels]({{< relref "../../panels-visualizations" >}}) that visually presents your data in one or more rows.
 
 For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
 

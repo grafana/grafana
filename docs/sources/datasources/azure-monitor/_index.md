@@ -147,7 +147,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 The Azure Monitor data source can query data from Azure Monitor Metrics and Logs, the Azure Resource Graph, and Application Insights Traces. Each source has its own specialized query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -155,7 +155,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
 ## Application Insights and Insights Analytics (removed))
 
@@ -163,4 +163,4 @@ Until Grafana v8.0, you could query the same Azure Application Insights data usi
 
 These queries were deprecated in Grafana v7.5. In Grafana v8.0, Application Insights and Insights Analytics were made read-only in favor of querying this data through Metrics and Logs. These query methods were completely removed in Grafana v9.0.
 
-If you're upgrading from a Grafana version prior to v9.0 and relied on Application Insights and Analytics queries, refer to the [Grafana v9.0 documentation](/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/) for help migrating these queries to Metrics and Logs queries.
+If you're upgrading from a Grafana version prior to v9.0 and relied on Application Insights and Analytics queries, refer to the [Grafana v9.0 documentation]({{< relref "/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights" >}}) for help migrating these queries to Metrics and Logs queries.

@@ -206,7 +206,7 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 ## Table footer
 
-You can use the table footer to show [calculations]({{< relref "../../calculation-types/" >}}) on fields.
+You can use the table footer to show [calculations]({{< relref "../../calculation-types" >}}) on fields.
 
 After you enable the table footer:
 

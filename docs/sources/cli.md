@@ -143,7 +143,7 @@ grafana cli --homepath "/usr/share/grafana" admin reset-admin-password <new pass
 
 ### Override config file
 
-`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "./setup-grafana/configure-grafana/" >}}) for more information about configuring Grafana and default configuration file locations.
+`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "./setup-grafana/configure-grafana" >}}) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
 
@@ -153,7 +153,7 @@ grafana cli --config "/etc/configuration/" admin reset-admin-password mynewpassw
 
 ## Plugins commands
 
-Grafana CLI allows you to install, upgrade, and manage your Grafana plugins. For more information about installing plugins, refer to [plugins page]({{< relref "./administration/plugin-management/" >}}).
+Grafana CLI allows you to install, upgrade, and manage your Grafana plugins. For more information about installing plugins, refer to [plugins page]({{< relref "./administration/plugin-management" >}}).
 
 All listed commands apply to the Grafana default repositories and directories. You can override the defaults with [Global Options](#global-options).
 

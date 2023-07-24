@@ -12,10 +12,10 @@ Because Grafana upgrades are backward compatible, the upgrade process is straigh
 In addition to common tasks you should complete for all versions of Grafana, there might be additional upgrade tasks to complete for a version.
 
 {{% admonition type="note" %}}
-There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes/" >}}) document for releases with many breaking changes.
+There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes" >}}) document for releases with many breaking changes.
 {{% /admonition %}}
 
-For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
+For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes" >}}).
 
 When available, we list all changes with links to pull requests or issues in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
@@ -123,7 +123,7 @@ To upgrade Grafana installed using RPM or YUM complete the following steps:
 
 1. Perform one of the following steps based on your installation.
 
-   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install Grafana on Red Hat, RHEL, or Fedora]({{< relref "../../setup-grafana/installation/redhat-rhel-fedora/" >}}) or [Install Grafana on SUSE or openSUSE]({{< relref "../../setup-grafana/installation/suse-opensuse/" >}}) to upgrade Grafana.
+   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install Grafana on Red Hat, RHEL, or Fedora]({{< relref "../../setup-grafana/installation/redhat-rhel-fedora" >}}) or [Install Grafana on SUSE or openSUSE]({{< relref "../../setup-grafana/installation/suse-opensuse" >}}) to upgrade Grafana.
    - If you used the Grafana YUM repository, run the following command:
 
      ```bash

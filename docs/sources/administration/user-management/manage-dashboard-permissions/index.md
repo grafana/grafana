@@ -81,7 +81,7 @@ If you use Grafana Enterprise and customize users' permissions using RBAC, the R
 
 1. Open the Grafana configuration file.
 
-   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../setup-grafana/configure-grafana/" >}}).
+   For more information about the Grafana configuration file and its location, refer to [Configuration]({{< relref "../../../setup-grafana/configure-grafana" >}}).
 
 1. Locate the `viewers_can_edit` parameter.
 1. Set the `viewers_can_edit` value to `true`.
@@ -159,4 +159,4 @@ Folder permissions settings:
 
 Result: User1 has editor permissions for the folder because user1 has permissions on a folder that contains this folder.
 
-> Refer to [Role-based access Control]({{< relref "../../roles-and-permissions/access-control/" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.
+> Refer to [Role-based access Control]({{< relref "../../roles-and-permissions/access-control" >}}) in Grafana Enterprise to understand how to use RBAC permissions to restrict access to dashboards, folders, administrative functions, and other resources.

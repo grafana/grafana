@@ -40,7 +40,7 @@ A server administrator can perform the following tasks:
 
 - Manage users and permissions
 - Create, edit, and delete organizations
-- View server-wide settings defined in the [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) file
+- View server-wide settings defined in the [Configuration]({{< relref "../../setup-grafana/configure-grafana" >}}) file
 - View Grafana server statistics, including total users and active sessions
 - Upgrade the server to Grafana Enterprise.
 
@@ -48,7 +48,7 @@ A server administrator can perform the following tasks:
 The server administrator role does not exist in Grafana Cloud.
 {{% /admonition %}}
 
-To assign or remove server administrator privileges, see [Server user management]({{< relref "../user-management/server-user-management/assign-remove-server-admin-privileges/" >}}).
+To assign or remove server administrator privileges, see [Server user management]({{< relref "../user-management/server-user-management/assign-remove-server-admin-privileges" >}}).
 
 ## Organization users and permissions
 
@@ -68,11 +68,11 @@ Permissions assigned to a user within an organization control the extent to whic
 - library panels
 - API keys
 
-For more information about managing organization users, see [User management]({{< relref "../user-management/manage-org-users/" >}}).
+For more information about managing organization users, see [User management]({{< relref "../user-management/manage-org-users" >}}).
 
 ### Organization roles
 
-Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "../user-management/manage-dashboard-permissions/" >}}).
+Organization role-based permissions are global, which means that each permission level applies to all Grafana resources within an given organization. For example, an editor can see and update _all_ dashboards in an organization, unless those dashboards have been specifically restricted using [dashboard permissions]({{< relref "../user-management/manage-dashboard-permissions" >}}).
 
 Grafana uses the following roles to control user access:
 
@@ -128,7 +128,7 @@ This permission does not allow editors to manage folders, dashboards, and teams 
 
 This setting can be used to enable self-organizing teams to administer their own dashboards.
 
-For more information about assigning administrator permissions to editors, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions/" >}}).
+For more information about assigning administrator permissions to editors, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions" >}}).
 
 ## Viewers with dashboard preview and Explore permissions
 
@@ -150,9 +150,9 @@ You can assign a team member one of the following permissions:
 - **Member**: Includes the user as a member of the team. Members do not have team administrator privileges.
 - **Admin**: Administrators have permission to manage various aspects of the team, including team membership, permissions, and settings.
 
-Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions/" >}}).
+Because teams exist inside an organization, the organization administrator can manage all teams. When the `editors_can_admin` setting is enabled, editors can create teams and manage teams that they create. For more information about the `editors_can_admin` setting, refer to [Grant editors administrator permissions]({{< relref "../user-management/server-user-management/grant-editor-admin-permissions" >}}).
 
-For details on managing teams, see [Team management]({{< relref "../team-management/" >}}).
+For details on managing teams, see [Team management]({{< relref "../team-management" >}}).
 
 ## Grafana Enterprise user permissions features
 
@@ -167,13 +167,13 @@ While Grafana OSS includes a robust set of permissions and settings that you can
 
 By default, a user can query any data source in an organization, even if the data source is not linked to the user's dashboards.
 
-Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions/" >}}).
+Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions" >}}).
 
 ### Role-based access control
 
 RBAC provides you a way of granting, changing, and revoking user read and write access to Grafana resources, such as users, reports, and authentication.
 
-For more information about RBAC, refer to [Role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}).
+For more information about RBAC, refer to [Role-based access control]({{< relref "../roles-and-permissions/access-control" >}}).
 
 ### Learn more
 

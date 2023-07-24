@@ -20,7 +20,7 @@ weight: 250
 # Dashboard URL variables
 
 Grafana can apply variable values passed as query parameters in dashboard URLs.
-For more information, refer to [Manage dashboard links]({{< relref "../manage-dashboard-links/" >}}) and [Templates and variables]({{< relref "../../variables/" >}}).
+For more information, refer to [Manage dashboard links]({{< relref "../manage-dashboard-links" >}}) and [Templates and variables]({{< relref "../../variables" >}}).
 
 ## Passing variables as query parameters
 
@@ -50,7 +50,7 @@ This example in [Grafana Play](https://play.grafana.org/d/000000074/alerting?var
 
 ## Adding variables to dashboard links
 
-Grafana can add variables to dashboard links when you generate them from a dashboard's settings. For more information and steps to add variables, refer to [Manage dashboard links]({{< relref "../manage-dashboard-links/" >}}).
+Grafana can add variables to dashboard links when you generate them from a dashboard's settings. For more information and steps to add variables, refer to [Manage dashboard links]({{< relref "../manage-dashboard-links" >}}).
 
 ## Passing ad hoc filters
 
@@ -76,4 +76,4 @@ When sharing URLs with ad hoc filters, remember to encode the URL. In the above 
 
 ## Controlling time range using the URL
 
-To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview]({{< relref "../" >}}).
+To set a dashboard's time range, use the `from`, `to`, `time`, and `time.window` query parameters. Because these are not variables, they do not require the `var-` prefix. For more information, see the [Linking overview]({{< relref ".." >}}).

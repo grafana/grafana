@@ -23,9 +23,9 @@ The Traces panel visualizes traces data into a diagram that allows you to easily
 
 For more information about traces and how to use them, refer to the following documentation:
 
-- [Tracing in Explore]({{< relref "../../../explore/trace-integration/" >}})
-- [Tempo data source]({{< relref "../../../datasources/tempo/" >}})
-- [Getting started with Tempo](/docs/tempo/latest/getting-started)
+- [Tracing in Explore]({{< relref "../../../explore/trace-integration" >}})
+- [Tempo data source]({{< relref "../../../datasources/tempo" >}})
+- [Getting started with Tempo]({{< relref "/docs/tempo/latest/getting-started" >}})
 
 {{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
 
@@ -41,7 +41,7 @@ For more information about dashboard variables, refer to the [Variables document
 To use this procedure, you need:
 
 - A Grafana instance
-- A Tempo data source connected to your Grafana instance (see [documentation](/docs/grafana/datasources/tempo/))
+- A Tempo data source connected to your Grafana instance (see [documentation]({{< relref "/docs/grafana/datasources/tempo" >}}))
 
 ### Add the Traces panel query
 

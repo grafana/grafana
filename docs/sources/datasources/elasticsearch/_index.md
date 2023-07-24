@@ -25,11 +25,11 @@ You can make many types of queries to visualize logs or metrics stored in Elasti
 This topic explains configuring and querying specific to the Elasticsearch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Elasticsearch data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore" >}}).
+Once you've added the Elasticsearch data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}) and use [Explore]({{< relref "../../explore" >}}).
 
 ## Supported Elasticsearch versions
 
@@ -93,7 +93,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 ### X-Pack enabled
 
-Toggle this to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor/" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
+Toggle this to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
 
 #### Include frozen indices
 
@@ -105,7 +105,7 @@ Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en
 
 ### Logs
 
-You can optionally configure the two Logs parameters **Message field name** and **Level field name** to determine which fields the data source uses for log messages and log levels when visualizing logs in [Explore]({{< relref "../../explore/" >}}).
+You can optionally configure the two Logs parameters **Message field name** and **Level field name** to determine which fields the data source uses for log messages and log levels when visualizing logs in [Explore]({{< relref "../../explore" >}}).
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch, set:
 
@@ -142,7 +142,7 @@ Available in Grafana v7.3 and higher.
 To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
-For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication/" >}}).
+For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication" >}}).
 
 {{< figure src="/static/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}
 
@@ -201,7 +201,7 @@ datasources:
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -209,4 +209,4 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).

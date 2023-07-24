@@ -34,12 +34,12 @@ For each change, the provided information:
 - Guides you in how to mitigate for the change or migrate
 - Provides more learning resources
 
-For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10-0/" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
+For release highlights and deprecations, refer to our [v10.0 What’s new]({{< relref "../whatsnew/whats-new-in-v10-0" >}}). For the specific steps we recommend when you upgrade to v10.0, check out our [Upgrade guide]({{< relref "../upgrade-guide/upgrade-v10.0/index.md" >}}).
 
 <!--
 ## Feature
 
-You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
+You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references]({{< relref "/docs/writers-toolkit/writing-guide/references" >}}).-->
 
 ## General breaking changes
 
@@ -47,7 +47,7 @@ You must use relative references when linking to docs within the Grafana repo. P
 
 #### You are affected if:
 
-You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}).
+You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins" >}}).
 
 #### Background
 
@@ -61,13 +61,13 @@ Angular is disabled by default for all new Grafana Cloud stacks. Existing stacks
 
 #### How to mitigate
 
-If you're using Angular plugins in Grafana, try an alternative panel or data source that doesn't use Angular. This list of detected [Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}) offers alternatives where they exist.
+If you're using Angular plugins in Grafana, try an alternative panel or data source that doesn't use Angular. This list of detected [Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins" >}}) offers alternatives where they exist.
 
 If you're a developer maintaining a plugin that uses Angular, we recommend you refactor or rewrite its frontend using React.js instead. The team at Grafana is ready to help and provide tools and guidance; you can reach us in [Slack](https://grafana.slack.com/archives/C3HJV5PNE) or on our [Forum](https://community.grafana.com/c/plugin-development/30).
 
 #### Learn more
 
-- [Angular Support Deprecation documentation]({{< relref "../developers/angular_deprecation/" >}})
+- [Angular Support Deprecation documentation]({{< relref "../developers/angular_deprecation" >}})
 
 ### Grafana legacy alerting is deprecated and no longer accepts internal or external contributions
 
@@ -81,7 +81,7 @@ Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.
 
 #### Migration path
 
-The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/set-up/migrating-alerts/" >}}).
+The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/set-up/migrating-alerts" >}}).
 
 ### API keys are migrating to service accounts
 
@@ -95,7 +95,7 @@ In Grafana v8.5, we introduced [service accounts](https://grafana.com/blog/2022/
 
 This is a "breaking" change because if users are used to seeing and interacting with API keys, they won't see that page in navigation anymore and will need to navigate to the **Service accounts** page instead. However, your existing API tokens will remain fully functional and migrated to service accounts, so no automation will break. If you roll back to a previous version of Grafana, your API keys will remain intact.
 
-Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "../developers/http_api/auth/#create-api-token" >}}) remain functional, but we recommend you begin using the [Service account HTTP API]({{< relref "../developers/http_api/serviceaccount/" >}}) to generate and manage machine authentication instead.
+Grafana's [HTTP API endpoints for generating and managing API Keys]({{< relref "../developers/http_api/auth/#create-api-token" >}}) remain functional, but we recommend you begin using the [Service account HTTP API]({{< relref "../developers/http_api/serviceaccount" >}}) to generate and manage machine authentication instead.
 
 #### Migration path
 
@@ -103,7 +103,7 @@ While upgrading to Grafana v10, you don't need to take any action; your API keys
 
 #### Learn more
 
-- [Documentation on migrating from API keys to service accounts]({{< relref "../administration/api-keys/" >}})
+- [Documentation on migrating from API keys to service accounts]({{< relref "../administration/api-keys" >}})
 
 - [Blog post announcement with a video demo including how to migrate](https://grafana.com/blog/2022/08/24/new-in-grafana-9.1-service-accounts-are-now-ga/)
 
@@ -193,7 +193,7 @@ We strongly recommend not doing this in case you are using Azure AD as an identi
 #### Learn more
 
 - [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/CVE-2023-3128)
-- [Enable email lookup]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
+- [Enable email lookup]({{< relref "../setup-grafana/configure-security/configure-authentication" >}})
 
 ### The "Alias" field in the CloudWatch data source is removed
 

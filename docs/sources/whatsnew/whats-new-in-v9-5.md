@@ -28,7 +28,7 @@ For more detail about all the changes in this release, refer to the [changelog](
 
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 
-> **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).-->
+> **Note:** You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references]({{< relref "/docs/writers-toolkit/writing-guide/references" >}}).-->
 
 ## Grafana's new navigation is generally available
 
@@ -180,7 +180,7 @@ This feature should be used if you want to enforce strict role synchronization f
 
 To use this feature, enable the `onlyExternalOrgRoleSync` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support. We'll also be automatically enabling this feature for Grafana Cloud instances over the upcoming weeks.
 
-You can also _prevent_ the synchronization of organization roles from a given authentication provider. Learn more in our [skip org role sync]({{< relref "../setup-grafana/configure-grafana#authgrafana_com-skip_org_role_sync/" >}})! documentation.
+You can also _prevent_ the synchronization of organization roles from a given authentication provider. Learn more in our [skip org role sync]({{< relref "../setup-grafana/configure-grafana#authgrafana_com-skip_org_role_sync" >}})! documentation.
 
 ## Reporting UI adapted to match the new navigation style
 

@@ -12,16 +12,16 @@ Grafana open source is open source visualization and analytics software. It allo
 
 ### Grafana Loki
 
-Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation](/docs/loki/latest/).
+Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Loki documentation]({{< relref "/docs/loki/latest" >}}).
 
 ### Grafana Tempo
 
-Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Tempo documentation](/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
+Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Tempo documentation]({{< relref "/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt" >}}).
 
 ### Grafana Mimir
 
-Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](/docs/mimir/latest/).
+Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation]({{< relref "/docs/mimir/latest" >}}).
 
 ### Grafana Oncall
 
-Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation](/docs/oncall/latest/).
+Grafana OnCall is an open source incident response management tool built to help teams improve their collaboration and resolve incidents faster. For more information about Grafana OnCall, refer to [Grafana OnCall documentation]({{< relref "/docs/oncall/latest" >}}).

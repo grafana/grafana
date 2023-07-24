@@ -17,7 +17,7 @@ weight: 50
 # Manage RBAC roles
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
@@ -94,9 +94,9 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 **Before you begin:**
 
-- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy/" >}}).
-- Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes/" >}}).
-- [Enable role provisioning]({{< relref "./rbac-grafana-provisioning/" >}}).
+- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy" >}}).
+- Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes" >}}).
+- [Enable role provisioning]({{< relref "./rbac-grafana-provisioning" >}}).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
   - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.
@@ -123,7 +123,7 @@ File-based provisioning is one method you can use to create custom roles.
 | `state`       | State of the role. Defaults to `present`, but if set to `absent` the role will be removed.                                                                                                                                                                                                                                                                                                                                                       |
 | `force`       | Can be used in addition to state `absent`, to force the removal of a role and all its assignments.                                                                                                                                                                                                                                                                                                                                               |
 | `from`        | An optional list of roles from which you want to copy permissions.                                                                                                                                                                                                                                                                                                                                                                               |
-| `permissions` | Provides users access to Grafana resources. For a list of permissions, refer to [RBAC permissions actions and scopes]({{< relref "./rbac-fixed-basic-role-definitions/" >}}). If you do not know which permissions to assign, you can create and assign roles without any permissions as a placeholder. Using the `from` attribute, you can specify additional permissions or permissions to remove by adding a `state` to your permission list. |
+| `permissions` | Provides users access to Grafana resources. For a list of permissions, refer to [RBAC permissions actions and scopes]({{< relref "./rbac-fixed-basic-role-definitions" >}}). If you do not know which permissions to assign, you can create and assign roles without any permissions as a placeholder. Using the `from` attribute, you can specify additional permissions or permissions to remove by adding a `state` to your permission list. |
 
 1. Reload the provisioning configuration file.
 

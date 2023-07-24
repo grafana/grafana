@@ -43,7 +43,7 @@ For links to data source-specific documentation, see [Data sources]({{< relref "
 You can configure data source permissions to allow or deny certain users the ability to query or edit a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, teams, or roles.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. Additionally, by default, data sources can be edited by the user who created the data source, as well as users with the `Admin` role.
@@ -89,12 +89,12 @@ You can assign data source permissions to users, teams, and roles which will all
 
 When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results will come back from the cache instead of from the data source.
 
-When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend/" >}}).
+When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend" >}}).
 
 The caching feature works for **all** backend data sources. You can enable the cache globally in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 The following cache backend options are available: in-memory, Redis, and Memcached.
@@ -105,9 +105,9 @@ Storing cached queries in-memory can increase Grafana's memory footprint. In pro
 
 When a panel queries a data source with cached data, it will either fetch fresh data or use cached data depending on the panel's **interval.** The interval is used to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
 
-A panel's interval is visible in the [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}). It is calculated as follows: `time range / max data points`. Max data points are calculated based on the width of the panel. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, cached data for this panel will be served for up to 10 minutes before Grafana needs to query the data source again for new data.
+A panel's interval is visible in the [query options]({{< relref "../../panels-visualizations/query-transform-data" >}}). It is calculated as follows: `time range / max data points`. Max data points are calculated based on the width of the panel. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, cached data for this panel will be served for up to 10 minutes before Grafana needs to query the data source again for new data.
 
-You can configure a panel to retrieve data more often by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
+You can configure a panel to retrieve data more often by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 ### Caching benefits
 
@@ -129,7 +129,7 @@ Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries th
 
 ### Enable and configure query caching
 
-You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/" >}}).
+You must be an Org admin or Grafana admin to enable query caching for a data source. For more information on Grafana roles and permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions" >}}).
 
 By default, data source queries are not cached. To enable query caching for a single data source:
 
@@ -186,10 +186,10 @@ You can add additional data sources as plugins, which you can install or create 
 ### Find data source plugins in the plugin catalog
 
 To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
-For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
+For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management" >}}).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 

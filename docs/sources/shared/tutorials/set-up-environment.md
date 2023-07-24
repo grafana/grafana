@@ -12,7 +12,7 @@ To discover plugins, Grafana scans a _plugin directory_, the location of which d
 
 1. Create a directory called `grafana-plugins` in your preferred workspace.
 
-1. Find the `plugins` property in the Grafana configuration file and set the `plugins` property to the path of your `grafana-plugins` directory. Refer to the [Grafana configuration documentation](/docs/grafana/latest/installation/configuration/#plugins) for more information.
+1. Find the `plugins` property in the Grafana configuration file and set the `plugins` property to the path of your `grafana-plugins` directory. Refer to the [Grafana configuration documentation]({{< relref "/docs/grafana/latest/installation/configuration/#plugins" >}}) for more information.
 
    ```ini
    [paths]

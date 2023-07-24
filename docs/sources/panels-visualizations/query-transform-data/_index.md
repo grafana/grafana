@@ -24,7 +24,7 @@ weight: 200
 
 # Query and transform data
 
-Grafana supports many types of [data sources]({{< relref "../../datasources/" >}}).
+Grafana supports many types of [data sources]({{< relref "../../datasources" >}}).
 Data source **queries** return data that Grafana can **transform** and visualize.
 Each data source uses its own query language, and data source plugins each implement a query-building user interface called a query editor.
 
@@ -37,7 +37,7 @@ You can configure query frequency and data collection limits in the panel's data
 Grafana supports up to 26 queries per panel.
 
 > **Important:** You **must** be familiar with a data source's query language.
-> For more information, refer to [Data sources]({{< relref "../../datasources/" >}}).
+> For more information, refer to [Data sources]({{< relref "../../datasources" >}}).
 
 ### Query editors
 
@@ -57,8 +57,8 @@ For details on a specific data source's unique query editor features, refer to i
 - For data sources included with Grafana, refer to [Built-in core data sources]({{< relref "../../datasources/#data-source-plugins" >}}), which links to each core data source's documentation.
 - For data sources installed as plugins, refer to its own documentation.
   - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
-    For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
-  - For links to Grafana Enterprise data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
+    For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management" >}}).
+  - For links to Grafana Enterprise data source plugin documentation, refer to the [Enterprise plugins index]({{< relref "/docs/plugins" >}}).
 
 ### Query syntax
 
@@ -87,12 +87,12 @@ For details, refer to [Data sources]({{< relref "../../datasources/#special-data
 A panel's Query tab consists of the following elements:
 
 - **Data source selector:** Selects the data source to query.
-  For more information about data sources, refer to [Data sources]({{< relref "../../datasources/" >}}).
+  For more information about data sources, refer to [Data sources]({{< relref "../../datasources" >}}).
 - **Query options:** Sets maximum data retrieval parameters and query execution time intervals.
 - **Query inspector button:** Opens the query inspector panel, where you can view and optimize your query.
 - **Query editor list:** Lists the queries you've written.
 - **Expressions:** Uses the expression builder to create alert expressions.
-  For more information about expressions, refer to [Use expressions to manipulate data]({{< relref "expression-queries/" >}}).
+  For more information about expressions, refer to [Use expressions to manipulate data]({{< relref "expression-queries" >}}).
 
 {{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
 

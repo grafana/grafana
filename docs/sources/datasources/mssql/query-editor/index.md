@@ -166,7 +166,7 @@ To display the raw interpolated SQL string that the data source executed, click 
 
 ## Use table queries
 
-If the **Format** query option is set to **Table** for a [Table panel]{{< relref "../../../panels-visualizations/visualizations/table/" >}}, you can enter any type of SQL query.
+If the **Format** query option is set to **Table** for a [Table panel]{{< relref "../../../panels-visualizations/visualizations/table" >}}, you can enter any type of SQL query.
 The Table panel then displays the query results with whatever columns and rows are returned.
 
 **Example database table:**

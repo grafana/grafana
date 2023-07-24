@@ -33,10 +33,10 @@ This topic describes queries, templates, variables, and other configuration spec
 Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
 {{% /admonition %}}
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 
-Once you've added the Google Cloud Monitoring data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) and apply [annotations]({{< relref "#annotations" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the Google Cloud Monitoring data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) and apply [annotations]({{< relref "#annotations" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}) and use [Explore]({{< relref "../../explore" >}}).
 
 ## Configure the data source
 
@@ -61,7 +61,7 @@ To configure basic settings for the data source, complete the following steps:
 Before you can request data from Google Cloud Monitoring, you must configure authentication.
 All requests to Google APIs are performed on the server-side by the Grafana backend.
 
-For authentication options and configuration details, refer to [Google authentication]({{< relref "./google-authentication/" >}}).
+For authentication options and configuration details, refer to [Google authentication]({{< relref "./google-authentication" >}}).
 
 When configuring Google authentication, note these additional Google Cloud Monitoring-specific steps:
 
@@ -164,7 +164,7 @@ These curated dashboards are based on similar dashboards in the GCP dashboard sa
 
 1. Select **Import** for the dashboard to import.
 
-The dashboards include a [template variable]({{< relref "./template-variables/" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication/" >}}) each time you load the dashboard.
+The dashboards include a [template variable]({{< relref "./template-variables" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication" >}}) each time you load the dashboard.
 After Grafana loads the dashboard, you can select a project from the dropdown list.
 
 **To customize an imported dashboard:**
@@ -176,7 +176,7 @@ If you don't, upgrading Grafana can overwrite the customized dashboard with the 
 
 The Google Cloud Monitoring query editor helps you build two types of queries: **Metric** and **Service Level Objective (SLO)**.
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -184,4 +184,4 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).

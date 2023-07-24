@@ -22,7 +22,7 @@ weight: 800
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications, such as Terraform, with the Grafana API.
 
 {{% admonition type="note" %}}
-Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+Service accounts will eventually replace [API keys]({{< relref "../api-keys" >}}) as the primary way to authenticate applications that interact with Grafana.
 {{% /admonition %}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
@@ -32,7 +32,7 @@ A common use case for creating a service account is to perform operations on aut
 - Set up an external SAML authentication provider
 - Interact with Grafana without signing in as a user
 
-In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}) to grant very specific permissions to applications that interact with Grafana.
+In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../roles-and-permissions/access-control" >}}) to grant very specific permissions to applications that interact with Grafana.
 
 {{% admonition type="note" %}}
 Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
@@ -62,7 +62,7 @@ The added benefits of service accounts to API keys include:
 - Service accounts resemble Grafana users and can be enabled/disabled, granted specific permissions, and remain active until they are deleted or disabled. API keys are only valid until their expiry date.
 - Service accounts can be associated with multiple tokens.
 - Unlike API keys, service account tokens are not associated with a specific user, which means that applications can be authenticated even if a Grafana user is deleted.
-- You can grant granular permissions to service accounts by leveraging [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}). For more information about permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions/" >}}).
+- You can grant granular permissions to service accounts by leveraging [role-based access control]({{< relref "../roles-and-permissions/access-control" >}}). For more information about permissions, refer to [About users and permissions]({{< relref "../roles-and-permissions" >}}).
 
 ## Create a service account in Grafana
 
@@ -118,7 +118,7 @@ By default, service account tokens don't have an expiration date, meaning they w
 You can assign roles to a Grafana service account to control access for the associated service account tokens.
 You can assign roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#update-service-account" >}}).
 
-In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also [assign RBAC roles]({{< relref "../roles-and-permissions/access-control/assign-rbac-roles" >}}) to grant very specific permissions to applications that interact with Grafana.
+In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you can also [assign RBAC roles]({{< relref "../roles-and-permissions/access-control/assign-rbac-roles" >}}) to grant very specific permissions to applications that interact with Grafana.
 
 ### Before you begin
 

@@ -684,7 +684,7 @@ After merge:
 
 ### Merge
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table" >}}).
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
@@ -890,7 +890,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 {{% /admonition %}}
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames/" >}}).
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames" >}}).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 

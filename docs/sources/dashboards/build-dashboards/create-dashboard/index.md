@@ -21,7 +21,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **Before you begin:**
 
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions" >}}).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}) if you need instructions.
@@ -45,7 +45,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    The **Edit panel** view opens with your data source selected.
    You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
 
-   For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
+   For more information about data sources, refer to [Data sources]({{< relref "../../../datasources" >}}) for specific guidelines.
 
 1. Write or construct a query in the query language of your data source.
 
@@ -59,17 +59,17 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Grafana displays a preview of your query results with the visualization applied.
 
-   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../panels-visualizations/visualizations/" >}}).
+   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../panels-visualizations/visualizations" >}}).
 
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
    - [Configure value mappings]({{< relref "../../../panels-visualizations/configure-value-mappings" >}})
-   - [Visualization-specific options]({{< relref "../../../panels-visualizations/visualizations/" >}})
-   - [Override field values]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
-   - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}})
-   - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options/" >}})
+   - [Visualization-specific options]({{< relref "../../../panels-visualizations/visualizations" >}})
+   - [Override field values]({{< relref "../../../panels-visualizations/configure-overrides" >}})
+   - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds" >}})
+   - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options" >}})
 
 1. When you've finished editing your panel, click **Save** to save the dashboard.
 

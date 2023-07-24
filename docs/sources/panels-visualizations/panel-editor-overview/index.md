@@ -49,7 +49,7 @@ This section describes the areas of the Grafana panel editor.
 
 1. Visualization preview: The visualization preview section contains the following options:
 
-   - **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It does not include transformations you might have applied to the data or the formatting options available in the [Table]({{< relref "../visualizations/table/" >}}) visualization.
+   - **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It does not include transformations you might have applied to the data or the formatting options available in the [Table]({{< relref "../visualizations/table" >}}) visualization.
    - **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
    - **Actual:** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
    - **Time range controls:** **Default** is either the browser local timezone or the timezone selected at a higher level.
@@ -57,8 +57,8 @@ This section describes the areas of the Grafana panel editor.
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
    - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../query-transform-data/#add-a-query" >}}). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the dropdown in the **Query** tab.
-   - **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../query-transform-data/transform-data/" >}}).
-   - **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting]({{< relref "../../alerting/" >}}).
+   - **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../query-transform-data/transform-data" >}}).
+   - **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting]({{< relref "../../alerting" >}}).
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 

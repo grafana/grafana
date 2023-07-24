@@ -33,7 +33,7 @@ If the user is aware of the change and intended it, then that's great! But if th
 
 In Grafana, you can change your names and emails associated with groups or accounts in the Settings or Preferences. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions" >}}).
 
 ### Change organization name
 
@@ -79,7 +79,7 @@ To learn how to edit your user information, refer to [Edit your profile]({{< rel
 
 In Grafana, you can modify the UI theme configured in the Settings or Preferences. Set the UI theme for the server, an organization, a team, or your personal user account using the instructions in this topic.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions" >}}).
 
 ### Theme options
 
@@ -138,7 +138,7 @@ You can change the UI theme for your user account. This setting overrides UI the
 
 By default, Grafana uses the timezone in your web browser. However, you can override this setting at the server, organization, team, or individual user level. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions" >}}).
 
 ### Set server timezone
 
@@ -175,7 +175,7 @@ You can change the timezone for your user account. This setting overrides timezo
 
 The home dashboard you set is the one all users will see by default when they log in. Click the Grafana icon or **Home** in the breadcrumb to return to it. You can set the home dashboard for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
-Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions/" >}}).
+Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions]({{< relref "../roles-and-permissions" >}}).
 
 ### Set the home dashboard for the server
 

@@ -18,7 +18,7 @@ weight: 120
 # Role-based access control (RBAC)
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
@@ -83,25 +83,25 @@ Grafana Enterprise includes the ability for you to assign discrete fixed roles t
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../../alerting/" >}})
+- [Alerting]({{< relref "../../../alerting" >}})
 - [Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}})
-- [API keys]({{< relref "../../api-keys/" >}})
-- [Dashboards and folders]({{< relref "../../../dashboards/" >}})
-- [Data sources]({{< relref "../../../datasources/" >}})
-- [Explore]({{< relref "../../../explore/" >}})
+- [API keys]({{< relref "../../api-keys" >}})
+- [Dashboards and folders]({{< relref "../../../dashboards" >}})
+- [Data sources]({{< relref "../../../datasources" >}})
+- [Explore]({{< relref "../../../explore" >}})
 - [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
-- [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
-- [Licenses]({{< relref "../../stats-and-license/" >}})
-- [Organizations]({{< relref "../../organization-management/" >}})
-- [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
-- [Roles]({{< relref "../../" >}})
+- [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap" >}})
+- [Licenses]({{< relref "../../stats-and-license" >}})
+- [Organizations]({{< relref "../../organization-management" >}})
+- [Provisioning]({{< relref "../../provisioning" >}})
+- [Reports]({{< relref "../../../dashboards/create-reports" >}})
+- [Roles]({{< relref "../.." >}})
 - [Settings]({{< relref "../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}})
-- [Service accounts]({{< relref "../../service-accounts/" >}})
-- [Teams]({{< relref "../../team-management/" >}})
-- [Users]({{< relref "../../user-management/" >}})
+- [Service accounts]({{< relref "../../service-accounts" >}})
+- [Teams]({{< relref "../../team-management" >}})
+- [Users]({{< relref "../../user-management" >}})
 
-To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions" >}}).
 
 ### Custom roles
 
@@ -117,8 +117,8 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../../developers/http_api/access_control/" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles" >}}).
+- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../../developers/http_api/access_control" >}}).
 
 ### Limitation
 

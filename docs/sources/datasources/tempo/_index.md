@@ -22,11 +22,11 @@ weight: 1400
 
 Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}) and use [Explore]({{< relref "../../explore" >}}).
 
 You can also [use the Service Graph]({{< relref "#use-the-service-graph" >}}) to view service relationships, [track RED metrics]({{< relref "#open-the-service-graph-view" >}}), [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), [link to a trace ID from logs]({{< relref "#link-to-a-trace-id-from-logs" >}}), and [link to a trace ID from metrics]({{< relref "#link-to-a-trace-id-from-metrics" >}}).
 
@@ -143,7 +143,7 @@ Each linked query consists of:
 
 ### Service Graph
 
-The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/grafana-agent/service-graphs/) feature.
+The **Service Graph** setting configures the [Service Graph]({{< relref "/docs/tempo/latest/grafana-agent/service-graphs" >}}) feature.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
@@ -151,13 +151,13 @@ To use the Service Graph, refer to the [Service Graph documentation]({{< relref 
 
 ### Node Graph
 
-The **Node Graph** setting enables the [node graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
+The **Node Graph** setting enables the [node graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph" >}}), which is disabled by default.
 
 Once enabled, Grafana displays the node graph above the trace view.
 
 ### Tempo search
 
-The **Search** setting configures [Tempo search](/docs/tempo/latest/configuration/#search).
+The **Search** setting configures [Tempo search]({{< relref "/docs/tempo/latest/configuration/#search" >}}).
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
@@ -318,15 +318,15 @@ You use the Service Graph to detect performance issues; track increases in error
 
 **To display the Service Graph:**
 
-1. [Configure Grafana Agent](/docs/tempo/latest/grafana-agent/service-graphs/#quickstart) or [Tempo or GET](/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
+1. [Configure Grafana Agent]({{< relref "/docs/tempo/latest/grafana-agent/service-graphs/#quickstart" >}}) or [Tempo or GET]({{< relref "/docs/tempo/latest/metrics-generator/service_graphs/#tempo" >}}) to generate Service Graph data.
 1. Link a Prometheus data source in the Tempo data source's [Service Graph](#configure-service-graph) settings.
-1. Navigate to [Explore]({{< relref "../../explore/" >}}).
+1. Navigate to [Explore]({{< relref "../../explore" >}}).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type.
 1. Run the query.
 1. _(Optional)_ Filter by service name.
 
-For details, refer to [Node Graph panel]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}).
+For details, refer to [Node Graph panel]({{< relref "../../panels-visualizations/visualizations/node-graph" >}}).
 
 Each circle in the graph represents a service.
 To open a context menu with additional links for quick navigation to other relevant information, click a service.
@@ -348,12 +348,12 @@ Service graph view displays a table of request rate, error rate, and duration me
 
 {{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Service Graph view" >}}
 
-For details, refer to the [Service Graph view documentation](/docs/tempo/latest/metrics-generator/service-graph-view/).
+For details, refer to the [Service Graph view documentation]({{< relref "/docs/tempo/latest/metrics-generator/service-graph-view" >}}).
 
 To open the Service Graph view:
 
 1. Link a Prometheus data source in the Tempo data source settings.
-1. Navigate to [Explore]({{< relref "../../explore/" >}}).
+1. Navigate to [Explore]({{< relref "../../explore" >}}).
 1. Select the Tempo data source.
 1. Select the **Service Graph** query type.
 1. Run the query.

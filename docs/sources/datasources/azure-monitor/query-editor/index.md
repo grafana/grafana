@@ -74,7 +74,7 @@ Optionally, you can apply further aggregations or filter by dimensions.
 
 The available options change depending on what is relevant to the selected metric.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ### Format legend aliases
 
@@ -133,7 +133,7 @@ You can also perform complex analysis of Logs data by using KQL.
 
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ### Logs query examples
 
@@ -336,7 +336,7 @@ Selecting the trace format will filter events with the `trace` type.
 1. Specify event types to filter by.
 1. Specify event properties to filter by.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ## Working with large Azure resource data sets
 

@@ -22,10 +22,10 @@ weight: 600
 Grafana includes built-in support for Graphite.
 This topic explains options, variables, querying, and other features specific to the Graphite data source, which include its feature-rich query editor.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 
-Once you've added the Graphite data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the Graphite data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}) and use [Explore]({{< relref "../../explore" >}}).
 
 ## Configure the data source
 
@@ -45,7 +45,7 @@ To configure basic settings for the data source, complete the following steps:
    | **Name**                | Sets the name you use to refer to the data source in panels and queries.                                                             |
    | **Default**             | Sets whether the data source is pre-selected for new panels. You can set only one default data source per organization.              |
    | **URL**                 | Sets the HTTP protocol, IP, and port of your graphite-web or graphite-api installation.                                              |
-   | **Auth**                | For details, refer to [Configure Authentication]({{< relref "../../setup-grafana/configure-security/configure-authentication/" >}}). |
+   | **Auth**                | For details, refer to [Configure Authentication]({{< relref "../../setup-grafana/configure-security/configure-authentication" >}}). |
    | **Basic Auth**          | Enables basic authentication to the data source.                                                                                     |
    | **User**                | Sets the user name for basic authentication.                                                                                         |
    | **Password**            | Sets the password for basic authentication.                                                                                          |
@@ -62,7 +62,7 @@ You can also configure settings specific to the Graphite data source:
 
 ### Integrate with Loki
 
-When you change the data source selection in [Explore]({{< relref "../../explore/" >}}), Graphite queries are converted to Loki queries.
+When you change the data source selection in [Explore]({{< relref "../../explore" >}}), Graphite queries are converted to Loki queries.
 Grafana extracts Loki label names and values from the Graphite queries according to mappings provided in the Graphite data source configuration.
 Queries using tags with `seriesByTags()` are also transformed without any additional setup.
 
@@ -91,7 +91,7 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It can handle all types of Graphite queries, including complex nested queries through the use of query references.
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -99,7 +99,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
 ## Get Grafana metrics into Graphite
 

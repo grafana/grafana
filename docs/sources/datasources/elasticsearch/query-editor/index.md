@@ -36,7 +36,7 @@ To expand the row to view and edit any available metric or group-by options, cli
 
 ## Use template variables
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ## Name a time series
 

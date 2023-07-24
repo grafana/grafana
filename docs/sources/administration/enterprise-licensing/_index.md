@@ -27,7 +27,7 @@ When you become a Grafana Enterprise customer, you gain access to Grafana's prem
 
 To purchase a license directly from Grafana Labs, [Contact a Grafana Labs representative](/contact?about=grafana-enterprise). To activate an Enterprise license purchased from Grafana Labs, refer to [Activate an Enterprise license]({{< relref "#activate-an-enterprise-license" >}}).
 
-You can also purchase a Grafana Enterprise license through the AWS Marketplace. To learn more about activating a license purchased through AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "./activate-aws-marketplace-license/" >}}).
+You can also purchase a Grafana Enterprise license through the AWS Marketplace. To learn more about activating a license purchased through AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "./activate-aws-marketplace-license" >}}).
 
 {{< section >}}
 
@@ -103,7 +103,7 @@ GF_SERVER_ROOT_URL=https://grafana.example.com/
 
 ### Step 4. Restart Grafana
 
-To finalize the installation of Grafana Enterprise, restart Grafana to enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../../setup-grafana/start-restart-grafana/" >}}) for more information.
+To finalize the installation of Grafana Enterprise, restart Grafana to enable all Grafana Enterprise features. Refer to [restart Grafana]({{< relref "../../setup-grafana/start-restart-grafana" >}}) for more information.
 
 ## License expiration
 
@@ -113,7 +113,7 @@ If your license has expired, most of Grafana keeps working as normal. Some enter
 
 ### Update your license
 
-1. Locate your current `license.jwt` file. In a standard installation it is stored inside the Grafana data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}).
+1. Locate your current `license.jwt` file. In a standard installation it is stored inside the Grafana data directory, which on a typical Linux installation is in `/var/lib/grafana/data`. This location might be overridden in the ini file [Configuration]({{< relref "../../setup-grafana/configure-grafana" >}}).
 
    ```ini
    [enterprise]
@@ -125,7 +125,7 @@ If your license has expired, most of Grafana keeps working as normal. Some enter
 2. Log in to your [Grafana Cloud Account](/login) and make sure you're in the correct organization in the dropdown at the top of the page.
 3. Under the **Grafana Enterprise** section in the menu bar to the left, choose licenses and download the currently valid license with which you want to run Grafana. If you cannot see a valid license on Grafana.com, please contact your account manager at Grafana Labs to renew your subscription.
 4. Replace the current `license.jwt`-file with the one you've just downloaded.
-5. [Restart Grafana]({{< relref "../../setup-grafana/start-restart-grafana/" >}}).
+5. [Restart Grafana]({{< relref "../../setup-grafana/start-restart-grafana" >}}).
 
 ### If your license expires
 
