@@ -18,6 +18,7 @@ import { LabelFilters } from './LabelFilters';
 import { MetricsWrapper } from './MetricsWrapper';
 import {
   displayedMetrics,
+  formatQueryForExecution,
   getBackendSearchMetrics,
   getLabelNames,
   placeholders,
@@ -82,95 +83,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
     onChangeParent(state.initialQuery);
   };
 
-  const labelsString = promQueryModeller.renderLabels(state.query.labels);
-  const expression = `${state.query.metric}${labelsString}`;
-
-  /**
-   * loads metrics and metadata on opening modal and switching off useBackend
-   */
-  const updateMetricsMetadata = useCallback(async () => {
-    // *** Loading Gif
-    dispatch(setIsLoading(true));
-    // console.log('query', state.query)
-    console.log('initialMetrics', state.lastBackendResultMetrics);
-    const data: MetricsModalMetadata = await setMetrics(
-      datasource,
-      state.lastBackendResultMetrics.map((metric) => metric.value)
-    );
-    console.log('MetricsModalMetadata', data);
-    dispatch(
-      buildMetrics({
-        isLoading: false,
-        hasMetadata: data.hasMetadata,
-        metrics: data.metrics,
-        metaHaystackDictionary: data.metaHaystackDictionary,
-        nameHaystackDictionary: data.nameHaystackDictionary,
-        totalMetricCount: data.metrics.length,
-        filteredMetricCount: data.metrics.length,
-      })
-    );
-  }, [datasource, state.lastBackendResultMetrics]);
-
-  useEffect(() => {
-    if (state.metricsStale) {
-      fetchMetrics(state.fuzzySearchQuery);
-    }
-
-    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.metricsStale]);
-
-  useEffect(() => {
-    if (state.labelNamesStale) {
-      const expr = promQueryModeller.renderLabels(
-        state.query.labels?.map((label) => {
-          if (label.op === '=' || label.op === '!=') {
-            return {
-              ...label,
-              value: escapeLabelValueInExactSelector(label.value),
-            };
-          }
-
-          return {
-            ...label,
-            value: escapeLabelValueInRegexSelector(label.value),
-          };
-        })
-      );
-      console.log('getLabelNames', state.query.metric + expr);
-      dispatch(setIsLoading(true));
-      // @todo escape the
-      getLabelNames(state.query.metric + expr, datasource).then((data) => {
-        dispatch(
-          buildLabels({
-            isLoading: false,
-            labelNames: data,
-          })
-        );
-      });
-    }
-    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.labelNamesStale]);
-
-  /**
-   * For all of the stale labels, fetch their values from the datasource in sequence
-   * @todo, parallel is faster, but could folks ddos their prometheus instance?
-   */
-  async function fetchLabelsInSequence() {
-    for (let i = 0; i < state.staleLabelValues.length; i++) {
-      await fetchValuesForLabelName(state.staleLabelValues[i]);
-    }
-  }
-
-  useEffect(() => {
-    if (state.staleLabelValues.length > 0) {
-      fetchLabelsInSequence();
-    }
-    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.staleLabelValues]);
-
   /**
    * Get label names
    */
@@ -185,25 +97,31 @@ export const MetricsModal = (props: MetricsModalProps) => {
     );
   }, [state.query.metric, datasource]);
 
-  useEffect(() => {
-    updateMetricsMetadata();
-  }, [updateMetricsMetadata]);
+  const formatQueryForExecution = () => {
+    const expr = promQueryModeller.renderLabels(
+      state.query.labels?.map((label) => {
+        // Any non regex operator
+        if (label.op === '=' || label.op === '!=' || label.op === '<' || label.op === '>') {
+          return {
+            ...label,
+            value: escapeLabelValueInExactSelector(label.value),
+          };
+        }
 
-  useEffect(() => {
-    updateLabels();
-  }, [updateLabels]);
+        // Regex operators
+        return {
+          ...label,
+          // value: escapeLabelValueInRegexSelector(label.value),
+          value: label.value
+            .split('|')
+            .map((v) => escapeLabelValueInRegexSelector(v))
+            .join('|'),
+        };
+      })
+    );
 
-  useEffect(() => {
-    updateMetricsMetadata();
-  }, [updateMetricsMetadata]);
-
-  const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
-    return {
-      value: t.value,
-      label: t.value,
-      description: t.description,
-    };
-  });
+    return { expr: expr, metric: state.query.metric, query: state.query.metric + expr };
+  };
 
   const fetchMetrics = useCallback(
     async (metricText: string) => {
@@ -250,7 +168,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
     console.log('current expr', state.query.metric);
     console.log('pending expr', expr);
     console.log('state.query.metric + expr', state.query.metric + expr);
-    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, state.query.metric + expr);
+    // No expression needed for label values, as that would filter any values that aren't already selected, and the logic for multiple selected values is boolean OR
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(labelName, state.query.metric);
   }
 
   function metricsSearchCallback(query: string, fullMetaSearchVal: boolean) {
@@ -274,7 +193,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
     // this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
 
     datasource.languageProvider
-      .getSeriesValues('__name__', expression)
+      .fetchSeriesValuesWithMatch('__name__', queryString)
       .then((result) => {
         dispatch(
           setValidatedState({
@@ -295,14 +214,26 @@ export const MetricsModal = (props: MetricsModalProps) => {
       });
   };
 
+  /**
+   * "Submits" the query by syncing the local query with the parent query, this will trigger the onChange actions in Grafana and run the query
+   */
   const submitQuery = () => {
+    // Overwrite existing query with local
     onChangeParent({
       ...query,
       ...state.query,
     });
+
+    // Close the modal
     onClose();
   };
 
+  /**
+   * sets a label value as selected
+   * @param labelName
+   * @param labelValue
+   * @param selected
+   */
   const setLabelValueSelected = async (labelName: string, labelValue: string, selected: boolean) => {
     dispatch(
       setSelectedLabelValue({
@@ -313,6 +244,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
     );
   };
 
+  /**
+   * Get the label values for a single label name
+   * @param labelName
+   */
   const fetchValuesForLabelName = async (labelName: string) => {
     dispatch(setIsLoading(true));
     getLabelValues(labelName).then((values) => {
@@ -342,6 +277,116 @@ export const MetricsModal = (props: MetricsModalProps) => {
     const page = val ?? 1;
     dispatch(setPageNum(page));
   };
+
+  // Gets the raw query string we'll send to the API
+  const { expr, query: queryString } = formatQueryForExecution();
+
+  /**
+   * loads metrics and metadata on opening modal and switching off useBackend
+   */
+  const updateMetricsMetadata = useCallback(async () => {
+    // *** Loading Gif
+    dispatch(setIsLoading(true));
+
+    const data: MetricsModalMetadata = await setMetrics(
+      datasource,
+      state.lastBackendResultMetrics.map((metric) => metric.value)
+    );
+
+    dispatch(
+      buildMetrics({
+        isLoading: false,
+        hasMetadata: data.hasMetadata,
+        metrics: data.metrics,
+        metaHaystackDictionary: data.metaHaystackDictionary,
+        nameHaystackDictionary: data.nameHaystackDictionary,
+        totalMetricCount: data.metrics.length,
+        filteredMetricCount: data.metrics.length,
+      })
+    );
+  }, [datasource, state.lastBackendResultMetrics]);
+
+  /**
+   * For all of the stale labels, fetch their values from the datasource in sequence
+   * @todo, parallel might be faster, but would folks ddos their prometheus instance?
+   */
+  async function fetchLabelsInSequence() {
+    for (let i = 0; i < state.staleLabelValues.length; i++) {
+      await fetchValuesForLabelName(state.staleLabelValues[i]);
+    }
+  }
+
+  /**
+   * @todo WIP toggles the state between labels/metrics
+   */
+  const toggleMetricsLabels = () => {
+    dispatch(toggleUIState());
+  };
+
+  const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
+    return {
+      value: t.value,
+      label: t.value,
+      description: t.description,
+    };
+  });
+
+  /**
+   * Metrics are stale
+   */
+  useEffect(() => {
+    if (state.metricsStale) {
+      fetchMetrics(state.fuzzySearchQuery);
+    }
+
+    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.metricsStale]);
+
+  /**
+   * Label names are stale
+   */
+  useEffect(() => {
+    if (state.labelNamesStale) {
+      const { metric } = formatQueryForExecution();
+
+      dispatch(setIsLoading(true));
+      // No need for the labels expression, we just want to query the potential label names for the selected metric
+      getLabelNames(metric, datasource).then((data) => {
+        dispatch(
+          buildLabels({
+            isLoading: false,
+            labelNames: data,
+          })
+        );
+      });
+    }
+    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.labelNamesStale]);
+
+  /**
+   * Label values are stale
+   */
+  useEffect(() => {
+    if (state.staleLabelValues.length > 0) {
+      fetchLabelsInSequence();
+    }
+    // We explicitly DO NOT want to run this whenever the fuzzy search query changes, only when the metrics are marked stale by the reducer
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.staleLabelValues]);
+
+  useEffect(() => {
+    updateMetricsMetadata();
+  }, [updateMetricsMetadata]);
+
+  useEffect(() => {
+    updateLabels();
+  }, [updateLabels]);
+
+  useEffect(() => {
+    updateMetricsMetadata();
+  }, [updateMetricsMetadata]);
 
   /* Settings switches */
   const additionalSettings = (
@@ -379,10 +424,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
       }}
     />
   );
-
-  const toggleMetricsLabels = () => {
-    dispatch(toggleUIState());
-  };
 
   console.log('state', state);
 
@@ -474,7 +515,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
           <span className={styles.exprPreview}>
             <div className={styles.exprPreviewTextWrap}>
               <span className={styles.exprPreviewTitle}>RESULT</span>
-              <span className={styles.exprPreviewText}>{expression}</span>
+              <span className={styles.exprPreviewText}>{queryString}</span>
             </div>
           </span>
           <span className={styles.exprButtons}>

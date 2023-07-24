@@ -8,6 +8,7 @@ import {
   escapeLabelValueInRegexSelector,
 } from 'app/plugins/datasource/prometheus/language_utils';
 
+import { promQueryModeller } from '../../../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../../../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../../../shared/types';
 import { PromVisualQuery } from '../../../types';
