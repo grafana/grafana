@@ -152,6 +152,7 @@ export interface QueryStats {
   chunks: number;
   bytes: number;
   entries: number;
+  message?: string;
 }
 
 export interface ContextFilter {

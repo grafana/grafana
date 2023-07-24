@@ -10,7 +10,7 @@ import { QueryStats } from 'app/plugins/datasource/loki/types';
 export interface Props {
   title: string;
   collapsedInfo: string[];
-  queryStats?: QueryStats | null;
+  queryStats?: QueryStats | string | null;
   children: React.ReactNode;
 }
 
@@ -18,8 +18,20 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
 
+  const generateQueryStats = () => {
+    if (typeof queryStats === 'string') {
+      return queryStats;
+    } else {
+      return `This query will process approximately ${convertUnits()}.`;
+    }
+  };
+
   const convertUnits = (): string => {
-    const { text, suffix } = getValueFormat('bytes')(queryStats!.bytes, 1);
+    if (typeof queryStats === 'string' || !queryStats?.bytes) {
+      return '';
+    }
+
+    const { text, suffix } = getValueFormat('bytes')(queryStats.bytes, 1);
     return text + suffix;
   };
 
@@ -45,7 +57,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
       >
         <div className={styles.body}>{children}</div>
       </Collapse>
-      {queryStats && <p className={styles.stats}>This query will process approximately {convertUnits()}.</p>}
+      {queryStats && <p className={styles.stats}>{generateQueryStats()}</p>}
     </div>
   );
 }

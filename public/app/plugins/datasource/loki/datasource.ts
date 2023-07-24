@@ -52,6 +52,7 @@ import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
+import { getTimeRange } from './components/stats';
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -456,16 +457,24 @@ export class LokiDatasource
       return undefined;
     }
 
-    const { start, end } = this.getTimeRangeParams();
     const labelMatchers = getStreamSelectorsFromQuery(query.expr);
-
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
-    for (const labelMatcher of labelMatchers) {
+    for (const idx in labelMatchers) {
+      const { start, end } = getTimeRange(this, query, Number(idx));
+
+      if (start === undefined || end === undefined) {
+        return { streams: 0, chunks: 0, bytes: 0, entries: 0, message: 'Query size estimate not available.' };
+      }
+
       try {
         const data = await this.statsMetadataRequest(
           'index/stats',
-          { query: labelMatcher, start, end },
+          {
+            query: labelMatchers[idx],
+            start: start,
+            end: end,
+          },
           { showErrorAlert: false }
         );
 

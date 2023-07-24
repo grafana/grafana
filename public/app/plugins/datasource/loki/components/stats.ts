@@ -1,9 +1,12 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
+import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
+import { Duration } from '@grafana/lezer-logql';
 
 import { LokiDatasource } from '../datasource';
+import { getNodesFromQuery, isLogsQuery } from '../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../types';
 
-export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | null> {
+export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | string | null> {
   if (!query) {
     return null;
   }
@@ -12,6 +15,10 @@ export async function getStats(datasource: LokiDatasource, query: LokiQuery): Pr
 
   if (!response) {
     return null;
+  }
+
+  if (response.message) {
+    return response.message;
   }
 
   return Object.values(response).every((v) => v === 0) ? null : response;
@@ -53,4 +60,40 @@ export function shouldUpdateStats(
   }
 
   return true;
+}
+
+export function getTimeRange(
+  ds: LokiDatasource,
+  query: LokiQuery,
+  idx: number
+): { start: number | undefined; end: number | undefined } {
+  let start: number, end: number;
+  const NS_IN_MS = 1000000;
+
+  const durationNodes = getNodesFromQuery(query.expr, [Duration]);
+  const durations = durationNodes.map((d) => query.expr.substring(d.from, d.to));
+
+  if (!isLogsQuery(query.expr)) {
+    if (query.queryType === LokiQueryType.Instant) {
+      // metric query with instant type
+      // we want the request timerange to be the query duration e.g. [5m]
+      // with the query -- rate({label="value"} [1h]) -- the range we want to request is: "now - 1h"
+      end = new Date().getTime() * NS_IN_MS;
+      start = end - intervalToMs(durations[idx]) * NS_IN_MS;
+    } else {
+      // metric query with range type
+      // we want the time range to be the selected range
+      // we also need to add the duration to this time range for a more accurate result
+      ({ start, end } = ds.getTimeRangeParams());
+      start = start - intervalToMs(durations[idx]) * NS_IN_MS;
+    }
+
+    return { start, end };
+  } else {
+    if (query.queryType === LokiQueryType.Instant) {
+      return { start: undefined, end: undefined };
+    }
+
+    return ds.getTimeRangeParams();
+  }
 }
