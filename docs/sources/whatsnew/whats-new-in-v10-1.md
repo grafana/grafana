@@ -61,7 +61,6 @@ The transformations tab has gotten an improved user experience and visual redesi
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
 
-
 ## Authentication and authorization
 
 ### Configure refresh token handling separately for OAuth providers
