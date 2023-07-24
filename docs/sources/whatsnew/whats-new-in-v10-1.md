@@ -223,12 +223,15 @@ Adds support for different time zones and locations as well as a visual selector
 
 Adds support for toggling common labels that are shared between all alert instances. You can toggle between showing or hiding them for each individual alert instance.
 
+## Authentication and authorization
+
 ### OAuth role mapping enforcement
 
 <!-- Jo Guerreiro, AuthNZ -->
 
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
+
 This change impacts `GitHub` OAuth, `Gitlab` OAuth, `Okta` OAuth and `Generic` OAuth.
-This change impacts the Enterprise, OSS and cloud versions of Grafana.
 
 Currently if no organization role mapping is found for a user when connecting using OAuth, Grafana doesn’t update the user’s organization role.
 
