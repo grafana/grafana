@@ -79,7 +79,7 @@ With Grafana 10.1 browsing log lines is faster than ever before after a series o
 
 ### Visualizations and Widgets split
 
-<!-- Alexa Vargas -->
+<!-- Alexa Vargas, Juan Cabanas -->
 
 _Experimental in all editions of Grafana._
 
