@@ -100,7 +100,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
     }
 
     // Show the deprecated search option if any of the deprecated search fields are set
-    if (query.spanName || query.serviceName || query.search || query.maxDuration || query.minDuration) {
+    if (
+      query.spanName ||
+      query.serviceName ||
+      query.search ||
+      query.maxDuration ||
+      query.minDuration ||
+      query.queryType === 'nativeSearch'
+    ) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: '[Deprecated] Search' });
     }
 
