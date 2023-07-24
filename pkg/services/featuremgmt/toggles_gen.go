@@ -326,4 +326,8 @@ const (
 	// FlagExtraThemes
 	// Enables extra themes
 	FlagExtraThemes = "extraThemes"
+
+	// FlagAzureMonitorDataplane
+	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
+	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 )

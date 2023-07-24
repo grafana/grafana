@@ -542,5 +542,12 @@ var (
 			State:        FeatureStateAlpha,
 			Owner:        grafanaUserEssentialsSquad,
 		},
+		{
+			Name:        "azureMonitorDataplane",
+			Description: "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
+			State:       FeatureStateStable,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // on by default
+		},
 	}
 )
