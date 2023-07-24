@@ -4,10 +4,31 @@ on:
     paths: ["docs/sources/**"]
   workflow_dispatch:
 jobs:
+  docs-target:
+    runs-on: ubuntu-latest
+    outputs:
+      target: ${{ steps.target.outputs.target }}
+    steps:
+      - name: Checkout Actions library
+        uses: actions/checkout@v3
+        with:
+          repository: grafana/grafana-github-actions
+          path: ./actions
+
+      - name: Install Actions from library
+        run: npm install --production --prefix ./actions
+
+      - name: Determine technical documentation version
+        uses: ./actions/docs-target
+        id: target
+        with:
+          ref_name: ${{ github.base_ref }}
+
   doc-validator:
     runs-on: ubuntu-latest
     container:
       image: grafana/doc-validator:v3.2.1
+    needs: docs-target
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -27,18 +48,6 @@ jobs:
         env:
           TOKEN: ${{ steps.generate-token.outputs.token }}
 
-      - name: Checkout Actions library
-        uses: actions/checkout@v3
-        with:
-          repository: grafana/grafana-github-actions
-          path: ./actions
-
-      - name: Determine technical documentation version
-        uses: ./actions/docs-target
-        id: target
-        with:
-          ref_name: ${{ github.base_ref }}
-
       - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
         run: >
@@ -54,5 +63,5 @@ jobs:
           --name=doc-validator
           --reporter=github-pr-review
         env:
-          REVIEWDOG_GITHUB_API_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          TARGET: ${{ steps.target.outputs.target }}
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET: ${{needs.docs-target.outputs.target}}
