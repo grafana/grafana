@@ -43,6 +43,8 @@ function OldFolderPickerWrapper({
   initialTitle,
   dashboardId,
   enableCreateNew,
+  inputId,
+  skipInitialLoad,
 }: FolderPickerProps) {
   const [initialFolderUID] = useState(value);
 
@@ -61,6 +63,8 @@ function OldFolderPickerWrapper({
       showRoot={showRootFolder}
       initialFolderUid={initialFolderUID}
       initialTitle={initialTitle}
+      inputId={inputId}
+      skipInitialLoad={skipInitialLoad}
       dashboardId={dashboardId}
       enableCreateNew={enableCreateNew}
     />
