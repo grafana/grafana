@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { Auth, convertLegacyAuthProps } from '@grafana/experimental';
-import { CustomMethod } from '@grafana/experimental/dist/ConfigEditor/Auth/types';
 import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
 
@@ -11,6 +10,7 @@ import { PromOptions } from '../types';
 import { docsTip, overhaulStyles } from './ConfigEditor';
 import { AdvancedHttpSettings } from './overhaul/AdvancedHttpSettings';
 import { ConnectionSettings } from './overhaul/ConnectionSettings';
+import { CustomMethod } from './overhaul/types';
 
 type Props = {
   options: DataSourceSettings<PromOptions, {}>;
