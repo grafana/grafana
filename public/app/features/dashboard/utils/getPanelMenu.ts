@@ -76,10 +76,9 @@ export function getPanelMenu(
     });
 
     exportPanel(
-      exportHtmlElement.closest('[id="reactRoot"]')?.querySelector('canvas')!,
+      exportHtmlElement.closest('[id="reactRoot"]')?.querySelector(`[data-panelid="${panel.id}"]`)!,
       panel,
       exportType ?? ExportType.jpeg,
-      document.getElementById('pageContent') as HTMLElement,
       data
     );
   };
@@ -169,7 +168,7 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  const subMenuEnable = true;
+  const subMenuEnable = false; // UX UX UX UX UX UX UX UX
 
   const exportMenu: PanelMenuItem[] = [];
   let exportImageMenu = exportMenu;
@@ -217,19 +216,25 @@ export function getPanelMenu(
   exportDataMenu.push({
     text: `Excel`,
     iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.xls),
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.xlsx),
   });
 
-  exportDataMenu.push({
-    text: `Numbers`,
-    iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.numbers),
-  });
+  // MAYBE add back numbers?
 
   exportDataMenu.push({
-    text: `JSON`,
+    text: `Panel JSON`,
     iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.json),
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.panelJson),
+  });
+  exportDataMenu.push({
+    text: `Data JSON`,
+    iconClassName: 'book',
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.dataJson),
+  });
+  exportDataMenu.push({
+    text: `DataFrame JSON`,
+    iconClassName: 'book',
+    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.dataFrameJson),
   });
 
   if (subMenuEnable) {
@@ -254,7 +259,7 @@ export function getPanelMenu(
       type: 'submenu',
       text: t('panel.header-menu.export', `Export`),
       iconClassName: 'download-alt',
-      shortcut: 't', // if multiple letters, overlaps with > symbol
+      // shortcut: 't', // if multiple letters, overlaps with > symbol
       subMenu: exportMenu,
     });
   }

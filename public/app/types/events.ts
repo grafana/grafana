@@ -31,10 +31,9 @@ export interface ShowModalReactPayload {
 
 export interface ExportPanelPayload {
   panel: PanelModel;
-  htmlElement: HTMLCanvasElement; // from HTMLElement
+  htmlElement: HTMLElement;
   format: ExportType;
   data?: PanelData | null;
-  parentHtml: HTMLElement | null;
 }
 
 export interface ShowConfirmModalPayload {

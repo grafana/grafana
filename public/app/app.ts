@@ -190,9 +190,6 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      //init panel exporter
-      // exportStartup();
-
       // Preload selected app plugins
       const preloadResults = await preloadPlugins(config.apps);
 

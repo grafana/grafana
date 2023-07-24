@@ -43,7 +43,7 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
   saveAs(blob, fileName);
 }
 
-function s2ab(s: string) {
+/* function s2ab(s: string) {
   // temporary
   let buf = new ArrayBuffer(s.length);
   let view = new Uint8Array(buf);
@@ -51,7 +51,7 @@ function s2ab(s: string) {
     view[i] = s.charCodeAt(i) & 0xff;
   }
   return buf;
-}
+} */
 
 /**
  * Exports a DataFrame as a CSV file.
@@ -69,16 +69,6 @@ export function downloadDataFrameAsCsv(
 ) {
   const dataFrameCsv = toCSV([dataFrame], csvConfig);
 
-  /*if (csvConfig?.useExcelHeader) { // working HERE
-    const blob = new Blob([dataFrameCsv], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,"
-    });
-  
-    const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-    const fileName = `${title}-data${transformation}-${dateTimeFormat(new Date())}.xls`
-    saveAs(blob, fileName);
-  } */
-  //else {
   const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
     type: 'text/csv;charset=utf-8',
   });
@@ -86,7 +76,7 @@ export function downloadDataFrameAsCsv(
   const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
   const fileName = `${title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
   saveAs(blob, fileName);
-  //}
+  // }
 }
 
 /**
