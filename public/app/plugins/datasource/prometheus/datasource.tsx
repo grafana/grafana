@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -92,7 +92,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>({ max: 10 });
+  metricsNameCache = new LRUCache<string, string[]>({ max: 10 });
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;

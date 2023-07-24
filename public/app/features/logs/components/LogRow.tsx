@@ -42,6 +42,7 @@ interface Props extends Themeable2 {
   styles: LogRowStyles;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
@@ -50,6 +51,7 @@ interface Props extends Themeable2 {
 interface State {
   highlightBackround: boolean;
   showDetails: boolean;
+  mouseIsOver: boolean;
 }
 
 /**
@@ -63,6 +65,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     highlightBackround: false,
     showDetails: false,
+    mouseIsOver: false,
   };
   logLineRef: React.RefObject<HTMLTableRowElement>;
 
@@ -108,12 +111,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
+    this.setState({ mouseIsOver: true });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(this.props.row);
     }
   };
 
   onMouseLeave = () => {
+    this.setState({ mouseIsOver: false });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(undefined);
     }
@@ -235,6 +240,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
+              mouseIsOver={this.state.mouseIsOver}
             />
           ) : (
             <LogRowMessage
@@ -249,6 +255,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
+              mouseIsOver={this.state.mouseIsOver}
             />
           )}
         </tr>
@@ -268,6 +275,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             displayedFields={displayedFields}
             app={app}
             styles={styles}
+            isFilterLabelActive={this.props.isFilterLabelActive}
           />
         )}
       </>

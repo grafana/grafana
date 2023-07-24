@@ -2,6 +2,10 @@
 aliases:
   - ../../enterprise/enterprise-configuration/
 description: Learn about Grafana Enterprise configuration options that you can specify.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure Grafana Enterprise
 weight: 100
 ---

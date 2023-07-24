@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	// nolint:depguard // Lint exception can be removed once we move testdata to a separate module
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 

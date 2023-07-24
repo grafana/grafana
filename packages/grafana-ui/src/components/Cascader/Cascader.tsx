@@ -63,11 +63,11 @@ export interface CascaderOption {
   children?: CascaderOption[];
 }
 
-const disableDivFocus = css(`
-&:focus{
-  outline: none;
-}
-`);
+const disableDivFocus = css({
+  '&:focus': {
+    outline: 'none',
+  },
+});
 
 const DEFAULT_SEPARATOR = '/';
 
