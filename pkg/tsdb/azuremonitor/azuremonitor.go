@@ -67,7 +67,6 @@ type Service struct {
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
 	tracer          tracing.Tracer
-	features        featuremgmt.FeatureToggles
 }
 
 func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
