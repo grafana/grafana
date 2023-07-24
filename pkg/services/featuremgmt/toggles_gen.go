@@ -148,7 +148,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the still in-development new folder picker to support nested folders
+	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
