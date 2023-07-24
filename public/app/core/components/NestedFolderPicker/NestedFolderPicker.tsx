@@ -221,6 +221,7 @@ export function NestedFolderPicker({
     return (
       <Trigger
         label={label}
+        invalid={invalid}
         isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
         ref={setTriggerRef}
