@@ -181,6 +181,10 @@ export const stateSlice = createSlice({
     showAdditionalSettings: (state) => {
       state.showAdditionalSettings = !state.showAdditionalSettings;
     },
+
+    toggleUIState: (state) => {
+      state.UIState = state.UIState === 'labels' ? 'metrics' : 'labels';
+    },
   },
 });
 
@@ -236,16 +240,20 @@ export function initialState(query: PromVisualQuery): MetricsModalState {
     lastBackendResultMetrics: [],
     staleLabelValues: Object.keys(initialLabelValues),
     numberOfSeriesForQuery: undefined,
+    UIState: 'metrics',
   };
 }
 
 type LabelName = string;
 type LabelValue = string;
 
+type UIState = 'metrics' | 'labels';
+
 /**
  * The metrics explorer state object
  */
 export interface MetricsModalState {
+  UIState: UIState;
   /** Used for the loading spinner */
   isLoading: boolean;
   /**

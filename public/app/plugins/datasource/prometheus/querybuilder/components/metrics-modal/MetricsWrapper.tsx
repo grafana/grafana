@@ -28,6 +28,8 @@ export const MetricsWrapper = (props: {
   onNavigate: (val: number) => void;
   onChangePageNumber: (e: FormEvent<HTMLInputElement>) => void;
   clearQuery: () => void;
+  fetchValuesForLabelName: (labelName: string) => void;
+  setLabelValueSelected: (labelName: string, labelValue: string, selected: boolean) => void;
 }) => {
   const theme = useTheme2();
 
@@ -107,6 +109,8 @@ export const MetricsWrapper = (props: {
             query={props.query}
             state={state}
             disableTextWrap={state.disableTextWrap}
+            fetchValuesForLabelName={props.fetchValuesForLabelName}
+            setLabelValueSelected={props.setLabelValueSelected}
           />
         )}
       </div>

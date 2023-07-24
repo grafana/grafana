@@ -1,11 +1,7 @@
 import { AnyAction } from '@reduxjs/toolkit';
 
 import { reportInteraction } from '@grafana/runtime';
-import {
-  PrometheusDatasource,
-  prometheusRegularEscape,
-  prometheusSpecialRegexEscape,
-} from 'app/plugins/datasource/prometheus/datasource';
+import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 import {
   escapeLabelValueInExactSelector,

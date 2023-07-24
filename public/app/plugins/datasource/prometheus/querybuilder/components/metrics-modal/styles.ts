@@ -56,7 +56,7 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         top: 0;
       }
     `,
-    wrapper: css`
+    wrapperLabels: css`
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -66,6 +66,18 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         grid-template-columns: 33.334% 66.667%;
       }
     `,
+    wrapperMetrics: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      @media only screen and (min-width: 768px) {
+        display: grid;
+        grid-template-columns: 100%;
+      }
+    `,
+
+    wrapper: css``,
     modalMetricsWrapper: css`
       width: 100%;
       @media only screen and (min-width: 768px) {
@@ -235,5 +247,6 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     labelNamesCollapsableSection: css`
       padding: 0;
     `,
+    uiStateToggle: css``,
   };
 };

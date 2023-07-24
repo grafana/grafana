@@ -4,19 +4,18 @@ import debounce from 'debounce-promise';
 import React, { FormEvent, useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Checkbox, Input, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, Input, Modal, Switch, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../../language_utils';
 import { promQueryModeller } from '../../PromQueryModeller';
-import { QueryBuilderLabelFilter } from '../../shared/types';
 import { PromVisualQuery } from '../../types';
 
 import { AdditionalSettings } from './AdditionalSettings';
 import { ExplorerMetricPaginationFooter } from './ExplorerMetricPaginationFooter';
 import { FeedbackLink } from './FeedbackLink';
+import { LabelFilters } from './LabelFilters';
 import { MetricsWrapper } from './MetricsWrapper';
-import { PromCollapsableSection } from './PromCollapsableSection';
 import {
   displayedMetrics,
   getBackendSearchMetrics,
@@ -63,6 +62,7 @@ const {
   clear,
   setQuery,
   setValidatedState,
+  toggleUIState,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -327,18 +327,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
     });
   };
 
-  const isLabelValueSelected = (label: QueryBuilderLabelFilter, labelValue: string, labelName: string) => {
-    if (label.op === '=') {
-      return label.value === labelValue && labelName === label.label;
-    }
-    if (label.op === '=~') {
-      return label.value.split('|').some((value) => value === labelValue && labelName === label.label);
-    }
-    // @todo need to impelemnt for all operators
-    console.warn('Non-implemented label operator', label.op);
-    return label.value === labelValue && label.label === labelName;
-  };
-
   const onChangePageNum = (e: FormEvent<HTMLInputElement>) => {
     // cast as number
     const value = +e.currentTarget.value;
@@ -392,6 +380,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
     />
   );
 
+  const toggleMetricsLabels = () => {
+    dispatch(toggleUIState());
+  };
+
   console.log('state', state);
 
   return (
@@ -407,62 +399,39 @@ export const MetricsModal = (props: MetricsModalProps) => {
       className={styles.modal}
     >
       <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
-      <div className={styles.wrapper}>
-        {/* LABELS */}
-        <div className={styles.modalLabelsWrapper}>
-          <div className={styles.labelsSearchWrapper}>
-            <div className={cx(styles.labelInputItem)}>
-              <Input
-                autoFocus={true}
-                data-testid={testIds.searchLabels}
-                placeholder={placeholders.labelSearch}
-                value={state.labelSearchQuery}
-                onInput={(e) => {
-                  const value = e.currentTarget.value ?? '';
-                  dispatch(setLabelSearchQuery(value));
-                }}
+
+      <div className={styles.uiStateToggle}>
+        <Switch label={'browse by metrics'} checked={state.UIState === 'metrics'} onChange={toggleMetricsLabels} />
+      </div>
+      <div className={cx(styles.wrapper, state.UIState === 'labels' ? styles.wrapperLabels : styles.wrapperMetrics)}>
+        {state.UIState === 'labels' && (
+          <div className={styles.modalLabelsWrapper}>
+            <div className={styles.labelsSearchWrapper}>
+              <div className={cx(styles.labelInputItem)}>
+                <Input
+                  autoFocus={true}
+                  data-testid={testIds.searchLabels}
+                  placeholder={placeholders.labelSearch}
+                  value={state.labelSearchQuery}
+                  onInput={(e) => {
+                    const value = e.currentTarget.value ?? '';
+                    dispatch(setLabelSearchQuery(value));
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.labelsWrapper}>
+              <div className={styles.labelsTitle}>Label name</div>
+              <LabelFilters
+                query={query}
+                state={state}
+                fetchValuesForLabelName={fetchValuesForLabelName}
+                setLabelValueSelected={setLabelValueSelected}
               />
             </div>
           </div>
-
-          {/* @TODO this needs to be a virtualized list */}
-          <div className={styles.labelsWrapper}>
-            <>
-              <div className={styles.labelsTitle}>Label name</div>
-              {state.labelNames
-                .filter((label) => label !== '__name__')
-                .map((labelName, index) => (
-                  <PromCollapsableSection
-                    className={styles.labelNamesCollapsableSection}
-                    key={'label_names_' + labelName}
-                    label={<LabelNameLabel labelName={labelName} />}
-                    onToggle={(isOpen: boolean) => {
-                      if (isOpen) {
-                        fetchValuesForLabelName(labelName);
-                      }
-                    }}
-                    isOpen={query.labels.some((label) => label.label === labelName) ?? false}
-                  >
-                    {state.labelValues[labelName]?.map((labelValue) => (
-                      <LabelNameValue
-                        key={'label_values_' + labelValue}
-                        onChange={(e) => {
-                          setLabelValueSelected(labelName, labelValue, e.currentTarget.checked);
-                        }}
-                        labelName={labelName}
-                        labelValue={labelValue}
-                        checked={
-                          state.query.labels.some((label: QueryBuilderLabelFilter) =>
-                            isLabelValueSelected(label, labelValue, labelName)
-                          ) ?? false
-                        }
-                      />
-                    ))}
-                  </PromCollapsableSection>
-                ))}
-            </>
-          </div>
-        </div>
+        )}
 
         {/* METRICS */}
         <div className={styles.modalMetricsWrapper}>
@@ -485,6 +454,8 @@ export const MetricsModal = (props: MetricsModalProps) => {
             onNavigate={onNavigate}
             onChangePageNumber={onChangePageNum}
             clearQuery={() => dispatch(clear())}
+            fetchValuesForLabelName={fetchValuesForLabelName}
+            setLabelValueSelected={setLabelValueSelected}
           />
           {/* We want this to be sticky to the metrics section, not the entire mobile, so we have a slightly different DOM structure to accomodate a better mobile UX */}
           <div className={cx(styles.mobileOnly, styles.stickyMobileFooter)}>

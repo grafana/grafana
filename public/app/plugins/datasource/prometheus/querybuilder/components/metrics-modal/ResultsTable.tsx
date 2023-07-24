@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import cx from 'classnames';
 import React, { ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
@@ -8,6 +9,7 @@ import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 import { docsTip } from '../../../configuration/ConfigEditor';
 import { PromVisualQuery } from '../../types';
 
+import { LabelFilters } from './LabelFilters';
 import { tracking } from './state/helpers';
 import { MetricsModalState } from './state/state';
 import { MetricData, MetricsData } from './types';
@@ -19,6 +21,8 @@ type ResultsTableProps = {
   query: PromVisualQuery;
   state: MetricsModalState;
   disableTextWrap: boolean;
+  fetchValuesForLabelName: (labelName: string) => void;
+  setLabelValueSelected: (labelName: string, labelValue: string, selected: boolean) => void;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
@@ -136,7 +140,7 @@ export function ResultsTable(props: ResultsTableProps) {
     <table className={styles.table}>
       <thead className={styles.stickyHeader}>
         <tr>
-          <th className={styles.selectButtonWidth}> </th>
+          <th className={styles.selectButtonWidth}></th>
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>Name</th>
           {state.hasMetadata && (
             <>
@@ -146,13 +150,14 @@ export function ResultsTable(props: ResultsTableProps) {
           )}
         </tr>
       </thead>
-      <tbody>
-        <>
-          {metrics.length > 0 &&
-            metrics.map((metric: MetricData, idx: number) => {
-              return (
-                <tr key={metric?.value ?? idx} className={styles.row}>
-                  <td>
+
+      <>
+        {metrics.length > 0 &&
+          metrics.map((metric: MetricData, idx: number) => {
+            return (
+              <tbody key={metric?.value ?? idx}>
+                <tr className={styles.row}>
+                  <td className={styles.td}>
                     <Button
                       size="xs"
                       variant={`${metric?.value === query.metric ? 'success' : 'secondary'}`}
@@ -162,7 +167,7 @@ export function ResultsTable(props: ResultsTableProps) {
                       Select
                     </Button>
                   </td>
-                  <td className={styles.nameOverflow}>
+                  <td className={cx(styles.nameOverflow, styles.td)}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
                       searchWords={textHighlight(state)}
@@ -172,25 +177,37 @@ export function ResultsTable(props: ResultsTableProps) {
                   </td>
                   {state.hasMetadata && metaRows(metric)}
                 </tr>
-              );
-            })}
-          {metrics.length === 0 && !state.isLoading && noMetricsMessages()}
-        </>
-      </tbody>
+                {state.UIState === 'metrics' && metric.value === query.metric && (
+                  <tr className={styles.collapsableRow}>
+                    <td className={cx(styles.labelNamesCollapsableSection, styles.td)} colSpan={4}>
+                      <LabelFilters
+                        fetchValuesForLabelName={props.fetchValuesForLabelName}
+                        setLabelValueSelected={props.setLabelValueSelected}
+                        state={state}
+                        query={query}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            );
+          })}
+        {metrics.length === 0 && !state.isLoading && noMetricsMessages()}
+      </>
     </table>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
+    td: css`
+      padding: ${theme.spacing(1)};
+    `,
     table: css`
       ${disableTextWrap ? '' : 'table-layout: fixed;'}
       border-radius: ${theme.shape.borderRadius()};
       width: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
-      td {
-        padding: ${theme.spacing(1)};
-      }
 
       td,
       th {
@@ -198,10 +215,13 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
         border-bottom: 1px solid ${theme.colors.border.weak};
       }
     `,
+    labelNamesCollapsableSection: css`
+      padding: 0 0 0 ${theme.spacing(4)};
+    `,
+    collapsableRow: css``,
     row: css`
       label: row;
-      border-bottom: 1px solid ${theme.colors.border.weak}
-      &:last-child {
+      border-bottom: 1px solid ${theme.colors.border.weak} &: last-child {
         border-bottom: 0;
       }
     `,
