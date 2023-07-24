@@ -40,9 +40,24 @@ To learn more, refer to our [disconnect values documentation]({{< relref "../pan
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
 
+### Flamegraph improvements
+
+_Generally available in all editions of Grafana._
+
+<!-- Andrej Ocenas -->
+
+We have added 4 new features to the flamegraph visualization:
+
+- **Sandwich view**: You can now show a sandwich of any symbol in the flamegraph. Sandwich view will show all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
+- **Switching color scheme**: You can now switch color scheme between color gradient by the relative value of a symbol or by package name of a symbol.
+- **Switching symbol name alignment**: With symbols with long name it may be problematic to differentiate them if they have the same prefix. This new option allows you to align the text to left or right so that you can see the part of the symbol name that is important.
+- **Improved navigation**: You can also highlight a symbol or switch on sandwich view for a symbol from the table. Also, a new status bar on top of the flamegraph gives you an overview of which views are enabled.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
+
 ### Visualizations and Widgets split
 
-<!--Alexa Vargas -->
+<!-- Alexa Vargas -->
 
 _Experimental in some of our free tiers of Grafana._
 
@@ -67,3 +82,65 @@ The `use_refresh_token` configuration must be used in conjunction with the `acce
 
 The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.
 {{% /admonition %}}
+
+## Data sources
+
+### Step editor in Loki
+
+<!-- Ivana Huckova -->
+
+_Generally available in all editions of Grafana._
+
+We've improved the Loki query editor by adding a new step editor. This editor allows you to specify a value for the _step_ parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want to get a matrix response from your queries.
+
+By default, the step parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki step parameter, you can visit [the Loki step parameter documentation](<(https://grafana.com/docs/loki/latest/api/#step-versus-interval)>).
+
+{{< figure src="/media/docs/grafana/data-sources/loki-step-editor.png" max-width="750px" caption="New Loki step editor" >}}
+
+### Copy link to a Loki log line
+
+<!-- Sven Grossmann -->
+
+_Generally available in all editions of Grafana._
+
+A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it with a blue background, making it easy to identify and focus on the relevant information.
+
+{{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
+
+### TraceQL response streaming in Tempo
+
+<!-- André Pereira -->
+
+_Generally available in all editions of Grafana._
+
+Grafana's Tempo data source latest upgrade includes support for streaming responses of TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for those long queries that take a long time to return a response.
+
+To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
+
+### Configuration page redesign for Loki and Elasticsearch
+
+<!-- Matías Wenceslao Chomicki -->
+
+Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages and tooltips to assist you with configuring and customizing data sources.
+
+### Loki query splitting
+
+<!-- Matías Wenceslao Chomicki -->
+
+In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
+
+## Explore
+
+### Logs: Log rows menu when using displayed fields
+
+<!-- Matías Wenceslao Chomicki -->
+
+When you're browsing logs in Explore you can use the Log Details component, that is displayed when you click on a row, to replace the log lines contents with the value of one or more of the log fields or labels by using the "eye" icon. When this feature is in use, you now have access to the menu displayed on mouse-over with options such as show context (if available), copy log to clipboard, or copy shortlink.
+
+### Logs: Improved rendering performance of log lines
+
+<!-- Matías Wenceslao Chomicki -->
+
+With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
