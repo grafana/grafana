@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import { config } from '@grafana/runtime';
 
@@ -46,8 +46,6 @@ function OldFolderPickerWrapper({
   inputId,
   skipInitialLoad,
 }: FolderPickerProps) {
-  const [initialFolderUID] = useState(value);
-
   const handleOnChange = useCallback(
     (newFolder: { title: string; uid: string }) => {
       if (onChange) {
@@ -61,7 +59,7 @@ function OldFolderPickerWrapper({
     <OldFolderPicker
       onChange={handleOnChange}
       showRoot={showRootFolder}
-      initialFolderUid={initialFolderUID}
+      initialFolderUid={value}
       initialTitle={initialTitle}
       inputId={inputId}
       skipInitialLoad={skipInitialLoad}
