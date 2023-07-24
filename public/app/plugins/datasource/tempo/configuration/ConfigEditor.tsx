@@ -14,7 +14,6 @@ import { SpanBarSection } from 'app/features/explore/TraceView/components/settin
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
-import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
@@ -88,11 +87,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
             />
           }
         >
-          {config.featureToggles.traceqlSearch ? (
-            <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
-          ) : (
-            <SearchSettings options={options} onOptionsChange={onOptionsChange} />
-          )}
+          <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
         <Divider hideLine={true} />

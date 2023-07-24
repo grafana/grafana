@@ -7,6 +7,11 @@ aliases:
   - ../../best-practices/dashboard-management-maturity-levels/
   - ../../getting-started/strategies/
 description: Best practices for working with Grafana
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Best practices
 title: Grafana dashboard best practices
 weight: 100

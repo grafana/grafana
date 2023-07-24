@@ -1,12 +1,12 @@
-import { markersLayer } from './markersLayer';
+import { dayNightLayer } from './dayNightLayer';
+import { dynamicGeoJSONLayer } from './geojsonDynamic';
 import { geojsonLayer } from './geojsonLayer';
 import { heatmapLayer } from './heatMap';
 import { lastPointTracker } from './lastPointTracker';
-import { routeLayer } from './routeLayer';
-import { dayNightLayer } from './dayNightLayer';
-import { dynamicGeoJSONLayer } from './geojsonDynamic';
+import { markersLayer } from './markersLayer';
 import { photosLayer } from './photosLayer';
 import { networkLayer } from './networkLayer';
+import { routeLayer } from './routeLayer';
 
 /**
  * Registry for layer handlers

@@ -8,7 +8,10 @@ import coreModule from 'app/angular/core_module';
 export class AngularLoader implements AngularLoaderInterface {
   static $inject = ['$compile', '$rootScope'];
 
-  constructor(private $compile: any, private $rootScope: GrafanaRootScope) {}
+  constructor(
+    private $compile: any,
+    private $rootScope: GrafanaRootScope
+  ) {}
 
   load(elem: any, scopeProps: any, template: string): AngularComponent {
     const scope = this.$rootScope.$new();

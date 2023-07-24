@@ -95,6 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
+  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }
@@ -374,6 +375,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onPermalinkClick = async (row: LogRowModel) => {
+    // this is an extra check, to be sure that we are not
+    // creating permalinks for logs without an id-field.
+    // normally it should never happen, because we do not
+    // display the permalink button in such cases.
+    if (row.rowId === undefined) {
+      return;
+    }
+
     // get explore state, add log-row-id and make timerange absolute
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
@@ -695,6 +704,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onPermalinkClick={this.onPermalinkClick}
                   permalinkedRowId={this.props.panelState?.logs?.id}
                   scrollIntoView={this.scrollIntoView}
+                  isFilterLabelActive={this.props.isFilterLabelActive}
                 />
               </div>
             )}
@@ -784,6 +794,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
     `,
     visualisationType: css`
       display: flex;
+      flex: 1;
       justify-content: space-between;
     `,
     visualisationTypeRadio: css`

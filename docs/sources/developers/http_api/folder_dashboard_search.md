@@ -11,6 +11,10 @@ keywords:
   - search
   - folder
   - dashboard
+labels:
+  products:
+    - enterprise
+    - oss
 title: Folder/Dashboard Search HTTP API
 ---
 

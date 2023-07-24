@@ -2,6 +2,10 @@
 aliases:
   - ../../installation/docker/
 description: Guide for running Grafana using Docker
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Grafana Docker image
 title: Run Grafana Docker image
 weight: 400

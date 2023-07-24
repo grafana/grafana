@@ -20,6 +20,7 @@ const setup = (propOverrides: Partial<Props> = {}, detectedFields = ['place', 'p
     onOpenContext: () => {},
     styles,
     detectedFields,
+    mouseIsOver: true,
     ...propOverrides,
   };
 

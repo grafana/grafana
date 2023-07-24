@@ -5,7 +5,12 @@ rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following ev
 """
 
 load(
+    "scripts/drone/steps/lib.star",
+    "get_windows_steps",
+)
+load(
     "scripts/drone/utils/utils.star",
+    "ignore_failure",
     "pipeline",
 )
 load(
@@ -70,7 +75,6 @@ def rgm_main():
 
     return pipeline(
         name = "rgm-main-prerelease",
-        edition = "all",
         trigger = trigger,
         steps = rgm_build(),
         depends_on = ["main-test-backend", "main-test-frontend"],
@@ -95,20 +99,37 @@ tag_trigger = {
 def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
-        edition = "all",
         trigger = tag_trigger,
-        steps = rgm_build(script = "drone_publish_tag.sh"),
+        steps = rgm_build(script = "drone_publish_tag_grafana.sh"),
         depends_on = [],
+    )
+
+def rgm_windows():
+    return pipeline(
+        name = "rgm-tag-prerelease-windows",
+        trigger = tag_trigger,
+        steps = ignore_failure(
+            get_windows_steps(
+                ver_mode = "release",
+                bucket = "grafana-prerelease-dev",
+            ),
+        ),
+        depends_on = ["rgm-tag-prerelease"],
+        platform = "windows",
     )
 
 def rgm():
     return [
         rgm_main(),
         rgm_tag(),
+        rgm_windows(),
         verify_release_pipeline(
-            name = "rgm-tag-verify-prerelease-assets",
             trigger = tag_trigger,
-            depends_on = ["rgm-tag-prerelease"],
+            name = "rgm-tag-verify-prerelease-assets",
             bucket = "grafana-prerelease-dev",
+            depends_on = [
+                "rgm-tag-prerelease",
+                "rgm-tag-prerelease-windows",
+            ],
         ),
     ]
