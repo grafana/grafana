@@ -100,7 +100,9 @@ where:
 }
 ```
 
-> **Note**: the `from` and `to` also accepts relative ranges defined in [Time units and relative ranges]({{< relref "../dashboards/use-dashboards/#time-units-and-relative-ranges" >}})
+{{% admonition type="note" %}}
+The `from` and `to` also accept relative ranges defined in [Time units and relative ranges]({{< relref "../dashboards/use-dashboards/#time-units-and-relative-ranges" >}}).
+{{% /admonition %}}
 
 ## Share shortened link
 
