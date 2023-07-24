@@ -9,6 +9,6 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
   }
 
   getDefaultQuery(_: CoreApp): Partial<MyQuery> {
-    return DEFAULT_QUERY
+    return DEFAULT_QUERY;
   }
 }

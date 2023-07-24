@@ -1,6 +1,7 @@
 <!-- This README file is going to be the one displayed on the Grafana.com website for your plugin. Uncomment and replace the content here before publishing.
 
 Remove any remaining comments before publishing as these may be displayed on Grafana.com -->
+
 # Test Data
 
 Generates test data in different forms
@@ -9,13 +10,13 @@ Generates test data in different forms
 
 **BEFORE YOU BEGIN**
 - Ensure all links are absolute URLs so that they will work when the README is displayed within Grafana and Grafana.com
-- Be inspired ✨ 
+- Be inspired ✨
   - [grafana-polystat-panel](https://github.com/grafana/grafana-polystat-panel)
   - [volkovlabs-variable-panel](https://github.com/volkovlabs/volkovlabs-variable-panel)
 
 **ADD SOME BADGES**
 
-Badges convey useful information at a glance for users whether in the Catalog or viewing the source code. You can use the generator on [Shields.io](https://shields.io/badges/dynamic-json-badge) together with the Grafana.com API 
+Badges convey useful information at a glance for users whether in the Catalog or viewing the source code. You can use the generator on [Shields.io](https://shields.io/badges/dynamic-json-badge) together with the Grafana.com API
 to create dynamic badges that update automatically when you publish a new version to the marketplace.
 
 - For the logo field use 'grafana'.
@@ -30,7 +31,7 @@ Full example: ![Dynamic JSON Badge](https://img.shields.io/badge/dynamic/json?lo
 Consider other [badges](https://shields.io/badges) as you feel appropriate for your project.
 
 ## Overview / Introduction
-Provide one or more paragraphs as an introduction to your plugin to help users understand why they should use it.  
+Provide one or more paragraphs as an introduction to your plugin to help users understand why they should use it.
 
 Consider including screenshots:
 - in [plugin.json](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/#info) include them as relative links.
