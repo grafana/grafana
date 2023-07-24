@@ -24,7 +24,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: website
-          key: ${{ runner.os }}-website
+          key: build-technical-documentation-website
 
       - name: Sparse clone website repository
         if: steps.cache-primes.outputs.cache-hit != 'true'
@@ -48,6 +48,7 @@ jobs:
         run: |
           rm -rf /hugo/content/docs
           ln -sn "$$(pwd)/website/content/docs" /hugo/content/docs
+          mkdir -p /hugo/content/docs/grafana/latest
           ln -sn "$$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
           cd /hugo
           make prod HUGO_ENV=docs
