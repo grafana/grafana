@@ -111,6 +111,29 @@ To use this feature, toggle on the "Stream response" option in either the Search
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
 
+### Span filtering for traces is GA
+
+_Generally available in all editions of Grafana._
+
+<!-- Joey Tawadrous -->
+
+Since the last release, we've made several improvements to span filtering. We're promoting span filters out of public preview and into general availability.
+
+Span filters allow you to work much more efficiently with traces that consist of a large number of spans.
+
+Span filters exist above the trace view and allow you to filter the spans that are shown in the trace view. The more filters you add, the more specific are the filtered spans.
+
+Currently, you can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
+
+To only show the spans you have matched, you can press the `Show matches only` toggle.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png" max-width="750px" caption="Traces span filtering" >}}
+
 ### Configuration page redesign for Loki and Elasticsearch
 
 <!-- Matías Wenceslao Chomicki -->
