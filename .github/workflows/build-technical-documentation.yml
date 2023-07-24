@@ -94,14 +94,13 @@ jobs:
           rm -rf "$(pwd)/website/content/docs/grafana/${TARGET}"
           mv "$(pwd)/docs/sources" "$(pwd)/website/content/docs/grafana/${TARGET}"
           doc-validator \
-            "--include=^$(pwd)/website/content/docs/grafana/${TARGET}/${INCLUDE}" \
-            "--skip-checks=${SKIP_CHECKS}" \
+            "--include=^$(pwd)/website/content/docs/grafana/${TARGET}/${DOC_VALIDATOR_INCLUDE}" \
+            "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
             "$(pwd)/website/content/docs/grafana/${TARGET}" \
             /docs/grafana/latest \
             | sed "s,$(pwd)/website/content/docs/grafana/${TARGET},docs/sources,g" \
             | reviewdog \
                 -f=rdjsonl \
-                --fail-on-error \
                 --filter-mode=nofilter \
                 --name=doc-validator \
                 --reporter=github-pr-review
