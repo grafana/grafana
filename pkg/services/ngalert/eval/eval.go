@@ -442,7 +442,10 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 	// for each Datasource UID we can append them all to a slice and then
 	// sort them once
 	refIDs := make([]string, 0, len(refIDsToDatasourceUIDs))
-	for refID := range refIDsToDatasourceUIDs {
+	for refID, datasourceUid := range refIDsToDatasourceUIDs {
+		if expr.NodeTypeFromDatasourceUID(datasourceUid) != expr.TypeDatasourceNode {
+			continue
+		} // TODO think about ML node NO-Data... perhaps report original datasource.
 		refIDs = append(refIDs, refID)
 	}
 	sort.Strings(refIDs)
