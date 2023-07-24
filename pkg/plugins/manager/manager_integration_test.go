@@ -128,8 +128,10 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
 
-	_ = ps.StartAsync(context.Background())
-	_ = ps.AwaitRunning(context.Background())
+	err = ps.StartAsync(context.Background())
+	require.NoError(t, err)
+	err = ps.AwaitRunning(context.Background())
+	require.NoError(t, err)
 	defer ps.StopAsync()
 
 	ctx := context.Background()
