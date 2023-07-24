@@ -17,6 +17,9 @@ interface FolderPickerProps extends NestedFolderPickerProps {
 
   /** @deprecated */
   enableCreateNew?: boolean;
+
+  /** @deprecated */
+  skipInitialLoad?: boolean;
 }
 
 // Temporary wrapper component to switch between the NestedFolderPicker and the old flat
