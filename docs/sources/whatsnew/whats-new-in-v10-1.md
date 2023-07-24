@@ -77,6 +77,20 @@ _Generally available in all editions of Grafana._
 
 With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
 
+### Visualizations and Widgets split
+
+<!-- Alexa Vargas, Juan Cabanas -->
+
+_Experimental in all editions of Grafana._
+
+This experimental feature introduces a clear distinction between two different categories of panel plugin types: visualization panels that consume a data source and a new type called _widgets_ that don't require a data source.
+
+Now, you can easily add widgets like Text, News, and Annotation list without the need to select a data source. The plugins list and library panels are filtered based on whether you've selected a widget or visualization, providing a streamlined editing experience.
+
+To try out the visualizations and widgets split, enable the `vizAndWidgetSplit` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+
+{{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
+
 ## Data sources
 
 ### Step editor in Loki
