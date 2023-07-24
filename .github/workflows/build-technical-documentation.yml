@@ -37,7 +37,6 @@ jobs:
         run: npm install --production --prefix ./actions
 
       - name: Determine technical documentation version
-        if: steps.has-matching-release-tag.outputs.bool == 'true'
         uses: ./actions/docs-target
         id: target
         with:
