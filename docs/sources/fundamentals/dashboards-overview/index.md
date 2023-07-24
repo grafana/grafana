@@ -49,7 +49,7 @@ Currently, Grafana offers a diverse range of 155 data sources that you can use. 
 
 Queries allow you to reduce the entirety of your data to a specific dataset, providing a more manageable visualization. They help answer questions you have about system and operational processes. For instance, a company with an online store might want to determine the number of customers who add products to their shopping carts. This can be achieved through a query that aggregates access metrics for the shopping cart service, revealing the number of users accessing the service per second.
 
-When working with data sources, it's crucial to recognize that each one has its own distinct query language. For example, Prometheus data sources utilize [PromQL](/blog/2020/02/04/introduction-to-promql-the-prometheus-query-language/), while [LogQL](/docs/loki/latest/logql/) is used for logs, and particular databases employ SQL. A query is the foundation of every visualization in Grafana, and a dashboard might use a range of query languages.
+When working with data sources, it's crucial to recognize that each one has its own distinct query language. For example, Prometheus data sources utilize [PromQL](/blog/2020/02/04/introduction-to-promql-the-prometheus-query-language/), while [LogQL]({{< relref "/docs/loki/latest/logql" >}}) is used for logs, and particular databases employ SQL. A query is the foundation of every visualization in Grafana, and a dashboard might use a range of query languages.
 
 The following image shows the Query Editor associated with the Prometheus data source. The `node_cpu_seconds_total` query is written in PromQL and requests just one metric:
 

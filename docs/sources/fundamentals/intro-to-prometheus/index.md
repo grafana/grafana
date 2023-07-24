@@ -94,7 +94,7 @@ The following image shows the two metrics associated with the endpoint. The HELP
 
 The 'MyApp' metrics are available in an HTTP endpoint, but how do they get to Grafana, and subsequently, into a dashboard? The process of recording and transmitting the readings of an application or piece of infrastructure is known as _telemetry_. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. The metrics introduced previously, for example, `MyAppnodejs_active_requests_total`, are telemetry data.
 
-To get metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards the telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed. For example, you can configure Grafana Agent to pull the data from 'MyApp' every five seconds and send the results to Grafana Cloud.
+To get metrics into Grafana, you can use either the Prometheus software or [Grafana Agent]({{< relref "/docs/agent/latest" >}}) to scrape metrics. Grafana Agent collects and forwards the telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed. For example, you can configure Grafana Agent to pull the data from 'MyApp' every five seconds and send the results to Grafana Cloud.
 
 Metrics data is only one type of telemetry data; the other kinds are logs and traces. Using Grafana Agent can be a great option to send telemetry data because as you scale your observability practices to include logs and traces, which Grafana Agent also supports, you've got a solution already in place.
 

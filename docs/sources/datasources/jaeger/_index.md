@@ -26,7 +26,7 @@ For instructions on how to add a data source to Grafana, refer to the [administr
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so your Grafana instance's users can create queries in the [query editor]({{< relref "#query-the-data-source" >}}) when the users [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so your Grafana instance's users can create queries in the [query editor]({{< relref "#query-the-data-source" >}}) when the users [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}) and use [Explore]({{< relref "../../explore" >}}).
 
 You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), [link to a trace ID from logs]({{< relref "#link-to-a-trace-id-from-logs" >}}), and [link to a trace ID from metrics]({{< relref "#link-to-a-trace-id-from-metrics" >}}).
 
@@ -143,7 +143,7 @@ Each linked query consists of:
 
 ### Node Graph
 
-The **Node Graph** setting enables the [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
+The **Node Graph** setting enables the [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph" >}}), which is disabled by default.
 
 Once enabled, Grafana displays the Node Graph above the trace view.
 

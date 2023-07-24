@@ -15,14 +15,14 @@ weight: 8
 
 {{% admonition type="note" %}}
 
-This feature is in [public preview](/docs/release-life-cycle/).
+This feature is in [public preview]({{< relref "/docs/release-life-cycle" >}}).
 
 {{% /admonition %}}
 
 {{% admonition type="caution" %}}
 
 Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-and-resource-caching" >}}) and/or rate limiting features.
+This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}) and/or rate limiting features.
 
 {{% /admonition %}}
 
@@ -88,7 +88,7 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 {{% admonition type="note" %}}
 
-Available in [private preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
+Available in [private preview]({{< relref "/docs/release-life-cycle" >}}) in [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}). This feature will have a cost by active users after being promoted into general availability.
 
 Please contact support to have the feature enabled.
 
@@ -150,14 +150,14 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 ## Assess public dashboard usage
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
-Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage/#dashboard-insights" >}}).
+Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage#dashboard-insights" >}}).
 
 ## Supported data sources
 

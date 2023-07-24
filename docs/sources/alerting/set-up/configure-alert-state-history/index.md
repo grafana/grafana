@@ -60,7 +60,7 @@ enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStat
 
 ## Adding the Loki data source
 
-See our instructions on [adding a data source](/docs/grafana/latest/administration/data-source-management/).
+See our instructions on [adding a data source]({{< relref "/docs/grafana/latest/administration/data-source-management" >}}).
 
 ## Querying the history
 

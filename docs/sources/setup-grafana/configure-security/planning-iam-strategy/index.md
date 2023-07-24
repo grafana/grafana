@@ -170,7 +170,7 @@ Dashboard, folder, and data source permissions can be set through the UI or APIs
 ### Role-based access control
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 If you think that the basic organization and server administrator roles are too limiting, it might be beneficial to employ [role-based access control (RBAC)]({{< relref "../../../administration/roles-and-permissions/access-control" >}}).
@@ -190,7 +190,7 @@ When connecting Grafana to an identity provider, it's important to think beyond 
 Team sync is a feature that allows you to synchronize teams or groups from your authentication provider with teams in Grafana. This means that users of specific teams or groups in LDAP, OAuth, or SAML will be automatically added or removed as members of corresponding teams in Grafana. Whenever a user logs in, Grafana will check for any changes in the teams or groups of the authentication provider and update the user's teams in Grafana accordingly. This makes it easy to manage user permissions across multiple systems.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 {{% admonition type="note" %}}

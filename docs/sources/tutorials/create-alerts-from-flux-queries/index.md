@@ -20,7 +20,7 @@ weight: 70
 
 # How to create Grafana alerts with InfluxDB and the Flux query language
 
-[Grafana Alerting](/docs/grafana/latest/alerting/) represents a powerful new approach to systems observability and incident response management. While the alerting platform is perhaps best known for its strong integrations with Prometheus, the system works with numerous popular data sources including InfluxDB. In this tutorial we will learn how to create Grafana alerts using InfluxDB and the newer Flux query language. We will cover five common scenarios from the most basic to the most complex. Together, these five scenarios will provide an excellent guide for almost any type of alerting query that you wish to create using Grafana and Flux.
+[Grafana Alerting]({{< relref "/docs/grafana/latest/alerting" >}}) represents a powerful new approach to systems observability and incident response management. While the alerting platform is perhaps best known for its strong integrations with Prometheus, the system works with numerous popular data sources including InfluxDB. In this tutorial we will learn how to create Grafana alerts using InfluxDB and the newer Flux query language. We will cover five common scenarios from the most basic to the most complex. Together, these five scenarios will provide an excellent guide for almost any type of alerting query that you wish to create using Grafana and Flux.
 
 Before we dive into our alerting scenarios, it is worth considering the development of InfluxDB's two popular query languages: InfluxQL and Flux. Originally, InfluxDB used [InfluxQL](https://docs.influxdata.com/influxdb/v2.5/reference/syntax/influxql/spec/) as their query language, which uses a SQL-like syntax. But beginning with InfluxDB v1.8, the company introduced [Flux](https://docs.influxdata.com/flux/v0.x/), "an open source functional data scripting language designed for querying, analyzing, and acting on data." "Flux," its official documentation goes on to state, "unifies code for querying, processing, writing, and acting on data into a single syntax. The language is designed to be usable, readable, flexible, composable, testable, contributable, and shareable."
 
@@ -41,7 +41,7 @@ To do this, we'll: create a Grafana alert rule, add a Flux query, and then add e
 1. Open the Grafana alerting menu and select **Alert rules**.
 1. Click **New alert rule**.
 1. Give your alert rule a name and then select **Grafana managed alert**.
-   For InfluxDB, you will always create a [Grafana managed rule](/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#add-grafana-managed-rule).
+   For InfluxDB, you will always create a [Grafana managed rule]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule#add-grafana-managed-rule" >}}).
 
 ### Add an initial Flux query to the alert rule
 
@@ -67,7 +67,7 @@ This Flux query will yield a time-series graph like this:
 
 ### Add expressions to your Grafana Alert rule
 
-With data now appearing in our rule setup, our next step is to create an [expression](/docs/grafana/v9.0/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#using-expressions). Move to section `B`. For this scenario, we want to create a Reduce expression that will reduce the above to a single value. In this image, you can see that we have chosen to reduce our time-series data the `Last` value from input `A`. In this case, it returns a value 53 degrees celsius for Tank A5:
+With data now appearing in our rule setup, our next step is to create an [expression]({{< relref "/docs/grafana/v9.0/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions#using-expressions" >}}). Move to section `B`. For this scenario, we want to create a Reduce expression that will reduce the above to a single value. In this image, you can see that we have chosen to reduce our time-series data the `Last` value from input `A`. In this case, it returns a value 53 degrees celsius for Tank A5:
 
 ![grafana alerts from flux queries](/media/tutorials/screenshot-flux-reduce-expression.png)
 
@@ -158,7 +158,7 @@ And here is a preview of our alerts:
 This will display as follows:
 ![grafana alerts from flux queries](/media/tutorials/screenshot-flux-tip-significant-figures.png))
 
-You can reference our documentation on [alert message templating](/docs/grafana/latest/alerting/contact-points/message-templating/) to learn more about this powerful feature.
+You can reference our documentation on [alert message templating]({{< relref "/docs/grafana/latest/alerting/contact-points/message-templating" >}}) to learn more about this powerful feature.
 
 ### Conclusion
 
@@ -335,4 +335,4 @@ We can now see that two tanks, `D2` and `E1`, are evaluating to true. When we pr
 
 ### Conclusion
 
-Flux queries and Grafana Unified Alerting are a powerful combination to identify practically any alertable conditions in your dataset, or across your entire system. For more information on Grafana Alerting, [visit the documentation here](/docs/grafana/latest/alerting/). For more information on the Flux query language, [you can visit that documentation as well](https://docs.influxdata.com/flux/v0.x/).
+Flux queries and Grafana Unified Alerting are a powerful combination to identify practically any alertable conditions in your dataset, or across your entire system. For more information on Grafana Alerting, [visit the documentation here]({{< relref "/docs/grafana/latest/alerting" >}}). For more information on the Flux query language, [you can visit that documentation as well](https://docs.influxdata.com/flux/v0.x/).

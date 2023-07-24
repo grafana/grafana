@@ -16,9 +16,9 @@ weight: 15
 
 Along with metrics, Explore allows you to investigate your logs across several data sources including:
 
-- [Elasticsearch]({{< relref "../datasources/elasticsearch/" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb/" >}})
-- [Loki]({{< relref "../datasources/loki/" >}})
+- [Elasticsearch]({{< relref "../datasources/elasticsearch" >}})
+- [InfluxDB]({{< relref "../datasources/influxdb" >}})
+- [Loki]({{< relref "../datasources/loki" >}})
 
 During monitoring, troubleshooting, and incident response, you can dig deeper into the metrics and logs to find the cause of the issue. Explore also allows you to correlate metrics and logs by viewing them side-by-side.
 
@@ -132,13 +132,13 @@ The **Open in split view** button allows you to execute the context query for a 
 
 ## Copy link to log line
 
-Linking of log lines in Grafana allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortcut** 🔗 button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana will automatically scroll to the corresponding log line and highlight it with a blue background, making it easy to identify and focus on the relevant information.
+Linking of log lines in Grafana allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortcut** 🔗 button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana will automatically scroll to the corresponding log line and highlight it with a blue background, making it easy to identify and focus on the relevant information.
 
 ## Loki-specific features
 
 As mentioned, one of the log integrations is for the new open source log aggregation system from Grafana Labs - [Loki](https://github.com/grafana/loki). Loki is designed to be very cost effective, as it does not index the contents of the logs, but rather a set of labels for each log stream. The logs from Loki are queried in a similar way to querying with label selectors in Prometheus. It uses labels to group log streams which can be made to match up with your Prometheus labels. For more information about Grafana Loki, refer to [Grafana Loki](https://github.com/grafana/loki) or the Grafana Labs hosted variant: [Grafana Cloud Logs](https://grafana.com/loki).
 
-For more information, refer to [Loki's data source documentation]({{< relref "../datasources/loki/" >}}) on how to query for log data.
+For more information, refer to [Loki's data source documentation]({{< relref "../datasources/loki" >}}) on how to query for log data.
 
 ### Switch from metrics to logs
 

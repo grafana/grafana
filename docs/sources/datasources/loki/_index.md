@@ -20,14 +20,14 @@ weight: 800
 
 # Loki data source
 
-Grafana ships with built-in support for [Loki](/docs/loki/latest/), an open-source log aggregation system by Grafana Labs.
+Grafana ships with built-in support for [Loki]({{< relref "/docs/loki/latest" >}}), an open-source log aggregation system by Grafana Labs.
 This topic explains configuring and querying specific to the Loki data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Loki data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
+Once you've added the Loki data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}), use [Explore]({{< relref "../../explore" >}}), and [annotate visualizations]({{< relref "./query-editor#apply-annotations" >}}).
 
 ## Configure the data source
 
@@ -62,7 +62,7 @@ The **Derived Fields** configuration helps you:
 - Add a link that uses the value of the field
 
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
-These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
+These links appear in the [log details]({{< relref "../../explore/logs-integration#labels-and-detected-fields" >}}).
 
 {{% admonition type="note" %}}
 If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
@@ -92,7 +92,7 @@ The new field with the link shown in log details:
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 #### Provisioning examples
 
@@ -159,9 +159,9 @@ datasources:
 
 ## Query the data source
 
-The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL]({{< relref "/docs/loki/latest/logql" >}}).
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -169,4 +169,4 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).

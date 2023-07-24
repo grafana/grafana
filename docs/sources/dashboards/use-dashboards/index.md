@@ -39,8 +39,8 @@ The following image and descriptions highlight all dashboard features.
 - (3) **Share dashboard or panel**: Use this option to share the current dashboard or panel using a link or snapshot. You can also export the dashboard definition from the share modal.
 - (4) **Add**: Use this option to add a panel, dashboard row, or library panel to the current dashboard.
 - (5) **Save dashboard**: Click to save changes to your dashboard.
-- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics]({{< relref "../assess-dashboard-usage/" >}}).
-- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings/" >}}).
+- (6) **Dashboard insights**: Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics]({{< relref "../assess-dashboard-usage" >}}).
+- (7) **Dashboard settings**: Use this option to change dashboard name, folder, and tags and manage variables and annotation queries. Learn more about [dashboard settings]({{< relref "../build-dashboards/modify-dashboard-settings" >}}).
 - (8) **Time picker dropdown**: Click to select relative time range options and set custom absolute time ranges.
   - You can change the **Timezone** and **fiscal year** settings from the time range controls by clicking the **Change time settings** button.
   - Time settings are saved on a per-dashboard basis.
@@ -56,7 +56,7 @@ The following image and descriptions highlight all dashboard features.
 - (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
   - Panels inside a collapsed row do not issue queries.
-  - Use [repeating rows]({{< relref "../build-dashboards/create-dashboard/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
+  - Use [repeating rows]({{< relref "../build-dashboards/create-dashboard#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 

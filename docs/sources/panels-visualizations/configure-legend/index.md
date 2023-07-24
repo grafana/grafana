@@ -35,12 +35,12 @@ When you apply your changes, the visualization changes appear to all users of th
 
 This topic currently applies to the following visualizations:
 
-- [Bar chart]({{< relref "../visualizations/bar-chart/" >}})
-- [Histogram]({{< relref "../visualizations/histogram/" >}})
-- [Pie chart]({{< relref "../visualizations/pie-chart/" >}})
-- [State timeline]({{< relref "../visualizations/state-timeline/" >}})
-- [Status history]({{< relref "../visualizations/status-history/" >}})
-- [Time series]({{< relref "../visualizations/time-series/" >}})
+- [Bar chart]({{< relref "../visualizations/bar-chart" >}})
+- [Histogram]({{< relref "../visualizations/histogram" >}})
+- [Pie chart]({{< relref "../visualizations/pie-chart" >}})
+- [State timeline]({{< relref "../visualizations/state-timeline" >}})
+- [Status history]({{< relref "../visualizations/status-history" >}})
+- [Time series]({{< relref "../visualizations/time-series" >}})
 
 ## Add values to a legend
 
@@ -72,7 +72,7 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 ## Sort series
 
-You can change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+You can change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
 {{% admonition type="note" %}}
 This feature is only supported in these panels: Bar chart, Histogram, Time series.

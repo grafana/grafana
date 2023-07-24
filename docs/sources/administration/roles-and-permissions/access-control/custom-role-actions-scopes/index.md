@@ -15,12 +15,12 @@ weight: 80
 # RBAC permissions, actions, and scopes
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
-To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "../#fixed-roles" >}}).
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "..#fixed-roles" >}}).
 
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
@@ -123,7 +123,7 @@ The following list contains role-based access control actions.
 | `serviceaccounts:read`               | `serviceaccounts:*`                                                                     | Read Grafana service accounts.                                                                                                                                                                                      |
 | `serviceaccounts.permissions:write`  | `serviceaccounts:*`                                                                     | Update Grafana service account permissions to control who can do what with the service account.                                                                                                                     |
 | `serviceaccounts.permissions:read`   | `serviceaccounts:*`                                                                     | Read Grafana service account permissions to see who can do what with the service account.                                                                                                                           |
-| `settings:read`                      | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Read the [Grafana configuration settings]({{< relref "../../../../setup-grafana/configure-grafana/" >}})                                                                                                            |
+| `settings:read`                      | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Read the [Grafana configuration settings]({{< relref "../../../../setup-grafana/configure-grafana" >}})                                                                                                            |
 | `settings:write`                     | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update any Grafana configuration settings that can be [updated at runtime]({{< relref "../../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}}).                                               |
 | `status:accesscontrol`               | `services:accesscontrol`                                                                | Get access-control enabled status.                                                                                                                                                                                  |
 | `teams.permissions:read`             | `teams:*`<br>`teams:id:*`                                                               | Read members and Team Sync setup for teams.                                                                                                                                                                         |
@@ -158,7 +158,7 @@ The following list contains role-based access control actions.
 > **Note:** Available from Grafana 9.4 in early access.
 
 > **Note:** This feature is behind the `accessControlOnCall` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana#feature_toggles" >}}) for details.
 
 The following list contains role-based access control actions used by Grafana OnCall application plugin.
 
@@ -206,7 +206,7 @@ The following list contains role-based access control scopes.
 | `permissions:type:delegate`                     | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.                                     |
 | `permissions:type:escalate`                     | The scope is required to trigger the reset of basic roles permissions. It indicates that users might acquire additional permissions they did not previously have.                                                                                  |
 | `plugins:*` <br> `plugins:id:*`                 | Restrict an action to a set of plugins. For example, `plugins:id:grafana-oncall-app` matches Grafana OnCall plugin, and `plugins:*` matches all plugins.                                                                                           |
-| `provisioners:*`                                | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-grafana-provisioning/" >}}).           |
+| `provisioners:*`                                | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-grafana-provisioning" >}}).           |
 | `reports:*` <br> `reports:id:*`                 | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:id:1` matches the report whose ID is `1`.                                                                                                         |
 | `roles:*` <br> `roles:uid:*`                    | Restrict an action to a set of roles. For example, `roles:*` matches any role and `roles:uid:randomuid` matches only the role whose UID is `randomuid`.                                                                                            |
 | `services:accesscontrol`                        | Restrict an action to target only the role-based access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                  |

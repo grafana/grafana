@@ -48,7 +48,7 @@ To set up Alerting, you need to:
    - [Optional] Add additional nested policies
    - [Optional] Add labels and label matchers to control alert routing
 
-4. [Optional] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting) and [Grafana Incident](/docs/grafana-cloud/incident/set-up)
+4. [Optional] Integrate with [Grafana OnCall]({{< relref "/docs/oncall/latest/integrations/grafana-alerting" >}}) and [Grafana Incident]({{< relref "/docs/grafana-cloud/incident/set-up" >}})
 
 ## Advanced set up options
 
@@ -80,7 +80,7 @@ The following sections cover all of these concepts:
 
 `mimirtool` is a powerful command-line tool for interacting with Grafana Mimir, which powers Grafana Cloud Metrics and Alerts. Use `mimirtool` to upload your metric and log rules definition and the Alertmanager configuration using YAML files.
 
-For more information, including installation instructions, see [Grafana Mimirtool](/docs/mimir/latest/operators-guide/tools/mimirtool).
+For more information, including installation instructions, see [Grafana Mimirtool]({{< relref "/docs/mimir/latest/operators-guide/tools/mimirtool" >}}).
 
 {{% admonition type="note" %}}
 For `mimirtool` to interact with Grafana Cloud, you must set the correct configuration variables. Set them using either environment variables or a command line flags.

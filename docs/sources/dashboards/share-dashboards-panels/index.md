@@ -94,14 +94,14 @@ If you created a snapshot by mistake, click **Delete snapshot** to remove the sn
 
 ### Dashboard export
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "./manage-dashboards/#export-and-import-dashboards" >}}).
+Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "./manage-dashboards#export-and-import-dashboards" >}}).
 
 ## Export dashboard as PDF
 
 You can generate and save PDF files of any dashboard.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 {{% /admonition %}}
 
 1. Click **Dashboards** in the left-side menu.
@@ -132,7 +132,7 @@ The **Link** tab shows the current time range, template variables, and the defau
 1. Send the copied URL to a Grafana user with authorization to view the link.
 1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-For more information, refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering/" >}}).
+For more information, refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering" >}}).
 
 The following example shows a link to a server-side rendered PNG:
 

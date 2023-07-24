@@ -133,7 +133,7 @@ Gradient color is generated based on the hue of the line color.
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../../calculation-types/" >}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../../calculation-types" >}}) to show in the legend. You can have more than one.
 
 For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
@@ -187,4 +187,4 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions]({{< relref "../../configure-standard-options/#max" >}}).
+You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions]({{< relref "../../configure-standard-options#max" >}}).

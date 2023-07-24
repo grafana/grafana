@@ -76,6 +76,6 @@ For a plugin to be published on [Grafana Plugins](/grafana/plugins/), it needs t
 
 1. [Create a pull request](https://github.com/grafana/grafana-plugin-repository/pull/new/master).
 
-Once your plugin has been accepted, it'll be published on [Grafana Plugin](/grafana/plugins/), available for anyone to [install](/docs/grafana/latest/plugins/installation/)!
+Once your plugin has been accepted, it'll be published on [Grafana Plugin](/grafana/plugins/), available for anyone to [install]({{< relref "/docs/grafana/latest/plugins/installation" >}})!
 
 > We're auditing every plugin that's added to make sure it's ready to be published. This means that it might take some time before your plugin is accepted. We're working on adding more automated tests to improve this process.

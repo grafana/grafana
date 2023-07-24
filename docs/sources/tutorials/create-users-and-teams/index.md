@@ -56,7 +56,7 @@ a global role, the default `admin` user has this role.
 - **Viewer -** View dashboards.
 
 {{% admonition type="note" %}}
-You can also configure Grafana to allow [anonymous access](/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
+You can also configure Grafana to allow [anonymous access]({{< relref "/docs/grafana/latest/auth/overview#anonymous-authentication" >}}), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
 {{% /admonition %}}
 
 ### Exercise
@@ -241,5 +241,5 @@ In this tutorial, you've configured Grafana for an organization:
 
 ### Learn more
 
-- [Organization Roles](/docs/grafana/next/administration/manage-users-and-permissions/about-users-and-permissions/#organization-roles)
-- [Permissions Overview](/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/#about-users-and-permissions)
+- [Organization Roles]({{< relref "/docs/grafana/next/administration/manage-users-and-permissions/about-users-and-permissions#organization-roles" >}})
+- [Permissions Overview]({{< relref "/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions#about-users-and-permissions" >}})

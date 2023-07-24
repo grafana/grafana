@@ -22,7 +22,7 @@ Recorded queries allow you to see trends over time by taking a snapshot of a dat
 For our plugins that do not return time series, it might be useful to plot historical data. For example, you might want to query ServiceNow to see a history of request response times but it can only return current point-in-time metrics.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}).
 {{% /admonition %}}
 
 ## How recorded queries work
@@ -67,7 +67,7 @@ You can add existing recorded queries to panels in a dashboard. For each recorde
 1. If you want to filter recorded queries by data source, select a data source from the filter by data source drop down menu.
 1. Click the `Add` button on your recorded query to add it to the panel.
 
-After adding your recorded query to the panel, the panel data source will become `-- Mixed --`. Your recorded query is represented by a `Prometheus` query with a name label matching your recorded query name. Refer to [Prometheus]({{< relref "../../datasources/prometheus/" >}}) to learn more about the `Prometheus` data source.
+After adding your recorded query to the panel, the panel data source will become `-- Mixed --`. Your recorded query is represented by a `Prometheus` query with a name label matching your recorded query name. Refer to [Prometheus]({{< relref "../../datasources/prometheus" >}}) to learn more about the `Prometheus` data source.
 
 If after adding a recorded query, a query with a `-- Mixed --` data source instead of `Prometheus` data source appears, this could mean that a Prometheus remote write target was not set up for recorded queries. Refer to [Remote write target](#remote-write-target) to set up a remote write point.
 

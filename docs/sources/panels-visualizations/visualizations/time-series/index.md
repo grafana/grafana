@@ -90,12 +90,12 @@ Use opacity to specify the series area fill color.
 
 ### Gradient mode
 
-Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}).
+Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../configure-standard-options#color-scheme" >}}).
 
 - **None:** No gradient fill. This is the default setting.
 - **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
+- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options#color-scheme" >}}). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
@@ -126,7 +126,7 @@ This option controls how the graph interpolates the series line.
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) field option.
+Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../configure-standard-options#color-scheme" >}}) field option.
 
 ![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
@@ -205,7 +205,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a specific point.
 
-To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options]({{< relref "../../configure-standard-options/#max" >}}).
+To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options]({{< relref "../../configure-standard-options#max" >}}).
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
@@ -229,7 +229,7 @@ The transform option is only available as an override.
 
 ## Color options
 
-By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options#color-scheme" >}}) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
 color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette

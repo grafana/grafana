@@ -87,7 +87,7 @@ Query variables are generally only supported for strings. If your query returns 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
 {{% admonition type="note" %}}
-Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
+Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources" >}}).
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
@@ -136,7 +136,7 @@ Constant variables are _not_ flexible. Each constant variable only holds one val
 Constant variables are useful when you have complex values that you need to include in queries but don't want to retype in every query. For example, if you had a server path called `i-0b6a61efe2ab843gg`, then you could replace it with a variable called `$path_gg`.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format]({{< relref "../variable-syntax/#raw" >}}).
+1. In the **Value** field, enter the variable value. You can enter letters, numbers, and symbols. You can even use wildcards if you use [raw format]({{< relref "../variable-syntax#raw" >}}).
 1. In **Preview of values**, Grafana displays the current variable value. Review it to ensure it matches what you expect.
 1. Click **Add** to add the variable to the dashboard.
 
@@ -226,7 +226,7 @@ Automatic escaping and formatting can cause problems and it can be tricky to gra
 If you do not want Grafana to do this automatic regex escaping and formatting, then you must do one of the following:
 
 - Turn off the **Multi-value** or **Include All option** options.
-- Use the [raw variable format]({{< relref "../variable-syntax/#raw" >}}).
+- Use the [raw variable format]({{< relref "../variable-syntax#raw" >}}).
 
 ### Include All option
 
@@ -509,7 +509,7 @@ For example, if you have a series of four linked variables (country, region, ser
 
 ## Manage variables
 
-The variables page lets you [add]({{< relref "./add-template-variables/" >}}) variables and manage existing variables. It also allows you to [inspect]({{< relref "inspect-variable/" >}}) variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
+The variables page lets you [add]({{< relref "./add-template-variables" >}}) variables and manage existing variables. It also allows you to [inspect]({{< relref "inspect-variable" >}}) variables and identify whether a variable is being referenced (or used) in other variables or dashboard.
 
 **Move:** You can move a variable up or down the list using drag and drop.
 

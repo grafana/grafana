@@ -28,7 +28,7 @@ Fine-grained access control is now called "Role-based access control (RBAC)". As
 
 - Built-in roles are now called basic roles. They now consist of permissions, not roles.
 - The Terraform `builtin_role_assignment` resource is deprecated. Please use [grafana_role](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) resource instead.
-- Grafana provisioning has a new schema. Please refer to [Provisioning RBAC with Grafana](/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/) to learn more about provisioning.
+- Grafana provisioning has a new schema. Please refer to [Provisioning RBAC with Grafana]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning" >}}) to learn more about provisioning.
 - Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
 - Several role-based access control actions have been renamed. All database entries that use legacy action names will be migrated to use the new names, but provisioning files and scripts will have to be updated by the user. This change also means that if Grafana is downgraded from 9.0 to a lower version, some role-based access control permissions will not be resolved correctly.
 
@@ -55,7 +55,7 @@ In the Prometheus data source, when grafana receives numeric data from Prometheu
 
 <!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
-In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../../datasources/influxdb/##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../../datasources/influxdb##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 

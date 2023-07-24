@@ -22,7 +22,7 @@ weight: 150
 # Alertmanager data source
 
 Grafana includes built-in support for Alertmanager implementations in Prometheus and Mimir.
-Once you add it as a data source, you can use the [Grafana Alerting UI](/docs/grafana/latest/alerting/) to manage silences, contact points, and notification policies.
+Once you add it as a data source, you can use the [Grafana Alerting UI]({{< relref "/docs/grafana/latest/alerting" >}}) to manage silences, contact points, and notification policies.
 To switch between Grafana and any configured Alertmanager data sources, you can select your preference from a drop-down option in those databases' data source settings pages.
 
 ## Alertmanager implementations
@@ -56,7 +56,7 @@ To configure basic settings for the data source, complete the following steps:
 ## Provision the Alertmanager data source
 
 You can provision Alertmanager data sources by updating Grafana's configuration files.
-For more information on provisioning, and common settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning/#datasources" >}}).
+For more information on provisioning, and common settings available, refer to the [provisioning docs page]({{< relref "../../administration/provisioning#datasources" >}}).
 
 Here is an example for provisioning the Alertmanager data source:
 

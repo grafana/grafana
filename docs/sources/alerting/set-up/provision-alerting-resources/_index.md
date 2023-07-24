@@ -40,7 +40,7 @@ Currently, provisioning for Grafana Alerting supports alert rules, contact point
 
 [Grafana provisioning][provisioning]
 
-[Terraform provisioning](/docs/grafana-cloud/infrastructure-as-code/terraform/)
+[Terraform provisioning]({{< relref "/docs/grafana-cloud/infrastructure-as-code/terraform" >}})
 
 [Grafana Alerting provisioning API][alerting_provisioning]
 

@@ -32,7 +32,7 @@ weight: 8
 
 # Manage dashboards
 
-A dashboard is a set of one or more [panels]({{< relref "../../panels-visualizations/" >}}) that visually presents your data in one or more rows.
+A dashboard is a set of one or more [panels]({{< relref "../../panels-visualizations" >}}) that visually presents your data in one or more rows.
 
 For more information about creating dashboards, refer to [Add and organize panels](../add-organize-panels).
 
@@ -49,7 +49,7 @@ Folders help you organize and group dashboards, which is useful when you have ma
 
 **Before you begin:**
 
-- Ensure that you have Grafana Admin or Super Admin permissions. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
+- Ensure that you have Grafana Admin or Super Admin permissions. For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions#dashboard-permissions" >}}).
 
 **To create a dashboard folder:**
 
@@ -84,11 +84,11 @@ To navigate to the dashboard folder page, hover over the name of the folder and 
 
 You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team**, and a **User** can be assigned permissions.
 
-For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions/#dashboard-permissions" >}}).
+For more information about dashboard permissions, refer to [Dashboard permissions]({{< relref "../../administration/roles-and-permissions#dashboard-permissions" >}}).
 
 ## Export and import dashboards
 
-You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_api/dashboard/#create-update-dashboard" >}}) to export and import dashboards.
+You can use the Grafana UI or the [HTTP API]({{< relref "../../developers/http_api/dashboard#create-update-dashboard" >}}) to export and import dashboards.
 
 ### Export a dashboard
 

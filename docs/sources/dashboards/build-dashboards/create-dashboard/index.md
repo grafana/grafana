@@ -21,7 +21,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 **Before you begin:**
 
-- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions/" >}}).
+- Ensure that you have the proper permissions. For more information about permissions, refer to [About users and permissions]({{< relref "../../../administration/roles-and-permissions" >}}).
 - Identify the dashboard to which you want to add the panel.
 - Understand the query language of the target data source.
 - Ensure that data source for which you are writing a query has been added. For more information about adding a data source, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}) if you need instructions.
@@ -37,7 +37,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. In the modal that opens, do one of the following:
 
    - Select one of your existing data sources.
-   - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources/#special-data-sources" >}}).
+   - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources#special-data-sources" >}}).
    - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
@@ -45,7 +45,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
    The **Edit panel** view opens with your data source selected.
    You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
 
-   For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
+   For more information about data sources, refer to [Data sources]({{< relref "../../../datasources" >}}) for specific guidelines.
 
 1. Write or construct a query in the query language of your data source.
 
@@ -59,17 +59,17 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Grafana displays a preview of your query results with the visualization applied.
 
-   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../panels-visualizations/visualizations/" >}}).
+   For more information about individual visualizations, refer to [Visualizations options]({{< relref "../../../panels-visualizations/visualizations" >}}).
 
 1. Refer to the following documentation for ways you can adjust panel settings.
 
    While not required, most visualizations need some adjustment before they properly display the information that you need.
 
    - [Configure value mappings]({{< relref "../../../panels-visualizations/configure-value-mappings" >}})
-   - [Visualization-specific options]({{< relref "../../../panels-visualizations/visualizations/" >}})
-   - [Override field values]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
-   - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}})
-   - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options/" >}})
+   - [Visualization-specific options]({{< relref "../../../panels-visualizations/visualizations" >}})
+   - [Override field values]({{< relref "../../../panels-visualizations/configure-overrides" >}})
+   - [Configure thresholds]({{< relref "../../../panels-visualizations/configure-thresholds" >}})
+   - [Configure standard options]({{< relref "../../../panels-visualizations/configure-standard-options" >}})
 
 1. When you've finished editing your panel, click **Save** to save the dashboard.
 
@@ -85,7 +85,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 ## Configure repeating rows
 
-You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels]({{< relref "../../../panels-visualizations/configure-panel-options/#configure-repeating-panels" >}}).
+You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels]({{< relref "../../../panels-visualizations/configure-panel-options#configure-repeating-panels" >}}).
 
 To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
 

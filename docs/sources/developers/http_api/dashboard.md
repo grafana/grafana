@@ -475,4 +475,4 @@ Content-Type: application/json
 
 ## Dashboard Search
 
-See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}}).
+See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search" >}}).
