@@ -99,21 +99,21 @@ TableInputCSV.displayName = 'TableInputCSV';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    tableInputCsv: css`
-      position: relative;
-    `,
-    textarea: css`
-      height: 100%;
-      width: 100%;
-    `,
-    footer: css`
-      position: absolute;
-      bottom: 15px;
-      right: 15px;
-      border: 1px solid #222;
-      background: ${theme.colors.success.main};
-      padding: 1px ${theme.spacing(0.5)};
-      font-size: 80%;
-    `,
+    tableInputCsv: css({
+      position: 'relative',
+    }),
+    textarea: css({
+      height: '100%',
+      width: '100%',
+    }),
+    footer: css({
+      position: 'absolute',
+      bottom: '15px',
+      right: '15px',
+      border: '1px solid #222',
+      background: theme.colors.success.main,
+      padding: `1px ${theme.spacing(0.5)}`,
+      fontSize: '80%',
+    }),
   };
 });

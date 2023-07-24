@@ -201,16 +201,16 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
     const fields = getNodeFields(nodes);
     for (const f of [fields.title, fields.subTitle, fields.mainStat, fields.secondaryStat, ...fields.details]) {
       if (f && f.values[node.dataFrameRowIndex]) {
-        rows.push(<FieldRow field={f} index={node.dataFrameRowIndex} />);
+        rows.push(<FieldRow key={f.name} field={f} index={node.dataFrameRowIndex} />);
       }
     }
   } else {
     // Fallback if we don't have nodes dataFrame. Can happen if we use just the edges frame to construct this.
     if (node.title) {
-      rows.push(<HeaderRow label={'Title'} value={node.title} />);
+      rows.push(<HeaderRow key="title" label={'Title'} value={node.title} />);
     }
     if (node.subTitle) {
-      rows.push(<HeaderRow label={'Subtitle'} value={node.subTitle} />);
+      rows.push(<HeaderRow key="subtitle" label={'Subtitle'} value={node.subTitle} />);
     }
   }
 

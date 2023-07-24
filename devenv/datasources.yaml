@@ -56,13 +56,21 @@ datasources:
     type: prometheus
     access: proxy
     url: http://localhost:9090
+    basicAuth: true #username: admin, password: admin
+    basicAuthUser: admin
     jsonData:
       manageAlerts: true
       alertmanagerUid: gdev-alertmanager
       prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
       prometheusVersion: 2.40.0
+      exemplarTraceIdDestinations:
+      - name: traceID
+        datasourceUid: gdev-tempo
+    secureJsonData:
+      basicAuthPassword: admin #https://grafana.com/docs/grafana/latest/administration/provisioning/#using-environment-variables
 
   - name: gdev-slow-prometheus
+    uid: gdev-slow-prometheus-uid
     type: prometheus
     access: proxy
     url: http://localhost:3011
@@ -243,6 +251,9 @@ datasources:
       - targetUID: gdev-zipkin
         label: "Zipkin traces"
         description: "Related traces stored in Zipkin"
+      - targetUID: gdev-tempo
+        label: "Tempo traces"
+        description: "Related traces stored in Tempo"
       - targetUID: gdev-prometheus
         label: "Logs to metrics"
         description: "Related metrics stored in Prometheus"
@@ -262,6 +273,10 @@ datasources:
           matcherRegex: "traceID=(\\w+)"
           url: "$${__value.raw}"
           datasourceUid: gdev-zipkin
+        - name: "traceID"
+          matcherRegex: "traceID=(\\w+)"
+          url: "$${__value.raw}"
+          datasourceUid: gdev-tempo
 
   - name: gdev-jaeger
     type: jaeger

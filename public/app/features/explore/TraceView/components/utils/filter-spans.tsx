@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { SpanStatusCode } from '@opentelemetry/api';
+
 import { SearchProps, Tag } from '../../useSearch';
+import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
 import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
-export function filterSpansNewTraceViewHeader(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
+export function filterSpans(searchProps: SearchProps, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return undefined;
   }
@@ -56,21 +59,38 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
       // match against every tag filter
       return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
-          if (span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) {
+          if (
+            span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
+            span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
+            (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) ||
+            (span.kind && tag.key === KIND && tag.value === span.kind) ||
+            (span.statusCode !== undefined &&
+              tag.key === STATUS &&
+              tag.value === SpanStatusCode[span.statusCode].toLowerCase()) ||
+            (span.statusMessage && tag.key === STATUS_MESSAGE && tag.value === span.statusMessage) ||
+            (span.instrumentationLibraryName &&
+              tag.key === LIBRARY_NAME &&
+              tag.value === span.instrumentationLibraryName) ||
+            (span.instrumentationLibraryVersion &&
+              tag.key === LIBRARY_VERSION &&
+              tag.value === span.instrumentationLibraryVersion) ||
+            (span.traceState && tag.key === TRACE_STATE && tag.value === span.traceState) ||
+            (tag.key === ID && tag.value === span.spanID)
+          ) {
             return getReturnValue(tag.operator, true);
           }
         } else if (tag.key) {
-          if (span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-            return getReturnValue(tag.operator, true);
-          } else if (
-            span.logs &&
-            span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))
+          if (
+            span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
+            span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
+            (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))) ||
+            (span.kind && tag.key === KIND) ||
+            (span.statusCode !== undefined && tag.key === STATUS) ||
+            (span.statusMessage && tag.key === STATUS_MESSAGE) ||
+            (span.instrumentationLibraryName && tag.key === LIBRARY_NAME) ||
+            (span.instrumentationLibraryVersion && tag.key === LIBRARY_VERSION) ||
+            (span.traceState && tag.key === TRACE_STATE) ||
+            tag.key === ID
           ) {
             return getReturnValue(tag.operator, true);
           }
@@ -137,8 +157,12 @@ const getDurationMatches = (spans: TraceSpan[], searchProps: SearchProps) => {
 };
 
 export const convertTimeFilter = (time: string) => {
-  if (time.includes('μs')) {
-    return parseFloat(time.split('μs')[0]);
+  if (time.includes('ns')) {
+    return parseFloat(time.split('ns')[0]) / 1000;
+  } else if (time.includes('us')) {
+    return parseFloat(time.split('us')[0]);
+  } else if (time.includes('µs')) {
+    return parseFloat(time.split('µs')[0]);
   } else if (time.includes('ms')) {
     return parseFloat(time.split('ms')[0]) * 1000;
   } else if (time.includes('s')) {
@@ -150,55 +174,3 @@ export const convertTimeFilter = (time: string) => {
   }
   return undefined;
 };
-
-// legacy code that will be removed when the Header feature flag is removed
-export function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
-  if (!spans) {
-    return undefined;
-  }
-
-  // if a span field includes at least one filter in includeFilters, the span is a match
-  const includeFilters: string[] = [];
-
-  // values with keys that include text in any one of the excludeKeys will be ignored
-  const excludeKeys: string[] = [];
-
-  // split textFilter by whitespace, remove empty strings, and extract includeFilters and excludeKeys
-  textFilter
-    .split(/\s+/)
-    .filter(Boolean)
-    .forEach((w) => {
-      if (w[0] === '-') {
-        excludeKeys.push(w.slice(1).toLowerCase());
-      } else {
-        includeFilters.push(w.toLowerCase());
-      }
-    });
-
-  const isTextInFilters = (filters: string[], text: string) =>
-    filters.some((filter) => text.toLowerCase().includes(filter));
-
-  const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
-    kvs
-      ? kvs.some((kv) => {
-          // ignore checking key and value for a match if key is in excludeKeys
-          if (isTextInFilters(excludeKeys, kv.key)) {
-            return false;
-          }
-          // match if key or value matches an item in includeFilters
-          return isTextInFilters(includeFilters, kv.key) || isTextInFilters(includeFilters, kv.value.toString());
-        })
-      : false;
-
-  const isSpanAMatch = (span: TraceSpan) =>
-    isTextInFilters(includeFilters, span.operationName) ||
-    isTextInFilters(includeFilters, span.process.serviceName) ||
-    isTextInKeyValues(span.tags) ||
-    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
-    isTextInKeyValues(span.process.tags) ||
-    includeFilters.some((filter) => filter === span.spanID);
-
-  // declare as const because need to disambiguate the type
-  const rv: Set<string> = new Set(spans.filter(isSpanAMatch).map((span: TraceSpan) => span.spanID));
-  return rv;
-}

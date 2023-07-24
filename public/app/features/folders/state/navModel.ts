@@ -1,5 +1,7 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getNavSubTitle } from 'app/core/components/AppChrome/MegaMenu/navBarItem-translations';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
@@ -15,7 +17,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
   const model: NavModelItem = {
     icon: 'folder',
     id: FOLDER_ID,
-    subTitle: 'Manage folder dashboards and permissions',
+    subTitle: getNavSubTitle('manage-folder'),
     url: folder.url,
     text: folder.title,
     children: [
@@ -23,7 +25,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         active: false,
         icon: 'apps',
         id: getDashboardsTabID(folder.uid),
-        text: 'Dashboards',
+        text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
         url: folder.url,
       },
     ],
@@ -39,7 +41,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     active: false,
     icon: 'library-panel',
     id: getLibraryPanelsTabID(folder.uid),
-    text: 'Panels',
+    text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
     url: `${folder.url}/library-panels`,
   });
 
@@ -48,7 +50,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       active: false,
       icon: 'bell',
       id: getAlertingTabID(folder.uid),
-      text: 'Alert rules',
+      text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
     });
   }
@@ -59,20 +61,20 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         active: false,
         icon: 'lock',
         id: getPermissionsTabID(folder.uid),
-        text: 'Permissions',
+        text: t('browse-dashboards.manage-folder-nav.permissions', 'Permissions'),
         url: `${folder.url}/permissions`,
       });
     }
-  }
 
-  if (folder.canSave) {
-    model.children!.push({
-      active: false,
-      icon: 'cog',
-      id: getSettingsTabID(folder.uid),
-      text: 'Settings',
-      url: `${folder.url}/settings`,
-    });
+    if (folder.canSave) {
+      model.children!.push({
+        active: false,
+        icon: 'cog',
+        id: getSettingsTabID(folder.uid),
+        text: t('browse-dashboards.manage-folder-nav.settings', 'Settings'),
+        url: `${folder.url}/settings`,
+      });
+    }
   }
 
   return model;

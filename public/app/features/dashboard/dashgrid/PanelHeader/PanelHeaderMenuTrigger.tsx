@@ -35,6 +35,8 @@ export function PanelHeaderMenuTrigger({ children, onOpenMenu, ...divProps }: Pr
   }, []);
 
   return (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <header {...divProps} className="panel-title-container" onClick={onMenuToggle} onMouseDown={onMouseDown}>
       {children({ panelMenuOpen, closeMenu: () => setPanelMenuOpen(false) })}
     </header>

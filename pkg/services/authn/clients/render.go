@@ -56,11 +56,11 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 			return nil, err
 		}
 
-		identity = authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true})
+		identity = authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.RenderModule)
 	}
 
 	identity.LastSeenAt = time.Now()
-	identity.AuthModule = login.RenderModule
+	identity.AuthenticatedBy = login.RenderModule
 	return identity, nil
 }
 

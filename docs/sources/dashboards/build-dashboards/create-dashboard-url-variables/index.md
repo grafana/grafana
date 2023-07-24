@@ -8,6 +8,11 @@ keywords:
   - documentation
   - variables
   - dashboards
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Dashboard URL variables
 weight: 250
 ---
@@ -67,7 +72,7 @@ When sharing URLs with ad hoc filters, remember to encode the URL. In the above 
 
 ### Example
 
-See [https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica] - this passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
+[This example in Grafana Play](https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica) passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
 
 ## Controlling time range using the URL
 

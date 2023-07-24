@@ -62,8 +62,7 @@ const durationError = 'Value is not valid, you can use number with time unit spe
  * Bugs: It will only reject versions that are a major release apart, so Mimir 2.x might get selected for Prometheus 2.8 if the user selects an incorrect flavor
  * Advantages: We don't need to maintain a list of every possible version for each release
  *
- * This function will return the closest version from PromFlavorVersions that is equal or lower to the version argument,
- * unless the versions are a major release apart.
+ * This function will return the closest version from PromFlavorVersions that is equal or lower to the version argument
  */
 const getVersionString = (version: string, flavor?: string): string | undefined => {
   if (!flavor || !PromFlavorVersions[flavor]) {
@@ -172,7 +171,7 @@ export const PromSettings = (props: Props) => {
 
   return (
     <>
-      <h6 className="page-heading">Interval behaviour</h6>
+      <h3 className="page-heading">Interval behaviour</h3>
       <div className="gf-form-group">
         {/* Scrape interval */}
         <div className="gf-form-inline">
@@ -231,7 +230,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h6 className="page-heading">Query editor</h6>
+      <h3 className="page-heading">Query editor</h3>
       <div className="gf-form-group">
         <div className="gf-form">
           <InlineField
@@ -275,7 +274,7 @@ export const PromSettings = (props: Props) => {
         </div>
       </div>
 
-      <h6 className="page-heading">Performance</h6>
+      <h3 className="page-heading">Performance</h3>
       {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
         <div className={styles.versionMargin}>
           For more information on configuring prometheus type and version in data sources, see the{' '}
@@ -440,9 +439,26 @@ export const PromSettings = (props: Props) => {
             </InlineField>
           )}
         </div>
-      </div>
 
-      <h6 className="page-heading">Other</h6>
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <InlineField
+              label="Disable recording rules (beta)"
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
+              interactive={true}
+              className={styles.switchField}
+              disabled={options.readOnly}
+            >
+              <Switch
+                value={options.jsonData.disableRecordingRules ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
+              />
+            </InlineField>
+          </div>
+        </div>
+      </div>
+      <h3 className="page-heading">Other</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">

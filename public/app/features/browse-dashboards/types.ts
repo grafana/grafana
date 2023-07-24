@@ -1,14 +1,26 @@
 import { CellProps, Column, HeaderProps } from 'react-table';
 
-import { DashboardViewItem as DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 export type DashboardTreeSelection = Record<DashboardViewItemKind, Record<string, boolean | undefined>> & {
   $all: boolean;
 };
 
+/**
+ * Stores children at a particular location in the tree, and information
+ * required for pagination.
+ */
+export type DashboardViewItemCollection = {
+  items: DashboardViewItem[];
+  lastFetchedKind: 'folder' | 'dashboard';
+  lastFetchedPage: number;
+  lastKindHasMoreItems: boolean;
+  isFullyLoaded: boolean;
+};
+
 export interface BrowseDashboardsState {
-  rootItems: DashboardViewItem[] | undefined;
-  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>;
+  rootItems: DashboardViewItemCollection | undefined;
+  childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
   selectedItems: DashboardTreeSelection;
 
   // Only folders can ever be open or closed, so no need to seperate this by kind
@@ -16,16 +28,18 @@ export interface BrowseDashboardsState {
 }
 
 export interface UIDashboardViewItem {
-  kind: 'ui-empty-folder';
+  kind: 'ui';
+  uiKind: 'empty-folder' | 'pagination-placeholder';
   uid: string;
 }
 
-type DashboardViewItemWithUIItems = DashboardViewItem | UIDashboardViewItem;
+export type DashboardViewItemWithUIItems = DashboardViewItem | UIDashboardViewItem;
 
 export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = DashboardViewItemWithUIItems> {
   item: T;
   level: number;
   isOpen: boolean;
+  parentUID?: string;
 }
 
 export const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';

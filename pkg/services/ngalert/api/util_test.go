@@ -13,6 +13,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -159,3 +160,18 @@ func Test_containsProvisionedAlerts(t *testing.T) {
 		require.Falsef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is not expected to be provisioned but it is. Provenances: %v", provenance)
 	})
 }
+
+type recordingConditionValidator struct {
+	recorded []models2.Condition
+	hook     func(c models2.Condition) error
+}
+
+func (r *recordingConditionValidator) Validate(_ eval.EvaluationContext, condition models2.Condition) error {
+	r.recorded = append(r.recorded, condition)
+	if r.hook != nil {
+		return r.hook(condition)
+	}
+	return nil
+}
+
+var _ ConditionValidator = &recordingConditionValidator{}

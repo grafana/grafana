@@ -8,18 +8,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCSVFileScenario(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
-	cfg.StaticRootPath = "../../../public"
-
-	s := &Service{
-		cfg: cfg,
-	}
+	s := &Service{}
 
 	t.Run("loadCsvFile", func(t *testing.T) {
 		files := []string{"simple", "mixed", "labels"}

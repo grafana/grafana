@@ -16,7 +16,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
+	authConfigUIAvailable := s.license.FeatureEnabled("saml")
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &navtree.NavLink{
@@ -121,12 +121,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.cfg.LDAPAuthEnabled && hasAccess(ac.EvalPermission(ac.ActionLDAPStatusRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
-		})
-	}
-
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
 		storage := &navtree.NavLink{
 			Text:     "Storage",
@@ -157,8 +151,8 @@ func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 }
 
 func evalAuthenticationSettings() ac.Evaluator {
-	return ac.EvalAll(
+	return ac.EvalAny(ac.EvalAll(
 		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
 		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
-	)
+	), ac.EvalPermission(ac.ActionLDAPStatusRead))
 }

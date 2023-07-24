@@ -2,8 +2,13 @@
 aliases:
   - ../../installation/kubernetes/
 description: Guide for deploying Grafana on Kubernetes
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Grafana on Kubernetes
 title: Deploy Grafana on Kubernetes
-weight: 300
+weight: 500
 ---
 
 # Deploy Grafana on Kubernetes

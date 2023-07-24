@@ -27,6 +27,7 @@ const labelQueryPrefix = "labels_"
 func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) response.Response {
 	from := c.QueryInt64("from")
 	to := c.QueryInt64("to")
+	limit := c.QueryInt("limit")
 	ruleUID := c.Query("ruleUID")
 
 	labels := make(map[string]string)
@@ -42,6 +43,7 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 		SignedInUser: c.SignedInUser,
 		From:         time.Unix(from, 0),
 		To:           time.Unix(to, 0),
+		Limit:        limit,
 		Labels:       labels,
 	}
 	frame, err := srv.hist.Query(c.Req.Context(), query)

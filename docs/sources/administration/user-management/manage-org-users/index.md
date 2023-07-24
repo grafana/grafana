@@ -7,6 +7,10 @@ aliases:
   - ../manage-users-and-permissions/manage-org-users/manage-pending-invites/
   - ../manage-users-and-permissions/manage-org-users/remove-user-from-org/
   - ../manage-users-and-permissions/manage-org-users/view-list-org-users/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage users in an organization
 weight: 400
 ---
@@ -89,6 +93,7 @@ If you have [server administrator]({{< relref "../../roles-and-permissions/#graf
    > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
 
 1. Navigate to **Administration > Users**.
+1. Click **Organization users**.
 1. Click **Invite**.
 1. Enter the following information:
 

@@ -31,7 +31,7 @@ type CachedResourceDataResponse struct {
 	Response *backend.CallResourceResponse
 	// A function that should be used to cache a CallResourceResponse for a given resource request.
 	// It can be set to nil by the method implementation (if there is an error, for example), so it should be checked before being called.
-	// Because plugins can send multiple responses asyncronously, the implementation should be able to handle multiple calls to this function for one request.
+	// Because plugins can send multiple responses asynchronously, the implementation should be able to handle multiple calls to this function for one request.
 	UpdateCacheFn CacheResourceResponseFn
 }
 

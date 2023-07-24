@@ -32,7 +32,7 @@ func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path strin
 		}
 
 		file := filepath.Join(path, name)
-		pathSet[file] = struct{}{}
+		pathSet[name] = struct{}{}
 
 		// Check if the template file already exists and if it has changed
 		// We can safely ignore gosec here as we've previously checked the filename is clean
@@ -60,7 +60,7 @@ func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path strin
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
-		_, ok := pathSet[p]
+		_, ok := pathSet[existingFile.Name()]
 		if !ok {
 			templatesChanged = true
 			err := os.Remove(p)

@@ -20,12 +20,13 @@ type PluginSetting struct {
 	SecureJsonFields map[string]bool        `json:"secureJsonFields"`
 	DefaultNavUrl    string                 `json:"defaultNavUrl"`
 
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	State         plugins.ReleaseState    `json:"state"`
-	Signature     plugins.SignatureStatus `json:"signature"`
-	SignatureType plugins.SignatureType   `json:"signatureType"`
-	SignatureOrg  string                  `json:"signatureOrg"`
+	LatestVersion   string                  `json:"latestVersion"`
+	HasUpdate       bool                    `json:"hasUpdate"`
+	State           plugins.ReleaseState    `json:"state"`
+	Signature       plugins.SignatureStatus `json:"signature"`
+	SignatureType   plugins.SignatureType   `json:"signatureType"`
+	SignatureOrg    string                  `json:"signatureOrg"`
+	AngularDetected bool                    `json:"angularDetected"`
 }
 
 type PluginListItem struct {

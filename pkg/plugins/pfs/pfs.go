@@ -196,13 +196,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	})
 	bi.Files = append(bi.Files, f)
 
-	gpi := ctx.BuildInstance(bi)
-	// Temporary hack while we figure out what in the elasticsearch lineage turns
-	// this into an endless loop in thema, and why unifying twice is anything other
-	// than a total no-op.
-	if pp.Properties.Id != "elasticsearch" {
-		gpi = gpi.Unify(gpv)
-	}
+	gpi := ctx.BuildInstance(bi).Unify(gpv)
 	if gpi.Err() != nil {
 		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
 	}
@@ -230,6 +224,49 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 
 	// TODO custom kinds
 	return pp, nil
+}
+
+// LoadComposableKindDef loads and validates a composable kind definition.
+// On success, it returns a [Def] which contains the entire contents of the kind definition.
+//
+// defpath is the path to the directory containing the composable kind definition,
+// relative to the root of the caller's repository.
+//
+// NOTE This function will be deprecated in favor of a more generic loader when kind
+// providers will be implemented.
+func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kindsys.Def[kindsys.ComposableProperties], error) {
+	pp := ParsedPlugin{
+		ComposableKinds: make(map[string]kindsys.Composable),
+		Properties: plugindef.PluginDef{
+			Id: defpath,
+		},
+	}
+
+	fsys, err := ensureCueMod(fsys, pp.Properties)
+	if err != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
+	}
+
+	bi, err := cuectx.LoadInstanceWithGrafana(fsys, "", load.Package(PackageName))
+	if err != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, err
+	}
+
+	ctx := rt.Context()
+	v := ctx.BuildInstance(bi)
+	if v.Err() != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, fmt.Errorf("%s not a valid CUE instance: %w", defpath, v.Err())
+	}
+
+	props, err := kindsys.ToKindProps[kindsys.ComposableProperties](v)
+	if err != nil {
+		return kindsys.Def[kindsys.ComposableProperties]{}, err
+	}
+
+	return kindsys.Def[kindsys.ComposableProperties]{
+		V:          v,
+		Properties: props,
+	}, nil
 }
 
 func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {

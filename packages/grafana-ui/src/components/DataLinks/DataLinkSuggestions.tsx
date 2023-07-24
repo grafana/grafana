@@ -18,38 +18,38 @@ interface DataLinkSuggestionsProps {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    list: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      &:last-child {
-        border: none;
-      }
-    `,
-    wrapper: css`
-      background: ${theme.colors.background.primary};
-      width: 250px;
-    `,
-    item: css`
-      background: none;
-      padding: 2px 8px;
-      color: ${theme.colors.text.primary};
-      cursor: pointer;
-      &:hover {
-        background: ${theme.colors.action.hover};
-      }
-    `,
-    label: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    activeItem: css`
-      background: ${theme.colors.background.secondary};
-      &:hover {
-        background: ${theme.colors.background.secondary};
-      }
-    `,
-    itemValue: css`
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.size.sm};
-    `,
+    list: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:last-child': {
+        border: 'none',
+      },
+    }),
+    wrapper: css({
+      background: theme.colors.background.primary,
+      width: '250px',
+    }),
+    item: css({
+      background: 'none',
+      padding: '2px 8px',
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+    }),
+    label: css({
+      color: theme.colors.text.secondary,
+    }),
+    activeItem: css({
+      background: theme.colors.background.secondary,
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    itemValue: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.size.sm,
+    }),
   };
 };
 

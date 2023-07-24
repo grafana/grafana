@@ -178,7 +178,7 @@ export const useDataSourceSettingsNav = (dataSourceId: string, pageId: string | 
     main: {
       ...pageNav.main,
       text: dataSource.name,
-      dataSourcePluginName: datasourcePlugin?.name || '',
+      dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
       active: true,
     },
     dataSourceHeader: {

@@ -95,7 +95,7 @@ func generateVersionFromBuildID() (string, error) {
 		return "", fmt.Errorf("unable to get DRONE_BUILD_NUMBER environmental variable")
 	}
 	var err error
-	version, err := GetGrafanaVersion(buildID, ".")
+	version, err := GenerateGrafanaVersion(buildID, ".")
 	if err != nil {
 		return "", err
 	}

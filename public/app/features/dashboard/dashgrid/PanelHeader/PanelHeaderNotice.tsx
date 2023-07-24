@@ -14,7 +14,7 @@ export const PanelHeaderNotice = ({ notice, onClick }: Props) => {
   const styles = useStyles2(getStyles);
 
   const iconName =
-    notice.severity === 'error' || notice.severity === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    notice.severity === 'error' || notice.severity === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
   if (notice.inspect && onClick) {
     return (
