@@ -75,7 +75,7 @@ For details, refer to [Configuring using Managed Identity]({{< relref "#configur
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 #### Provisioning examples
 
@@ -130,7 +130,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 **To enable managed identity for Grafana:**
 
-1. Set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration]({{< relref "../../setup-grafana/configure-grafana/#azure" >}}).
+1. Set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server configuration]({{< relref "../../setup-grafana/configure-grafana#azure" >}}).
 
    ```ini
    [azure]

@@ -21,7 +21,7 @@ This strategy can drastically reduce the number of queries being made when you f
 
 1. [Create a dashboard]({{< relref "../../../dashboards/build-dashboards/create-dashboard" >}}).
 1. Change the title to "Source panel". You'll use this panel as a source for the other panels.
-1. Define the [query]({{< relref "../#add-a-query" >}}) or queries that you want share.
+1. Define the [query]({{< relref "..#add-a-query" >}}) or queries that you want share.
 
    If you don't have a data source available, use the **Grafana** data source, which returns a random time series that you can use for testing.
 

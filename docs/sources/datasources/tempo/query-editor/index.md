@@ -28,7 +28,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application's instrumentation, such as HTTP status code and customer ID.
 
-To configure Tempo and the Tempo data source for search, refer to [Configure the data source]({{< relref "../#configure-the-data-source" >}}).
+To configure Tempo and the Tempo data source for search, refer to [Configure the data source]({{< relref "..#configure-the-data-source" >}}).
 
 To search for traces:
 
@@ -51,13 +51,13 @@ To search for traces:
 You can search recent traces held in Tempo's ingesters.
 By default, ingesters store the last 15 minutes of tracing data.
 
-To configure your Tempo data source to use this feature, refer to the [Tempo documentation]({{< relref "/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-recent-traces" >}}).
+To configure your Tempo data source to use this feature, refer to the [Tempo documentation]({{< relref "/docs/tempo/latest/getting-started/tempo-in-grafana#search-of-recent-traces" >}}).
 
 ### Search the backend datastore
 
 Tempo includes the ability to search the entire backend datastore.
 
-To configure your Tempo data source to use this feature, refer to the [Tempo documentation]({{< relref "/docs/tempo/latest/getting-started/tempo-in-grafana/#search-of-the-backend-datastore" >}}).
+To configure your Tempo data source to use this feature, refer to the [Tempo documentation]({{< relref "/docs/tempo/latest/getting-started/tempo-in-grafana#search-of-the-backend-datastore" >}}).
 
 ## Query by TraceID
 

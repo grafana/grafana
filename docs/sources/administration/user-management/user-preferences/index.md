@@ -85,7 +85,7 @@ Every user is a member of at least one organization. You can have different role
 1. Click the user icon in the top right corner of the page and select **Profile**.
 1. Scroll down to the Organizations section and review the following information:
    - **Name**: The name of the organizations of which you are a member.
-   - **Role**: The role to which you are assigned in the organization. For more information about roles and permissions, refer to [Organization users and permissions]({{< relref "../../roles-and-permissions/#organization-users-and-permissions" >}}).
+   - **Role**: The role to which you are assigned in the organization. For more information about roles and permissions, refer to [Organization users and permissions]({{< relref "../../roles-and-permissions#organization-users-and-permissions" >}}).
    - **Current**: Grafana indicates the organization that you are currently signed into as _Current_. If you are a member of multiple organizations, you can click **Select** to switch to that organization.
 
 ## View your Grafana sessions

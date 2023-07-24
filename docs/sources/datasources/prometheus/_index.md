@@ -22,13 +22,13 @@ weight: 1300
 Prometheus is an open-source database that uses an telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?]({{< relref "../../fundamentals/intro-to-prometheus" >}}).
 
 Grafana provides native support for Prometheus.
-For instructions on downloading Prometheus see [Get started with Grafana and Prometheus]({{< relref "/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus" >}}).
+For instructions on downloading Prometheus see [Get started with Grafana and Prometheus]({{< relref "/docs/grafana/latest/getting-started/get-started-grafana-prometheus#get-started-with-grafana-and-prometheus" >}}).
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management" >}}).
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it]({{< relref "/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}), use [Explore]({{< relref "../../explore" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
+Once you've added the Prometheus data source, you can [configure it]({{< relref "/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards" >}}), use [Explore]({{< relref "../../explore" >}}), and [annotate visualizations]({{< relref "./query-editor#apply-annotations" >}}).
 
 The following guides will help you get started with the Prometheus data source:
 
@@ -48,7 +48,7 @@ For more information on how to query other Prometheus-compatible projects from G
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 {{% admonition type="note" %}}
 Once you have provisioned a data source you cannot edit it.
@@ -122,9 +122,9 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 ## Azure authentication settings
 
-The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication]({{< relref "/docs/grafana/latest/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication" >}}).
+The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication]({{< relref "/docs/grafana/latest/datasources/azure-monitor#configure-azure-active-directory-ad-authentication" >}}).
 
-In Grafana Enterprise, update the .ini configuration file: [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/). Depending on your setup, the .ini file is located [here]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location" >}}).
+In Grafana Enterprise, update the .ini configuration file: [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/). Depending on your setup, the .ini file is located [here]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#configuration-file-location" >}}).
 Add the following setting in the **[auth]** section :
 
 ```bash

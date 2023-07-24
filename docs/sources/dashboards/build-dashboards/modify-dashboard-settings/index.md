@@ -95,4 +95,4 @@ A dashboard in Grafana is represented by a JSON object, which stores metadata of
 
 To view a dashboard JSON model, on the **Dashboard settings** page, click **JSON**.
 
-For more information about the JSON fields, refer to [JSON fields]({{< relref "../view-dashboard-json-model/#json-fields" >}}).
+For more information about the JSON fields, refer to [JSON fields]({{< relref "../view-dashboard-json-model#json-fields" >}}).

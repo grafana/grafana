@@ -22,7 +22,7 @@ This feature is in [public preview]({{< relref "/docs/release-life-cycle" >}}).
 {{% admonition type="caution" %}}
 
 Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-and-resource-caching" >}}) and/or rate limiting features.
+This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}) and/or rate limiting features.
 
 {{% /admonition %}}
 
@@ -157,7 +157,7 @@ You can check usage analytics about your public dashboard by clicking the insigh
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights.png" max-width="400px" class="docs-image--no-shadow" alt="Dashboard insights icon" >}}
 
-Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage/#dashboard-insights" >}}).
+Learn more about the kind of information provided in the [dashboard insights documentation]({{< relref "../assess-dashboard-usage#dashboard-insights" >}}).
 
 ## Supported data sources
 

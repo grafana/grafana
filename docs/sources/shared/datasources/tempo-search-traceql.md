@@ -51,7 +51,7 @@ The screenshot below identifies the areas used to perform a search.
 Every query searches the data for the selected time frame.
 By default, queries run against data from the last hour.
 Select Time range to the left of Run query to choose the time range for the data your query runs against.
-Read the [dashboard time range]({{< relref "/docs/grafana/latest/dashboards/use-dashboards/#set-dashboard-time-range" >}}) documentation to learn more.
+Read the [dashboard time range]({{< relref "/docs/grafana/latest/dashboards/use-dashboards#set-dashboard-time-range" >}}) documentation to learn more.
 
 To access Search, use the following steps:
 

@@ -42,9 +42,9 @@ As the number of dashboards and data sources grows within your organization, man
 
 Grafana supports configuration as code through _provisioning_. The resources that currently supports provisioning are:
 
-- [Dashboards]({{< relref "/docs/grafana/latest/administration/provisioning/#dashboards" >}})
-- [Data sources]({{< relref "/docs/grafana/latest/administration/provisioning/#datasources" >}})
-- [Alert notification channels]({{< relref "/docs/grafana/latest/administration/provisioning/#alert-notification-channels" >}})
+- [Dashboards]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}})
+- [Data sources]({{< relref "/docs/grafana/latest/administration/provisioning#datasources" >}})
+- [Alert notification channels]({{< relref "/docs/grafana/latest/administration/provisioning#alert-notification-channels" >}})
 
 ## Set the provisioning directory
 
@@ -98,7 +98,7 @@ Let's configure a [TestData]({{< relref "/docs/grafana/latest/features/datasourc
 1. Restart Grafana to load the new changes.
 1. In the sidebar, hover the cursor over the **Configuration** (gear) icon and click **Data Sources**. TestData appears in the list of data sources.
 
-> The configuration options can vary between different types of data sources. For more information on how to configure a specific data source, refer to [Data sources]({{< relref "/docs/grafana/latest/administration/provisioning/#datasources" >}}).
+> The configuration options can vary between different types of data sources. For more information on how to configure a specific data source, refer to [Data sources]({{< relref "/docs/grafana/latest/administration/provisioning#datasources" >}}).
 
 ## Provision a dashboard
 
@@ -128,7 +128,7 @@ providers:
         # Default path for Linux is: /var/lib/grafana/dashboards
 ```
 
-For more information on how to configure dashboard providers, refer to [Dashboards]({{< relref "/docs/grafana/latest/administration/provisioning/#dashboards" >}}).
+For more information on how to configure dashboard providers, refer to [Dashboards]({{< relref "/docs/grafana/latest/administration/provisioning#dashboards" >}}).
 
 #### Create a dashboard definition
 

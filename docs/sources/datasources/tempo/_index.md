@@ -157,7 +157,7 @@ Once enabled, Grafana displays the node graph above the trace view.
 
 ### Tempo search
 
-The **Search** setting configures [Tempo search]({{< relref "/docs/tempo/latest/configuration/#search" >}}).
+The **Search** setting configures [Tempo search]({{< relref "/docs/tempo/latest/configuration#search" >}}).
 
 You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
@@ -195,7 +195,7 @@ You can choose one of three options:
 ### Provision the data source
 
 You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning and available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 #### Provisioning example
 
@@ -318,7 +318,7 @@ You use the Service Graph to detect performance issues; track increases in error
 
 **To display the Service Graph:**
 
-1. [Configure Grafana Agent]({{< relref "/docs/tempo/latest/grafana-agent/service-graphs/#quickstart" >}}) or [Tempo or GET]({{< relref "/docs/tempo/latest/metrics-generator/service_graphs/#tempo" >}}) to generate Service Graph data.
+1. [Configure Grafana Agent]({{< relref "/docs/tempo/latest/grafana-agent/service-graphs#quickstart" >}}) or [Tempo or GET]({{< relref "/docs/tempo/latest/metrics-generator/service_graphs#tempo" >}}) to generate Service Graph data.
 1. Link a Prometheus data source in the Tempo data source's [Service Graph](#configure-service-graph) settings.
 1. Navigate to [Explore]({{< relref "../../explore" >}}).
 1. Select the Tempo data source.

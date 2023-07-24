@@ -65,7 +65,7 @@ This can help you monitor metrics for AWS resources, like EC2 instances or conta
 When an auto-scaling event creates new instances, they automatically appear in the graph without you having to track the new instance IDs.
 This capability is currently limited to retrieving up to 100 metrics.
 
-You can expand the [Query inspector]({{< relref "../../../panels-visualizations/query-transform-data/#navigate-the-query-tab" >}}) button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
+You can expand the [Query inspector]({{< relref "../../../panels-visualizations/query-transform-data#navigate-the-query-tab" >}}) button and click `Meta Data` to see the search expression that's automatically built to support wildcards.
 
 To learn more about search expressions, refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 The search expression is defined by default in such a way that the queried metrics must match the defined dimension names exactly.
@@ -235,7 +235,7 @@ To enable cross-account observability, complete the following steps:
 
 1. Go to the [Amazon CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions on enabling cross-account observability.
 
-1. Add [two API actions]({{< relref "/docs/grafana/latest/datasources/aws-cloudwatch/#cross-account-observability-permissions" >}}) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions]({{< relref "/docs/grafana/latest/datasources/aws-cloudwatch#cross-account-observability-permissions" >}}) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the `Logs` mode and the `Metric search` mode. Once you have it configured correctly, you'll see a "Monitoring account" badge displayed in the query editor header.
 

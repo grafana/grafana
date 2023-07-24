@@ -38,11 +38,11 @@ enabled = true
 ```
 
 All permission and role updates, and role assignments are added to audit logs.
-Learn more about [access control audit logs]({{< relref "../../../../setup-grafana/configure-security/audit-grafana/#access-control" >}}).
+Learn more about [access control audit logs]({{< relref "../../../../setup-grafana/configure-security/audit-grafana#access-control" >}}).
 
 ## Missing dashboard, folder or data source permissions
 
-[Dashboard and folder permissions]({{< relref "../../#dashboard-permissions" >}}) and [data source permissions]({{< relref "../../#data-source-permissions" >}}) can go out of sync if a Grafana instance version is upgraded, downgraded and then upgraded again.
+[Dashboard and folder permissions]({{< relref "../..#dashboard-permissions" >}}) and [data source permissions]({{< relref "../..#data-source-permissions" >}}) can go out of sync if a Grafana instance version is upgraded, downgraded and then upgraded again.
 This happens when an instance is downgraded from a version that uses RBAC to a version that uses the legacy access control, and dashboard, folder or data source permissions are updated.
 These permission updates will not be applied to RBAC, so permissions will be out of sync when the instance is next upgraded to a version with RBAC.
 

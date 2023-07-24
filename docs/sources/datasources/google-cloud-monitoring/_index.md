@@ -67,13 +67,13 @@ When configuring Google authentication, note these additional Google Cloud Monit
 
 #### Configure a GCP Service Account
 
-When you [create a Google Cloud Platform (GCP) Service Account and key file]({{< relref "./google-authentication/#create-a-gcp-service-account-and-key-file" >}}), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+When you [create a Google Cloud Platform (GCP) Service Account and key file]({{< relref "./google-authentication#create-a-gcp-service-account-and-key-file" >}}), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 #### Grant the GCE Default Service Account scope
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, then when you [Configure a GCE Default Service Account]({{< relref "./google-authentication/#configure-a-gce-default-service-account" >}}), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, then when you [Configure a GCE Default Service Account]({{< relref "./google-authentication#configure-a-gce-default-service-account" >}}), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
 
 ### Enable necessary Google Cloud Platform APIs
 
@@ -91,7 +91,7 @@ Before you can request data from Google Cloud Monitoring, you must first enable 
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 #### Provisioning examples
 

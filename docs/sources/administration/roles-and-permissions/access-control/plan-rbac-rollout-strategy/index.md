@@ -35,8 +35,8 @@ As a first step in determining your permissions rollout strategy, we recommend t
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
-- [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}})
-- [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}})
+- [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}})
+- [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}})
 
 ## User and team considerations
 
@@ -99,7 +99,7 @@ If you have a use case that you'd like to share, feel free to contribute to this
 ### Limit viewer, editor, or admin permissions
 
 1. Review the list of permissions associated with the basic role.
-1. [Change the permissions of the basic role]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+1. [Change the permissions of the basic role]({{< relref "./manage-rbac-roles#update-basic-role-permissions" >}}).
 
 ### Allow only members of one team to manage Alerts
 
@@ -177,7 +177,7 @@ roles:
         global: true
 ```
 
-- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
+- Or add the following permissions to the `basic:editor` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control#update-a-role" >}}):
 
 | action         | scope                       |
 | -------------- | --------------------------- |
@@ -207,9 +207,9 @@ roles:
         global: true
 ```
 
-> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#fixed-role-definitions" >}}).
+> **Note:** The `fixed:reports:writer` role assigns more permissions than just creating reports. For more information about fixed role permission assignments, refer to [Fixed role definitions]({{< relref "./rbac-fixed-basic-role-definitions#fixed-role-definitions" >}}).
 
-- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}):
+- Add the following permissions to the `basic:viewer` role, using provisioning or the [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control#update-a-role" >}}):
 
 | Action           | Scope                           |
 | ---------------- | ------------------------------- |
@@ -220,7 +220,7 @@ roles:
 
 ### Prevent a Grafana Admin from creating and inviting users
 
-To prevent a Grafana Admin from creating users and inviting them to join an organization, you must [update a basic role permission]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+To prevent a Grafana Admin from creating users and inviting them to join an organization, you must [update a basic role permission]({{< relref "./manage-rbac-roles#update-basic-role-permissions" >}}).
 The permissions to remove are:
 
 | Action          | Scope     |
@@ -250,12 +250,12 @@ roles:
         state: 'absent'
 ```
 
-- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control#update-a-role" >}}).
 
 ### Prevent Viewers from accessing an App Plugin
 
 By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access.
-To change this default behavior and prevent Viewers from accessing an App plugin, you must [update a basic role's permissions]({{< relref "./manage-rbac-roles/#update-basic-role-permissions" >}}).
+To change this default behavior and prevent Viewers from accessing an App plugin, you must [update a basic role's permissions]({{< relref "./manage-rbac-roles#update-basic-role-permissions" >}}).
 
 In this example, three App plugins have been installed and enabled:
 | Name | ID | Required Org role |
@@ -300,4 +300,4 @@ roles:
         state: 'present'
 ```
 
-- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+- Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control#update-a-role" >}}).

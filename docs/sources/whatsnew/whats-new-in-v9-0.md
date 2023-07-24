@@ -169,11 +169,11 @@ Fine-grained access control is now called role-based access control, or RBAC. It
 
 ### Add multiple dashboards to a single report
 
-If you have information spread across several dashboards that you’d like to send out to a group of recipients periodically, you can now add multiple dashboards to a single report and send it all in one email. Learn more about Reporting in the [Reporting docs]({{< relref "/docs/grafana/latest/enterprise/reporting/#reporting" >}}).
+If you have information spread across several dashboards that you’d like to send out to a group of recipients periodically, you can now add multiple dashboards to a single report and send it all in one email. Learn more about Reporting in the [Reporting docs]({{< relref "/docs/grafana/latest/enterprise/reporting#reporting" >}}).
 
 ### Embed an image of a dashboard in a report
 
-Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs]({{< relref "/docs/grafana/latest/enterprise/reporting/#reporting" >}}).
+Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs]({{< relref "/docs/grafana/latest/enterprise/reporting#reporting" >}}).
 
 {{< figure src="/static/img/docs/dashboards/report-embedded-image.png" max-width="750px" caption="Embed report" >}}
 

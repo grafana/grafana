@@ -123,7 +123,7 @@ Support for exemplars is available only for the Prometheus data source. If this 
 
 - **Internal link** - Toggle on to enable an internal link. When enabled, reveals the data source selector. Select the backend tracing data store for your exemplar data.
 
-- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}).
+- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links#value-variables" >}}).
 
 - **Data source** - _(Visible if you **enable** `Internal link`)_ The data source the exemplar will navigate to.
 

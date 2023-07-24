@@ -37,7 +37,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. In the modal that opens, do one of the following:
 
    - Select one of your existing data sources.
-   - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources/#special-data-sources" >}}).
+   - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources#special-data-sources" >}}).
    - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
@@ -85,7 +85,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 ## Configure repeating rows
 
-You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels]({{< relref "../../../panels-visualizations/configure-panel-options/#configure-repeating-panels" >}}).
+You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels]({{< relref "../../../panels-visualizations/configure-panel-options#configure-repeating-panels" >}}).
 
 To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
 

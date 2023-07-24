@@ -68,7 +68,7 @@ The added benefits of service accounts to API keys include:
 
 A service account can be used to run automated workloads in Grafana, like dashboard provisioning, configuration, or report generation. For more information about how you can use service accounts, refer to [About service accounts]({{< ref "#about-service-accounts" >}}).
 
-For more information about creating service accounts via the API, refer to [Create a service account in the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account" >}}).
+For more information about creating service accounts via the API, refer to [Create a service account in the HTTP API]({{< relref "../../developers/http_api/serviceaccount#create-service-account" >}}).
 
 Note that the user who created a service account will also be able to read, update and delete the service account that they created, as well as permissions associated with that service account.
 
@@ -91,7 +91,7 @@ Note that the user who created a service account will also be able to read, upda
 
 A service account token is a generated random string that acts as an alternative to a password when authenticating with Grafana’s HTTP API. For more information about service accounts, refer to [About service accounts in Grafana]({{< ref "#about-service-accounts" >}}).
 
-You can create a service account token using the Grafana UI or via the API. For more information about creating a service account token via the API, refer to [Create service account tokens using the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#create-service-account-tokens" >}}).
+You can create a service account token using the Grafana UI or via the API. For more information about creating a service account token via the API, refer to [Create service account tokens using the HTTP API]({{< relref "../../developers/http_api/serviceaccount#create-service-account-tokens" >}}).
 
 ### Before you begin
 
@@ -116,7 +116,7 @@ By default, service account tokens don't have an expiration date, meaning they w
 ## Assign roles to a service account in Grafana
 
 You can assign roles to a Grafana service account to control access for the associated service account tokens.
-You can assign roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API]({{< relref "../../developers/http_api/serviceaccount/#update-service-account" >}}).
+You can assign roles to a service account using the Grafana UI or via the API. For more information about assigning a role to a service account via the API, refer to [Update service account using the HTTP API]({{< relref "../../developers/http_api/serviceaccount#update-service-account" >}}).
 
 In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you can also [assign RBAC roles]({{< relref "../roles-and-permissions/access-control/assign-rbac-roles" >}}) to grant very specific permissions to applications that interact with Grafana.
 

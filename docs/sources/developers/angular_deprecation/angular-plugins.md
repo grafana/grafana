@@ -35,7 +35,7 @@ Plugins were updated to include signatures in 2021, so whilst a plugin may show 
 ## What should I do with the information below?
 
 - Consider the available migration steps.
-- Check your Grafana instances for usage of these plugins - see information here on [browsing installed plugins]({{< relref "../../administration/plugin-management/#browse-plugins" >}}).
+- Check your Grafana instances for usage of these plugins - see information here on [browsing installed plugins]({{< relref "../../administration/plugin-management#browse-plugins" >}}).
 - Review the project repositories to add your support to any migration issues.
 
 ## I'm a plugin author
@@ -554,7 +554,7 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content.
+> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text#html" >}}) panel included with Grafana supports rendering HTML content.
 
 ### [Track Map](https://grafana.com/grafana/plugins/alexandra-trackmap-panel/)
 
@@ -732,7 +732,7 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/mxswat/grafana-separator-panel) in the past 5 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** the [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel can be used with no data to provide space within dashboards.
+> **Migration available - potential alternative:** the [Text]({{< relref "../../panels-visualizations/visualizations/text#html" >}}) panel can be used with no data to provide space within dashboards.
 
 ### [Discrete](https://grafana.com/grafana/plugins/natel-discrete-panel/)
 

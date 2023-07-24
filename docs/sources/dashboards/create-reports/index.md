@@ -36,7 +36,7 @@ For information about recent improvements to the reporting UI, refer to [Grafana
 
 ## Requirements
 
-- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../../setup-grafana/configure-grafana/#smtp" >}}) in [Configuration]({{< relref "../../setup-grafana/configure-grafana" >}}) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../../setup-grafana/configure-grafana#smtp" >}}) in [Configuration]({{< relref "../../setup-grafana/configure-grafana" >}}) for more information.
 - The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering" >}}) for more information.
 
 ## Access control
@@ -99,7 +99,7 @@ The query variables saved with a report might become of date if the results of t
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 {{% /admonition %}}
 
-You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels-visualizations/configure-panel-options/#configure-repeating-rows-or-panels" >}}).
+You can include dynamic dashboards with panels or rows, set to repeat by a variable, into reports. For detailed information about setting up repeating panels or rows in dashboards, refer to [Repeat panels or rows]({{< relref "../../panels-visualizations/configure-panel-options#configure-repeating-rows-or-panels" >}}).
 
 #### Caveats
 
@@ -123,7 +123,7 @@ By default, reports use the saved time range of the dashboard. You can change th
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "./manage-dashboards/#dashboard-time-settings" >}}).
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. To avoid this, set the time zone to UTC for dashboards when using a remote renderer. Each dashboard's time zone setting is visible in the [time range controls]({{< relref "./manage-dashboards#dashboard-time-settings" >}}).
 
 ### Layout and orientation
 
@@ -148,7 +148,7 @@ This feature relies on the same plugin that supports the [image rendering]({{< r
 
 When the CSV file is generated, it is temporarily written to the `csv` folder in the Grafana `data` folder.
 
-A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../../setup-grafana/configure-grafana/#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
+A background job runs every 10 minutes and removes temporary CSV files. You can configure how long a CSV file should be stored before being removed by configuring the [temp-data-lifetime]({{< relref "../../setup-grafana/configure-grafana#temp-data-lifetime" >}}) setting. This setting also affects how long a renderer PNG file should be stored.
 
 ### Scheduling
 
@@ -226,7 +226,7 @@ Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterpr
 
 ## Send a report via the API
 
-You can send reports programmatically with the [send report]({{< relref "../../developers/http_api/reporting/#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../../developers/http_api" >}}).
+You can send reports programmatically with the [send report]({{< relref "../../developers/http_api/reporting#send-report" >}}) endpoint in the [HTTP APIs]({{< relref "../../developers/http_api" >}}).
 
 ## Rendering configuration
 
@@ -284,7 +284,7 @@ Currently, the API does not allow for the simultaneous upload of files with iden
 
 ## Troubleshoot reporting
 
-To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana/#filters" >}}) for more information.
+To troubleshoot and get more log information, enable debug logging in the configuration file. Refer to [Configuration]({{< relref "../../setup-grafana/configure-grafana#filters" >}}) for more information.
 
 ```bash
 [log]

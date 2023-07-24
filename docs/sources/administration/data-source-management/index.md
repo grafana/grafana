@@ -91,7 +91,7 @@ When you enable query and resource caching, Grafana temporarily stores the resul
 
 When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend" >}}).
 
-The caching feature works for **all** backend data sources. You can enable the cache globally in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
+The caching feature works for **all** backend data sources. You can enable the cache globally in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration#caching" >}}), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
@@ -119,12 +119,12 @@ By reducing the number of queries and requests sent to data sources, caching can
 
 ### Data sources that work with query caching
 
-Query caching works for Grafana's [built-in data sources]({{< relref "../../datasources/#built-in-core-data-sources" >}}), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in the plugins SDK.
+Query caching works for Grafana's [built-in data sources]({{< relref "../../datasources#built-in-core-data-sources" >}}), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in the plugins SDK.
 
 To verify that a data source works with query caching, follow the [instructions below](#enable-and-configure-query-caching) to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
 
 {{% admonition type="note" %}}
-Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend/#resources" >}}) for details.
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend#resources" >}}) for details.
 {{% /admonition %}}
 
 ### Enable and configure query caching
@@ -148,7 +148,7 @@ You can optionally override a data source's configured TTL for individual dashbo
 If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 {{% /admonition %}}
 
-To configure global settings for query caching, refer to the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}).
+To configure global settings for query caching, refer to the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration#caching" >}}).
 
 ### Disable query caching
 
@@ -159,7 +159,7 @@ To disable query caching for a single data source:
 1. In the data source list, click the data source that you want to turn off caching for.
 1. On the Cache tab, click **Disable**.
 
-To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
+To disable query caching for an entire Grafana instance, set the `enabled` flag to `false` in the `caching` section of [Configure Grafana Enterprise]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration#caching" >}}). You will no longer see the Cache tab on any data sources, and no data source queries will be cached.
 
 ### Clear cache
 

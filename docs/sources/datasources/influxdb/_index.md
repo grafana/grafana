@@ -123,7 +123,7 @@ Configure these options if you select the Flux query language:
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 {{% admonition type="note" %}}
 `database` [field is deprecated](https://github.com/grafana/grafana/pull/58647).

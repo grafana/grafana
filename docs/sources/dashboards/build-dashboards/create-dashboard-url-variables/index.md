@@ -54,7 +54,7 @@ Grafana can add variables to dashboard links when you generate them from a dashb
 
 ## Passing ad hoc filters
 
-Ad hoc filters apply key/value filters to all metric queries that use a specified data source. For more information, refer to [Add ad hoc filters]({{< relref "../../variables/add-template-variables/#add-ad-hoc-filters" >}}).
+Ad hoc filters apply key/value filters to all metric queries that use a specified data source. For more information, refer to [Add ad hoc filters]({{< relref "../../variables/add-template-variables#add-ad-hoc-filters" >}}).
 
 To pass an ad hoc filter as a query parameter, use the variable syntax to pass the ad hoc filter variable, and also provide the key, the operator as the value, and the value as a pipe-separated list.
 

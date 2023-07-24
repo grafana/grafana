@@ -37,7 +37,7 @@ To install Grafana, refer to the documentation specific to your implementation.
 
 - [Install Grafana]({{< relref "../../../../setup-grafana/installation" >}}).
 - [Run Grafana Docker image]({{< relref "../../../../setup-grafana/installation/docker" >}}).
-- [Deploy Grafana on Kubernetes]({{< relref "../../../../setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes" >}}).
+- [Deploy Grafana on Kubernetes]({{< relref "../../../../setup-grafana/installation/kubernetes#deploy-grafana-enterprise-on-kubernetes" >}}).
 
 ## Task 2: Create an AWS IAM user with access to your Grafana Enterprise license
 
@@ -110,7 +110,7 @@ To retrieve your license, Grafana Enterprise requires access to your AWS account
 
 In this task you configure Grafana Enterprise to validate the license with AWS instead of Grafana Labs.
 
-Choose one of the following options to update the [license_validation_type]({{< relref "../../../../setup-grafana/configure-grafana/enterprise-configuration/#license_validation_type" >}}) configuration to `aws`:
+Choose one of the following options to update the [license_validation_type]({{< relref "../../../../setup-grafana/configure-grafana/enterprise-configuration#license_validation_type" >}}) configuration to `aws`:
 
 - **Option 1:** In the `[enterprise]` section of the grafana.ini configuration file, add `license_validation_type=aws`.
 

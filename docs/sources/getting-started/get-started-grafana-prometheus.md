@@ -109,7 +109,7 @@ remote_write:
 ```
 
 {{% admonition type="note" %}}
-To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](/grafana/download) and follow the configuration steps listed [here]({{< relref "/docs/grafana/latest/datasources/prometheus/#configure-the-data-source" >}}).
+To configure your Prometheus instance to work with Grafana locally instead of Grafana Cloud, install Grafana [here](/grafana/download) and follow the configuration steps listed [here]({{< relref "/docs/grafana/latest/datasources/prometheus#configure-the-data-source" >}}).
 {{% /admonition %}}
 
 #### Check Prometheus metrics in Grafana Explore view

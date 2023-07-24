@@ -32,11 +32,11 @@ We recommend using service account tokens for provisioning. [Service accounts]({
 
 To create a service account token for provisioning, complete the following steps.
 
-1. [Create a new service account]({{< relref "../../../service-accounts/#create-a-service-account-in-grafana" >}}) for your CI pipeline.
-1. [Assign permissions to service account]({{< relref "../../../service-accounts/#assign-roles-to-a-service-account-in-grafana" >}}):
+1. [Create a new service account]({{< relref "../../../service-accounts#create-a-service-account-in-grafana" >}}) for your CI pipeline.
+1. [Assign permissions to service account]({{< relref "../../../service-accounts#assign-roles-to-a-service-account-in-grafana" >}}):
    - You will need roles “Role reader”, "Role writer" and roles including any permissions that will be provisioned. For example, to create or assign a role that allows creating users, a service account needs permissions to create users.
    - Alternatively, you can assign "Admin" basic role to the service account.
-1. [Create a new service account token]({{< relref "../../../service-accounts/#to-add-a-token-to-a-service-account" >}}) for use in Terraform.
+1. [Create a new service account token]({{< relref "../../../service-accounts#to-add-a-token-to-a-service-account" >}}) for use in Terraform.
 
 Alternatively, you can use basic authentication. To view all the supported authentication formats, see [here](https://registry.terraform.io/providers/grafana/grafana/latest/docs#authentication).
 

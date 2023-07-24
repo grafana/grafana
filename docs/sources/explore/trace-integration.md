@@ -34,8 +34,8 @@ Each data source can have it's own query editor. The query editor for the Tempo 
 For information on querying each data source, refer to their documentation:
 
 - [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
-- [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
-- [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
+- [Jaeger query editor]({{< relref "../datasources/jaeger#query-the-data-source" >}})
+- [Zipkin query editor]({{< relref "../datasources/zipkin#query-the-data-source" >}})
 
 ## Trace View
 
@@ -99,7 +99,7 @@ Clicking anywhere on the span row shows span details.
 Available in Grafana 7.4 and later versions.
 {{% /admonition %}}
 
-You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation]({{< relref "/docs/grafana/latest/datasources/tempo/#trace-to-logs" >}}) for configuration instructions.
+You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation]({{< relref "/docs/grafana/latest/datasources/tempo#trace-to-logs" >}}) for configuration instructions.
 
 {{< figure src="/static/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
@@ -111,7 +111,7 @@ Click the document icon to open a split view in Explore with the configured data
 This feature is currently in beta & behind the `traceToMetrics` feature toggle.
 {{% /admonition %}}
 
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation]({{< relref "/docs/grafana/latest/datasources/tempo/#trace-to-metrics" >}}) for configuration instructions.
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation]({{< relref "/docs/grafana/latest/datasources/tempo#trace-to-metrics" >}}) for configuration instructions.
 
 ## Node Graph
 
@@ -124,7 +124,7 @@ You can optionally expand the node graph for the displayed trace. Depending on t
 The Service Graph visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
 
-For more information, refer to the [Service Graph view section]({{< relref "../datasources/tempo/#open-the-service-graph-view" >}}) of the Tempo data source page and the [service graph view page]({{< relref "/docs/tempo/latest/metrics-generator/service-graph-view" >}}) in the Tempo documentation.
+For more information, refer to the [Service Graph view section]({{< relref "../datasources/tempo#open-the-service-graph-view" >}}) of the Tempo data source page and the [service graph view page]({{< relref "/docs/tempo/latest/metrics-generator/service-graph-view" >}}) in the Tempo documentation.
 
 {{< figure src="/static/img/docs/grafana-cloud/apm-overview.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the Service Graph view" >}}
 

@@ -114,9 +114,9 @@ You can specify the following permissions to dashboards and folders.
 
 > Important: When a user creates a dashboard or a folder, he is set as **Admin** of it.
 
-For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}).
+For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "../user-management/manage-dashboard-permissions#grant-dashboard-folder-permissions" >}}).
 
-For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "../user-management/manage-dashboard-permissions/#grant-dashboard-permissions" >}}).
+For more information about assigning dashboard permissions, refer to [Grant dashboard permissions]({{< relref "../user-management/manage-dashboard-permissions#grant-dashboard-permissions" >}}).
 
 ## Editors with administrator permissions
 
@@ -139,7 +139,7 @@ If you have access to the Grafana server, you can modify the default viewer role
 
 Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
 
-For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "../user-management/manage-dashboard-permissions/#enable-viewers-to-edit-but-not-save-dashboards-and-use-explore" >}}).
+For more information about assigning dashboard preview permissions to viewers, refer to [Enable viewers to preview dashboards and use Explore]({{< relref "../user-management/manage-dashboard-permissions#enable-viewers-to-edit-but-not-save-dashboards-and-use-explore" >}}).
 
 ## Teams and permissions
 
@@ -167,7 +167,7 @@ While Grafana OSS includes a robust set of permissions and settings that you can
 
 By default, a user can query any data source in an organization, even if the data source is not linked to the user's dashboards.
 
-Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions" >}}).
+Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management#data-source-permissions" >}}).
 
 ### Role-based access control
 

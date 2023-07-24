@@ -21,7 +21,7 @@ Server administrators are "super-admins" with full permissions to create, read, 
 
 ## Before you begin
 
-- [Add a user]({{< relref "../#add-a-user" >}})
+- [Add a user]({{< relref "..#add-a-user" >}})
 - Ensure you have Grafana server administrator privileges
 
 **To assign or remove Grafana administrator privileges**:

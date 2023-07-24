@@ -41,7 +41,7 @@ To do this, we'll: create a Grafana alert rule, add a Flux query, and then add e
 1. Open the Grafana alerting menu and select **Alert rules**.
 1. Click **New alert rule**.
 1. Give your alert rule a name and then select **Grafana managed alert**.
-   For InfluxDB, you will always create a [Grafana managed rule]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/#add-grafana-managed-rule" >}}).
+   For InfluxDB, you will always create a [Grafana managed rule]({{< relref "/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule#add-grafana-managed-rule" >}}).
 
 ### Add an initial Flux query to the alert rule
 
@@ -67,7 +67,7 @@ This Flux query will yield a time-series graph like this:
 
 ### Add expressions to your Grafana Alert rule
 
-With data now appearing in our rule setup, our next step is to create an [expression]({{< relref "/docs/grafana/v9.0/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#using-expressions" >}}). Move to section `B`. For this scenario, we want to create a Reduce expression that will reduce the above to a single value. In this image, you can see that we have chosen to reduce our time-series data the `Last` value from input `A`. In this case, it returns a value 53 degrees celsius for Tank A5:
+With data now appearing in our rule setup, our next step is to create an [expression]({{< relref "/docs/grafana/v9.0/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions#using-expressions" >}}). Move to section `B`. For this scenario, we want to create a Reduce expression that will reduce the above to a single value. In this image, you can see that we have chosen to reduce our time-series data the `Last` value from input `A`. In this case, it returns a value 53 degrees celsius for Tank A5:
 
 ![grafana alerts from flux queries](/media/tutorials/screenshot-flux-reduce-expression.png)
 

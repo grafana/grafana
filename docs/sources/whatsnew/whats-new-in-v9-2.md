@@ -55,7 +55,7 @@ _Generally available in Grafana Open Source._
 
 You can now use Google Analytics 4 (GA4) to track usage of Grafana.
 To enable tracking with GA4, specify your property's measurement ID in Grafana's configuration file.
-Read more [in our documentation]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana/#google_analytics_4_id" >}}).
+Read more [in our documentation]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#google_analytics_4_id" >}}).
 
 Google Analytics 4 replaces Universal Analytics, which will stop processing hits in 2023 (July 1 for free accounts, October 1 for Google Analytics 360).
 You can continue using Universal Analytics with Grafana and send analytics data to both types of properties.
@@ -158,7 +158,7 @@ _Generally available in Grafana Open Source._
 
 We have significantly simplified and improved the way you can create template variable queries for Loki data sources in dashboards.
 Use drop-downs to choose query type, label, and stream selector, without needing to worry about templating query syntax.
-For more information, refer to [Loki data source documentation]({{< relref "/docs/grafana/latest/datasources/loki/#query-variable" >}}).
+For more information, refer to [Loki data source documentation]({{< relref "/docs/grafana/latest/datasources/loki#query-variable" >}}).
 
 {{< figure src="/static/img/docs/queries/loki-template-variable-queries-9-2.png" max-width="750px" caption="Creating a template variable query for Loki" >}}
 
@@ -188,7 +188,7 @@ Previously, you could assign roles only when looking at a list of all teams.
 #### RBAC: Organize custom roles into groups
 
 If you create many custom roles in Grafana – for example, different roles for editing specific dashboards or folders, or specific roles for certain teams in your company – you can now organize them into groups for more efficient navigation, browsing, and custom role assignment.
-For more information on custom roles, see the [documentation]({{< relref "/docs/grafana/latest/developers/http_api/access_control/#create-a-new-custom-role" >}}).
+For more information on custom roles, see the [documentation]({{< relref "/docs/grafana/latest/developers/http_api/access_control#create-a-new-custom-role" >}}).
 
 {{< figure src="/static/img/docs/manage-users/rbac-groups-9-2.png" max-width="750px" caption="Organizing custom roles into RBAC groups" >}}
 
@@ -205,7 +205,7 @@ _Generally available in Grafana Enterprise, Grafana Cloud Pro, and Advanced._
 ### Map a user to all organizations in Grafana
 
 You can now use `*` as the Grafana organization in the mapping to add all users from a given SAML Organization to all existing Grafana organizations.
-For more information, see ["Configure SAML authentication"]({{< relref "/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml/#configure-organization-mapping" >}}) in the documentation.
+For more information, see ["Configure SAML authentication"]({{< relref "/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml#configure-organization-mapping" >}}) in the documentation.
 
 ### Skip organization role sync
 

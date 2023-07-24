@@ -139,7 +139,7 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 Available in Grafana v7.3 and higher.
 {{% /admonition %}}
 
-To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
+To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana#sigv4_auth_enabled" >}}).
 
 Once AWS SigV4 is enabled, you can configure it on the Elasticsearch data source configuration page.
 For more information about AWS authentication options, refer to [AWS authentication]({{< relref "../aws-cloudwatch/aws-authentication" >}}).
@@ -149,7 +149,7 @@ For more information about AWS authentication options, refer to [AWS authenticat
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 {{% admonition type="note" %}}
 The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).

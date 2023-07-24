@@ -33,7 +33,7 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 ### Community Contributions
 
-Grafana 8.2 includes a number of important community contributions including support for OAuth role mapping with GitLab accounts ([#30025](https://github.com/grafana/grafana/pull/30025)), a new wide-to-long function ([#38670](https://github.com/grafana/grafana/pull/38670)) included in the [prepare time series transformation]({{< relref "/docs/grafana/latest/panels/transformations/types-options/#prepare-time-series" >}}). A number of additions to the Azure Monitor data source were submitted, including an overview dashboard([#38801](https://github.com/grafana/grafana/pull/38801)) and support for parsing numeric fields in the Azure Resource Graph([#38728](https://github.com/grafana/grafana/pull/38728)). Contributions also included [regular-expression based value mapping]({{< relref "/docs/grafana/next/panels/value-mappings/#map-a-regular-expression" >}}) ([#38931](https://github.com/grafana/grafana/pull/38931)) and improvements to our systemd unit for Grafana installations ([#38109](https://github.com/grafana/grafana/pull/38109)). This list is by no means exhaustive or comprehensive. We greatly appreciate _all_ the contributions submitted for inclusion in Grafana.
+Grafana 8.2 includes a number of important community contributions including support for OAuth role mapping with GitLab accounts ([#30025](https://github.com/grafana/grafana/pull/30025)), a new wide-to-long function ([#38670](https://github.com/grafana/grafana/pull/38670)) included in the [prepare time series transformation]({{< relref "/docs/grafana/latest/panels/transformations/types-options#prepare-time-series" >}}). A number of additions to the Azure Monitor data source were submitted, including an overview dashboard([#38801](https://github.com/grafana/grafana/pull/38801)) and support for parsing numeric fields in the Azure Resource Graph([#38728](https://github.com/grafana/grafana/pull/38728)). Contributions also included [regular-expression based value mapping]({{< relref "/docs/grafana/next/panels/value-mappings#map-a-regular-expression" >}}) ([#38931](https://github.com/grafana/grafana/pull/38931)) and improvements to our systemd unit for Grafana installations ([#38109](https://github.com/grafana/grafana/pull/38109)). This list is by no means exhaustive or comprehensive. We greatly appreciate _all_ the contributions submitted for inclusion in Grafana.
 
 ### Accessibility
 
@@ -47,7 +47,7 @@ The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurab
 
 ### Plugins management
 
-We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog]({{< relref "/docs/grafana/v8.0/administration/configuration/#plugin_admin_enabled" >}}) is now enabled by default. You can use the plugin catalog to find, install, and uninstall your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
+We have continued to improve how you manage your plugins within Grafana. The new [plugins catalog]({{< relref "/docs/grafana/v8.0/administration/configuration#plugin_admin_enabled" >}}) is now enabled by default. You can use the plugin catalog to find, install, and uninstall your plugins directly from within Grafana without needing the Grafana CLI or to restart Grafana.
 
 {{< figure src="/static/img/docs/plugins/plugins-catalog-browse-8-1.png" max-width="1200px" caption="Plugins Catalog Browsers" >}}
 
@@ -57,7 +57,7 @@ We’ve continued to bolster the new, unified alerting system launched in Grafan
 
 ### Image Renderer performance improvements and measurement
 
-You can use Grafana’s image renderer to generate images of panels and dashboards. Grafana uses these images for alert notifications, PDF exports (Grafana Enterprise), and reports sent by Grafana (Grafana Enterprise). We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation]({{< relref "/docs/grafana/next/image-rendering/#rendering-mode" >}}) to help you configure it for the best mix of performance and resource usage. Tests show that we have reduced image load time from the 95th percentile of 10 seconds to less than 3 seconds under normal load.
+You can use Grafana’s image renderer to generate images of panels and dashboards. Grafana uses these images for alert notifications, PDF exports (Grafana Enterprise), and reports sent by Grafana (Grafana Enterprise). We’ve added additional metrics to the image renderer to help you diagnose its performance, and [included guidance in our documentation]({{< relref "/docs/grafana/next/image-rendering#rendering-mode" >}}) to help you configure it for the best mix of performance and resource usage. Tests show that we have reduced image load time from the 95th percentile of 10 seconds to less than 3 seconds under normal load.
 
 ## Grafana Enterprise
 

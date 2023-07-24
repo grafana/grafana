@@ -54,7 +54,7 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 For details on a specific data source's unique query editor features, refer to its documentation:
 
-- For data sources included with Grafana, refer to [Built-in core data sources]({{< relref "../../datasources/#data-source-plugins" >}}), which links to each core data source's documentation.
+- For data sources included with Grafana, refer to [Built-in core data sources]({{< relref "../../datasources#data-source-plugins" >}}), which links to each core data source's documentation.
 - For data sources installed as plugins, refer to its own documentation.
   - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
     For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management" >}}).
@@ -80,7 +80,7 @@ query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
 ### Special data sources
 
 Grafana also includes three special data sources: **Grafana**, **Mixed**, and **Dashboard**.
-For details, refer to [Data sources]({{< relref "../../datasources/#special-data-sources" >}})
+For details, refer to [Data sources]({{< relref "../../datasources#special-data-sources" >}})
 
 ## Navigate the Query tab
 
@@ -169,7 +169,7 @@ Panel data source query options include:
   As the user zooms out on a visualization, the interval grows, resulting in a more coarse-grained aggregation.
   Likewise, if the user zooms in, the interval decreases, resulting in a more fine-grained aggregation.
 
-  For more information, refer to [Global variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables" >}}).
+  For more information, refer to [Global variables]({{< relref "../../dashboards/variables/add-template-variables#global-variables" >}}).
 
 - **Relative time:** Overrides the relative time range for individual panels, which causes them to be different than what is selected in the dashboard time picker in the top-right corner of the dashboard.
   You can use this to show metrics from different time periods or days on the same dashboard.

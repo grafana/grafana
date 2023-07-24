@@ -58,7 +58,7 @@ To configure basic settings for the data source, complete the following steps:
 
 ### Min time interval
 
-A lower limit for the [$__interval]({{< relref "../../dashboards/variables/add-template-variables/#__interval" >}}) and [$__interval_ms]({{< relref "../../dashboards/variables/add-template-variables/#__interval_ms" >}}) variables.
+A lower limit for the [$__interval]({{< relref "../../dashboards/variables/add-template-variables#__interval" >}}) and [$__interval_ms]({{< relref "../../dashboards/variables/add-template-variables#__interval_ms" >}}) variables.
 Recommended to be set to write frequency, for example `1m` if your data is written every minute.
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:

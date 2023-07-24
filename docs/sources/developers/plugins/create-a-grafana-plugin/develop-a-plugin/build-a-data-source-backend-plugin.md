@@ -111,8 +111,8 @@ You can then start Grafana in development mode by running `make run & make run-f
 If you are running Grafana from a binary or inside a Docker container, you can start it in development mode by setting the environment variable `GF_DEFAULT_APP_MODE` to `development`.
 
 By default, Grafana requires backend plugins to be signed. To load unsigned backend plugins, you need to
-configure Grafana to [allow unsigned plugins]({{< relref "/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins" >}}).
-For more information, refer to [Plugin signature verification]({{< relref "/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins" >}}).
+configure Grafana to [allow unsigned plugins]({{< relref "/docs/grafana/latest/plugins/plugin-signature-verification#allow-unsigned-plugins" >}}).
+For more information, refer to [Plugin signature verification]({{< relref "/docs/grafana/latest/plugins/plugin-signature-verification#backend-plugins" >}}).
 
 ## Anatomy of a backend plugin
 
@@ -161,7 +161,7 @@ Open `/pkg/plugin/datasource.go`. In this file you'll see that the `SampleDataso
 
 ## Add authentication
 
-Implementing authentication allows your plugin to access protected resources like databases or APIs. To learn more about how to authenticate using a backend plugin, refer to [our documentation]({{< relref "../extend-a-plugin/add-authentication-for-data-source-plugins/#authenticate-using-a-backend-plugin" >}}).
+Implementing authentication allows your plugin to access protected resources like databases or APIs. To learn more about how to authenticate using a backend plugin, refer to [our documentation]({{< relref "../extend-a-plugin/add-authentication-for-data-source-plugins#authenticate-using-a-backend-plugin" >}}).
 
 ## Enable Grafana Alerting
 

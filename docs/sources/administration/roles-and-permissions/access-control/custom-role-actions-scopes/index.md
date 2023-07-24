@@ -20,7 +20,7 @@ Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-e
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
-To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "../#fixed-roles" >}}).
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions]({{< relref "..#fixed-roles" >}}).
 
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
@@ -158,7 +158,7 @@ The following list contains role-based access control actions.
 > **Note:** Available from Grafana 9.4 in early access.
 
 > **Note:** This feature is behind the `accessControlOnCall` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana#feature_toggles" >}}) for details.
 
 The following list contains role-based access control actions used by Grafana OnCall application plugin.
 

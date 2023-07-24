@@ -74,8 +74,8 @@ You can use RBAC to modify the permissions associated with any basic role, which
 Note that any modification to any of these basic role is not propagated to the other basic roles.
 For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
 
-For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
-To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
+For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions#basic-role-assignments" >}}).
+To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
 
 ### Fixed roles
 
@@ -89,7 +89,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Dashboards and folders]({{< relref "../../../dashboards" >}})
 - [Data sources]({{< relref "../../../datasources" >}})
 - [Explore]({{< relref "../../../explore" >}})
-- [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
+- [Folders]({{< relref "../../../dashboards/manage-dashboards#create-a-dashboard-folder" >}})
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap" >}})
 - [Licenses]({{< relref "../../stats-and-license" >}})
 - [Organizations]({{< relref "../../organization-management" >}})
@@ -124,4 +124,4 @@ You can use either of the following methods to create, assign, and manage custom
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions#grant-dashboard-folder-permissions" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.

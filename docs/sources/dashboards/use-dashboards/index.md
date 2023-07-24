@@ -56,7 +56,7 @@ The following image and descriptions highlight all dashboard features.
 - (15) **Dashboard row**: A dashboard row is a logical divider within a dashboard that groups panels together.
   - Rows can be collapsed or expanded allowing you to hide parts of the dashboard.
   - Panels inside a collapsed row do not issue queries.
-  - Use [repeating rows]({{< relref "../build-dashboards/create-dashboard/#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
+  - Use [repeating rows]({{< relref "../build-dashboards/create-dashboard#configure-repeating-rows" >}}) to dynamically create rows based on a template variable.
 
 ## Keyboard shortcuts
 

@@ -49,7 +49,7 @@ Expressions work with two types of data.
 - A collection of time series.
 - A collection of numbers, where each number is an item.
 
-Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../fundamentals/timeseries-dimensions/#labels" >}}) or key-value pairs.
+Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../fundamentals/timeseries-dimensions#labels" >}}) or key-value pairs.
 
 ### Data source queries
 
@@ -235,6 +235,6 @@ For more information about expressions, refer to [About expressions]({{< relref 
 
 When any queried data source returns no series or numbers, the expression engine returns `NoData`. For example, if a request contains two data source queries that are merged by an expression, if `NoData` is returned by at least one of the data source queries, then the returned result for the entire query is `NoData`.
 
-For more information about how [Grafana Alerting]({{< relref "../../../alerting" >}}) processes `NoData` results, refer to [No data and error handling]({{< relref "../../../alerting/alerting-rules/create-grafana-managed-rule/#no-data-and-error-handling" >}}).
+For more information about how [Grafana Alerting]({{< relref "../../../alerting" >}}) processes `NoData` results, refer to [No data and error handling]({{< relref "../../../alerting/alerting-rules/create-grafana-managed-rule#no-data-and-error-handling" >}}).
 
 In the case of using an expression on multiple queries, the expression engine requires that all of the queries return an identical timestamp. For example, if using math to combine the results of multiple SQL queries which each use `SELECT NOW() AS "time"`, the expression will only work if all queries evaluate `NOW()` to an identical timestamp; which does not always happen. To resolve this, you can replace `NOW()` with an arbitrary time, such as `SELECT 1 AS "time"`, or any other valid UNIX timestamp.

@@ -11,7 +11,7 @@ weight: 50
 
 # Change a user's organization permissions
 
-Update organization permissions when you want to enhance or restrict a user's access to organization resources. For more information about organization permissions, refer to [Organization roles]({{< relref "../../../roles-and-permissions/#organization-roles" >}}).
+Update organization permissions when you want to enhance or restrict a user's access to organization resources. For more information about organization permissions, refer to [Organization roles]({{< relref "../../../roles-and-permissions#organization-roles" >}}).
 
 ## Before you begin
 

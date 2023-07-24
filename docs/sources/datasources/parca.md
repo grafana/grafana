@@ -81,7 +81,7 @@ This allows you to quickly see any spikes in the value of the scraped profiles a
 
 ## Provision the Parca data source
 
-You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see [provisioning documentation]({{< relref "../administration/provisioning/#datasources" >}}).
+You can modify the Grafana configuration files to provision the Parca data source. To learn more, and to view the available provisioning settings, see [provisioning documentation]({{< relref "../administration/provisioning#datasources" >}}).
 
 Here is an example config:
 

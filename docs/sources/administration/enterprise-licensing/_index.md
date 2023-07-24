@@ -84,9 +84,9 @@ environment variable.
 
 ### Step 3. Ensure that the license file's root URL matches the root_url configuration option
 
-Update the [`root_url`]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
+Update the [`root_url`]({{< relref "../../setup-grafana/configure-grafana#root_url" >}}) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
 
-This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}) in your configuration.
+This is important, because as part of the validation checks at startup, Grafana compares the license URL to the [`root_url`]({{< relref "../../setup-grafana/configure-grafana#root_url" >}}) in your configuration.
 
 In your configuration file:
 
@@ -229,7 +229,7 @@ As the license expiration date approaches, you will see a banner in Grafana that
 
 **Grafana License URL:** Your license does not work with an instance of Grafana with a different root URL.
 
-The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../setup-grafana/configure-grafana/#root_url" >}}) configuration setting.
+The License URL is the complete URL of your Grafana instance, for example `https://grafana.your-company.com/`. It is defined in the [root_url]({{< relref "../../setup-grafana/configure-grafana#root_url" >}}) configuration setting.
 
 **Concurrent sessions limit**: As of Grafana Enterprise 7.5, users can initiate up to three concurrent sessions of Grafana.
 
@@ -241,7 +241,7 @@ When a user reaches the session limit, the fourth connection succeeds and the lo
 
 You can request Grafana Labs to activate usage billing which allows an unlimited number of active users. When usage billing is enabled, Grafana does not enforce active user limits or display warning banners. Instead, you are charged for active users that exceed the limit, according to your customer contract.
 
-Usage billing involves a contractual agreement between you and Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#auto_refresh_license" >}}).
+Usage billing involves a contractual agreement between you and Grafana Labs, and it is only available if Grafana Enterprise is configured to [automatically refresh its license token]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration#auto_refresh_license" >}}).
 
 ### Request a change to your license
 

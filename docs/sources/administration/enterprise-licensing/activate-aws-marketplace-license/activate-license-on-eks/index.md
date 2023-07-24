@@ -50,7 +50,7 @@ Grafana requires that you configure a database to hold dashboards, users, and ot
 ### Before you begin
 
 - Ensure that you have a supported Grafana database available.
-  - For a list of supported databases, refer to [Supported databases]({{< relref "../../../../setup-grafana/installation/#supported-databases" >}}).
+  - For a list of supported databases, refer to [Supported databases]({{< relref "../../../../setup-grafana/installation#supported-databases" >}}).
   - For information about creating a database, refer to [Creating an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html).
 - Review the information required to connect to the RDS DB instance. For more information, refer to [Connecting to an Amazon RDS DB instance](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_CommonTasks.Connect.html).
 
@@ -99,7 +99,7 @@ In this task, you configure Grafana Enterprise to validate the license with AWS 
 
    For more information about AWS license permissions, refer to [Actions, resources, and condition keys for AWS License Manager](https://docs.aws.amazon.com/service-authorization/latest/reference/list_awslicensemanager.html).
 
-1. Choose **one** of the following options to update the [license_validation_type]({{< relref "../../../../setup-grafana/configure-grafana/enterprise-configuration/#license_validation_type" >}}) configuration to `aws`:
+1. Choose **one** of the following options to update the [license_validation_type]({{< relref "../../../../setup-grafana/configure-grafana/enterprise-configuration#license_validation_type" >}}) configuration to `aws`:
 
    - **Option 1:** Use `kubectl edit configmap grafana` to edit `grafana.ini` add the following section to the configuration:
 

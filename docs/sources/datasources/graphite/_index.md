@@ -69,7 +69,7 @@ Queries using tags with `seriesByTags()` are also transformed without any additi
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for lists of common configuration options and JSON data options, refer to [Provisioning data sources]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for lists of common configuration options and JSON data options, refer to [Provisioning data sources]({{< relref "../../administration/provisioning#data-sources" >}}).
 
 #### Provisioning example
 
