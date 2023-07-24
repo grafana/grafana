@@ -94,8 +94,8 @@ jobs:
           rm -rf "$(pwd)/website/content/docs/grafana/${TARGET}"
           mv "$(pwd)/docs/sources" "$(pwd)/website/content/docs/grafana/${TARGET}"
           doc-validator \
-            "--include=^$(pwd)/website/content/docs/grafana/${TARGET}/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$" \
-            '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$' \
+            "--include=^$(pwd)/website/content/docs/grafana/${TARGET}/${INCLUDE}" \
+            "--skip-checks=${SKIP_CHECKS}" \
             "$(pwd)/website/content/docs/grafana/${TARGET}" \
             /docs/grafana/latest \
             | sed "s,$(pwd)/website/content/docs/grafana/${TARGET},docs/sources,g" \
@@ -106,5 +106,7 @@ jobs:
                 --name=doc-validator \
                 --reporter=github-pr-review
         env:
+          DOC_VALIDATOR_INCLUDE: (?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$
+          DOC_VALIDATOR_SKIP_CHECKS: ^(?:image.+|canonical-does-not-match-pretty-URL)$
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET: ${{ needs.docs-target.outputs.target }}
