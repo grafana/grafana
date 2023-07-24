@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -28,6 +29,13 @@ func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.List
 	return nil, nil
 }
 
+func (f *FakeInstanceStore) ListAlertInstanceData(ctx context.Context, q *models.ListAlertInstancesQuery) ([]*models.AlertInstanceData, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, *q)
+	return nil, nil
+}
+
 func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q models.AlertInstance) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -35,7 +43,25 @@ func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q models.AlertI
 	return nil
 }
 
+func (f *FakeInstanceStore) SaveAlertInstanceData(_ context.Context, alertInstances models.AlertInstanceData) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, alertInstances)
+	return nil
+}
+
+func (f *FakeInstanceStore) DeleteExpiredAlertInstanceData(_ context.Context) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, time.Now())
+	return 0, nil
+}
+
 func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
+
+func (f *FakeInstanceStore) FetchOrgIdsFromInstanceData(_ context.Context) ([]int64, error) {
+	return []int64{}, nil
+}
 
 func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...models.AlertInstanceKey) error {
 	f.mtx.Lock()

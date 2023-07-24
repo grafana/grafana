@@ -53,6 +53,8 @@ func historicalTableMigrations(mg *migrator.Migrator) {
 	addAlertmanagerConfigHistoryMigrations(mg)
 
 	extractAlertmanagerConfigurationHistoryMigration(mg)
+
+	addAlertInstanceDataMigration(mg)
 }
 
 // addAlertDefinitionMigrations should not be modified.
@@ -189,6 +191,26 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 		migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
 			Name: "current_reason", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: true,
 		}))
+}
+
+func addAlertInstanceDataMigration(mg *migrator.Migrator) {
+	alertInstanceData := migrator.Table{
+		Name: "alert_instance_data",
+		Columns: []*migrator.Column{
+			{Name: "rule_org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
+			{Name: "data", Type: migrator.DB_LongBlob, Nullable: false},
+			{Name: "expires_at", Type: migrator.DB_DateTime, Nullable: false},
+		},
+		PrimaryKeys: []string{"rule_org_id", "rule_uid"},
+	}
+
+	mg.AddMigration("create alert_instance_data table", migrator.NewAddTableMigration(alertInstanceData))
+	mg.AddMigration("add index on expires_at column in alert_instance_data table", migrator.NewAddIndexMigration(alertInstanceData, &migrator.Index{
+		Cols: []string{"expires_at"},
+		Type: migrator.IndexType,
+	}))
+
 }
 
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {

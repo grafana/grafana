@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
@@ -10,8 +9,12 @@ import (
 // InstanceStore represents the ability to fetch and write alert instances.
 type InstanceStore interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
+	FetchOrgIdsFromInstanceData(ctx context.Context) ([]int64, error)
 	ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error)
+	ListAlertInstanceData(ctx context.Context, cmd *models.ListAlertInstancesQuery) ([]*models.AlertInstanceData, error)
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
+	SaveAlertInstanceData(ctx context.Context, data models.AlertInstanceData) error
+	DeleteExpiredAlertInstanceData(ctx context.Context) (int64, error)
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
 }

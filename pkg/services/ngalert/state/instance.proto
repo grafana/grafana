@@ -1,0 +1,25 @@
+syntax = "proto3";
+package state;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "./pb";
+
+message AlertInstance {
+  message AlertInstanceKey {
+    int64 rule_org_id = 1;
+    string rule_uid = 2;
+    string labels_hash = 3;
+  }
+  AlertInstanceKey key = 1;
+  map<string, string> labels = 2;
+  string current_state = 3;
+  string current_reason = 4;
+  google.protobuf.Timestamp current_state_since = 5;
+  google.protobuf.Timestamp current_state_end = 6;
+  google.protobuf.Timestamp last_eval_time = 7;
+}
+
+message AlertInstances {
+  repeated AlertInstance instances = 1;
+}

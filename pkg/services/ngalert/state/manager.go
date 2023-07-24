@@ -1,19 +1,24 @@
 package state
 
 import (
+	"bytes"
+	"compress/zlib"
 	"context"
+	"io"
 	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/pb"
 )
 
 var (
@@ -96,7 +101,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	startTime := time.Now()
 	st.log.Info("Warming state cache for startup")
 
-	orgIds, err := st.instanceStore.FetchOrgIds(ctx)
+	orgIds, err := st.instanceStore.FetchOrgIdsFromInstanceData(ctx)
 	if err != nil {
 		st.log.Error("Unable to fetch orgIds", "error", err)
 	}
@@ -108,6 +113,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
+
 		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
@@ -125,9 +131,48 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		cmd := ngModels.ListAlertInstancesQuery{
 			RuleOrgID: orgId,
 		}
-		alertInstances, err := st.instanceStore.ListAlertInstances(ctx, &cmd)
+		alertInstanceData, err := st.instanceStore.ListAlertInstanceData(ctx, &cmd)
 		if err != nil {
 			st.log.Error("Unable to fetch previous state", "error", err)
+			return
+		}
+
+		alertInstances := make([]*ngModels.AlertInstance, 0)
+		for _, n := range alertInstanceData {
+			r, err := zlib.NewReader(bytes.NewReader(n.Data))
+			if err != nil {
+				st.log.Error("Failed to create zlib reader", "error", err)
+				return
+			}
+			b := bytes.Buffer{}
+			if _, err := io.Copy(&b, r); err != nil {
+				st.log.Error("Failed to copy from zlib", "error", err)
+				return
+			}
+			if err := r.Close(); err != nil {
+				st.log.Error("Failed to close zlib reader", "error", err)
+				return
+			}
+			p := pb.AlertInstances{}
+			if err := proto.Unmarshal(b.Bytes(), &p); err != nil {
+				st.log.Error("Failed to unmarshal protobuf", "error", err)
+			}
+			for _, i := range p.Instances {
+				v := ngModels.AlertInstance{
+					AlertInstanceKey: ngModels.AlertInstanceKey{
+						RuleOrgID:  i.Key.RuleOrgId,
+						RuleUID:    i.Key.RuleUid,
+						LabelsHash: i.Key.LabelsHash,
+					},
+					Labels:            i.Labels,
+					CurrentState:      ngModels.InstanceStateType(i.CurrentState),
+					CurrentReason:     i.CurrentReason,
+					LastEvalTime:      i.LastEvalTime.AsTime(),
+					CurrentStateSince: i.CurrentStateSince.AsTime(),
+					CurrentStateEnd:   i.CurrentStateEnd.AsTime(),
+				}
+				alertInstances = append(alertInstances, &v)
+			}
 		}
 
 		for _, entry := range alertInstances {
@@ -148,6 +193,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			if err != nil {
 				st.log.Error("Error getting cacheId for entry", "error", err)
 			}
+
 			rulesStates.states[cacheID] = &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
@@ -251,9 +297,10 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 		states = append(states, s)
 	}
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.deleteAlertStates(ctx, logger, staleStates)
 
-	st.saveAlertStates(ctx, logger, states...)
+	expiresAt := time.Now().Add((2 * time.Second) * time.Duration(alertRule.IntervalSeconds))
+	st.saveAlertStates(ctx, logger, expiresAt, states...)
+	st.deleteOldInstanceData(ctx, logger)
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
@@ -350,45 +397,89 @@ func (st *Manager) Put(states []*State) {
 }
 
 // TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
+func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, expiresAt time.Time, states ...StateTransition) {
 	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
 
-	saveState := func(ctx context.Context, idx int) error {
-		s := states[idx]
+	start := time.Now()
+	logger.Debug("Saving alert states", "count", len(states))
+
+	p := &pb.AlertInstances{Instances: make([]*pb.AlertInstance, 0, len(states))}
+	for _, state := range states {
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
-		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
-			return nil
+		if st.doNotSaveNormalState && IsNormalStateWithNoReason(state.State) && !state.Changed() {
+			continue
 		}
-
-		key, err := s.GetAlertInstanceKey()
+		key, err := state.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
-			return nil
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored", "cacheID", state.CacheID, "error", err, "labels", state.Labels.String())
+			return
 		}
-		instance := ngModels.AlertInstance{
-			AlertInstanceKey:  key,
-			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
-			CurrentReason:     s.StateReason,
-			LastEvalTime:      s.LastEvaluationTime,
-			CurrentStateSince: s.StartsAt,
-			CurrentStateEnd:   s.EndsAt,
-		}
-
-		err = st.instanceStore.SaveAlertInstance(ctx, instance)
-		if err != nil {
-			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
-			return nil
-		}
-		return nil
+		p.Instances = append(p.Instances, &pb.AlertInstance{
+			Key: &pb.AlertInstance_AlertInstanceKey{
+				RuleOrgId:  key.RuleOrgID,
+				RuleUid:    key.RuleUID,
+				LabelsHash: key.LabelsHash,
+			},
+			Labels:            state.Labels,
+			CurrentState:      state.State.State.String(),
+			CurrentReason:     state.State.StateReason,
+			LastEvalTime:      timestamppb.New(state.LastEvaluationTime),
+			CurrentStateSince: timestamppb.New(state.StartsAt),
+			CurrentStateEnd:   timestamppb.New(state.EndsAt),
+		})
 	}
 
-	start := time.Now()
-	logger.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
-	_ = concurrency.ForEachJob(ctx, len(states), st.maxStateSaveConcurrency, saveState)
-	logger.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency, "duration", time.Since(start))
+	out, err := proto.Marshal(p)
+	if err != nil {
+		logger.Error("Failed to marshal protobuf", "error", err)
+		return
+	}
+
+	b := bytes.Buffer{}
+	w := zlib.NewWriter(&b)
+	if _, err := w.Write(out); err != nil {
+		logger.Error("Failed to write to zlib writer", "error", err)
+		return
+	}
+	if err := w.Close(); err != nil {
+		logger.Error("Failed to close zlib writer", "error", err)
+		return
+	}
+
+	logger.Debug("Reduced size summary", "without_compression", len(out), "with_compression", b.Len())
+
+	// It is assumed that all the states are from the same alert rule, as that's what ProcessEvalResults does
+	key, err := states[0].GetAlertInstanceKey()
+	if err != nil {
+		logger.Error("Unexpected error getting alert instance key", "error", err)
+		return
+	}
+
+	if err = st.instanceStore.SaveAlertInstanceData(ctx, ngModels.AlertInstanceData{
+		RuleOrgID: key.RuleOrgID,
+		RuleUID:   key.RuleUID,
+		Data:      b.Bytes(),
+		ExpiresAt: expiresAt,
+	}); err != nil {
+		logger.Error("Failed to save alert instance data", "error", err)
+		return
+	}
+
+	logger.Debug("Saving alert states done", "count", len(states), "duration", time.Since(start))
+}
+
+func (st *Manager) deleteOldInstanceData(ctx context.Context, logger log.Logger) {
+	if st.instanceStore == nil {
+		return
+	}
+	deleted, err := st.instanceStore.DeleteExpiredAlertInstanceData(ctx)
+	if err != nil {
+		logger.Error("Failed to delete expired alert instance data", "error", err)
+	} else {
+		logger.Debug("Deleted alert instance data", "rows", deleted)
+	}
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {

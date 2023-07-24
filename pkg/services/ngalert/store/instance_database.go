@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -43,6 +45,33 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 	return result, err
 }
 
+func (st DBstore) ListAlertInstanceData(ctx context.Context, cmd *models.ListAlertInstancesQuery) (result []*models.AlertInstanceData, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		data := make([]*models.AlertInstanceData, 0)
+
+		s := strings.Builder{}
+		params := make([]interface{}, 0)
+
+		addToQuery := func(stmt string, p ...interface{}) {
+			s.WriteString(stmt)
+			params = append(params, p...)
+		}
+
+		addToQuery("SELECT * FROM alert_instance_data WHERE rule_org_id = ?", cmd.RuleOrgID)
+
+		if cmd.RuleUID != "" {
+			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
+		}
+
+		if err := sess.SQL(s.String(), params...).Find(&data); err != nil {
+			return err
+		}
+		result = data
+		return nil
+	})
+	return result, err
+}
+
 // SaveAlertInstance is a handler for saving a new alert instance.
 func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -69,6 +98,37 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.Al
 	})
 }
 
+// SaveAlertInstance is a handler for saving a new alert instance.
+func (st DBstore) SaveAlertInstanceData(ctx context.Context, alertInstances models.AlertInstanceData) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
+			"alert_instance_data",
+			[]string{"rule_org_id", "rule_uid"},
+			[]string{"rule_org_id", "rule_uid", "data", "expires_at"})
+		_, err := sess.SQL(upsertSQL, alertInstances.RuleOrgID, alertInstances.RuleUID, alertInstances.Data, alertInstances.ExpiresAt).Query()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (st DBstore) DeleteExpiredAlertInstanceData(ctx context.Context) (int64, error) {
+	var (
+		res     sql.Result
+		deleted int64
+		err     error
+	)
+	if err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		res, err = sess.Exec("DELETE FROM alert_instance_data WHERE expires_at <= ?", time.Now())
+		return err
+	}); err != nil {
+		return -1, err
+	}
+	deleted, err = res.RowsAffected()
+	return deleted, err
+}
+
 func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	orgIds := []int64{}
 
@@ -82,6 +142,29 @@ func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 		}
 
 		addToQuery("SELECT DISTINCT rule_org_id FROM alert_instance")
+
+		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return orgIds, err
+}
+
+func (st DBstore) FetchOrgIdsFromInstanceData(ctx context.Context) ([]int64, error) {
+	orgIds := []int64{}
+
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		s := strings.Builder{}
+		params := make([]interface{}, 0)
+
+		addToQuery := func(stmt string, p ...interface{}) {
+			s.WriteString(stmt)
+			params = append(params, p...)
+		}
+
+		addToQuery("SELECT DISTINCT rule_org_id FROM alert_instance_data")
 
 		if err := sess.SQL(s.String(), params...).Find(&orgIds); err != nil {
 			return err

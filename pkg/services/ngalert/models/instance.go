@@ -16,6 +16,13 @@ type AlertInstance struct {
 	LastEvalTime      time.Time
 }
 
+type AlertInstanceData struct {
+	RuleOrgID int64     `xorm:"rule_org_id"`
+	RuleUID   string    `xorm:"rule_uid"`
+	Data      []byte    `xorm:"data"`
+	ExpiresAt time.Time `xorm:"expires_at"`
+}
+
 type AlertInstanceKey struct {
 	RuleOrgID  int64  `xorm:"rule_org_id"`
 	RuleUID    string `xorm:"rule_uid"`
