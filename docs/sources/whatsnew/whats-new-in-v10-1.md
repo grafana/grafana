@@ -55,6 +55,13 @@ We have added 4 new features to the flamegraph visualization:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
 
+### Transformations redesign
+
+The transformations tab has gotten an improved user experience and visual redesign! Now you can view transformations with categories and illustrations.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
+
+
 ## Authentication and authorization
 
 ### Configure refresh token handling separately for OAuth providers
@@ -145,6 +152,12 @@ Loki and Elasticsearch data source configuration pages have been redesigned to m
 <!-- Matías Wenceslao Chomicki -->
 
 In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
+
+### Metrics explorer
+
+The Metrics Explorer is a new feature to enhance metric browsing in the Prometheus query builder. The Metrics Explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name / description, and filter on the Prometheus type.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Metrics explorer" >}}
 
 ## Explore
 
