@@ -1,6 +1,8 @@
 import { useLayoutEffect } from 'react';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { pluginLog } from '../utils';
+
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;
   config: UPlotConfigBuilder;
@@ -19,6 +21,16 @@ export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
       const max = u.posToVal(u.select.left + u.select.width, 'x');
 
       if (u.select.width >= MIN_ZOOM_DIST) {
+        pluginLog('ZoomPlugin', false, 'selected', {
+          min,
+          max,
+          bbox: {
+            left: u.bbox.left / window.devicePixelRatio + u.select.left,
+            top: u.bbox.top / window.devicePixelRatio,
+            height: u.bbox.height / window.devicePixelRatio,
+            width: u.select.width,
+          },
+        });
         onZoom({ from: min, to: max });
       }
 
