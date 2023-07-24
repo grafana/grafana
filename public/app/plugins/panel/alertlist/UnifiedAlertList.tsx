@@ -411,7 +411,6 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    container: instance / inline-size;
   `,
   customGroupDetails: css`
     margin-bottom: ${theme.spacing(0.5)};
