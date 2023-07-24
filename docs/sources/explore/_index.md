@@ -22,10 +22,10 @@ Grafana's dashboard UI is all about building dashboards for visualization. Explo
 
 If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time. See also:
 
-- [Query management in Explore]({{< relref "query-management/" >}})
-- [Logs integration in Explore]({{< relref "logs-integration/" >}})
-- [Trace integration in Explore]({{< relref "trace-integration/" >}})
-- [Inspector in Explore]({{< relref "explore-inspector/" >}})
+- [Query management in Explore]({{< relref "./query-management" >}})
+- [Logs integration in Explore]({{< relref "./logs-integration" >}})
+- [Trace integration in Explore]({{< relref "./trace-integration" >}})
+- [Inspector in Explore]({{< relref "./explore-inspector" >}})
 
 ## Start exploring
 
