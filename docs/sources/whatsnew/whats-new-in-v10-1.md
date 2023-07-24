@@ -227,6 +227,7 @@ Adds support for toggling common labels that are shared between all alert instan
 <!-- Jo Guerreiro, AuthNZ -->
 
 This change impacts `GitHub` OAuth, `Gitlab` OAuth, `Okta` OAuth and `Generic` OAuth.
+This change impacts the Enterprise, OSS and cloud versions of Grafana.
 
 Currently if no organization role mapping is found for a user when connecting using OAuth, Grafana doesn’t update the user’s organization role.
 
@@ -250,9 +251,6 @@ To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab a
 <!-- Jo Guerreiro, AuthNZ -->
 
 Grafana 10.1 now supports Google OIDC through the `Google` OAuth provider in addition to the existing `Google` OAuth2 provider. This allows you to use Google OIDC to authenticate users in Grafana, which in turn lets Grafana reduce the access scope to only the required scopes for authentication and authorization.
-.
-
-This allows Grafana to reduce the access scope to only the required scopes for authentication and authorization.
 
 This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by using their Google groups.
 
