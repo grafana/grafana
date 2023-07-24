@@ -20,9 +20,9 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
     ...(language && getStandardSQLCompletionProvider(monaco, language)),
     tables: {
       resolve: async (identifier) => {
-        return await getTables.current(identifier.table);
+        return await getTables.current(identifier?.table);
       },
-      parseName: (token: LinkedToken) => {
+      parseName: (token: LinkedToken | undefined | null) => {
         if (!token) {
           return { table: '' };
         }

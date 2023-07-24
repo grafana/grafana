@@ -559,9 +559,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {config.featureToggles.logsSampleInExplore && showLogsSample && (
-                            <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
-                          )}
+                          {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
                           {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>

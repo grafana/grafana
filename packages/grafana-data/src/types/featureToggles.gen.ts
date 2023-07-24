@@ -60,7 +60,6 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
@@ -117,4 +116,5 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
 }
