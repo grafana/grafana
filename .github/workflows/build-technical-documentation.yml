@@ -45,10 +45,9 @@ jobs:
 
       - name: Build website
         run: |
-          ls -al /hugo/content/docs
           rm -rf /hugo/content/docs
-          ln -sn "$$(pwd)/website/content/docs" /hugo/content/docs
+          ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
           mkdir -p /hugo/content/docs/grafana/latest
-          ln -sn "$$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
+          ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
           cd /hugo
           make prod HUGO_ENV=docs
