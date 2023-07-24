@@ -183,6 +183,29 @@ describe('DateMath', () => {
     });
   });
 
+  describe('isMathString', () => {
+    it('should return true when valid date text', () => {
+      expect(dateMath.isMathString('now-1h')).toBe(true);
+    });
+
+    it('should return false when an absolute date is inserted', () => {
+      const date = new Date();
+      const result = dateMath.isMathString(date);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when invalid date text', () => {
+      expect(dateMath.isMathString('2 + 2')).toBe(false);
+    });
+
+    it('should return false if no text is passed', () => {
+      expect(dateMath.isMathString('')).toBe(false);
+    });
+    it('should return false if nothing is passed ', () => {
+      expect(dateMath.isMathString(' ')).toBe(false);
+    });
+  });
+
   describe('Round to fiscal start/end', () => {
     it('Should round to start of fiscal year when datetime is the same year as the start of the fiscal year', () => {
       let date = dateMath.roundToFiscal(1, dateTime([2021, 3, 5]), 'y', false);

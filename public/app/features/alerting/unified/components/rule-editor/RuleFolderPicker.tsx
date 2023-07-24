@@ -4,10 +4,10 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { FolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker, Props as FolderPickerProps } from 'app/core/components/Select/OldFolderPicker';
 import { PermissionLevelString, SearchQueryType } from 'app/types';
 
-import { FolderWarning, CustomAdd } from '../../../../../core/components/Select/FolderPicker';
+import { FolderWarning, CustomAdd } from '../../../../../core/components/Select/OldFolderPicker';
 
 export interface Folder {
   title: string;
@@ -48,7 +48,7 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
   };
 
   return (
-    <FolderPicker
+    <OldFolderPicker
       showRoot={false}
       rootName=""
       allowEmpty={true}

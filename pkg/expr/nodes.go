@@ -27,20 +27,6 @@ var (
 	logger = log.New("expr")
 )
 
-type QueryError struct {
-	RefID         string
-	DatasourceUID string
-	Err           error
-}
-
-func (e QueryError) Error() string {
-	return fmt.Sprintf("failed to execute query %s: %s", e.RefID, e.Err)
-}
-
-func (e QueryError) Unwrap() error {
-	return e.Err
-}
-
 // baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
@@ -254,24 +240,19 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	resp, err := s.dataService.QueryData(ctx, req)
 	if err != nil {
-		return mathexp.Results{}, QueryError{
-			RefID:         dn.refID,
-			DatasourceUID: dn.datasource.UID,
-			Err:           err,
-		}
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
 	dataFrames, err := getResponseFrame(resp, dn.refID)
 	if err != nil {
-		return mathexp.Results{}, QueryError{
-			RefID:         dn.refID,
-			DatasourceUID: dn.datasource.UID,
-			Err:           err,
-		}
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
 	var result mathexp.Results
 	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+	if err != nil {
+		err = MakeConversionError(dn.refID, err)
+	}
 	return result, err
 }
 
@@ -492,7 +473,7 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 func WideToMany(frame *data.Frame, fixSeries func(series mathexp.Series, valueField *data.Field)) ([]mathexp.Series, error) {
 	tsSchema := frame.TimeSeriesSchema()
 	if tsSchema.Type != data.TimeSeriesTypeWide {
-		return nil, fmt.Errorf("input data must be a wide series but got type %s (input refid)", tsSchema.Type)
+		return nil, fmt.Errorf("input data must be a wide series but got type %s", tsSchema.Type)
 	}
 
 	if len(tsSchema.ValueIndices) == 1 {
