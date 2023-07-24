@@ -222,6 +222,7 @@ Adds support for different time zones and locations as well as a visual selector
 #### Adds support for toggling common labels
 
 Adds support for toggling common labels that are shared between all alert instances. You can toggle between showing or hiding them for each individual alert instance.
+
 ### OAuth role mapping enforcement
 
 <!-- Jo Guerreiro, AuthNZ -->
