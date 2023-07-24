@@ -32,7 +32,7 @@ jobs:
           rm -rf /hugo/content/docs
           ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
           ln -sn "$(pwd)/website/scripts/versions.js" /hugo/scripts/versions.js
-          ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
+          ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/next
           cd /hugo
           unset WEBSITE_SKIP_MOUNTS
           make hugo HUGO_ENV=docs | grep docs/grafana/
