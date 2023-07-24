@@ -1,0 +1,51 @@
+name: Build technical documentation
+on:
+  pull_request:
+    paths: ["docs/sources/**"]
+  workflow_dispatch:
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    image: grafana/docs-base:latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Generate GitHub token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Cache website repository
+        uses: actions/cache@v3
+        with:
+          path: website
+          key: ${{ runner.os }}-website
+
+      - name: Sparse clone website repository
+        if: steps.cache-primes.outputs.cache-hit != 'true'
+        run: |
+          git clone --filter=blob:none --no-checkout --sparse --depth 1 https://x-access-token:${TOKEN}github.com/grafana/website.git website
+          git -C website sparse-checkout set content/docs
+          git -C website checkout master
+        env:
+          TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: Update branch
+        if: steps.cache-primes.outputs.cache-hit == 'true'
+        run: |
+          git -C website remote set-url origin https://x-access-token:${TOKEN}github.com/grafana/website.git website
+          git -C website fetch
+          git -C website reset --hard origin/master
+        env:
+          TOKEN: ${{ steps.generate-token.outputs.token }}
+
+      - name: Build website
+        run: |
+          rm -rf /hugo/content/docs
+          ln -sn "$$(pwd)/website/content/docs" /hugo/content/docs
+          ln -sn "$$(pwd)/docs/sources" /hugo/content/docs/grafana/latest
+          cd /hugo
+          make prod HUGO_ENV=docs
