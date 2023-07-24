@@ -58,7 +58,7 @@ jobs:
           ln -sn "$(pwd)/docs/sources" "/hugo/content/docs/grafana/${TARGET}"
           cd /hugo
           unset WEBSITE_SKIP_MOUNTS
-          make hugo HUGO_ENV=docs | grep docs/grafana/
+          make hugo HUGO_ENV=docs | grep "docs/grafana/${TARGET}"
         env:
           TARGET: ${{ needs.docs-target.outputs.target }}
 
