@@ -22,7 +22,7 @@ import { isNumber } from 'lodash';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getStyleDimension } from '../../utils/utils';
 import { LineString, SimpleGeometry } from 'ol/geom';
-import { Fill, Stroke, Text } from 'ol/style';
+import { Fill, Style, Text } from 'ol/style';
 import tinycolor from 'tinycolor2';
 import FlowLine from 'ol-ext/style/FlowLine';
 
@@ -109,7 +109,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         // For edges
         if (geom?.getType() === 'LineString' && geom instanceof SimpleGeometry) {
           const edgeDims = edgeStyle.dims;
-          console.log(edgeDims);
+          const edgeTextConfig = edgeStyle.config.textConfig;
           const edgeId = Number(feature.getId());
           const coordinates = geom.getCoordinates();
           const opacity = edgeStyle.config.opacity ?? 1;
@@ -128,6 +128,8 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
               .toString();
             const arrowSize1 = (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size;
             const arrowSize2 = (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size;
+            const styles = [];
+
             const flowStyle = new FlowLine({
               visible: true,
               lineCap: config.arrow == 0 ? 'round' : 'square',
@@ -136,20 +138,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
               width: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
               width2: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
             });
-            if (edgeDims.text) {
-              const edgeText = new Text({
-                text: 'test',
-                scale: 1,
-                fill: new Fill({
-                  color: '#FF0000',
-                }),
-                stroke: new Stroke({
-                  color: '#FF0000',
-                  width: 2,
-                }),
-              });
-              flowStyle.setText(edgeText);
-            }
+
             if (config.arrow) {
               flowStyle.setArrow(config.arrow);
               if (config.arrow > 0) {
@@ -163,7 +152,21 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
             const LS = new LineString([segmentStartCoords, segmentEndCoords]);
             flowStyle.setGeometry(LS);
 
-            return flowStyle;
+            const fontFamily = theme.typography.fontFamily;
+            if (edgeDims.text) {
+              const labelStyle = new Style({
+                text: new Text({
+                  text: edgeDims.text.get(edgeId),
+                  font: `normal ${edgeTextConfig?.fontSize}px ${fontFamily}`,
+                  fill: new Fill({ color: color1 ?? defaultStyleConfig.color.fixed }),
+                  ...edgeTextConfig,
+                }),
+              });
+              labelStyle.setGeometry(LS);
+              styles.push(labelStyle);
+            }
+            styles.push(flowStyle);
+            return styles;
           }
         }
         if (!dims || !isNumber(idx)) {
