@@ -137,6 +137,14 @@ When you're browsing logs in Explore you can use the Log Details component, that
 
 With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
 
+### Elasticsearch logs sample
+
+<!-- Gareth Dawson -->
+
+_Generally available in all editions of Grafana._
+
+For Elasticsearch metric queries in Explore, you can now see the sample of log lines that contributed to the displayed results. To see these logs, click on the collapsed Logs sample panel under your graph or table panel. If you want to interact with your log lines or modify the log query, click on the “Open logs in split view” button and the log query will be executed in the split view.
+
 ## Alerting
 
 _All Alerting features are generally available in all editions of Grafana._
