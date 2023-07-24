@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { UPlotConfigBuilder, useStyles2, PlotSelection } from '@grafana/ui';
+import { UPlotConfigBuilder, useStyles2, PlotSelection, DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './annotations/AnnotationEditor2';
 
@@ -41,39 +41,26 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
 
   useLayoutEffect(() => {
     let _plot: uPlot;
+    let annotating = false;
 
     builder.addHook('init', (u) => {
       setPlot((_plot = u));
 
-      u.over.addEventListener('click', (e) => {
-        if (e.ctrlKey || e.metaKey) {
-          setIsAddingAnnotation(true);
+      u.over.addEventListener('mousedown', (e) => {
+        annotating = e.ctrlKey || e.metaKey;
+      });
 
-          if (u.select.width === 0) {
-            u.select.left = u.cursor.left!;
-            u.select.height = u.bbox.height / window.devicePixelRatio;
-            u.select.width = 1;
-          }
-
-          setSelection({
-            min: u.posToVal(u.select.left, 'x'),
-            max: u.posToVal(u.select.left + u.select.width, 'x'),
-            bbox: {
-              left: u.select.left,
-              top: 0,
-              height: u.select.height,
-              width: u.select.width,
-            },
-          });
-
-          u.over.querySelector<HTMLDivElement>('.u-select')!.classList.add(styles.overlay);
-          forceRender(Math.random());
+      u.over.addEventListener('mouseup', (e) => {
+        if (annotating && u.select.width === 0) {
+          u.select.left = u.cursor.left!;
+          u.select.height = u.bbox.height / window.devicePixelRatio;
+          u.select.width = 1; // @TODO ??
         }
       });
     });
 
     builder.addHook('setSelect', (u) => {
-      if (u.cursor.event?.ctrlKey || u.cursor.event?.metaKey) {
+      if (annotating) {
         setIsAddingAnnotation(true);
         setSelection({
           min: u.posToVal(u.select.left, 'x'),
@@ -119,24 +106,26 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  editor: css({
-    position: 'absolute',
-    top: '100%',
-    width: `300px`,
-    padding: `8px`,
-    transform: 'translateX(-50%)',
-    borderRadius: '6px',
-    background: theme.colors.background.secondary,
-    boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
-    zIndex: 999,
-  }),
-  overlay: css({
-    background: 'rgba(0, 211, 255, 0.1)',
-    borderLeft: '1px dashed rgb(0, 211, 255)',
-    borderRight: '1px dashed rgb(0, 211, 255)',
-    borderBottom: '5px solid rgb(0, 211, 255)',
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    editor: css({
+      position: 'absolute',
+      top: '100%',
+      width: `300px`,
+      padding: `8px`,
+      transform: 'translateX(-50%)',
+      borderRadius: '6px',
+      background: theme.colors.background.secondary,
+      boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+      zIndex: 999,
+    }),
+    overlay: css({
+      background: `${colorManipulator.alpha(DEFAULT_ANNOTATION_COLOR, 0.1)}`,
+      borderLeft: `1px dashed ${DEFAULT_ANNOTATION_COLOR}`,
+      borderRight: `1px dashed ${DEFAULT_ANNOTATION_COLOR}`,
+      borderBottom: `5px solid ${DEFAULT_ANNOTATION_COLOR}`,
 
-    // height: '100% !important', // todo: uPlot should do this
-  }),
-});
+      // height: '100% !important', // todo: uPlot should do this
+    }),
+  };
+};
