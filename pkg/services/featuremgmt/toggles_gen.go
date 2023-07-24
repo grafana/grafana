@@ -390,4 +390,8 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagConfigurableSchedulerTick
+	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
+	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 )

@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -285,12 +286,26 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.MaxAttempts = uaMaxAttempts
 
-	uaCfg.BaseInterval, err = gtime.ParseDuration(valueAsString(ua, "scheduler_tick_interval", SchedulerBaseInterval.String()))
-	if err != nil {
-		return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
-	}
-	if uaCfg.BaseInterval != SchedulerBaseInterval {
-		cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
+	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	// The base interval of the scheduler for evaluating alerts.
+	// 1. It is used by the internal scheduler's timer to tick at this interval.
+	// 2. to spread evaluations of rules that need to be evaluated at the current tick T. In other words, the evaluation of rules at the tick T will be evenly spread in the interval from T to T+scheduler_tick_interval.
+	//    For example, if there are 100 rules that need to be evaluated at tick T, and the base interval is 10s, rules will be evaluated every 100ms.
+	// 3. It increases delay between rule updates and state reset.
+	// NOTE:
+	// 1. All alert rule intervals should be times of this interval. Otherwise, the rules will not be evaluated. It is not recommended to set it lower than 10s or odd numbers. Recommended: 10s, 30s, 1m
+	// 2. The increasing of the interval will affect how slow alert rule updates will reset the state, and therefore reset notification. Higher the interval - slower propagation of the changes.
+	baseInterval, err := gtime.ParseDuration(valueAsString(ua, "scheduler_tick_interval", SchedulerBaseInterval.String()))
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagConfigurableSchedulerTick) {
+		if err != nil {
+			return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
+		}
+		if uaCfg.BaseInterval != SchedulerBaseInterval {
+			cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
+		}
+	} else if baseInterval != SchedulerBaseInterval {
+		cfg.Logger.Warn("Scheduler tick interval is changed to non-default but the feature flag is not enabled. Use default.", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
 	}
 
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
