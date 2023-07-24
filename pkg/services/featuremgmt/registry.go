@@ -685,6 +685,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 	}
 )
