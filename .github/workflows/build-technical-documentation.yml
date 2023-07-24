@@ -24,36 +24,30 @@ jobs:
         with:
           ref_name: ${{ github.base_ref }}
 
-  generate-token:
-    runs-on: ubuntu-latest
-    outputs:
-      token: ${{ steps.generate.outputs.token }}
-    steps:
-      - name: Generate GitHub token
-        id: generate
-        uses: tibdex/github-app-token@v1
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-
   with-hugo:
     runs-on: ubuntu-latest
     container:
       image: grafana/docs-base:latest
     needs:
       - docs-target
-      - generate-token
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Generate GitHub token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
       - name: Sparse clone website repository
         run: |
-          git clone --filter=blob:none --no-checkout --sparse --depth 1 https://x-access-token:${TOKEN}@github.com/grafana/website.git website
+          git clone --filter=blob:none --no-checkout --sparse --depth 1 "https://x-access-token:${TOKEN}@github.com/grafana/website.git" website
           git -C website sparse-checkout set content/docs
           git -C website checkout master
         env:
-          TOKEN: ${{ needs.generate-token.outputs.token }}
+          TOKEN: ${{ steps.generate-token.outputs.token }}
 
       - name: Build website
         # Note that busybox `ln` does not have the `-F` option.
@@ -74,10 +68,16 @@ jobs:
       image: grafana/doc-validator:v3.2.1
     needs:
       - docs-target
-      - generate-token
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Generate GitHub token
+        id: generate-token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
       - name: Sparse clone website repository
         run: |
@@ -85,7 +85,7 @@ jobs:
           git -C website sparse-checkout set content/docs
           git -C website checkout master
         env:
-          TOKEN: ${{ needs.generate-token.outputs.token }}
+          TOKEN: ${{ steps.generate-token.outputs.token }}
 
       - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
