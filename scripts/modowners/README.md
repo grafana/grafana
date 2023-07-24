@@ -18,15 +18,21 @@ Currently `validate-modfile` is non-blocking, but will eventually become a block
 
 Validate `go.mod` and exit with an error if a dependency does not have an owner.
 
-Example CLI command: `go run scripts/modowners/modowners.go check go.mod`
+Example CLI command:
+
+`go run scripts/modowners/modowners.go check go.mod`
 
 ### `owners`
 
 List owners of given dependency.
 
-Example CLI command to get a list of all owners with a count of the number of dependencies they own: `go run scripts/modowners/modowners.go owners -a -c go.mod`
+Example CLI command to get a list of all owners with a count of the number of dependencies they own:
 
-Example CLI command to get the owner for a specific dependency (you must use `dependency@version`, not `dependency version`): `go run scripts/modowners/modowners.go owners -d cloud.google.com/go/storage@v1.30.1 go.mod`
+`go run scripts/modowners/modowners.go owners -a -c go.mod`
+
+Example CLI command to get the owner for a specific dependency (you must use `dependency@version`, not `dependency version`):
+
+`go run scripts/modowners/modowners.go owners -d cloud.google.com/go/storage@v1.30.1 go.mod`
 
 ### `module`
 
