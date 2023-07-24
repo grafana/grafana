@@ -13,8 +13,8 @@ import {
   LiveChannelLeaveEvent,
   LiveChannelScope,
   LoadingState,
+  StreamingDataFrame,
 } from '@grafana/data';
-import { StreamingDataFrame } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import { StreamingFrameAction } from '@grafana/runtime';
 
 import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
