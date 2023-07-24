@@ -44,10 +44,9 @@ jobs:
 
       - name: Build website
         run: |
-          rm -rf /hugo/content/docs
-          ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
-          ln -sn "$(pwd)/website/scripts/versions.js" /hugo/scripts/versions.js
-          ln -sn "$(pwd)/docs/sources" "content/docs/grafana/${TARGET}"
+          ln -Fsn "$(pwd)/website/content/docs" /hugo/content/docs
+          ln -Fsn "$(pwd)/website/scripts/versions.js" /hugo/scripts/versions.js
+          ln -Fsn "$(pwd)/docs/sources" "content/docs/grafana/${TARGET}"
           cd /hugo
           unset WEBSITE_SKIP_MOUNTS
           make hugo HUGO_ENV=docs | grep docs/grafana/
