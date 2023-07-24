@@ -222,3 +222,44 @@ Adds support for different time zones and locations as well as a visual selector
 #### Adds support for toggling common labels
 
 Adds support for toggling common labels that are shared between all alert instances. You can toggle between showing or hiding them for each individual alert instance.
+
+## Authentication and authorization
+
+### OAuth role mapping enforcement
+
+<!-- Jo Guerreiro, AuthNZ -->
+
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
+
+This change impacts `GitHub` OAuth, `Gitlab` OAuth, `Okta` OAuth and `Generic` OAuth.
+
+Currently if no organization role mapping is found for a user when connecting using OAuth, Grafana doesn’t update the user’s organization role.
+
+With Grafana 10.1, on every login, if the `role_attribute_path` property does not return a role, then the user is assigned the role specified by the `auto_assign_org_role` option or the default role for the organization, by default, Viewer.
+
+To avoid overriding manually set roles, enable the `skip_org_role_sync` option in the Grafana configuration for your OAuth provider before the user logs in for the first time.
+
+### GitLab OIDC support
+
+<!-- Jo Guerreiro, AuthNZ -->
+
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
+
+Grafana 10.1 now supports GitLab OIDC through the `GitLab` OAuth provider in addition to the existing `GitLab` OAuth2 provider. This allows you to use GitLab OIDC to authenticate users in Grafana.
+
+This allows Grafana to reduce the access scope to only the required scopes for authentication and authorization instead
+of full read API access.
+
+To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/" >}}).
+
+### Google OIDC and Team Sync support
+
+<!-- Jo Guerreiro, AuthNZ -->
+
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
+
+Grafana 10.1 now supports Google OIDC through the `Google` OAuth provider in addition to the existing `Google` OAuth2 provider. This allows you to use Google OIDC to authenticate users in Grafana, which in turn lets Grafana reduce the access scope to only the required scopes for authentication and authorization.
+
+This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by using their Google groups.
+
+To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team Sync, refer to our [Google authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/google/" >}}).
