@@ -18,7 +18,7 @@ import {
   hasToggleableQueryFiltersSupport,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   CustomScrollbar,
