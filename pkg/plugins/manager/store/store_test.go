@@ -42,7 +42,8 @@ func TestStore_ProvideService(t *testing.T) {
 			}
 		}}
 
-		_, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
+		s, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
+		s.starting(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
 	})
@@ -59,7 +60,7 @@ func TestStore_Plugin(t *testing.T) {
 				p1.ID: p1,
 				p2.ID: p2,
 			},
-		})
+		}, &fakes.FakeSourceRegistry{}, &fakes.FakeLoader{})
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
 		require.False(t, exists)
@@ -88,7 +89,7 @@ func TestStore_Plugins(t *testing.T) {
 				p4.ID: p4,
 				p5.ID: p5,
 			},
-		})
+		}, &fakes.FakeSourceRegistry{}, &fakes.FakeLoader{})
 
 		pss := ps.Plugins(context.Background())
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
@@ -126,7 +127,7 @@ func TestStore_Routes(t *testing.T) {
 				p5.ID: p5,
 				p6.ID: p6,
 			},
-		})
+		}, &fakes.FakeSourceRegistry{}, &fakes.FakeLoader{})
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
 			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
@@ -149,7 +150,7 @@ func TestStore_Renderer(t *testing.T) {
 				p2.ID: p2,
 				p3.ID: p3,
 			},
-		})
+		}, &fakes.FakeSourceRegistry{}, &fakes.FakeLoader{})
 
 		r := ps.Renderer(context.Background())
 		require.Equal(t, p1, r)
@@ -170,7 +171,7 @@ func TestStore_SecretsManager(t *testing.T) {
 				p3.ID: p3,
 				p4.ID: p4,
 			},
-		})
+		}, &fakes.FakeSourceRegistry{}, &fakes.FakeLoader{})
 
 		r := ps.SecretsManager(context.Background())
 		require.Equal(t, p3, r)
@@ -188,7 +189,7 @@ func TestStore_availablePlugins(t *testing.T) {
 				p1.ID: p1,
 				p2.ID: p2,
 			},
-		})
+		}, &fakes.FakeSourceRegistry{}, &fakes.FakeLoader{})
 
 		aps := ps.availablePlugins(context.Background())
 		require.Len(t, aps, 1)

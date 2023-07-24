@@ -4,6 +4,9 @@ import (
 	"context"
 	"sort"
 
+	"github.com/grafana/dskit/services"
+
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -13,24 +16,34 @@ import (
 var _ plugins.Store = (*Service)(nil)
 
 type Service struct {
+	*services.BasicService
 	pluginRegistry registry.Service
+	pluginSources  sources.Registry
+	pluginLoader   loader.Service
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) (*Service, error) {
-	ctx := context.Background()
-	for _, ps := range pluginSources.List(ctx) {
-		if _, err := pluginLoader.Load(ctx, ps); err != nil {
-			return nil, err
-		}
-	}
-	return New(pluginRegistry), nil
+	return New(pluginRegistry, pluginSources, pluginLoader), nil
 }
 
-func New(pluginRegistry registry.Service) *Service {
-	return &Service{
+func New(pluginRegistry registry.Service, pluginSources sources.Registry, pluginLoader loader.Service) *Service {
+	s := &Service{
 		pluginRegistry: pluginRegistry,
+		pluginSources:  pluginSources,
+		pluginLoader:   pluginLoader,
 	}
+	s.BasicService = services.NewIdleService(s.starting, nil).WithName(modules.Plugins)
+	return s
+}
+
+func (s *Service) starting(ctx context.Context) error {
+	for _, ps := range s.pluginSources.List(ctx) {
+		if _, err := s.pluginLoader.Load(ctx, ps); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
