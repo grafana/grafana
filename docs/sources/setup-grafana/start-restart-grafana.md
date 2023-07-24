@@ -3,8 +3,12 @@ aliases:
   - ../installation/restart-grafana/
   - ./restart-grafana/
 description: How to start the Grafana server
-title: Start the Grafana server
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Start Grafana
+title: Start the Grafana server
 weight: 300
 ---
 
@@ -22,7 +26,7 @@ The following subsections describe three methods of starting and restarting the 
 
 ### Start the Grafana server with systemd
 
-Complete the following steps to start the Grafana server using systemd and verify that it is running:
+Complete the following steps to start the Grafana server using systemd and verify that it is running.
 
 1. To start the service, run the following commands:
 

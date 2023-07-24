@@ -185,6 +185,12 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
+    it('does not show an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
+    });
+
     it('does not show any tabs', async () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
@@ -287,6 +293,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('shows an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
+
+    it('does not show the "Edit title" button if the user does not have permissions', async () => {
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          canEditInFolder: false,
+          canCreateDashboards: false,
+          canCreateFolder: false,
+        };
+      });
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {

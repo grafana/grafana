@@ -36,10 +36,13 @@ type Store interface {
 
 const (
 	// modules
+	PasswordAuthModule  = "password"
+	APIKeyAuthModule    = "apikey"
 	SAMLAuthModule      = "auth.saml"
 	LDAPAuthModule      = "ldap"
 	AuthProxyAuthModule = "authproxy"
 	JWTModule           = "jwt"
+	ExtendedJWTModule   = "extendedjwt"
 	RenderModule        = "render"
 	// OAuth provider modules
 	AzureADAuthModule    = "oauth_azuread"
@@ -130,7 +133,7 @@ func IsProviderEnabled(cfg *setting.Cfg, authModule string) bool {
 	case GithubAuthModule:
 		return cfg.GitHubAuthEnabled
 	case GrafanaComAuthModule:
-		return cfg.GrafanaComAuthEnabled
+		return cfg.GrafanaComAuthEnabled || cfg.GrafanaNetAuthEnabled
 	case GenericOAuthModule:
 		return cfg.GenericOAuthAuthEnabled
 	}

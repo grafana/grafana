@@ -42,12 +42,6 @@ var (
 			Owner:       grafanaAppPlatformSquad,
 		},
 		{
-			Name:        "prometheusAzureOverrideAudience",
-			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			Stage:       FeatureStagePublicPreview,
@@ -84,21 +78,6 @@ var (
 			Description: "Configurable storage for dashboards, datasources, and resources",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAppPlatformSquad,
-		},
-		{
-			Name:         "exploreMixedDatasource",
-			Description:  "Enable mixed datasource in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // turned on by default
-			Owner:        grafanaExploreSquad,
-		},
-		{
-			Name:         "newTraceViewHeader",
-			Description:  "Shows the new trace view header",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "correlations",
@@ -211,14 +190,14 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:        "redshiftAsyncQueryDataSupport",
 			Description: "Enable async query data support for Redshift",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
@@ -226,7 +205,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -261,22 +240,18 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:        "nestedFolderPicker",
-			Description: "Enables the still in-development new folder picker to support nested folders",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
+			Name:         "nestedFolderPicker",
+			Description:  "Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:        "showTraceId",
-			Description: "Show trace ids for requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "emptyDashboardPage",
@@ -313,15 +288,6 @@ var (
 			Owner:           grafanaAlertingSquad,
 		},
 		{
-
-			Name:         "logsSampleInExplore",
-			Description:  "Enables access to the logs sample feature in Explore",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // turned on by default
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			Stage:        FeatureStageGeneralAvailability,
@@ -332,9 +298,10 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -354,13 +321,6 @@ var (
 			Description: "Prohibits a user from changing organization roles synced with external auth providers",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:         "traceqlSearch",
-			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
@@ -409,6 +369,12 @@ var (
 			Description: "Changes metric responses from Loki to be compliant with the dataplane specification.",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true",
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "lokiLogsDataplane",
+			Description: "Changes logs responses from Loki to be compliant with the dataplane specification.",
+			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
@@ -546,6 +512,20 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:         "dashboardEmbed",
+			Description:  "Allow embedding dashboard for external use in Code editors",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAsCodeSquad,
+		},
+		{
+			Name:         "frontendSandboxMonitorOnly",
+			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "sqlDatasourceDatabaseSelection",
 			Description:  "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly: true,
@@ -553,11 +533,18 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
+			Name:         "lokiFormatQuery",
+			Description:  "Enables the ability to format Loki queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "cloudWatchLogsMonacoEditor",
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "exploreScrollableLogsContainer",
@@ -587,13 +574,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "flameGraphV2",
-			Description:  "New version of flame graph with new features",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:         "elasticToggleableFilters",
 			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
 			Stage:        FeatureStageExperimental,
@@ -606,6 +586,90 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "prometheusIncrementalQueryInstrumentation",
+			Description:  "Adds RudderStack events to incremental queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "logsExploreTableVisualisation",
+			Description:  "A table visualisation for logs in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "awsDatasourcesTempCredentials",
+			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:         "transformationsRedesign",
+			Description:  "Enables the transformations redesign",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "toggleLabelsInLogsUI",
+			Description:  "Enable toggleable filters in log details view",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "mlExpressions",
+			Description:  "Enable support for Machine Learning in server-side expressions",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "disableTraceQLStreaming",
+			Description:  "Disables the option to stream the response of TraceQL queries of the Tempo data source",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "grafanaAPIServer",
+			Description:  "Enable Kubernetes API Server for Grafana resources",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAppPlatformSquad,
+		},
+		{
+			Name:            "featureToggleAdminPage",
+			Description:     "Enable admin page for managing feature toggles from the Grafana front-end",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaOperatorExperienceSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "awsAsyncQueryCaching",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "splitScopes",
+			Description:     "Support faster dashboard and folder search by splitting permission scopes into parts",
+			Stage:           FeatureStagePublicPreview,
+			FrontendOnly:    false,
+			Owner:           grafanaAuthnzSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:        "azureMonitorDataplane",
+			Description: "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // on by default
 		},
 	}
 )

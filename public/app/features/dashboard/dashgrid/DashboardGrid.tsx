@@ -93,6 +93,7 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
+    this.forceUpdate();
   };
 
   triggerForceUpdate = () => {

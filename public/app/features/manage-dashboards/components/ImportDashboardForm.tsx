@@ -14,7 +14,7 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 
 import {
   DashboardInput,
@@ -82,7 +82,7 @@ export const ImportDashboardForm = ({
       <Field label="Folder">
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <FolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
+            <OldFolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
           )}
           name="folder"
           control={control}

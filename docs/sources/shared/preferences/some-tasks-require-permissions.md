@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Some tasks require permissions
 ---
 

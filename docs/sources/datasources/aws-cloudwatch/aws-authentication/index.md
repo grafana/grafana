@@ -8,6 +8,11 @@ keywords:
   - grafana
   - aws
   - authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: AWS authentication
 title: Configure AWS authentication
 weight: 200
