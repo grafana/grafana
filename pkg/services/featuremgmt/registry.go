@@ -240,10 +240,12 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:        "nestedFolderPicker",
-			Description: "Enables the still in-development new folder picker to support nested folders",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
+			Name:         "nestedFolderPicker",
+			Description:  "Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
@@ -319,13 +321,6 @@ var (
 			Description: "Prohibits a user from changing organization roles synced with external auth providers",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:         "traceqlSearch",
-			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
@@ -668,6 +663,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:        "azureMonitorDataplane",
+			Description: "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "true", // on by default
 		},
 	}
 )

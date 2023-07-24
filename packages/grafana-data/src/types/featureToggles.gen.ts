@@ -65,7 +65,6 @@ export interface FeatureToggles {
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
-  traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   prometheusResourceBrowserCache?: boolean;
@@ -116,4 +115,5 @@ export interface FeatureToggles {
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
 }
