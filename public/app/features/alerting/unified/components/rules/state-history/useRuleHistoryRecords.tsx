@@ -10,6 +10,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { config } from '@grafana/runtime';
 import { MappingType, ThresholdsMode } from '@grafana/schema';
 import { OK_COLOR, useTheme2 } from '@grafana/ui';
 import { normalizeAlertState } from 'app/features/alerting/state/alertDef';
@@ -70,46 +71,44 @@ export function useRuleHistoryRecords(stateHistory?: DataFrameJSON, filter?: str
   }, [stateHistory, filter, theme]);
 }
 
-export function useRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON, filter?: string) {
-  const theme = useTheme2();
-  return useMemo(() => {
-    if (!stateHistory) {
-      return { dataFrames: [] };
+export function getRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON, filter?: string) {
+  if (!stateHistory) {
+    return { dataFrames: [] };
+  }
+  const theme = config.theme2;
+  // merge timestamp with "line"
+  const tsValues = stateHistory?.data?.values[0] ?? [];
+  const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
+  const lines = stateHistory?.data?.values[1] ?? [];
+
+  const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
+    const line = lines[index];
+    // values property can be undefined for some instance states (e.g. NoData)
+    if (isLine(line)) {
+      acc.push({ timestamp, line });
     }
-    // merge timestamp with "line"
-    const tsValues = stateHistory?.data?.values[0] ?? [];
-    const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
-    const lines = stateHistory?.data?.values[1] ?? [];
 
-    const logRecords = timestamps.reduce((acc: LogRecord[], timestamp: number, index: number) => {
-      const line = lines[index];
-      // values property can be undefined for some instance states (e.g. NoData)
-      if (isLine(line)) {
-        acc.push({ timestamp, line });
-      }
+    return acc;
+  }, []);
 
-      return acc;
-    }, []);
+  // group all records by alert instance (unique set of labels)
+  const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
+    return JSON.stringify(record.line.labels);
+  });
 
-    // group all records by alert instance (unique set of labels)
-    const logRecordsByInstance = groupBy(logRecords, (record: LogRecord) => {
-      return JSON.stringify(record.line.labels);
-    });
+  const filterMatchers = filter ? parseMatchers(filter) : [];
+  const filteredGroupedLines = Object.entries(logRecordsByInstance).filter(([key]) => {
+    const labels = JSON.parse(key);
+    return labelsMatchMatchers(labels, filterMatchers);
+  });
 
-    const filterMatchers = filter ? parseMatchers(filter) : [];
-    const filteredGroupedLines = Object.entries(logRecordsByInstance).filter(([key]) => {
-      const labels = JSON.parse(key);
-      return labelsMatchMatchers(labels, filterMatchers);
-    });
+  const dataFrames: DataFrame[] = filteredGroupedLines.map<DataFrame>(([key, records]) => {
+    return logRecordsToDataFrameForPanel(key, records, theme);
+  });
 
-    const dataFrames: DataFrame[] = filteredGroupedLines.map<DataFrame>(([key, records]) => {
-      return logRecordsToDataFrameForPanel(key, records, theme);
-    });
-
-    return {
-      dataFrames,
-    };
-  }, [stateHistory, filter, theme]);
+  return {
+    dataFrames,
+  };
 }
 
 export function isNumbers(value: unknown[]): value is number[] {

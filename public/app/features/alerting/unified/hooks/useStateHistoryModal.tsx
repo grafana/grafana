@@ -14,7 +14,7 @@ export enum StateHistoryImplementation {
   Annotations = 'annotations',
 }
 
-export const useHistoryImplementation = () => {
+export const getHistoryImplementation = () => {
   // can be "loki", "multiple" or "annotations"
   const stateHistoryBackend = config.unifiedAlerting.alertStateHistoryBackend;
   // can be "loki" or "annotations"
@@ -36,7 +36,7 @@ function useStateHistoryModal() {
 
   const styles = useStyles2(getStyles);
 
-  const implementation = useHistoryImplementation();
+  const implementation = getHistoryImplementation();
 
   const dismissModal = useCallback(() => {
     setRule(undefined);
