@@ -47,8 +47,6 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
           const frame = data[frameIndex];
 
-          console.log('frame ref id: ', frame.refId);
-
           for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
             const field = frame.fields[fieldIndex];
 
