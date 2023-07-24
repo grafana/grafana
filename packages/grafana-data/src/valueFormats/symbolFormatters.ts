@@ -1,6 +1,6 @@
 import { DecimalCount } from '../types/displayValue';
 
-import { scaledUnits, scaledMetricUnits, ValueFormatter } from './valueFormats';
+import { scaledUnits, ValueFormatter } from './valueFormats';
 
 export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
@@ -44,12 +44,4 @@ export function binaryPrefix(unit: string, offset = 0): ValueFormatter {
 export function SIPrefix(unit: string, offset = 0): ValueFormatter {
   const units = SI_PREFIXES.map((p) => ' ' + p + unit);
   return scaledUnits(1000, units, SI_BASE_INDEX + offset);
-}
-
-const MERTIC_PREFIXES = ['m', 'c', '', 'k'];
-
-export function metricPrefix(unit: string, offset = 0): ValueFormatter {
-  const baseIndex = MERTIC_PREFIXES.indexOf('');
-  const units = MERTIC_PREFIXES.map((p) => ' ' + p + unit);
-  return scaledMetricUnits(units, baseIndex + offset);
 }

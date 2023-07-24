@@ -23,7 +23,7 @@ import {
   toTimeTicks,
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
-import { binaryPrefix, currency, SIPrefix, metricPrefix } from './symbolFormatters';
+import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
 import {
   locale,
   scaledUnits,
@@ -32,6 +32,7 @@ import {
   ValueFormatCategory,
   stringFormater,
   booleanValueFormatter,
+  scaledMetricUnits,
 } from './valueFormats';
 
 export const getCategories = (): ValueFormatCategory[] => [
@@ -300,10 +301,10 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Length',
     formats: [
-      { name: 'millimeter', id: 'lengthmm', fn: metricPrefix('m', -2) },
-      { name: 'centimeter', id: 'lengthcm', fn: metricPrefix('m', -1) },
-      { name: 'meter', id: 'lengthm', fn: metricPrefix('m') },
-      { name: 'kilometer', id: 'lengthkm', fn: metricPrefix('m', 1) },
+      { name: 'millimeter', id: 'lengthmm', fn: scaledMetricUnits('m', -3) },
+      { name: 'centimeter', id: 'lengthcm', fn: scaledMetricUnits('m', -2) },
+      { name: 'meter', id: 'lengthm', fn: scaledMetricUnits('m') },
+      { name: 'kilometer', id: 'lengthkm', fn: scaledMetricUnits('m', 3) },
       { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
       { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
       { name: 'mile (mi)', id: 'lengthmi', fn: toFixedUnit('mi') },
