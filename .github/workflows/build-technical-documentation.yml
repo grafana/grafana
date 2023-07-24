@@ -47,8 +47,8 @@ jobs:
         run: |
           rm -rf /hugo/content/docs
           ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
-          rm -rf "content/docs/grafana/${TARGET}"
-          ln -sn "$(pwd)/docs/sources" "content/docs/grafana/${TARGET}"
+          rm -rf "/hugo/content/docs/grafana/${TARGET}"
+          ln -sn "$(pwd)/docs/sources" "/hugo/content/docs/grafana/${TARGET}"
           cd /hugo
           unset WEBSITE_SKIP_MOUNTS
           make hugo HUGO_ENV=docs | grep docs/grafana/
