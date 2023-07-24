@@ -12,7 +12,6 @@ import {
   MapLayerRegistryItem,
   MapLayerOptions,
   GrafanaTheme2,
-  PluginState,
   EventBus,
 } from '@grafana/data';
 import { ComparisonOperation } from '@grafana/schema';
