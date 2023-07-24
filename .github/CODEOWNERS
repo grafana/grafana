@@ -533,7 +533,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
-/public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
+/public/plugins/testdata/ @grafana/plugins-platform-frontend
 
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/observability-metrics
