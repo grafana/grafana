@@ -243,6 +243,8 @@ To avoid overriding manually set roles, enable the `skip_org_role_sync` option i
 
 <!-- Jo Guerreiro, AuthNZ -->
 
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
+
 Grafana 10.1 now supports GitLab OIDC through the `GitLab` OAuth provider in addition to the existing `GitLab` OAuth2 provider. This allows you to use GitLab OIDC to authenticate users in Grafana.
 
 This allows Grafana to reduce the access scope to only the required scopes for authentication and authorization instead
@@ -253,6 +255,8 @@ To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab a
 ### Google OIDC and Team Sync support
 
 <!-- Jo Guerreiro, AuthNZ -->
+
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
 
 Grafana 10.1 now supports Google OIDC through the `Google` OAuth provider in addition to the existing `Google` OAuth2 provider. This allows you to use Google OIDC to authenticate users in Grafana, which in turn lets Grafana reduce the access scope to only the required scopes for authentication and authorization.
 
