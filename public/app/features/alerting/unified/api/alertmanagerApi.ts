@@ -233,10 +233,10 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: () => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/api/v1/receivers`,
       }),
-      // this transformer basically fixes the weird "0001-01-01T00:00:00.000Z" timestamps
+      // this transformer basically fixes the weird "0001-01-01T00:00:00.000Z" and "0001-01-01T00:00:00.00Z" timestamps
       // and sets both last attempt and duration to an empty string to indicate there hasn't been an attempt yet
       transformResponse: (response: ReceiversStateDTO[]) => {
-        const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
+        const isLastNotifyNullDate = (lastNotify: string) => lastNotify.startsWith('0001-01-01');
 
         return response.map((receiversState) => ({
           ...receiversState,
