@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Service provides methods for constructing asset paths for plugins.
@@ -25,12 +26,12 @@ func ProvideService(cdn *pluginscdn.Service) *Service {
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		return path.Join("/public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
+		return path.Join(setting.AppSubUrl, "/public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "")
 	}
-	return path.Join("/public/plugins", pluginJSON.ID), nil
+	return path.Join(setting.AppSubUrl, "/public/plugins", pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
@@ -41,7 +42,7 @@ func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugi
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "module.js")
 	}
-	return path.Join("/public/plugins", pluginJSON.ID, "module.js"), nil
+	return path.Join(setting.AppSubUrl, "/public/plugins", pluginJSON.ID, "module.js"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.

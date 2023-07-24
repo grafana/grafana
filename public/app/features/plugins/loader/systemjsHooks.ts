@@ -45,10 +45,9 @@ export function decorateSystemJSResolve(
   parentUrl?: string
 ) {
   const isFileSystemModule = id.endsWith('module.js') && !isHostedOnCDN(id);
-  const idWithAppSubUrlMaybe = isFileSystemModule ? `${config.appSubUrl ?? ''}${id}` : id;
 
   try {
-    const url = originalResolve.apply(this, [idWithAppSubUrlMaybe, parentUrl]);
+    const url = originalResolve.apply(this, [id, parentUrl]);
     const cleanedUrl = getBackWardsCompatibleUrl(url);
     // Add a cache query param for filesystem module.js requests
     // CDN hosted plugins contain the version in the path so skip
@@ -76,7 +75,6 @@ export function decorateSystemJsOnload(err: unknown, id: string) {
 
 // This function handles the following legacy SystemJS functionality:
 // - strips legacy loader wildcard from urls
-// - prepends `SHARED_DEPENDENCY_PREFIX` to correctly resolve `app` imports in old angular plugins
 // - support config.defaultExtension for System.register deps that lack an extension (e.g. './my_ctrl')
 function getBackWardsCompatibleUrl(url: string) {
   if (url.endsWith('!')) {
