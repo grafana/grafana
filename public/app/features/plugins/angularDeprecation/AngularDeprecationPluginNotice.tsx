@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { PluginType } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -43,8 +43,9 @@ function deprecationMessage(pluginType?: string, angularSupportEnabled?: boolean
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
 export function AngularDeprecationPluginNotice(props: Props): React.ReactElement | null {
   const { className, angularSupportEnabled, pluginId, pluginType, showPluginDetailsLink } = props;
-  return (
-    <Alert severity="warning" title="Angular plugin" className={className}>
+  const [dismissed, setDismissed] = useState(false);
+  return dismissed ? null : (
+    <Alert severity="warning" title="Angular plugin" className={className} onRemove={() => setDismissed(true)}>
       <p>{deprecationMessage(pluginType, angularSupportEnabled)}</p>
       <div className="markdown-html">
         <ul>
