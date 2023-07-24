@@ -2990,8 +2990,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - '! ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat |
-    grep "No URLs matched"'
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
+  - '! cat /tmp/stat.log | grep "No URLs matched"'
   depends_on:
   - clone
   environment:
@@ -2999,6 +2999,7 @@ steps:
       from_secret: prerelease_bucket
     GCP_KEY:
       from_secret: gcp_key
+  failure: ignore
   image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
@@ -3263,14 +3264,15 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - '! ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat |
-    grep "No URLs matched"'
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
+  - '! cat /tmp/stat.log | grep "No URLs matched"'
   depends_on:
   - clone
   environment:
     BUCKET: grafana-prerelease-dev
     GCP_KEY:
       from_secret: gcp_key
+  failure: ignore
   image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
@@ -4487,6 +4489,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: bb4911dfd695fb4686d69ad2217fa80db110f8ccf691634470100b0c3bbbaf6d
+hmac: f6b35e423df93c4cbe13528ef3e8994259c66016dddf2a4d7873837e51011585
 
 ...
