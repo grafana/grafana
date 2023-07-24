@@ -90,14 +90,12 @@ jobs:
       - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
         run: |
-          rm -rf /hugo/content/docs
-          ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
-          rm -rf "/hugo/content/docs/grafana/${TARGET}"
-          ln -sn "$(pwd)/docs/sources" "/hugo/content/docs/grafana/${TARGET}"
+          rm -rf "$(pwd)/website/hugo/content/docs/grafana/${TARGET}"
+          ln -sn "$(pwd)/docs/sources" "$(pwd)/website/hugo/content/docs/grafana/${TARGET}"
           doc-validator \
-          "--include=^/hugo/content/docs/grafana/${TARGET}/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$" \
+          "--include=^$(pwd)/hugo/content/docs/grafana/${TARGET}/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$" \
           '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$' \
-          "/hugo/content/docs/grafana/${TARGET}" \
+          "$(pwd)/hugo/content/docs/grafana/${TARGET}" \
           /docs/grafana/latest \
           | reviewdog \
           -f=rdjsonl \
