@@ -1103,6 +1103,10 @@
      "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
      "type": "string"
     },
+    "preferredVisualisationPluginId": {
+     "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+     "type": "string"
+    },
     "preferredVisualisationType": {
      "$ref": "#/definitions/VisType"
     },
@@ -2901,7 +2905,7 @@
      "type": "boolean"
     },
     "settings": {
-     "$ref": "#/definitions/Json"
+     "$ref": "#/definitions/RawMessage"
     },
     "type": {
      "type": "string"
@@ -4038,6 +4042,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4142,7 +4147,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4205,6 +4209,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4253,7 +4258,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4403,7 +4407,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
