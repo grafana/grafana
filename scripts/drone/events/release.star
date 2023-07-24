@@ -51,7 +51,12 @@ load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
-load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+    "gcp_upload_artifacts_key",
+    "prerelease_bucket",
+)
 load(
     "scripts/drone/utils/images.star",
     "images",
@@ -87,7 +92,7 @@ def store_npm_packages_step():
             "build-frontend-packages",
         ],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm store --tag ${DRONE_TAG}"],

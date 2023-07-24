@@ -3,7 +3,7 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
@@ -112,9 +112,13 @@ export const SaveDashboardAsForm = ({
             <InputControl
               render={({ field: { ref, ...field } }) =>
                 config.featureToggles.nestedFolderPicker ? (
-                  <NestedFolderPicker {...field} value={field.value?.uid} />
+                  <NestedFolderPicker
+                    {...field}
+                    onChange={(uid: string, title: string) => field.onChange({ uid, title })}
+                    value={field.value?.uid}
+                  />
                 ) : (
-                  <FolderPicker
+                  <OldFolderPicker
                     {...field}
                     dashboardId={dashboard.id}
                     initialFolderUid={dashboard.meta.folderUid}
