@@ -14,6 +14,7 @@ import {
   CustomScrollbar,
   LoadingPlaceholder,
   useStyles2,
+  useTheme2,
 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -103,6 +104,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
   const somePromRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(promRulesRequests);
+
+  const hideViewRuleLinkText = props.width < 320;
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -222,6 +225,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
               options={parsedOptions}
               handleInstancesLimit={handleInstancesLimit}
               limitInstances={limitInstances}
+              hideViewRuleLinkText={hideViewRuleLinkText}
             />
           )}
         </section>
@@ -419,9 +423,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     gap: ${theme.spacing(1)};
   `,
-  viewRuleLinkText: css`
-    @container (max-width: ${theme.spacing(40)}) {
-      display: none;
-    }
+  hidden: css`
+    display: none;
   `,
 });
