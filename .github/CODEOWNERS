@@ -597,6 +597,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend-product
 /.github/workflows/auto-milestone.yml @grafana/grafana-delivery
 /.github/workflows/backport.yml @grafana/grafana-delivery
+/.github/workflows/build-technical-documentation.yml @grafana/docs-tooling
 /.github/workflows/bump-version.yml @grafana/grafana-delivery
 /.github/workflows/close-milestone.yml @grafana/grafana-delivery
 /.github/workflows/codeowners-validator.yml @tolzhabayev
