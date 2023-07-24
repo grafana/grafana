@@ -93,7 +93,7 @@ jobs:
           doc-validator
           "--include=^/hugo/content/docs/grafana/${TARGET}/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$"
           '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$'
-          "/hugo/content/docs/${TARGET}"
+          "/hugo/content/docs/grafana/${TARGET}"
           /docs/grafana/latest
           | reviewdog
           -f=rdjsonl
