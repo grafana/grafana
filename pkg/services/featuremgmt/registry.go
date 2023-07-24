@@ -629,6 +629,13 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "toggleLabelsInLogsUI",
+			Description:  "Enable toggleable filters in log details view",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "mlExpressions",
 			Description:  "Enable support for Machine Learning in server-side expressions",
 			Stage:        FeatureStageExperimental,
