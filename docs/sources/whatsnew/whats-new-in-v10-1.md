@@ -40,13 +40,13 @@ To learn more, refer to our [disconnect values documentation]({{< relref "../pan
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
 
-### Visualizations and Widgets Split
+### Visualizations and Widgets split
 
 <!--Alexa Vargas -->
 
-_Available to some of our free tier users of Grafana, this feature is experimental._
+_Experimental in some of our free tiers of Grafana._
 
-This experimental feature brings a clear distinction between panel plugins: visualizations and widgets. Now, easily add widgets like Text, News, and Annotation List without selecting a datasource. The plugins list and library panels are filtered based on widget or visualization type, providing a streamlined editing experience. Early access to this exciting update will be granted to some of our cloud free tier users.
+This experimental feature brings a clear distinction between two panel plugin types: visualizations and widgets. Now, easily add widgets like Text, News, and Annotation list, without selecting a data source. The plugins list and library panels are filtered based on widget or visualization type, providing a streamlined editing experience. Early access to this exciting update will be granted to some of our Cloud free tier users.
 
 ## Authentication and authorization
 
