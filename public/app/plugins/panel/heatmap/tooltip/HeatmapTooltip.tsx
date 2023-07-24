@@ -345,6 +345,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 280px;
     display: flex;
     flex-direction: column;
-    padding: ${theme.spacing(1)};
   `,
 });
