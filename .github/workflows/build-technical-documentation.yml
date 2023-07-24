@@ -27,12 +27,30 @@ jobs:
         env:
           TOKEN: ${{ steps.generate-token.outputs.token }}
 
+      - name: Checkout Actions library
+        uses: actions/checkout@v3
+        with:
+          repository: grafana/grafana-github-actions
+          path: ./actions
+
+      - name: Install Actions from library
+        run: npm install --production --prefix ./actions
+
+      - name: Determine technical documentation version
+        if: steps.has-matching-release-tag.outputs.bool == 'true'
+        uses: ./actions/docs-target
+        id: target
+        with:
+          ref_name: ${{ github.ref_name }}
+
       - name: Build website
         run: |
           rm -rf /hugo/content/docs
           ln -sn "$(pwd)/website/content/docs" /hugo/content/docs
           ln -sn "$(pwd)/website/scripts/versions.js" /hugo/scripts/versions.js
-          ln -sn "$(pwd)/docs/sources" /hugo/content/docs/grafana/next
+          ln -sn "$(pwd)/docs/sources" "content/docs/grafana/${TARGET}"
           cd /hugo
           unset WEBSITE_SKIP_MOUNTS
           make hugo HUGO_ENV=docs | grep docs/grafana/
+        env:
+          TARGET: ${{ steps.target.outputs.target }}
