@@ -103,6 +103,7 @@ function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtens
     const { extensions } = getPluginLinkExtensions({
       extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
       context: context,
+      limitPerPlugin: 3,
     });
 
     return extensions;
