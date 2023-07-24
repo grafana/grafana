@@ -20,7 +20,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -116,9 +116,9 @@ const ContactPoints = () => {
                   ) : (
                     <>
                       {/* TODO we can add some additional info here with a ToggleTip */}
-                      <Span variant="body" color="secondary">
+                      <Text variant="body" color="secondary">
                         Define where notifications are sent, a contact point can contain multiple integrations.
-                      </Span>
+                      </Text>
                       {contactPoints.map((contactPoint) => {
                         const contactPointKey = selectedAlertmanager + contactPoint.name;
                         const provisioned = isProvisioned(contactPoint);
@@ -146,9 +146,9 @@ const ContactPoints = () => {
               {/* Message Templates tab */}
               {showingMessageTemplates && (
                 <>
-                  <Span variant="body" color="secondary">
+                  <Text variant="body" color="secondary">
                     Create message templates to customize your notifications.
-                  </Span>
+                  </Text>
                   <MessageTemplates />
                 </>
               )}
@@ -237,9 +237,9 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Span variant="body" weight="medium">
+          <Text variant="body" weight="medium">
             {name}
-          </Span>
+          </Text>
         </Stack>
         {isReferencedByPolicies ? (
           <MetaText>
@@ -336,14 +336,14 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
           <Stack direction="row" alignItems="center" gap={1}>
             <Stack direction="row" alignItems="center" gap={0.5}>
               {iconName && <Icon name={iconName} />}
-              <Span variant="body" color="primary">
+              <Text variant="body" color="primary">
                 {receiverName}
-              </Span>
+              </Text>
             </Stack>
             {description && (
-              <Span variant="bodySmall" color="secondary">
+              <Text variant="bodySmall" color="secondary">
                 {description}
-              </Span>
+              </Text>
             )}
           </Stack>
         </div>
@@ -384,10 +384,10 @@ const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryP
                 <React.Fragment key={type}>
                   <Stack direction="row" alignItems="center" gap={0.5}>
                     {iconName && <Icon name={iconName} />}
-                    <Span variant="body" color="primary">
+                    <Text variant="body" color="primary">
                       {receiverName}
                       {receivers.length > 1 && <> ({receivers.length})</>}
-                    </Span>
+                    </Text>
                   </Stack>
                   {!isLastItem && '⋅'}
                 </React.Fragment>
@@ -415,7 +415,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
         {failedToSend ? (
           <>
             {/* TODO we might need an error variant for MetaText, dito for success */}
-            <Span color="error" variant="bodySmall" weight="bold">
+            <Text color="error" variant="bodySmall" weight="bold">
               <Stack direction="row" alignItems={'center'} gap={0.5}>
                 <Tooltip content={diagnostics.lastNotifyAttemptError!}>
                   <span>
@@ -423,7 +423,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
                   </span>
                 </Tooltip>
               </Stack>
-            </Span>
+            </Text>
           </>
         ) : (
           <>

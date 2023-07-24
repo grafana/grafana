@@ -53,9 +53,9 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
       <div
         className={cx(
           'gf-form',
-          css`
-            align-items: baseline;
-          `
+          css({
+            alignItems: 'baseline',
+          })
         )}
       >
         <h6>TLS/SSL Auth Details</h6>

@@ -108,14 +108,14 @@ const getContentText = (ruleFormType: RuleFormType, isEditing: boolean, dataSour
       return {
         contentText:
           'Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.',
-        title: `This alert rule will be managed by Grafana. The selected data source is configured to support rule creation. You can switch to data source-managed alert rule.`,
+        title: `This alert rule will be managed by Grafana. The selected data source is configured to support rule creation.`,
       };
     }
   } else {
     // it can be only grafana rule
     return {
       contentText: `Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.`,
-      title: `Based on the selected data sources this alert rule will be managed by Grafana.`,
+      title: `Based on the data sources selected, this alert rule is managed by Grafana.`,
     };
   }
 };

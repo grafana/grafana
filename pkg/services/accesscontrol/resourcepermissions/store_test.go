@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -520,7 +521,7 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
 	sql := db.InitTestDB(t)
-	return NewStore(sql), sql
+	return NewStore(sql, featuremgmt.WithFeatures()), sql
 }
 
 func TestStore_IsInherited(t *testing.T) {

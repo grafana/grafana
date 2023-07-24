@@ -25,6 +25,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "grafana-default-email",
+      "numberOfPolicies": 0,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -48,6 +49,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "provisioned-contact-point",
+      "numberOfPolicies": 0,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -70,6 +72,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "lotsa-emails",
+      "numberOfPolicies": 0,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -111,6 +114,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
       ],
       "name": "Slack with multiple channels",
+      "numberOfPolicies": 0,
     },
   ],
   "error": undefined,

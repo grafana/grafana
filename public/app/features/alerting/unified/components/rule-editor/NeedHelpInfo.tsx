@@ -6,9 +6,9 @@ import { Stack } from '@grafana/experimental';
 import { Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
 interface NeedHelpInfoProps {
-  contentText: string;
-  externalLink: string;
-  linkText: string;
+  contentText: string | JSX.Element;
+  externalLink?: string;
+  linkText?: string;
   title: string;
 }
 export function NeedHelpInfo({ contentText, externalLink, linkText, title }: NeedHelpInfoProps) {
@@ -23,11 +23,13 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
         </Stack>
       }
       footer={
-        <a href={externalLink} target="_blank" rel="noreferrer">
-          <div className={styles.infoLink}>
-            {linkText} <Icon name="external-link-alt" />
-          </div>
-        </a>
+        externalLink ? (
+          <a href={externalLink} target="_blank" rel="noreferrer">
+            <div className={styles.infoLink}>
+              {linkText} <Icon name="external-link-alt" />
+            </div>
+          </a>
+        ) : undefined
       }
       closeButton={true}
       placement="bottom-start"

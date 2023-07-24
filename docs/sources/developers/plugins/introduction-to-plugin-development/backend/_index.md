@@ -1,8 +1,9 @@
 ---
-title: Backend plugins
 aliases:
   - ../../plugins/developing/backend-plugins-guide/
   - ../../plugins/backend/
+description: Learn about the Grafana plugin system for backend development of Grafana
+  integrations.
 keywords:
   - grafana
   - plugins
@@ -10,7 +11,11 @@ keywords:
   - plugin
   - backend-plugins
   - documentation
-description: Learn about the Grafana plugin system for backend development of Grafana integrations.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Backend plugins
 ---
 
 # Backend plugins
