@@ -40,7 +40,7 @@ jobs:
         uses: ./actions/docs-target
         id: target
         with:
-          ref_name: ${{ github.ref_name }}
+          ref_name: ${{ github.base_ref }}
 
       - name: Build website
         run: |
