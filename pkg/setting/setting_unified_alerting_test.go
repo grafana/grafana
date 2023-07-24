@@ -41,6 +41,12 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 	}
 
 	t.Run("should read 'scheduler_tick_interval'", func(t *testing.T) {
+		tmp := cfg.IsFeatureToggleEnabled
+		t.Cleanup(func() {
+			cfg.IsFeatureToggleEnabled = tmp
+		})
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return key == "configurableSchedulerTick" }
+
 		s, err := cfg.Raw.NewSection("unified_alerting")
 		require.NoError(t, err)
 		_, err = s.NewKey("scheduler_tick_interval", "1m")

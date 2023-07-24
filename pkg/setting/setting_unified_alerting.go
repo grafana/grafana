@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -297,13 +296,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	// 1. All alert rule intervals should be times of this interval. Otherwise, the rules will not be evaluated. It is not recommended to set it lower than 10s or odd numbers. Recommended: 10s, 30s, 1m
 	// 2. The increasing of the interval will affect how slow alert rule updates will reset the state, and therefore reset notification. Higher the interval - slower propagation of the changes.
 	baseInterval, err := gtime.ParseDuration(valueAsString(ua, "scheduler_tick_interval", SchedulerBaseInterval.String()))
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagConfigurableSchedulerTick) {
+	if cfg.IsFeatureToggleEnabled("configurableSchedulerTick") { // use literal to avoid cycle imports
 		if err != nil {
 			return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
 		}
-		if uaCfg.BaseInterval != SchedulerBaseInterval {
+		if baseInterval != SchedulerBaseInterval {
 			cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
 		}
+		uaCfg.BaseInterval = baseInterval
 	} else if baseInterval != SchedulerBaseInterval {
 		cfg.Logger.Warn("Scheduler tick interval is changed to non-default but the feature flag is not enabled. Use default.", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
 	}
