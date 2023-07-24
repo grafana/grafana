@@ -158,6 +158,6 @@ If the selected data source implements logs sample, and supports both log and me
 
 ### Switch from metrics to logs
 
-If you are coming from a metrics data source that implements `DataSourceWithQueryExportSupport` (such as Prometheus) to logging data source that supports `DataSourceWithQueryImportSupport` (such as Loki), then it will keep the labels from your query that exist in the logs and use those to query the log streams.
+If you are coming from a metrics data source that implements `DataSourceWithQueryExportSupport` (such as Prometheus) to a logging data source that supports `DataSourceWithQueryImportSupport` (such as Loki), then it will keep the labels from your query that exist in the logs and use those to query the log streams.
 
 For example, the following Prometheus query `grafana_alerting_active_alerts{job="grafana"}` after switching to the Loki data source, will change to `{job="grafana"}`. This will return a chunk of logs in the selected time range that can be grepped/text searched.
