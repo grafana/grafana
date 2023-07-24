@@ -19,11 +19,11 @@ import {
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  renderLegendFormat,
 } from '@grafana/data';
 import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
 import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
-import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
