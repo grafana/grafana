@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { Alert, DataSourceHttpSettings, FieldValidationMessage, useTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 
@@ -14,7 +14,6 @@ import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
-import { AdvancedHttpSettings } from './overhaul/AdvancedHttpSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
 
@@ -48,14 +47,21 @@ export const ConfigEditor = (props: Props) => {
       )}
       {/* WRAP IN FEATURE TOGGLE */}
       {prometheusAuthOverhaul ? (
-        <DataSourcehttpSettingsOverhaul
-          options={options}
-          onOptionsChange={onOptionsChange}
-          azureAuthSettings={azureAuthSettings}
-          sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
-          renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
-          secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
-        />
+        <>
+          <DataSourceDescription
+            dataSourceName="Prometheus"
+            docsLink="https://grafana.com/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/"
+          />
+          <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
+          <DataSourcehttpSettingsOverhaul
+            options={options}
+            onOptionsChange={onOptionsChange}
+            azureAuthSettings={azureAuthSettings}
+            sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
+            renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
+            secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+          />
+        </>
       ) : (
         <DataSourceHttpSettings
           defaultUrl="http://localhost:9090"
@@ -72,16 +78,12 @@ export const ConfigEditor = (props: Props) => {
       )}
       {prometheusAuthOverhaul ? (
         <>
-          {/* STYLE: ADD PADDING */}
           <hr />
-          {/* STYLE: ADD PADDING */}
           <ConfigSection
+            className={styles.advancedSettings}
             title="Advanced settings"
             description="Additional settings are optional settings that can be configured for more control over your data source."
           >
-            {/* Does this component go here or does it go in the auth section? */}
-            <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
-            {/* STYLE: ADD PADDING */}
             <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
             <PromSettings options={options} onOptionsChange={onOptionsChange} />
           </ConfigSection>
@@ -165,6 +167,16 @@ export function overhaulStyles(theme: GrafanaTheme2) {
     `,
     versionMargin: css`
       margin-bottom: 12px;
+    `,
+    advancedHTTPSettingsMargin: css`
+      margin: 24px 0 0 0;
+      padding: 0 0 32px 0;
+    `,
+    advancedSettings: css`
+      padding-top: 32px;
+    `,
+    alertingTop: css`
+      margin-top: 40px !important;
     `,
   };
 }
