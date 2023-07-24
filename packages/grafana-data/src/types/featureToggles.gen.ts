@@ -60,7 +60,6 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
@@ -97,6 +96,7 @@ export interface FeatureToggles {
   dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  lokiFormatQuery?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
@@ -108,8 +108,12 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
+  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   disableTraceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
+  awsAsyncQueryCaching?: boolean;
+  splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
 }

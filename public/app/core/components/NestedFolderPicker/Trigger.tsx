@@ -25,7 +25,12 @@ function Trigger({ isLoading, label, ...rest }: TriggerProps, ref: React.Forward
           </div>
         ) : undefined}
 
-        <button className={cx(styles.fakeInput, label ? styles.hasPrefix : undefined)} {...rest} ref={ref}>
+        <button
+          type="button"
+          className={cx(styles.fakeInput, label ? styles.hasPrefix : undefined)}
+          {...rest}
+          ref={ref}
+        >
           {isLoading ? (
             <Skeleton width={100} />
           ) : label ? (
