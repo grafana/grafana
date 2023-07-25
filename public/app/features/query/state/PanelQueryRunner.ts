@@ -31,7 +31,7 @@ import {
 } from '@grafana/data';
 import { getBackendSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { getRuleHistoryRecordsForPanel } from 'app/features/alerting/unified/components/rules/state-history/useRuleHistoryRecords';
+import { getRuleHistoryRecordsForPanel } from 'app/features/alerting/unified/components/rules/state-history/common';
 import {
   getHistoryImplementation,
   StateHistoryImplementation,
