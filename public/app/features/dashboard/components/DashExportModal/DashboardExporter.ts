@@ -17,7 +17,7 @@ export interface InputUsage {
   libraryPanels?: LibraryPanel[];
 }
 
-interface LibraryPanel {
+export interface LibraryPanel {
   name: string;
   uid: string;
 }

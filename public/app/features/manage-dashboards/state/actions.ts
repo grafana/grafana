@@ -6,7 +6,12 @@ import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDash
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
-import { Input, InputUsage, LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import {
+  Input,
+  InputUsage,
+  LibraryElementExport,
+  LibraryPanel,
+} from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
@@ -52,7 +57,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   };
 }
 
-const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState) => {
+const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): LibraryPanel[] | undefined => {
   return input?.usage?.libraryPanels?.filter((usageLibPanel) =>
     state.inputs.libraryPanels.some(
       (libPanel) => libPanel.state !== LibraryPanelInputState.Exists && libPanel.model.uid === usageLibPanel.uid
@@ -67,6 +72,7 @@ function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardSt
     dashboardJson.__inputs?.forEach((input: Input) => {
       if (!input?.usage?.libraryPanels) {
         filteredUsedInputs.push(input);
+        return;
       }
 
       const newLibraryPanels = getNewLibraryPanelsByInput(input, state);
