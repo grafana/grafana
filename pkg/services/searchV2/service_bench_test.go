@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -96,7 +97,7 @@ func runSearchService(searchService *StandardSearchService) error {
 func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStore) error {
 	// Insert folders
 	offset := 1
-	if errInsert := actest.ConcurrentBatch(actest.Concurrency, folderCount, actest.BatchSize, func(start, end int) error {
+	if errInsert := ac.ConcurrentBatch(ac.Concurrency, folderCount, ac.BatchSize, func(start, end int) error {
 		n := end - start
 		folders := make([]dashboards.Dashboard, 0, n)
 		now := time.Now()
@@ -127,7 +128,7 @@ func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStor
 
 	// Insert dashboards
 	offset += folderCount
-	if errInsert := actest.ConcurrentBatch(actest.Concurrency, dashboardsPerFolder*folderCount, actest.BatchSize, func(start, end int) error {
+	if errInsert := ac.ConcurrentBatch(ac.Concurrency, dashboardsPerFolder*folderCount, ac.BatchSize, func(start, end int) error {
 		n := end - start
 		dbs := make([]dashboards.Dashboard, 0, n)
 		now := time.Now()
