@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
@@ -13,17 +15,19 @@ import (
 var errSecretStoreIsNotCached = errors.New("SecretsKVStore is not a CachedKVStore")
 
 type CachedKVStore struct {
+	*services.BasicService
 	log   log.Logger
 	cache *localcache.CacheService
 	store SecretsKVStore
 }
 
 func WithCache(store SecretsKVStore, defaultExpiration time.Duration, cleanupInterval time.Duration) *CachedKVStore {
-	return &CachedKVStore{
+	kv := &CachedKVStore{
 		log:   log.New("secrets.kvstore"),
 		cache: localcache.New(defaultExpiration, cleanupInterval),
 		store: store,
 	}
+	return kv
 }
 
 func (kv *CachedKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {

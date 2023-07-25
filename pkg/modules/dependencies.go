@@ -15,14 +15,16 @@ const (
 	Provisioning string = "provisioning"
 	// SecretMigrator handles legacy secrets migrations
 	SecretMigrator string = "secret-migrator"
+	// SecretsKVStore is the key-value store for Grafana secrets
+	SecretsKVStore string = "secrets-kvstore"
 )
 
 // dependencyMap defines Module Targets => Dependencies
 var dependencyMap = map[string][]string{
-	BackgroundServices: {Provisioning, HTTPServer},
+	BackgroundServices: {Provisioning},
 	CertGenerator:      {},
 	GrafanaAPIServer:   {CertGenerator},
-	Provisioning:       {SecretMigrator},
+	Provisioning:       {SecretMigrator, SecretsKVStore},
 
-	All: {BackgroundServices},
+	All: {BackgroundServices, HTTPServer},
 }

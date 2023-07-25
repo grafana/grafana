@@ -302,7 +302,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
 	guardian.ProvideService,
 	sanitizer.ProvideService,
-	secretsStore.ProvideService,
+	secretsStore.WireSet,
 	avatar.ProvideAvatarCacheServer,
 	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
