@@ -66,7 +66,7 @@ To close the newly created query, click on the Close Split button.
 
 ## Share Explore URLs
 
-When using Explore, the URL in the browser address bar is updated as you make changes to the queries. This allows you to share the URLs with others or bookmark them for later use.
+When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL. 
 
 ### Generating Explore URLs from external tools
 
