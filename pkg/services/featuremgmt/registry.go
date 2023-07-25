@@ -317,12 +317,6 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:        "onlyExternalOrgRoleSync",
-			Description: "Prohibits a user from changing organization roles synced with external auth providers",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
 			Expression:   "true",
