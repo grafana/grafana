@@ -285,7 +285,7 @@ func TestIntegrationTestReceivers(t *testing.T) {
 		_ = postRequest(t, u, amConfig, http.StatusAccepted) // nolint
 
 		// Get am config with UID and without secureSettings
-		resp := getRequest(t, u, http.StatusOK)
+		resp := getRequest(t, u, http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		config, err := notifier.Load(b)
