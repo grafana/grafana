@@ -88,6 +88,17 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 			expected: true,
 		},
 		{
+			desc:      "should be able to save dashboard under root with general folder scope",
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionDashboardsWrite,
+					Scope:  "folders:uid:general",
+				},
+			},
+			expected: true,
+		},
+		{
 			desc:      "should be able to save dashboard with folder scope",
 			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
@@ -229,6 +240,17 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 				{
 					Action: dashboards.ActionDashboardsWrite,
 					Scope:  "dashboards:uid:1",
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:      "should be able to edit dashboard under root with general folder scope",
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionDashboardsWrite,
+					Scope:  "folders:uid:general",
 				},
 			},
 			expected: true,
@@ -396,6 +418,17 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 			expected: true,
 		},
 		{
+			desc:      "should be able to view dashboard under root with general folder scope",
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionDashboardsRead,
+					Scope:  "folders:uid:general",
+				},
+			},
+			expected: true,
+		},
+		{
 			desc:      "should be able to view dashboard with folder scope",
 			dashboard: dashboard,
 			permissions: []accesscontrol.Permission{
@@ -549,6 +582,21 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 				{
 					Action: dashboards.ActionDashboardsPermissionsWrite,
 					Scope:  "dashboards:uid:1",
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:      "should be able to admin dashboard under root with general folder scope",
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionDashboardsPermissionsRead,
+					Scope:  "folders:uid:general",
+				},
+				{
+					Action: dashboards.ActionDashboardsPermissionsWrite,
+					Scope:  "folders:uid:general",
 				},
 			},
 			expected: true,
@@ -776,6 +824,17 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 				{
 					Action: dashboards.ActionDashboardsDelete,
 					Scope:  "dashboards:uid:1",
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:      "should be able to delete dashboard under root with general folder scope",
+			dashboard: &dashboards.Dashboard{OrgID: orgID, UID: dashUID, IsFolder: false, FolderID: 0},
+			permissions: []accesscontrol.Permission{
+				{
+					Action: dashboards.ActionDashboardsDelete,
+					Scope:  "folders:uid:general",
 				},
 			},
 			expected: true,
@@ -1019,9 +1078,6 @@ func setupAccessControlGuardianTest(t *testing.T, d *dashboards.Dashboard,
 	dashboardPermissions accesscontrol.DashboardPermissionsService, folderPermissions accesscontrol.FolderPermissionsService) DashboardGuardian {
 	t.Helper()
 	store := db.InitTestDB(t)
-
-	toSave := dashboards.NewDashboard(d.UID)
-	toSave.SetUID(d.UID)
 
 	fakeDashboardService := dashboards.NewFakeDashboardService(t)
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
