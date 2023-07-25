@@ -317,6 +317,12 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
+			Name:        "gcomOnlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAuthnzSquad,
+		},
+		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
 			Expression:   "true",
@@ -334,8 +340,9 @@ var (
 		{
 			Name:         "prometheusResourceBrowserCache",
 			Description:  "Displays browser caching options in Prometheus data source configuration",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // turned on by default
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
