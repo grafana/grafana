@@ -60,6 +60,8 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
     });
 
     builder.addHook('setSelect', (u) => {
+      u.over.querySelector<HTMLDivElement>('.u-select')!.classList.remove(styles.overlay);
+
       if (annotating) {
         setIsAddingAnnotation(true);
         setSelection({
