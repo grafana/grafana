@@ -6,7 +6,11 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 
-# ## Unreleased
+# ## 4.1.1 (2023-07-20)
+
+# ### Fixed
+
+# - Replaced use of `realpath` with POSIX compatible alternative to determine default value for REPOS_PATH.
 
 # ## 4.1.0 (2023-06-16)
 
@@ -158,7 +162,7 @@ EOF
   exit 1
 fi
 
-readonly REPOS_PATH="${REPOS_PATH:-$(realpath "$(git rev-parse --show-toplevel)/..")}"
+readonly REPOS_PATH="${REPOS_PATH:-$(cd "$(git rev-parse --show-toplevel)/.." && echo "${PWD}")}"
 
 if [ -z "${REPOS_PATH}" ]; then
   cat <<EOF >&2
@@ -527,7 +531,7 @@ fi
 ${WEBSITE_EXEC}
 EOF
     chmod +x "${tempfile}"
-    volumes="${volumes} --volume=$(realpath "${tempfile}"):/entrypoint"
+    volumes="${volumes} --volume=${tempfile}:/entrypoint"
     readonly volumes
 
     echo

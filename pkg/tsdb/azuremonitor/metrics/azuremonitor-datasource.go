@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -28,7 +29,8 @@ import (
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	Proxy types.ServiceProxy
+	Proxy    types.ServiceProxy
+	Features featuremgmt.FeatureToggles
 }
 
 var (
@@ -396,6 +398,9 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 		}
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
+		if e.Features.IsEnabled(featuremgmt.FlagAzureMonitorDataplane) {
+			frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
+		}
 		frame.RefID = query.RefID
 		timeField := frame.Fields[0]
 		timeField.Name = data.TimeSeriesTimeFieldName
