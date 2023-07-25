@@ -94,7 +94,7 @@ describe('Dashboard browse (nested)', () => {
 
   // Remove nested folder structure
   after(() => {
-    // Clean up dashboards
+    // Clean up root dashboards
     for (const dashboardUID of dashboardUIDsToCleanUp) {
       e2e.flows.deleteDashboard({
         uid: dashboardUID,
@@ -102,7 +102,7 @@ describe('Dashboard browse (nested)', () => {
         title: '',
       });
     }
-    // Clean up folders
+    // Clean up root folders (cascading delete will remove any nested folders and dashboards)
     for (const folderUID of folderUIDsToCleanUp) {
       e2e().request({
         method: 'DELETE',
