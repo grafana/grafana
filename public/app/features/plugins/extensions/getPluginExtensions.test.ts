@@ -140,7 +140,7 @@ describe('getPluginExtensions()', () => {
       type: 'unknown-type',
       pluginId: 'another-plugin',
 
-      // Unkown properties
+      // Unknown properties
       testing: false,
 
       // The following props are allowed to override
