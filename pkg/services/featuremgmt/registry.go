@@ -672,5 +672,11 @@ var (
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // on by default
 		},
+		{
+			Name:        "permissionsFilterRemoveSubquery",
+			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendPlatformSquad,
+		},
 	}
 )
