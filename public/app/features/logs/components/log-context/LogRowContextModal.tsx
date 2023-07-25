@@ -363,16 +363,33 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;
 
       if (currentGen === generationRef.current) {
-        setContext((c) => ({
-          above: {
-            rows: sortLogRows([...newAbove, ...c.above.rows], logsSortOrder),
-            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
-          },
-          below: {
-            rows: sortLogRows([...c.below.rows, ...newBelow], logsSortOrder),
-            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
-          },
-        }));
+        setContext((c) => {
+          // we should only modify the row-arrays if necessary
+          const sortedNewAbove =
+            newAbove.length > 0 ? sortLogRows([...newAbove, ...c.above.rows], logsSortOrder) : c.above.rows;
+          const sortedNewBelow =
+            newBelow.length > 0 ? sortLogRows([...c.below.rows, ...newBelow], logsSortOrder) : c.below.rows;
+          return {
+            above: {
+              rows: sortedNewAbove,
+              loadingState:
+                place === 'above'
+                  ? newRows.length === 0
+                    ? LoadingState.Done
+                    : LoadingState.NotStarted
+                  : c.above.loadingState,
+            },
+            below: {
+              rows: sortedNewBelow,
+              loadingState:
+                place === 'below'
+                  ? newRows.length === 0
+                    ? LoadingState.Done
+                    : LoadingState.NotStarted
+                  : c.below.loadingState,
+            },
+          };
+        });
       }
     } catch {
       setSection(place, (section) => ({
