@@ -1,6 +1,8 @@
 package signature
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -47,6 +49,8 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 
 	switch plugin.Signature {
 	case plugins.SignatureStatusUnsigned:
+		s.log.Info("Plugin is unsigned. Checking if it is authorized to load", "pluginID", plugin.ID)
+		s.log.Info("Authorizer type", "type", fmt.Sprintf("%T", s.authorizer))
 		if authorized := s.authorizer.CanLoadPlugin(plugin); !authorized {
 			s.log.Info("Plugin is unsigned", "pluginID", plugin.ID)
 			return &plugins.SignatureError{
