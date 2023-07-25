@@ -398,4 +398,8 @@ const (
 	// FlagAzureMonitorDataplane
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
 )
