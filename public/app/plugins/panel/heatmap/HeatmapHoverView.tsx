@@ -125,18 +125,21 @@ const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars 
 
   for (const field of visibleFields ?? []) {
     const hasLinks = field.config.links && field.config.links.length > 0;
+
     if (hasLinks && data.heatmap) {
-      let appropriateScopedVars = scopedVars.filter(
-        (sv) => sv && sv.__dataContext && sv.__dataContext.value.field.name === nonNumericOrdinalDisplay
-      )[0];
-      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars ?? {}, replaceVars);
+      const appropriateScopedVars = scopedVars.find(
+        (scopedVar) =>
+          scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
+      );
+
+      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars || {}, replaceVars);
     }
 
     if (field.getLinks) {
-      const v = field.values[index];
-      const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
+      const value = field.values[index];
+      const display = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
 
-      field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {
+      field.getLinks({ calculatedValue: display, valueRowIndex: index }).forEach((link) => {
         const key = `${link.title}/${link.href}`;
         if (!linkLookup.has(key)) {
           links.push(link);
