@@ -29,6 +29,13 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Login:          "admin",
 	})
 
+	otherOrgUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin2",
+		Login:          "admin2",
+		OrgID:          2,
+	})
+
 	viewerUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -85,6 +92,14 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		OrgID: 1,
 	}
 	dsWithoutCorrelations := ctx.createDs(createDsCommand)
+
+	createDsCommand = &datasources.AddDataSourceCommand{
+		Name:  "with-correlations",
+		UID:   dsWithCorrelations.UID, // reuse UID
+		Type:  "loki",
+		OrgID: 2,
+	}
+	ctx.createDs(createDsCommand)
 
 	// This creates 2 records in the correlation table that should never be returned by the API.
 	// Given all tests in this file work on the assumption that only a single correlation exists,
@@ -157,6 +172,26 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 			require.NoError(t, res.Body.Close())
 		})
+
+		t.Run("Should correctly return correlations for current organization", func(t *testing.T) {
+			res := ctx.Get(GetParams{
+				url:  "/api/datasources/correlations",
+				user: otherOrgUser,
+			})
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			responseBody, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+
+			var response correlations.GetCorrelationsResponseBody
+			err = json.Unmarshal(responseBody, &response)
+			require.NoError(t, err)
+
+			require.Len(t, response.Correlations, 0)
+
+			require.NoError(t, res.Body.Close())
+		})
+
 	})
 
 	t.Run("Get all correlations for a given data source", func(t *testing.T) {
