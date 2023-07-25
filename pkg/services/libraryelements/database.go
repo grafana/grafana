@@ -121,21 +121,13 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		}
 	}
 
-	var modelMap map[string]interface{}
-	err := json.Unmarshal(cmd.Model, &modelMap)
-	if err != nil {
-		return model.LibraryElementDTO{}, err
-	}
-
-	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
-		if uid, ok := libraryPanel["uid"]; ok && uid == "" {
-			libraryPanel["uid"] = createUID
+	var updatedModel json.RawMessage
+	var err error
+	if cmd.Kind == int64(model.PanelElement) {
+		updatedModel, err = l.addUidToLibraryPanel(cmd.Model, createUID)
+		if err != nil {
+			return model.LibraryElementDTO{}, err
 		}
-	}
-
-	updatedModel, err := json.Marshal(modelMap)
-	if err != nil {
-		return model.LibraryElementDTO{}, err
 	}
 
 	element := model.LibraryElement{
@@ -246,7 +238,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 }
 
 // getLibraryElements gets a Library Element where param == value
-func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair, features featuremgmt.FeatureToggles) ([]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair, features featuremgmt.FeatureToggles) ([]model.LibraryElementDTO, error) {
 	libraryElements := make([]model.LibraryElementWithMeta, 0)
 
 	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
@@ -285,22 +277,12 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
-		var modelMap map[string]interface{}
-
-		err := json.Unmarshal(libraryElement.Model, &modelMap)
-		if err != nil {
-			return []model.LibraryElementDTO{}, err
-		}
-
-		if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
-			if uid, ok := libraryPanel["uid"]; ok && uid == "" {
-				libraryPanel["uid"] = libraryElement.UID
+		var updatedModel json.RawMessage
+		if libraryElement.Kind == int64(model.PanelElement) {
+			updatedModel, err = l.addUidToLibraryPanel(libraryElement.Model, libraryElement.UID)
+			if err != nil {
+				return []model.LibraryElementDTO{}, err
 			}
-		}
-
-		updatedModel, err := json.Marshal(modelMap)
-		if err != nil {
-			return []model.LibraryElementDTO{}, err
 		}
 
 		leDtos[i] = model.LibraryElementDTO{
@@ -341,7 +323,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 
 // getLibraryElementByUid gets a Library Element by uid.
 func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error) {
-	libraryElements, err := getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.OrgID}, {key: "uid", value: UID}}, l.features)
+	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.OrgID}, {key: "uid", value: UID}}, l.features)
 	if err != nil {
 		return model.LibraryElementDTO{}, err
 	}
@@ -354,7 +336,7 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser *user.SignedInUser, name string) ([]model.LibraryElementDTO, error) {
-	return getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.OrgID}, {"name", name}}, l.features)
+	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.OrgID}, {"name", name}}, l.features)
 }
 
 // getAllLibraryElements gets all Library Elements.
