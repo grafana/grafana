@@ -53,7 +53,7 @@ export const defaultMarkersConfig: MapLayerOptions<NetworkConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
-  tooltip: true,
+  tooltip: false,
 };
 
 /**
@@ -90,8 +90,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
-    // Add lines between nodes from edges
-
+    // TODO update legend to display edges as well
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
     let legend: ReactNode = null;
     if (config.showLegend) {
@@ -228,6 +227,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         builder
           .addCustomEditor({
             id: 'config.style',
+            category: ['Node Styles'],
             path: 'config.style',
             name: 'Node Styles',
             editor: StyleEditor,
@@ -238,6 +238,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           })
           .addCustomEditor({
             id: 'config.edgeStyle',
+            category: ['Edge Styles'],
             path: 'config.edgeStyle',
             name: 'Edge Styles',
             editor: StyleEditor,
