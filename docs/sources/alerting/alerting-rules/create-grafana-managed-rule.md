@@ -36,12 +36,6 @@ In the following sections, we’ll guide you through the process of creating you
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
 
-1. Enter an alert rule name
-1. Define query and alert condition
-1. Set evaluation behavior
-1. Add annotations
-1. Configure notifications
-
 ## Set alert rule name
 
 1. Click **Alerts & IRM** -> **Alert rules** -> **+ New alert rule**.
