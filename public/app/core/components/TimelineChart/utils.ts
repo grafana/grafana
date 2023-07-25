@@ -466,6 +466,7 @@ export function prepareTimelineFields(
           hasTimeseries = true;
           fields.push(field);
           break;
+        case FieldType.enum:
         case FieldType.number:
           if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
             const f = mergeThresholdValues(field, theme);

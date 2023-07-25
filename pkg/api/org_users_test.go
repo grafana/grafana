@@ -275,7 +275,6 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
-				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.accesscontrolService = &actest.FakeService{

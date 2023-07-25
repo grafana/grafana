@@ -7,6 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -123,13 +127,26 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 			dsUID := dsUIDMap.GetUID(orgID, set.Conditions[condIdx].Query.DatasourceID)
 			queryObj["refId"] = refID
 
-			encodedObj, err := json.Marshal(queryObj)
+			// See services/alerting/conditions/query.go's newQueryCondition
+			queryObj["maxDataPoints"] = interval.DefaultRes
+
+			simpleJson, err := simplejson.NewJson(set.Conditions[condIdx].Query.Model)
 			if err != nil {
 				return nil, err
 			}
 
 			rawFrom := newRefIDsToTimeRanges[refID][0]
 			rawTo := newRefIDsToTimeRanges[refID][1]
+			calculatedInterval, err := calculateInterval(legacydata.NewDataTimeRange(rawFrom, rawTo), simpleJson, nil)
+			if err != nil {
+				return nil, err
+			}
+			queryObj["intervalMs"] = calculatedInterval.Milliseconds()
+
+			encodedObj, err := json.Marshal(queryObj)
+			if err != nil {
+				return nil, err
+			}
 
 			rTR, err := getRelativeDuration(rawFrom, rawTo)
 			if err != nil {
@@ -294,4 +311,29 @@ type classicConditionJSON struct {
 		// Params []interface{} `json:"params"` (Unused)
 		Type string `json:"type"`
 	} `json:"reducer"`
+}
+
+// Copied from services/alerting/conditions/query.go's calculateInterval
+func calculateInterval(timeRange legacydata.DataTimeRange, model *simplejson.Json, dsInfo *datasources.DataSource) (time.Duration, error) {
+	// if there is no min-interval specified in the datasource or in the dashboard-panel,
+	// the value of 1ms is used (this is how it is done in the dashboard-interval-calculation too,
+	// see https://github.com/grafana/grafana/blob/9a0040c0aeaae8357c650cec2ee644a571dddf3d/packages/grafana-data/src/datetime/rangeutil.ts#L264)
+	defaultMinInterval := time.Millisecond * 1
+
+	// interval.GetIntervalFrom has two problems (but they do not affect us here):
+	// - it returns the min-interval, so it should be called interval.GetMinIntervalFrom
+	// - it falls back to model.intervalMs. it should not, because that one is the real final
+	//   interval-value calculated by the browser. but, in this specific case (old-alert),
+	//   that value is not set, so the fallback never happens.
+	minInterval, err := interval.GetIntervalFrom(dsInfo, model, defaultMinInterval)
+
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	calc := interval.NewCalculator()
+
+	intvl := calc.Calculate(timeRange, minInterval)
+
+	return intvl.Value, nil
 }
