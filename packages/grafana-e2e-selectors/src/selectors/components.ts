@@ -45,7 +45,7 @@ export const Components = {
         drop: 'TestData drop values',
       },
     },
-    DataSourceHttpSettings: {
+    ConnectionSettings: {
       urlInput: 'Datasource HTTP settings url',
     },
     Jaeger: {
