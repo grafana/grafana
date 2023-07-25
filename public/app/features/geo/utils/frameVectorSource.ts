@@ -60,10 +60,24 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
 
   updateEdge(frames: DataFrame[]) {
     this.clear(true);
-    // TODO don't hard code frame indices
-    const frameNodes = frames[0];
-    const frameEdges = frames[1];
+    const networkFrames = frames.reduce<{
+      nodes: DataFrame[];
+      edges: DataFrame[];
+    }>(
+      (acc, frame) => {
+        const sourceField = frame.fields.filter((f) => f.name === 'source');
+        if (sourceField.length) {
+          acc.edges.push(frame);
+        } else {
+          acc.nodes.push(frame);
+        }
+        return acc;
+      },
+      { edges: [], nodes: [] }
+    );
 
+    const frameNodes = networkFrames.nodes[0];
+    const frameEdges = networkFrames.edges[0];
     const info = getGeometryField(frameNodes, this.location);
     if (!info.field) {
       this.changed();
@@ -71,6 +85,12 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
     }
     //eslint-disable-next-line
     const field = info.field as unknown as Field<Point>;
+
+    // TODO for nodes, don't hard code id field name
+    const nodeIdIndex = frameNodes.fields.findIndex((f) => {
+      return f.name === 'id';
+    });
+    const nodeIdValues = frameNodes.fields[nodeIdIndex].values;
 
     // Edges
     // TODO for edges, don't hard code source and target fields
@@ -86,11 +106,14 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
     // Loop through edges, referencing node locations
     for (let i = 0; i < sources.length; i++) {
       // Create linestring for each edge
-      const si = sources[i];
-      const ti = targets[i];
-      const sourceValue = field.values[si].getCoordinates();
-      const targetValue = field.values[ti].getCoordinates();
-      const geometryEdge = new LineString([sourceValue, targetValue]) as Geometry;
+      const sourceId = sources[i];
+      const targetId = targets[i];
+      const sourceNodeIndex = nodeIdValues.findIndex((value) => value === sourceId);
+      const targetNodeIndex = nodeIdValues.findIndex((value) => value === targetId);
+      const geometryEdge = new LineString([
+        field.values[sourceNodeIndex].getCoordinates(),
+        field.values[targetNodeIndex].getCoordinates(),
+      ]) as Geometry;
       const edgeFeature = new Feature({
         geometry: geometryEdge as T,
       });
