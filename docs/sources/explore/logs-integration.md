@@ -84,7 +84,7 @@ Explore replaces these sequences. When it does so, the option will change from "
 
 ### Log level
 
-For the logs where a `level` label is specified, we use the value of this label to determine the log level and update color of each log line accordingly. If the log doesn't have an specificed level label, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In the case where Grafana is not able to infer a log level field, it will be visualized with an unknown log level.
+For the logs where a `level` label is specified, we use the value of this label to determine the log level and update color of each log line accordingly. If the log doesn't have specified level label, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In the case where Grafana is not able to infer a log level field, it will be visualized with an unknown log level.
 
 > **Tip:** If you use a Loki data source and the "level" is part of your log line, you can use parsers (JSON, logfmt, regex,..) to extract the level information into a level label that is used to determine the level value. This will allow the histogram to show the various log levels as separate bars.
 
