@@ -90,7 +90,7 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 }
 
 function ExportAction({ permissions, receiverName }: ActionProps) {
-  const canReadSecrets = contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin())
+  const canReadSecrets = contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin());
   return (
     <Authorize actions={[permissions.provisioning.read, permissions.provisioning.readSecrets]}>
       <ActionIcon
@@ -101,7 +101,7 @@ function ExportAction({ permissions, receiverName }: ActionProps) {
           decrypt: canReadSecrets.toString(),
           name: receiverName,
         })}
-        tooltip={canReadSecrets ? 'Export redacted contact point': 'Export contact point'}
+        tooltip={canReadSecrets ? 'Export redacted contact point' : 'Export contact point'}
         icon="download-alt"
         target="_blank"
       />
@@ -303,7 +303,10 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
 
   const isGrafanaAM = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
-  const showExport = isGrafanaAM && (contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) || contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin()));
+  const showExport =
+    isGrafanaAM &&
+    (contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+      contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin()));
 
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
@@ -501,7 +504,12 @@ function useGetColumns(
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
         <Authorize
-          actions={[permissions.update, permissions.delete, permissions.provisioning.read, permissions.provisioning.readSecrets ]}
+          actions={[
+            permissions.update,
+            permissions.delete,
+            permissions.provisioning.read,
+            permissions.provisioning.readSecrets,
+          ]}
           fallback={isOrgAdmin()}
         >
           <div className={tableStyles.actionsCell}>
