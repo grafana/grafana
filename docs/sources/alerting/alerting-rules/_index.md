@@ -22,7 +22,9 @@ Configure the features and integrations that you need to create and manage your 
 
 **Configure alert rules**
 
-For more information, see [Configure alert rules][create-grafana-managed-rule].
+[Configure Grafana-managed alert rules][create-grafana-managed-rule].
+
+[Configure data source-managed alert rules][create-mimir-loki-managed-rule]
 
 **Configure recording rules**
 

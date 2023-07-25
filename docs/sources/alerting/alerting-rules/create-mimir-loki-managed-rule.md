@@ -4,7 +4,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
-description: Create Grafana Mimir or Loki managed alerting rule
+description: Configure data source-managed alert rules
 keywords:
   - grafana
   - alerting
@@ -16,13 +16,17 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create Grafana Mimir or Loki managed alert rules
+title: Configure data source-managed alert rules
 weight: 400
 ---
 
-# Create Grafana Mimir or Loki managed alert rules
+# Configure data source-managed alert rules
 
 Grafana allows you to create alerting rules for an external Grafana Mimir or Loki instance that has ruler API enabled. For information on Grafana Alerting, see [About Grafana Alerting][alerting] which explains the various components of Grafana Alerting. We also recommend that you familiarize yourself with some of the [fundamental concepts][fundamentals] of Grafana Alerting.
+
+**Note**:
+
+Alert rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
 
 ## Before you begin
 
