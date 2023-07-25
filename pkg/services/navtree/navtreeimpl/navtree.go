@@ -142,10 +142,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
-		if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
-			treeRoot.AddSection(connectionsSection)
-		}
+	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
+		treeRoot.AddSection(connectionsSection)
 	}
 
 	orgAdminNode, err := s.getAdminNode(c)
