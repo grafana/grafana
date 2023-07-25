@@ -297,6 +297,12 @@
       "$ref": "#/definitions/AlertRuleGroupExport"
      },
      "type": "array"
+    },
+    "policies": {
+     "items": {
+      "$ref": "#/definitions/NotificationPolicyExport"
+     },
+     "type": "array"
     }
    },
    "title": "AlertingFileExport is the full provisioned file export.",
@@ -1095,6 +1101,10 @@
     },
     "pathSeparator": {
      "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+     "type": "string"
+    },
+    "preferredVisualisationPluginId": {
+     "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
      "type": "string"
     },
     "preferredVisualisationType": {
@@ -1896,6 +1906,19 @@
    "format": "int64",
    "title": "NoticeSeverity is a type for the Severity property of a Notice.",
    "type": "integer"
+  },
+  "NotificationPolicyExport": {
+   "properties": {
+    "Policy": {
+     "$ref": "#/definitions/RouteExport"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+   "type": "object"
   },
   "NotificationTemplate": {
    "properties": {
@@ -2882,7 +2905,7 @@
      "type": "boolean"
     },
     "settings": {
-     "$ref": "#/definitions/Json"
+     "$ref": "#/definitions/RawMessage"
     },
     "type": {
      "type": "string"
@@ -2979,6 +3002,61 @@
     "routes": {
      "items": {
       "$ref": "#/definitions/Route"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "RouteExport": {
+   "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+   "properties": {
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
      },
      "type": "array"
     }
@@ -3940,6 +4018,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3963,6 +4042,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4067,7 +4147,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4328,7 +4407,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -7012,6 +7090,29 @@
      }
     },
     "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/policies/export": {
+   "get": {
+    "operationId": "RouteGetPolicyTreeExport",
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Export the notification policy tree in provisioning file format.",
     "tags": [
      "provisioning"
     ]
