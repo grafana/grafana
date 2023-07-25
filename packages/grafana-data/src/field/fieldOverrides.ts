@@ -205,6 +205,35 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         context.replaceVariables,
         options.timeZone
       );
+
+      if (field.config.custom?.nested) {
+        for (const nestedFrames of field.values) {
+          for (const nf of nestedFrames) {
+            for (const valueField of nf.fields) {
+              valueField.state = {
+                scopedVars: {
+                  __dataContext: {
+                    value: {
+                      data: options.data!,
+                      frame: nf,
+                      frameIndex: index,
+                      field: valueField,
+                    },
+                  },
+                },
+              };
+
+              valueField.getLinks = getLinksSupplier(
+                nf,
+                valueField,
+                valueField.state!.scopedVars,
+                context.replaceVariables,
+                options.timeZone
+              );
+            }
+          }
+        }
+      }
     }
 
     return newFrame;
