@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: '30 1 * * *'
 
+permissions:
+  pull-requests: write
+
 jobs:
   stale:
     runs-on: ubuntu-latest
