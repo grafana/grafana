@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -17,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -1078,6 +1078,58 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_AngularClass(t *testing.T) {
+	for _, tc := range []struct {
+		name                   string
+		class                  plugins.Class
+		expAngularDetectionRun bool
+	}{
+		{
+			name:                   "core plugin should skip angular detection",
+			class:                  plugins.ClassCore,
+			expAngularDetectionRun: false,
+		},
+		{
+			name:                   "bundled plugin should skip angular detection",
+			class:                  plugins.ClassBundled,
+			expAngularDetectionRun: false,
+		},
+		{
+			name:                   "external plugin should run angular detection",
+			class:                  plugins.ClassExternal,
+			expAngularDetectionRun: true,
+		},
+		{
+			name:                   "other-class plugin should run angular detection",
+			class:                  "CDN", // (enterprise-only class)
+			expAngularDetectionRun: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fakePluginSource := &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return tc.class
+				},
+				PluginURIsFunc: func(ctx context.Context) []string {
+					return []string{"../testdata/valid-v2-signature"}
+				},
+			}
+			l := newLoader(t, &config.Cfg{AngularSupportEnabled: true}, func(l *Loader) {
+				// So if angularDetected = true, it means that the detection has run
+				l.angularInspector = angularinspector.AlwaysAngularFakeInspector
+			})
+			p, err := l.Load(context.Background(), fakePluginSource)
+			require.NoError(t, err)
+			require.Len(t, p, 1, "should load 1 plugin")
+			if tc.expAngularDetectionRun {
+				require.True(t, p[0].AngularDetected, "angular detection should run")
+			} else {
+				require.False(t, p[0].AngularDetected, "angular detection should not run")
+			}
+		})
+	}
+}
+
 func TestLoader_Load_Angular(t *testing.T) {
 	fakePluginSource := &fakes.FakePluginSource{
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1442,8 +1494,8 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
-		signature.ProvideService(cfg, statickey.New()), angularInspector, &fakes.FakeOauthService{})
+		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg.DevMode),
+		signature.ProvideService(statickey.New()), angularInspector, &fakes.FakeOauthService{})
 
 	for _, cb := range cbs {
 		cb(l)

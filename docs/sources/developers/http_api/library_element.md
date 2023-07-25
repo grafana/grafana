@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - library-element
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Library Element HTTP API '
 ---
 

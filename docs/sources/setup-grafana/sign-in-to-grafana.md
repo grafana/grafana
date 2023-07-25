@@ -1,5 +1,9 @@
 ---
 description: Learn how to sign in to Grafana
+labels:
+  products:
+    - enterprise
+    - oss
 title: Sign in to Grafana
 weight: 400
 ---

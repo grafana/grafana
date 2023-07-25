@@ -199,6 +199,7 @@ export const availableIconsIndex = {
   'square-shape': true,
   star: true,
   'step-backward': true,
+  stopwatch: true,
   'stopwatch-slash': true,
   sync: true,
   'sync-slash': true,

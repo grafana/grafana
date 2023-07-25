@@ -2,6 +2,12 @@
 aliases:
   - data-sources/
   - overview/
+  - ./features/datasources/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Data sources
 weight: 60
 ---

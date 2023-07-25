@@ -135,14 +135,27 @@ describe('SharePublic', () => {
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
     expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
   });
-  it('renders default relative time in input', async () => {
+  it('renders default relative time in settings summary when they are closed', async () => {
     expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
 
     //@ts-ignore
     mockDashboard.originalTime = { from: 'now-6h', to: 'now' };
 
     await renderSharePublicDashboard();
+    await waitFor(() => screen.getByText('Time range ='));
+
     expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
+  });
+  it('renders default relative time in settings when they are open', async () => {
+    expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
+
+    //@ts-ignore
+    mockDashboard.originalTime = { from: 'now-6h', to: 'now' };
+
+    await renderSharePublicDashboard();
+    await userEvent.click(screen.getByText('Settings'));
+
+    expect(screen.queryAllByText('Last 6 hours')).toHaveLength(2);
   });
   it('when modal is opened, then checkboxes are enabled but create button is disabled', async () => {
     server.use(getNonExistentPublicDashboardResponse());
@@ -214,6 +227,7 @@ describe('SharePublic - Already persisted', () => {
   });
   it('when fetch is done, then inputs are checked and delete button is enabled', async () => {
     await renderSharePublicDashboard();
+    await userEvent.click(screen.getByText('Settings'));
 
     await waitFor(() => {
       expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
@@ -231,6 +245,7 @@ describe('SharePublic - Already persisted', () => {
   it('inputs and delete button are disabled because of lack of permissions', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     await renderSharePublicDashboard();
+    await userEvent.click(screen.getByText('Settings'));
 
     expect(await screen.findByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeChecked();
@@ -257,6 +272,7 @@ describe('SharePublic - Already persisted', () => {
     );
 
     await renderSharePublicDashboard();
+    await userEvent.click(screen.getByText('Settings'));
 
     const enableTimeRangeSwitch = await screen.findByTestId(selectors.EnableTimeRangeSwitch);
     await waitFor(() => {
@@ -320,6 +336,8 @@ describe('SharePublic - Report interactions', () => {
 
   it('reports interaction when time range is clicked', async () => {
     await renderSharePublicDashboard();
+    await userEvent.click(screen.getByText('Settings'));
+
     await waitFor(() => {
       expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
     });
@@ -333,6 +351,8 @@ describe('SharePublic - Report interactions', () => {
   });
   it('reports interaction when show annotations is clicked', async () => {
     await renderSharePublicDashboard();
+    await userEvent.click(screen.getByText('Settings'));
+
     await waitFor(() => {
       expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
     });

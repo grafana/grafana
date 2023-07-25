@@ -5,8 +5,6 @@ import '@pyroscope/flamegraph/dist/index.css';
 import { CoreApp, DataFrame, DataFrameView } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import FlameGraphContainerV2 from '../flamegraphV2/components/FlameGraphContainer';
-
 import FlameGraphContainer from './FlameGraphContainer';
 
 type Props = {
@@ -24,11 +22,7 @@ export const FlameGraphTopWrapper = (props: Props) => {
     return <FlamegraphRenderer profile={profile} />;
   }
 
-  return config.featureToggles.flameGraphV2 ? (
-    <FlameGraphContainerV2 data={props.data} app={props.app} />
-  ) : (
-    <FlameGraphContainer data={props.data} app={props.app} />
-  );
+  return <FlameGraphContainer data={props.data} app={props.app} />;
 };
 
 type Row = {

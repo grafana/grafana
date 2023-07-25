@@ -29,6 +29,7 @@ export type PluginExtensionLink = PluginExtensionBase & {
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
+  category?: string;
 };
 
 export type PluginExtensionComponent = PluginExtensionBase & {
@@ -65,11 +66,15 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
         path: string;
         onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
         icon: IconName;
+        category: string;
       }>
     | undefined;
 
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
+
+  // (Optional) A category to be used when grouping the options in the ui
+  category?: string;
 };
 
 export type PluginExtensionComponentConfig<Context extends object = object> = {

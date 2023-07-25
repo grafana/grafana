@@ -258,7 +258,12 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   target.select?.forEach((select) => {
     const selector = select.filter((x) => x.type !== 'field');
     if (selector.length > 0) {
-      allParams.push(selector[0].type);
+      const aliasIfExist = selector.find((s) => s.type === 'alias');
+      if (aliasIfExist) {
+        allParams.push(aliasIfExist.params?.[0].toString() ?? '');
+      } else {
+        allParams.push(selector[0].type);
+      }
     } else {
       if (select[0] && select[0].params && select[0].params[0]) {
         allParams.push(select[0].params[0].toString());

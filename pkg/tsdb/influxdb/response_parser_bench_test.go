@@ -22,7 +22,7 @@ func BenchmarkParseJson(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		buf := strings.NewReader(testResponse)
-		result := parser.parse(buf, queries)
+		result := parser.parse(buf, 200, queries)
 		require.NotNil(b, result.Responses["A"].Frames)
 		require.NoError(b, result.Responses["A"].Error)
 	}

@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Navigate to the dashboard list
 ---
 

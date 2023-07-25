@@ -89,7 +89,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
-    if (this.isSignedIn) {
+    if (this.canScheduleRotation()) {
       this.scheduleTokenRotationJob();
     }
   }
@@ -206,10 +206,8 @@ export class ContextSrv {
 
   // schedules a job to perform token ration in the background
   private scheduleTokenRotationJob() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const isRenderRequest = !!urlParams.get('render');
-    // only schedule job if feature toggle is enabled, user is signed in and it's not a render request
-    if (config.featureToggles.clientTokenRotation && this.isSignedIn && !isRenderRequest) {
+    // check if we can schedula the token rotation job
+    if (this.canScheduleRotation()) {
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
@@ -239,6 +237,32 @@ export class ContextSrv {
         this.rotateToken().then();
       }, nextRun);
     }
+  }
+
+  private canScheduleRotation() {
+    // skip if user is not signed in, this happens on login page or when using anonymous auth
+    if (!this.isSignedIn) {
+      return false;
+    }
+
+    // skip if feature toggle is not enabled
+    if (!config.featureToggles.clientTokenRotation) {
+      return false;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    // skip if this is a render request
+    if (!!params.get('render')) {
+      return false;
+    }
+
+    // skip if we are using auth_token in url
+    if (!!params.get('auth_token')) {
+      return false;
+    }
+
+    return true;
   }
 
   private cancelTokenRotationJob() {

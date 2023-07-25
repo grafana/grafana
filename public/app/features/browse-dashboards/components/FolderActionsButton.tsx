@@ -112,7 +112,7 @@ export function FolderActionsButton({ folder }: Props) {
       </Dropdown>
       {showPermissionsDrawer && (
         <Drawer
-          title="Permissions"
+          title={t('browse-dashboards.action.manage-permissions-button', 'Manage permissions')}
           subtitle={folder.title}
           scrollableContent
           onClose={() => setShowPermissionsDrawer(false)}

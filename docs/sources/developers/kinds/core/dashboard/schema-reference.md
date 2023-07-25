@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Dashboard kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -74,7 +79,7 @@ extraFields is reserved for any fields that are pulled from the API server metad
 | `description`          | string                                      | No       |           | Description of dashboard.                                                                                                                                                                                                                                                                                                                                                                                      |
 | `fiscalYearStartMonth` | integer                                     | No       | `0`       | The month that the fiscal year starts on.  0 = January, 11 = December<br/>Constraint: `>=0 & <12`.                                                                                                                                                                                                                                                                                                             |
 | `gnetId`               | string                                      | No       |           | ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal                                                                                                                                                                                                                                                                                                                             |
-| `id`                   | integer                                     | No       |           | Unique numeric identifier for the dashboard.<br/>`id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.                                                                                                                                                                                                                                       |
+| `id`                   | integer or null                             | No       |           | Unique numeric identifier for the dashboard.<br/>`id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.                                                                                                                                                                                                                                       |
 | `links`                | [DashboardLink](#dashboardlink)[]           | No       |           | Links with references to other dashboards or external websites.                                                                                                                                                                                                                                                                                                                                                |
 | `liveNow`              | boolean                                     | No       |           | When set to true, the dashboard will redraw panels at an interval matching the pixel width.<br/>This will keep data "moving left" regardless of the query refresh rate. This setting helps<br/>avoid dashboards presenting stale live data                                                                                                                                                                     |
 | `panels`               | [object](#panels)[]                         | No       |           | List of dashboard panels                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -301,11 +306,11 @@ For example, if a value is within a certain range, you can configure a range val
 
 Range to match against and the result to apply when the value is within the range
 
-| Property | Type                                      | Required | Default | Description                                                                                                                                                                          |
-|----------|-------------------------------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `from`   | number or null                            | **Yes**  |         | Min value of the range. It can be null which means -Infinity<br/>Constraint: `>=-1.797693134862315708145274237317043567981E+308 & <=1.797693134862315708145274237317043567981E+308`. |
-| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches                                                                                                                |
-| `to`     | number or null                            | **Yes**  |         | Max value of the range. It can be null which means +Infinity<br/>Constraint: `>=-1.797693134862315708145274237317043567981E+308 & <=1.797693134862315708145274237317043567981E+308`. |
+| Property | Type                                      | Required | Default | Description                                                           |
+|----------|-------------------------------------------|----------|---------|-----------------------------------------------------------------------|
+| `from`   | number or null                            | **Yes**  |         | Min value of the range. It can be null which means -Infinity          |
+| `result` | [ValueMappingResult](#valuemappingresult) | **Yes**  |         | Result used as replacement with text and color when the value matches |
+| `to`     | number or null                            | **Yes**  |         | Max value of the range. It can be null which means +Infinity          |
 
 ### ValueMappingResult
 

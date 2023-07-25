@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -226,8 +227,9 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate string
-	AngularSupportEnabled bool
+	CSPReportOnlyTemplate            string
+	AngularSupportEnabled            bool
+	DisableFrontendSandboxForPlugins []string
 
 	TempDataLifetime time.Duration
 
@@ -492,6 +494,9 @@ type Cfg struct {
 	// skip the org roles coming from GrafanaCom
 	GrafanaComSkipOrgRoleSync bool
 
+	// Grafana.com Auth enabled through [auth.grafananet] config section
+	GrafanaNetAuthEnabled bool
+
 	// Geomap base layer config
 	GeomapDefaultBaseLayerConfig map[string]interface{}
 	GeomapEnableCustomBaseLayers bool
@@ -546,6 +551,9 @@ type Cfg struct {
 	// This needs to be on the global object since its used in the
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
+
+	// Feature Management Settings
+	FeatureManagement FeatureMgmtSettings
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1231,6 +1239,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
+	cfg.readFeatureManagementConfig()
+
 	return nil
 }
 
@@ -1408,6 +1418,12 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
 
+	disableFrontendSandboxForPlugins := security.Key("frontend_sandbox_disable_for_plugins").MustString("")
+	for _, plug := range strings.Split(disableFrontendSandboxForPlugins, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.DisableFrontendSandboxForPlugins = append(cfg.DisableFrontendSandboxForPlugins, plug)
+	}
+
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
 		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")
 	}
@@ -1442,6 +1458,11 @@ func readAuthGrafanaComSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
 	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthGrafanaNetSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.grafananet")
+	cfg.GrafanaNetAuthEnabled = sec.Key("enabled").MustBool(false)
 }
 
 func readAuthGithubSettings(cfg *Cfg) {
@@ -1551,6 +1572,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// GrafanaCom
 	readAuthGrafanaComSettings(cfg)
+	readAuthGrafanaNetSettings(cfg)
 
 	// Github
 	readAuthGithubSettings(cfg)
@@ -1638,7 +1660,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
+		string(roletype.RoleViewer), []string{
+			string(roletype.RoleViewer),
+			string(roletype.RoleEditor),
+			string(roletype.RoleAdmin)})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
