@@ -326,7 +326,7 @@ export class PanelQueryRunner {
         const historyImplementation = getHistoryImplementation();
         const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
 
-        if (usingLokiAsImplementation && data.request?.panelId && data.request?.dashboardUID) {
+        if (usingLokiAsImplementation && data.alertState?.dashboardId && data.alertState?.panelId) {
           // fetch data from Loki state history
           let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
             panelUID: data.request?.panelId,
