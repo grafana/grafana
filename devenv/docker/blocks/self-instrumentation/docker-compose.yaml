@@ -6,6 +6,7 @@
       - "host.docker.internal:host-gateway"
     command: >
       --enable-feature=remote-write-receiver
+      --enable-feature=exemplar-storage
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
     volumes:

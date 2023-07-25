@@ -3,7 +3,7 @@ import React from 'react';
 import { PanelPlugin } from '@grafana/data';
 import { config, DataSourcePicker } from '@grafana/runtime';
 import { TagsInput } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import {
   ALL_FOLDER,
   GENERAL_FOLDER,
@@ -275,7 +275,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
         return (
-          <FolderPicker
+          <OldFolderPicker
             enableReset={true}
             showRoot={false}
             allowEmpty={true}
