@@ -20,6 +20,10 @@ func (f *ProvisioningApiHandler) handleRouteGetPolicyTree(ctx *contextmodel.ReqC
 	return f.svc.RouteGetPolicyTree(ctx)
 }
 
+func (f *ProvisioningApiHandler) handleRouteGetPolicyTreeExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetPolicyTreeExport(ctx)
+}
+
 func (f *ProvisioningApiHandler) handleRoutePutPolicyTree(ctx *contextmodel.ReqContext, route apimodels.Route) response.Response {
 	return f.svc.RoutePutPolicyTree(ctx, route)
 }

@@ -1,22 +1,38 @@
 import { AlignedData } from 'uplot';
 
+import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta } from '..';
+import { join } from '../transformations/transformers/joinDataFrames';
+import { renderLegendFormat } from '../utils/legend';
+
 import {
-  DataFrame,
   DataFrameJSON,
   decodeFieldValueEntities,
-  Field,
-  FieldDTO,
   FieldSchema,
-  FieldType,
   guessFieldTypeFromValue,
-  Labels,
-  parseLabels,
-  QueryResultMeta,
   toFilteredDataFrameDTO,
-} from '@grafana/data';
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
-import { renderLegendFormat } from 'app/plugins/datasource/prometheus/legend';
+} from '.';
+
+/**
+ * Indicate if the frame is appened or replace
+ *
+ * @alpha
+ */
+export enum StreamingFrameAction {
+  Append = 'append',
+  Replace = 'replace',
+}
+
+/**
+ * @alpha
+ * */
+export interface StreamingFrameOptions {
+  maxLength: number; // 1000
+  maxDelta: number; // how long to keep things
+  action: StreamingFrameAction; // default will append
+
+  /** optionally format field names based on labels */
+  displayNameFormat?: string;
+}
 
 /**
  * Stream packet info is attached to StreamingDataFrames and indicate how many
@@ -110,7 +126,7 @@ export class StreamingDataFrame implements DataFrame {
       values: (f.values as unknown[]).slice(numberOfItemsToRemove),
     }));
 
-    const length = dataFrameDTO.fields[0]?.values?.length ?? 0
+    const length = dataFrameDTO.fields[0]?.values?.length ?? 0;
 
     return {
       ...dataFrameDTO,
