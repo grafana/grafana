@@ -41,7 +41,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	entitystorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/entity"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
+	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -106,6 +109,9 @@ type service struct {
 	config     *config
 	restConfig *clientrest.Config
 
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+
 	stopCh    chan struct{}
 	stoppedCh chan error
 
@@ -127,6 +133,8 @@ func ProvideService(
 ) (*service, error) {
 	s := &service{
 		config:     newConfig(cfg, features),
+		cfg:        cfg,
+		features:   features,
 		rr:         rr,
 		stopCh:     make(chan struct{}),
 		builders:   []APIGroupBuilder{},
@@ -260,6 +268,20 @@ func (s *service) start(ctx context.Context) error {
 		if err := o.Etcd.ApplyTo(&serverConfig.Config); err != nil {
 			return err
 		}
+	}
+
+	if s.config.storageType == "unified" {
+		eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
+		if err != nil {
+			return err
+		}
+
+		store, err := sqlstash.ProvideSQLEntityServer(eDB)
+		if err != nil {
+			return err
+		}
+
+		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, nil)
 	}
 
 	if s.config.storageType == StorageTypeFile {
