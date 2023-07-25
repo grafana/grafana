@@ -113,6 +113,10 @@ describe('Toggletip', () => {
     // focus backwards
     await userEvent.tab({ shift: true });
     expect(closeButton).toHaveFocus();
+
+    // focus back to togglebutton
+    await userEvent.tab({ shift: true });
+    expect(button).toHaveFocus();
   });
 
   describe('Focus state', () => {
