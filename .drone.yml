@@ -4950,3 +4950,8 @@ get:
   path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
 kind: secret
 name: delivery-bot-app-private-key
+---
+kind: signature
+hmac: 8c956ced3054ef832080afaf1e9f870f17b94713288a5e389b5990eb592ea37a
+
+...
