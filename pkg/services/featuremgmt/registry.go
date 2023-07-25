@@ -340,8 +340,9 @@ var (
 		{
 			Name:         "prometheusResourceBrowserCache",
 			Description:  "Displays browser caching options in Prometheus data source configuration",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // turned on by default
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
