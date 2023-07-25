@@ -38,7 +38,7 @@ type service struct {
 	sqlStore       db.DB
 	secretsService secrets.Service
 	pluginsManager plugins.SecretsPluginManager
-	kvstore        kvstore.KVStore
+	kvstore        *kvstore.NamespacedKVStore
 	features       featuremgmt.FeatureToggles
 	cfg            *setting.Cfg
 }
@@ -59,7 +59,7 @@ func ProvideService(
 		sqlStore:       sqlStore,
 		secretsService: secretsService,
 		pluginsManager: pluginsManager,
-		kvstore:        kvstore,
+		kvstore:        GetNamespacedKVStore(kvstore),
 		features:       features,
 		cfg:            cfg,
 	}
@@ -147,13 +147,11 @@ func (s *service) getSQLStore() SecretsKVStore {
 }
 
 func (s *service) getPluginStore(ctx context.Context) (SecretsKVStore, error) {
-	namespacedKVStore := GetNamespacedKVStore(s.kvstore)
-
 	// attempt to start the plugin
 	secretsPlugin, err := StartAndReturnPlugin(s.pluginsManager, ctx)
 	if err != nil || secretsPlugin == nil {
 		s.log.Error("failed to start remote secrets management plugin")
-		if isFatal, readErr := IsPluginStartupErrorFatal(ctx, namespacedKVStore); isFatal || readErr != nil {
+		if isFatal, readErr := IsPluginStartupErrorFatal(ctx, s.kvstore); isFatal || readErr != nil {
 			// plugin error was fatal or there was an error determining if the error was fatal
 			s.log.Error("secrets management plugin is required to start -- exiting app")
 			if readErr != nil {
@@ -167,7 +165,7 @@ func (s *service) getPluginStore(ctx context.Context) (SecretsKVStore, error) {
 	// as the plugin is installed, SecretsKVStoreSQL is now replaced with
 	// an instance of SecretsKVStorePlugin with the sql store as a fallback
 	// (used for migration and in case a secret is not found).
-	return NewPluginSecretsKVStore(secretsPlugin, s.secretsService, namespacedKVStore, s.features, s.getSQLStore(), s.log), nil
+	return NewPluginSecretsKVStore(secretsPlugin, s.secretsService, s.kvstore, s.features, s.getSQLStore(), s.log), nil
 }
 
 func GetUnwrappedStore(kv SecretsKVStore) (SecretsKVStore, error) {
