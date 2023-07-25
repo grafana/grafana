@@ -56,6 +56,12 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 	stream.WriteObjectField("GRN")
 	stream.WriteVal(obj.GRN)
 
+	if obj.Guid != "" {
+		stream.WriteMore()
+		stream.WriteObjectField("guid")
+		stream.WriteString(obj.Guid)
+	}
+
 	if obj.Version != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("version")
@@ -97,11 +103,12 @@ func (codec *rawEntityCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream)
 			stream.WriteString(sEnc) // works for strings
 		}
 	}
-	if len(obj.SummaryJson) > 0 {
+	if obj.Name != "" {
 		stream.WriteMore()
-		stream.WriteObjectField("summary")
-		writeRawJson(stream, obj.SummaryJson)
+		stream.WriteObjectField("name")
+		stream.WriteString(obj.Name)
 	}
+	// TODO other ex-summary fields
 	if obj.ETag != "" {
 		stream.WriteMore()
 		stream.WriteObjectField("etag")
@@ -132,6 +139,8 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "GRN":
 			raw.GRN = &grn.GRN{}
 			iter.ReadVal(raw.GRN)
+		case "guid":
+			raw.Guid = iter.ReadString()
 		case "updatedAt":
 			raw.UpdatedAt = iter.ReadInt64()
 		case "updatedBy":
@@ -151,15 +160,9 @@ func readEntity(iter *jsoniter.Iterator, raw *Entity) {
 		case "origin":
 			raw.Origin = &EntityOriginInfo{}
 			iter.ReadVal(raw.Origin)
-		case "summary":
-			var val interface{}
-			iter.ReadVal(&val) // ??? is there a smarter way to just keep the underlying bytes without read+marshal
-			body, err := json.Marshal(val)
-			if err != nil {
-				iter.ReportError("raw entity", "error reading summary body")
-				return
-			}
-			raw.SummaryJson = body
+		case "name":
+			raw.Name = iter.ReadString()
+		// TODO other ex-summary fields
 
 		case "body":
 			var val interface{}
@@ -203,34 +206,27 @@ func (codec *searchResultCodec) IsEmpty(ptr unsafe.Pointer) bool {
 func (codec *searchResultCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
 	obj := (*EntitySearchResult)(ptr)
 	stream.WriteObjectStart()
+	stream.WriteObjectField("GUID")
+	stream.WriteVal(obj.Guid)
+	stream.WriteMore()
 	stream.WriteObjectField("GRN")
 	stream.WriteVal(obj.GRN)
+	stream.WriteMore()
+	stream.WriteObjectField("name")
+	stream.WriteString(obj.Name)
+	stream.WriteMore()
+	stream.WriteObjectField("description")
+	stream.WriteString(obj.Description)
+	stream.WriteMore()
+	stream.WriteObjectField("size")
+	stream.WriteInt64(obj.Size)
+	stream.WriteMore()
+	stream.WriteObjectField("updatedAt")
+	stream.WriteInt64(obj.UpdatedAt)
+	stream.WriteMore()
+	stream.WriteObjectField("updatedBy")
+	stream.WriteVal(obj.UpdatedBy)
 
-	if obj.Name != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("name")
-		stream.WriteString(obj.Name)
-	}
-	if obj.Description != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("description")
-		stream.WriteString(obj.Description)
-	}
-	if obj.Size > 0 {
-		stream.WriteMore()
-		stream.WriteObjectField("size")
-		stream.WriteInt64(obj.Size)
-	}
-	if obj.UpdatedAt > 0 {
-		stream.WriteMore()
-		stream.WriteObjectField("updatedAt")
-		stream.WriteInt64(obj.UpdatedAt)
-	}
-	if obj.UpdatedBy != "" {
-		stream.WriteMore()
-		stream.WriteObjectField("updatedBy")
-		stream.WriteVal(obj.UpdatedBy)
-	}
 	if obj.Body != nil {
 		stream.WriteMore()
 		if json.Valid(obj.Body) {
@@ -284,20 +280,10 @@ func (codec *writeResponseCodec) Encode(ptr unsafe.Pointer, stream *jsoniter.Str
 		stream.WriteObjectField("error")
 		stream.WriteVal(obj.Error)
 	}
-	if obj.GRN != nil {
-		stream.WriteMore()
-		stream.WriteObjectField("GRN")
-		stream.WriteVal(obj.GRN)
-	}
 	if obj.Entity != nil {
 		stream.WriteMore()
 		stream.WriteObjectField("entity")
 		stream.WriteVal(obj.Entity)
-	}
-	if len(obj.SummaryJson) > 0 {
-		stream.WriteMore()
-		stream.WriteObjectField("summary")
-		writeRawJson(stream, obj.SummaryJson)
 	}
 	stream.WriteObjectEnd()
 }
