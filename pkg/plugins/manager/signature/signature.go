@@ -48,7 +48,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	switch plugin.Signature {
 	case plugins.SignatureStatusUnsigned:
 		if authorized := s.authorizer.CanLoadPlugin(plugin); !authorized {
-			s.log.Debug("Plugin is unsigned", "pluginID", plugin.ID)
+			s.log.Info("Plugin is unsigned", "pluginID", plugin.ID)
 			return &plugins.SignatureError{
 				PluginID:        plugin.ID,
 				SignatureStatus: plugins.SignatureStatusUnsigned,
