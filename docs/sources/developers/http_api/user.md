@@ -212,7 +212,6 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
-Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -236,6 +235,12 @@ Content-Type: application/json
   "avatarUrl":""
 }
 ```
+**Note:**
+
+- Both examples above require basic authentication, and the authenticated user must be a Grafana Admin.
+- "Grafana Admin" in this context refers to a Grafana Server Admin role, which is a higher-level administrative role with broader permissions. Grafana Cloud users may not have the same level of access as Grafana Server Admins, and thus, they might encounter limitations when making API calls with this specific role.
+- For Grafana Cloud users who do not have Grafana Server Admin privileges, alternative API calls might be more appropriate. For example, the [Get All Users within the Current Organization API](https://grafana.com/docs/grafana/latest/developers/http_api/org/#get-all-users-within-the-current-organization) can be used to retrieve information about users within the current organization.
+
 
 ## User Update
 
