@@ -1,7 +1,8 @@
 import { isNumber } from 'lodash';
+import { Feature } from "ol";
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
-import { LineString, SimpleGeometry } from 'ol/geom';
+import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
 import { Fill, Style, Text } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
@@ -17,11 +18,13 @@ import {
   FrameGeometrySourceMode,
   EventBus,
   DataFrame,
+  Field,
   PluginState,
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
+import { getNetworkFrames } from "../../../nodeGraph/utils";
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
@@ -71,7 +74,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   showLocation: true,
   hideOpacity: true,
   state: PluginState.beta,
-  
+
 
   /**
    * Function that configures transformation and returns a transformer
@@ -225,7 +228,8 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
             });
           }
         }
-        source.updateEdge(dataFrames);
+
+        updateEdge(source, dataFrames);
       },
 
       // Marker overlay options
@@ -279,3 +283,68 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   // fill in the default values
   defaultOptions,
 };
+
+function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
+  source.clear(true);
+
+  const networkFrames = getNetworkFrames(frames);
+  const frameNodes = networkFrames.nodes[0];
+  const frameEdges = networkFrames.edges[0];
+
+  const info = getGeometryField(frameNodes, source.location);
+  if (!info.field) {
+    source.changed();
+    return;
+  }
+  //eslint-disable-next-line
+  const field = info.field as unknown as Field<Point>;
+
+  // TODO for nodes, don't hard code id field name
+  const nodeIdIndex = frameNodes.fields.findIndex((f) => {
+    return f.name === 'id';
+  });
+  const nodeIdValues = frameNodes.fields[nodeIdIndex].values;
+
+  // Edges
+  // TODO for edges, don't hard code source and target fields
+  const sourceIndex = frameEdges.fields.findIndex((f) => f.name === 'source');
+  const targetIndex = frameEdges.fields.findIndex((f) => f.name === 'target');
+
+  const sources = frameEdges.fields[sourceIndex].values;
+  const targets = frameEdges.fields[targetIndex].values;
+
+  // Loop through edges, referencing node locations
+  for (let i = 0; i < sources.length; i++) {
+    // Create linestring for each edge
+    const sourceId = sources[i];
+    const targetId = targets[i];
+
+    const sourceNodeIndex = nodeIdValues.findIndex((value) => value === sourceId);
+    const targetNodeIndex = nodeIdValues.findIndex((value) => value === targetId);
+
+    const geometryEdge = new LineString([
+      field.values[sourceNodeIndex].getCoordinates(),
+      field.values[targetNodeIndex].getCoordinates(),
+    ]) as Geometry;
+
+    const edgeFeature = new Feature({
+      geometry: geometryEdge,
+    });
+    edgeFeature.setId(i);
+    source['addFeatureInternal'](edgeFeature);  // @TODO revisit?
+  }
+
+  // Nodes
+  for (let i = 0; i < frameNodes.length; i++) {
+    source['addFeatureInternal'](
+      new Feature({
+        frameNodes,
+        rowIndex: i,
+        geometry: info.field.values[i] as Geometry,
+      })
+    );
+  }
+
+  // only call source at the end
+  source.changed();
+}
