@@ -60,7 +60,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
 
   updateEdge(frames: DataFrame[]) {
     this.clear(true);
-    // find location frame
+    // TODO don't hard code frame indices
     const frameNodes = frames[0];
     const frameEdges = frames[1];
 
@@ -73,6 +73,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
     const field = info.field as unknown as Field<Point>;
 
     // Edges
+    // TODO for edges, don't hard code source and target fields
     const sourceIndex = frameEdges.fields.findIndex((f) => {
       return f.name === 'source';
     });
