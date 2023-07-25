@@ -40,8 +40,6 @@ Alert rules for an external Grafana Mimir or Loki instance can be edited or dele
 
 Watch this video to learn more about how to create a Mimir managed alert rule: {{< vimeo 720001865 >}}
 
-_Refer to [Add a Grafana Mimir or Loki managed alerting rule]({{< relref "#add-a-grafana-mimir-or-loki-managed-alerting-rule" >}}) (following) for current instructions._
-
 {{% admonition type="note" %}}
 If you do not want to manage alert rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 {{% /admonition %}}
@@ -51,10 +49,10 @@ In the following sections, we’ll guide you through the process of creating you
 To create a data source-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
 
 1. Enter an alert rule name
-1. Define query and alert condition
-1. Set evaluation behavior
-1. Add annotations
-1. Configure notifications
+2. Define query and alert condition
+3. Set evaluation behavior
+4. Add annotations
+5. Configure notifications
 
 ## Set alert rule name
 
