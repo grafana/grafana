@@ -329,7 +329,7 @@ export class PanelQueryRunner {
         if (usingLokiAsImplementation && data.alertState?.dashboardId && data.alertState?.panelId) {
           // fetch data from Loki state history
           let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
-            panelUID: data.request?.panelId,
+            panelID: data.request?.panelId,
             dashboardUID: data.request?.dashboardUID,
             from: data.timeRange.from.unix(),
             to: data.timeRange.to.unix(),
