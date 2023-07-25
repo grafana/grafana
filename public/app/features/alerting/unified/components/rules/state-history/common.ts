@@ -1,8 +1,10 @@
-import { groupBy, isEqual, uniqBy } from 'lodash';
+import { cloneDeep, groupBy, isEqual, uniqBy } from 'lodash';
 
-import { DataFrame, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { DataFrame, DataFrameJSON, PanelData } from '@grafana/data';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
+
+import { StateHistoryImplementation } from '../../../hooks/useStateHistoryModal';
 
 import { isLine, isNumbers, logRecordsToDataFrameForPanel } from './useRuleHistoryRecords';
 
@@ -42,11 +44,7 @@ export function extractCommonLabels(labels: Label[][]): Label[] {
   return commonLabels;
 }
 
-export function getRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON) {
-  if (!stateHistory) {
-    return { dataFrames: [] };
-  }
-  const theme = config.theme2;
+export const getLogRecordsByInstances = (stateHistory?: DataFrameJSON) => {
   // merge timestamp with "line"
   const tsValues = stateHistory?.data?.values[0] ?? [];
   const timestamps: number[] = isNumbers(tsValues) ? tsValues : [];
@@ -67,6 +65,17 @@ export function getRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON) {
     return JSON.stringify(record.line.labels);
   });
 
+  return { logRecordsByInstance, logRecords };
+};
+
+export function getRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON) {
+  if (!stateHistory) {
+    return { dataFrames: [] };
+  }
+  const theme = config.theme2;
+
+  const { logRecordsByInstance } = getLogRecordsByInstances(stateHistory);
+
   const groupedLines = Object.entries(logRecordsByInstance);
 
   const dataFrames: DataFrame[] = groupedLines.map<DataFrame>(([key, records]) => {
@@ -77,3 +86,47 @@ export function getRuleHistoryRecordsForPanel(stateHistory?: DataFrameJSON) {
     dataFrames,
   };
 }
+
+export const getHistoryImplementation = () => {
+  // can be "loki", "multiple" or "annotations"
+  const stateHistoryBackend = config.unifiedAlerting.alertStateHistoryBackend;
+  // can be "loki" or "annotations"
+  const stateHistoryPrimary = config.unifiedAlerting.alertStateHistoryPrimary;
+
+  // if "loki" is either the backend or the primary, show the new state history implementation
+  const usingNewAlertStateHistory = [stateHistoryBackend, stateHistoryPrimary].some(
+    (implementation) => implementation === StateHistoryImplementation.Loki
+  );
+  const implementation = usingNewAlertStateHistory
+    ? StateHistoryImplementation.Loki
+    : StateHistoryImplementation.Annotations;
+  return implementation;
+};
+
+export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelData) => {
+  //--- check if alert state history uses Loki as implementation, if so, fetch data from Loki state history and concat it to annotations
+  const historyImplementation = getHistoryImplementation();
+  const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
+
+  if (
+    usingLokiAsImplementation &&
+    panelDataProcessed.alertState?.dashboardId &&
+    panelDataProcessed.alertState?.panelId
+  ) {
+    // fetch data from Loki state history
+    let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
+      panelID: panelDataProcessed.request?.panelId,
+      dashboardUID: panelDataProcessed.request?.dashboardUID,
+      from: panelDataProcessed.timeRange.from.unix(),
+      to: panelDataProcessed.timeRange.to.unix(),
+      limit: 250,
+    });
+    const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
+    const clonedPanel = cloneDeep(panelDataProcessed);
+    clonedPanel.annotations = panelDataProcessed.annotations
+      ? panelDataProcessed.annotations.concat(records.dataFrames)
+      : panelDataProcessed.annotations;
+    return clonedPanel;
+  }
+  return panelDataProcessed;
+};

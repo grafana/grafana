@@ -29,13 +29,9 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { getBackendSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { getRuleHistoryRecordsForPanel } from 'app/features/alerting/unified/components/rules/state-history/common';
-import {
-  getHistoryImplementation,
-  StateHistoryImplementation,
-} from 'app/features/alerting/unified/hooks/useStateHistoryModal';
+import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -320,27 +316,8 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: async (data) => {
-        const panelDataProcessed = preProcessPanelData(data, this.lastResult);
+        const panelDataProcessed = await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
 
-        //--- check if alert state history uses Loki as implementation, if so, fetch data from Loki state history and concat it to annotations
-        const historyImplementation = getHistoryImplementation();
-        const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
-
-        if (usingLokiAsImplementation && data.alertState?.dashboardId && data.alertState?.panelId) {
-          // fetch data from Loki state history
-          let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
-            panelID: data.request?.panelId,
-            dashboardUID: data.request?.dashboardUID,
-            from: data.timeRange.from.unix(),
-            to: data.timeRange.to.unix(),
-            limit: 250,
-          });
-          const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
-
-          panelDataProcessed.annotations = panelDataProcessed.annotations
-            ? panelDataProcessed.annotations.concat(records.dataFrames)
-            : panelDataProcessed.annotations;
-        }
         this.lastResult = skipPreProcess ? data : panelDataProcessed;
 
         // Store preprocessed query results for applying overrides later on in the pipeline
