@@ -1,4 +1,14 @@
+import { isNumber } from 'lodash';
+import { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
+import { LineString, SimpleGeometry } from 'ol/geom';
+import VectorLayer from 'ol/layer/Vector';
+import { Fill, Style, Text } from 'ol/style';
+import FlowLine from 'ol-ext/style/FlowLine';
 import React, { ReactNode } from 'react';
+import { ReplaySubject } from 'rxjs';
+import tinycolor from 'tinycolor2';
+
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
@@ -8,23 +18,15 @@ import {
   EventBus,
   DataFrame,
 } from '@grafana/data';
-import Map from 'ol/Map';
-import { FeatureLike } from 'ol/Feature';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
-import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
-import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
-import { ReplaySubject } from 'rxjs';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { StyleEditor } from '../../editor/StyleEditor';
-import { getStyleConfigState } from '../../style/utils';
-import VectorLayer from 'ol/layer/Vector';
-import { isNumber } from 'lodash';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
+
+import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
+import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
+import { StyleEditor } from '../../editor/StyleEditor';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
-import { LineString, SimpleGeometry } from 'ol/geom';
-import { Fill, Style, Text } from 'ol/style';
-import tinycolor from 'tinycolor2';
-import FlowLine from 'ol-ext/style/FlowLine';
 
 // Configuration options for Circle overlays
 export interface NetworkConfig {
@@ -86,7 +88,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const vectorLayer = new VectorLayer({
       source,
     });
-    const hasArrows = config.arrow == 1 || config.arrow == -1 || config.arrow == 2;
+    const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 
     // Add lines between nodes from edges
 
@@ -103,7 +105,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
       vectorLayer.setStyle((feature: FeatureLike) => {
         const geom = feature.getGeometry();
 
-        const idx = feature.get('rowIndex') as number;
+        const idx = feature.get('rowIndex');
         const dims = style.dims;
 
         // For edges
@@ -114,6 +116,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           const coordinates = geom.getCoordinates();
           const opacity = edgeStyle.config.opacity ?? 1;
           if (coordinates && edgeDims) {
+            // TODO fix hardcoded frame indices
             const segmentStartCoords = coordinates[0];
             const segmentEndCoords = coordinates[1];
             const color1 = tinycolor(
@@ -132,7 +135,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
 
             const flowStyle = new FlowLine({
               visible: true,
-              lineCap: config.arrow == 0 ? 'round' : 'square',
+              lineCap: config.arrow === 0 ? 'round' : 'square',
               color: color1,
               color2: color2,
               width: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
