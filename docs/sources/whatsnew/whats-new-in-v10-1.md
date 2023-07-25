@@ -291,9 +291,10 @@ This change impacts all instances that use an external authentication provider a
 
 Currently, it is possible to manually update a user's organization role (Viewer, Editor or Admin) even if this role is managed by an external authentication provider.
 This means that roles can be manually set for the duration of a user's session, but are overridden by the external authentication provider the next time when the user logs in.
+If `onlyExternalOrgRoleSync` feature toggle is enabled, manual role updates for externally managed roles are not allowed.
 
-With Grafana 10.1, you can no longer manually update an externally managed organization role. Role locking was previously behind `onlyExternalOrgRoleSync` feature toggle.
-We have removed this feature toggle with Grafana 10.1, and made externally synced role locking the default behaviour.
+With Grafana 10.1, you can no longer manually update externally managed organization roles.
+We have removed this feature toggle with Grafana 10.1, and have defaulted to locking the organization role of users authenticated by an external provider.
 
 If you prefer to manage your users' organization roles manually, enable the `skip_org_role_sync` option in the Grafana configuration for your authentication provider.
 
