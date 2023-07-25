@@ -14,10 +14,11 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
   try {
     return [
       createExtensionLinkConfig<PluginExtensionExploreContext>({
-        title: 'Dashboard',
+        title: 'Add to dashboard',
         description: 'Use the query and panel from explore and create/add it to a dashboard',
         extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
         icon: 'apps',
+        category: 'Dashboards',
         configure: () => {
           const canAddPanelToDashboard =
             contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
