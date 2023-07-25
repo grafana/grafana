@@ -398,4 +398,8 @@ const (
 	// FlagAzureMonitorDataplane
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+	
+	// FlagPrometheusConfigOverhaulAuth
+	// Update the Prometheus configuration page with the new auth component
+	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
 )
