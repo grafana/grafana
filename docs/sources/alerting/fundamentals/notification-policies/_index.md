@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/
 description: Introduction to notifications Policies
 keywords:
   - grafana

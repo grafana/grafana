@@ -8,6 +8,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/set-up-cloud/
 description: How to configure Alerting for Cloud
 labels:
   products:

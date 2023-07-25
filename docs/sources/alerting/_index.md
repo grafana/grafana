@@ -1,7 +1,9 @@
 ---
 aliases:
   - about-alerting/
-  - unified-alerting/alerting/
+  - ./unified-alerting/alerting/
+  - ./alerting/unified-alerting/
+canonical: https://grafana.com/docs/grafana/latest/alerting/
 description: Intro to key benefits and features of Grafana Alerting
 labels:
   products:

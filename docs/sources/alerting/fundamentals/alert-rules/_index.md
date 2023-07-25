@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/
 description: About Grafana alert rules
 keywords:
   - grafana
@@ -10,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Alert rules
-weight: 105
+weight: 106
 ---
 
 # Alert rules
