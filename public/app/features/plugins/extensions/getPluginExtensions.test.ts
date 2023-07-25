@@ -134,7 +134,7 @@ describe('getPluginExtensions()', () => {
     expect(extension.category).toBe('Machine Learning');
   });
 
-  test('should ignore not-allowed properties passed via the configure() function', () => {
+  test('should ignore restricted properties passed via the configure() function', () => {
     link2.configure = jest.fn().mockImplementation(() => ({
       // The following props are not allowed to override
       type: 'unknown-type',
