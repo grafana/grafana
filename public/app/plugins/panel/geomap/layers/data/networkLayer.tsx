@@ -28,7 +28,6 @@ import { getNetworkFrames } from '../../../nodeGraph/utils';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { TooltipMode, TooltipOptions } from '../../panelcfg.gen';
 import { defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
@@ -37,7 +36,6 @@ import { getStyleDimension } from '../../utils/utils';
 export interface NetworkConfig {
   style: StyleConfig;
   showLegend?: boolean;
-  tooltip?: TooltipOptions;
   edgeStyle: StyleConfig;
   arrow?: 0 | 1 | -1 | 2;
 }
@@ -45,7 +43,6 @@ export interface NetworkConfig {
 const defaultOptions: NetworkConfig = {
   style: defaultStyleConfig,
   showLegend: false,
-  tooltip: { mode: TooltipMode.None },
   edgeStyle: defaultStyleConfig,
   arrow: 0,
 };
@@ -60,7 +57,6 @@ export const defaultMarkersConfig: MapLayerOptions<NetworkConfig> = {
   location: {
     mode: FrameGeometrySourceMode.Auto,
   },
-  tooltip: false,
 };
 
 /**
@@ -295,7 +291,9 @@ function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
     source.changed();
     return;
   }
-  //eslint-disable-next-line
+
+  // TODO: Fix this
+  // eslint-disable-next-line
   const field = info.field as unknown as Field<Point>;
 
   // TODO for nodes, don't hard code id field name
