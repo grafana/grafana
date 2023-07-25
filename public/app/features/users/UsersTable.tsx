@@ -5,7 +5,6 @@ import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
@@ -57,10 +56,8 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
         <tbody>
           {users.map((user, index) => {
             let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
-            if (config.featureToggles.onlyExternalOrgRoleSync) {
-              const isUserSynced = user?.isExternallySynced;
-              basicRoleDisabled = isUserSynced || basicRoleDisabled;
-            }
+            const isUserSynced = user?.isExternallySynced;
+            basicRoleDisabled = isUserSynced || basicRoleDisabled;
             return (
               <tr key={`${user.userId}-${index}`}>
                 <td className="width-2 text-center">

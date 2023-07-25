@@ -154,7 +154,7 @@ export const EmailSharingConfiguration = () => {
 
   return (
     <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Can view dashboard">
+      <Field label="Can view dashboard" className={styles.field}>
         <InputControl
           name="shareType"
           control={control}
@@ -184,6 +184,7 @@ export const EmailSharingConfiguration = () => {
             description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
+            className={styles.field}
           >
             <div className={styles.emailContainer}>
               <Input
@@ -221,20 +222,30 @@ export const EmailSharingConfiguration = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-bottom: ${theme.spacing(2)};
+    label: emailConfigContainer;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
+  `,
+  field: css`
+    label: field-noMargin;
+    margin-bottom: 0;
   `,
   emailContainer: css`
+    label: emailContainer;
     display: flex;
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
+    label: emailInput;
     flex-grow: 1;
   `,
   table: css`
+    label: table;
     display: flex;
     max-height: 220px;
     overflow-y: scroll;
-    margin-bottom: ${theme.spacing(1)};
 
     & tbody {
       display: flex;
