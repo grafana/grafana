@@ -33,16 +33,17 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 
 	// SQLite does not seem to handle concurrency well
 	if db.GetDialect().DriverName() == "sqlite3" {
-		if errBatch := batch(len(permissions), ac.BatchSize, func(start, end int) error {
+		errBatchUpdate := batch(len(permissions), ac.BatchSize, func(start, end int) error {
 			if err := batchScopeSplitScope(ctx, log, db, permissions, t, end, start); err != nil {
 				return err
 			}
 
 			cnt += end - start
 			return nil
-		}); errBatch != nil {
-			log.Error("could not migrate permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "left", len(permissions)-cnt, "error", errBatch)
-			return errBatch
+		})
+		if errBatchUpdate != nil {
+			log.Error("could not migrate permissions", "migration", "scopeSplit", "total", len(permissions), "succeeded", cnt, "left", len(permissions)-cnt, "error", errBatchUpdate)
+			return errBatchUpdate
 		}
 	} else {
 		var muCnt sync.Mutex
