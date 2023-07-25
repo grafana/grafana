@@ -279,7 +279,7 @@ func SetupFatalCrashTest(
 	require.NoError(t, err)
 	err = svc.StartAsync(context.Background())
 	require.NoError(t, err)
-	err = svc.AwaitRunning(context.Background())
+	_ = svc.AwaitRunning(context.Background())
 	defer svc.StopAsync()
 	t.Cleanup(ResetPlugin)
 	return fatalCrashTestFields{
@@ -287,7 +287,7 @@ func SetupFatalCrashTest(
 		PluginManager:  manager,
 		KVStore:        kvstore,
 		SqlStore:       sqlStore,
-	}, err
+	}, svc.FailureCase()
 }
 
 type fatalCrashTestFields struct {

@@ -15,7 +15,7 @@ import (
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
 	_, err := SetupFatalCrashTest(t, true, true, false)
 	assert.Error(t, err)
-	assert.Equal(t, "invalid service state: Failed, expected: Running, failure: mocked failed to start", err.Error())
+	assert.Equal(t, "mocked failed to start", err.Error())
 }
 
 // Set fatal flag to false, then simulate a plugin start failure
