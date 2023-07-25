@@ -169,6 +169,7 @@ const ConfigPublicDashboard = () => {
               annotationsEnabled={publicDashboard?.annotationsEnabled}
             />
           )}
+          data-testid={selectors.SettingsDropdown}
         >
           <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
         </SettingsBar>

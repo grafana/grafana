@@ -10,7 +10,7 @@ export interface Props extends Pick<SettingsBarHeaderProps, 'headerElement' | 't
   children: React.ReactNode;
 }
 
-export function SettingsBar({ children, title, headerElement }: Props) {
+export function SettingsBar({ children, title, headerElement, ...rest }: Props) {
   const styles = useStyles2(getStyles);
   const [isContentVisible, setIsContentVisible] = useState(false);
 
@@ -25,6 +25,7 @@ export function SettingsBar({ children, title, headerElement }: Props) {
         isContentVisible={isContentVisible}
         title={title}
         headerElement={headerElement}
+        {...rest}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </>

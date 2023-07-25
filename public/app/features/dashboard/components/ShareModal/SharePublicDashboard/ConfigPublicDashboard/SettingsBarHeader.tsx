@@ -11,7 +11,7 @@ export interface Props {
   headerElement?: React.ReactNode | ((props: { className?: string }) => React.ReactNode);
 }
 
-export function SettingsBarHeader({ headerElement, isContentVisible = false, onRowToggle, title }: Props) {
+export function SettingsBarHeader({ headerElement, isContentVisible = false, onRowToggle, title, ...rest }: Props) {
   const styles = useStyles2(getStyles);
 
   const headerElementRendered =
@@ -26,6 +26,7 @@ export function SettingsBarHeader({ headerElement, isContentVisible = false, onR
           className={styles.collapseIcon}
           onClick={onRowToggle}
           aria-expanded={isContentVisible}
+          {...rest}
         />
         {title && (
           // disabling the a11y rules here as the IconButton above handles keyboard interactions
