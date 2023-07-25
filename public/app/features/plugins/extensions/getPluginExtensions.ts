@@ -140,7 +140,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
 
     if (Object.keys(rest).length > 0) {
       logWarning(
-        `Extension "${config.title}", it trying to override not-allowed properties: ${Object.keys(rest).join(
+        `Extension "${config.title}", is trying to override not-allowed properties: ${Object.keys(rest).join(
           ', '
         )} which will be ignored.`
       );
