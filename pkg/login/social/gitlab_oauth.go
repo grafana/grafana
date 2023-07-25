@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const groupPerPage = 50
+const (
+	groupPerPage     = 50
+	accessLevelGuest = "10"
+)
 
 type SocialGitlab struct {
 	*SocialBase
@@ -94,7 +97,7 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, n
 
 	q := parsedUrl.Query()
 	q.Set("per_page", fmt.Sprintf("%d", groupPerPage))
-	q.Set("min_access_level", "10")
+	q.Set("min_access_level", accessLevelGuest)
 	q.Set("page", fmt.Sprintf("%d", nextPage))
 	parsedUrl.RawQuery = q.Encode()
 
