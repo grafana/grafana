@@ -297,6 +297,25 @@ With Grafana 10.1, on every login, if the `role_attribute_path` property does no
 
 To avoid overriding manually set roles, enable the `skip_org_role_sync` option in the Grafana configuration for your OAuth provider before the user logs in for the first time.
 
+### Preventing manual role updates for externally synced roles
+
+<!-- Ieva Vasiljeva, AuthNZ -->
+
+_Generally available in Grafana Open Source, Enterprise, and Cloud._
+
+This change impacts all instances that use an external authentication provider and have [role mapping]({{< relref "../setup-grafana/configure-security/planning-iam-strategy/#role-sync" >}}) enabled.
+
+Currently, it is possible to manually update a user's organization role (Viewer, Editor or Admin) even if this role is managed by an external authentication provider.
+This means that roles can be manually set for the duration of a user's session, but are overridden by the external authentication provider the next time when the user logs in.
+If `onlyExternalOrgRoleSync` feature toggle is enabled, manual role updates for externally managed roles are not allowed.
+
+With Grafana 10.1, you can no longer manually update externally managed organization roles.
+We have removed this feature toggle with Grafana 10.1, and have defaulted to locking the organization role of users authenticated by an external provider.
+
+If you prefer to manage your users' organization roles manually, enable the `skip_org_role_sync` option in the Grafana configuration for your authentication provider.
+
+Refer to the [release notes of Grafana 9.5]({{< relref "../whatsnew/whats-new-in-v9-5/#auth-lock-organization-roles-synced-from-auth-providers" >}}) for context on the previous work done to build up to this change.
+
 ### GitLab OIDC support
 
 <!-- Jo Guerreiro, AuthNZ -->
