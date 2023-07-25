@@ -28,6 +28,7 @@ const (
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
 	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
+	DS_TESTDATA       = "testdata"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.

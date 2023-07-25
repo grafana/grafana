@@ -601,9 +601,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     newCard: css`
       grid-template-rows: min-content 0 1fr 0;
     `,
-    badge: css`
-      padding: 4px 3px;
-    `,
     heading: css`
       font-weight: 400;
 
@@ -696,7 +693,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick }: Tr
             <>
               <span>{transform.name}</span>
               <span className={styles.pluginStateInfoWrapper}>
-                <PluginStateInfo className={styles.badge} state={transform.state} />
+                <PluginStateInfo state={transform.state} />
               </span>
             </>
           </Card.Heading>

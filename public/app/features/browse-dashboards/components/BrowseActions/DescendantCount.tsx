@@ -2,7 +2,7 @@ import React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Alert } from '@grafana/ui';
-import { P } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/unstable';
 
 import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';
@@ -18,10 +18,10 @@ export const DescendantCount = ({ selectedItems }: Props) => {
 
   return (
     <>
-      <P color="secondary">
+      <Text element="p" color="secondary">
         {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
         {(isFetching || isLoading) && <Skeleton width={200} />}
-      </P>
+      </Text>
       {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
     </>
   );
