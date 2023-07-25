@@ -25,7 +25,7 @@ import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { errorFromSeries, refIdExists, findRenamedDataQueryReferences } from '../util';
+import { errorFromSeries, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
@@ -334,7 +334,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   ]);
 
   return (
-    <RuleEditorSection stepNo={2} title="Define query and alert condition">
+    <RuleEditorSection
+      stepNo={2}
+      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition' : 'Define query'}
+    >
       {/* This is the cloud data source selector */}
       {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
         <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} />
@@ -436,7 +439,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           />
           {/* Expression Queries */}
           <Text element="h5">Expressions</Text>
-          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}

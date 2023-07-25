@@ -202,11 +202,12 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	type testCase struct {
-		desc            string
-		SkipOrgRoleSync bool
-		AuthEnabled     bool
-		AuthModule      string
-		expectedCode    int
+		desc                        string
+		SkipOrgRoleSync             bool
+		GcomOnlyExternalOrgRoleSync bool
+		AuthEnabled                 bool
+		AuthModule                  string
+		expectedCode                int
 	}
 	permissions := []accesscontrol.Permission{
 		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
@@ -235,6 +236,22 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			AuthEnabled:     true,
 			AuthModule:      login.GenericOAuthModule,
 			expectedCode:    http.StatusForbidden,
+		},
+		{
+			desc:                        "should be able to change basicRole for a user synced through GCom if GcomOnlyExternalOrgRoleSync flag is set to false",
+			SkipOrgRoleSync:             false,
+			GcomOnlyExternalOrgRoleSync: false,
+			AuthEnabled:                 true,
+			AuthModule:                  login.GrafanaComAuthModule,
+			expectedCode:                http.StatusOK,
+		},
+		{
+			desc:                        "should not be able to change basicRole for a user synced through GCom if GcomOnlyExternalOrgRoleSync flag is set to true",
+			SkipOrgRoleSync:             false,
+			GcomOnlyExternalOrgRoleSync: true,
+			AuthEnabled:                 true,
+			AuthModule:                  login.GrafanaComAuthModule,
+			expectedCode:                http.StatusForbidden,
 		},
 		{
 			desc:            "should be able to change basicRole with a basic Auth",
@@ -266,6 +283,9 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				} else if tt.AuthModule == login.GenericOAuthModule {
 					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
 					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
+				} else if tt.AuthModule == login.GrafanaComAuthModule {
+					hs.Cfg.GrafanaNetAuthEnabled = tt.AuthEnabled
+					hs.Cfg.GrafanaComSkipOrgRoleSync = tt.SkipOrgRoleSync
 				} else if tt.AuthModule == "" {
 					// authmodule empty means basic auth
 				} else {
@@ -275,7 +295,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
-				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagGcomOnlyExternalOrgRoleSync, tt.GcomOnlyExternalOrgRoleSync)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.accesscontrolService = &actest.FakeService{

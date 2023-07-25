@@ -69,7 +69,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   description: 'Render data points as a route',
   isBaseMap: false,
   showLocation: true,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
