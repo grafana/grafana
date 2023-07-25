@@ -148,18 +148,22 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         // Also make sure to store the data about your component
         // being selected/unselected.
         onAuthMethodSelect={(method) => {
-          newAuthProps.onAuthMethodSelect(method);
-
           // handle selecting of custom methods
           // sigV4Id
-          setSigV4Selected(method === sigV4Id);
-          onSettingsChange({
-            jsonData: { ...options.jsonData, sigV4Auth: method === sigV4Id },
-          });
+          if (sigV4AuthToggleEnabled) {
+            setSigV4Selected(method === sigV4Id);
+            onSettingsChange({
+              jsonData: { ...options.jsonData, sigV4Auth: method === sigV4Id },
+            });
+          }
 
           // Azure
-          setAzureAuthSelected(method === azureAuthId);
-          azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
+          if (azureAuthSettings?.azureAuthSupported) {
+            setAzureAuthSelected(method === azureAuthId);
+            azureAuthSettings.setAzureAuthEnabled(options, method === azureAuthId);
+          }
+
+          newAuthProps.onAuthMethodSelect(method);
         }}
         // If your method is selected pass its id to `selectedMethod`,
         // otherwise pass the id from converted legacy data
