@@ -73,7 +73,7 @@ func MigrateScopeSplitV2(db db.DB, log log.Logger) error {
 		delArgs := make([]interface{}, 0, n)
 
 		// Query to insert the updated permissions
-		insertQuery := "INSERT INTO permission (role_id, action, scope, kind, attribute, identifier, created, updated) VALUES "
+		insertQuery := "INSERT INTO permission (id, role_id, action, scope, kind, attribute, identifier, created, updated) VALUES "
 		insertArgs := make([]interface{}, 0, 8*n)
 
 		// Prepare batch of updated permissions
@@ -83,8 +83,8 @@ func MigrateScopeSplitV2(db db.DB, log log.Logger) error {
 			delQuery += "?,"
 			delArgs = append(delArgs, permissions[i].ID)
 
-			insertQuery += "(?, ?, ?, ?, ?, ?, ?, ?),"
-			insertArgs = append(insertArgs, permissions[i].RoleID,
+			insertQuery += "(?, ?, ?, ?, ?, ?, ?, ?, ?),"
+			insertArgs = append(insertArgs, permissions[i].ID, permissions[i].RoleID,
 				permissions[i].Action, permissions[i].Scope,
 				kind, attribute, identifier,
 				permissions[i].Created, t,

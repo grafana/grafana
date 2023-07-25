@@ -68,7 +68,7 @@ func benchScopeSplitV2(b *testing.B, count int) {
 func BenchmarkMigrateScopeSplit_1K(b *testing.B) { benchScopeSplit(b, 1000) }
 
 func BenchmarkMigrateScopeSplit_50K(b *testing.B)   { benchScopeSplit(b, 50000) }   // pg: 9.1 s/op mysql: 11.7 s/op
-func BenchmarkMigrateScopeSplitV2_50K(b *testing.B) { benchScopeSplitV2(b, 50000) } // pg:0.045 s/op mysql: deadlock
+func BenchmarkMigrateScopeSplitV2_50K(b *testing.B) { benchScopeSplitV2(b, 50000) } // pg: 0.11 s/op mysql: 2.2 s/op
 
 func BenchmarkMigrateScopeSplit_100K(b *testing.B)   { benchScopeSplit(b, 100000) }   // pg: ~18.4s/op, mysql8: ~25,1s/op
-func BenchmarkMigrateScopeSplitV2_100K(b *testing.B) { benchScopeSplitV2(b, 100000) } // pg: ~1.8s/op, mysql8: ~7.04s/op
+func BenchmarkMigrateScopeSplitV2_100K(b *testing.B) { benchScopeSplitV2(b, 100000) } // pg: ~1.8s/op, mysql8: ~5.4s/op
