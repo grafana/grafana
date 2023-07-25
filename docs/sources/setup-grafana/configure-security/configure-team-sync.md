@@ -42,17 +42,23 @@ If you have already grouped some users into a team, then you can synchronize tha
 {{< figure src="/static/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 1. In Grafana, navigate to **Administration > Teams**.
-1. Select a team.
-1. Go to the External group sync tab, and click **Add group**.
-1. Insert the value of the group you want to sync with. This becomes the Grafana `GroupID`.
+2. Select a team.
+3. Go to the External group sync tab, and click **Add group**.
+4. Insert the value of the group you want to sync with. This becomes the Grafana `GroupID`.
    Examples:
 
    - For LDAP, this is the LDAP distinguished name (DN) of LDAP group you want to synchronize with the team.
    - For Auth Proxy, this is the value we receive as part of the custom `Groups` header.
 
-1. Click **Add group** to save.
+5. Click **Add group** to save.
 
 > Group matching is case insensitive.
+
+## Automated Removal of Users with LDAP Background Synchronization:
+
+When LDAP is configured with active background synchronization in Grafana, it enables the system to automatically remove users from Grafana teams if they have been removed from the corresponding LDAP groups in the Identity Provider. This mechanism helps ensure that team memberships in Grafana stay in sync with group memberships in the external IdP.
+
+It is essential to understand that this automated removal functionality currently requires the use of LDAP with the active background synchronization feature to be fully functional. For other authentication providers such as OAuth or SAML, this automatic user removal from teams may not be available.
 
 ## LDAP specific: wildcard matching
 
@@ -60,3 +66,4 @@ When using LDAP, you can use a wildcard (\*) in the common name attribute (CN)
 to match any group in the corresponding Organizational Unit (OU).
 
 Ex: `cn=*,ou=groups,dc=grafana,dc=org` can be matched by `cn=users,ou=groups,dc=grafana,dc=org`
+
