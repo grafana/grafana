@@ -336,7 +336,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   return (
     <RuleEditorSection
       stepNo={2}
-      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition.' : 'Define query.'}
+      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition' : 'Define query'}
     >
       {/* This is the cloud data source selector */}
       {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
@@ -439,7 +439,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           />
           {/* Expression Queries */}
           <Text element="h5">Expressions</Text>
-          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}
