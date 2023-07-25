@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../provision-alerting-resources/file-provisioning/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
   - grafana
@@ -8,6 +9,11 @@ keywords:
   - alerting resources
   - file provisioning
   - provisioning
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create and manage alerting resources using file provisioning
 weight: 100
 ---
@@ -131,11 +137,13 @@ deleteRules:
 
 Create or delete contact points in your Grafana instance(s).
 
-1. Create a YAML or JSON configuration file.
+1. Create a contact point in Grafana.
+1. Use the [Alerting provisioning API]({{< relref "../../../../developers/http_api/alerting_provisioning" >}}) export endpoints to download a provisioning file for your contact point.
+1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
-1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating contact points.
 
@@ -488,11 +496,13 @@ settings:
 
 Create or reset the notification policy tree in your Grafana instance(s).
 
-1. Create a YAML or JSON configuration file.
+1. Create a notification policy in Grafana.
+2. Use the [Alerting provisioning API]({{< relref "../../../../developers/http_api/alerting_provisioning" >}}) export endpoints to download a provisioning file for your notification policy.
+3. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+4. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating notification policies.
 

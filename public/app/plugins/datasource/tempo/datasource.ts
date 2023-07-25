@@ -788,12 +788,14 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   return {
     ...options,
     targets: serviceMapMetrics.map((metric) => {
+      const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
+      const extraSumByFields = serviceMapIncludeNamespace ? ', client_service_namespace, server_service_namespace' : '';
       return {
         format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `sum by (client, server) (rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range]))`,
+        expr: `sum by (client, server${extraSumByFields}) (rate(${metric}${serviceMapQuery || ''}[$__range]))`,
         instant: true,
       };
     }),

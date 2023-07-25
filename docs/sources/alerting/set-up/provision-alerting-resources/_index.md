@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../provision-alerting-resources/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/
 description: Provision alerting resources
 keywords:
   - grafana
@@ -8,6 +9,11 @@ keywords:
   - set up
   - configure
   - provisioning
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Provision Grafana Alerting resources
 weight: 300
 ---

@@ -7,6 +7,11 @@ keywords:
   - loki
   - logs
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Loki query editor
 weight: 300

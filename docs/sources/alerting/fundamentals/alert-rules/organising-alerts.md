@@ -1,9 +1,15 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/organising-alerts/
 description: Learn how to organize alert rules
 keywords:
   - grafana
   - alerting
   - organization
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Organising alert rules
 weight: 105
 ---

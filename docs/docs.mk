@@ -1,5 +1,5 @@
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk.
-# 4.0.0 (2023-06-06)
+# A changelog is included in the head of the `make-docs` script.
 include variables.mk
 -include variables.mk.local
 

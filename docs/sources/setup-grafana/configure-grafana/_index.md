@@ -3,6 +3,10 @@ aliases:
   - ../administration/configuration/
   - ../installation/configuration/
 description: Configuration documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure Grafana
 weight: 200
 ---

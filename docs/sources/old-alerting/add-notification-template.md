@@ -9,6 +9,10 @@ keywords:
   - alerts
   - notification
   - templating
+labels:
+  products:
+    - enterprise
+    - oss
 title: Alert notification templating
 weight: 110
 ---

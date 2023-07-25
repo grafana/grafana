@@ -15,65 +15,45 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { createTheme } from '@grafana/data';
+import { defaultFilters } from '../../../useSearch';
+import { trace } from '../TracePageHeader.test';
 
-import TracePageSearchBar, { getStyles, TracePageSearchBarProps } from './TracePageSearchBar';
-
-const defaultProps = {
-  forwardedRef: React.createRef(),
-  navigable: true,
-  searchBarSuffix: 'suffix',
-  searchValue: 'value',
-};
+import TracePageSearchBar from './TracePageSearchBar';
 
 describe('<TracePageSearchBar>', () => {
-  describe('truthy textFilter', () => {
-    it('renders SearchBarInput with correct props', () => {
-      render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
-      expect((screen.getByPlaceholderText('Find...') as HTMLInputElement)['value']).toEqual('value');
-      const suffix = screen.getByLabelText('Search bar suffix');
-      const theme = createTheme();
-      expect(suffix['className']).toBe(getStyles(theme).TracePageSearchBarSuffix);
-      expect(suffix.textContent).toBe('suffix');
-    });
+  const TracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
+    const searchBarProps = {
+      trace: trace,
+      search: defaultFilters,
+      spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
+      showSpanFilterMatchesOnly: false,
+      setShowSpanFilterMatchesOnly: jest.fn(),
+      setFocusedSpanIdForSearch: jest.fn(),
+      focusedSpanIndexForSearch: -1,
+      setFocusedSpanIndexForSearch: jest.fn(),
+      datasourceType: '',
+      clear: jest.fn(),
+      totalSpans: 100,
+      showSpanFilters: true,
+    };
 
-    it('renders buttons', () => {
-      render(<TracePageSearchBar {...(defaultProps as unknown as TracePageSearchBarProps)} />);
-      const nextResButton = screen.queryByRole('button', { name: 'Next results button' });
-      const prevResButton = screen.queryByRole('button', { name: 'Prev results button' });
-      expect(nextResButton).toBeInTheDocument();
-      expect(prevResButton).toBeInTheDocument();
-      expect((nextResButton as HTMLButtonElement)['disabled']).toBe(false);
-      expect((prevResButton as HTMLButtonElement)['disabled']).toBe(false);
-    });
+    return <TracePageSearchBar {...searchBarProps} />;
+  };
 
-    it('only shows navigable buttons when navigable is true', () => {
-      const props = {
-        ...defaultProps,
-        navigable: false,
-      };
-      render(<TracePageSearchBar {...(props as unknown as TracePageSearchBarProps)} />);
-      expect(screen.queryByRole('button', { name: 'Next results button' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Prev results button' })).not.toBeInTheDocument();
-    });
+  it('should render', () => {
+    expect(() => render(<TracePageSearchBarWithProps matches={[]} />)).not.toThrow();
   });
 
-  describe('falsy textFilter', () => {
-    beforeEach(() => {
-      const props = {
-        ...defaultProps,
-        searchValue: '',
-      };
-      render(<TracePageSearchBar {...(props as unknown as TracePageSearchBarProps)} />);
-    });
+  it('renders clear filter button', () => {
+    render(<TracePageSearchBarWithProps matches={[]} />);
+    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
+    expect(clearFiltersButton).toBeInTheDocument();
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+  });
 
-    it('does not render suffix', () => {
-      expect(screen.queryByLabelText('Search bar suffix')).not.toBeInTheDocument();
-    });
-
-    it('renders buttons', () => {
-      expect(screen.getByRole('button', { name: 'Next results button' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Prev results button' })).toBeInTheDocument();
-    });
+  it('renders show span filter matches only switch', async () => {
+    render(<TracePageSearchBarWithProps matches={[]} />);
+    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    expect(matchesSwitch).toBeInTheDocument();
   });
 });

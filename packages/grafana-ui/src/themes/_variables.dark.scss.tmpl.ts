@@ -6,6 +6,7 @@ import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
 
 export const darkThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/dark.ts', 'grafana-ui/src/themes/_variables.dark.scss.tmpl.ts')}
+@use 'sass:color';
 // Global values
 // --------------------------------------------------
 
@@ -181,7 +182,7 @@ $btn-primary-bg: $blue-base;
 $btn-primary-bg-hl: $blue-shade;
 
 $btn-secondary-bg: $dark-6;
-$btn-secondary-bg-hl: lighten($dark-6, 4%);
+$btn-secondary-bg-hl: color.adjust($dark-6, $lightness: 4%);
 
 $btn-success-bg: $green-base;
 $btn-success-bg-hl: $green-shade;
@@ -190,7 +191,7 @@ $btn-danger-bg: $red-base;
 $btn-danger-bg-hl: $red-shade;
 
 $btn-inverse-bg: $dark-6;
-$btn-inverse-bg-hl: lighten($dark-6, 4%);
+$btn-inverse-bg-hl: color.adjust($dark-6, $lightness: 4%);
 $btn-inverse-text-color: $link-color;
 $btn-inverse-text-shadow: 0px 1px 0 rgba(0, 0, 0, 0.1);
 
@@ -380,9 +381,9 @@ $panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $input-bg;
 $panel-editor-tabs-line-color: #e3e3e3;
 
-$panel-editor-viz-item-bg-hover: darken($blue-base, 46%);
+$panel-editor-viz-item-bg-hover: color.adjust($blue-base, $lightness: -46%);
 
-$panel-grid-placeholder-bg: darken(${theme.v1.palette.blue77}, 30%);
+$panel-grid-placeholder-bg: color.adjust(${theme.v1.palette.blue77}, $lightness: -30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.v1.palette.blue80};
 
 // logs

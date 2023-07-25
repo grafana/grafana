@@ -1,11 +1,12 @@
 ---
-menuTitle: Set up
 aliases:
   - unified-alerting/set-up/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/
+description: How to configure alerting features and integrations
 labels:
   products:
     - oss
-description: How to configure alerting features and integrations
+menuTitle: Set up
 title: Set up Alerting
 weight: 107
 ---
