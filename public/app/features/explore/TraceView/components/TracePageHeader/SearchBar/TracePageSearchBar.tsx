@@ -135,7 +135,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     matchesOnly: css`
       display: inline-flex;
-      margin: 0 0 0 15px;
+      margin: 0 0 0 25px;
       vertical-align: middle;
       align-items: center;
 
