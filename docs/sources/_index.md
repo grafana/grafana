@@ -17,6 +17,8 @@ title: Grafana documentation
 
 # Grafana documentation
 
+We recommend Grafana Cloud for users that just want to get started quickly and deploy a sandbox or learning environment.  Several quick start guides for shipping metrics and logs to Grafana are available here:  https://grafana.com/docs/grafana-cloud/quickstart/.
+
 ## Installing Grafana
 
 <div class="nav-cards">
