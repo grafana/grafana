@@ -192,7 +192,6 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 			require.NoError(t, res.Body.Close())
 		})
-
 	})
 
 	t.Run("Get all correlations for a given data source", func(t *testing.T) {
