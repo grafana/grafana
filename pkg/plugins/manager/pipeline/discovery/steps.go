@@ -10,16 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
-// DefaultFindFunc is the default function used to find plugins during the Discovery stage. It will scan the local
+// DefaultFindFunc is the default function used for the Find step of the Discovery stage. It will scan the local
 // filesystem for plugins.
-var DefaultFindFunc = func(cfg *config.Cfg) FindFunc {
+func DefaultFindFunc(cfg *config.Cfg) FindFunc {
 	return finder.NewLocalFinder(cfg.DevMode).Find
-}
-
-// DefaultFindFilterFunc is the default function used to filter plugins during the Discovery stage. It will not filter
-// any plugins, by simply returning the input.
-var DefaultFindFilterFunc = func(_ context.Context, _ plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	return bundles, nil
 }
 
 // DuplicatePluginValidation is a filter step that will filter out any plugins that are already registered with the

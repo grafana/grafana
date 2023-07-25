@@ -20,15 +20,23 @@ type FindFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Fo
 type FindFilterFunc func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
 
 // Discovery implements the Discoverer interface.
+//
+// The Discovery stage is made up of the following steps (in order):
+// - Find: Find plugins (from disk, remote, etc.)
+// - Filter: Filter the results based on some criteria.
+//
+// The Find step is implemented by the FindFunc type.
+//
+// The Filter step is implemented by the FindFilterFunc type.
 type Discovery struct {
-	findStep       FindFunc
-	findFilterStep FindFilterFunc
-	log            log.Logger
+	findStep        FindFunc
+	findFilterSteps []FindFilterFunc
+	log             log.Logger
 }
 
 type Opts struct {
-	FindFunc       FindFunc
-	FindFilterFunc FindFilterFunc
+	FindFunc        FindFunc
+	FindFilterFuncs []FindFilterFunc
 }
 
 // New returns a new Discovery stage.
@@ -37,14 +45,14 @@ func New(cfg *config.Cfg, opts Opts) *Discovery {
 		opts.FindFunc = DefaultFindFunc(cfg)
 	}
 
-	if opts.FindFilterFunc == nil {
-		opts.FindFilterFunc = DefaultFindFilterFunc
+	if len(opts.FindFilterFuncs) == 0 {
+		opts.FindFilterFuncs = []FindFilterFunc{} // no filters by default
 	}
 
 	return &Discovery{
-		findStep:       opts.FindFunc,
-		findFilterStep: opts.FindFilterFunc,
-		log:            log.New("plugins.discovery"),
+		findStep:        opts.FindFunc,
+		findFilterSteps: opts.FindFilterFuncs,
+		log:             log.New("plugins.discovery"),
 	}
 }
 
@@ -55,9 +63,11 @@ func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*
 		return nil, err
 	}
 
-	found, err = d.findFilterStep(ctx, src.PluginClass(ctx), found)
-	if err != nil {
-		return nil, err
+	for _, filterStep := range d.findFilterSteps {
+		found, err = filterStep(ctx, src.PluginClass(ctx), found)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return found, nil

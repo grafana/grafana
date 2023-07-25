@@ -73,7 +73,6 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 	}
 }
 
-// nolint:gocyclo
 func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 	// <DISCOVERY STAGE>
 	discoveredPlugins, err := l.discovery.Discover(ctx, src)

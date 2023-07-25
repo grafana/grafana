@@ -22,11 +22,11 @@ type DefaultConstructor struct {
 }
 
 // DefaultConstructFunc is the default ConstructFunc used for the Construct step of the Bootstrap stage.
-var DefaultConstructFunc = func(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
+func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
 	return NewDefaultConstructor(signatureCalculator, assetPath).Construct
 }
 
-// DefaultDecorateFuncs is the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
+// DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
 var DefaultDecorateFuncs = []DecorateFunc{
 	AliasDecorateFunc,
 	AppDefaultNavURLDecorateFunc,
@@ -78,7 +78,7 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 }
 
 // AliasDecorateFunc is a DecorateFunc that sets the alias for the plugin.
-var AliasDecorateFunc = DecorateFunc(func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+func AliasDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	switch p.ID {
 	case "grafana-pyroscope-datasource": // rebranding
 		p.Alias = "phlare"
@@ -86,15 +86,15 @@ var AliasDecorateFunc = DecorateFunc(func(ctx context.Context, p *plugins.Plugin
 		p.Alias = "debugX"
 	}
 	return p, nil
-})
+}
 
 // AppDefaultNavURLDecorateFunc is a DecorateFunc that sets the default nav URL for app plugins.
-var AppDefaultNavURLDecorateFunc = DecorateFunc(func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+func AppDefaultNavURLDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IsApp() {
 		setDefaultNavURL(p)
 	}
 	return p, nil
-})
+}
 
 func setDefaultNavURL(p *plugins.Plugin) {
 	// slugify pages
@@ -123,12 +123,12 @@ func setDefaultNavURL(p *plugins.Plugin) {
 }
 
 // AppChildDecorateFunc is a DecorateFunc that configures child plugins of app plugins.
-var AppChildDecorateFunc = DecorateFunc(func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+func AppChildDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.Parent != nil && p.Parent.IsApp() {
 		configureAppChildPlugin(p.Parent, p)
 	}
 	return p, nil
-})
+}
 
 func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
