@@ -5,6 +5,10 @@ aliases:
   - ../plugins/installation/
   - ../plugins/plugin-signature-verification/
   - ../plugins/plugin-signatures/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugin management
 weight: 600
 ---

@@ -15,12 +15,13 @@ describe('getExploreExtensionConfigs', () => {
       expect(extensions).toEqual([
         {
           type: 'link',
-          title: 'Dashboard',
+          title: 'Add to dashboard',
           description: 'Use the query and panel from explore and create/add it to a dashboard',
           extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
           icon: 'apps',
           configure: expect.any(Function),
           onClick: expect.any(Function),
+          category: 'Dashboards',
         },
       ]);
     });

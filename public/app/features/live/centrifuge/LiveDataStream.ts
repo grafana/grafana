@@ -10,11 +10,12 @@ import {
   LiveChannelEvent,
   LiveChannelId,
   LoadingState,
+  StreamingDataFrame,
 } from '@grafana/data';
+import { getStreamingFrameOptions } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
 import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
 
-import { getStreamingFrameOptions, StreamingDataFrame } from '../data/StreamingDataFrame';
 import { StreamingResponseDataType } from '../data/utils';
 
 import { DataStreamSubscriptionKey, StreamingDataQueryResponse } from './service';

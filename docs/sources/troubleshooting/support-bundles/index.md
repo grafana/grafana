@@ -5,8 +5,13 @@ keywords:
   - troubleshooting
   - support
   - bundles
-title: Send a support bundle to Grafana Labs support
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menutitle: Send a support bundle to support
+title: Send a support bundle to Grafana Labs support
 weight: 200
 ---
 
@@ -82,7 +87,7 @@ public_keys = ""
 
 ## Encrypting a support bundle
 
-Support bundles can be encrypted with [age](age-encryption.org) before they are sent to
+Support bundles can be encrypted with [age](https://age-encryption.org) before they are sent to
 recipients. This is useful when you want to send a support bundle to Grafana through a
 channel that is not private.
 

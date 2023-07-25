@@ -8,6 +8,11 @@ keywords:
   - loki
   - logging
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Loki
 title: Loki data source
 weight: 800
