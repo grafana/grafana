@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -389,22 +388,22 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
-	if hs.Features.IsEnabled(featuremgmt.FlagOnlyExternalOrgRoleSync) {
-		// we do not allow to change role for external synced users
-		qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
-		authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
-		if err != nil {
-			if errors.Is(err, user.ErrUserNotFound) {
-				hs.log.Debug("Failed to get user auth info for basic auth user", cmd.UserID, nil)
-			} else {
-				hs.log.Error("Failed to get user auth info for external sync check", cmd.UserID, err)
-				return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
-			}
-		}
-		if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
-			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
+
+	// we do not allow to change role for external synced users
+	qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
+	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			hs.log.Debug("Failed to get user auth info for basic auth user", cmd.UserID, nil)
+		} else {
+			hs.log.Error("Failed to get user auth info for external sync check", cmd.UserID, err)
+			return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
 		}
 	}
+	if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
+		return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
+	}
+
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)

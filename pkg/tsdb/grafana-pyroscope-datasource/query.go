@@ -312,14 +312,14 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 
 type EnumField struct {
 	field     *data.Field
-	valuesMap map[string]int64
-	counter   int64
+	valuesMap map[string]data.EnumItemIndex
+	counter   data.EnumItemIndex
 }
 
 func NewEnumField(name string, labels data.Labels) *EnumField {
 	return &EnumField{
 		field:     data.NewField(name, labels, []data.EnumItemIndex{}),
-		valuesMap: make(map[string]int64),
+		valuesMap: make(map[string]data.EnumItemIndex),
 	}
 }
 
@@ -328,7 +328,7 @@ func (e *EnumField) Append(value string) {
 		e.field.Append(valueIndex)
 	} else {
 		e.valuesMap[value] = e.counter
-		e.field.Append(data.EnumItemIndex(e.counter))
+		e.field.Append(e.counter)
 		e.counter++
 	}
 }
