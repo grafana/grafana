@@ -1,7 +1,40 @@
+<mj-style>
+  .canvas {
+    background-color: {{ ternary "#111217" "#F4F5F5" (ne .Theme "light") }};
+  }
+
+  .background {
+    background-color: {{ ternary "#22252b" "#FFF" (ne .Theme "light") }};
+    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" (ne .Theme "light") }};
+  }
+
+  .border-bottom {
+    border-bottom: 1px solid {{ ternary "#2f3037" "#e4e5e6" (ne .Theme "light") }};
+  }
+
+  .border-top {
+    border-top: 1px solid {{ ternary "#2f3037" "#e4e5e6" (ne .Theme "light") }};
+  }
+
+  .well {
+    background-color: {{ ternary "#111217" "#F4F5F5" (ne .Theme "light") }};
+    border: 1px solid  {{ ternary "#2f3037" "#e4e5e6" (ne .Theme "light") }};
+  }
+
+  .txt div {
+    color: {{ ternary "#fff" "#000" (ne .Theme "light") }} !important;
+  }
+
+  .txt tbody tr td {
+    color: {{ ternary "#fff" "#000" (ne .Theme "light") }} !important;
+  }
+</mj-style>
+
 <mj-attributes>
-  <mj-text align="left" color="#FFF" line-height="1.5" />
+  <mj-text css-class="txt" align="left" line-height="150%" />
+  <mj-table css-class="txt" />
   <mj-button background-color="#3D71D9" rel="noopener" />
-  <mj-body background-color="#111217" />
+  <mj-body css-class="canvas" />
 </mj-attributes>
 <mj-style inline="inline">
   a {

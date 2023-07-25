@@ -6,7 +6,7 @@ clean:
 
 build-mjml:
 	npx mjml \
-		--config.beautify true \
+		--config.beautify false \
 		--config.minify false \
 		--config.validationLevel=strict \
 		--config.keepComments=false \
