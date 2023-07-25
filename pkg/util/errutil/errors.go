@@ -251,3 +251,8 @@ func (e Error) Public() PublicError {
 		Extra:      e.PublicPayload,
 	}
 }
+
+// Error implements the error interface.
+func (p PublicError) Error() string {
+	return fmt.Sprintf("[%s] %s", p.MessageID, p.Message)
+}

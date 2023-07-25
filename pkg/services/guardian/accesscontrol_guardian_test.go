@@ -1045,12 +1045,12 @@ func setupAccessControlGuardianTest(t *testing.T, d *dashboards.Dashboard,
 	acSvc := acimpl.ProvideOSSService(cfg, acdb.ProvideService(store), localcache.ProvideService(), featuremgmt.WithFeatures())
 	if folderPermissions == nil {
 		folderPermissions, err = ossaccesscontrol.ProvideFolderPermissions(
-			cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
+			featuremgmt.WithFeatures(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
 		require.NoError(t, err)
 	}
 	if dashboardPermissions == nil {
 		dashboardPermissions, err = ossaccesscontrol.ProvideDashboardPermissions(
-			cfg, routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
+			featuremgmt.WithFeatures(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, folderSvc, acSvc, teamSvc, userSvc)
 		require.NoError(t, err)
 	}
 

@@ -281,6 +281,12 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		}
 		return apierrors.ToFolderErrorResponse(err)
 	}
+	/* TODO: after a decision regarding folder deletion permissions has been made
+	(https://github.com/grafana/grafana-enterprise/issues/5144),
+	remove the previous call to hs.LibraryElementService.DeleteLibraryElementsInFolder
+	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+	*/
 
 	uid := web.Params(c.Req)[":uid"]
 	err = hs.folderService.Delete(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})

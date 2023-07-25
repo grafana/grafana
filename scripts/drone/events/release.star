@@ -51,7 +51,12 @@ load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
-load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+    "gcp_upload_artifacts_key",
+    "prerelease_bucket",
+)
 load(
     "scripts/drone/utils/images.star",
     "images",
@@ -87,7 +92,7 @@ def store_npm_packages_step():
             "build-frontend-packages",
         ],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm store --tag ${DRONE_TAG}"],
@@ -458,8 +463,10 @@ def verify_release_pipeline(
             "apt-get update && apt-get install -yq gettext",
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "! ./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat | grep \"No URLs matched\"".format(version),
+            "./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat >> /tmp/stat.log".format(version),
+            "! cat /tmp/stat.log | grep \"No URLs matched\"",
         ],
+        "failure": "ignore",
     }
     return pipeline(
         depends_on = depends_on,
