@@ -19,20 +19,46 @@ import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 const ufuzzy = new uFuzzy();
 
-export function useFlameRender(
-  canvasRef: RefObject<HTMLCanvasElement>,
-  data: FlameGraphDataContainer,
-  levels: LevelItem[][],
-  wrapperWidth: number,
-  rangeMin: number,
-  rangeMax: number,
-  search: string,
-  textAlign: TextAlign,
-  totalTicks: number,
-  totalTicksRight: number | undefined,
-  colorScheme: ColorScheme,
-  focusedItemData?: ClickedItemData
-) {
+type RenderOptions = {
+  canvasRef: RefObject<HTMLCanvasElement>;
+  data: FlameGraphDataContainer;
+  levels: LevelItem[][];
+  wrapperWidth: number;
+
+  // If we are rendering only zoomed in part of the graph.
+  rangeMin: number;
+  rangeMax: number;
+
+  search: string;
+  textAlign: TextAlign;
+
+  // Total ticks that will be used for sizing
+  totalViewTicks: number;
+  // Total ticks that will be used for computing colors as some color scheme (like in diff view) should not be affected
+  // by sandwich or focus view.
+  totalColorTicks: number;
+  // Total ticks used to compute the diff colors
+  totalTicksRight: number | undefined;
+  colorScheme: ColorScheme;
+  focusedItemData?: ClickedItemData;
+};
+
+export function useFlameRender(options: RenderOptions) {
+  const {
+    canvasRef,
+    data,
+    levels,
+    wrapperWidth,
+    rangeMin,
+    rangeMax,
+    search,
+    textAlign,
+    totalViewTicks,
+    totalColorTicks,
+    totalTicksRight,
+    colorScheme,
+    focusedItemData,
+  } = options;
   const foundLabels = useMemo(() => {
     if (search) {
       const foundLabels = new Set<string>();
@@ -58,20 +84,20 @@ export function useFlameRender(
       return;
     }
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
+    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
 
     for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
       const level = levels[levelIndex];
       // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
       // sometimes we collapse multiple bars into single rect.
-      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalViewTicks, rangeMin, pixelsPerTick);
       for (const rect of dimensions) {
         const focusedLevel = focusedItemData ? focusedItemData.level : 0;
         // Render each rectangle based on the computed dimensions
         renderRect(
           ctx,
           rect,
-          totalTicks,
+          totalColorTicks,
           totalTicksRight,
           rangeMin,
           rangeMax,
@@ -95,7 +121,8 @@ export function useFlameRender(
     focusedItemData,
     foundLabels,
     textAlign,
-    totalTicks,
+    totalViewTicks,
+    totalColorTicks,
     totalTicksRight,
     colorScheme,
     theme,
