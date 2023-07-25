@@ -3,5 +3,5 @@
   "compilerOptions": {
     "typeRoots": []
   },
-  "include": ["../../app/types/*.d.ts"]
+  "include": ["./src", "./types", "../../app/types/*.d.ts", "../../../packages/grafana-ui/src/types/*.d.ts"]
 }
