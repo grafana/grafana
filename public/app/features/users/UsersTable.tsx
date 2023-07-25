@@ -90,6 +90,8 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       basicRole={user.role}
                       onBasicRoleChange={(newRole) => onRoleChange(newRole, user)}
                       basicRoleDisabled={basicRoleDisabled}
+                      basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
+                        Refer to the Grafana authentication docs for details."
                     />
                   ) : (
                     <OrgRolePicker

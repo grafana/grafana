@@ -202,11 +202,11 @@ export const RolePickerMenu = ({
         <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
           {showBasicRole && (
             <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Basic roles</div>
               <BuiltinRoleSelector
                 value={selectedBuiltInRole}
                 onChange={onSelectedBuiltinRoleChange}
                 disabled={basicRoleDisabled}
+                disabledMesssage={disabledMessage}
               />
             </div>
           )}
