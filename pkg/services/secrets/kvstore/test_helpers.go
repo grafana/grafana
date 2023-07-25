@@ -276,6 +276,11 @@ func SetupFatalCrashTest(
 	features := NewFakeFeatureToggles(t, isBackwardsCompatDisabled)
 	manager := NewFakeSecretsPluginManager(t, shouldFailOnStart)
 	svc, err := ProvideService(sqlStore, secretService, manager, kvstore, features, cfg)
+	require.NoError(t, err)
+	err = svc.StartAsync(context.Background())
+	require.NoError(t, err)
+	err = svc.AwaitRunning(context.Background())
+	defer svc.StopAsync()
 	t.Cleanup(ResetPlugin)
 	return fatalCrashTestFields{
 		SecretsKVStore: svc,

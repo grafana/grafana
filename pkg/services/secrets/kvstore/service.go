@@ -118,17 +118,26 @@ func (s *service) starting(ctx context.Context) error {
 	// check if the plugin is installed and enabled
 	if err := EvaluateRemoteSecretsPlugin(ctx, s.pluginsManager, s.cfg); err != nil {
 		s.log.Debug("secrets manager evaluator returned false", "reason", err.Error())
-		// use the sql store if the plugin is not available
+		// use the sql store if a plugin is not enabeld or installed
 		s.store = s.getSQLStore()
 		return nil
 	}
 
 	// if the plugin is available, start it and use it
-	store, err := s.getPluginStore(ctx)
+	pluginStore, err := s.getPluginStore(ctx)
 	if err != nil {
 		return err
 	}
-	s.store = store
+
+	if pluginStore != nil {
+		s.store = pluginStore
+		return nil
+	}
+
+	// if the plugin is not available, use the sql store
+	s.log.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
+	s.store = s.getSQLStore()
+
 	return nil
 }
 
@@ -152,6 +161,7 @@ func (s *service) getPluginStore(ctx context.Context) (SecretsKVStore, error) {
 			}
 			return nil, err
 		}
+		return nil, nil
 	}
 
 	// as the plugin is installed, SecretsKVStoreSQL is now replaced with

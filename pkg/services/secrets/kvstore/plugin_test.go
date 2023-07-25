@@ -13,10 +13,9 @@ import (
 // Set fatal flag to true, then simulate a plugin start failure
 // Should result in an error from the secret store provider
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
-	p, err := SetupFatalCrashTest(t, true, true, false)
+	_, err := SetupFatalCrashTest(t, true, true, false)
 	assert.Error(t, err)
-	assert.Equal(t, "mocked failed to start", err.Error())
-	assert.Nil(t, p.SecretsKVStore)
+	assert.Equal(t, "invalid service state: Failed, expected: Running, failure: mocked failed to start", err.Error())
 }
 
 // Set fatal flag to false, then simulate a plugin start failure
@@ -24,12 +23,12 @@ func TestFatalPluginErr_PluginFailsToStartWithFatalFlagSet(t *testing.T) {
 func TestFatalPluginErr_PluginFailsToStartWithFatalFlagNotSet(t *testing.T) {
 	p, err := SetupFatalCrashTest(t, true, false, false)
 	assert.NoError(t, err)
-	require.IsType(t, &CachedKVStore{}, p.SecretsKVStore)
-
-	cachedKv, _ := p.SecretsKVStore.(*CachedKVStore)
-	store, err := GetUnwrappedStoreFromCache(cachedKv)
-	require.NoError(t, err)
-	assert.IsType(t, &SecretsKVStoreSQL{}, store)
+	require.IsType(t, &service{}, p.SecretsKVStore)
+	serviceKV, ok := p.SecretsKVStore.(*service)
+	require.True(t, ok)
+	assert.IsType(t, &CachedKVStore{}, serviceKV.store)
+	cachedKV, _ := serviceKV.store.(*CachedKVStore)
+	assert.IsType(t, &SecretsKVStoreSQL{}, cachedKV.store)
 }
 
 // With fatal flag not set, store a secret in the plugin while backwards compatibility is disabled
