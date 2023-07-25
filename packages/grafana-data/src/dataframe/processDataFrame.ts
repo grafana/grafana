@@ -434,9 +434,20 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
       return {
         ...f,
         values: f.values.map((v, i) => f.values[index[i]]),
+        nanos: f.nanos?.map((n, i, nanos) => nanos[index[i]]),
       };
     }),
   };
+}
+
+function reverseNanos(nanos?: number[]): number[] | undefined {
+  if (nanos === undefined) {
+    return undefined;
+  }
+
+  const revNanos = [...nanos];
+  revNanos.reverse();
+  return revNanos;
 }
 
 /**
@@ -448,9 +459,11 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
     fields: data.fields.map((f) => {
       const values = [...f.values];
       values.reverse();
+
       return {
         ...f,
         values,
+        nanos: reverseNanos(f.nanos),
       };
     }),
   };
