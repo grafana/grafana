@@ -37,6 +37,7 @@ const (
 const (
 	MetaKeyUsername   = "username"
 	MetaKeyAuthModule = "authModule"
+	MetaKeyIsLogin    = "isLogin"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management

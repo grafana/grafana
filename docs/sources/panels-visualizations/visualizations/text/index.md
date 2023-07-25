@@ -32,7 +32,7 @@ This option formats the content as [markdown](https://en.wikipedia.org/wiki/Mark
 
 ### HTML
 
-This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/code-in-text-panel/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the
+This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the
 [disable_sanitize_html]({{< relref "../../../setup-grafana/configure-grafana/#disable_sanitize_html" >}}) flag which enables you to directly enter HTML.
 
 ### Code

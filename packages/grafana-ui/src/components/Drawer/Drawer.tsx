@@ -125,7 +125,7 @@ export function Drawer({
                 />
               </div>
               <div className={styles.titleWrapper}>
-                <Text as="h3" {...titleProps}>
+                <Text element="h3" {...titleProps}>
                   {title}
                 </Text>
                 {subtitle && <div className={styles.subtitle}>{subtitle}</div>}

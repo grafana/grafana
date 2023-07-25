@@ -51,7 +51,6 @@ describe('<TraceTimelineViewer>', () => {
     expandOne: jest.fn(),
     registerAccessors: jest.fn(),
     collapseOne: jest.fn(),
-    setTrace: jest.fn(),
     theme: createTheme(),
     history: {
       replace: () => {},
