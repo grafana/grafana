@@ -7,17 +7,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
 )
 
-// setupPermissions will create cnt permissions
-func setupPermissions(b *testing.B, cnt int) db.DB {
+func batchInsertPermissions(cnt int, sqlStore db.DB) error {
 	now := time.Now()
-	sqlStore := db.InitTestDB(b)
-
-	// Populate permissions
-	if errInsert := ac.ConcurrentBatch(ac.Concurrency, cnt, ac.BatchSize, func(start, end int) error {
+	return ac.ConcurrentBatch(ac.Concurrency, cnt, ac.BatchSize, func(start, end int) error {
 		n := end - start
 		permissions := make([]ac.Permission, 0, n)
 		for i := start + 1; i < end+1; i++ {
@@ -29,14 +27,33 @@ func setupPermissions(b *testing.B, cnt int) db.DB {
 				Updated: now,
 			})
 		}
-		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(permissions)
 			return err
 		})
-		return err
-	}); errInsert != nil {
-		require.NoError(b, errInsert, "could not insert permissions")
-	}
+	})
+}
 
-	return sqlStore
+func TestMigrateScopeSplit(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	logger := log.New("accesscontrol.migrator.test")
+
+	// Populate permissions
+	require.NoError(t, batchInsertPermissions(3*ac.BatchSize, sqlStore), "could not insert permissions")
+
+	// Migrate
+	require.NoError(t, MigrateScopeSplit(sqlStore, logger))
+
+	// Check migration result
+	permissions := make([]ac.Permission, 0, 3*ac.BatchSize)
+	errFind := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		return sess.Find(&permissions)
+	})
+	require.NoError(t, errFind, "could not find permissions in store")
+
+	for i := range permissions {
+		require.NotEmpty(t, permissions[i].Kind, "kind is not populated")
+		require.NotEmpty(t, permissions[i].Attribute, "attribute is not populated")
+		require.NotEmpty(t, permissions[i].Scope, "scope is not populated")
+	}
 }
