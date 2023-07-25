@@ -73,7 +73,7 @@ Here are some tips on how to create an effective alert management set up for you
 
 **Which type of Alerting do you want to use?**
 
-- Choose between Grafana-managed Alerting or Grafana Mimir or Loki-managed Alerting; or both.
+- Choose between Grafana-managed Alerting, Grafana Mimir or Loki-managed Alerting; or a combination of them all.
 
 **How do you want to organize your alerts and notifications?**
 
