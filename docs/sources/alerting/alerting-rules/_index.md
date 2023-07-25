@@ -26,10 +26,12 @@ An alert rule is a set of evaluation criteria that determines whether an alert w
 
 While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert. An interval specifies how frequently an alert rule is evaluated. Duration, when configured, indicates how long a condition must be met. Alert rules can also define alerting behavior in the absence of data.
 
+Grafana supports two different types of alert rule; Grafana-managed and data source-managed.
+
 You can:
 
 - [Create Grafana Mimir or Loki managed alert rules][create-mimir-loki-managed-rule].
-- [Create Grafana Mimir or Loki managed recording rules][create-mimir-loki-managed-recording-rule].
+- [Configure recording rules][create-mimir-loki-managed-recording-rule].
 - [Edit Grafana Mimir or Loki rule groups and namespaces][edit-mimir-loki-namespace-group].
 - [Create Grafana managed alert rules][create-grafana-managed-rule].
 
