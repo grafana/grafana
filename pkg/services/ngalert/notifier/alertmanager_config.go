@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type UnknownReceiverError struct {
@@ -166,8 +167,12 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	if err := moa.Crypto.ProcessReceivers(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
+	}
+
+	if err := assignReceiverConfigsUIDs(config.AlertmanagerConfig.Receivers); err != nil {
+		return fmt.Errorf("failed to assign missing uids: %w", err)
 	}
 
 	am, err := moa.AlertmanagerFor(org)
@@ -183,6 +188,36 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return AlertmanagerConfigRejectedError{err}
 	}
 
+	return nil
+}
+
+// assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
+func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
+	seenUIDs := make(map[string]struct{})
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case definitions.GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				if gr.UID == "" {
+					retries := 5
+					for i := 0; i < retries; i++ {
+						gen := util.GenerateShortUID()
+						_, ok := seenUIDs[gen]
+						if !ok {
+							gr.UID = gen
+							break
+						}
+					}
+					if gr.UID == "" {
+						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
+					}
+				}
+				seenUIDs[gr.UID] = struct{}{}
+			}
+		default:
+		}
+	}
 	return nil
 }
 

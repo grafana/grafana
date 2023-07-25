@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Crypto allows decryption of Alertmanager Configuration and encryption of arbitrary payloads.
@@ -20,7 +19,7 @@ type Crypto interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
-	ProcessReceivers(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
+	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -38,8 +37,8 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 	}
 }
 
-// ProcessReceivers encrypts new secure settings, loads existing secure settings from the database, and assigns missing uids.
-func (c *alertmanagerCrypto) ProcessReceivers(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
+// ProcessSecureSettings encrypts new secure settings and loads existing secure settings from the database.
+func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
 	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
 	// and add back any that weren't updated.
 	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
@@ -54,9 +53,6 @@ func (c *alertmanagerCrypto) ProcessReceivers(ctx context.Context, orgId int64, 
 		return err
 	}
 
-	if err := assignReceiverConfigsUIDs(recvs); err != nil {
-		return fmt.Errorf("failed to assign missing uids: %w", err)
-	}
 	return nil
 }
 
@@ -74,36 +70,6 @@ func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 					}
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
-			}
-		default:
-		}
-	}
-	return nil
-}
-
-// assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
-func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
-	seenUIDs := make(map[string]struct{})
-	// encrypt secure settings for storing them in DB
-	for _, r := range c {
-		switch r.Type() {
-		case definitions.GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				if gr.UID == "" {
-					retries := 5
-					for i := 0; i < retries; i++ {
-						gen := util.GenerateShortUID()
-						_, ok := seenUIDs[gen]
-						if !ok {
-							gr.UID = gen
-							break
-						}
-					}
-					if gr.UID == "" {
-						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
-					}
-				}
-				seenUIDs[gr.UID] = struct{}{}
 			}
 		default:
 		}

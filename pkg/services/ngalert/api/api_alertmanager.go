@@ -301,7 +301,7 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.crypto.ProcessReceivers(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
+	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
