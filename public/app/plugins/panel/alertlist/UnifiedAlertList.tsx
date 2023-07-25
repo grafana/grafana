@@ -160,7 +160,9 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
       if (shouldFetchGrafanaRules) {
         refetchGrafanaPromRules();
-      } else {
+      }
+
+      if (!dataSourceName || dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
         fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
       }
     });
