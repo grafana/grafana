@@ -316,6 +316,7 @@ We've made the following updates in Grafana 10.1 to increase awareness of [Angul
 
 - Added an "Angular" badge next to affected plugins in the plugins catalog.
 - Added an alert at the top of a plugin's page in the plugins catalog when browsing Angular plugins.
+- Added an alert at the top of the query editor when editing panels which use Angular data source plugins.
 
 #### Other changes
 
