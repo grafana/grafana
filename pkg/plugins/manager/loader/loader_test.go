@@ -1209,9 +1209,12 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 			l.discovery = discovery.New(l.cfg, discovery.Opts{
-				FindFilterFuncs: func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-					return discovery.NewDuplicatePluginFilterStep(l.pluginRegistry).Filter(ctx, bundles)
-				}},
+				FindFilterFuncs: []discovery.FindFilterFunc{
+					func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+						return discovery.NewDuplicatePluginFilterStep(l.pluginRegistry).Filter(ctx, bundles)
+					},
+				},
+			},
 			)
 		})
 
