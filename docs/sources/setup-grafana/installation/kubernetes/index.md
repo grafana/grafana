@@ -11,10 +11,28 @@ weight: 500
 
 This page explains how to install and run Grafana on Kubernetes (K8S). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
+
+## Before you begin
+
+To follow this guide, you need:
+
+- The latest version of Kubernetes running either locally or remotely (on a public or private cloud).
+
+- To use in a local environment use any Kubernetes such as [Minikube](https://minikube.sigs.k8s.io/docs/), [KinD](https://kind.sigs.k8s.io/), [Docker Desktop](https://docs.docker.com/desktop/kubernetes/), and so on.
+
+- To use managed cloud services such as [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), or [Azure Kubernetes Service (AKS)](https://azure.microsoft.com/en-us/) if you are considering using Kubernetes in a production environment.**
+
+
+
+
+
 ## Deploy Grafana OSS on Kubernetes
 
 This section explains how to install Grafana using Kubernetes.
 If you are interested in the Grafana Enterprise version of this information, see [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).
+
+
+
 
 ### Create a Grafana Kubernetes manifest
 
