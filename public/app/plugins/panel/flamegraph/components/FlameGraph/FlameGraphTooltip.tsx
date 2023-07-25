@@ -150,8 +150,8 @@ export const getDiffTooltipData = (
     {
       rowId: '3',
       label: 'Samples',
-      baseline: valueLeft,
-      comparison: item.valueRight!,
+      baseline: shortValFormat(valueLeft).text,
+      comparison: shortValFormat(item.valueRight!).text,
       diff: shortValFormat(item.valueRight! - valueLeft).text,
     },
   ];

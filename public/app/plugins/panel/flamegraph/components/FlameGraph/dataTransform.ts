@@ -9,7 +9,9 @@ export type LevelItem = {
   start: number;
   // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
   // to trim the value to correspond only to the part used by the children in the subtree.
+  // In case of diff profile this is actually left + right value.
   value: number;
+  // Only exists for diff profiles.
   valueRight?: number;
   // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
   // node.
