@@ -114,10 +114,8 @@ type CloudMonitoringQuery struct {
 	// SLO sub-query properties.
 	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
 
-	// GCM query type.
-	// queryType: #QueryType
 	// Time Series List sub-query properties.
-	TimeSeriesList *any `json:"timeSeriesList,omitempty"`
+	TimeSeriesList *TimeSeriesList `json:"timeSeriesList,omitempty"`
 
 	// Time Series sub-query properties.
 	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
