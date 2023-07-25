@@ -4,7 +4,7 @@ aliases:
   - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/organising-alerts/
 https://grafana.com/docs/grafana/latest/alerting/alerting-rules/edit-mimir-loki-namespace-group/
-description: Learn how to organize alert rules
+description: Namespaces, folders, and groups
 keywords:
   - grafana
   - alerting
