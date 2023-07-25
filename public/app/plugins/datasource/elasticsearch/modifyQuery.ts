@@ -130,7 +130,7 @@ export function escapeFilter(value: string) {
  * Normalizes the query by removing whitespace around colons, which breaks parsing.
  */
 function normalizeQuery(query: string) {
-  return query.replace(/\s+:\s+/g, ':');
+  return query.replace(/(\w+)\s(:)/gi, '$1$2');
 }
 
 function isLeftOnlyAST(ast: unknown): ast is LeftOnlyAST {

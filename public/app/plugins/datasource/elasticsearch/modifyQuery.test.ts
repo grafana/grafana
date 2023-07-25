@@ -11,6 +11,7 @@ describe('queryHasFilter', () => {
     expect(queryHasFilter('this:"that" OR (test:test AND label:value)', 'test', 'test')).toBe(true);
     expect(queryHasFilter('(this:"that" OR test:test) AND label:value', 'this', 'that')).toBe(true);
     expect(queryHasFilter('(this:"that" OR test:test) AND label:value', 'test', 'test')).toBe(true);
+    expect(queryHasFilter('(this:"that" OR test :test) AND label:value', 'test', 'test')).toBe(true);
     expect(
       queryHasFilter(
         'message:"Jun 20 17:19:47 Xtorm syslogd[348]: ASL Sender Statistics"',
