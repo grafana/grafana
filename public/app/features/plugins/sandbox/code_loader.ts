@@ -58,12 +58,12 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     const response = await fetch('public/' + meta.module + '.js');
     let pluginCode = await response.text();
     pluginCode = patchPluginSourceMap(meta, pluginCode);
-    pluginCode = patchPluginAPIs(meta, pluginCode);
+    pluginCode = patchPluginAPIs(pluginCode);
     return pluginCode;
   }
 }
 
-function patchPluginAPIs(_: PluginMeta, pluginCode: string): string {
+function patchPluginAPIs(pluginCode: string): string {
   return pluginCode.replace(/window\.location/gi, 'window.locationSandbox');
 }
 
