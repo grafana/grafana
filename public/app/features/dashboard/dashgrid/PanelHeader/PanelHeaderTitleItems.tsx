@@ -55,7 +55,11 @@ export function PanelHeaderTitleItems(props: Props) {
   );
 
   const message = `This ${
-    angularNotice?.isAngularPanel ? 'panel' : angularNotice?.isAngularDatasource ? 'datasource' : 'panel or datasource'
+    angularNotice?.isAngularPanel
+      ? 'panel'
+      : angularNotice?.isAngularDatasource
+      ? 'data source'
+      : 'panel or data source'
   } requires Angular (deprecated).`;
   const angularNoticeTooltip = (
     <Tooltip content={message}>

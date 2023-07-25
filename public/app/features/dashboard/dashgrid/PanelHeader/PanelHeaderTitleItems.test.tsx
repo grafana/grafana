@@ -51,13 +51,13 @@ describe('PanelHeaderTitleItems angular deprecation', () => {
         name: 'datasource',
         isAngularPanel: false,
         isAngularDatasource: true,
-        expect: /This datasource requires Angular/i,
+        expect: /This data source requires Angular/i,
       },
       {
         name: 'unknown (generic)',
         isAngularPanel: false,
         isAngularDatasource: false,
-        expect: /This panel or datasource requires Angular/i,
+        expect: /This panel or data source requires Angular/i,
       },
     ];
     tests.forEach((test) => {
