@@ -322,3 +322,13 @@ We've made the following updates in Grafana 10.1 to increase awareness of [Angul
 - Angular Plugins will not be loaded if [angular_support_enabled]({{< relref "../setup-grafana/configure-grafana/#angular_support_enabled" >}}) is set to `false`.
 
 You can [refer to our documentation]({{< relref "../developers/angular_deprecation/" >}}) to learn more about Angular deprecation.
+
+### Deprecated provisioning of data sources with invalid UIDs
+
+<!-- Giuseppe Guerra, Plugins Platform -->
+
+_Generally available in all editions of Grafana._
+
+Grafana 10.1 logs an error when provisioning data sources with invalid UIDs. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), `-` (dash) and `_` (underscore) characters, maximum length 40.
+
+**Provisioning data sources with invalid UIDs will be removed in future versions of Grafana, and will return an error instead.**
