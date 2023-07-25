@@ -1,17 +1,12 @@
 import { map } from 'rxjs/operators';
 
 import { dateTime } from '../../datetime';
-
-// import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
-import { fieldMatchers } from '../matchers';
-import { FieldMatcherID } from '../matchers/ids';
+import { DataFrame, Field, FieldType } from '../../types';
 import { DataTransformerInfo } from '../../types/transformations';
 
 import { DataTransformerID } from './ids';
 
 export interface FormatTimeTransformerOptions {
-  // renameByName: Record<string, string>;
   timeField: string;
   outputFormat: string;
 }
@@ -20,62 +15,44 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
   id: DataTransformerID.formatTime,
   name: 'Format Time',
   description: 'Set the output format of a time field',
-  defaultOptions: {timeField: '', outputFormat: ''},
-
-  /**
-   * Return a modified copy of the series. If the transform is not or should not
-   * be applied, just return the input series
-   */
+  defaultOptions: { timeField: '', outputFormat: '' },
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
-        // const newFrames: Array<DataFrame> = [];
-
         // If a field and a format are configured
         // then format the time output
-
-        // const formatter = () => createFormatter({test: 'test'});
-
-        // console.log()
-
+        const formatter = createTimeFormatter(options.timeField, options.outputFormat);
 
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
 
-        const newData = data.map((frame) => {
-
-          const newFields = frame.fields.map((field) => {
-            // Find the configured field
-            if (field.name === options.timeField) {
-
-              // Update values to use the configured format
-              const newVals = field.values.map((value) => {
-                const moment = dateTime(value)
-                return moment.format(options.outputFormat)
-              })
-
-              return {
-                ...field,
-                values: newVals
-              }
-            }
-
-
-            return field;
-          });
-
-         
-         
-
-          return {...frame, fields: newFields}
-        });
-
-        console.log(newData);
-        
-
-        return newData;
+        return data.map((frame) => ({
+          ...frame,
+          fields: formatter(frame.fields, data, frame),
+        }));
       })
     ),
 };
 
+const createTimeFormatter =
+  (timeField: string, outputFormat: string) => (fields: Field[], data: DataFrame[], frame: DataFrame) => {
+    return fields.map((field) => {
+      // Find the configured field
+      if (field.name === timeField) {
+        // Update values to use the configured format
+        const newVals = field.values.map((value) => {
+          const moment = dateTime(value);
+          return moment.format(outputFormat);
+        });
+
+        return {
+          ...field,
+          type: FieldType.string,
+          values: newVals,
+        };
+      }
+
+      return field;
+    });
+  };
