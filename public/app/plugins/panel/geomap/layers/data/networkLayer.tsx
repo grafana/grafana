@@ -4,7 +4,7 @@ import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
 import VectorLayer from 'ol/layer/Vector';
-import { Fill, Style, Text } from 'ol/style';
+import { Fill, Stroke, Style, Text } from 'ol/style';
 import FlowLine from 'ol-ext/style/FlowLine';
 import React, { ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
@@ -163,10 +163,15 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
             const fontFamily = theme.typography.fontFamily;
             if (edgeDims.text) {
               const labelStyle = new Style({
+                zIndex: 10,
                 text: new Text({
                   text: edgeDims.text.get(edgeId),
                   font: `normal ${edgeTextConfig?.fontSize}px ${fontFamily}`,
                   fill: new Fill({ color: color1 ?? defaultStyleConfig.color.fixed }),
+                  stroke: new Stroke({
+                    color: tinycolor(theme.visualization.getColorByName('text')).setAlpha(opacity).toString(),
+                    width: Math.max(edgeTextConfig?.fontSize! / 10, 1),
+                  }),
                   ...edgeTextConfig,
                 }),
               });
