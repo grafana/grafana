@@ -1,6 +1,7 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
+import AzureCheatSheet from './components/AzureCheatSheet';
 import { ConfigEditor } from './components/ConfigEditor';
 import AzureMonitorQueryEditor from './components/QueryEditor';
 import Datasource from './datasource';
@@ -9,6 +10,7 @@ import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, ResultFormat } from './types';
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureDataSourceJsonData>(Datasource)
+  .setQueryEditorHelp(AzureCheatSheet)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(AzureMonitorQueryEditor);
 
