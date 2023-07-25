@@ -69,6 +69,7 @@ interface ActionProps {
     delete: AccessControlAction;
     provisioning: {
       read: AccessControlAction;
+      readSecrets: AccessControlAction;
     };
   };
   alertManagerName: string;
@@ -89,8 +90,9 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 }
 
 function ExportAction({ permissions, receiverName }: ActionProps) {
+  const canReadSecrets = contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin())
   return (
-    <Authorize actions={[permissions.provisioning.read]} fallback={isOrgAdmin()}>
+    <Authorize actions={[permissions.provisioning.read, permissions.provisioning.readSecrets]}>
       <ActionIcon
         data-testid="export"
         to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
@@ -301,7 +303,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
 
   const isGrafanaAM = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
-  const showExport = isGrafanaAM && contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
+  const showExport = isGrafanaAM && (contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) || contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin()));
 
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
@@ -436,6 +438,7 @@ function useGetColumns(
     delete: AccessControlAction;
     provisioning: {
       read: AccessControlAction;
+      readSecrets: AccessControlAction;
     };
   },
   isVanillaAM: boolean
@@ -498,7 +501,7 @@ function useGetColumns(
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
         <Authorize
-          actions={[permissions.update, permissions.delete, permissions.provisioning.read]}
+          actions={[permissions.update, permissions.delete, permissions.provisioning.read, permissions.provisioning.readSecrets ]}
           fallback={isOrgAdmin()}
         >
           <div className={tableStyles.actionsCell}>
