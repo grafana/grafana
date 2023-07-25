@@ -211,6 +211,7 @@ e2e.scenario({
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
