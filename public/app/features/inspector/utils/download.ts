@@ -43,16 +43,6 @@ export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows
   saveAs(blob, fileName);
 }
 
-/* function s2ab(s: string) {
-  // temporary
-  let buf = new ArrayBuffer(s.length);
-  let view = new Uint8Array(buf);
-  for (let i = 0; i !== s.length; ++i) {
-    view[i] = s.charCodeAt(i) & 0xff;
-  }
-  return buf;
-} */
-
 /**
  * Exports a DataFrame as a CSV file.
  *
@@ -76,7 +66,6 @@ export function downloadDataFrameAsCsv(
   const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
   const fileName = `${title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
   saveAs(blob, fileName);
-  // }
 }
 
 /**

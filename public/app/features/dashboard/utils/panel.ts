@@ -5,17 +5,18 @@ import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { exportSelect, ExportType } from 'app/core/services/PanelExporterService';
 import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { exportSelect } from 'app/features/exporter/PanelExporter';
+import { ExportType } from 'app/features/exporter/types';
 import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
 import { UnlinkModal } from 'app/features/library-panels/components/UnlinkModal/UnlinkModal';
 import { cleanUpPanelState } from 'app/features/panel/state/actions';
 import { dispatch } from 'app/store/store';
 
-import { PanelExportEvent, ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -80,7 +81,7 @@ export const exportPanel = (
     throw new Error('No panel found to export');
   }
 
-  exportSelect(new PanelExportEvent({ panel, data, htmlElement, format }));
+  exportSelect({ panel, data, htmlElement, format });
 };
 
 export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {

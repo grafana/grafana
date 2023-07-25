@@ -1,7 +1,5 @@
-import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory, PanelData } from '@grafana/data';
+import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
 import { IconName, ButtonVariant } from '@grafana/ui';
-import { ExportType } from 'app/core/services/PanelExporterService';
-import { PanelModel } from 'app/features/dashboard/state';
 
 /**
  * Event Payloads
@@ -27,13 +25,6 @@ export interface ShowModalPayload {
 export interface ShowModalReactPayload {
   component: React.ComponentType<any>;
   props?: any;
-}
-
-export interface ExportPanelPayload {
-  panel: PanelModel;
-  htmlElement: HTMLElement;
-  format: ExportType;
-  data?: PanelData | null;
 }
 
 export interface ShowConfirmModalPayload {
@@ -217,8 +208,4 @@ export class PanelEditEnteredEvent extends BusEventWithPayload<number> {
 
 export class PanelEditExitedEvent extends BusEventWithPayload<number> {
   static type = 'panel-edit-finished';
-}
-
-export class PanelExportEvent extends BusEventWithPayload<ExportPanelPayload> {
-  static type = 'panel-export';
 }

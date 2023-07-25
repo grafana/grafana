@@ -18,7 +18,7 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { Randomize, randomizeData } from './randomizer';
 
-export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+export function getPanelDataFrames(data?: PanelData | null): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];
   if (data?.series) {
     for (const f of data.series) {

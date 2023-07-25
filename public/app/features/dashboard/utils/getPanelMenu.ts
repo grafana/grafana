@@ -10,7 +10,6 @@ import {
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
-import { ExportType } from 'app/core/services/PanelExporterService';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -25,6 +24,7 @@ import {
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
+import { ExportType } from 'app/features/exporter/types';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
@@ -65,10 +65,10 @@ export function getPanelMenu(
 
   //=================
 
-  const onExportPanel = (event: React.MouseEvent, exportType: ExportType) => {
-    event.preventDefault();
+  const onExportPanel = (exportType: ExportType) => {
+    // event.preventDefault();
     //todo avoid as   DONE? (or maybe causes problems elsewhere) // NOW UNDONE
-    const exportHtmlElement: HTMLElement = event.target as HTMLElement;
+    // const exportHtmlElement: HTMLElement = event.target;
 
     reportInteraction('dashboards_panelheader_menu', {
       item: 'createExportPanel',
@@ -76,7 +76,7 @@ export function getPanelMenu(
     });
 
     exportPanel(
-      exportHtmlElement.closest('[id="reactRoot"]')?.querySelector(`[data-panelid="${panel.id}"]`)!,
+      document.documentElement.querySelector(`[data-panelid="${panel.id}"]`)!,
       panel,
       exportType ?? ExportType.jpeg,
       data
@@ -183,19 +183,19 @@ export function getPanelMenu(
   exportImageMenu.push({
     text: `PNG`,
     iconClassName: 'camera',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.png),
+    onClick: () => onExportPanel(ExportType.png),
   });
 
   exportImageMenu.push({
     text: `JPEG`,
     iconClassName: 'camera',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.jpeg),
+    onClick: () => onExportPanel(ExportType.jpeg),
   });
 
   exportImageMenu.push({
     text: `BMP`,
     iconClassName: 'camera',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.bmp),
+    onClick: () => onExportPanel(ExportType.bmp),
   });
 
   if (!subMenuEnable) {
@@ -205,36 +205,38 @@ export function getPanelMenu(
     });
   }
 
-  exportDataMenu.push({
-    text: `CSV`,
-    iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => {
-      onExportPanel(e, ExportType.csv);
-    },
-  });
+  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    exportDataMenu.push({
+      text: `CSV`,
+      iconClassName: 'book',
+      onClick: () => onExportPanel(ExportType.csv),
+    });
 
-  exportDataMenu.push({
-    text: `Excel`,
-    iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.xlsx),
-  });
+    exportDataMenu.push({
+      text: `Excel`,
+      iconClassName: 'book',
+      onClick: () => onExportPanel(ExportType.xlsx),
+    });
 
-  // MAYBE add back numbers?
+    // MAYBE add back numbers?
+
+    exportDataMenu.push({
+      text: `Data JSON`,
+      iconClassName: 'book',
+      onClick: () => onExportPanel(ExportType.dataJson),
+    });
+
+    exportDataMenu.push({
+      text: `DataFrame JSON`,
+      iconClassName: 'book',
+      onClick: () => onExportPanel(ExportType.dataFrameJson),
+    });
+  }
 
   exportDataMenu.push({
     text: `Panel JSON`,
     iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.panelJson),
-  });
-  exportDataMenu.push({
-    text: `Data JSON`,
-    iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.dataJson),
-  });
-  exportDataMenu.push({
-    text: `DataFrame JSON`,
-    iconClassName: 'book',
-    onClick: (e: React.MouseEvent) => onExportPanel(e, ExportType.dataFrameJson),
+    onClick: () => onExportPanel(ExportType.panelJson),
   });
 
   if (subMenuEnable) {
@@ -283,20 +285,20 @@ export function getPanelMenu(
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
     inspectMenu.push({
       text: t('panel.header-menu.inspect-data', `Data`),
-      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Data),
+      onClick: () => onInspectPanel(InspectTab.Data),
     });
 
     if (dashboard.meta.canEdit) {
       inspectMenu.push({
         text: t('panel.header-menu.query', `Query`),
-        onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Query),
+        onClick: () => onInspectPanel(InspectTab.Query),
       });
     }
   }
 
   inspectMenu.push({
     text: t('panel.header-menu.inspect-json', `Panel JSON`),
-    onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.JSON),
+    onClick: () => onInspectPanel(InspectTab.JSON),
   });
 
   menu.push({
@@ -392,7 +394,7 @@ export function getPanelMenu(
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
     subMenu.push({
       text: t('panel.header-menu.get-help', 'Get help'),
-      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
+      onClick: () => onInspectPanel(InspectTab.Help),
     });
   }
 

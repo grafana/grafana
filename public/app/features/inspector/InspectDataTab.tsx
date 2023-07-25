@@ -94,7 +94,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
   exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
-    console.log('inspectData', dataFrame);
     downloadDataFrameAsCsv(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', csvConfig, transformId);
   };
 
@@ -166,9 +165,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
   /*  getProcessedData(): DataFrame[] {
     const { options, panel, timeZone } = this.props;
-    console.log("options", this.props.options);
     const data = this.state.transformedData;
-    console.log("preProcessedData", data);
 
     if (!options.withFieldConfig || !panel) {
       return applyRawFieldOverrides(data);
@@ -227,7 +224,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     const dataFrames = getProcessedData(options, transformedData, panel);
-    console.log('postProcessed', dataFrames);
 
     if (!dataFrames || !dataFrames.length) {
       return <div>No Data</div>;
@@ -327,7 +323,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
 }
 
 export function getProcessedData(options: GetDataOptions, data: DataFrame[], panel?: PanelModel): DataFrame[] {
-  console.log('optionsIN', options);
   console.log('preProcessedDataIN', data);
 
   if (!options.withFieldConfig || !panel) {
