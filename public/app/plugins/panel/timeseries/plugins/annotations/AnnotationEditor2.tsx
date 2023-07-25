@@ -34,7 +34,6 @@ export const AnnotationEditor2 = ({
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
 
   annotation = annotation || ({ time: selection.min, timeEnd: selection.max } as AnnotationsDataFrameViewDTO);
-  console.log('annotation', annotation);
 
   return (
     <div className={styles.wrapper}>
