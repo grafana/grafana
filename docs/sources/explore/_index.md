@@ -5,6 +5,11 @@ keywords:
   - explore
   - loki
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Explore
 weight: 90
 ---
@@ -58,6 +63,46 @@ It is possible to select another data source for the new query which for example
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync. It ensures that you’re looking at the same time interval in both split panels.
 
 To close the newly created query, click on the Close Split button.
+
+## Share Explore URLs
+
+When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
+
+### Generating Explore URLs from external tools
+
+Because Explore URLs have a defined structure, you can build a URL from external tools and open it in Grafana. The URL structure is:
+
+```
+http://<grafana_url>/explore?panes=<panes>&schemaVersion=<schema_version>&orgId=<org_id>
+```
+
+where:
+
+- `org_id` is the organization ID
+- `schema_version` is the schema version (should be set to the latest version which is `1`)
+- `panes` is a url-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the following schema:
+
+```
+{
+  datasource: string; // the pane's root datasource UID, or `-- Mixed --` for mixed datasources
+  queries: {
+    refId: string; // an alphanumeric identifier for this query, must be unique within the pane, i.e. "A", "B", "C", etc.
+    datasource: {
+      uid: string; // the query's datasource UID ie: "AD7864H6422"
+      type: string; // the query's datasource type-id, i.e: "loki"
+    }
+    // ... any other datasource-specific query parameters
+  }[]; // array of queries for this pane
+  range: {
+    from: string | number; // the start time, in milliseconds since epoch
+    to: string | number; // the end time, in milliseconds since epoch
+  }
+}
+```
+
+{{% admonition type="note" %}}
+The `from` and `to` also accept relative ranges defined in [Time units and relative ranges]({{< relref "../dashboards/use-dashboards/#time-units-and-relative-ranges" >}}).
+{{% /admonition %}}
 
 ## Share shortened link
 

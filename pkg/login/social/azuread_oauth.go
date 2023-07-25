@@ -83,10 +83,14 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	var role roletype.RoleType
 	var grafanaAdmin bool
 	if !s.skipOrgRoleSync {
-		role, grafanaAdmin = s.extractRoleAndAdmin(claims)
-	}
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
+		if err != nil {
+			return nil, err
+		}
+
+		if !role.IsValid() {
+			return nil, errInvalidRole.Errorf("AzureAD OAuth: invalid role %q", role)
+		}
 	}
 	s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
@@ -102,6 +106,10 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 	var isGrafanaAdmin *bool = nil
 	if s.allowAssignGrafanaAdmin {
 		isGrafanaAdmin = &grafanaAdmin
+	}
+
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	return &BasicUserInfo{
@@ -201,9 +209,12 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
+func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
 	if len(claims.Roles) == 0 {
-		return s.defaultRole(false), false
+		if s.roleAttributeStrict {
+			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
+		}
+		return s.defaultRole(), false, nil
 	}
 
 	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
@@ -211,14 +222,18 @@ func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, 
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == RoleGrafanaAdmin {
-				return org.RoleAdmin, true
+				return org.RoleAdmin, true, nil
 			}
 
-			return role, false
+			return role, false, nil
 		}
 	}
 
-	return s.defaultRole(false), false
+	if s.roleAttributeStrict {
+		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
+	}
+
+	return s.defaultRole(), false, nil
 }
 
 func hasRole(roles []string, role org.RoleType) bool {

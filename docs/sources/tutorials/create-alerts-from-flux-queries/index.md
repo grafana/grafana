@@ -1,13 +1,20 @@
 ---
-title: How to create Grafana alerts with InfluxDB and the Flux query language
-summary: Create complex alerts from Flux queries in the new Grafana Alerting
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grant_pinkos
+categories:
+  - alerting
 description: Create complex alerts from Flux queries in the new Grafana Alerting
 id: grafana-alerts-flux-queries
-categories: ['alerting']
-tags: ['advanced']
+labels:
+  products:
+    - enterprise
+    - oss
 status: published
-authors: ['grant_pinkos']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Create complex alerts from Flux queries in the new Grafana Alerting
+tags:
+  - advanced
+title: How to create Grafana alerts with InfluxDB and the Flux query language
 weight: 70
 ---
 

@@ -1,13 +1,20 @@
 ---
-title: Create users and teams
-summary: Learn how to set up teams and users.
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Learn how to set up teams and users.
 id: create-users-and-teams
-categories: ['administration']
-tags: ['beginner']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Learn how to set up teams and users.
+tags:
+  - beginner
+title: Create users and teams
 weight: 20
 ---
 

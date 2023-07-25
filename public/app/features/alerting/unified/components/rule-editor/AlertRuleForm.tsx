@@ -27,6 +27,7 @@ import * as ruleId from '../../utils/rule-id';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
+import { GrafanaRuleInspector } from './GrafanaRuleInspector';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
@@ -49,7 +50,7 @@ const AlertRuleNameInput = () => {
 
   const ruleFormType = watch('type');
   return (
-    <RuleEditorSection stepNo={1} title="Set an alert rule name">
+    <RuleEditorSection stepNo={1} title="Set alert rule name">
       <Field
         className={styles.formInput}
         label="Rule name"
@@ -225,7 +226,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           Delete
         </Button>
       ) : null}
-      {isCortexLokiOrRecordingRule(watch) && (
+
+      {existing ? (
         <Button
           variant="secondary"
           type="button"
@@ -233,9 +235,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           disabled={submitState.loading}
           size="sm"
         >
-          Edit YAML
+          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
         </Button>
-      )}
+      ) : null}
     </HorizontalGroup>
   );
 
@@ -278,7 +280,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
-      {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
+      {showEditYaml ? (
+        type === RuleFormType.grafana ? (
+          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+        ) : (
+          <RuleInspector onClose={() => setShowEditYaml(false)} />
+        )
+      ) : null}
     </FormProvider>
   );
 };

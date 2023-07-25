@@ -10,81 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
 const maximumRecursiveQueries = 2
-
-type DashboardPermissionFilter struct {
-	OrgRole         org.RoleType
-	Dialect         migrator.Dialect
-	UserId          int64
-	OrgId           int64
-	PermissionLevel dashboards.PermissionType
-}
-
-func (d DashboardPermissionFilter) Where() (string, []interface{}) {
-	if d.OrgRole == org.RoleAdmin {
-		return "", nil
-	}
-
-	okRoles := []interface{}{d.OrgRole}
-	if d.OrgRole == org.RoleEditor {
-		okRoles = append(okRoles, org.RoleViewer)
-	}
-
-	falseStr := d.Dialect.BooleanStr(false)
-
-	sql := `(
-		dashboard.id IN (
-			SELECT distinct DashboardId from (
-				SELECT d.id AS DashboardId
-					FROM dashboard AS d
-					LEFT JOIN dashboard_acl AS da ON
-						da.dashboard_id = d.id OR
-						da.dashboard_id = d.folder_id
-					WHERE
-						d.org_id = ? AND
-						da.permission >= ? AND
-						(
-							da.user_id = ? OR
-							da.team_id IN (SELECT team_id from team_member AS tm WHERE tm.user_id = ?) OR
-							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
-						)
-				UNION
-				SELECT d.id AS DashboardId
-					FROM dashboard AS d
-					LEFT JOIN dashboard AS folder on folder.id = d.folder_id
-					LEFT JOIN dashboard_acl AS da ON
-						(
-							-- include default permissions -->
-							da.org_id = -1 AND (
-							  (folder.id IS NOT NULL AND folder.has_acl = ` + falseStr + `) OR
-							  (folder.id IS NULL AND d.has_acl = ` + falseStr + `)
-							)
-						)
-					WHERE
-						d.org_id = ? AND
-						da.permission >= ? AND
-						(
-							da.user_id = ? OR
-							da.role IN (?` + strings.Repeat(",?", len(okRoles)-1) + `)
-						)
-			) AS a
-		)
-	)
-	`
-
-	params := []interface{}{d.OrgId, d.PermissionLevel, d.UserId, d.UserId}
-	params = append(params, okRoles...)
-	params = append(params, d.OrgId, d.PermissionLevel, d.UserId)
-	params = append(params, okRoles...)
-	return sql, params
-}
 
 type clause struct {
 	string

@@ -3,7 +3,7 @@ import React, { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { locationSearchToObject } from '@grafana/runtime';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -67,7 +67,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     return null;
   }
 
-  const subTitle = config.featureToggles.dataConnectionsConsole ? (
+  const subTitle = (
     <div>
       Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
       <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
@@ -75,8 +75,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       </a>
       .
     </div>
-  ) : (
-    <div>Extend the Grafana experience with panel plugins and apps.</div>
   );
 
   return (
