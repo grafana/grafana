@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DataFrameType, Field, PanelProps } from '@grafana/data';
+import { Field, PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -40,7 +40,6 @@ export const TimeSeriesPanel = ({
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
-
   const suggestions = useMemo(() => {
     if (frames?.length && frames.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
       const s = getPrepareTimeseriesSuggestion(id);
