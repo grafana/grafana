@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure Grafana-managed alert rules
-weight: 400
+weight: 100
 ---
 
 # Configure Grafana-managed alert rules
@@ -140,15 +140,15 @@ All alert rules and instances, irrespective of their labels, match the default n
 
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
-2. Preview your alert instance routing set up.
+1. Preview your alert instance routing set up.
 
    Based on the labels added, alert instances are routed to the following notification policies displayed.
 
    Expand each notification policy below to view more details.
 
-3. Click **See details** to view alert routing details and an email preview.
+1. Click **See details** to view alert routing details and an email preview.
 
-4. Click **Save rule**.
+1. Click **Save rule**.
 
 ### Single and multi-dimensional rule
 

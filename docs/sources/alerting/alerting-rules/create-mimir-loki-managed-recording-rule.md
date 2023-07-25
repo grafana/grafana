@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure recording rules
-weight: 400
+weight: 300
 ---
 
 # Configure recording rules

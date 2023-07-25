@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure data source-managed alert rules
-weight: 400
+weight: 200
 ---
 
 # Configure data source-managed alert rules
