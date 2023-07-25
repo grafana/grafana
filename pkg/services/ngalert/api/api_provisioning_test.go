@@ -1027,7 +1027,6 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			require.Equal(t, 403, response.Status())
 			require.Len(t, env.ac.EvaluateRecordings, 1)
 			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
-
 		})
 
 		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
