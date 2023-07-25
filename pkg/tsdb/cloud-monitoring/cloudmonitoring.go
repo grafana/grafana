@@ -234,17 +234,17 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			rawQuery["timeSeriesList"] == nil &&
 			rawQuery["sloQuery"] == nil {
 			// migrate legacy query
-			var mq timeSeriesList
+			var mq dataquery.TimeSeriesList
 			err = json.Unmarshal(q.JSON, &mq)
 			if err != nil {
 				return err
 			}
 			q.QueryType = string(dataquery.QueryTypeAnnotation)
-			gq := grafanaQuery{
+			gq := dataquery.CloudMonitoringQuery{
 				TimeSeriesList: &mq,
 			}
 			if rawQuery["aliasBy"] != nil {
-				gq.AliasBy = rawQuery["aliasBy"].(string)
+				gq.AliasBy = rawQuery["aliasBy"].(*string)
 			}
 			if rawQuery["metricType"] != nil {
 				// metricType should be a filter
@@ -374,11 +374,11 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	return resp, nil
 }
 
-func queryModel(query backend.DataQuery) (grafanaQuery, error) {
-	var q grafanaQuery
+func queryModel(query backend.DataQuery) (dataquery.CloudMonitoringQuery, error) {
+	var q dataquery.CloudMonitoringQuery
 	err := json.Unmarshal(query.JSON, &q)
 	if err != nil {
-		return grafanaQuery{}, err
+		return dataquery.CloudMonitoringQuery{}, err
 	}
 	return q, nil
 }
@@ -398,31 +398,32 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 		var queryInterface cloudMonitoringQueryExecutor
 		switch query.QueryType {
 		case string(dataquery.QueryTypeTimeSeriesList), string(dataquery.QueryTypeAnnotation):
-			cmtsf := &cloudMonitoringTimeSeriesList{
+			cmtsf := &dataquery.TimeSeriesList{
 				refID:   query.RefID,
 				logger:  logger,
-				aliasBy: q.AliasBy,
+				aliasBy: *q.AliasBy,
 			}
-			if q.TimeSeriesList.View == "" {
-				q.TimeSeriesList.View = "FULL"
+			if q.TimeSeriesList.View == nil && *q.TimeSeriesList.View == "" {
+				defaultTimeSeriesListView := "FULL"
+				q.TimeSeriesList.View = &defaultTimeSeriesListView
 			}
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmtsf
 		case string(dataquery.QueryTypeTimeSeriesQuery):
-			queryInterface = &cloudMonitoringTimeSeriesQuery{
+			queryInterface = &dataquery.TimeSeriesQuery{
 				refID:      query.RefID,
-				aliasBy:    q.AliasBy,
+				aliasBy:    *q.AliasBy,
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
 				timeRange:  req.Queries[0].TimeRange,
 				logger:     logger,
 			}
 		case string(dataquery.QueryTypeSlo):
-			cmslo := &cloudMonitoringSLO{
+			cmslo := &dataquery.SLOQuery{
 				refID:      query.RefID,
 				logger:     logger,
-				aliasBy:    q.AliasBy,
+				aliasBy:    *q.AliasBy,
 				parameters: q.SloQuery,
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
