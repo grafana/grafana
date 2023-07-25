@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, ReactElement, ReactNode } from 'react';
+import React, { CSSProperties, ReactElement, ReactNode, useId } from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -114,6 +114,7 @@ export function PanelChrome({
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const panelContentId = useId();
 
   const [isOpen, toggleOpen] = useToggle(true);
 
@@ -154,8 +155,18 @@ export function PanelChrome({
 
   const collapsibleHeader = (
     <h6 className={styles.title}>
-      <button type="button" className={styles.clearButtonStyles} onClick={toggleOpen}>
-        <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
+      <button
+        type="button"
+        className={styles.clearButtonStyles}
+        onClick={toggleOpen}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? panelContentId : undefined}
+      >
+        <Icon
+          name={isOpen ? 'angle-down' : 'angle-right'}
+          aria-hidden={!!title}
+          aria-label={!title ? 'toggle collapse panel' : undefined}
+        />
         {title}
       </button>
     </h6>
@@ -254,7 +265,11 @@ export function PanelChrome({
       )}
 
       {isOpen && (
-        <div className={cx(styles.content, height === undefined && styles.containNone)} style={contentStyle}>
+        <div
+          id={panelContentId}
+          className={cx(styles.content, height === undefined && styles.containNone)}
+          style={contentStyle}
+        >
           {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
         </div>
       )}

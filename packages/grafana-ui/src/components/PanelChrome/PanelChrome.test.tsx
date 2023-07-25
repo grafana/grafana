@@ -131,7 +131,13 @@ it('collapes the panel when user clicks on the chevron or the title', () => {
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 
   const button = screen.getByText('Default title');
+  // collapse button should have same aria-controls as the panel's content
+  expect(button.getAttribute('aria-controls')).toBe(button.parentElement?.parentElement?.nextElementSibling?.id);
+
   fireEvent.click(button);
 
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
+  // aria-controls should be removed when panel is collapsed
+  expect(button).not.toHaveAttribute('aria-controlls');
+  expect(button.parentElement?.parentElement?.nextElementSibling?.id).toBe(undefined);
 });
