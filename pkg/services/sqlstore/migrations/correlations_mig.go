@@ -31,6 +31,6 @@ func addCorrelationsMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("add org_id column", NewAddColumnMigration(correlationsV1, &Column{
-		Name: "org_id", Type: DB_BigInt, Default: "0", IsPrimaryKey: true,
+		Name: "org_id", Type: DB_BigInt, Nullable: true, IsPrimaryKey: true,
 	}))
 }
