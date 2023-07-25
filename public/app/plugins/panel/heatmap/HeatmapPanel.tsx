@@ -48,7 +48,7 @@ export const HeatmapPanel = ({
   for (const series of data.series) {
     for (const field of series.fields) {
       if (field.state?.scopedVars) {
-        scopedVarsFromRawData.push(field.state?.scopedVars);
+        scopedVarsFromRawData.push(field.state.scopedVars);
       }
     }
   }
