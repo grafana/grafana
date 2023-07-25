@@ -1,9 +1,8 @@
 ---
 aliases:
-- ../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
-  - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
+  - ../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
+    - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/organising-alerts/
-https://grafana.com/docs/grafana/latest/alerting/alerting-rules/edit-mimir-loki-namespace-group/
 description: Namespaces, folders, and groups
 keywords:
   - grafana
