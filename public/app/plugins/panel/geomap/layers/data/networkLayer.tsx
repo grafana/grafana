@@ -104,7 +104,6 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
         const geom = feature.getGeometry();
-
         const idx = feature.get('rowIndex');
         const dims = style.dims;
 
@@ -116,7 +115,6 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           const coordinates = geom.getCoordinates();
           const opacity = edgeStyle.config.opacity ?? 1;
           if (coordinates && edgeDims) {
-            // TODO fix hardcoded frame indices
             const segmentStartCoords = coordinates[0];
             const segmentEndCoords = coordinates[1];
             const color1 = tinycolor(
@@ -203,14 +201,10 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           return; // ignore empty
         }
         const dataFrames: DataFrame[] = [];
-        for (const frame of data.series) {
-          dataFrames.push(frame);
-        }
         // TODO find a better way to handle multiple frames
         for (const frame of data.series) {
-          if (frame.refId === 'nodes') {
-            style.dims = getStyleDimension(frame, style, theme);
-          } else if (frame.refId === 'edges') {
+          dataFrames.push(frame);
+          if (frame.refId === 'edges') {
             edgeStyle.dims = getStyleDimension(frame, edgeStyle, theme);
           } else {
             style.dims = getStyleDimension(frame, style, theme);
