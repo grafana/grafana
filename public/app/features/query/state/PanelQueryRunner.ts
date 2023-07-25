@@ -322,14 +322,15 @@ export class PanelQueryRunner {
       next: async (data) => {
         const panelDataProcessed = preProcessPanelData(data, this.lastResult);
 
-        //--- check if alert state history uses Loki as implementation
+        //--- check if alert state history uses Loki as implementation, if so, fetch data from Loki state history and concat it to annotations
         const historyImplementation = getHistoryImplementation();
         const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
 
-        if (usingLokiAsImplementation) {
-          // fetch data from Loki using stateHistoryApi without hooks
+        if (usingLokiAsImplementation && data.request?.panelId && data.request?.dashboardUID) {
+          // fetch data from Loki state history
           let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
-            ruleUID: `b6a0008b-a29e-46f6-b3dc-d9eac6c8ce2a`,
+            panelUID: data.request?.panelId,
+            dashboardUID: data.request?.dashboardUID,
             from: data.timeRange.from.unix(),
             to: data.timeRange.to.unix(),
             limit: 250,

@@ -259,7 +259,6 @@ export function logRecordsToDataFrameForPanel(
         name: 'alertId',
         type: FieldType.string,
         values: records.map((_) => 1),
-        //not sure what id to put here, we need to have a value i here so it's shown in the notation tooltip as alert annotation
         config: {
           displayName: 'AlertId',
           custom: { fillOpacity: 100 },
@@ -305,9 +304,7 @@ export function logRecordsToDataFrameForPanel(
               return theme.colors.info.main;
           }
         }),
-        config: {
-          // not sure if is there something missing here
-        },
+        config: {},
       },
       {
         name: 'data',
