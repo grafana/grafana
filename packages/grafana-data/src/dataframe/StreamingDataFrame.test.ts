@@ -1,7 +1,12 @@
-import { DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID } from '@grafana/data';
-import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime';
+import { DataFrame, DataFrameJSON, FieldType, getFieldDisplayName, reduceField, ReducerID } from '..';
 
-import { closestIdx, getStreamingFrameOptions, StreamingDataFrame } from './StreamingDataFrame';
+import {
+  closestIdx,
+  getStreamingFrameOptions,
+  StreamingDataFrame,
+  StreamingFrameAction,
+  StreamingFrameOptions,
+} from './StreamingDataFrame';
 
 describe('Streaming JSON', () => {
   describe('closestIdx', function () {
@@ -721,8 +726,7 @@ describe('Streaming JSON', () => {
       },
     });
 
-    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, values: f.values })))
-      .toMatchInlineSnapshot(`
+    expect(stream.fields.map((f) => ({ name: f.name, labels: f.labels, values: f.values }))).toMatchInlineSnapshot(`
       [
         {
           "labels": undefined,
