@@ -153,12 +153,12 @@ export function PanelChrome({
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
   const collapsibleHeader = (
-    <button type="button" className={styles.clearButtonStyles} onClick={toggleOpen}>
-      <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-      <h6 title={title} className={styles.title}>
+    <h6 className={styles.title}>
+      <button type="button" className={styles.clearButtonStyles} onClick={toggleOpen}>
+        <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
         {title}
-      </h6>
-    </button>
+      </button>
+    </h6>
   );
 
   const headerContent = (
@@ -380,6 +380,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     title: css({
       label: 'panel-title',
+      display: 'flex',
       marginBottom: 0, // override default h6 margin-bottom
       padding: theme.spacing(0, padding),
       textOverflow: 'ellipsis',
@@ -430,12 +431,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
     }),
     clearButtonStyles: css({
-      display: 'flex',
       alignItems: 'center',
       background: 'transparent',
       color: theme.colors.text.primary,
       border: 'none',
       padding: 0,
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.h6.fontWeight,
     }),
   };
 };
