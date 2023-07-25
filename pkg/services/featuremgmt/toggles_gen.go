@@ -191,10 +191,6 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with external auth providers
-	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
-
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
