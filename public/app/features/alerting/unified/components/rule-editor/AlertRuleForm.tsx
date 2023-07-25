@@ -56,7 +56,7 @@ const AlertRuleNameInput = () => {
 
   const ruleFormType = watch('type');
   return (
-    <RuleEditorSection stepNo={1} title="Set alert rule name">
+    <RuleEditorSection stepNo={1} title="Set alert rule name.">
       <Field
         className={styles.formInput}
         label="Rule name"
