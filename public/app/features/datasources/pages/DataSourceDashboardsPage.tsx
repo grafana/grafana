@@ -4,12 +4,13 @@ import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DataSourceDashboards } from '../components/DataSourceDashboards';
-import { useDataSourceSettingsNav } from '../state';
+import { useDataSourceSettingsNav, useInitDataSourceSettings } from '../state';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function DataSourceDashboardsPage(props: Props) {
   const uid = props.match.params.uid;
+  useInitDataSourceSettings(uid);
   const nav = useDataSourceSettingsNav(uid, 'dashboards');
 
   return (
