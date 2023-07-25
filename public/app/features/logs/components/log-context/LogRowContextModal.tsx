@@ -279,6 +279,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const updateResults = async () => {
     await updateContextQuery();
     setContext(makeEmptyContext());
+    loadCountRef.current = { above: 0, below: 0 };
     generationRef.current += 1; // results from currently running loadMore calls will be ignored
   };
 
