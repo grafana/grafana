@@ -3,24 +3,24 @@ aliases:
   - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-description: Create recording rules
+description: Configure recording rules
 keywords:
   - grafana
   - alerting
   - guide
   - rules
   - recording rules
-  - create
+  - configure
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Create recording rules
+title: Configure recording rules
 weight: 400
 ---
 
-# Create recording rules
+# Configure recording rules
 
 You can create and manage recording rules for an external Grafana Mimir or Loki instance. Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
 
@@ -42,11 +42,7 @@ This setting has precedence over each individual rule frequency. If a rule frequ
 
   - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
-{{% admonition type="note" %}}
-If you do not want to manage alerting rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
-{{% /admonition %}}
-
-## Add recording rules
+## Create recording rules
 
 To create recording rules, follow these steps.
 
@@ -54,17 +50,17 @@ To create recording rules, follow these steps.
 1. Click **Alert rules**.
 1. Click the **More** dropdown and then **New recording rule**.
 
-1. In Step 1, add the rule name. The recording name must be a Prometheus metric name and contain no whitespace.
+1. Add the rule name.
 
-1. In Step 2, select a data source.
+   The recording rule name must be a Prometheus metric name and contain no whitespace.
+
+1. Select a data source.
    - Select your Loki or Prometheus data source.
    - Enter a query.
-1. In Step 3, add a namespace and a group.
+1. Add a namespace and a group.
    - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces][edit-mimir-loki-namespace-group].
    - From the **Group** dropdown, select an existing group within the selected namespace or add a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting][annotation-label].
-   - Add Runbook URL, panel, dashboard, and alert IDs.
-1. In Step 4, add custom labels.
+1. Add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
 
