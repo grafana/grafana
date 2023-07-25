@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import { Feature } from "ol";
+import { Feature } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
 import { Geometry, LineString, Point, SimpleGeometry } from 'ol/geom';
@@ -24,7 +24,7 @@ import {
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
-import { getNetworkFrames } from "../../../nodeGraph/utils";
+import { getNetworkFrames } from '../../../nodeGraph/utils';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
@@ -74,7 +74,6 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   showLocation: true,
   hideOpacity: true,
   state: PluginState.beta,
-
 
   /**
    * Function that configures transformation and returns a transformer
@@ -300,15 +299,15 @@ function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
   const field = info.field as unknown as Field<Point>;
 
   // TODO for nodes, don't hard code id field name
-  const nodeIdIndex = frameNodes.fields.findIndex((f) => {
+  const nodeIdIndex = frameNodes.fields.findIndex((f: Field) => {
     return f.name === 'id';
   });
   const nodeIdValues = frameNodes.fields[nodeIdIndex].values;
 
   // Edges
   // TODO for edges, don't hard code source and target fields
-  const sourceIndex = frameEdges.fields.findIndex((f) => f.name === 'source');
-  const targetIndex = frameEdges.fields.findIndex((f) => f.name === 'target');
+  const sourceIndex = frameEdges.fields.findIndex((f: Field) => f.name === 'source');
+  const targetIndex = frameEdges.fields.findIndex((f: Field) => f.name === 'target');
 
   const sources = frameEdges.fields[sourceIndex].values;
   const targets = frameEdges.fields[targetIndex].values;
@@ -319,19 +318,19 @@ function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
     const sourceId = sources[i];
     const targetId = targets[i];
 
-    const sourceNodeIndex = nodeIdValues.findIndex((value) => value === sourceId);
-    const targetNodeIndex = nodeIdValues.findIndex((value) => value === targetId);
+    const sourceNodeIndex = nodeIdValues.findIndex((value: string) => value === sourceId);
+    const targetNodeIndex = nodeIdValues.findIndex((value: string) => value === targetId);
 
-    const geometryEdge = new LineString([
+    const geometryEdge: Geometry = new LineString([
       field.values[sourceNodeIndex].getCoordinates(),
       field.values[targetNodeIndex].getCoordinates(),
-    ]) as Geometry;
+    ]);
 
     const edgeFeature = new Feature({
       geometry: geometryEdge,
     });
     edgeFeature.setId(i);
-    source['addFeatureInternal'](edgeFeature);  // @TODO revisit?
+    source['addFeatureInternal'](edgeFeature); // @TODO revisit?
   }
 
   // Nodes
@@ -340,7 +339,7 @@ function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
       new Feature({
         frameNodes,
         rowIndex: i,
-        geometry: info.field.values[i] as Geometry,
+        geometry: info.field.values[i],
       })
     );
   }
