@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, ChangeEvent } from 'react';
 
 import {
   DataTransformerID,
@@ -6,35 +6,42 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  getFieldDisplayName
 } from '@grafana/data';
-import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
+import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
 
-import { useAllFieldNamesFromDataFrames } from '../utils';
-
-const modes = [
-  { value: JoinMode.outer, label: 'OUTER', description: 'Keep all rows from any table with a value' },
-  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables' },
-];
-
-export function FormatTimeTransfomerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
-  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+export function FormatTimeTransfomerEditor({ input, options, onChange }: TransformerUIProps<FormatTimeTransformerOptions>) {
+  console.log(input)
+  const timeFields: Array<SelectableValue<string>> = []
+  
+  // Get time fields
+  for (const frame of input) {
+    for (const field of frame.fields) {
+      if (field.type === 'time') {
+        const name = getFieldDisplayName(field, frame, input)
+        timeFields.push({label: name, value: name })
+      }
+    }
+  }
 
   const onSelectField = useCallback(
     (value: SelectableValue<string>) => {
+      const val = value?.value !== undefined ? value.value : '';
       onChange({
         ...options,
-        byField: value?.value,
+        timeField: val,
       });
     },
     [onChange, options]
   );
 
-  const onSetMode = useCallback(
-    (value: SelectableValue<JoinMode>) => {
+  const onFormatChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
       onChange({
         ...options,
-        mode: value?.value,
+        outputFormat: val,
       });
     },
     [onChange, options]
@@ -43,34 +50,32 @@ export function FormatTimeTransfomerEditor({ input, options, onChange }: Transfo
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Mode" labelWidth={8} grow>
-          <Select options={modes} value={options.mode ?? JoinMode.outer} onChange={onSetMode} />
-        </InlineField>
-
-        <InlineField label="Format" labelWidth={8} grow>
-          <Input onChange={() => {}} />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Field" labelWidth={8} grow>
+        <InlineField label="Time Field" labelWidth={15} grow>
           <Select
-            options={fieldNames}
-            value={options.byField}
+            options={timeFields}
+            value={options.timeField}
             onChange={onSelectField}
             placeholder="time"
             isClearable
           />
+        </InlineField>
+
+        <InlineField 
+          label="Format" 
+          labelWidth={10}
+          tooltip="The output format for the field specified as a moment.js format string."
+          grow>
+          <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>
       </InlineFieldRow>
     </>
   );
 }
 
-export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByFieldOptions> = {
-  id: DataTransformerID.joinByField,
-  aliasIds: [DataTransformerID.seriesToColumns],
+export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTimeTransformerOptions> = {
+  id: DataTransformerID.formatTime,
   editor: FormatTimeTransfomerEditor,
-  transformation: standardTransformers.joinByFieldTransformer,
-  name: standardTransformers.joinByFieldTransformer.name,
-  description: standardTransformers.joinByFieldTransformer.description,
+  transformation: standardTransformers.formatTimeTransformer,
+  name: standardTransformers.formatTimeTransformer.name,
+  description: standardTransformers.formatTimeTransformer.description,
 };

@@ -29,6 +29,7 @@ import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/Pr
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
+import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
@@ -59,6 +60,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
+    formatTimeTransformerRegistryItem,
     ...(config.featureToggles.timeSeriesTable ? [timeSeriesTableTransformRegistryItem] : []),
   ];
 };
