@@ -317,9 +317,9 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:        "onlyExternalOrgRoleSync",
-			Description: "Prohibits a user from changing organization roles synced with external auth providers",
-			Stage:       FeatureStageExperimental,
+			Name:        "gcomOnlyExternalOrgRoleSync",
+			Description: "Prohibits a user from changing organization roles synced with Grafana Cloud auth provider",
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAuthnzSquad,
 		},
 		{

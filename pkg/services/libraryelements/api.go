@@ -112,7 +112,12 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
-	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
+	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser,
+		model.GetLibraryElementCommand{
+			UID:        web.Params(c.Req)[":uid"],
+			FolderName: dashboards.RootFolderName,
+		},
+	)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
 	}
