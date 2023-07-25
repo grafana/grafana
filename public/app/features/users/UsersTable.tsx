@@ -5,6 +5,7 @@ import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
@@ -56,8 +57,14 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
         <tbody>
           {users.map((user, index) => {
             let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
-            const isUserSynced = user?.isExternallySynced;
-            basicRoleDisabled = isUserSynced || basicRoleDisabled;
+            let authLabel = Array.isArray(user.authLabels) && user.authLabels.length > 0 ? user.authLabels[0] : '';
+            // A GCom specific feature toggle for role locking has been introduced, as the previous implementation had a bug with locking down external users synced through GCom (https://github.com/grafana/grafana/pull/72044)
+            // Remove this conditional once FlagGcomOnlyExternalOrgRoleSync feature toggle has been removed
+            if (authLabel !== 'grafana.com' || config.featureToggles.gcomOnlyExternalOrgRoleSync) {
+              const isUserSynced = user?.isExternallySynced;
+              basicRoleDisabled = isUserSynced || basicRoleDisabled;
+            }
+
             return (
               <tr key={`${user.userId}-${index}`}>
                 <td className="width-2 text-center">

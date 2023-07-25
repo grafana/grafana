@@ -45,6 +45,7 @@ logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,false,true
 lokiQuerySplitting,GA,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false,false
+gcomOnlyExternalOrgRoleSync,GA,@grafana/grafana-authnz-team,false,false,false,false
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,experimental,@grafana/app-o11y,false,false,false,true
 prometheusResourceBrowserCache,experimental,@grafana/observability-metrics,false,false,false,true
