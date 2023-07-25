@@ -172,6 +172,22 @@ The Metrics Explorer is a new feature to enhance metric browsing in the Promethe
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Metrics explorer" >}}
 
+## Redshift And Athena: Async Query Data Support
+
+<!-- Isabella Siu, Kevin Yu, Andrés Martínez -->
+
+_Generally available in all editions of Grafana._
+
+Async Query Data Support in Redshift and Athena makes queries over multiple requests (starting, checking its status, and fetching the results) instead of single request queries. This is useful for queries that can potentially run for a long time and timeout. This feature has been available behind a feature toggle for some time and is now be generally available and enabled by default.
+
+## Redshift And Athena: Async Query Caching
+
+<!-- Isabella Siu -->
+
+_Experimental in Enterprise, Cloud Pro, and Cloud Advanced_
+
+This adds support for query caching of async queries in the Athena and Redshift Data Source Plugins. To test this feature enable both the `useCachingService` and `awsAsyncQueryCaching` feature toggles. If you’re using Grafana Cloud and would like to enable this experimental feature, please contact customer support.
+
 ### CloudWatch Logs Monaco query editor
 
 <!-- Isabella Siu, Kevin Yu -->
@@ -260,6 +276,10 @@ We’ve made the following changes to alert management.
 Adds support for different time zones and locations as well as a visual selector for week days, improvement to loading and error handling, and better validation for time ranges.
 
 {{< figure src="/media/docs/alerting/timezone-support.png" max-width="750px" caption="Time zone support" >}}
+
+#### Label colors for alert instances
+
+Labels are colored according to the label key, which makes it easier to track and view labels across alert instances.
 
 ## Authentication and authorization
 
