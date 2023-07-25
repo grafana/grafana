@@ -620,7 +620,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   }
 
   isAngularPlugin(): boolean {
-    return this.plugin?.meta.angularDetected ?? false;
+    return (this.plugin && this.plugin.angularPanelCtrl) !== undefined || (this.plugin?.meta?.angularDetected ?? false);
   }
 
   destroy() {
