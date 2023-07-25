@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -432,6 +433,17 @@ func TestLoader_Load(t *testing.T) {
 					BaseURL:       "public/plugins/test-app",
 				},
 			},
+		},
+		{
+			name:  "Skips a core plugin",
+			class: plugins.ClassCore,
+			cfg: &config.Cfg{
+				Features:             featuremgmt.WithFeatures(featuremgmt.FlagDecoupleCorePlugins),
+				SkipCorePlugins:      map[string]bool{"test-app": true},
+				PluginsAllowUnsigned: []string{"test-app"},
+			},
+			pluginPaths: []string{"../testdata/test-app-with-includes"},
+			want:        []*plugins.Plugin{},
 		},
 	}
 	for _, tt := range tests {
@@ -1494,7 +1506,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg.DevMode),
+		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
 		signature.ProvideService(statickey.New()), angularInspector, &fakes.FakeOauthService{})
 
 	for _, cb := range cbs {

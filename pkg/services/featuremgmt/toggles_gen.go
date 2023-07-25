@@ -402,4 +402,8 @@ const (
 	// FlagSplitScopes
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
+
+	// FlagDecoupleCorePlugins
+	// Skip loading core plugins on startup to load them as external
+	FlagDecoupleCorePlugins = "decoupleCorePlugins"
 )

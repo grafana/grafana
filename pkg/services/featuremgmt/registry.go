@@ -678,5 +678,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "decoupleCorePlugins",
+			Description:     "Skip loading core plugins on startup to load them as external",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
 	}
 )
