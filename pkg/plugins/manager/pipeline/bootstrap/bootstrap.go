@@ -10,14 +10,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 )
 
+// Bootstrapper is responsible for the Bootstrap stage of the plugin loader pipeline.
 type Bootstrapper interface {
 	Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
 }
 
+// ConstructFunc is the function used for the Construct step of the Bootstrap stage.
 type ConstructFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
 
+// DecorateFunc is the function used for the Decorate step of the Bootstrap stage.
 type DecorateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
 
+// Bootstrap implements the Bootstrapper interface.
 type Bootstrap struct {
 	constructStep ConstructFunc
 	decorateSteps []DecorateFunc
@@ -29,6 +33,7 @@ type Opts struct {
 	DecorateFuncs []DecorateFunc
 }
 
+// New returns a new Bootstrap stage.
 func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 	if opts.ConstructFunc == nil {
 		opts.ConstructFunc = DefaultConstructFunc(signature.DefaultCalculator(), assetpath.DefaultService(cfg))
@@ -41,10 +46,11 @@ func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 	return &Bootstrap{
 		constructStep: opts.ConstructFunc,
 		decorateSteps: opts.DecorateFuncs,
-		log:           log.New("plugins.discovery"),
+		log:           log.New("plugins.bootstrap"),
 	}
 }
 
+// Bootstrap will execute the Construct and Decorate steps of the Bootstrap stage.
 func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	ps, err := b.constructStep(ctx, src, found)
 	if err != nil {

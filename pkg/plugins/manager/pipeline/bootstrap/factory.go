@@ -10,10 +10,15 @@ import (
 
 type pluginFactoryFunc func(p plugins.FoundPlugin, pluginClass plugins.Class, sig plugins.Signature) (*plugins.Plugin, error)
 
+// DefaultPluginFactory is the default plugin factory used by the Construct step of the Bootstrap stage.
+//
+// It creates the plugin using plugin information found during the Discovery stage and makes use of the assetPath
+// service to set the plugin's BaseURL, Module, Logos and Screenshots fields.
 type DefaultPluginFactory struct {
 	assetPath *assetpath.Service
 }
 
+// NewDefaultPluginFactory returns a new DefaultPluginFactory.
 func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory {
 	return &DefaultPluginFactory{assetPath: assetPath}
 }
@@ -67,5 +72,5 @@ func setImages(p *plugins.Plugin, assetPath *assetpath.Service) error {
 }
 
 func defaultLogoPath(pluginType plugins.Type) string {
-	return "public/img/icn-" + string(pluginType) + ".svg"
+	return fmt.Sprintf("public/img/icn-%s.svg", string(pluginType))
 }

@@ -10,26 +10,34 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
+// DefaultFindFunc is the default function used to find plugins during the Discovery stage. It will scan the local
+// filesystem for plugins.
 var DefaultFindFunc = func(cfg *config.Cfg) FindFunc {
 	return finder.NewLocalFinder(cfg.DevMode).Find
 }
 
+// DefaultFindFilterFunc is the default function used to filter plugins during the Discovery stage. It will not filter
+// any plugins, by simply returning the input.
 var DefaultFindFilterFunc = func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	return bundles, nil
 }
 
+// DuplicatePluginValidation is a filter step that will filter out any plugins that are already registered with the
+// registry. This includes both the primary plugin and any child plugins, which are matched using the plugin ID field.
 type DuplicatePluginValidation struct {
 	registry registry.Service
 	log      log.Logger
 }
 
+// NewDuplicatePluginFilterStep returns a new DuplicatePluginValidation.
 func NewDuplicatePluginFilterStep(registry registry.Service) *DuplicatePluginValidation {
 	return &DuplicatePluginValidation{
 		registry: registry,
-		log:      log.New("duplicate.checker"),
+		log:      log.New("plugins.dedupe"),
 	}
 }
 
+// Filter will filter out any plugins that are already registered with the registry.
 func (d *DuplicatePluginValidation) Filter(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	res := make([]*plugins.FoundBundle, 0, len(bundles))
 	for _, b := range bundles {

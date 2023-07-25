@@ -12,32 +12,38 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// DefaultConstructor implements the default ConstructFunc used for the Construct step of the Bootstrap stage.
+//
+// It uses a pluginFactoryFunc to create plugins and the signatureCalculator to calculate the plugin's signature state.
 type DefaultConstructor struct {
 	pluginFactoryFunc   pluginFactoryFunc
 	signatureCalculator plugins.SignatureCalculator
 	log                 log.Logger
 }
 
+// DefaultConstructFunc is the default ConstructFunc used for the Construct step of the Bootstrap stage.
 var DefaultConstructFunc = func(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
-	return NewDefaultConstructor(signatureCalculator, assetPath).Bootstrap
+	return NewDefaultConstructor(signatureCalculator, assetPath).Construct
 }
 
+// DefaultDecorateFuncs is the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
 var DefaultDecorateFuncs = []DecorateFunc{
 	AliasDecorateFunc,
 	AppDefaultNavURLDecorateFunc,
 	AppChildDecorateFunc,
 }
 
+// NewDefaultConstructor returns a new DefaultConstructor.
 func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *DefaultConstructor {
-	f := NewDefaultPluginFactory(assetPath)
 	return &DefaultConstructor{
-		pluginFactoryFunc:   f.createPlugin,
+		pluginFactoryFunc:   NewDefaultPluginFactory(assetPath).createPlugin,
 		signatureCalculator: signatureCalculator,
-		log:                 log.New("bootstrap"),
+		log:                 log.New("plugins.construct"),
 	}
 }
 
-func (c *DefaultConstructor) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+// Construct will calculate the plugin's signature state and create the plugin using the pluginFactoryFunc.
+func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	res := make([]*plugins.Plugin, 0, len(bundles))
 
 	for _, bundle := range bundles {
