@@ -1,3 +1,7 @@
 {
-  "extends": "./.config/tsconfig.json"
+  "extends": "./.config/tsconfig.json",
+  "compilerOptions": {
+    "typeRoots": []
+  },
+  "include": ["../../app/types/*.d.ts"]
 }
