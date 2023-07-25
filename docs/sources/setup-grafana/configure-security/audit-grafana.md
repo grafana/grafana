@@ -443,4 +443,11 @@ If you have multiple Grafana instances sending logs to the same Loki service or 
 
 ### Console exporter
 
-Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration]({{< relref "../configure-grafana#log" >}}) section of the documentation. Accessing the audit logs in this way is not recommended for production use.
+Audit logs are sent to the Grafana default logger. The audit logs use the `auditing.console` logger and are logged on `debug`-level, learn how to enable debug logging in the [log configuration]({{< relref "../configure-grafana#log" >}}) section of the documentation. Accessing the audit logs in this way is not recommended for production use. For production use you may want to consider using `filters` as follows.
+
+```ini
+[log]
+level = info
+# Only set level debug for the specific logger auditing.console
+filters = auditing.console:debug
+```
