@@ -14,6 +14,7 @@ import { AzureAuthSettings } from './AzureAuthSettings';
 import { hasCredentials, setDefaultCredentials, resetCredentials } from './AzureCredentialsConfig';
 import { DataSourcehttpSettingsOverhaul } from './DataSourceHttpSettingsOverhaul';
 import { PromSettings } from './PromSettings';
+import { AdvancedHttpSettings } from './overhaul/AdvancedHttpSettings';
 
 export const PROM_CONFIG_LABEL_WIDTH = 30;
 
@@ -84,6 +85,11 @@ export const ConfigEditor = (props: Props) => {
             title="Advanced settings"
             description="Additional settings are optional settings that can be configured for more control over your data source."
           >
+            <AdvancedHttpSettings
+              className={styles.advancedHTTPSettingsMargin}
+              config={options}
+              onChange={onOptionsChange}
+            />
             <AlertingSettingsOverhaul<PromOptions> options={options} onOptionsChange={onOptionsChange} />
             <PromSettings options={options} onOptionsChange={onOptionsChange} />
           </ConfigSection>
@@ -169,14 +175,19 @@ export function overhaulStyles(theme: GrafanaTheme2) {
       margin-bottom: 12px;
     `,
     advancedHTTPSettingsMargin: css`
-      margin: 24px 0 0 0;
-      padding: 0 0 32px 0;
+      margin: 24px 0 8px 0;
     `,
     advancedSettings: css`
       padding-top: 32px;
     `,
     alertingTop: css`
       margin-top: 40px !important;
+    `,
+    overhaulPageHeading: css`
+      font-weight: 400;
+    `,
+    container: css`
+      maxwidth: 578;
     `,
   };
 }

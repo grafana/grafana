@@ -4,12 +4,13 @@ import React from 'react';
 import { ConfigSubSection } from '@grafana/experimental';
 import { InlineField, Input, TagsInput } from '@grafana/ui';
 
+import { PROM_CONFIG_LABEL_WIDTH } from '../ConfigEditor';
+
 import { Config, OnChangeHandler } from './ConnectionSettings';
 
 // THIS FILE IS COPIED FROM GRAFANA/EXPERIMENTAL
-// BECAUSE IT IS NOT AVAILABLE IN GRAFANA YET
+// BECAUSE THE STYLES DO NOT MATCH THE PROM CONFIG
 // THE TYPES ARE WRITTEN THERE WHERE THEY ARE NOT AS STRICT
-// REPLACE THIS FILE WHEN IT BECOMES AVAILABLE IN GRAFANA
 // @ts-ignore
 export type Props<C extends Config = Config> = {
   config: C;
@@ -49,41 +50,44 @@ export const AdvancedHttpSettings: <C extends Config = Config>(props: Props<C>) 
   };
 
   return (
-    <ConfigSubSection title="Advanced HTTP settings" className={cx(styles.container, className)}>
-      <InlineField
-        htmlFor="advanced-http-cookies"
-        label="Allowed cookies"
-        labelWidth={24}
-        tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
-        disabled={config.readOnly}
-        grow
-      >
-        <TagsInput
-          id="advanced-http-cookies"
-          placeholder="New cookie (hit enter to add)"
-          tags={config.jsonData.keepCookies}
-          onChange={onCookiesChange}
-        />
-      </InlineField>
-
-      <InlineField
-        htmlFor="advanced-http-timeout"
-        label="Timeout"
-        labelWidth={24}
-        tooltip="HTTP request timeout in seconds"
-        disabled={config.readOnly}
-        grow
-      >
-        <Input
-          id="advanced-http-timeout"
-          type="number"
-          min={0}
-          placeholder="Timeout in seconds"
-          aria-label="Timeout in seconds"
-          value={config.jsonData.timeout}
-          onChange={onTimeoutChange}
-        />
-      </InlineField>
-    </ConfigSubSection>
+    <>
+      <ConfigSubSection title="Advanced HTTP settings" className={cx(styles.container, className)}>
+        <InlineField
+          htmlFor="advanced-http-cookies"
+          label="Allowed cookies"
+          labelWidth={PROM_CONFIG_LABEL_WIDTH}
+          tooltip="Grafana proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source."
+          disabled={config.readOnly}
+          grow
+        >
+          <TagsInput
+            className="width-20"
+            id="advanced-http-cookies"
+            placeholder="New cookie (hit enter to add)"
+            tags={config.jsonData.keepCookies}
+            onChange={onCookiesChange}
+          />
+        </InlineField>
+        <InlineField
+          htmlFor="advanced-http-timeout"
+          label="Timeout"
+          labelWidth={PROM_CONFIG_LABEL_WIDTH}
+          tooltip="HTTP request timeout in seconds"
+          disabled={config.readOnly}
+          grow
+        >
+          <Input
+            className="width-20"
+            id="advanced-http-timeout"
+            type="number"
+            min={0}
+            placeholder="Timeout in seconds"
+            aria-label="Timeout in seconds"
+            value={config.jsonData.timeout}
+            onChange={onTimeoutChange}
+          />
+        </InlineField>
+      </ConfigSubSection>
+    </>
   );
 };

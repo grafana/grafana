@@ -1,15 +1,13 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
-import { Auth, convertLegacyAuthProps } from '@grafana/experimental';
+import { Auth, ConnectionSettings, convertLegacyAuthProps } from '@grafana/experimental';
 import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';
 import { AzureAuthSettings } from '@grafana/ui/src/components/DataSourceSettings/types';
 
 import { PromOptions } from '../types';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
-import { AdvancedHttpSettings } from './overhaul/AdvancedHttpSettings';
-import { ConnectionSettings } from './overhaul/ConnectionSettings';
 import { CustomMethod } from './overhaul/types';
 
 type Props = {
@@ -169,8 +167,13 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         // otherwise pass the id from converted legacy data
         selectedMethod={returnSelectedMethod()}
       />
-      <AdvancedHttpSettings className={styles.advancedHTTPSettingsMargin} config={options} onChange={onOptionsChange} />
-      {secureSocksDSProxyEnabled && <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />}
+      <div className={styles.sectionBottomPadding} />
+      {secureSocksDSProxyEnabled && (
+        <>
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          <div className={styles.sectionBottomPadding} />
+        </>
+      )}
     </>
   );
 };
