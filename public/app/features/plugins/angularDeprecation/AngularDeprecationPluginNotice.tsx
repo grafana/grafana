@@ -66,7 +66,12 @@ export function AngularDeprecationPluginNotice(props: Props): React.ReactElement
           </li>
           {showPluginDetailsLink && pluginId ? (
             <li>
-              <a href={`plugins/${encodeURIComponent(pluginId)}`} className="external-link">
+              <a
+                href={`plugins/${encodeURIComponent(pluginId)}`}
+                className="external-link"
+                target="_blank"
+                rel="noreferrer"
+              >
                 View plugin details
               </a>
             </li>
