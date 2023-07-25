@@ -29,11 +29,12 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Login:          "admin",
 	})
 
+	otherOrgId := ctx.createOrg("New organization")
 	otherOrgUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin2",
 		Login:          "admin2",
-		OrgID:          2,
+		OrgID:          otherOrgId,
 	})
 
 	viewerUser := ctx.createUser(user.CreateUserCommand{
@@ -97,7 +98,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Name:  "with-correlations",
 		UID:   dsWithCorrelations.UID, // reuse UID
 		Type:  "loki",
-		OrgID: 2,
+		OrgID: otherOrgId,
 	}
 	ctx.createDs(createDsCommand)
 
