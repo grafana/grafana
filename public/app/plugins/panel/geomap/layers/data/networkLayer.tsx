@@ -24,6 +24,7 @@ import { getLocationMatchers } from 'app/features/geo/utils/location';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
+import { TooltipMode, TooltipOptions } from '../../panelcfg.gen';
 import { defaultStyleConfig, StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
@@ -32,13 +33,15 @@ import { getStyleDimension } from '../../utils/utils';
 export interface NetworkConfig {
   style: StyleConfig;
   showLegend?: boolean;
+  tooltip?: TooltipOptions;
   edgeStyle: StyleConfig;
   arrow?: 0 | 1 | -1 | 2;
 }
 
 const defaultOptions: NetworkConfig = {
   style: defaultStyleConfig,
-  showLegend: true,
+  showLegend: false,
+  tooltip: { mode: TooltipMode.None },
   edgeStyle: defaultStyleConfig,
   arrow: 0,
 };
