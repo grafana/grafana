@@ -18,7 +18,7 @@ var DefaultFindFunc = func(cfg *config.Cfg) FindFunc {
 
 // DefaultFindFilterFunc is the default function used to filter plugins during the Discovery stage. It will not filter
 // any plugins, by simply returning the input.
-var DefaultFindFilterFunc = func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+var DefaultFindFilterFunc = func(_ context.Context, _ plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	return bundles, nil
 }
 

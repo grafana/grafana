@@ -11,6 +11,6 @@
 // - func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 //
 // The Filter step is implemented by the FindFilterFunc type.
-// - func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
+// - func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
 
 package discovery

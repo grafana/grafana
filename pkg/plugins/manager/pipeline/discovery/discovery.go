@@ -17,7 +17,7 @@ type Discoverer interface {
 type FindFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 
 // FindFilterFunc is the function used for the Filter step of the Discovery stage.
-type FindFilterFunc func(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
+type FindFilterFunc func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error)
 
 // Discovery implements the Discoverer interface.
 type Discovery struct {
@@ -55,7 +55,7 @@ func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*
 		return nil, err
 	}
 
-	found, err = d.findFilterStep(ctx, found)
+	found, err = d.findFilterStep(ctx, src.PluginClass(ctx), found)
 	if err != nil {
 		return nil, err
 	}
