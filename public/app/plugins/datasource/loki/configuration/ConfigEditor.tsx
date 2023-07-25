@@ -10,7 +10,7 @@ import {
   AdvancedHttpSettings,
 } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
+import { SecureSocksProxySettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 
 import { LokiOptions } from '../types';
