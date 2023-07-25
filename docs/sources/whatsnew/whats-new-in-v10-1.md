@@ -243,6 +243,14 @@ Adds support for the following contact points when using an external Alertmanage
 
 Facilitates file provisioning and maintenance for contact points.This feature implements the provisioning API export endpoints for exporting contact points as well as adding export buttons to the contact point list in the UI.
 
+### Notification policies
+
+We’ve made the following changes to notification policies.
+
+#### Notification policy provisioning file export
+
+Facilitates file provisioning and maintenance for notification policies.This feature implements the provisioning API export endpoints for exporting notification policies as well as adding an export button to the root notification policy in the UI.
+
 ### Alert management
 
 We’ve made the following changes to alert management.
