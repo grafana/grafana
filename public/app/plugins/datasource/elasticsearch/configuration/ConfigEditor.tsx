@@ -33,8 +33,6 @@ export const ConfigEditor = (props: Props) => {
     }
   }, [onOptionsChange, options]);
 
-  config.sigV4AuthEnabled = true;
-
   const authProps = convertLegacyAuthProps({
     config: options,
     onChange: onOptionsChange,
