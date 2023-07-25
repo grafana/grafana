@@ -19,10 +19,10 @@ export const PROM_CONFIG_LABEL_WIDTH = 30;
 
 export type Props = DataSourcePluginOptionsEditorProps<PromOptions>;
 
-export const prometheusAuthOverhaul = true;
-
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
+
+  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
 
   // use ref so this is evaluated only first time it renders and the select does not disappear suddenly.
   const showAccessOptions = useRef(props.options.access === 'direct');
@@ -46,7 +46,7 @@ export const ConfigEditor = (props: Props) => {
         </Alert>
       )}
       {/* WRAP IN FEATURE TOGGLE */}
-      {prometheusAuthOverhaul ? (
+      {prometheusConfigOverhaulAuth ? (
         <>
           <DataSourceDescription
             dataSourceName="Prometheus"
@@ -76,7 +76,7 @@ export const ConfigEditor = (props: Props) => {
           urlDocs={docsTip()}
         />
       )}
-      {prometheusAuthOverhaul ? (
+      {prometheusConfigOverhaulAuth ? (
         <>
           <hr />
           <ConfigSection

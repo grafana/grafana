@@ -40,6 +40,12 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
     }
   };
 
+  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
+
+  const labelWidth = prometheusConfigOverhaulAuth ? 24 : 26;
+
+  const classWidth = prometheusConfigOverhaulAuth ? 'width-20' : 'width-30';
+
   return (
     <>
       <h6>Azure authentication</h6>
@@ -53,15 +59,15 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
       <h6>Azure configuration</h6>
       <div className="gf-form-group">
         <InlineFieldRow>
-          <InlineField labelWidth={24} label="Override AAD audience" disabled={dataSourceConfig.readOnly}>
+          <InlineField labelWidth={labelWidth} label="Override AAD audience" disabled={dataSourceConfig.readOnly}>
             <InlineSwitch value={overrideAudienceChecked} onChange={onOverrideAudienceChange} />
           </InlineField>
         </InlineFieldRow>
         {overrideAudienceChecked && (
           <InlineFieldRow>
-            <InlineField labelWidth={24} label="Resource ID" disabled={dataSourceConfig.readOnly}>
+            <InlineField labelWidth={labelWidth} label="Resource ID" disabled={dataSourceConfig.readOnly}>
               <Input
-                className="width-20"
+                className={classWidth}
                 value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
                 onChange={onResourceIdChange}
               />

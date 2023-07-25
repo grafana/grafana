@@ -6,6 +6,10 @@ import { InlineField, Input, TagsInput } from '@grafana/ui';
 
 import { Config, OnChangeHandler } from './ConnectionSettings';
 
+// THIS FILE IS COPIED FROM GRAFANA/EXPERIMENTAL
+// BECAUSE IT IS NOT AVAILABLE IN GRAFANA YET
+// THE TYPES ARE WRITTEN THERE WHERE THEY ARE NOT AS STRICT
+// REPLACE THIS FILE WHEN IT BECOMES AVAILABLE IN GRAFANA
 // @ts-ignore
 export type Props<C extends Config = Config> = {
   config: C;

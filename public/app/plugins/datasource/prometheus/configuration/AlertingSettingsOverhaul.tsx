@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
@@ -19,9 +20,13 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
 
+  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
+
+  const space = prometheusConfigOverhaulAuth ? styles.alertingTop : '';
+
   return (
     <>
-      <h3 className={`page-heading ${styles.alertingTop}`}>Alerting</h3>
+      <h3 className={`page-heading ${space}`}>Alerting</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
