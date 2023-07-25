@@ -295,7 +295,7 @@ This means that roles can be manually set for the duration of a user's session, 
 With Grafana 10.1, you can no longer manually update an externally managed organization role. Role locking was previously behind `onlyExternalOrgRoleSync` feature toggle.
 We have removed this feature toggle with Grafana 10.1, and made externally synced role locking the default behaviour.
 
-If you prefer to manage your users' organization roles manually, enable the `skip_org_role_sync` option in the Grafana configuration for your OAuth provider.
+If you prefer to manage your users' organization roles manually, enable the `skip_org_role_sync` option in the Grafana configuration for your authentication provider.
 
 Refer to the [release notes of Grafana 9.5]({{< relref "../whatsnew/whats-new-in-v9-5/#auth-lock-organization-roles-synced-from-auth-providers" >}}) for context on the previous work done to build up to this change.
 
