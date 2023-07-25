@@ -2,23 +2,30 @@
 aliases:
   - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-description: Create Grafana managed alert rule
+description: Configure alert rules
 keywords:
   - grafana
   - alerting
   - guide
   - rules
   - create
+  - grafana-managed
+  - data source-managed
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Create Grafana-managed alert rules
+title: Configure alert rules
 weight: 400
 ---
 
-# Create Grafana-managed alert rules
+# Configure alert rules
+
+**Note:**
+Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
+
+Alert rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
 
 Grafana-managed rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of our supported data sources. In addition to supporting multiple data sources, you can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported. This is the only type of rule that allows alerting from multiple data sources in a single rule definition.
 
