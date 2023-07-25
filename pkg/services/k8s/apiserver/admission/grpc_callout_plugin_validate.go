@@ -19,12 +19,13 @@ package admission
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"io"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"k8s.io/apiserver/pkg/admission"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const PluginNameGrpcCalloutPluginValidate = "GrpcCalloutPluginValidate"
@@ -34,16 +35,15 @@ var (
 )
 
 // Register registers a plugin
-func RegisterGrpcCalloutPluginValidate(plugins *admission.Plugins, pluginsClient plugins.Client, pCtxProvider *plugincontext.Provider) {
+func RegisterGrpcCalloutPluginValidate(plugins *admission.Plugins, pluginsClient plugins.Client) {
 	plugins.Register(PluginNameGrpcCalloutPluginValidate, func(config io.Reader) (admission.Interface, error) {
-		return NewGrpcCalloutPluginValidate(pluginsClient, pCtxProvider), nil
+		return NewGrpcCalloutPluginValidate(pluginsClient), nil
 	})
 }
 
 // example of admission plugin that will deny any resource with name "deny"
 type grpcCalloutPluginValidate struct {
 	pluginsClient plugins.Client
-	pCtxProvider  *plugincontext.Provider
 }
 
 var _ admission.ValidationInterface = grpcCalloutPluginValidate{}
@@ -57,16 +57,17 @@ func (g grpcCalloutPluginValidate) Send(response *backend.CallResourceResponse) 
 func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	// kind := a.GetKind()
 	if true { // kind.Group == "charandas.example.com" && kind.Kind == "TestObject"
-		g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
+		return g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
 			Path:   "/k8s/admission/mutation",
 			Method: "GET",
 			PluginContext: backend.PluginContext{
 				OrgID:                      0,
 				PluginID:                   "charandas-callbackadmissionexample-app",
-				User:                       nil,
-				AppInstanceSettings:        nil,
+				User:                       &backend.User{},
+				AppInstanceSettings:        &backend.AppInstanceSettings{},
 				DataSourceInstanceSettings: nil,
 			},
+			Body: []byte("{\"kind\":\"TestObject\",\"apiVersion\":\"charandas.example.com/v1\",\\}}"),
 		}, g)
 	}
 
@@ -80,9 +81,8 @@ func (grpcCalloutPluginValidate) Handles(operation admission.Operation) bool {
 }
 
 // NewGrpcCalloutPluginValidate creates an always deny admission handler
-func NewGrpcCalloutPluginValidate(pluginsClient plugins.Client, pCtxProvider *plugincontext.Provider) admission.Interface {
+func NewGrpcCalloutPluginValidate(pluginsClient plugins.Client) admission.Interface {
 	return &grpcCalloutPluginValidate{
 		pluginsClient: pluginsClient,
-		pCtxProvider:  pCtxProvider,
 	}
 }
