@@ -301,3 +301,24 @@ Grafana 10.1 now supports Google OIDC through the `Google` OAuth provider in add
 This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by using their Google groups.
 
 To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team Sync, refer to our [Google authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/google/" >}}).
+
+## Plugins
+
+### Angular deprecation changes
+
+<!-- Giuseppe Guerra, Plugins Platform -->
+
+_Generally available in all editions of Grafana._
+
+We've made the following updates in Grafana 10.1 to increase awareness of [Angular deprecation]({{< relref "../developers/angular_deprecation/" >}}) and its side effects in future releases of Grafana:
+
+#### UI changes
+
+- Added an "Angular" badge next to affected plugins in the plugins catalog.
+- Added an alert at the top of a plugin's page in the plugins catalog when browsing Angular plugins.
+
+#### Other changes
+
+- Angular Plugins will not be loaded if [angular_support_enabled]({{< relref "../setup-grafana/configure-grafana/#angular_support_enabled" >}}) is set to `false`.
+
+You can [refer to our documentation]({{< relref "../developers/angular_deprecation/" >}}) to learn more about Angular deprecation.
