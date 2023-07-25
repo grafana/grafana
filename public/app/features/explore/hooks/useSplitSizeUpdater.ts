@@ -1,19 +1,19 @@
 import { inRange } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useWindowSize } from 'react-use';
 
 import { useDispatch, useSelector } from 'app/types';
 
 import { splitSizeUpdateAction } from '../state/main';
 import { isSplit, selectPanesEntries } from '../state/selectors';
 
-export const useSplitSizeUpdater = (windowWidth: number) => {
+export const useSplitSizeUpdater = (minWidth: number) => {
   const dispatch = useDispatch();
+  const { width: windowWidth } = useWindowSize();
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const [rightPaneWidthRatio, setRightPaneWidthRatio] = useState(0.5);
-  const [widthCalc, setWidthCalc] = useState(0);
 
-  const minWidth = 200;
   const exploreState = useSelector((state) => state.explore);
 
   const updateSplitSize = (size: number) => {
@@ -32,17 +32,16 @@ export const useSplitSizeUpdater = (windowWidth: number) => {
     setRightPaneWidthRatio(size / windowWidth);
   };
 
-  useEffect(() => {
-    if (hasSplit) {
-      if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-        setWidthCalc(exploreState.maxedExploreId === panes[1][0] ? windowWidth - minWidth : minWidth);
-      } else if (exploreState.evenSplitPanes) {
-        setWidthCalc(Math.floor(windowWidth / 2));
-      } else if (rightPaneWidthRatio !== undefined) {
-        setWidthCalc(windowWidth * rightPaneWidthRatio);
-      }
+  let widthCalc = 0;
+  if (hasSplit) {
+    if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
+      widthCalc = exploreState.maxedExploreId === panes[1][0] ? windowWidth - minWidth : minWidth;
+    } else if (exploreState.evenSplitPanes) {
+      widthCalc = Math.floor(windowWidth / 2);
+    } else if (rightPaneWidthRatio !== undefined) {
+      widthCalc = windowWidth * rightPaneWidthRatio;
     }
-  }, [windowWidth, hasSplit, exploreState.evenSplitPanes, exploreState.maxedExploreId, panes, rightPaneWidthRatio]);
+  }
 
-  return { updateSplitSize, widthCalc };
+  return { updateSplitSize, widthCalc, minWidth };
 };

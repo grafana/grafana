@@ -22,11 +22,11 @@ describe('useSplitSizeUpdater', () => {
       },
     });
 
-    const windowWidth = 1000;
+    const minWidth = 200;
 
     const dispatchMock = jest.fn().mockImplementation(store.dispatch);
 
-    const { result } = renderHook(() => useSplitSizeUpdater(windowWidth), {
+    const { result } = renderHook(() => useSplitSizeUpdater(minWidth), {
       wrapper: ({ children }: { children: ReactNode }) => (
         <TestProvider store={{ ...store, dispatch: dispatchMock }}>{children}</TestProvider>
       ),
@@ -37,7 +37,7 @@ describe('useSplitSizeUpdater', () => {
       result.current.updateSplitSize(450);
 
       expect(dispatchMock).toHaveBeenCalledWith(splitSizeUpdateAction({ largerExploreId: undefined }));
-      expect(result.current.widthCalc).toBe(500);
+      expect(result.current.widthCalc).toBe(512);
     });
 
     // 2. Left pane is larger

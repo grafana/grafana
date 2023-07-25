@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
-import { useWindowSize } from 'react-use';
 
 import { ErrorBoundaryAlert } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
@@ -39,9 +38,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useExplorePageTitle(props.queryParams);
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
-  const { width: windowWidth } = useWindowSize();
-  const { updateSplitSize, widthCalc } = useSplitSizeUpdater(windowWidth);
-  const minWidth = 200;
+  const { updateSplitSize, widthCalc, minWidth } = useSplitSizeUpdater(200);
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
