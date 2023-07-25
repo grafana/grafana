@@ -17,6 +17,7 @@ import {
   FrameGeometrySourceMode,
   EventBus,
   DataFrame,
+  PluginState,
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
@@ -69,6 +70,8 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   isBaseMap: false,
   showLocation: true,
   hideOpacity: true,
+  state: PluginState.beta,
+  
 
   /**
    * Function that configures transformation and returns a transformer
