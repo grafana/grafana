@@ -4,6 +4,7 @@ import { makeNewDashboardRequestBody } from './utils/makeDashboard';
 
 const NUM_ROOT_FOLDERS = 60;
 const NUM_ROOT_DASHBOARDS = 60;
+const NUM_NESTED_FOLDERS = 60;
 const NUM_NESTED_DASHBOARDS = 60;
 
 describe('Dashboard browse (nested)', () => {
@@ -21,7 +22,7 @@ describe('Dashboard browse (nested)', () => {
           method: 'POST',
           url: '/api/folders',
           body: {
-            title: `Empty folder ${i.toString().padStart(2, '0')}`,
+            title: `Root folder ${i.toString().padStart(2, '0')}`,
           },
           headers: {
             'Content-Type': 'application/json',
@@ -48,13 +49,13 @@ describe('Dashboard browse (nested)', () => {
         });
     }
 
-    // Add nested dashboards under Folder 00
+    // Add folder with children
     e2e()
       .request({
         method: 'POST',
         url: '/api/folders',
         body: {
-          title: 'A folder with dashboards',
+          title: 'A root folder with children',
         },
         headers: {
           'Content-Type': 'application/json',
@@ -63,11 +64,26 @@ describe('Dashboard browse (nested)', () => {
       .then((response) => {
         const folderUid = response.body.uid;
         folderUIDsToCleanUp.push(folderUid);
+        // Add nested folders
+        for (let i = 0; i < NUM_NESTED_FOLDERS; i++) {
+          e2e().request({
+            method: 'POST',
+            url: '/api/folders',
+            body: {
+              title: `Nested folder ${i.toString().padStart(2, '0')}`,
+              parentUid: folderUid,
+            },
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        }
+        // Add nested dashboards
         for (let i = 0; i < NUM_NESTED_DASHBOARDS; i++) {
           e2e().request({
             method: 'POST',
             url: '/api/dashboards/db',
-            body: makeNewDashboardRequestBody(`Folder 00 dashboard ${i.toString().padStart(2, '0')}`, folderUid),
+            body: makeNewDashboardRequestBody(`Nested dashboard ${i.toString().padStart(2, '0')}`, folderUid),
             headers: {
               'Content-Type': 'application/json',
             },
