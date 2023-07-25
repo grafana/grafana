@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 type UnknownReceiverError struct {
@@ -166,21 +166,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
-	// and add back any that weren't updated.
-	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
-	// settings were modified.
-	if err := config.EncryptConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
-		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
-	}); err != nil {
-		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
-	}
-
-	if err := moa.Crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
-		return err
-	}
-
-	if err := config.AssignMissingConfigUIDs(); err != nil {
+	if err := moa.Crypto.ProcessReceivers(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
@@ -198,6 +184,13 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	return nil
+}
+
+type provisioningStore interface {
+	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
 
 func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableUserConfig, org int64) (definitions.GettableUserConfig, error) {
