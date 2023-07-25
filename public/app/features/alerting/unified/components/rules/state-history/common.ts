@@ -113,20 +113,24 @@ export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelDa
     panelDataProcessed.alertState?.dashboardId &&
     panelDataProcessed.alertState?.panelId
   ) {
-    // fetch data from Loki state history
-    let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
-      panelID: panelDataProcessed.request?.panelId,
-      dashboardUID: panelDataProcessed.request?.dashboardUID,
-      from: panelDataProcessed.timeRange.from.unix(),
-      to: panelDataProcessed.timeRange.to.unix(),
-      limit: 250,
-    });
-    const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
-    const clonedPanel = cloneDeep(panelDataProcessed);
-    clonedPanel.annotations = panelDataProcessed.annotations
-      ? panelDataProcessed.annotations.concat(records.dataFrames)
-      : panelDataProcessed.annotations;
-    return clonedPanel;
+    try {
+      // fetch data from Loki state history
+      let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
+        panelID: panelDataProcessed.request?.panelId,
+        dashboardUID: panelDataProcessed.request?.dashboardUID,
+        from: panelDataProcessed.timeRange.from.unix(),
+        to: panelDataProcessed.timeRange.to.unix(),
+        limit: 250,
+      });
+      const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
+      const clonedPanel = cloneDeep(panelDataProcessed);
+      clonedPanel.annotations = panelDataProcessed.annotations
+        ? panelDataProcessed.annotations.concat(records.dataFrames)
+        : panelDataProcessed.annotations;
+      return clonedPanel;
+    } catch (error) {
+      return panelDataProcessed;
+    }
   }
   return panelDataProcessed;
 };
