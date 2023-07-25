@@ -95,6 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
+  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }
@@ -703,6 +704,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onPermalinkClick={this.onPermalinkClick}
                   permalinkedRowId={this.props.panelState?.logs?.id}
                   scrollIntoView={this.scrollIntoView}
+                  isFilterLabelActive={this.props.isFilterLabelActive}
                 />
               </div>
             )}
