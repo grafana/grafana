@@ -1,5 +1,5 @@
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
-import { FUNCTIONS } from '../../../promql';
+import { FUNCTIONS, RATE_RANGES } from '../../../promql';
 
 import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
@@ -57,20 +57,10 @@ async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvid
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
 
-const DURATION_COMPLETIONS: Completion[] = [
-  '$__interval',
-  '$__range',
-  '$__rate_interval',
-  '1m',
-  '5m',
-  '10m',
-  '30m',
-  '1h',
-  '1d',
-].map((text) => ({
+const DURATION_COMPLETIONS: Completion[] = RATE_RANGES.map((text) => ({
   type: 'DURATION',
-  label: text,
-  insertText: text,
+  label: text.label,
+  insertText: text.label,
 }));
 
 async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Completion[]> {
