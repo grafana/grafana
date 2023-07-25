@@ -461,6 +461,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       return;
     }
 
+    // if the newly loaded content is part of the initial load of `above` and `below`,
+    // we scroll to center, to keep the chosen log-row centered
+    if (loadCountRef.current.above <= 1 && loadCountRef.current.below <= 1) {
+      scrollToCenter();
+      return;
+    }
+
     const prevScrollHeight = prevScrollHeightRef.current;
     const currentHeight = scrollE.scrollHeight;
     prevScrollHeightRef.current = currentHeight;
