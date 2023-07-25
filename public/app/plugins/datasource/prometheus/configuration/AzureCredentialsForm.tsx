@@ -237,7 +237,7 @@ export const AzureCredentialsForm = (props: Props) => {
                 <InlineFormLabel className="width-12">Client Secret</InlineFormLabel>
                 <div className="width-15">
                   <Input
-                    className="width-30"
+                    className="width-20"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={credentials.clientSecret || ''}
                     onChange={onClientSecretChange}
@@ -254,7 +254,7 @@ export const AzureCredentialsForm = (props: Props) => {
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel className="width-12">Default Subscription</InlineFormLabel>
-              <div className="width-25">
+              <div className="width-20">
                 <Select
                   value={
                     credentials.defaultSubscriptionId
