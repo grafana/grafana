@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import { css } from '@emotion/css';
+import React, { useEffect } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
@@ -10,7 +11,7 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
-import { Alert, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
+import { Alert, SecureSocksProxySettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 import { config } from 'app/core/config';
 
@@ -47,11 +48,6 @@ export const ConfigEditor = (props: Props) => {
         component: <SIGV4ConnectionConfig {...props} />,
       },
     ];
-    authProps.onAuthMethodSelect = (method) => {
-      authProps.onAuthMethodSelect(method);
-      options.jsonData.sigV4Auth = method === 'custom-sigv4';
-      onOptionsChange(options);
-    };
     authProps.selectedMethod = options.jsonData.sigV4Auth ? 'custom-sigv4' : authProps.selectedMethod;
   }
 
@@ -70,7 +66,15 @@ export const ConfigEditor = (props: Props) => {
       <Divider />
       <ConnectionSettings config={options} onChange={onOptionsChange} />
       <Divider />
-      <Auth {...authProps} />
+      <div className={options.jsonData.sigV4Auth ? styles.sigV4authContainer : ''}>
+        <Auth
+          {...authProps}
+          onAuthMethodSelect={(method) => {
+            options.jsonData.sigV4Auth = method === 'custom-sigv4';
+            authProps.onAuthMethodSelect(method);
+          }}
+        />
+      </div>
       <Divider />
       <ConfigSection
         title="Additional settings"
@@ -110,4 +114,12 @@ export const ConfigEditor = (props: Props) => {
       </ConfigSection>
     </>
   );
+};
+
+const styles = {
+  sigV4authContainer: css`
+    & > div {
+      max-width: 100%;
+    }
+  `,
 };
