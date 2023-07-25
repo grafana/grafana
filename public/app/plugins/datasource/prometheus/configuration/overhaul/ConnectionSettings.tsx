@@ -71,7 +71,7 @@ export const ConnectionSettings: <C extends Config = Config>(props: Props<C>) =>
         >
           <Input
             id="connection-url"
-            aria-label="Data source connection URL"
+            aria-label="Datasource HTTP settings url"
             onChange={(event) =>
               onChange({
                 ...config,
