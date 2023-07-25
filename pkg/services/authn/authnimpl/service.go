@@ -155,7 +155,7 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableDisabledUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
 		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
@@ -270,6 +270,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()

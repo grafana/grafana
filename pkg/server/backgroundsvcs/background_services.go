@@ -28,7 +28,6 @@ import (
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchV2"
-	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	samanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
@@ -48,7 +47,7 @@ func ProvideBackgroundServiceRegistry(
 	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
-	grpcServerProvider grpcserver.Provider, secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
+	grpcServerProvider grpcserver.Provider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service,
 	publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever,
@@ -84,7 +83,6 @@ func ProvideBackgroundServiceRegistry(
 		saService,
 		authInfoService,
 		processManager,
-		secretMigrationProvider,
 		loginAttemptService,
 		bundleService,
 		publicDashboardsMetric,
