@@ -285,7 +285,7 @@ export enum AlignmentTypes {
 }
 
 /**
- * @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+ * @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
  */
 export interface LegacyCloudMonitoringAnnotationQuery {
   /**
