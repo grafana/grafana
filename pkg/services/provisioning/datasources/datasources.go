@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	jsoniter "github.com/json-iterator/go"
-	"golang.org/x/exp/slices"
 )
 
 type Store interface {
@@ -57,8 +56,8 @@ func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore Cor
 	}
 }
 
-func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error {
-	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, cfg.Datasources); err != nil {
+func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultimatelyDeleted map[DataSourceMapKey]bool) error {
+	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, ultimatelyDeleted); err != nil {
 		return err
 	}
 
@@ -121,14 +120,30 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 	return nil
 }
 
+type DataSourceMapKey struct {
+	Name  string
+	OrgId int64
+}
+
 func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath string) error {
 	configs, err := dc.cfgProvider.readConfig(ctx, configPath)
 	if err != nil {
 		return err
 	}
 
+	// Creates a list of data sources that will be ultimately deleted after provisioning finishes
+	ultimatelyDeletedMap := map[DataSourceMapKey]bool{}
 	for _, cfg := range configs {
-		if err := dc.apply(ctx, cfg); err != nil {
+		for _, ds := range cfg.DeleteDatasources {
+			ultimatelyDeletedMap[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = true
+		}
+		for _, ds := range cfg.Datasources {
+			ultimatelyDeletedMap[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = false
+		}
+	}
+
+	for _, cfg := range configs {
+		if err := dc.apply(ctx, cfg, ultimatelyDeletedMap); err != nil {
 			return err
 		}
 	}
@@ -180,26 +195,19 @@ func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID 
 	return createCommand, nil
 }
 
-func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, dsToBeAdded []*upsertDataSourceFromConfig) error {
-	var uidsToBeAdded []string
-	for _, ds := range dsToBeAdded {
-		uidsToBeAdded = append(uidsToBeAdded, ds.UID)
-	}
-
+func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, ultimatelyDeleted map[DataSourceMapKey]bool) error {
 	for _, ds := range dsToDelete {
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
-		dataSource, err := dc.store.GetDataSource(ctx, getDsQuery)
+		_, err := dc.store.GetDataSource(ctx, getDsQuery)
 
 		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
 		}
 
-		var willBeAdded = false
-		if dataSource != nil {
-			willBeAdded = slices.Contains(uidsToBeAdded, dataSource.UID)
-		}
 		// Skip publishing the event as the data source is not really deleted, it will be re-created during provisioning
-		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: willBeAdded}
+		isUltimatelyDeleted := ultimatelyDeleted[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}]
+		dc.log.Info("ultimately deleted?", "name", ds.Name, "orgId", ds.OrgID, "deleted", isUltimatelyDeleted)
+		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: !isUltimatelyDeleted}
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
 		}
