@@ -130,7 +130,7 @@ Experimental features might be changed or removed without prior notice.
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                                                                                                       |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                |
 | `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
-| `decoupleCorePlugins`                       | Skip loading core plugins on startup to load them as external                                                                                                                            |
+| `decoupleCorePlugins`                       | Skip loading core plugins on startup in order to load them as external                                                                                                                   |
 
 ## Development feature toggles
 

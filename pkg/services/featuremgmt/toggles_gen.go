@@ -404,6 +404,6 @@ const (
 	FlagSplitScopes = "splitScopes"
 
 	// FlagDecoupleCorePlugins
-	// Skip loading core plugins on startup to load them as external
+	// Skip loading core plugins on startup in order to load them as external
 	FlagDecoupleCorePlugins = "decoupleCorePlugins"
 )

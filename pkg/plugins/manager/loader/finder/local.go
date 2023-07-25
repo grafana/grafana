@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,19 +24,19 @@ var (
 )
 
 type Local struct {
-	log log.Logger
-	cfg *config.Cfg
+	log        log.Logger
+	production bool
 }
 
-func NewLocalFinder(cfg *config.Cfg) *Local {
+func NewLocalFinder(devMode bool) *Local {
 	return &Local{
-		log: log.New("local.finder"),
-		cfg: cfg,
+		production: !devMode,
+		log:        log.New("local.finder"),
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg)
+	return NewLocalFinder(cfg.DevMode)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -80,15 +79,6 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 			continue
 		}
 
-		// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
-		// It could be loaded later as an external plugin.
-		if l.cfg.Features != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) &&
-			src.PluginClass(ctx) == plugins.ClassCore &&
-			l.cfg.SkipCorePlugins[plugin.ID] {
-			l.log.Info("Skipping plugin loading as it is a core plugin", "pluginID", plugin.ID)
-			continue
-		}
-
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
@@ -96,7 +86,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	for pluginDir, data := range foundPlugins {
 		var pluginFs plugins.FS
 		pluginFs = plugins.NewLocalFS(pluginDir)
-		if !l.cfg.DevMode {
+		if l.production {
 			// In prod, tighten up security by allowing access only to the files present up to this point.
 			// Any new file "sneaked in" won't be allowed and will acts as if the file did not exist.
 			var err error
