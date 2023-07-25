@@ -261,6 +261,10 @@ Adds support for different time zones and locations as well as a visual selector
 
 {{< figure src="/media/docs/alerting/timezone-support.png" max-width="750px" caption="Time zone support" >}}
 
+#### Label colors for alert instances
+
+Labels are colored according to the label key, which makes it easier to track and view labels across alert instances.
+
 ## Authentication and authorization
 
 ### OAuth role mapping enforcement
