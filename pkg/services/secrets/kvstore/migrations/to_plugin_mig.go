@@ -50,7 +50,7 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	if err == nil && hasStarted {
 		logger.Debug("starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
-		tmpStore, err := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore)
+		tmpStore, err := secretskvs.GetUnwrappedStore(s.secretsStore)
 		if err != nil {
 			tmpStore = s.secretsStore
 			logger.Warn("secret store is not cached, this is unexpected - continuing migration anyway.")

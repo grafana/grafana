@@ -169,3 +169,13 @@ func (s *service) getPluginStore(ctx context.Context) (SecretsKVStore, error) {
 	// (used for migration and in case a secret is not found).
 	return NewPluginSecretsKVStore(secretsPlugin, s.secretsService, namespacedKVStore, s.features, s.getSQLStore(), s.log), nil
 }
+
+func GetUnwrappedStore(kv SecretsKVStore) (SecretsKVStore, error) {
+	if s, ok := kv.(*service); ok {
+		return s.store, nil
+	}
+	if cache, ok := kv.(*CachedKVStore); ok {
+		return cache.store, nil
+	}
+	return nil, errSecretStoreIsNotCached
+}

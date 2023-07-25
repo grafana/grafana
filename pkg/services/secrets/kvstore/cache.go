@@ -87,10 +87,3 @@ func (kv *CachedKVStore) Rename(ctx context.Context, orgId int64, namespace stri
 func (kv *CachedKVStore) GetAll(ctx context.Context) ([]Item, error) {
 	return kv.store.GetAll(ctx)
 }
-
-func GetUnwrappedStoreFromCache(kv SecretsKVStore) (SecretsKVStore, error) {
-	if cache, ok := kv.(*CachedKVStore); ok {
-		return cache.store, nil
-	}
-	return nil, errSecretStoreIsNotCached
-}

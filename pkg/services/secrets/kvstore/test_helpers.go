@@ -310,6 +310,9 @@ func SetupTestConfig(t *testing.T) *setting.Cfg {
 
 func ReplaceFallback(t *testing.T, kv SecretsKVStore, fb SecretsKVStore) error {
 	t.Helper()
+	if store, ok := kv.(*service); ok {
+		kv = store.store
+	}
 	if store, ok := kv.(*CachedKVStore); ok {
 		kv = store.store
 	}
