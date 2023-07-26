@@ -375,7 +375,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 }
 
 func defaultLogoPath(pluginType plugins.Type) string {
-	return "/public/img/icn-" + string(pluginType) + ".svg"
+	return setting.AppSubUrl + "/public/img/icn-" + string(pluginType) + ".svg"
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {
