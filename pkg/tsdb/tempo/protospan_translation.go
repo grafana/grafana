@@ -15,7 +15,7 @@
 package tempo
 
 import (
-	"go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 // Some of the keys used to represent OTLP constructs as tags or annotations in other formats.
@@ -55,9 +55,9 @@ const (
 
 // StatusCodeFromHTTP takes an HTTP status code and return the appropriate OpenTelemetry status code
 // See: https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/semantic_conventions/http.md#status
-func StatusCodeFromHTTP(httpStatusCode int) pdata.StatusCode {
+func StatusCodeFromHTTP(httpStatusCode int) ptrace.StatusCode {
 	if httpStatusCode >= 100 && httpStatusCode < 399 {
-		return pdata.StatusCodeUnset
+		return ptrace.StatusCodeUnset
 	}
-	return pdata.StatusCodeError
+	return ptrace.StatusCodeError
 }

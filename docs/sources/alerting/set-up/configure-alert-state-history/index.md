@@ -1,19 +1,16 @@
 ---
-title: Configure Alert State History
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/
 description: Configure Alert State History
-
 keywords:
   - grafana
   - alerting
   - set up
   - configure
   - alert state history
-
 labels:
   products:
-    - enterprise
-    - oss
-
+    - cloud
+title: Configure Alert State History
 weight: 600
 ---
 

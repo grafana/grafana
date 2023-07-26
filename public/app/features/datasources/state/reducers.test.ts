@@ -37,7 +37,7 @@ const mockPlugin = () =>
     pinned: true,
     type: PluginType.datasource,
     module: 'path/to/module',
-  } as PluginMeta);
+  }) as PluginMeta;
 
 describe('dataSourcesReducer', () => {
   describe('when dataSourcesLoaded is dispatched', () => {

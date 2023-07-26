@@ -24,15 +24,15 @@ Divider.displayName = 'Divider';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    horizontalDivider: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      margin: ${theme.spacing(2, 0)};
-      width: 100%;
-    `,
-    verticalDivider: css`
-      border-right: 1px solid ${theme.colors.border.weak};
-      margin: ${theme.spacing(0, 0.5)};
-      height: 100%;
-    `,
+    horizontalDivider: css({
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      margin: theme.spacing(2, 0),
+      width: '100%',
+    }),
+    verticalDivider: css({
+      borderRight: `1px solid ${theme.colors.border.weak}`,
+      margin: theme.spacing(0, 0.5),
+      height: '100%',
+    }),
   };
 };

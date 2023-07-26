@@ -15,6 +15,11 @@ keywords:
   - create links
   - link dashboards
   - navigate
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Manage dashboard links
 title: Manage dashboard links
 weight: 500

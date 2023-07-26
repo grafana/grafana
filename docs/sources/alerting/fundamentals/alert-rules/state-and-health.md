@@ -1,12 +1,18 @@
 ---
 aliases:
   - ../unified-alerting/alerting-rules/state-and-health/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/state-and-health/
 description: State and Health of alerting rules
 keywords:
   - grafana
   - alerting
   - guide
   - state
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: State and health of alerting rules
 weight: 405
 ---

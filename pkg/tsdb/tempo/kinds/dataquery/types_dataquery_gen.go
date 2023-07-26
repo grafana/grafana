@@ -89,10 +89,10 @@ type TempoQuery struct {
 	// Defines the maximum number of traces that are returned from Tempo
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+	// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MaxDuration *string `json:"maxDuration,omitempty"`
 
-	// Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+	// @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MinDuration *string `json:"minDuration,omitempty"`
 
 	// TraceQL query or trace ID
@@ -107,20 +107,20 @@ type TempoQuery struct {
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
-	// Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+	// @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
 	Search *string `json:"search,omitempty"`
+
+	// Use service.namespace in addition to service.name to uniquely identify a service.
+	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
 
 	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 	ServiceMapQuery *string `json:"serviceMapQuery,omitempty"`
 
-	// Query traces by service name
+	// @deprecated Query traces by service name
 	ServiceName *string `json:"serviceName,omitempty"`
 
-	// Query traces by span name
+	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
-
-	// Use the streaming API to get partial results as they are available
-	Streaming *bool `json:"streaming,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
