@@ -360,7 +360,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
   - **Forward**
   - **Reverse**
   - **Both**
-- **Show legend** allows you to toggle the legend for the layer.
+- **Show legend** allows you to toggle the legend for the layer. **Note:** The legend currently only supports node data.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
 #### Node styles
