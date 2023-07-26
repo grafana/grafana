@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
@@ -23,10 +24,11 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
 
   const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
 
-  const space = prometheusConfigOverhaulAuth ? styles.alertingTop : '';
-
   return (
-    <ConfigSubSection title="Alerting" className={`${styles.container} ${space}`}>
+    <ConfigSubSection
+      title="Alerting"
+      className={cx(styles.container, { [styles.alertingTop]: prometheusConfigOverhaulAuth })}
+    >
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
