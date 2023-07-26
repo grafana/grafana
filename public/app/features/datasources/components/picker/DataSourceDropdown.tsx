@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
-import { FocusScope } from '@react-aria/focus';
+import { FocusScope, useFocusManager } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
@@ -80,7 +80,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
 
   // Used to handle tabbing inside the dropdown before closing it
-  const [focusedElementManually, setFocusedElementManually] = useState<HTMLElement | null>();
+  const [footerRef, setFooterRef] = useState<HTMLElement | null>();
 
   const openDropdown = () => {
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
@@ -128,7 +128,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
     if (keyEvent.key === 'Tab' && !keyEvent.shiftKey && isOpen) {
       keyEvent.preventDefault();
-      focusedElementManually?.focus();
+      footerRef?.focus();
     }
     if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
       onClose();
@@ -211,8 +211,14 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           <div {...underlayProps} />
           <div ref={ref} {...overlayProps} {...dialogProps}>
             <PickerContent
-              keyboardEvents={keyboardEvents}
+              {...restProps}
+              {...popper.attributes.popper}
+              style={popper.styles.popper}
+              ref={setSelectorElement}
+              firstElementRef={setFooterRef}
+              current={currentValue}
               filterTerm={filterTerm}
+              keyboardEvents={keyboardEvents}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 onClose();
                 if (ds.uid !== currentValue?.uid) {
@@ -221,30 +227,16 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
                 }
               }}
               onClose={onClose}
-              current={currentValue}
-              style={popper.styles.popper}
-              ref={setSelectorElement}
               onClickAddCSV={onClickAddCSV}
-              {...restProps}
               onDismiss={onClose}
-              {...popper.attributes.popper}
-              advancedButtonRef={(element) => {
-                if (element instanceof HTMLElement) {
-                  // FIXME: This is a hack to make sure that the advanced button is focused when the dropdown is opened.
-                  // This should be avoided. Otherwise we're adding a event listener for every time the dropdown is opened.
-                  // Probably we can pass the marker element to the picker content and set the focus there.
-                  // Or pass a function that says "onBlurFooter" and "onFocusFooter"
-                  setFocusedElementManually(element);
-                  element.addEventListener('keydown', (e: KeyboardEvent) => {
-                    if (e.key === 'Tab' && !e.shiftKey) {
-                      markerElement?.focus();
-                      onClose();
-                    }
-                    if (e.key === 'Tab' && e.shiftKey) {
-                      e.preventDefault();
-                      markerElement?.focus();
-                    }
-                  });
+              onBlurFooter={(e) => {
+                // When navigating back, the dropdown keeps open and the input element is focused.
+                if (e.shiftKey) {
+                  e.preventDefault();
+                  markerElement?.focus();
+                  // When navigating forward, the dropdown closes and and the element next to the input element is focused.
+                } else {
+                  onClose();
                 }
               }}
             />
@@ -281,11 +273,10 @@ export interface PickerContentProps extends DataSourceDropdownProps {
   filterTerm?: string;
   onClose: () => void;
   onDismiss: () => void;
-  advancedButtonRef?: Dispatch<SetStateAction<HTMLElement | null | undefined>>;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, uploadFile } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter } = props;
 
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
@@ -319,53 +310,14 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           }
         ></DataSourceList>
       </CustomScrollbar>
-      <div className={styles.footer}>
-        <FocusScope>
-          <ModalsController>
-            {({ showModal, hideModal }) => (
-              <Button
-                size="sm"
-                variant="secondary"
-                fill="text"
-                onClick={() => {
-                  onClose();
-                  showModal(DataSourceModal, {
-                    reportedInteractionFrom: 'ds_picker',
-                    tracing: props.tracing,
-                    dashboard: props.dashboard,
-                    mixed: props.mixed,
-                    metrics: props.metrics,
-                    type: props.type,
-                    annotations: props.annotations,
-                    variables: props.variables,
-                    alerting: props.alerting,
-                    pluginId: props.pluginId,
-                    logs: props.logs,
-                    filter: props.filter,
-                    uploadFile: props.uploadFile,
-                    current: props.current,
-                    onDismiss: hideModal,
-                    onChange: (ds, defaultQueries) => {
-                      onChange(ds, defaultQueries);
-                      hideModal();
-                    },
-                  });
-                  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
-                }}
-                ref={props.advancedButtonRef}
-              >
-                Open advanced data source picker
-                <Icon name="arrow-right" />
-              </Button>
-            )}
-          </ModalsController>
-          {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
-            <Button variant="secondary" size="sm" onClick={clickAddCSVCallback} tabIndex={0}>
-              Add csv or spreadsheet
-            </Button>
-          )}
-        </FocusScope>
-      </div>
+      <FocusScope>
+        <Footer
+          {...props}
+          onClickAddCSV={clickAddCSVCallback}
+          onChange={changeCallback}
+          onBlurFooter={props.onBlurFooter}
+        />
+      </FocusScope>
     </div>
   );
 });
@@ -385,6 +337,90 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     dataSourceList: css`
       flex: 1;
     `,
+    footer: css`
+      flex: 0;
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: space-between;
+      padding: ${theme.spacing(1.5)};
+      border-top: 1px solid ${theme.colors.border.weak};
+      background-color: ${theme.colors.background.secondary};
+    `,
+  };
+}
+
+export interface FooterProps extends PickerContentProps {
+  firstElementRef?: React.RefObject<HTMLButtonElement>;
+  onBlurFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+}
+
+function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
+  const styles = useStyles2(getStylesFooter);
+  const isUploadFileEnabled = props.uploadFile && config.featureToggles.editPanelCSVDragAndDrop;
+
+  const onKeyDownLastButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Tab') {
+      props.onBlurFooter(e);
+    }
+  };
+  const onKeyDownFirstButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Tab' && e.shiftKey) {
+      props.onBlurFooter(e);
+    }
+  };
+
+  return (
+    <div className={styles.footer}>
+      <ModalsController>
+        {({ showModal, hideModal }) => (
+          <Button
+            size="sm"
+            variant="secondary"
+            fill="text"
+            onClick={() => {
+              onClose();
+              showModal(DataSourceModal, {
+                reportedInteractionFrom: 'ds_picker',
+                tracing: props.tracing,
+                dashboard: props.dashboard,
+                mixed: props.mixed,
+                metrics: props.metrics,
+                type: props.type,
+                annotations: props.annotations,
+                variables: props.variables,
+                alerting: props.alerting,
+                pluginId: props.pluginId,
+                logs: props.logs,
+                filter: props.filter,
+                uploadFile: props.uploadFile,
+                current: props.current,
+                onDismiss: hideModal,
+                onChange: (ds, defaultQueries) => {
+                  onChange(ds, defaultQueries);
+                  hideModal();
+                },
+              });
+              reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
+            }}
+            ref={props.firstElementRef}
+            onKeyDown={isUploadFileEnabled ? onKeyDownFirstButton : onKeyDownLastButton}
+          >
+            Open advanced data source picker
+            <Icon name="arrow-right" />
+          </Button>
+        )}
+      </ModalsController>
+      {isUploadFileEnabled && (
+        <Button variant="secondary" size="sm" onClick={onClickAddCSV} onKeyDown={onKeyDownLastButton}>
+          Add csv or spreadsheet
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function getStylesFooter(theme: GrafanaTheme2) {
+  return {
     footer: css`
       flex: 0;
       display: flex;
