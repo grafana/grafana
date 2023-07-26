@@ -39,9 +39,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
-      .within((select) => {
-        e2e.components.Select.singleValue().should('have.text', 'gdev-testdata');
-      });
+      .should('have.text', 'gdev-testdata');
 
     e2e().get('label').contains('Refresh').scrollIntoView().should('be.visible');
     e2e().get('label').contains('On dashboard load').scrollIntoView().should('be.visible');
