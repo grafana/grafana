@@ -21,6 +21,12 @@ weight: 1150
 
 # Grafana Pyroscope data source
 
+{{% admonition type="note" %}}
+Profiles, the commercial offering of Pyroscope available within [Grafana Cloud](/products/cloud/), is currently in public preview. In public preview, free and paid tiers includes **50GB** of profiles with **14-day** retention. 
+
+To increase these limits, users of Grafana Cloud Profiles can submit a support ticket via the [Grafana.com Account Portal](/login).
+{{% /admonition %}}
+
 Formerly Phlare data source, it supports both Phlare and Pyroscope, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation systems. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 
 ## Configure the Grafana Pyroscope data source
