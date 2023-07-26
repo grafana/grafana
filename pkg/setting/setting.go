@@ -552,6 +552,9 @@ type Cfg struct {
 	// This needs to be on the global object since its used in the
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
+
+	// Feature Management Settings
+	FeatureManagement FeatureMgmtSettings
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1236,6 +1239,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
+
+	cfg.readFeatureManagementConfig()
 
 	return nil
 }

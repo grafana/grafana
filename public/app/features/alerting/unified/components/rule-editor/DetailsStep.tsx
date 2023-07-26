@@ -56,11 +56,12 @@ export function DetailsStep() {
   return (
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 3 : 4}
-      title={type === RuleFormType.cloudRecording ? 'Folder and group' : 'Add annotations'}
+      title={type === RuleFormType.cloudRecording ? 'Add namespace and group' : 'Add annotations'}
       description={getDescription(type, styles)}
     >
-      {(ruleFormType === RuleFormType.cloudRecording || ruleFormType === RuleFormType.cloudAlerting) &&
-        dataSourceName && <GroupAndNamespaceFields rulesSourceName={dataSourceName} />}
+      {ruleFormType === RuleFormType.cloudRecording && dataSourceName && (
+        <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
+      )}
 
       {type !== RuleFormType.cloudRecording && <AnnotationsField />}
     </RuleEditorSection>

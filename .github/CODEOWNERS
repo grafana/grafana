@@ -292,6 +292,7 @@
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
+/public/plugins/testdata/pkg @grafana/plugins-platform-backend
 
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
@@ -532,6 +533,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
+/public/plugins/testdata/ @grafana/plugins-platform-frontend
 
 # SSE - Server Side Expressions
 /pkg/expr/ @grafana/observability-metrics
@@ -605,7 +607,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
-/.github/workflows/github-release.yml @torkelo
+/.github/workflows/github-release.yml @grafana/grafana-delivery
 /.github/workflows/issue-labeled.yml @armandgrillet
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo

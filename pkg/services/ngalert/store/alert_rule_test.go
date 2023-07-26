@@ -474,7 +474,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	}
 	rule := createRule(t, store, nil)
 
-	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID)
+	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
 	require.NoError(t, err)
 
 	c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
