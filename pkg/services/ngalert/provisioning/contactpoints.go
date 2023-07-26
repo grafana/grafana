@@ -66,7 +66,7 @@ func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u *user.S
 // GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
 func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u *user.SignedInUser) ([]apimodels.EmbeddedContactPoint, error) {
 	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
-		return nil, fmt.Errorf("%w: user does not have permissions to read decrypted secure settings", ErrPermissionDenied)
+		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
 	}
 	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
 	if err != nil {

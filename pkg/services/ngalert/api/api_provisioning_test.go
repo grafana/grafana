@@ -1009,7 +1009,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
 		})
 
-		t.Run("decrypt true without admin returns 403", func(t *testing.T) {
+		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {

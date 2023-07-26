@@ -101,7 +101,7 @@ function ExportAction({ permissions, receiverName }: ActionProps) {
           decrypt: canReadSecrets.toString(),
           name: receiverName,
         })}
-        tooltip={canReadSecrets ? 'Export redacted contact point' : 'Export contact point'}
+        tooltip={canReadSecrets ? 'Export contact point with decrypted secrets' : 'Export contact point with redacted secrets'}
         icon="download-alt"
         target="_blank"
       />
