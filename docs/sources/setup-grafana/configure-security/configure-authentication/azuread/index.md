@@ -139,6 +139,15 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 }
 ```
 
+## Enable Azure AD OAuth in Grafana Cloud
+1. Go to your Grafana Cloud Portal
+2. Click on **Advanced Auth**
+3. Click on **Azure AD**
+4. Click on **Configure** for the stack for which you would like to configue Azure AD OAuth2
+5. Select **Enabled** to enable the client
+6. Fill in the required fields
+7. Click on **Submit**
+
 ## Enable Azure AD OAuth in Grafana
 
 1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
