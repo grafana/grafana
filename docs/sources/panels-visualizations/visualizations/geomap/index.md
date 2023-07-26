@@ -86,9 +86,10 @@ There are six map layer types to choose from in the Geomap visualization.
 - [Markers]({{< relref "#markers-layer" >}}) renders a marker at each data point.
 - [Heatmap]({{< relref "#heatmap-layer" >}}) visualizes a heatmap of the data.
 - [GeoJSON]({{< relref "#geojson-layer" >}}) renders static data from a GeoJSON file.
-- [Night / Day layer]({{< relref "#night--day-layer" >}}) renders a night / day region.
-- [Route layer (Beta)]({{< relref "#route-layer" >}}) render data points as a route.
-- [Photos layer (Beta)]({{< relref "#photos-layer" >}}) renders a photo at each data point.
+- [Night / Day]({{< relref "#night--day-layer" >}}) renders a night / day region.
+- [Route (Beta)]({{< relref "#route-laye-beta" >}}) render data points as a route.
+- [Photos (Beta)]({{< relref "#photos-layer-beta" >}}) renders a photo at each data point.
+- [Network (Beta)]({{< relref "#network-layer-beta" >}}) visualizes a network graph from the data.
 
 There are also two alpha layer types.
 
@@ -232,10 +233,12 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
 
-- **Marker Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
-- **Marker Size** configures the size of the marker. The default is `Fixed size`, which makes all marker sizes the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
+- **Marker Size** configures the size of the marker. The default is `Fixed size`, which makes all marker sizes the same regardless of the data points. However, there is also an option to scale the markers to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
 - **Marker Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
+- **Marker Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
 - **Fill opacity** configures the transparency of each marker.
+- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed size`, which makes all markers rotate to the same angle the same regardless of the data points. However, there is also an option to rotate the markers tied to field data.
+- **Text label** configures a text label for each marker.
 
 ## Heatmap layer
 
@@ -335,6 +338,28 @@ The Photos layer renders a photo at each data point.
 ### More information
 
 - [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
+
+## Network layer (Beta)
+
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization]({{< relref "../node-graph/#data-api" >}}) with the addition of [geospatial data]({{< relref "#location">}}) included the nodes data. The geospatial data is used to render the nodes on the map.
+
+### Options
+
+#### Node styles
+
+- **Node Size** configures the size of the node. The default is `Fixed size`, which makes all node sizes the same regardless of the data points. However, there is also an option to scale the nodes to the corresponding data points. `Min` and `Max` node size has to be set such that the nodes can scale within this range.
+- **Node Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
+- **Node Color** configures the color of the node. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Fill opacity** configures the transparency of each node.
+- **Rotation angle** configures the rotation angle of each node. The default is `Fixed size`, which makes all nodes rotate to the same angle the same regardless of the data points. However, there is also an option to rotate the nodes tied to field data.
+- **Text label** configures a text label for each node.
+
+#### Edge styles
+
+- **Edge Size** configures the size of the edge. The default is `Fixed size`, which makes all edge sizes the same regardless of the data points. However, there is also an option to scale the edges to the corresponding data points. `Min` and `Max` edge size has to be set such that the edges can scale within this range.
+- **Edge Color** configures the color of the edge. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Fill opacity** configures the transparency of each edge.
+- **Text label** configures a text label for each edge.
 
 ## CARTO layer
 
