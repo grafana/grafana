@@ -633,8 +633,8 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "disableTraceQLStreaming",
-			Description:  "Disables the option to stream the response of TraceQL queries of the Tempo data source",
+			Name:         "traceQLStreaming",
+			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
