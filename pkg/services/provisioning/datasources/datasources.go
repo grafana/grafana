@@ -73,7 +73,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultima
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
-			dataSource, err := dc.store.AddDataSource(ctx, insertCmd)
+			dataSource, err = dc.store.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
 			}
