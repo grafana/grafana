@@ -342,7 +342,7 @@ The Photos layer renders a photo at each data point.
 
 - **Image Source field** allows you to select a string field containing image data in either of the following formats:
   - **Image URLs**
-  - **Base64 encoded**  - Image binary ("data:image/png;base64,...")
+  - **Base64 encoded** - Image binary ("data:image/png;base64,...")
 - **Kind** sets the frame style around the images. Choose from:
   - **Square**
   - **Circle**
