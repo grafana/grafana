@@ -1222,7 +1222,7 @@ def publish_grafanacom_step(ver_mode):
         ],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret(gcp_grafanauploads),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
         },
         "commands": [
             cmd,
@@ -1245,7 +1245,7 @@ def publish_linux_packages_step(package_manager = "deb"):
             "gpg_passphrase": from_secret("packages_gpg_passphrase"),
             "gpg_public_key": from_secret("packages_gpg_public_key"),
             "gpg_private_key": from_secret("packages_gpg_private_key"),
-            "package_path": "gs://grafana-prerelease/artifacts/downloads/*$${{DRONE_TAG}}/oss/**.{}".format(
+            "package_path": "gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/oss/**.{}".format(
                 package_manager,
             ),
         },

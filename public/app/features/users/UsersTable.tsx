@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, Tooltip } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -10,6 +10,9 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
+
+const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
+  Refer to the Grafana authentication docs for details.`;
 
 export interface Props {
   users: OrgUser[];
@@ -49,6 +52,7 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
             <th>Name</th>
             <th>Seen</th>
             <th>Role</th>
+            <th />
             <th style={{ width: '34px' }} />
             <th>Origin</th>
             <th></th>
@@ -97,6 +101,7 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       basicRole={user.role}
                       onBasicRoleChange={(newRole) => onRoleChange(newRole, user)}
                       basicRoleDisabled={basicRoleDisabled}
+                      basicRoleDisabledMessage={disabledRoleMessage}
                     />
                   ) : (
                     <OrgRolePicker
@@ -105,6 +110,16 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       disabled={basicRoleDisabled}
                       onChange={(newRole) => onRoleChange(newRole, user)}
                     />
+                  )}
+                </td>
+
+                <td>
+                  {basicRoleDisabled && (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Tooltip content={disabledRoleMessage}>
+                        <Icon name="question-circle" style={{ marginLeft: '8px' }} />
+                      </Tooltip>
+                    </div>
                   )}
                 </td>
 

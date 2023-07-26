@@ -667,7 +667,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logsnavigation and padding */}
                 <LogsTable
-                  rows={logRows}
                   logsSortOrder={this.state.logsSortOrder}
                   range={this.props.range}
                   splitOpen={this.props.splitOpen}
