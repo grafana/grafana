@@ -92,11 +92,9 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		f = &accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
 			recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 		}
-
 	}
 	f.buildClauses()
 	return f
-
 }
 
 func (f *accessControlDashboardPermissionFilter) LeftJoin() string {

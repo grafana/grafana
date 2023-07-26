@@ -600,7 +600,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			},
 		}
 		for _, features := range []*featuremgmt.FeatureManager{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
-
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -608,7 +607,6 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			}
 
 			t.Run(tc.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-
 				usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(tc.signedInUserPermissions)}}
 				db := setupNestedTest(t, helperUser, []accesscontrol.Permission{}, orgID, features)
 				recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
