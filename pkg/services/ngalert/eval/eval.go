@@ -343,7 +343,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			hasNoFrames := len(res.Frames) == 0
 			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
 			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && !expr.IsDataSource(s) {
 					result.NoData[refID] = s
 				}
 			}

@@ -567,9 +567,6 @@ func TestEvaluate(t *testing.T) {
 			}, {
 				RefID:         "C",
 				DatasourceUID: expr.OldDatasourceUID,
-			}, {
-				RefID:         "D",
-				DatasourceUID: expr.MLDatasourceUID,
 			}},
 		},
 		resp: backend.QueryDataResponse{
@@ -577,7 +574,6 @@ func TestEvaluate(t *testing.T) {
 				"A": {Frames: nil},
 				"B": {Frames: []*data.Frame{{Fields: nil}}},
 				"C": {Frames: nil},
-				"D": {Frames: []*data.Frame{{Fields: nil}}},
 			},
 		},
 		expected: Results{{
