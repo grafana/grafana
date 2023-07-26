@@ -6,6 +6,7 @@ labels:
   products:
     - enterprise
     - oss
+    - cloud
 title: Correlations
 weight: 900
 ---
