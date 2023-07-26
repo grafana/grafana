@@ -239,6 +239,8 @@ The markers layer allows you to display data points as different marker shapes s
 - **Fill opacity** configures the transparency of each marker.
 - **Rotation angle** configures the rotation angle of each marker. The default is `Fixed size`, which makes all markers rotate to the same angle the same regardless of the data points. However, there is also an option to rotate the markers tied to field data.
 - **Text label** configures a text label for each marker.
+- **Show legend** allows you to toggle the legend for the layer.
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 ## Heatmap layer
 
@@ -256,6 +258,8 @@ Similar to `Markers`, you are prompted with various options to determine which d
 - **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
 - **Radius** configures the size of the heatmap clusters.
 - **Blur** configures the amount of blur on each cluster.
+- **Opacity** configures the opacity of each cluster.
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 ## GeoJSON layer
 
@@ -270,6 +274,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
   - **Color** configures the color of the style for the current rule
   - **Opacity** configures the transparency level for the current rule
 - **Add style rule** creates additional style rules.
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 ## Night / Day layer
 
@@ -283,6 +288,7 @@ The Night / Day layer displays night and day regions based on the current time r
 - **Night region color** picks color for night region
 - **Display sun** toggles sun icon
 - **Opacity** from 0 (transparent) to 1 (opaque)
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
 
@@ -300,10 +306,13 @@ The Route layer renders data points as a route.
 
 - **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
 - **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
+- **Fill opacity** configures the opacity of the route.
+- **Text label** configures a text label for each route.
 - **Arrow** sets the arrow styling to display along route, in order of data.
   - **None**
   - **Forward**
   - **Reverse**
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
 
@@ -332,6 +341,7 @@ The Photos layer renders a photo at each data point.
 - **Border** set the border size around images
 - **Border color** set the border color around images
 - **Radius** set the overall size of images in pixels
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
 
@@ -344,6 +354,14 @@ The Photos layer renders a photo at each data point.
 The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization]({{< relref "../node-graph/#data-api" >}}) with the addition of [geospatial data]({{< relref "#location">}}) included the nodes data. The geospatial data is used to render the nodes on the map.
 
 ### Options
+
+- **Arrow** sets the arrow styling to display for each edge.
+  - **None**
+  - **Forward**
+  - **Reverse**
+  - **Both**
+- **Show legend** allows you to toggle the legend for the layer.
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 #### Node styles
 
