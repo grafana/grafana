@@ -204,6 +204,14 @@ _Experimental in all editions of Grafana_
 
 The CloudWatch Logs query editor is moving from being a Slate-based editor to a Monaco-based editor. This new Monaco-based editor will provide improved syntax highlighting, and auto-completion. Enable the `cloudWatchLogsMonacoEditor` feature toggle to use the Monaco-based query editor. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
+### InfluxDB Backend Mode
+
+<!-- Ismail Simsek -->
+
+_Behind the feature toggle `influxdbBackendMigration`_
+
+InfluxDB backend mode was available for a while but it had some compatibility issues. All those issues were addressed and there is no more compatibility issues. In the future backend mode will be the default one and we will deprecate frontend mode. Users won't need to do anything specific when we make it enabled by default. If you'd like to try backend mode right away you can enable `influxdbBackendMigration` feature toggle.
+
 ## Explore
 
 ### Elasticsearch logs sample
