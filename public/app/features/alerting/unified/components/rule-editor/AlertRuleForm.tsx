@@ -227,15 +227,17 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         </Button>
       ) : null}
 
-      <Button
-        variant="secondary"
-        type="button"
-        onClick={() => setShowEditYaml(true)}
-        disabled={submitState.loading}
-        size="sm"
-      >
-        {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
-      </Button>
+      {existing ? (
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => setShowEditYaml(true)}
+          disabled={submitState.loading}
+          size="sm"
+        >
+          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
+        </Button>
+      ) : null}
     </HorizontalGroup>
   );
 
