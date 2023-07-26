@@ -56,7 +56,7 @@ func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 		err = json.Unmarshal(dashAlerts[i].Settings, &dashAlerts[i].ParsedSettings)
 		if err != nil {
 			da := dashAlerts[i]
-			return nil, fmt.Errorf("failed to parse alert rule id %d, name '%s': %w", da.Id, da.Name, err)
+			return nil, fmt.Errorf("failed to parse alert rule ID:%d, name:'%s', orgID:%d: %w", da.Id, da.Name, da.OrgId, err)
 		}
 	}
 
