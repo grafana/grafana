@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
-import { FocusScope, useFocusManager } from '@react-aria/focus';
+import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 import { Observable } from 'rxjs';
 
@@ -215,7 +215,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               {...popper.attributes.popper}
               style={popper.styles.popper}
               ref={setSelectorElement}
-              firstElementRef={setFooterRef}
+              footerRef={setFooterRef}
               current={currentValue}
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
@@ -273,6 +273,8 @@ export interface PickerContentProps extends DataSourceDropdownProps {
   filterTerm?: string;
   onClose: () => void;
   onDismiss: () => void;
+  footerRef: (element: HTMLElement | null) => void;
+  onBlurFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
@@ -349,10 +351,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
   };
 }
 
-export interface FooterProps extends PickerContentProps {
-  firstElementRef?: React.RefObject<HTMLButtonElement>;
-  onBlurFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
-}
+export interface FooterProps extends PickerContentProps {}
 
 function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
   const styles = useStyles2(getStylesFooter);
@@ -402,7 +401,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
               });
               reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
             }}
-            ref={props.firstElementRef}
+            ref={props.footerRef}
             onKeyDown={isUploadFileEnabled ? onKeyDownFirstButton : onKeyDownLastButton}
           >
             Open advanced data source picker
