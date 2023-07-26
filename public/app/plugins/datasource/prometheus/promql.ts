@@ -239,6 +239,13 @@ export const FUNCTIONS = [
       'Returns the day of the week for each of the given times in UTC. Returned values are from 0 to 6, where 0 means Sunday etc.',
   },
   {
+    insertText: 'day_of_year',
+    label: 'day_of_year',
+    detail: 'day_of_year(v=vector(time()) instant-vector)',
+    documentation:
+      'Returns the day of the year for each of the given times in UTC. Returned values are from 1 to 365 for non-leap years, and 1 to 366 in leap years.',
+  },
+  {
     insertText: 'days_in_month',
     label: 'days_in_month',
     detail: 'days_in_month(v=vector(time()) instant-vector)',
