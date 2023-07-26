@@ -15,12 +15,12 @@ import (
 func TestAnonSessionKey(t *testing.T) {
 	testCases := []struct {
 		name     string
-		session  *AnonSession
+		session  *AnonDevice
 		expected string
 	}{
 		{
 			name: "should hash correctly",
-			session: &AnonSession{
+			session: &AnonDevice{
 				ip:        "10.10.10.10",
 				userAgent: "test",
 			},
@@ -28,7 +28,7 @@ func TestAnonSessionKey(t *testing.T) {
 		},
 		{
 			name: "should hash correctly with different ip",
-			session: &AnonSession{
+			session: &AnonDevice{
 				ip:        "10.10.10.1",
 				userAgent: "test",
 			},
@@ -36,7 +36,7 @@ func TestAnonSessionKey(t *testing.T) {
 		},
 		{
 			name: "should hash correctly with different user agent",
-			session: &AnonSession{
+			session: &AnonDevice{
 				ip:        "10.10.10.1",
 				userAgent: "test2",
 			},
@@ -134,10 +134,10 @@ func TestIntegrationAnonSessionService_tag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeStore := remotecache.NewFakeStore(t)
 
-			anonService := ProvideAnonymousSessionService(fakeStore, &usagestats.UsageStatsMock{})
+			anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
 
 			for _, req := range tc.req {
-				err := anonService.TagSession(context.Background(), req)
+				err := anonService.TagDevice(context.Background(), req)
 				require.NoError(t, err)
 			}
 
@@ -152,7 +152,7 @@ func TestIntegrationAnonSessionService_tag(t *testing.T) {
 // Ensure that the local cache prevents request from being tagged
 func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
 	fakeStore := remotecache.NewFakeStore(t)
-	anonService := ProvideAnonymousSessionService(fakeStore, &usagestats.UsageStatsMock{})
+	anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
 
 	req := &http.Request{
 		Header: http.Header{
@@ -161,7 +161,7 @@ func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
 		},
 	}
 
-	anonSession := &AnonSession{
+	anonSession := &AnonDevice{
 		ip:        "10.30.30.2",
 		userAgent: "test",
 	}
@@ -171,7 +171,7 @@ func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
 
 	anonService.localCache.SetDefault(key, true)
 
-	err = anonService.TagSession(context.Background(), req)
+	err = anonService.TagDevice(context.Background(), req)
 	require.NoError(t, err)
 
 	stats, err := anonService.usageStatFn(context.Background())

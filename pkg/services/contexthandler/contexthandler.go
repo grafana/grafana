@@ -282,7 +282,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 				reqContext.Logger.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := h.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
+		if err := h.anonSessionService.TagDevice(context.Background(), httpReqCopy); err != nil {
 			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
