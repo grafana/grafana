@@ -111,7 +111,6 @@ describe('<EditDataSourcePage>', () => {
   });
 
   it('should show updated action buttons when topnav is on', async () => {
-    config.featureToggles.topnav = true;
     setup(uid, store);
 
     await waitFor(() => {
