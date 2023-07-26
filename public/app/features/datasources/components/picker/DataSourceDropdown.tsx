@@ -71,28 +71,100 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     ...restProps
   } = props;
 
+  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
+  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+  const ref = useRef<HTMLDivElement>(null);
 
-  // Used to position the popper correctly
+  // Used to position the popper correctly and to bring back the focus when navigating from footer to input
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
+  // Used to position the popper correctly
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
-
-  // Used to handle tabbing inside the dropdown before closing it
+  // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
-
-  const openDropdown = () => {
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
-    setOpen(true);
-    markerElement?.focus();
-  };
   const currentDataSourceInstanceSettings = useDatasource(current);
+  const grafanaDS = useDatasource('-- Grafana --');
   const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
-  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
+  const popper = usePopper(markerElement, selectorElement, {
+    placement: 'bottom-start',
+    modifiers: [
+      {
+        name: 'offset',
+        options: {
+          offset: [0, 4],
+        },
+      },
+      maxSize,
+      applyMaxSize,
+    ],
+  });
+
+  const onClose = useCallback(() => {
+    setFilterTerm('');
+    setOpen(false);
+    markerElement?.focus();
+  }, [setOpen, markerElement]);
+
+  const { overlayProps, underlayProps } = useOverlay(
+    {
+      onClose: onClose,
+      isDismissable: true,
+      isOpen,
+      shouldCloseOnInteractOutside: (element) => {
+        return markerElement ? !markerElement.isSameNode(element) : false;
+      },
+    },
+    ref
+  );
+  const { dialogProps } = useDialog(
+    {
+      'aria-label': 'Opened data source picker list',
+    },
+    ref
+  );
+
+  function openDropdown() {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
+    setOpen(true);
+    markerElement?.focus();
+  }
+
+  function onClickAddCSV() {
+    if (!grafanaDS) {
+      return;
+    }
+
+    onChange(grafanaDS, [defaultFileUploadQuery]);
+  }
+
+  function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
+    // From the input, it navigates to the footer
+    if (keyEvent.key === 'Tab' && !keyEvent.shiftKey && isOpen) {
+      keyEvent.preventDefault();
+      footerRef?.focus();
+    }
+    // From the input, if we navigate back, it closes the dropdown
+    if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
+      onClose();
+    }
+    onKeyDown(keyEvent);
+  }
+
+  function onNavigateOutsiteFooter(e: React.KeyboardEvent<HTMLButtonElement>) {
+    // When navigating back, the dropdown keeps open and the input element is focused.
+    if (e.shiftKey) {
+      e.preventDefault();
+      markerElement?.focus();
+      // When navigating forward, the dropdown closes and and the element next to the input element is focused.
+    } else {
+      onClose();
+    }
+  }
 
   useEffect(() => {
     const sub = keyboardEvents.subscribe({
@@ -115,67 +187,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     });
     return () => sub.unsubscribe();
   });
-  const grafanaDS = useDatasource('-- Grafana --');
-
-  const onClickAddCSV = () => {
-    if (!grafanaDS) {
-      return;
-    }
-
-    onChange(grafanaDS, [defaultFileUploadQuery]);
-  };
-
-  function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
-    if (keyEvent.key === 'Tab' && !keyEvent.shiftKey && isOpen) {
-      keyEvent.preventDefault();
-      footerRef?.focus();
-    }
-    if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
-      onClose();
-    }
-    onKeyDown(keyEvent);
-  }
-
-  const popper = usePopper(markerElement, selectorElement, {
-    placement: 'bottom-start',
-    modifiers: [
-      {
-        name: 'offset',
-        options: {
-          offset: [0, 4],
-        },
-      },
-      maxSize,
-      applyMaxSize,
-    ],
-  });
-
-  const onClose = useCallback(() => {
-    setFilterTerm('');
-    setOpen(false);
-    markerElement?.focus();
-  }, [setOpen, markerElement]);
-
-  const ref = useRef<HTMLDivElement>(null);
-  const { overlayProps, underlayProps } = useOverlay(
-    {
-      onClose: onClose,
-      isDismissable: true,
-      isOpen,
-      shouldCloseOnInteractOutside: (element) => {
-        return markerElement ? !markerElement.isSameNode(element) : false;
-      },
-    },
-    ref
-  );
-  const { dialogProps } = useDialog(
-    {
-      'aria-label': 'Opened data source picker list',
-    },
-    ref
-  );
-
-  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
 
   return (
     <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
@@ -189,7 +200,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
-          onClick={openDropdown}
           onFocus={() => {
             setInputHasFocus(true);
           }}
@@ -229,16 +239,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               onClose={onClose}
               onClickAddCSV={onClickAddCSV}
               onDismiss={onClose}
-              onBlurFooter={(e) => {
-                // When navigating back, the dropdown keeps open and the input element is focused.
-                if (e.shiftKey) {
-                  e.preventDefault();
-                  markerElement?.focus();
-                  // When navigating forward, the dropdown closes and and the element next to the input element is focused.
-                } else {
-                  onClose();
-                }
-              }}
+              onNavigateOutsiteFooter={onNavigateOutsiteFooter}
             />
           </div>
         </Portal>
@@ -274,7 +275,7 @@ export interface PickerContentProps extends DataSourceDropdownProps {
   onClose: () => void;
   onDismiss: () => void;
   footerRef: (element: HTMLElement | null) => void;
-  onBlurFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+  onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
@@ -317,7 +318,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           {...props}
           onClickAddCSV={clickAddCSVCallback}
           onChange={changeCallback}
-          onBlurFooter={props.onBlurFooter}
+          onNavigateOutsiteFooter={props.onNavigateOutsiteFooter}
         />
       </FocusScope>
     </div>
@@ -359,12 +360,12 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
 
   const onKeyDownLastButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Tab') {
-      props.onBlurFooter(e);
+      props.onNavigateOutsiteFooter(e);
     }
   };
   const onKeyDownFirstButton = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === 'Tab' && e.shiftKey) {
-      props.onBlurFooter(e);
+      props.onNavigateOutsiteFooter(e);
     }
   };
 
