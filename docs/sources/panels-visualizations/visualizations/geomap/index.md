@@ -353,6 +353,8 @@ The Photos layer renders a photo at each data point.
 
 The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization]({{< relref "../node-graph/#data-api" >}}) with the addition of [geospatial data]({{< relref "#location">}}) included the nodes data. The geospatial data is used to render the nodes on the map.
 
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
+
 ### Options
 
 - **Arrow** sets the arrow styling to display for each edge.
