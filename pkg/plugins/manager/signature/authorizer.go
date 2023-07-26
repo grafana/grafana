@@ -36,7 +36,7 @@ func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
 
 	for _, pID := range u.cfg.PluginsAllowUnsigned {
 		if pID == p.ID {
-			u.log.Info("Permitting as is in the allow list", "pluginID", p.ID)
+			u.log.Info("Permitting as is in the allow list", "pluginID", p.ID, "allowlist", u.cfg.PluginsAllowUnsigned)
 			return true
 		}
 	}
