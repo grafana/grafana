@@ -42,6 +42,7 @@ export interface FeatureToggles {
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
+  topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
