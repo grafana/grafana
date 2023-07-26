@@ -55,7 +55,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const { retentionPolicies } = useRetentionPolicies(datasource);
 
   useEffect(() => {
-    if (!policy) {
+    if (!policy && retentionPolicies.length > 0) {
       props.onChange({
         ...query,
         policy: retentionPolicies[0],

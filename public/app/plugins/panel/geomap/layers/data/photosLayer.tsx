@@ -69,7 +69,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
   isBaseMap: false,
   showLocation: true,
   hideOpacity: true,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
