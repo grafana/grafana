@@ -3906,9 +3906,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.4.2":
-  version: 1.4.2
-  resolution: "@grafana/experimental@npm:1.4.2"
+"@grafana/experimental@npm:1.6.1":
+  version: 1.6.1
+  resolution: "@grafana/experimental@npm:1.6.1"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
@@ -3920,7 +3920,7 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
     react-select: ^5.2.1
-  checksum: 6e4d7f162ebc4c1a2746f7d0301e98a1634486d8e4c8adccdbab993139b06f46ccc85ab7233fdaaa93981b8b9ad8d68fb1b8542a0e6bba4f89e51707971a05db
+  checksum: 64c32bc9e3bf96c88fbe9522c53e13e4cbc3848ff83df2b1b76735ad5cf9e1775b31094d1298c4bc6a8c75dbcac015eedb14dd9269f492f296c240c58c9916e7
   languageName: node
   linkType: hard
 
@@ -3959,12 +3959,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.5":
-  version: 0.1.5
-  resolution: "@grafana/lezer-logql@npm:0.1.5"
+"@grafana/lezer-logql@npm:0.1.8":
+  version: 0.1.8
+  resolution: "@grafana/lezer-logql@npm:0.1.8"
+  dependencies:
+    lodash: ^4.17.21
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: ac0a842c06add812b583e35f0cd4a6a0272adc1a34b681ceb94fbde3e63ed93db72ef4ee9f6531a781c380530b98b2a178736160baa251262a240d11f3afb211
+  checksum: f0f301b6d4fbd2d79563b5b4e34303257be0ea995b2b9fa1f012648654b4afaa9cea91642bc59eddb70e9fa24ec8804489c161f7065b41eef49db68d3a2ca561
   languageName: node
   linkType: hard
 
@@ -19266,11 +19268,11 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.0
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": 1.4.2
+    "@grafana/experimental": 1.6.1
     "@grafana/faro-core": 1.1.0
     "@grafana/faro-web-sdk": 1.1.0
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.5
+    "@grafana/lezer-logql": 0.1.8
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": 0.22.0

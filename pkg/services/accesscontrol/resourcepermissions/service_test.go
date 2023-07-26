@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -244,7 +245,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, *sqlstore.SQLSto
 	ac := acimpl.ProvideAccessControl(cfg)
 	acService := &actest.FakeService{}
 	service, err := New(
-		ops, cfg, routing.NewRouteRegister(), license,
+		ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc,
 	)
 	require.NoError(t, err)
