@@ -30,7 +30,7 @@ func setDefaultTemplateData(cfg *setting.Cfg, data map[string]interface{}, u *us
 	data["BuildStamp"] = setting.BuildStamp
 	data["EmailCodeValidHours"] = cfg.EmailCodeValidMinutes / 60
 	data["Subject"] = map[string]interface{}{}
-	data["Theme"] = "light"
+	data["Theme"] = "dark"
 	if u != nil {
 		data["Name"] = u.NameOrFallback()
 	}
