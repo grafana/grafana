@@ -108,6 +108,10 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	return &BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
