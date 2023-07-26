@@ -55,11 +55,10 @@ function mapFieldsToTypes(columns: SQLSelectableValue[]) {
 }
 
 export function removeQuotesForMultiVariables(val: SQLExpression, templateVars: VariableWithMultiSupport[]) {
-  if (
-    templateVars.some((tv) => {
-      return tv.multi && (val.whereString?.includes('${' + tv.name + '}') || val.whereString?.includes('$' + tv.name));
-    })
-  ) {
+  const multiVariableInWhereString = (tv: VariableWithMultiSupport) =>
+    tv.multi && (val.whereString?.includes(`\${${tv.name}}`) || val.whereString?.includes(`$${tv.name}`));
+
+  if (templateVars.some((tv) => multiVariableInWhereString(tv))) {
     val.whereString = val.whereString?.replaceAll("')", ')');
     val.whereString = val.whereString?.replaceAll("('", '(');
   }
