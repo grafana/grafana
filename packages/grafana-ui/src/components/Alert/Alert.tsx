@@ -125,6 +125,7 @@ const getStyles = (
 
   return {
     alert: css({
+      label: 'alert',
       flexGrow: 1,
       position: 'relative',
       borderRadius,

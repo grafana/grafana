@@ -12,7 +12,6 @@ export interface ResourceRow {
   name: string;
   type: ResourceRowType;
   typeLabel: string;
-  locationDisplayName?: string;
   location?: string;
   children?: ResourceRowGroup;
 }
