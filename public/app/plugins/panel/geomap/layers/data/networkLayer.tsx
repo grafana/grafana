@@ -24,7 +24,7 @@ import {
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
-import { getNetworkFrames } from '../../../nodeGraph/utils';
+import { getGraphFrame } from '../../../nodeGraph/utils';
 import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
@@ -282,7 +282,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
 function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
   source.clear(true);
 
-  const networkFrames = getNetworkFrames(frames);
+  const networkFrames = getGraphFrame(frames);
   const frameNodes = networkFrames.nodes[0];
   const frameEdges = networkFrames.edges[0];
 
@@ -297,9 +297,7 @@ function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
   const field = info.field as unknown as Field<Point>;
 
   // TODO for nodes, don't hard code id field name
-  const nodeIdIndex = frameNodes.fields.findIndex((f: Field) => {
-    return f.name === 'id';
-  });
+  const nodeIdIndex = frameNodes.fields.findIndex((f: Field) => f.name === 'id');
   const nodeIdValues = frameNodes.fields[nodeIdIndex].values;
 
   // Edges

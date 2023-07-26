@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { DataFrame } from '@grafana/data';
 
-import { getNetworkFrames } from './utils';
+import { getGraphFrame } from './utils';
 
 /**
  * As we need 2 dataframes for the service map, one with nodes and one with edges we have to figure out which is which.
@@ -11,6 +11,6 @@ import { getNetworkFrames } from './utils';
  */
 export function useCategorizeFrames(series: DataFrame[]) {
   return useMemo(() => {
-    return getNetworkFrames(series);
+    return getGraphFrame(series);
   }, [series]);
 }

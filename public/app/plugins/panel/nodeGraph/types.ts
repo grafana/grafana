@@ -44,7 +44,7 @@ export type NodesMarker = {
   count: number;
 };
 
-export type NetworkFrame = {
+export type GraphFrame = {
   nodes: DataFrame[];
   edges: DataFrame[];
 };
