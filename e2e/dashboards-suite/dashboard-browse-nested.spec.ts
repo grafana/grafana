@@ -116,5 +116,24 @@ describe('Dashboard browse (nested)', () => {
 
   it('pagination works correctly for folders and root', () => {
     e2e.pages.Dashboards.visit();
+    //Expect A root folder with children to be visible
+    e2e().contains('A root folder with children').should('be.visible');
+    //Expand A root folder with children
+    e2e().get('[aria-label="Expand folder"]').first().click();
+    //Expect Nested folder 00 to be visible
+    e2e().contains('Nested folder 00').should('be.visible');
+    //Scroll the page
+    e2e().get('[role="rowgroup"] > div').scrollTo(0, 500);
+
+    //Expect Nested folder 59 to be visible
+    //Expect Nested Dashboard 00 to be visible
+    //Scroll the page
+    //Expect Nested Dashboard 59 to be visible
+    //Expect Root folder 00 to be visible
+    //Scroll the page
+    //Expect Root folder 59 to be visible
+    //Expect Root dashboard 00 to be visible
+    //Scroll the page
+    //Expect Root dashboard 59 to be visible
   });
 });
