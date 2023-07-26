@@ -66,6 +66,37 @@ describe('getPanelMenu()', () => {
           "text": "Share",
         },
         {
+          "iconClassName": "download-alt",
+          "subMenu": [
+            {
+              "iconClassName": "camera",
+              "onClick": [Function],
+              "text": "PNG",
+            },
+            {
+              "iconClassName": "camera",
+              "onClick": [Function],
+              "text": "JPEG",
+            },
+            {
+              "iconClassName": "camera",
+              "onClick": [Function],
+              "text": "BMP",
+            },
+            {
+              "text": "",
+              "type": "divider",
+            },
+            {
+              "iconClassName": "book",
+              "onClick": [Function],
+              "text": "Panel JSON",
+            },
+          ],
+          "text": "Export",
+          "type": "submenu",
+        },
+        {
           "iconClassName": "compass",
           "onClick": [Function],
           "shortcut": "x",
@@ -444,6 +475,37 @@ describe('getPanelMenu()', () => {
             "onClick": [Function],
             "shortcut": "p s",
             "text": "Share",
+          },
+          {
+            "iconClassName": "download-alt",
+            "subMenu": [
+              {
+                "iconClassName": "camera",
+                "onClick": [Function],
+                "text": "PNG",
+              },
+              {
+                "iconClassName": "camera",
+                "onClick": [Function],
+                "text": "JPEG",
+              },
+              {
+                "iconClassName": "camera",
+                "onClick": [Function],
+                "text": "BMP",
+              },
+              {
+                "text": "",
+                "type": "divider",
+              },
+              {
+                "iconClassName": "book",
+                "onClick": [Function],
+                "text": "Panel JSON",
+              },
+            ],
+            "text": "Export",
+            "type": "submenu",
           },
           {
             "iconClassName": "compass",

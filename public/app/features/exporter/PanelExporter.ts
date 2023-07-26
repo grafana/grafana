@@ -1,5 +1,7 @@
+import domtoimage from 'dom-to-image';
 import saveAs from 'file-saver';
-import { toJpeg, toPng } from 'html-to-image';
+import { toCanvas } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 
@@ -9,6 +11,7 @@ import {
   dateTimeFormat,
   formattedValueToString,
   PanelData,
+  PanelModel,
   transformDataFrame,
 } from '@grafana/data';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
@@ -46,10 +49,11 @@ export async function exportSelect(payload: ExportPayload) {
       exportExcel(dataFrames[0], payload.panel.title);
       break;
     case ExportType.panelJson:
-      exportJSON(payload.panel.getSaveModel(), payload.panel.title);
+      exportPanelJSON(payload.panel.getSaveModel(), payload.panel.title);
+      console.log(payload.panel.getSaveModel());
       break;
     case ExportType.dataJson:
-      exportJSON(payload.data, payload.panel.title);
+      exportDataJSON(payload.data, payload.panel.title);
       break;
     case ExportType.dataFrameJson:
       const panelData = await firstValueFrom(
@@ -58,30 +62,31 @@ export async function exportSelect(payload: ExportPayload) {
           withTransforms: false,
         })
       );
-      exportJSON(panelData, payload.panel.title);
+      exportDataJSON(panelData, payload.panel.title);
       break;
   }
 }
 
-function exportJSON(panelData: PanelData | null | undefined, title: string) {
-  let blob: Blob;
-
-  if (panelData?.series) {
-    let jsonData = getPanelDataFrames(panelData);
-    blob = new Blob([getPrettyJSON(jsonData)], {
-      type: 'application/json',
-    });
-  } else {
-    blob = new Blob([getPrettyJSON(panelData)], {
-      type: 'application/json',
-    });
-  }
+export function exportPanelJSON(panelData: PanelModel, title: string) {
+  let blob = new Blob([getPrettyJSON(panelData)], {
+    type: 'application/json',
+  });
 
   const fileName = `${title}-${dateTimeFormat(new Date())}.json`;
   saveAs(blob, fileName);
 }
 
-function exportExcel(data: DataFrame, title: string) {
+export function exportDataJSON(panelData: PanelData | null | undefined, title: string) {
+  let jsonData = getPanelDataFrames(panelData);
+  const blob = new Blob([getPrettyJSON(jsonData)], {
+    type: 'application/json',
+  });
+
+  const fileName = `${title}-${dateTimeFormat(new Date())}.json`;
+  saveAs(blob, fileName);
+}
+
+export function exportExcel(data: DataFrame, title: string) {
   let dataJson = [];
 
   for (let i = 0; i < data.fields[0].values.length; i++) {
@@ -96,19 +101,52 @@ function exportExcel(data: DataFrame, title: string) {
   let dataSheet = XLSX.utils.json_to_sheet(dataJson);
   let xlsxFile = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(xlsxFile, dataSheet, 'People');
+  const wbout = XLSX.write(xlsxFile, { type: 'array', bookType: 'xlsx' });
+
+  const blob = new Blob([wbout], {
+    type: '',
+  });
+
   const fileName = `${title}-${dateTimeFormat(new Date())}.xlsx`;
-  XLSX.writeFile(xlsxFile, fileName);
+  saveAs(blob, fileName);
 }
 
-async function exportImage(payload: ExportPayload) {
-  // NOT WORKING FOR NEWS OR GEOMAP - new maybe due to nested images. geomap operation is insecure
-  let c = '';
-  if (payload.format === ExportType.png) {
-    c = await toPng(payload.htmlElement ?? new Node(), { style: { transform: 'translate(0px, 0px)' } });
-  } else if (payload.format === ExportType.jpeg) {
-    c = await toJpeg(payload.htmlElement ?? new Node(), { style: { transform: 'translate(0px, 0px)' } });
-  } // cant get it to work with custom formats in toBlob?
-  const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`;
+export async function exportImage(payload: ExportPayload) {
+  let mockHTMLElement = document.createElement('a');
+  //const mockHTMLChildElement = document.createElement("div");
+  //mockHTMLElement = mockHTMLElement.appendChild(mockHTMLChildElement);
 
-  saveAs(c, fileName);
+  console.log(mockHTMLElement);
+  // console.log(await toCanvas(mockHTMLElement, { style: { transform: 'translate(0px, 0px)' } }))
+
+  // NOT WORKING FOR NEWS, GEOMAP, LOGS - new maybe due to nested images? geomap operation is insecure
+  /*const panelCanvas:HTMLCanvasElement = await toCanvas(payload.htmlElement, { style: { transform: 'translate(0px, 0px)' } });
+
+  const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`;
+  let a = document.createElement('canvas');
+  //a = await toCanvas(payload.htmlElement ?? new Node(), { style: { transform: 'translate(0px, 0px)' } });
+
+  console.log("pc", panelCanvas as HTMLCanvasElement, a);
+  //a.toBlob((blob) => { saveAs(blob as Blob, fileName) }, `image/${payload.format}`);
+  (panelCanvas as HTMLCanvasElement).toBlob((blob) => { saveAs(blob as Blob, fileName) }, `image/${payload.format}`);  */
+
+  // HTML2CANVAS
+  /*const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`; // CONSOLE LOGS A LOT
+  const panelCanvas = await html2canvas(payload.htmlElement);
+  panelCanvas.toBlob((blob) => { saveAs(blob as Blob, fileName) }, `image/${payload.format}`); */
+
+  // HTML-TO-IMAGE
+  const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`;
+  const panelCanvas = await toCanvas(payload.htmlElement ?? new Node(), {
+    style: { transform: 'translate(0px, 0px)' },
+  });
+  panelCanvas.toBlob((blob) => {
+    saveAs(blob ?? new Blob(), fileName);
+  }, `image/${payload.format}`);
+
+  // DOM-TO-IMAGE
+  /*const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`; 
+  let panelBlob = await domtoimage.toBlob(payload.htmlElement);
+  panelBlob = panelBlob.slice(0, panelBlob.size, `image/${payload.format}`)
+  saveAs(panelBlob, fileName); */
 }

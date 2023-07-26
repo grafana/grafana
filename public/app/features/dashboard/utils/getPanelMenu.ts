@@ -1,4 +1,5 @@
 import {
+  PanelData,
   PanelMenuItem,
   PluginExtensionLink,
   PluginExtensionPoints,
