@@ -666,6 +666,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:            "decoupleCorePlugins",
+			Description:     "Skip loading core plugins on startup in order to load them as external",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaPluginsPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
 			Name:        "azureMonitorDataplane",
 			Description: "Adds dataplane compliant frame metadata in the Azure Monitor datasource",
 			Stage:       FeatureStageGeneralAvailability,

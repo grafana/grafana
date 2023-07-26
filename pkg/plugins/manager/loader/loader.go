@@ -89,6 +89,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	loadedPlugins := make([]*plugins.Plugin, 0, len(found))
 
 	for _, p := range found {
+		// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
+		// It could be loaded later as an external plugin.
+		if l.cfg.Features != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) &&
+			src.PluginClass(ctx) == plugins.ClassCore &&
+			l.cfg.SkipCorePlugins[p.Primary.JSONData.ID] {
+			l.log.Debug("Skipping plugin loading as a core plugin", "pluginID", p.Primary.JSONData.ID)
+			continue
+		}
+
 		if _, exists := l.pluginRegistry.Plugin(ctx, p.Primary.JSONData.ID); exists {
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 			continue

@@ -395,6 +395,10 @@ const (
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
 
+	// FlagDecoupleCorePlugins
+	// Skip loading core plugins on startup in order to load them as external
+	FlagDecoupleCorePlugins = "decoupleCorePlugins"
+
 	// FlagAzureMonitorDataplane
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
