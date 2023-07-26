@@ -25,7 +25,7 @@ import {
   FieldConfigSource,
   FieldOverrideContext,
   FieldType,
-  InternalDataLinkSupplier,
+  DataLinkPostProcessor,
   InterpolateFunction,
   LinkModel,
   NumericRange,
@@ -205,7 +205,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field.state!.scopedVars,
         context.replaceVariables,
         options.timeZone,
-        options.internalDataLinkSupplier
+        options.dataLinkPostProcessor
       );
     }
 
@@ -360,20 +360,22 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
-const defaultInternalDataLinkSupplier: InternalDataLinkSupplier = (options) => {
+const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
   // For internal links at the moment only destination is Explore.
-  const { link, dataLinkScopedVars, field, replaceVariables } = options;
-  if (!link.internal) {
-    return undefined;
+  const { link, linkModel, dataLinkScopedVars, field, replaceVariables } = options;
+
+  if (link.internal) {
+    return mapInternalLinkToExplore({
+      link,
+      internalLink: link.internal,
+      scopedVars: dataLinkScopedVars,
+      field,
+      range: link.internal.range ?? ({} as any),
+      replaceVariables,
+    });
+  } else {
+    return linkModel;
   }
-  return mapInternalLinkToExplore({
-    link,
-    internalLink: link.internal,
-    scopedVars: dataLinkScopedVars,
-    field,
-    range: link.internal.range ?? ({} as any),
-    replaceVariables,
-  });
 };
 
 export const getLinksSupplier =
@@ -383,7 +385,7 @@ export const getLinksSupplier =
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
     timeZone?: TimeZone,
-    internalDataLinkSupplier?: InternalDataLinkSupplier
+    dataLinkPostProcessor?: DataLinkPostProcessor
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     if (!field.config.links || field.config.links.length === 0) {
@@ -407,8 +409,10 @@ export const getLinksSupplier =
         dataContext.value.calculatedValue = config.calculatedValue;
       }
 
+      let linkModel: LinkModel<Field>;
+
       if (link.onClick) {
-        return {
+        linkModel = {
           href: link.url,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
@@ -421,38 +425,37 @@ export const getLinksSupplier =
           },
           origin: field,
         };
+      } else {
+        let href = link.onBuildUrl
+          ? link.onBuildUrl({
+              origin: field,
+              replaceVariables: boundReplaceVariables,
+            })
+          : link.url;
+
+        if (href) {
+          href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+          href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
+          href = locationUtil.processUrl(href);
+        }
+
+        linkModel = {
+          href,
+          title: replaceVariables(link.title || '', dataLinkScopedVars),
+          target: link.targetBlank ? '_blank' : undefined,
+          origin: field,
+        };
       }
 
-      if (link.internal) {
-        return (internalDataLinkSupplier || defaultInternalDataLinkSupplier)({
-          frame,
-          field,
-          dataLinkScopedVars,
-          replaceVariables,
-          config,
-          link,
-        });
-      }
-      let href = link.onBuildUrl
-        ? link.onBuildUrl({
-            origin: field,
-            replaceVariables: boundReplaceVariables,
-          })
-        : link.url;
-
-      if (href) {
-        href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        href = locationUtil.processUrl(href);
-      }
-
-      const info: LinkModel<Field> = {
-        href,
-        title: replaceVariables(link.title || '', dataLinkScopedVars),
-        target: link.targetBlank ? '_blank' : undefined,
-        origin: field,
-      };
-      return info;
+      return (dataLinkPostProcessor || defaultInternalLinkPostProcessor)({
+        frame,
+        field,
+        dataLinkScopedVars,
+        replaceVariables,
+        config,
+        link,
+        linkModel,
+      });
     });
 
     return linkModels.filter((link): link is LinkModel => !!link);
@@ -499,7 +502,7 @@ export function useFieldOverrides(
   timeZone: string,
   theme: GrafanaTheme2,
   replace: InterpolateFunction,
-  internalDataLinkSupplier?: InternalDataLinkSupplier
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ): PanelData | undefined {
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const structureRev = useRef(0);
@@ -531,7 +534,7 @@ export function useFieldOverrides(
         replaceVariables: replace,
         theme,
         timeZone,
-        internalDataLinkSupplier,
+        dataLinkPostProcessor,
       }),
     };
     if (data.annotations) {
@@ -544,11 +547,11 @@ export function useFieldOverrides(
         replaceVariables: replace,
         theme,
         timeZone,
-        internalDataLinkSupplier,
+        dataLinkPostProcessor,
       });
     }
     return panelData;
-  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace, internalDataLinkSupplier]);
+  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace, dataLinkPostProcessor]);
 }
 
 /**

@@ -6,7 +6,7 @@ import { PanelChrome, PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import { getPanelPluginMeta } from '../plugins/importPanelPlugin';
 
-import { useExploreInternalDataLinkSupplier } from './hooks/useExploreDataLinksSupplier';
+import { useExploreDataLinkPostProcessor } from './hooks/useExploreDataLinkPostProcessor';
 
 export interface Props {
   width: number;
@@ -45,10 +45,10 @@ export function CustomContainer({
 
   const plugin = getPanelPluginMeta(pluginId);
 
-  const internalDataLinkSupplier = useExploreInternalDataLinkSupplier(splitOpenFn, timeRange);
+  const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
 
   const panelContext: PanelContext = {
-    internalDataLinkSupplier,
+    dataLinkPostProcessor,
     eventBus,
     eventsScope: 'explore',
   };

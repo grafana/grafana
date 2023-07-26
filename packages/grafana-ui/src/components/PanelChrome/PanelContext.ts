@@ -9,7 +9,7 @@ import {
   SplitOpen,
   CoreApp,
   DataFrame,
-  InternalDataLinkSupplier,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
@@ -98,7 +98,7 @@ export interface PanelContext {
    * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
    * @internal
    */
-  internalDataLinkSupplier?: InternalDataLinkSupplier;
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

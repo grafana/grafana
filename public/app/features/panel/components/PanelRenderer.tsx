@@ -38,7 +38,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const { internalDataLinkSupplier } = usePanelContext();
+  const { dataLinkPostProcessor } = usePanelContext();
   const dataWithOverrides = useFieldOverrides(
     plugin,
     optionsWithDefaults?.fieldConfig,
@@ -46,7 +46,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
     timeZone,
     theme,
     replace,
-    internalDataLinkSupplier
+    dataLinkPostProcessor
   );
 
   useEffect(() => {

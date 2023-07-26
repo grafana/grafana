@@ -13,7 +13,7 @@ import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/t
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
 import { selectIsWaitingForData } from '../state/query';
-import { exploreInternalLinkSupplierFactory } from '../utils/links';
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface RawPrometheusContainerProps {
   ariaLabel?: string;
@@ -118,7 +118,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
 
     let dataFrames = tableResult;
 
-    const internalDataLinkSupplier = exploreInternalLinkSupplierFactory(splitOpenFn, range);
+    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
     if (dataFrames?.length) {
       dataFrames = applyFieldOverrides({
@@ -130,7 +130,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
           defaults: {},
           overrides: [],
         },
-        internalDataLinkSupplier,
+        dataLinkPostProcessor,
       });
     }
 

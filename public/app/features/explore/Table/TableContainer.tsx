@@ -9,7 +9,7 @@ import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
-import { exploreInternalLinkSupplierFactory } from '../utils/links';
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
@@ -52,7 +52,7 @@ export class TableContainer extends PureComponent<Props> {
 
     let dataFrames = tableResult;
 
-    const internalDataLinkSupplier = exploreInternalLinkSupplierFactory(splitOpenFn, range);
+    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
     if (dataFrames?.length) {
       dataFrames = applyFieldOverrides({
@@ -64,7 +64,7 @@ export class TableContainer extends PureComponent<Props> {
           defaults: {},
           overrides: [],
         },
-        internalDataLinkSupplier,
+        dataLinkPostProcessor,
       });
     }
 

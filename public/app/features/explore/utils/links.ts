@@ -16,7 +16,7 @@ import {
   DataLinkConfigOrigin,
   CoreApp,
   SplitOpenOptions,
-  InternalDataLinkSupplier,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -53,16 +53,16 @@ const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 /**
  * Creates an internal link supplier specific to Explore
  */
-export const exploreInternalLinkSupplierFactory = (
+export const exploreDataLinkPostProcessorFactory = (
   splitOpenFn: SplitOpen | undefined,
   range: TimeRange
-): InternalDataLinkSupplier => {
-  const exploreInternalLinkSupplier: InternalDataLinkSupplier = (options) => {
-    const { field, dataLinkScopedVars: vars, frame: dataFrame, link } = options;
+): DataLinkPostProcessor => {
+  const exploreDataLinkPostProcessor: DataLinkPostProcessor = (options) => {
+    const { field, dataLinkScopedVars: vars, frame: dataFrame, link, linkModel } = options;
     const { valueRowIndex: rowIndex } = options.config;
 
-    if (rowIndex === undefined) {
-      return undefined;
+    if (!link.internal || rowIndex === undefined) {
+      return linkModel;
     }
 
     /**
@@ -82,7 +82,7 @@ export const exploreInternalLinkSupplierFactory = (
 
     return links.length ? first(links) : undefined;
   };
-  return exploreInternalLinkSupplier;
+  return exploreDataLinkPostProcessor;
 };
 
 /**

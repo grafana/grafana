@@ -30,7 +30,7 @@ export const TimeSeriesPanel = ({
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, internalDataLinkSupplier } =
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, dataLinkPostProcessor } =
     usePanelContext();
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data.series, timeRange]);
@@ -80,7 +80,7 @@ export const TimeSeriesPanel = ({
             frames,
             replaceVariables,
             timeZone,
-            internalDataLinkSupplier
+            dataLinkPostProcessor
           );
         }
 

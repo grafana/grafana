@@ -6,7 +6,7 @@ import {
   getDisplayProcessor,
   getLinksSupplier,
   GrafanaTheme2,
-  InternalDataLinkSupplier,
+  DataLinkPostProcessor,
   InterpolateFunction,
   isBooleanUnit,
   SortedVector,
@@ -270,7 +270,7 @@ export function regenerateLinksSupplier(
   frames: DataFrame[],
   replaceVariables: InterpolateFunction,
   timeZone: string,
-  internalDataLinkSupplier?: InternalDataLinkSupplier
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ): DataFrame {
   alignedDataFrame.fields.forEach((field) => {
     if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
@@ -305,7 +305,7 @@ export function regenerateLinksSupplier(
       field.state!.scopedVars!,
       replaceVariables,
       timeZone,
-      internalDataLinkSupplier
+      dataLinkPostProcessor
     );
   });
 

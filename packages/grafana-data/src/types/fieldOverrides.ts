@@ -122,7 +122,7 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
   shouldApply: (field: Field) => boolean;
 }
 
-export type InternalLinkSupplierOptions = {
+export type DataLinkPostProcessorOptions = {
   frame: DataFrame;
   field: Field;
   dataLinkScopedVars: ScopedVars;
@@ -130,9 +130,10 @@ export type InternalLinkSupplierOptions = {
   timeZone?: TimeZone;
   config: ValueLinkConfig;
   link: DataLink;
+  linkModel: LinkModel;
 };
 
-export type InternalDataLinkSupplier = (options: InternalLinkSupplierOptions) => LinkModel<Field> | undefined;
+export type DataLinkPostProcessor = (options: DataLinkPostProcessorOptions) => LinkModel<Field> | undefined;
 
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
@@ -141,7 +142,7 @@ export interface ApplyFieldOverrideOptions {
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme2;
   timeZone?: TimeZone;
-  internalDataLinkSupplier?: InternalDataLinkSupplier;
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
 export enum FieldConfigProperty {
