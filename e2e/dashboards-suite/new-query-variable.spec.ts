@@ -137,7 +137,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.inputV2().type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.container().type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
