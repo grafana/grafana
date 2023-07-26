@@ -305,7 +305,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		}
 		uaCfg.BaseInterval = baseInterval
 	} else if baseInterval != SchedulerBaseInterval {
-		cfg.Logger.Warn("Scheduler tick interval is changed to non-default but the feature flag is not enabled. Use default.", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
+		cfg.Logger.Warn("Scheduler tick interval is changed to non-default but the feature flag is not enabled. Use default.", "interval", baseInterval, "default", SchedulerBaseInterval)
 	}
 
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
