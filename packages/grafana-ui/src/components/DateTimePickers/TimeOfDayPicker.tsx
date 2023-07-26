@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import RcTimePicker from 'rc-time-picker';
 import React from 'react';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
 import { Icon, useStyles2 } from '../../index';
 import { getFocusStyles } from '../../themes/mixins';
@@ -43,7 +43,11 @@ export const TimeOfDayPicker = ({
       className={cx(inputSizes()[size], styles.input)}
       popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
       defaultValue={dateTimeAsMoment()}
-      onChange={(value: any) => onChange(dateTime(value))}
+      onChange={(value) => {
+        if (isDateTimeInput(value)) {
+          return onChange(dateTime(value));
+        }
+      }}
       allowEmpty={false}
       showSecond={showSeconds}
       value={dateTimeAsMoment(value)}
