@@ -265,10 +265,7 @@ describe('createSpanLinkFactory', () => {
         createTraceSpan({
           process: {
             serviceName: 'service',
-            tags: [
-              { key: 'service.name', value: 'serviceName' },
-              { key: 'k8s.pod.name', value: 'podName' },
-            ],
+            tags: [{ key: 'k8s.pod.name', value: 'podName' }],
           },
         })
       );

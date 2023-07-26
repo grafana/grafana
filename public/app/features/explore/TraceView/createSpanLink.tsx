@@ -115,7 +115,15 @@ export function createSpanLinkFactory({
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace'].map((k) => ({
+const defaultKeys = [
+  'cluster',
+  'hostname',
+  'namespace',
+  'pod',
+  'service.name',
+  'service.namespace',
+  'deployment.environment',
+].map((k) => ({
   key: k,
   value: k.includes('.') ? k.replace('.', '_') : undefined,
 }));
@@ -152,7 +160,8 @@ function legacyCreateSpanLinkFactory(
     //  deprecated blob format and we can map the link easily in data frame.
     if (logsDataSourceSettings && traceToLogsOptions) {
       const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
-      const tagsToUse = traceToLogsOptions.tags || defaultKeys;
+      const tagsToUse =
+        traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : defaultKeys;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
           tags = getFormattedTags(span, tagsToUse);
