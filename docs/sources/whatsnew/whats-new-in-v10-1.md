@@ -99,6 +99,18 @@ To try out the visualizations and widgets split, enable the `vizAndWidgetSplit` 
 
 {{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
 
+### Geomap network layer
+
+_Experimental in all editions of Grafana._
+
+<!-- Nathan Marrs -->
+
+You can now display network data in the Geomap visualization by using the new beta Network layer. This layer supports the same data format as the [Node graph visualization]({{< relref "../panels-visualizations/visualizations/node-graph/#data-api" >}}).
+
+To learn more, refer to our [Geomap network layer documentation]({{< relref "../panels-visualizations/visualizations/geomap/#network-layer-beta" >}})
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer.png" max-width="750px" caption="Geomap network layer" >}}
+
 ### Heatmap visualizations now support datalinks
 
 _Generally available in all editions of Grafana._
