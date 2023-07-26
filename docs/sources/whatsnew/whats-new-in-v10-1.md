@@ -214,6 +214,14 @@ _Generally available in all editions of Grafana._
 
 For Elasticsearch metric queries in Explore, you can now see the sample of log lines that contributed to the displayed results. To see these logs, click on the collapsed Logs sample panel under your graph or table panel. If you want to interact with your log lines or modify the log query, click on the “Open logs in split view” button and the log query will be executed in the split view.
 
+### Panel plugins in Explore
+
+<!-- Ben Donnelly -->
+
+_Experimental in all editions of Grafana_
+
+Data source plugin developers can now use any plugin to visualize the data in Explore. Similarly to `preferredVisualizationType` we have introduced an experimental API to render visualization by plugin ID. In the returned data frame, set meta option `preferredVisualisationPluginId` to a plugin ID you want to be used when showing the data for given data frame.
+
 ## Alerting
 
 _All Alerting features are generally available in all editions of Grafana._
