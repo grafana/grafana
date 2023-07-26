@@ -51,6 +51,7 @@ export const StyleEditor = (props: Props) => {
     if (!item.settings?.frameMatcher) {
       return props.context;
     }
+
     return { ...props.context, data: props.context.data.filter(item.settings.frameMatcher) };
   }, [props.context, item.settings]);
 

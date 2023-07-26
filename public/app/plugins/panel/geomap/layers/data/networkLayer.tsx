@@ -23,16 +23,16 @@ import {
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
+import { GraphFrame } from 'app/plugins/panel/nodeGraph/types';
+import { getGraphFrame } from 'app/plugins/panel/nodeGraph/utils';
 
-import { getGraphFrame } from '../../../nodeGraph/utils';
-import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
+import { MarkersLegendProps, MarkersLegend } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { StyleConfig, defaultStyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 
-// Configuration options for Circle overlays
 export interface NetworkConfig {
   style: StyleConfig;
   showLegend?: boolean;
@@ -60,7 +60,7 @@ export const defaultMarkersConfig: MapLayerOptions<NetworkConfig> = {
 };
 
 /**
- * Map layer configuration for circle overlay
+ * Map layer configuration for network overlay
  */
 export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   id: NETWORK_LAYER_ID,
@@ -75,6 +75,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * Function that configures transformation and returns a transformer
    * @param map
    * @param options
+   * @param eventBus
    * @param theme
    */
   create: async (map: Map, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
@@ -208,15 +209,6 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           source.clear();
           return; // ignore empty
         }
-        const dataFrames: DataFrame[] = [];
-        // TODO find a better way to handle multiple frames
-        for (const frame of data.series) {
-          dataFrames.push(frame);
-          if (frame.refId === 'edges') {
-            edgeStyle.dims = getStyleDimension(frame, edgeStyle, theme);
-          } else {
-            style.dims = getStyleDimension(frame, style, theme);
-          }
 
           // Post updates to the legend component
           if (legend) {
@@ -227,9 +219,17 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
               layer: vectorLayer,
             });
           }
-        }
+        const graphFrames = getGraphFrame(data.series);
 
-        updateEdge(source, dataFrames);
+        for (const frame of data.series) {
+          if (frame === graphFrames.edges[0]) {
+            edgeStyle.dims = getStyleDimension(frame, edgeStyle, theme);
+          } else {
+            style.dims = getStyleDimension(frame, style, theme);
+          }
+
+          updateEdge(source, graphFrames);
+        }
       },
 
       // Marker overlay options
@@ -290,12 +290,11 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
   defaultOptions,
 };
 
-function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
+function updateEdge(source: FrameVectorSource, graphFrames: GraphFrame) {
   source.clear(true);
 
-  const networkFrames = getGraphFrame(frames);
-  const frameNodes = networkFrames.nodes[0];
-  const frameEdges = networkFrames.edges[0];
+  const frameNodes = graphFrames.nodes[0];
+  const frameEdges = graphFrames.edges[0];
 
   if (!frameNodes || !frameEdges) {
     // TODO: provide helpful error message / link to docs for how to format data
