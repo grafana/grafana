@@ -61,6 +61,14 @@ The transformations tab has gotten an improved user experience and visual redesi
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
 
+### Format Time Transformation (Alpha)
+
+<!-- Kyle Cunningham -->
+
+_Generally available in all editions of Grafana._
+
+When working with times it can be useful to have different time formats. The new format time transformation allows any time format supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation this can also be used to time bucket values together.
+
 ### Logs: Log rows menu when using displayed fields
 
 <!-- Matías Wenceslao Chomicki -->
