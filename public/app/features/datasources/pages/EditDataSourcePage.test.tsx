@@ -4,7 +4,7 @@ import { Store } from 'redux';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { LayoutModes } from '@grafana/data';
-import { setAngularLoader, config, setPluginExtensionGetter } from '@grafana/runtime';
+import { setAngularLoader, setPluginExtensionGetter } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
