@@ -380,3 +380,15 @@ _Generally available in all editions of Grafana._
 Grafana 10.1 logs an error when provisioning data sources with invalid UIDs. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), `-` (dash) and `_` (underscore) characters, maximum length 40.
 
 **Provisioning data sources with invalid UIDs will be removed in future versions of Grafana, and will return an error instead.**
+
+## Subfolders: folder selection
+
+<!-- Zsofia Komaromi -->
+
+_Available in public preview in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced_
+
+When saving or moving a dashboard, you can now see the full folder tree when selecting the destination folder.
+
+To get started creating subfolders, enable the `nestedFolders` feature toggle. We recommend that you enable this feature only on test or development instances, rather than in production environments.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10.1-subfolders-folder-picker.png" max-width="750px" caption="Selecting a folder in Grafana" >}}
