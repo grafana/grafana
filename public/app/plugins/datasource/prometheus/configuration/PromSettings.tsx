@@ -433,7 +433,7 @@ export const PromSettings = (props: Props) => {
                     onBlur={(e) =>
                       updateValidDuration({ ...validDuration, incrementalQueryOverlapWindow: e.currentTarget.value })
                     }
-                    className="width-25"
+                    className="width-20"
                     value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
                     onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
                     spellCheck={false}
