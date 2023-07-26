@@ -10,7 +10,7 @@ import {
   PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
-import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
+import { Select, InlineFieldRow, InlineField, Input, InlineSwitch } from '@grafana/ui';
 
 export function FormatTimeTransfomerEditor({
   input,
@@ -51,6 +51,13 @@ export function FormatTimeTransfomerEditor({
     [onChange, options]
   );
 
+  const onUseTzChange = useCallback(() => {
+    onChange({
+      ...options,
+      useTimezone: !options.useTimezone,
+    });
+  }, [onChange, options]);
+
   return (
     <>
       <InlineFieldRow>
@@ -68,9 +75,15 @@ export function FormatTimeTransfomerEditor({
           label="Format"
           labelWidth={10}
           tooltip="The output format for the field specified as a moment.js format string."
-          grow
         >
           <Input onChange={onFormatChange} value={options.outputFormat} />
+        </InlineField>
+        <InlineField
+          label="Use Timezone"
+          tooltip="Use the user's configured timezone when formatting time."
+          labelWidth={20}
+        >
+          <InlineSwitch value={options.useTimezone} transparent={true} onChange={onUseTzChange} />
         </InlineField>
       </InlineFieldRow>
     </>
