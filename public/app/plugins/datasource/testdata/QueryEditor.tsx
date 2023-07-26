@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea, Switch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
@@ -345,10 +345,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       )}
 
       {scenarioId === TestDataQueryType.FlameGraph && (
-        <InlineField grow>
-          <Switch
-            label="Flamegraph with diff data"
-            value={query.flamegraphDiff}
+        <InlineField label={'Diff profile'} grow>
+          <InlineSwitch
+            value={Boolean(query.flamegraphDiff)}
             onChange={(e) => {
               onUpdate({ ...query, flamegraphDiff: e.currentTarget.checked });
             }}
