@@ -135,7 +135,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			accessControl:   api.AccessControl,
 			evaluator:       api.EvaluatorFactory,
 			cfg:             &api.Cfg.UnifiedAlerting,
-			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer),
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
 			tracer:          api.Tracer,
