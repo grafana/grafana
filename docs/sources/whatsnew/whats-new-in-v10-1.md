@@ -67,7 +67,7 @@ The transformations tab has gotten an improved user experience and visual redesi
 
 _Generally available in all editions of Grafana._
 
-When working with times it can be useful to have different time formats. The new format time transformation allows any time format supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation this can also be used to time bucket values together.
+When working with times it can be useful to have different time formats. The new format time transformation allows any time format supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation this can also be used to bucket days, weeks, and other time windows together.
 
 ### Logs: Log rows menu when using displayed fields
 
