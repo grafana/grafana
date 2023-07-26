@@ -41,7 +41,6 @@ func BenchmarkExemplarJson(b *testing.B) {
 	tCtx, err := setup(true)
 	require.NoError(b, err)
 	b.ResetTimer()
-	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,

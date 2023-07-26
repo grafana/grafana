@@ -1,4 +1,4 @@
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { GraphContextMenuHeader } from '..';
@@ -8,7 +8,7 @@ import { VerticalGroup } from '../Layout/Layout';
 import { Menu } from './Menu';
 import mdx from './Menu.mdx';
 
-const meta: ComponentMeta<typeof Menu> = {
+const meta: Meta<typeof Menu> = {
   title: 'General/Menu',
   component: Menu,
   argTypes: {},

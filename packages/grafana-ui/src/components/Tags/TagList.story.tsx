@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { TagList } from './TagList';
 import mdx from './TagList.mdx';
 
-const meta: ComponentMeta<typeof TagList> = {
+const meta: Meta<typeof TagList> = {
   title: 'Forms/Tags/TagList',
   component: TagList,
   decorators: [withCenteredStory],
@@ -26,7 +26,7 @@ const meta: ComponentMeta<typeof TagList> = {
   },
 };
 
-export const List: ComponentStory<typeof TagList> = (args) => {
+export const List: StoryFn<typeof TagList> = (args) => {
   return (
     <div style={{ width: 300 }}>
       <TagList tags={args.tags} onClick={args.onClick} displayMax={args.displayMax} icon={args.icon} />

@@ -160,9 +160,9 @@ const SearchField = ({
           value={filter.value}
           onChange={(val) => {
             if (Array.isArray(val)) {
-              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
+              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type || uniqueOptionType });
             } else {
-              updateFilter({ ...filter, value: val?.value, valueType: val?.type });
+              updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
             }
           }}
           placeholder="Select value"
@@ -170,6 +170,7 @@ const SearchField = ({
           aria-label={`select ${filter.id} value`}
           allowCustomValue={true}
           isMulti
+          allowCreateWhileLoading
         />
       )}
       {allowDelete && (

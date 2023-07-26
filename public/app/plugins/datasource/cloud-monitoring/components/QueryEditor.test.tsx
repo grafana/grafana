@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { QueryType } from '../types';
+import { QueryType } from '../types/query';
 
 import { QueryEditor } from './QueryEditor';
 

@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -259,10 +260,16 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, string(b))
 	}
@@ -311,10 +318,16 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, string(b))
 			return true
@@ -454,10 +467,16 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 2
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 2
+		}
 	}
 }`, dashboardUID)
 	expectedFilteredByJSON := fmt.Sprintf(`
@@ -481,10 +500,16 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"lastEvaluation": "0001-01-01T00:00:00Z",
 				"evaluationTime": 0
 			}],
+			"totals": {
+				"inactive": 1
+			},
 			"interval": 60,
 			"lastEvaluation": "0001-01-01T00:00:00Z",
 			"evaluationTime": 0
-		}]
+		}],
+		"totals": {
+			"inactive": 1
+		}
 	}
 }`, dashboardUID)
 	expectedNoneJSON := `
@@ -639,7 +664,7 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")

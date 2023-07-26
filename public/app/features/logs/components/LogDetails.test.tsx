@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme } from '@grafana/data';
+import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -82,6 +82,7 @@ describe('LogDetails', () => {
     const entry = 'traceId=1234 msg="some message"';
     const dataFrame = new MutableDataFrame({
       fields: [
+        { name: 'timestamp', config: {}, type: FieldType.time, values: [1] },
         { name: 'entry', values: [entry] },
         // As we have traceId in message already this will shadow it.
         {
@@ -98,7 +99,7 @@ describe('LogDetails', () => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
-                href: link.url.replace('${__value.text}', field.values.get(rowIndex)),
+                href: link.url.replace('${__value.text}', field.values[rowIndex]),
                 title: link.title,
                 target: '_blank',
                 origin: field,

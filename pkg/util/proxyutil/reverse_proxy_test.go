@@ -21,6 +21,8 @@ func TestReverseProxy(t *testing.T) {
 		upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			actualReq = req
 			http.SetCookie(w, &http.Cookie{Name: "test"})
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000")
+			w.Header().Set("X-Custom-Hdr", "Ok!")
 			w.WriteHeader(http.StatusOK)
 		}))
 		t.Cleanup(upstream.Close)
@@ -52,11 +54,14 @@ func TestReverseProxy(t *testing.T) {
 		require.Empty(t, actualReq.Header.Get("Referer"))
 		require.Equal(t, "https://test.com/api", actualReq.Header.Get("X-Grafana-Referer"))
 		require.Equal(t, "value", actualReq.Header.Get("X-KEY"))
+		require.Empty(t, actualReq.Header.Get("Authorization"))
 		resp := rec.Result()
 		require.Empty(t, resp.Cookies())
 		require.Equal(t, "sandbox", resp.Header.Get("Content-Security-Policy"))
+		require.Contains(t, resp.Header, "X-Custom-Hdr")
+		require.NotContains(t, resp.Header, "Strict-Transport-Security")
+		require.Contains(t, resp.Header.Get("Via"), "grafana")
 		require.NoError(t, resp.Body.Close())
-		require.Empty(t, actualReq.Header.Get("Authorization"))
 	})
 
 	t.Run("When proxying a request using WithModifyResponse should call it before default ModifyResponse func", func(t *testing.T) {

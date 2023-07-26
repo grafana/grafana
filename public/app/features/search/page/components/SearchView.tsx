@@ -8,9 +8,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2, Spinner, Button } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { Trans } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 
-import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
 import { getGrafanaSearcher } from '../../service';
 import { getSearchStateManager } from '../../state/SearchStateManager';
 import { SearchLayout, DashboardViewItem } from '../../types';
@@ -21,7 +21,6 @@ import { FolderSection } from './FolderSection';
 import { ManageActions } from './ManageActions';
 import { RootFolderView } from './RootFolderView';
 import { SearchResultsCards } from './SearchResultsCards';
-import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
 
 export type SearchViewProps = {
@@ -77,10 +76,12 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
 
       return (
         <div className={styles.noResults}>
-          <div>No results found for your query.</div>
+          <div>
+            <Trans i18nKey="search-view.no-results.text">No results found for your query.</Trans>
+          </div>
           <br />
           <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
-            Clear search and filters
+            <Trans i18nKey="search-view.no-results.clear">Clear search and filters</Trans>
           </Button>
         </div>
       );
@@ -132,10 +133,6 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
               onDatasourceChange: state.datasource ? stateManager.onDatasourceChange : undefined,
               onClickItem: stateManager.onSearchItemClicked,
             };
-
-            if (layout === SearchLayout.Grid) {
-              return <SearchResultsGrid {...props} />;
-            }
 
             if (width < 800) {
               return <SearchResultsCards {...props} />;
@@ -193,13 +190,6 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
         />
       )}
 
-      {layout === SearchLayout.Grid && (
-        <PreviewsSystemRequirements
-          bottomSpacing={3}
-          showPreviews={true}
-          onRemove={() => stateManager.onLayoutChange(SearchLayout.List)}
-        />
-      )}
       {renderResults()}
     </>
   );

@@ -8,7 +8,11 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('POST', '/api/ds/query').as('query');
+    e2e()
+      .intercept({
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -50,10 +54,14 @@ e2e.scenario({
     // These elements should be rendered
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.DeleteButton().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().should('exist');
+
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().click();
+    // There elements should be rendered once the Settings dropdown is opened
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
   },
 });
 
@@ -65,7 +73,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('POST', '/api/ds/query').as('query');
+    e2e()
+      .intercept({
+        method: 'POST',
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -82,10 +95,14 @@ e2e.scenario({
 
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.DeleteButton().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().should('exist');
+
+    e2e.pages.ShareDashboardModal.PublicDashboard.SettingsDropdown().click();
+    // There elements should be rendered once the Settings dropdown is opened
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
 
     // Make a request to public dashboards api endpoint without authentication
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
@@ -109,7 +126,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e().intercept('/api/ds/query').as('query');
+    e2e()
+      .intercept({
+        method: 'POST',
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
     e2e().wait('@query');
 
@@ -127,7 +149,7 @@ e2e.scenario({
       .then((text) => e2e().wrap(text).as('url'));
 
     // Save public dashboard
-    e2e().intercept('PUT', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
+    e2e().intercept('PATCH', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
     // Switch off enabling toggle
     e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('be.enabled').click({ force: true });
     e2e().wait('@update');

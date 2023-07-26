@@ -89,20 +89,20 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should show a subscription as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resources={[singleSubscriptionSelectionURI]} />);
-    await waitFor(async () => {
-      const subscriptionCheckboxes = await screen.findAllByLabelText('Dev Subscription');
-      expect(subscriptionCheckboxes.length).toBe(2);
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Dev Subscription')).toHaveLength(2);
     });
     const subscriptionCheckboxes = await screen.findAllByLabelText('Dev Subscription');
-    expect(subscriptionCheckboxes.length).toBe(2);
     expect(subscriptionCheckboxes[0]).toBeChecked();
     expect(subscriptionCheckboxes[1]).toBeChecked();
   });
 
   it('should show a resourceGroup as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resources={[singleResourceGroupSelectionURI]} />);
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('A Great Resource Group')).toHaveLength(2);
+    });
     const resourceGroupCheckboxes = await screen.findAllByLabelText('A Great Resource Group');
-    expect(resourceGroupCheckboxes.length).toBe(2);
     expect(resourceGroupCheckboxes[0]).toBeChecked();
     expect(resourceGroupCheckboxes[1]).toBeChecked();
   });
@@ -112,8 +112,10 @@ describe('AzureMonitor ResourcePicker', () => {
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('db-server')).toHaveLength(2);
+    });
     const resourceCheckboxes = await screen.findAllByLabelText('db-server');
-    expect(resourceCheckboxes.length).toBe(2);
     expect(resourceCheckboxes[0]).toBeChecked();
     expect(resourceCheckboxes[1]).toBeChecked();
   });
@@ -158,8 +160,10 @@ describe('AzureMonitor ResourcePicker', () => {
   it('should call onApply removing an element', async () => {
     const onApply = jest.fn();
     render(<ResourcePicker {...defaultProps} resources={['/subscriptions/def-123']} onApply={onApply} />);
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Primary Subscription')).toHaveLength(2);
+    });
     const subscriptionCheckbox = await screen.findAllByLabelText('Primary Subscription');
-    expect(subscriptionCheckbox).toHaveLength(2);
     expect(subscriptionCheckbox.at(0)).toBeChecked();
     await userEvent.click(subscriptionCheckbox.at(0)!);
     const applyButton = screen.getByRole('button', { name: 'Apply' });
@@ -173,8 +177,10 @@ describe('AzureMonitor ResourcePicker', () => {
     render(
       <ResourcePicker {...defaultProps} resources={['/subscriptions/def-456/resourceGroups/DEV-3']} onApply={onApply} />
     );
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('A Great Resource Group')).toHaveLength(2);
+    });
     const subscriptionCheckbox = await screen.findAllByLabelText('A Great Resource Group');
-    expect(subscriptionCheckbox).toHaveLength(2);
     expect(subscriptionCheckbox.at(0)).toBeChecked();
     await userEvent.click(subscriptionCheckbox.at(0)!);
     const applyButton = screen.getByRole('button', { name: 'Apply' });
@@ -232,8 +238,10 @@ describe('AzureMonitor ResourcePicker', () => {
     await waitFor(() => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('web-server')).toHaveLength(2);
+    });
     const checkbox = await screen.findAllByLabelText('web-server');
-    expect(checkbox).toHaveLength(2);
     expect(checkbox.at(0)).toBeChecked();
     await userEvent.click(checkbox.at(0)!);
     const applyButton = screen.getByRole('button', { name: 'Apply' });

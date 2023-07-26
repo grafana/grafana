@@ -2,7 +2,6 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
-
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -12,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
@@ -19,15 +19,25 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/caching"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -46,6 +56,12 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
+
+	angularpatternsstore.ProvideService,
+	angulardetectorsprovider.ProvideDynamic,
+	angularinspector.ProvideService,
+	wire.Bind(new(pAngularInspector.Inspector), new(*angularinspector.Service)),
+
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
@@ -64,6 +80,15 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	filestore.ProvideService,
 	wire.Bind(new(plugins.FileStore), new(*filestore.Service)),
+	wire.Bind(new(plugins.SignatureCalculator), new(*signature.Signature)),
+	signature.ProvideService,
+	wire.Bind(new(plugins.KeyStore), new(*keystore.Service)),
+	keystore.ProvideService,
+	wire.Bind(new(plugins.KeyRetriever), new(*keyretriever.Service)),
+	keyretriever.ProvideService,
+	dynamic.ProvideService,
+	serviceregistration.ProvideService,
+	wire.Bind(new(oauth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -74,27 +99,32 @@ var WireExtensionSet = wire.NewSet(
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
-	finder.NewLocalFinder,
+	finder.ProvideLocalFinder,
 )
 
-func ProvideClientDecorator(cfg *setting.Cfg, pCfg *pCfg.Cfg,
+func ProvideClientDecorator(
+	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer)
+	tracer tracing.Tracer,
+	cachingService caching.CachingService,
+	features *featuremgmt.FeatureManager,
+) (*client.Decorator, error) {
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features)
 }
 
-func NewClientDecorator(cfg *setting.Cfg, pCfg *pCfg.Cfg,
-	pluginRegistry registry.Service,
-	oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer) (*client.Decorator, error) {
+func NewClientDecorator(
+	cfg *setting.Cfg, pCfg *pCfg.Cfg,
+	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
+	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
+) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer)
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features)
 
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewTracingMiddleware(tracer),
@@ -102,6 +132,12 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
+		clientmiddleware.NewResourceResponseMiddleware(),
+	}
+
+	// Placing the new service implementation behind a feature flag until it is known to be stable
+	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
+		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
 	}
 
 	if cfg.SendUserHeader {

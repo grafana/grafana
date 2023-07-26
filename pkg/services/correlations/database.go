@@ -225,17 +225,42 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 	return correlations, nil
 }
 
-func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
-	correlations := make([]Correlation, 0)
-
-	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Find(&correlations)
-	})
-	if err != nil {
-		return []Correlation{}, err
+func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
+	result := GetCorrelationsResponseBody{
+		Correlations: make([]Correlation, 0),
+		Page:         cmd.Page,
+		Limit:        cmd.Limit,
 	}
 
-	return correlations, nil
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		offset := cmd.Limit * (cmd.Page - 1)
+
+		q := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId)
+
+		if len(cmd.SourceUIDs) > 0 {
+			q.In("dss.uid", cmd.SourceUIDs)
+		}
+
+		return q.Limit(int(cmd.Limit), int(offset)).Find(&result.Correlations)
+	})
+	if err != nil {
+		return GetCorrelationsResponseBody{}, err
+	}
+
+	count, err := s.CountCorrelations(ctx)
+	if err != nil {
+		return GetCorrelationsResponseBody{}, err
+	}
+
+	tag, err := quota.NewTag(QuotaTargetSrv, QuotaTarget, quota.GlobalScope)
+	if err != nil {
+		return GetCorrelationsResponseBody{}, err
+	}
+
+	totalCount, _ := count.Get(tag)
+	result.TotalCount = totalCount
+
+	return result, nil
 }
 
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {

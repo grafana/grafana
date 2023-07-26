@@ -14,17 +14,17 @@ import {
   VizLayout,
   VizTooltipContainer,
 } from '@grafana/ui';
-import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { PanelOptions } from './types';
+import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
-interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
+interface HeatmapPanelProps extends PanelProps<Options> {}
 
 export const HeatmapPanel = ({
   data,
@@ -43,6 +43,16 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();
 
+  //  necessary for enabling datalinks in hover view
+  let scopedVarsFromRawData = [];
+  for (const series of data.series) {
+    for (const field of series.fields) {
+      if (field.state?.scopedVars) {
+        scopedVarsFromRawData.push(field.state.scopedVars);
+      }
+    }
+  }
+
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
@@ -54,13 +64,15 @@ export const HeatmapPanel = ({
     [replaceVariables]
   );
 
+  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
+
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data, options, theme, getFieldLinksSupplier);
+      return prepareHeatmapData(data.series, data.annotations, options, palette, theme, getFieldLinksSupplier);
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data, options, theme, getFieldLinksSupplier]);
+  }, [data.series, data.annotations, options, palette, theme, getFieldLinksSupplier]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field
@@ -68,25 +80,21 @@ export const HeatmapPanel = ({
 
     const meta = readHeatmapRowsCustomMeta(info.heatmap);
     if (info.exemplars?.length && meta.yMatchWithLabel) {
-      exemplarsXFacet = info.exemplars?.fields[0].values.toArray();
+      exemplarsXFacet = info.exemplars?.fields[0].values;
 
       // ordinal/labeled heatmap-buckets?
       const hasLabeledY = meta.yOrdinalDisplay != null;
 
       if (hasLabeledY) {
-        let matchExemplarsBy = info.exemplars?.fields
-          .find((field) => field.name === meta.yMatchWithLabel)!
-          .values.toArray();
+        let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
         exemplarsyFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label)) as number[];
       } else {
-        exemplarsyFacet = info.exemplars?.fields[1].values.toArray() as number[]; // "Value" field
+        exemplarsyFacet = info.exemplars?.fields[1].values as number[]; // "Value" field
       }
     }
 
-    return [null, info.heatmap?.fields.map((f) => f.values.toArray()), [exemplarsXFacet, exemplarsyFacet]];
+    return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars]);
-
-  const palette = useMemo(() => quantizeScheme(options.color, theme), [options.color, theme]);
 
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
@@ -120,6 +128,7 @@ export const HeatmapPanel = ({
   const builder = useMemo(() => {
     const scaleConfig = dataRef.current?.heatmap?.fields[1].config?.custom
       ?.scaleDistribution as ScaleDistributionConfig;
+
     return prepConfig({
       dataRef,
       theme,
@@ -136,7 +145,6 @@ export const HeatmapPanel = ({
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
-      palette,
       cellGap: options.cellGap,
       hideLE: options.filterValues?.le,
       hideGE: options.filterValues?.ge,
@@ -160,7 +168,7 @@ export const HeatmapPanel = ({
     let hoverValue: number | undefined = undefined;
     // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
     if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-      hoverValue = countField.values.get(hover.dataIdx);
+      hoverValue = countField.values[hover.dataIdx];
     }
 
     return (
@@ -169,8 +177,8 @@ export const HeatmapPanel = ({
           <ColorScale
             hoverValue={hoverValue}
             colorPalette={palette}
-            min={dataRef.current.minValue!}
-            max={dataRef.current.maxValue!}
+            min={dataRef.current.heatmapColors?.minValue!}
+            max={dataRef.current.heatmapColors?.maxValue!}
             display={info.display}
           />
         </div>
@@ -194,7 +202,7 @@ export const HeatmapPanel = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
           </UPlotChart>
         )}
@@ -206,31 +214,14 @@ export const HeatmapPanel = ({
             offset={{ x: 10, y: 10 }}
             allowPointerEvents={isToolTipOpen.current}
           >
-            {shouldDisplayCloseButton && (
-              <div
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  paddingBottom: '6px',
-                }}
-              >
-                <CloseButton
-                  onClick={onCloseToolTip}
-                  style={{
-                    position: 'relative',
-                    top: 'auto',
-                    right: 'auto',
-                    marginRight: 0,
-                  }}
-                />
-              </div>
-            )}
+            {shouldDisplayCloseButton && <ExemplarModalHeader onClick={onCloseToolTip} />}
             <HeatmapHoverView
               timeRange={timeRange}
               data={info}
               hover={hover}
               showHistogram={options.tooltip.yHistogram}
+              replaceVars={replaceVariables}
+              scopedVars={scopedVarsFromRawData}
             />
           </VizTooltipContainer>
         )}

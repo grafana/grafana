@@ -29,7 +29,6 @@ const initialFormModel: FormModel = { folderName: '' };
 const pageNav: NavModelItem = {
   text: 'Create a new folder',
   subTitle: 'Folders provide a way to group dashboards and alert rules.',
-  breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
 };
 
 function NewDashboardsFolder({ createNewFolder }: Props) {
@@ -54,7 +53,6 @@ function NewDashboardsFolder({ createNewFolder }: Props) {
   return (
     <Page navId="dashboards/browse" pageNav={pageNav}>
       <Page.Contents>
-        {!config.featureToggles.topnav && <h3>New dashboard folder</h3>}
         <Form defaultValues={initialFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>

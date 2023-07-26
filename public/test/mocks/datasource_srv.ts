@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import {
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
@@ -11,7 +12,10 @@ import {
 } from '@grafana/data';
 
 export class DatasourceSrvMock {
-  constructor(private defaultDS: DataSourceApi, private datasources: { [name: string]: DataSourceApi }) {
+  constructor(
+    private defaultDS: DataSourceApi,
+    private datasources: { [name: string]: DataSourceApi }
+  ) {
     //
   }
 
@@ -57,8 +61,8 @@ export class MockDataSourceApi extends DataSourceApi {
     });
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 
   setupMixed(value: boolean) {
@@ -99,7 +103,7 @@ export class MockObservableDataSourceApi extends DataSourceApi {
     });
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }

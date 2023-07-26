@@ -260,52 +260,59 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
-		if err != nil {
-			return fmt.Errorf("failed to insert alert rules: %w", err)
-		}
-		for uid := range uids {
-			if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
+		// Delete first as this could prevent future unique constraint violations.
+		if len(delta.Delete) > 0 {
+			for _, del := range delta.Delete {
+				// check that provenance is not changed in an invalid way
+				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, del, orgID)
+				if err != nil {
+					return err
+				}
+				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+				}
+			}
+			if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
 				return err
 			}
 		}
 
-		updates := make([]models.UpdateRule, 0, len(delta.Update))
-		for _, update := range delta.Update {
-			// check that provenance is not changed in a invalid way
-			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
-			if err != nil {
-				return err
+		if len(delta.Update) > 0 {
+			updates := make([]models.UpdateRule, 0, len(delta.Update))
+			for _, update := range delta.Update {
+				// check that provenance is not changed in an invalid way
+				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
+				if err != nil {
+					return err
+				}
+				if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
+					return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+				}
+				updates = append(updates, models.UpdateRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
 			}
-			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
+				return fmt.Errorf("failed to update alert rules: %w", err)
 			}
-			updates = append(updates, models.UpdateRule{
-				Existing: update.Existing,
-				New:      *update.New,
-			})
-		}
-		if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
-			return fmt.Errorf("failed to update alert rules: %w", err)
-		}
-		for _, update := range delta.Update {
-			if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
-				return err
+			for _, update := range delta.Update {
+				if err := service.provenanceStore.SetProvenance(ctx, update.New, orgID, provenance); err != nil {
+					return err
+				}
 			}
 		}
 
-		for _, delete := range delta.Delete {
-			// check that provenance is not changed in a invalid way
-			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
+		if len(delta.New) > 0 {
+			uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to insert alert rules: %w", err)
 			}
-			if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			for uid := range uids {
+				if err := service.provenanceStore.SetProvenance(ctx, &models.AlertRule{UID: uid}, orgID, provenance); err != nil {
+					return err
+				}
 			}
-		}
-		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
-			return err
 		}
 
 		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
@@ -316,16 +323,14 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	})
 }
 
-// CreateAlertRule creates a new alert rule. This function will ignore any
-// interval that is set in the rule struct and fetch the current group interval
-// from database.
+// UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
 	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
 		return models.AlertRule{}, err
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
@@ -357,7 +362,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	// check that provenance is not changed in a invalid way
+	// check that provenance is not changed in an invalid way
 	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
 	if err != nil {
 		return err
@@ -467,6 +472,10 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		groups[groupKey] = group
 
 		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
+	}
+
+	if len(namespaces) == 0 {
+		return []models.AlertRuleGroupWithFolderTitle{}, nil
 	}
 
 	dq := dashboards.GetDashboardsQuery{

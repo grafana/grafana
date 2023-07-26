@@ -1,7 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
@@ -30,11 +30,11 @@ describe('RootFolderView', () => {
         name: 'kind',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector([DashboardSearchItemType.DashFolder]),
+        values: [DashboardSearchItemType.DashFolder],
       },
-      { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My folder 1']) },
-      { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1']) },
-      { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-folder-1']) },
+      { name: 'name', type: FieldType.string, config: {}, values: ['My folder 1'] },
+      { name: 'uid', type: FieldType.string, config: {}, values: ['my-folder-1'] },
+      { name: 'url', type: FieldType.string, config: {}, values: ['/my-folder-1'] },
     ],
     length: 1,
   };

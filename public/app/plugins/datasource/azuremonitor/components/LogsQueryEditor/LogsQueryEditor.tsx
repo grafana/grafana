@@ -1,17 +1,19 @@
 import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Alert } from '@grafana/ui';
+import { Alert, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { selectors } from '../../e2e/selectors';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
+import FormatAsField from '../FormatAsField';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
-import FormatAsField from './FormatAsField';
 import QueryField from './QueryField';
+import { setFormatAs, setIntersectTime } from './setQueryValue';
 import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
@@ -49,7 +51,7 @@ const LogsQueryEditor = ({
   };
 
   return (
-    <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
+    <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>
@@ -79,6 +81,22 @@ const LogsQueryEditor = ({
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
+            <InlineField
+              label="Time-range"
+              tooltip={
+                'Specifies the time-range used to query. The query option will only use time-ranges specified in the query. Intersection will combine query time-ranges with the Grafana time-range.'
+              }
+            >
+              <RadioButtonGroup
+                options={[
+                  { label: 'Query', value: false },
+                  { label: 'Intersection', value: true },
+                ]}
+                value={query.azureLogAnalytics?.intersectTime ?? false}
+                size={'md'}
+                onChange={(val) => onChange(setIntersectTime(query, val))}
+              />
+            </InlineField>
           </EditorFieldGroup>
         </EditorRow>
         <QueryField
@@ -99,6 +117,14 @@ const LogsQueryEditor = ({
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}
                 setError={setError}
+                inputId={'azure-monitor-logs'}
+                options={[
+                  { label: 'Time series', value: ResultFormat.TimeSeries },
+                  { label: 'Table', value: ResultFormat.Table },
+                ]}
+                defaultValue={ResultFormat.Table}
+                setFormatAs={setFormatAs}
+                resultFormat={query.azureLogAnalytics?.resultFormat}
               />
             )}
 

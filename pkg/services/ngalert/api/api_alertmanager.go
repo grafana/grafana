@@ -19,7 +19,6 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -68,7 +67,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 	if postableSilence.ID == "" {
 		action = accesscontrol.ActionAlertingInstanceCreate
 	}
-	if !accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqOrgAdminOrEditor, accesscontrol.EvalPermission(action)) {
+	if !accesscontrol.HasAccess(srv.ac, c)(accesscontrol.EvalPermission(action)) {
 		errAction := "update"
 		if postableSilence.ID == "" {
 			errAction = "create"
@@ -302,17 +301,11 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
-	if err := srv.crypto.LoadSecureSettings(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
+	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
-	}
-
-	if err := body.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
-		return srv.crypto.Encrypt(ctx, payload, secrets.WithoutScope())
-	}); err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to post process Alertmanager configuration")
 	}
 
@@ -340,6 +333,20 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 	}
 
 	return response.JSON(statusForTestReceivers(result.Receivers), newTestReceiversResult(result))
+}
+
+func (srv AlertmanagerSrv) RoutePostTestTemplates(c *contextmodel.ReqContext, body apimodels.TestTemplatesConfigBodyParams) response.Response {
+	am, errResp := srv.AlertmanagerFor(c.OrgID)
+	if errResp != nil {
+		return errResp
+	}
+
+	res, err := am.TestTemplate(c.Req.Context(), body)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "", err)
+	}
+
+	return response.JSON(http.StatusOK, newTestTemplateResult(res))
 }
 
 // contextWithTimeoutFromRequest returns a context with a deadline set from the
@@ -406,8 +413,8 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 		for _, next := range receiver.Configs {
 			if next.Error != nil {
 				var (
-					invalidReceiverErr notifier.InvalidReceiverError
-					receiverTimeoutErr alertingNotify.ReceiverTimeoutError
+					invalidReceiverErr alertingNotify.IntegrationValidationError
+					receiverTimeoutErr alertingNotify.IntegrationTimeoutError
 				)
 				if errors.As(next.Error, &invalidReceiverErr) {
 					numBadRequests += 1
@@ -431,6 +438,24 @@ func statusForTestReceivers(v []notifier.TestReceiverResult) int {
 		// all receivers were sent a notification without error
 		return http.StatusOK
 	}
+}
+
+func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTemplatesResults {
+	apiRes := apimodels.TestTemplatesResults{}
+	for _, r := range res.Results {
+		apiRes.Results = append(apiRes.Results, apimodels.TestTemplatesResult{
+			Name: r.Name,
+			Text: r.Text,
+		})
+	}
+	for _, e := range res.Errors {
+		apiRes.Errors = append(apiRes.Errors, apimodels.TestTemplatesErrorResult{
+			Name:    e.Name,
+			Kind:    apimodels.TemplateErrorKind(e.Kind),
+			Message: e.Error.Error(),
+		})
+	}
+	return apiRes
 }
 
 func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {

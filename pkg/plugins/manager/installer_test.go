@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		)
 
 		// mock a plugin to be returned automatically by the plugin loader
-		pluginV1 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+		pluginV1 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 			plugin.Info.Version = v1
 		})
 		mockZipV1 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
@@ -52,22 +53,17 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		}
 
 		fs := &fakes.FakePluginStorage{
-			AddFunc: func(_ context.Context, id string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			ExtractFunc: func(_ context.Context, id string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginID, id)
 				require.Equal(t, mockZipV1, z)
 				return &storage.ExtractedPluginArchive{
 					Path: zipNameV1,
 				}, nil
 			},
-			RegisterFunc: func(_ context.Context, pluginID, pluginDir string) error {
-				require.Equal(t, pluginV1.ID, pluginID)
-				return nil
-			},
-			Store: map[string]struct{}{},
 		}
 
-		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs)
-		err := inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+		inst := New(fakes.NewFakePluginRegistry(), loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc)
+		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
 		t.Run("Won't add if already exists", func(t *testing.T) {
@@ -77,7 +73,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			err = inst.Add(context.Background(), pluginID, v1, plugins.CompatOpts{})
+			err = inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 			require.Equal(t, plugins.DuplicateError{
 				PluginID: pluginV1.ID,
 			}, err)
@@ -89,7 +85,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				zipNameV2 = "test-panel-2.0.0.zip"
 			)
 			// mock a plugin to be returned automatically by the plugin loader
-			pluginV2 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+			pluginV2 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = v2
 			})
 
@@ -97,13 +93,13 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				FileHeader: zip.FileHeader{Name: zipNameV2},
 			}}}}
 			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				require.Equal(t, plugins.External, src.PluginClass(ctx))
+				require.Equal(t, plugins.ClassExternal, src.PluginClass(ctx))
 				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
-			pluginRepo.GetPluginDownloadOptionsFunc = func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
-				return &repo.PluginDownloadOptions{
-					PluginZipURL: "https://grafanaplugins.com",
+			pluginRepo.GetPluginArchiveInfoFunc = func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+				return &repo.PluginArchiveInfo{
+					URL: "https://grafanaplugins.com",
 				}, nil
 			}
 			pluginRepo.GetPluginArchiveByURLFunc = func(_ context.Context, pluginZipURL string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
@@ -112,19 +108,15 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV2,
 				}, nil
 			}
-			fs.AddFunc = func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			fs.ExtractFunc = func(_ context.Context, pluginID string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginV1.ID, pluginID)
 				require.Equal(t, mockZipV2, z)
 				return &storage.ExtractedPluginArchive{
 					Path: zipNameV2,
 				}, nil
 			}
-			fs.RegisterFunc = func(_ context.Context, pluginID, pluginDir string) error {
-				require.Equal(t, pluginV2.ID, pluginID)
-				return nil
-			}
 
-			err = inst.Add(context.Background(), pluginID, v2, plugins.CompatOpts{})
+			err = inst.Add(context.Background(), pluginID, v2, testCompatOpts())
 			require.NoError(t, err)
 		})
 
@@ -161,8 +153,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		tcs := []struct {
 			class plugins.Class
 		}{
-			{class: plugins.Core},
-			{class: plugins.Bundled},
+			{class: plugins.ClassCore},
+			{class: plugins.ClassBundled},
 		}
 
 		for _, tc := range tcs {
@@ -176,11 +168,11 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				},
 			}
 
-			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{})
-			err := pm.Add(context.Background(), p.ID, "3.2.0", plugins.CompatOpts{})
+			pm := New(reg, &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc)
+			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
-			err = pm.Add(context.Background(), testPluginID, "", plugins.CompatOpts{})
+			err = pm.Add(context.Background(), testPluginID, "", testCompatOpts())
 			require.Equal(t, plugins.ErrInstallCorePlugin, err)
 
 			t.Run(fmt.Sprintf("Can't uninstall %s plugin", tc.class), func(t *testing.T) {
@@ -198,7 +190,7 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 		Class: class,
 		JSONData: plugins.JSONData{
 			ID:      pluginID,
-			Type:    plugins.DataSource,
+			Type:    plugins.TypeDataSource,
 			Backend: backend,
 		},
 	}
@@ -214,4 +206,8 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 	}
 
 	return p
+}
+
+func testCompatOpts() plugins.CompatOpts {
+	return plugins.NewCompatOpts("10.0.0", runtime.GOOS, runtime.GOARCH)
 }

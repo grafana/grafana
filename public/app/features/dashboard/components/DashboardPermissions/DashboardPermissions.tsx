@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { Tooltip, Icon, Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';

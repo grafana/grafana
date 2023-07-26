@@ -25,6 +25,7 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
@@ -68,6 +69,7 @@ export interface DashboardLink {
 }
 
 export class DashboardModel implements TimeModel {
+  /** @deprecated use UID */
   id: any;
   // TODO: use propert type and fix all the places where uid is set to null
   uid: any;
@@ -100,6 +102,7 @@ export class DashboardModel implements TimeModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
+  private timeRangeUpdatedDuringEdit = false;
 
   // ------------------
   // not persisted
@@ -125,6 +128,7 @@ export class DashboardModel implements TimeModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
+    timeRangeUpdatedDuringEdit: true,
   };
 
   constructor(
@@ -292,6 +296,7 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
+    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
       .filter(
         (panel) =>
@@ -377,6 +382,10 @@ export class DashboardModel implements TimeModel {
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
+
+    if (this.panelInEdit) {
+      this.timeRangeUpdatedDuringEdit = true;
+    }
   }
 
   startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
@@ -415,9 +424,26 @@ export class DashboardModel implements TimeModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
-    getTimeSrv().pauseAutoRefresh();
+    getTimeSrv().stopAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
+    this.timeRangeUpdatedDuringEdit = false;
     return this.panelInEdit;
+  }
+
+  exitPanelEditor() {
+    this.panelInEdit!.destroy();
+    this.panelInEdit = undefined;
+
+    getTimeSrv().resumeAutoRefresh();
+
+    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
+      this.startRefresh({
+        panelIds: this.panelsAffectedByVariableChange ?? [],
+        refreshAll: this.timeRangeUpdatedDuringEdit,
+      });
+      this.panelsAffectedByVariableChange = null;
+      this.timeRangeUpdatedDuringEdit = false;
+    }
   }
 
   initViewPanel(panel: PanelModel) {
@@ -428,13 +454,6 @@ export class DashboardModel implements TimeModel {
   exitViewPanel(panel: PanelModel) {
     this.panelInView = undefined;
     panel.setIsViewing(false);
-    this.refreshIfPanelsAffectedByVariableChange();
-  }
-
-  exitPanelEditor() {
-    this.panelInEdit!.destroy();
-    this.panelInEdit = undefined;
-    getTimeSrv().resumeAutoRefresh();
     this.refreshIfPanelsAffectedByVariableChange();
   }
 
@@ -750,6 +769,7 @@ export class DashboardModel implements TimeModel {
     for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
       const option = selectedOptions[optionIndex];
       const rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
+
       setScopedVars(rowCopy, option);
 
       const rowHeight = this.getRowHeight(rowCopy);
@@ -937,6 +957,10 @@ export class DashboardModel implements TimeModel {
     row.collapsed = false;
     const rowPanels = row.panels ?? [];
     const hasRepeat = rowPanels.some((p: PanelModel) => p.repeat);
+
+    // This is set only for the row being repeated.
+    const rowRepeatVariable = row.repeat;
+
     if (rowPanels.length > 0) {
       // Use first panel to figure out if it was moved or pushed
       // If the panel doesn't have gridPos.y, use the row gridPos.y instead.
@@ -951,6 +975,18 @@ export class DashboardModel implements TimeModel {
       let yMax = row.gridPos.y;
 
       for (const panel of rowPanels) {
+        // When expanding original row that's repeated, set scopedVars for repeated row panels.
+        if (rowRepeatVariable) {
+          const variable = this.getPanelRepeatVariable(row);
+          panel.scopedVars ??= {};
+          if (variable) {
+            const selectedOptions = this.getSelectedVariableOptions(variable);
+            panel.scopedVars = {
+              ...panel.scopedVars,
+              [variable.name]: selectedOptions[0],
+            };
+          }
+        }
         // set the y gridPos if it wasn't already set
         panel.gridPos.y ?? (panel.gridPos.y = row.gridPos.y); // (Safari 13.1 lacks ??= support)
         // make sure y is adjusted (in case row moved while collapsed)
@@ -1119,6 +1155,21 @@ export class DashboardModel implements TimeModel {
       panel.legend.show = !panelLegendsOn;
       panel.render();
     }
+  }
+
+  toggleExemplarsForAll() {
+    for (const panel of this.panels) {
+      for (const target of panel.targets) {
+        if (!(target.datasource && target.datasource.type === 'prometheus')) {
+          continue;
+        }
+
+        const promTarget = target as PromQuery;
+        promTarget.exemplar = !promTarget.exemplar;
+      }
+    }
+
+    this.startRefresh();
   }
 
   getVariables() {

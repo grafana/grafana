@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactElement, useCallback, useRef, useState } from 'react';
+import React, { ReactElement, useCallback, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -14,12 +15,13 @@ interface Props {
   title?: string;
   offset?: number;
   dragClass?: string;
+  onOpenMenu?: () => void;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
-
+  const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
   // Capture the pointer to keep the widget visible while dragging
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.setPointerCapture(e.pointerId);
@@ -29,29 +31,24 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
     draggableRef.current?.releasePointerCapture(e.pointerId);
   }, []);
 
-  const [menuOpen, setMenuOpen] = useState(false);
-
   if (children === undefined || React.Children.count(children) === 0) {
     return null;
   }
 
   return (
-    <div
-      className={cx(styles.container, { 'show-on-hover': !menuOpen })}
-      style={{ top: `${offset}px` }}
-      data-testid="hover-header-container"
-    >
+    <div className={cx(styles.container, 'show-on-hover')} style={{ top: offset }} data-testid={selectors.container}>
       {dragClass && (
         <div
           className={cx(styles.square, styles.draggable, dragClass)}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           ref={draggableRef}
+          data-testid={selectors.dragIcon}
         >
           <Icon name="expand-arrows" className={styles.draggableIcon} />
         </div>
       )}
-      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
+      {!title && <h6 className={cx(styles.untitled, { [styles.draggable]: !!dragClass }, dragClass)}>Untitled</h6>}
       {children}
       {menu && (
         <PanelMenu
@@ -59,7 +56,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           title={title}
           placement="bottom"
           menuButtonClass={styles.menuButton}
-          onVisibleChange={setMenuOpen}
+          onOpenMenu={onOpenMenu}
         />
       )}
     </div>
@@ -68,10 +65,6 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    hidden: css({
-      visibility: 'hidden',
-      opacity: '0',
-    }),
     container: css({
       label: 'hover-container-widget',
       transition: `all .1s linear`,

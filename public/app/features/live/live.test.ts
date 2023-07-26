@@ -1,10 +1,9 @@
 import { Subject } from 'rxjs';
 
-import { DataQueryResponse, FieldType, LiveChannelScope } from '@grafana/data';
+import { DataQueryResponse, FieldType, LiveChannelScope, StreamingDataFrame } from '@grafana/data';
 import { BackendSrv } from '@grafana/runtime';
 
 import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
-import { StreamingDataFrame } from './data/StreamingDataFrame';
 import { StreamingResponseDataType } from './data/utils';
 import { GrafanaLiveService } from './live';
 
@@ -99,25 +98,19 @@ describe('GrafanaLiveService', () => {
         config: {},
         name: 'time',
         type: FieldType.time,
-        values: {
-          buffer: [100, 101],
-        },
+        values: [100, 101],
       },
       {
         config: {},
         name: 'a',
         type: FieldType.string,
-        values: {
-          buffer: ['a', 'b'],
-        },
+        values: ['a', 'b'],
       },
       {
         config: {},
         name: 'b',
         type: FieldType.number,
-        values: {
-          buffer: [1, 2],
-        },
+        values: [1, 2],
       },
     ]);
   });

@@ -115,6 +115,8 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	}
 
 	m["stats.dashboards.count"] = statsResult.Dashboards
+	m["stats.dashboard_bytes.total"] = statsResult.DashboardBytesTotal
+	m["stats.dashboard_bytes.max"] = statsResult.DashboardBytesMax
 	m["stats.users.count"] = statsResult.Users
 	m["stats.admins.count"] = statsResult.Admins
 	m["stats.editors.count"] = statsResult.Editors
@@ -158,6 +160,13 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.data_keys.count"] = statsResult.DataKeys
 	m["stats.active_data_keys.count"] = statsResult.ActiveDataKeys
 	m["stats.public_dashboards.count"] = statsResult.PublicDashboards
+	m["stats.correlations.count"] = statsResult.Correlations
+	if statsResult.DatabaseCreatedTime != nil {
+		m["stats.database.created.time"] = statsResult.DatabaseCreatedTime.Unix()
+	}
+	if statsResult.DatabaseDriver != "" {
+		m["stats.database.driver"] = statsResult.DatabaseDriver
+	}
 
 	ossEditionCount := 1
 	enterpriseEditionCount := 0
@@ -314,6 +323,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
+	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
+
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
@@ -327,13 +338,13 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 }
 
 func (s *Service) appCount(ctx context.Context) int {
-	return len(s.plugins.Plugins(ctx, plugins.App))
+	return len(s.plugins.Plugins(ctx, plugins.TypeApp))
 }
 
 func (s *Service) panelCount(ctx context.Context) int {
-	return len(s.plugins.Plugins(ctx, plugins.Panel))
+	return len(s.plugins.Plugins(ctx, plugins.TypePanel))
 }
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
-	return len(s.plugins.Plugins(ctx, plugins.DataSource))
+	return len(s.plugins.Plugins(ctx, plugins.TypeDataSource))
 }

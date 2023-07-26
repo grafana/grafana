@@ -9,11 +9,15 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e().intercept('/api/ds/query').as('query');
+    e2e()
+      .intercept({
+        pathname: '/api/ds/query',
+      })
+      .as('query');
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
     e2e().wait('@query');
 
-    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST, true);
+    e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
     // New panel editor opens when navigating from Panel menu
     e2e.components.PanelEditor.General.content().should('be.visible');

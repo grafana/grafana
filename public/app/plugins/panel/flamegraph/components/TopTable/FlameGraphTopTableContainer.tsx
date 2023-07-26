@@ -1,119 +1,256 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { CoreApp, DisplayValue } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import {
+  IconButton,
+  Table,
+  TableCellDisplayMode,
+  TableCustomCellOptions,
+  TableFieldOptions,
+  TableSortByFieldState,
+  useStyles2,
+} from '@grafana/ui';
 
-import { PIXELS_PER_LEVEL } from '../../constants';
+import { TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { SelectedView, TableData, TopTableData } from '../types';
-
-import FlameGraphTopTable from './FlameGraphTopTable';
+import { TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
   app: CoreApp;
-  totalLevels: number;
-  selectedView: SelectedView;
-  search: string;
-  setSearch: (search: string) => void;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
-  setRangeMin: (range: number) => void;
-  setRangeMax: (range: number) => void;
+  onSymbolClick: (symbol: string) => void;
+  height?: number;
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (str: string) => void;
+  onSandwich: (str?: string) => void;
 };
 
-const FlameGraphTopTableContainer = ({
-  data,
-  app,
-  totalLevels,
-  selectedView,
-  search,
-  setSearch,
-  setTopLevelIndex,
-  setSelectedBarIndex,
-  setRangeMin,
-  setRangeMax,
-}: Props) => {
-  const styles = useStyles2(() => getStyles(selectedView, app));
+const FlameGraphTopTableContainer = React.memo(
+  ({ data, app, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich }: Props) => {
+    const styles = useStyles2(getStyles);
 
-  const topTable = useMemo(() => {
-    // Group the data by label
-    // TODO: should be by filename + funcName + linenumber?
-    let table: { [key: string]: TableData } = {};
-    for (let i = 0; i < data.data.length; i++) {
-      const value = data.getValue(i);
-      const self = data.getSelf(i);
-      const label = data.getLabel(i);
-      table[label] = table[label] || {};
-      table[label].self = table[label].self ? table[label].self + self : self;
-      table[label].total = table[label].total ? table[label].total + value : value;
-    }
+    const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
-    let topTable: TopTableData[] = [];
-    for (let key in table) {
-      const selfUnit = handleUnits(data.valueDisplayProcessor(table[key].self), data.getUnitTitle());
-      const valueUnit = handleUnits(data.valueDisplayProcessor(table[key].total), data.getUnitTitle());
+    return (
+      <div className={styles.topTableContainer} data-testid="topTable">
+        <AutoSizer style={{ width: '100%', height }}>
+          {({ width, height }) => {
+            if (width < 3 || height < 3) {
+              return null;
+            }
 
-      topTable.push({
-        symbol: key,
-        self: { value: table[key].self, unitValue: selfUnit },
-        total: { value: table[key].total, unitValue: valueUnit },
-      });
-    }
-
-    return topTable;
-  }, [data]);
-
-  return (
-    <>
-      {topTable && (
-        <div className={styles.topTableContainer}>
-          <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
-            {({ width, height }) => (
-              <FlameGraphTopTable
+            const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
+            return (
+              <Table
+                initialSortBy={sort}
+                onSortByChange={(s) => {
+                  if (s && s.length) {
+                    reportInteraction('grafana_flamegraph_table_sort_selected', {
+                      app,
+                      grafana_version: config.buildInfo.version,
+                      sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
+                    });
+                  }
+                  setSort(s);
+                }}
+                data={frame}
                 width={width}
                 height={height}
-                data={topTable}
-                search={search}
-                setSearch={setSearch}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
               />
-            )}
-          </AutoSizer>
-        </div>
-      )}
-    </>
-  );
-};
-
-function handleUnits(displayValue: DisplayValue, unit: string) {
-  let unitValue = displayValue.text + displayValue.suffix;
-  if (unit === 'Count') {
-    if (!displayValue.suffix) {
-      // Makes sure we don't show 123undefined or something like that if suffix isn't defined
-      unitValue = displayValue.text;
-    }
+            );
+          }}
+        </AutoSizer>
+      </div>
+    );
   }
-  return unitValue;
+);
+
+FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
+
+function buildTableDataFrame(
+  data: FlameGraphDataContainer,
+  width: number,
+  onSymbolClick: (str: string) => void,
+  onSearch: (str: string) => void,
+  onSandwich: (str?: string) => void,
+  search?: string,
+  sandwichItem?: string
+): DataFrame {
+  // Group the data by label
+  // TODO: should be by filename + funcName + linenumber?
+  let table: { [key: string]: TableData } = {};
+  for (let i = 0; i < data.data.length; i++) {
+    const value = data.getValue(i);
+    const self = data.getSelf(i);
+    const label = data.getLabel(i);
+    table[label] = table[label] || {};
+    table[label].self = table[label].self ? table[label].self + self : self;
+    table[label].total = table[label].total ? table[label].total + value : value;
+  }
+
+  const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
+
+  const symbolField: Field = {
+    type: FieldType.string,
+    name: 'Symbol',
+    values: [],
+    config: {
+      custom: { width: width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 2 },
+      links: [
+        {
+          title: 'Highlight symbol',
+          url: '',
+          onClick: (e: DataLinkClickEvent) => {
+            const field: Field = e.origin.field;
+            const value = field.values[e.origin.rowIndex];
+            onSymbolClick(value);
+          },
+        },
+      ],
+    },
+  };
+
+  const selfField = createNumberField('Self', data.selfField.config.unit);
+  const totalField = createNumberField('Total', data.valueField.config.unit);
+
+  for (let key in table) {
+    actionField.values.push(null);
+    symbolField.values.push(key);
+    selfField.values.push(table[key].self);
+    totalField.values.push(table[key].total);
+  }
+
+  const frame = { fields: [actionField, symbolField, selfField, totalField], length: symbolField.values.length };
+
+  const dataFrames = applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value: string) => value,
+    theme: config.theme2,
+  });
+
+  return dataFrames[0];
 }
 
-const getStyles = (selectedView: SelectedView, app: CoreApp) => {
-  const marginRight = '20px';
+function createNumberField(name: string, unit?: string): Field {
+  return {
+    type: FieldType.number,
+    name,
+    values: [],
+    config: { unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
+  };
+}
+
+const actionColumnWidth = 61;
+
+function createActionField(
+  onSandwich: (str?: string) => void,
+  onSearch: (str: string) => void,
+  search?: string,
+  sandwichItem?: string
+): Field {
+  const options: TableCustomCellOptions = {
+    type: TableCellDisplayMode.Custom,
+    cellComponent: (props) => {
+      return (
+        <ActionCell
+          frame={props.frame}
+          onSandwich={onSandwich}
+          onSearch={onSearch}
+          search={search}
+          sandwichItem={sandwichItem}
+          rowIndex={props.rowIndex}
+        />
+      );
+    },
+  };
+
+  const actionFieldTableConfig: TableFieldOptions = {
+    filterable: false,
+    width: actionColumnWidth,
+    hideHeader: true,
+    inspect: false,
+    align: 'auto',
+    cellOptions: options,
+  };
 
   return {
+    type: FieldType.number,
+    name: 'actions',
+    values: [],
+    config: {
+      custom: actionFieldTableConfig,
+    },
+  };
+}
+
+type ActionCellProps = {
+  frame: DataFrame;
+  rowIndex: number;
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (symbol: string) => void;
+  onSandwich: (symbol: string) => void;
+};
+
+function ActionCell(props: ActionCellProps) {
+  const styles = useStyles2(getStyles);
+  const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.rowIndex);
+  const isSearched = props.search === symbol;
+  const isSandwiched = props.sandwichItem === symbol;
+
+  return (
+    <div className={styles.actionCellWrapper}>
+      <IconButton
+        className={styles.actionCellButton}
+        name={'search'}
+        variant={isSearched ? 'primary' : 'secondary'}
+        tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+        aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
+        onClick={() => {
+          props.onSearch(isSearched ? '' : symbol);
+        }}
+      />
+      <IconButton
+        className={styles.actionCellButton}
+        name={'gf-show-context'}
+        tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+        variant={isSandwiched ? 'primary' : 'secondary'}
+        aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+        onClick={() => {
+          props.onSandwich(isSandwiched ? undefined : symbol);
+        }}
+      />
+    </div>
+  );
+}
+
+const getStyles = () => {
+  return {
     topTableContainer: css`
-      cursor: pointer;
-      float: left;
-      margin-right: ${marginRight};
-      width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore
-        ? 'height: calc(100% - 50px)'
-        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
+      label: topTableContainer;
+      flex-grow: 1;
+      flex-basis: 50%;
+      overflow: hidden;
+    `,
+
+    actionCellWrapper: css`
+      label: actionCellWrapper;
+      display: flex;
+      height: 24px;
+    `,
+
+    actionCellButton: css`
+      label: actionCellButton;
+      margin-right: 0;
+      width: 24px;
     `,
   };
 };

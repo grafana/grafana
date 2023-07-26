@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, FieldType } from '@grafana/data';
+import { DataFrame, FieldType } from '@grafana/data';
 import { ScaleDimensionConfig } from '@grafana/schema';
 
 import { getScaledDimension, validateScaleConfig } from './scale';
@@ -45,11 +45,11 @@ describe('scale dimensions', () => {
       name: 'a',
       length: values.length,
       fields: [
-        { name: 'time', type: FieldType.number, values: new ArrayVector(values), config: {} },
+        { name: 'time', type: FieldType.number, values: values, config: {} },
         {
           name: 'hello',
           type: FieldType.number,
-          values: new ArrayVector(values),
+          values: values,
           config: {
             min: -10,
             max: 10,
@@ -64,7 +64,7 @@ describe('scale dimensions', () => {
       field: 'hello',
       fixed: 0,
     });
-    const scaled = frame.fields[0].values.toArray().map((k, i) => supplier.get(i));
+    const scaled = frame.fields[0].values.map((k, i) => supplier.get(i));
     expect(scaled).toEqual([-1, -1, -0.5, 0, 0.5, 1, 1]);
   });
 });

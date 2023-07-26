@@ -85,7 +85,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFrames(queryRes, target)
+			nameFields(queryRes, target)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -102,7 +102,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}))
+			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
 		}
 
 		doc := map[string]interface{}{
@@ -119,6 +119,15 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 				doc["level"] = v
 			} else {
 				doc[k] = v
+			}
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
 			}
 		}
 
@@ -151,7 +160,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
-	setSearchWords(frame, searchWords)
+	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -165,7 +174,7 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}))
+			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
 		}
 
 		doc := map[string]interface{}{
@@ -258,15 +267,27 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	size := len(docs)
 	isFilterable := true
 	allFields := make([]*data.Field, len(propNames))
+	timeString := ""
+	timeStringOk := false
 
 	for propNameIdx, propName := range propNames {
 		// Special handling for time field
 		if propName == configuredFields.TimeField {
 			timeVector := make([]*time.Time, size)
 			for i, doc := range docs {
-				timeString, ok := doc[configuredFields.TimeField].(string)
-				if !ok {
-					continue
+				// Check if time field is a string
+				timeString, timeStringOk = doc[configuredFields.TimeField].(string)
+				// If not, it might be an array with one time string
+				if !timeStringOk {
+					timeList, ok := doc[configuredFields.TimeField].([]interface{})
+					if !ok || len(timeList) != 1 {
+						continue
+					}
+					// Check if the first element is a string
+					timeString, timeStringOk = timeList[0].(string)
+					if !timeStringOk {
+						continue
+					}
 				}
 				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 				if err != nil {
@@ -806,7 +827,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFrames(queryResult backend.DataResponse, target *Query) {
+func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -825,7 +846,10 @@ func nameFrames(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			frame.Name = fieldName
+			if valueField.Config == nil {
+				valueField.Config = &data.FieldConfig{}
+			}
+			valueField.Config.DisplayNameFromDS = fieldName
 		}
 	}
 }
@@ -895,7 +919,7 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 				found := false
 				for _, metric := range target.Metrics {
 					if metric.ID == field {
-						metricName += " " + describeMetric(metric.Type, field)
+						metricName += " " + describeMetric(metric.Type, metric.Field)
 						found = true
 					}
 				}
@@ -1017,38 +1041,26 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 }
 
 // flatten flattens multi-level objects to single level objects. It uses dot notation to join keys.
-func flatten(target map[string]interface{}) map[string]interface{} {
+func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
 	// On frontend maxDepth wasn't used but as we are processing on backend
 	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
-	maxDepth := 10
-	currentDepth := 0
-	delimiter := ""
 	output := make(map[string]interface{})
+	step(0, maxDepth, target, "", output)
+	return output
+}
 
-	var step func(object map[string]interface{}, prev string)
+func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
+	nextDepth := currentDepth + 1
+	for key, value := range target {
+		newKey := strings.Trim(prev+"."+key, ".")
 
-	step = func(object map[string]interface{}, prev string) {
-		for key, value := range object {
-			if prev == "" {
-				delimiter = ""
-			} else {
-				delimiter = "."
-			}
-			newKey := prev + delimiter + key
-
-			v, ok := value.(map[string]interface{})
-			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
-			if shouldStepInside {
-				currentDepth++
-				step(v, newKey)
-			} else {
-				output[newKey] = value
-			}
+		v, ok := value.(map[string]interface{})
+		if ok && len(v) > 0 && currentDepth < maxDepth {
+			step(nextDepth, maxDepth, v, newKey, output)
+		} else {
+			output[newKey] = value
 		}
 	}
-
-	step(target, "")
-	return output
 }
 
 // sortPropNames orders propNames so that timeField is first (if it exists), log message field is second
@@ -1113,7 +1125,7 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	frame.Meta.PreferredVisualization = visType
 }
 
-func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int) {
 	i := 0
 	searchWordsList := make([]string, len(searchWords))
 	for searchWord := range searchWords {
@@ -1132,6 +1144,7 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
+		"limit":       limit,
 	}
 }
 
@@ -1252,13 +1265,24 @@ func addOtherMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, met
 	otherMetrics := make([]*MetricAgg, 0)
 
 	for _, m := range target.Metrics {
-		if m.Type == metric.Type {
+		// To other metrics we add metric of the same type that are not the current metric
+		if m.ID != metric.ID && m.Type == metric.Type {
 			otherMetrics = append(otherMetrics, m)
 		}
 	}
 
-	if len(otherMetrics) > 1 {
+	if len(otherMetrics) > 0 {
 		metricName += " " + metric.Field
+
+		// We check if we have metric with the same type and same field name
+		// If so, append metric.ID to the metric name
+		for _, m := range otherMetrics {
+			if m.Field == metric.Field {
+				metricName += " " + metric.ID
+				break
+			}
+		}
+
 		if metric.Type == "bucket_script" {
 			// Use the formula in the column name
 			metricName = metric.Settings.Get("script").MustString("")

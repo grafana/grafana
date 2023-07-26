@@ -198,9 +198,14 @@ export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZ
   return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
 };
 
-export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone, fiscalYearStartMonth?: number): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth });
+export const convertRawToRange = (
+  raw: RawTimeRange,
+  timeZone?: TimeZone,
+  fiscalYearStartMonth?: number,
+  format?: string
+): TimeRange => {
+  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
+  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
 
   if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
     return { from, to, raw };

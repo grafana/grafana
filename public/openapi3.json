@@ -1,7 +1,43 @@
 {
   "components": {
     "responses": {
+      "GettableHistoricUserConfigs": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableHistoricUserConfig"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "SMTPNotEnabledError": {
+        "description": "(empty)"
+      },
+      "StateHistory": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Frame"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "TestGrafanaRuleResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/postableAlert"
+              },
+              "type": "array"
+            }
+          }
+        },
         "description": "(empty)"
       },
       "acceptedResponse": {
@@ -779,6 +815,16 @@
         },
         "description": "(empty)"
       },
+      "getFolderDescendantCountsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DescendantCounts"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getFolderPermissionListResponse": {
         "content": {
           "application/json": {
@@ -954,7 +1000,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -964,7 +1010,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Preferences"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -975,16 +1021,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/QueryHistoryDeleteQueryResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getQueryHistoryMigrationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryHistoryMigrationResponse"
             }
           }
         },
@@ -1654,6 +1690,19 @@
         "content": {
           "application/json": {
             "schema": {
+              "items": {
+                "$ref": "#/components/schemas/UserSearchHitDTO"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "searchUsersWithPagingResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
               "$ref": "#/components/schemas/SearchUserQueryResult"
             }
           }
@@ -1724,7 +1773,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -1828,6 +1877,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -1899,6 +1949,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -1918,6 +1969,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -2447,9 +2499,9 @@
           },
           "execErrState": {
             "enum": [
+              "OK",
               "Alerting",
-              "Error",
-              "OK"
+              "Error"
             ],
             "type": "string"
           },
@@ -2641,6 +2693,10 @@
       "AlertingRule": {
         "description": "adapted from cortex",
         "properties": {
+          "activeAt": {
+            "format": "date-time",
+            "type": "string"
+          },
           "alerts": {
             "items": {
               "$ref": "#/components/schemas/Alert"
@@ -2681,6 +2737,20 @@
             "description": "State can be \"pending\", \"firing\", \"inactive\".",
             "type": "string"
           },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "totalsFiltered": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
           "type": {
             "$ref": "#/components/schemas/RuleType"
           }
@@ -2692,7 +2762,7 @@
           "type",
           "state",
           "annotations",
-          "alerts"
+          "activeAt"
         ],
         "type": "object"
       },
@@ -2760,6 +2830,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3100,7 +3171,8 @@
             "additionalProperties": false,
             "description": "Target data query",
             "example": {
-              "expr": "job=app"
+              "prop1": "value1",
+              "prop2": "value"
             },
             "type": "object"
           },
@@ -3132,7 +3204,8 @@
             "additionalProperties": false,
             "description": "Target data query",
             "example": {
-              "expr": "job=app"
+              "prop1": "value1",
+              "prop2": "value"
             },
             "type": "object"
           },
@@ -3158,6 +3231,12 @@
           }
         },
         "type": "object"
+      },
+      "CounterResetHint": {
+        "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
+        "format": "uint8",
+        "title": "CounterResetHint contains the known information about a counter reset,",
+        "type": "integer"
       },
       "CreateAlertNotificationCommand": {
         "properties": {
@@ -3466,6 +3545,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3562,6 +3642,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3620,6 +3701,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -3878,6 +3960,9 @@
       "DataLink": {
         "description": "DataLink define what",
         "properties": {
+          "internal": {
+            "$ref": "#/components/schemas/InternalDataLink"
+          },
           "targetBlank": {
             "type": "boolean"
           },
@@ -4132,6 +4217,13 @@
         },
         "type": "object"
       },
+      "DescendantCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "type": "object"
+      },
       "DiscordConfig": {
         "properties": {
           "http_config": {
@@ -4179,8 +4271,8 @@
         "type": "integer"
       },
       "Duration": {
+        "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
         "format": "int64",
-        "title": "Duration is a type used for marshalling durations.",
         "type": "integer"
       },
       "EmailConfig": {
@@ -4403,6 +4495,9 @@
         "type": "object"
       },
       "EvalQueriesResponse": {},
+      "ExplorePanelsState": {
+        "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+      },
       "ExtendedReceiver": {
         "properties": {
           "email_configs": {
@@ -4492,7 +4587,7 @@
             "type": "string"
           },
           "displayNameFromDS": {
-            "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+            "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
             "type": "string"
           },
           "filterable": {
@@ -4567,6 +4662,56 @@
         "title": "FindTagsResult is the result of a tags search.",
         "type": "object"
       },
+      "FloatHistogram": {
+        "description": "A FloatHistogram is needed by PromQL to handle operations that might result\nin fractional counts. Since the counts in a histogram are unlikely to be too\nlarge to be represented precisely by a float64, a FloatHistogram can also be\nused to represent a histogram with integer counts and thus serves as a more\ngeneralized representation.",
+        "properties": {
+          "Count": {
+            "description": "Total number of observations. Must be zero or positive.",
+            "format": "double",
+            "type": "number"
+          },
+          "CounterResetHint": {
+            "$ref": "#/components/schemas/CounterResetHint"
+          },
+          "PositiveBuckets": {
+            "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
+            "items": {
+              "format": "double",
+              "type": "number"
+            },
+            "type": "array"
+          },
+          "PositiveSpans": {
+            "description": "Spans for positive and negative buckets (see Span below).",
+            "items": {
+              "$ref": "#/components/schemas/Span"
+            },
+            "type": "array"
+          },
+          "Schema": {
+            "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+            "format": "int32",
+            "type": "integer"
+          },
+          "Sum": {
+            "description": "Sum of observations. This is also used as the stale marker.",
+            "format": "double",
+            "type": "number"
+          },
+          "ZeroCount": {
+            "description": "Observations falling into the zero bucket. Must be zero or positive.",
+            "format": "double",
+            "type": "number"
+          },
+          "ZeroThreshold": {
+            "description": "Width of the zero bucket.",
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
+        "type": "object"
+      },
       "Folder": {
         "properties": {
           "accessControl": {
@@ -4602,6 +4747,13 @@
             "description": "only used if nested folders are enabled",
             "type": "string"
           },
+          "parents": {
+            "description": "the parent folders starting from the root going down",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "type": "array"
+          },
           "title": {
             "type": "string"
           },
@@ -4627,9 +4779,6 @@
       },
       "FolderSearchHit": {
         "properties": {
-          "accessControl": {
-            "$ref": "#/components/schemas/Metadata"
-          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -5067,6 +5216,34 @@
         },
         "type": "object"
       },
+      "GettableHistoricUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/GettableApiAlertingConfig"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_applied": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "template_file_provenances": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "type": "object"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "GettableNGalertConfig": {
         "properties": {
           "alertmanagersChoice": {
@@ -5252,11 +5429,19 @@
             "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
             "type": "boolean"
           },
+          "no_proxy": {
+            "description": "NoProxy contains addresses that should not use a proxy.",
+            "type": "string"
+          },
           "oauth2": {
             "$ref": "#/components/schemas/OAuth2"
           },
           "proxy_connect_header": {
             "$ref": "#/components/schemas/Header"
+          },
+          "proxy_from_environment": {
+            "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+            "type": "boolean"
           },
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
@@ -5497,6 +5682,31 @@
         "format": "int64",
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
+      },
+      "InternalDataLink": {
+        "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+        "properties": {
+          "datasourceName": {
+            "type": "string"
+          },
+          "datasourceUid": {
+            "type": "string"
+          },
+          "panelsState": {
+            "$ref": "#/components/schemas/ExplorePanelsState"
+          },
+          "query": {},
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRange"
+          },
+          "transformations": {
+            "items": {
+              "$ref": "#/components/schemas/LinkTransformationConfig"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
       },
       "Item": {
         "properties": {
@@ -5893,6 +6103,23 @@
         "title": "LibraryElementSearchResult is the search result for entities.",
         "type": "object"
       },
+      "LinkTransformationConfig": {
+        "properties": {
+          "expression": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "mapValue": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SupportedTransformationTypes"
+          }
+        },
+        "type": "object"
+      },
       "MassDeleteAnnotationsCmd": {
         "properties": {
           "annotationId": {
@@ -5997,19 +6224,6 @@
           "to",
           "queries"
         ],
-        "type": "object"
-      },
-      "MigrateQueriesToQueryHistoryCommand": {
-        "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
-        "properties": {
-          "queries": {
-            "description": "Array of queries to store in query history.",
-            "items": {
-              "$ref": "#/components/schemas/QueryToMigrate"
-            },
-            "type": "array"
-          }
-        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -6189,6 +6403,17 @@
               "type": "string"
             },
             "type": "object"
+          },
+          "no_proxy": {
+            "description": "NoProxy contains addresses that should not use a proxy.",
+            "type": "string"
+          },
+          "proxy_connect_header": {
+            "$ref": "#/components/schemas/Header"
+          },
+          "proxy_from_environment": {
+            "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+            "type": "boolean"
           },
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
@@ -6641,15 +6866,12 @@
             "type": "integer"
           },
           "interval": {
-            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
             "type": "string"
           },
           "name": {
-            "description": "Name of the playlist.",
             "type": "string"
           },
           "uid": {
-            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
             "type": "string"
           }
         },
@@ -6719,7 +6941,11 @@
         "type": "array"
       },
       "Point": {
+        "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
         "properties": {
+          "H": {
+            "$ref": "#/components/schemas/FloatHistogram"
+          },
           "T": {
             "format": "int64",
             "type": "integer"
@@ -6942,6 +7168,29 @@
         },
         "type": "object"
       },
+      "PostableExtendedRuleNodeExtended": {
+        "properties": {
+          "folderTitle": {
+            "example": "project_x",
+            "type": "string"
+          },
+          "folderUid": {
+            "example": "okrd3I0Vz",
+            "type": "string"
+          },
+          "rule": {
+            "$ref": "#/components/schemas/PostableExtendedRuleNode"
+          },
+          "ruleGroup": {
+            "example": "eval_group_1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule"
+        ],
+        "type": "object"
+      },
       "PostableGrafanaReceiver": {
         "properties": {
           "disableResolveMessage": {
@@ -7062,35 +7311,6 @@
         },
         "type": "object"
       },
-      "Preferences": {
-        "properties": {
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "title": "Preferences defines model for Preferences.",
-        "type": "object"
-      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -7176,9 +7396,9 @@
           },
           "execErrState": {
             "enum": [
+              "OK",
               "Alerting",
-              "Error",
-              "OK"
+              "Error"
             ],
             "type": "string"
           },
@@ -7261,8 +7481,30 @@
         },
         "type": "array"
       },
+      "ProxyConfig": {
+        "properties": {
+          "no_proxy": {
+            "description": "NoProxy contains addresses that should not use a proxy.",
+            "type": "string"
+          },
+          "proxy_connect_header": {
+            "$ref": "#/components/schemas/Header"
+          },
+          "proxy_from_environment": {
+            "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+            "type": "boolean"
+          },
+          "proxy_url": {
+            "$ref": "#/components/schemas/URL"
+          }
+        },
+        "type": "object"
+      },
       "PushoverConfig": {
         "properties": {
+          "device": {
+            "type": "string"
+          },
           "expire": {
             "type": "string"
           },
@@ -7362,22 +7604,6 @@
         },
         "type": "object"
       },
-      "QueryHistoryMigrationResponse": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "starredCount": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "totalCount": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
@@ -7452,7 +7678,7 @@
             "type": "string"
           },
           "displayNameFromDS": {
-            "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+            "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
             "type": "string"
           },
           "filterable": {
@@ -7508,27 +7734,6 @@
           }
         },
         "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
-        "type": "object"
-      },
-      "QueryToMigrate": {
-        "properties": {
-          "comment": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "datasourceUid": {
-            "type": "string"
-          },
-          "queries": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "starred": {
-            "type": "boolean"
-          }
-        },
         "type": "object"
       },
       "QuotaDTO": {
@@ -7947,6 +8152,13 @@
               "$ref": "#/components/schemas/RuleGroup"
             },
             "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -7980,6 +8192,13 @@
               "$ref": "#/components/schemas/AlertingRule"
             },
             "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -8077,6 +8296,9 @@
       },
       "Sample": {
         "properties": {
+          "H": {
+            "$ref": "#/components/schemas/FloatHistogram"
+          },
           "Metric": {
             "$ref": "#/components/schemas/Labels"
           },
@@ -8668,6 +8890,51 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "Span": {
+        "properties": {
+          "Length": {
+            "description": "Length of the span.",
+            "format": "uint32",
+            "type": "integer"
+          },
+          "Offset": {
+            "description": "Gap to previous span (always positive), or starting index for the 1st\nspan (which can be negative).",
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "title": "A Span defines a continuous sequence of buckets.",
+        "type": "object"
+      },
+      "Spec": {
+        "properties": {
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "theme": {
+            "description": "Theme light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "title": "Spec defines model for Spec.",
+        "type": "object"
+      },
       "State": {
         "type": "string"
       },
@@ -8685,6 +8952,9 @@
           }
         },
         "type": "object"
+      },
+      "SupportedTransformationTypes": {
+        "type": "string"
       },
       "SyncResult": {
         "properties": {
@@ -8799,6 +9069,9 @@
           },
           "permission": {
             "$ref": "#/components/schemas/PermissionType"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8861,6 +9134,9 @@
             "format": "int64",
             "type": "integer"
           },
+          "teamUID": {
+            "type": "string"
+          },
           "userId": {
             "format": "int64",
             "type": "integer"
@@ -8894,6 +9170,9 @@
           },
           "token": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "token_file": {
+            "type": "string"
           }
         },
         "title": "TelegramConfig configures notifications via Telegram.",
@@ -8940,6 +9219,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -9055,6 +9335,77 @@
         },
         "type": "object"
       },
+      "TestTemplatesConfigBodyParams": {
+        "properties": {
+          "alerts": {
+            "description": "Alerts to use as data when testing the template.",
+            "items": {
+              "$ref": "#/components/schemas/postableAlert"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the template file.",
+            "type": "string"
+          },
+          "template": {
+            "description": "Template string to test.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesErrorResult": {
+        "properties": {
+          "kind": {
+            "description": "Kind of template error that occurred.",
+            "enum": [
+              "invalid_template",
+              "execution_error"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "description": "Error message.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesResult": {
+        "properties": {
+          "name": {
+            "description": "Name of the associated template definition for this result.",
+            "type": "string"
+          },
+          "text": {
+            "description": "Interpolated value of the template.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesResults": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/TestTemplatesErrorResult"
+            },
+            "type": "array"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TestTemplatesResult"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Threshold": {
         "description": "Threshold a single step on the threshold list",
         "properties": {
@@ -9130,18 +9481,17 @@
         "type": "object"
       },
       "TimeRange": {
-        "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+        "description": "Redefining this to avoid an import cycle",
         "properties": {
-          "EndMinute": {
-            "format": "int64",
-            "type": "integer"
+          "from": {
+            "format": "date-time",
+            "type": "string"
           },
-          "StartMinute": {
-            "format": "int64",
-            "type": "integer"
+          "to": {
+            "format": "date-time",
+            "type": "string"
           }
         },
-        "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
         "type": "object"
       },
       "TimeRangeDTO": {
@@ -9341,7 +9691,6 @@
         "type": "string"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9377,7 +9726,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "A URL represents a parsed URL (technically, a URI reference).",
+        "title": "URL is a custom URL type that allows validation at configuration load time.",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9593,7 +9942,7 @@
             "type": "string"
           },
           "uid": {
-            "description": "NewUID it's an optional parameter used for overriding the existing folder UID",
+            "description": "NewUID it's an optional parameter used for overriding the existing folder UID\nStarting with 10.0, this is deprecated. It will be removed in a future release.\nPlease avoid using it because it can result in folder loosing its permissions.",
             "type": "string"
           },
           "version": {
@@ -9639,6 +9988,7 @@
         "properties": {
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -9767,6 +10117,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -9846,6 +10197,7 @@
           },
           "role": {
             "enum": [
+              "None",
               "Viewer",
               "Editor",
               "Admin"
@@ -10118,7 +10470,10 @@
             "type": "boolean"
           },
           "url": {
-            "$ref": "#/components/schemas/URL"
+            "$ref": "#/components/schemas/SecretURL"
+          },
+          "url_file": {
+            "type": "string"
           }
         },
         "title": "WebhookConfig configures notifications via a generic webhook.",
@@ -10364,13 +10719,13 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10419,6 +10774,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -10568,6 +10924,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -14352,7 +14709,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "operationId": "getAPIkeys",
         "parameters": [
           {
@@ -14388,6 +14745,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "Will return details of the created API key.",
         "operationId": "addAPIkey",
         "requestBody": {
@@ -14429,6 +14787,8 @@
     },
     "/auth/keys/{id}": {
       "delete": {
+        "deprecated": true,
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "operationId": "deleteAPIkey",
         "parameters": [
           {
@@ -15304,6 +15664,40 @@
     "/datasources/correlations": {
       "get": {
         "operationId": "getCorrelations",
+        "parameters": [
+          {
+            "description": "Limit the maximum number of correlations to return per page",
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "format": "int64",
+              "maximum": 1000,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Page index for starting fetching correlations",
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Source datasource UID filter to be applied to correlations",
+            "in": "query",
+            "name": "sourceUID",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/getCorrelationsResponse"
@@ -16161,7 +16555,7 @@
     },
     "/datasources/{datasourceId}/disable-permissions": {
       "post": {
-        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Disables permissions for the data source with the given id. All existing permissions will be removed and anyone will be able to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
         "operationId": "disablePermissions",
         "parameters": [
           {
@@ -16202,7 +16596,7 @@
     },
     "/datasources/{datasourceId}/enable-permissions": {
       "post": {
-        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Enables permissions for the data source with the given id.\nNo one except Org Admins will be able to query the data source until permissions have been added\nwhich permit certain users or teams to query the data source.\n\nYou need to have a permission with action `datasources.permissions:toggle` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.",
         "operationId": "enablePermissions",
         "parameters": [
           {
@@ -16243,7 +16637,7 @@
     },
     "/datasources/{datasourceId}/permissions": {
       "get": {
-        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Gets all existing permissions for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use GET /api/access-control/datasources/:uid",
         "operationId": "getAllPermissions",
         "parameters": [
           {
@@ -16279,7 +16673,7 @@
         ]
       },
       "post": {
-        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "You need to have a permission with action `datasources.permissions:read` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
         "operationId": "addPermission",
         "parameters": [
           {
@@ -16348,7 +16742,7 @@
     },
     "/datasources/{datasourceId}/permissions/{permissionId}": {
       "delete": {
-        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).",
+        "description": "Removes the permission with the given permissionId for the data source with the given id.\n\nYou need to have a permission with action `datasources.permissions:delete` and scopes `datasources:*`, `datasources:id:*`, `datasources:id:1` (single data source).\n\nDeprecated: true.\nDeprecated. Please use POST /api/access-control/datasources/:uid/users/:id, /api/access-control/datasources/:uid/teams/:id or /api/access-control/datasources/:uid/buildInRoles/:id",
         "operationId": "deletePermissions",
         "parameters": [
           {
@@ -16640,7 +17034,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -16733,7 +17127,8 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "deprecated": true,
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "operationId": "getFolderByID",
         "parameters": [
           {
@@ -16899,6 +17294,42 @@
           }
         },
         "summary": "Update folder.",
+        "tags": [
+          "folders"
+        ]
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "operationId": "getFolderDescendantCounts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getFolderDescendantCountsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
         "tags": [
           "folders"
         ]
@@ -19106,41 +19537,6 @@
         ]
       }
     },
-    "/query-history/migrate": {
-      "post": {
-        "description": "Adds multiple queries to query history.",
-        "operationId": "migrateQueries",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MigrateQueriesToQueryHistoryCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getQueryHistoryMigrationResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Migrate queries to query history.",
-        "tags": [
-          "query_history"
-        ]
-      }
-    },
     "/query-history/star/{query_history_uid}": {
       "delete": {
         "description": "Removes star from query in query history as specified by the UID.",
@@ -20912,6 +21308,52 @@
       }
     },
     "/teams/{teamId}/groups": {
+      "delete": {
+        "operationId": "removeTeamGroupApiQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove External Group.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ]
+      },
       "get": {
         "operationId": "getTeamGroupsApi",
         "parameters": [
@@ -21004,6 +21446,7 @@
     },
     "/teams/{teamId}/groups/{groupId}": {
       "delete": {
+        "deprecated": true,
         "operationId": "removeTeamGroupApi",
         "parameters": [
           {
@@ -22078,7 +22521,7 @@
         "operationId": "searchUsersWithPaging",
         "responses": {
           "200": {
-            "$ref": "#/components/responses/searchUsersResponse"
+            "$ref": "#/components/responses/searchUsersWithPagingResponse"
           },
           "401": {
             "$ref": "#/components/responses/unauthorisedError"

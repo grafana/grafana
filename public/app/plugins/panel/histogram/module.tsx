@@ -3,10 +3,10 @@ import { histogramFieldInfo } from '@grafana/data/src/transformations/transforme
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 
 import { HistogramPanel } from './HistogramPanel';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './panelcfg.gen';
+import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
@@ -25,7 +25,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
           placeholder: 'Auto',
           min: 0,
         },
-        defaultValue: defaultPanelOptions.bucketSize,
+        defaultValue: defaultOptions.bucketSize,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addNumberInput({
@@ -36,14 +36,14 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
           placeholder: '0',
           min: 0,
         },
-        defaultValue: defaultPanelOptions.bucketOffset,
+        defaultValue: defaultOptions.bucketOffset,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addBooleanSwitch({
         path: 'combine',
         name: histogramFieldInfo.combine.name,
         description: histogramFieldInfo.combine.description,
-        defaultValue: defaultPanelOptions.combine,
+        defaultValue: defaultOptions.combine,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       });
 
@@ -62,7 +62,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramP
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultPanelFieldConfig;
+      const cfg = defaultFieldConfig;
 
       builder
         .addSliderInput({

@@ -27,7 +27,10 @@ interface TopMetricBucket {
 }
 
 export class ElasticResponse {
-  constructor(private targets: ElasticsearchQuery[], private response: any) {
+  constructor(
+    private targets: ElasticsearchQuery[],
+    private response: any
+  ) {
     this.targets = targets;
     this.response = response;
   }
@@ -604,7 +607,7 @@ export class ElasticResponse {
 
     for (let frame of dataFrame) {
       for (let field of frame.fields) {
-        if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+        if (field.type === FieldType.time && typeof field.values[0] !== 'number') {
           field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
         }
       }
@@ -784,8 +787,10 @@ const addPreferredVisualisationType = (series: any, type: PreferredVisualisation
 
 const toNameTypePair =
   (docs: Array<Record<string, any>>) =>
-  (propName: string): [string, FieldType] =>
-    [propName, guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName])];
+  (propName: string): [string, FieldType] => [
+    propName,
+    guessType(docs.find((doc) => doc[propName] !== undefined)?.[propName]),
+  ];
 
 /**
  * Trying to guess data type from its value. This is far from perfect, as in order to have accurate guess

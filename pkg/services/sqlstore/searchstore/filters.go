@@ -14,6 +14,12 @@ type FilterWhere interface {
 	Where() (string, []interface{})
 }
 
+// FilterWith returns any recursive CTE queries (if supported)
+// and their parameters
+type FilterWith interface {
+	With() (string, []interface{})
+}
+
 // FilterGroupBy should be used after performing an outer join on the
 // search result to ensure there is only one of each ID in the results.
 // The id column must be present in the result.

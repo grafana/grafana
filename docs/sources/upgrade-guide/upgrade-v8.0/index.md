@@ -5,8 +5,12 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v8.0
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v8.0
+title: Upgrade to Grafana v8.0
 weight: 2900
 ---
 
@@ -20,7 +24,7 @@ This section describes technical changes associated with this release of Grafana
 
 ### Plugins
 
-Grafana now requires all plugins to be signed. If a plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure plugin files and binaries haven't been tampered with. All Grafana Labs authored plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../../administration/#allow_loading_unsigned_plugins" >}}).
+Grafana now requires all plugins to be signed. If a plugin is not signed Grafana will not load/start it. This is an additional security measure to make sure plugin files and binaries haven't been tampered with. All Grafana Labs authored plugins, including Enterprise plugins, are now signed. It's possible to allow unsigned plugins using a configuration setting, but is something we strongly advise against doing. For more information about this setting, refer to [allow loading unsigned plugins]({{< relref "../../setup-grafana/configure-grafana#allow_loading_unsigned_plugins" >}}).
 
 ### Grafana Live
 
@@ -30,11 +34,11 @@ When WebSocket connection is established, Grafana checks the request Origin head
 
 To handle many concurrent WebSocket connections you may need to tune your OS settings or infrastructure. Grafana Live is enabled by default and supports 100 concurrent WebSocket connections max to avoid possible problems with the file descriptor OS limit. As soon as your setup meets the requirements to scale the number of persistent connections this limit can be increased. You also have an option to disable Grafana Live.
 
-Refer to [Grafana Live configuration]({{< relref "../../setup-grafana/set-up-grafana-live/" >}}) documentation for more information.
+Refer to [Grafana Live configuration]({{< relref "../../setup-grafana/set-up-grafana-live" >}}) documentation for more information.
 
 ### Postgres, MySQL, Microsoft SQL Server data sources
 
-Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../../developers/plugins/data-frames/" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../../developers/plugins/data-frames/#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
+Grafana v8.0 changes the underlying data structure to [data frames]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames" >}}) for the Postgres, MySQL, Microsoft SQL Server data sources. As a result, a _Time series_ query result gets returned in a [wide format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). To make the visualizations work as they did before, you might have to do some manual migrations.
 
 For any existing panels/visualizations using a _Time series_ query, where the time column is only needed for filtering the time range, for example, using the bar gauge or pie chart panel, we recommend that you use a _Table query_ instead and exclude the time column as a field in the response.
 Refer to this [issue comment](https://github.com/grafana/grafana/issues/35534#issuecomment-861519658) for detailed instructions and workarounds.
@@ -57,6 +61,6 @@ ORDER BY time
 There are two possible workarounds to resolve this problem:
 
 1. In Grafana v8.0.3, use an alias of the string column selected as `metric`. for example, `hostname as metric`.
-2. Use the [Standard field definitions' display name]({{< relref "../../panels-visualizations/configure-standard-options/#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
+2. Use the [Standard field definitions' display name]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}) to format the alias. For the preceding example query, you would use `${__field.labels.hostname}` option.
 
-For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../../datasources/postgres/#time-series-queries" >}}), [MySQL]({{< relref "../../datasources/mysql/#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../../datasources/mssql/#time-series-queries" >}}).
+For more information, refer to the our relational databases documentation of [Postgres]({{< relref "../../datasources/postgres#time-series-queries" >}}), [MySQL]({{< relref "../../datasources/mysql#time-series-queries" >}}), [Microsoft SQL Server]({{< relref "../../datasources/mssql/query-editor#time-series-query-examples" >}}).

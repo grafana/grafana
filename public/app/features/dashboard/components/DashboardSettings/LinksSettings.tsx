@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 
 import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
 import { newLink } from '../LinksSettings/LinkSettingsEdit';

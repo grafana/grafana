@@ -19,7 +19,7 @@ interface Props {
 export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
   const ableToWrite = contextSrv.hasPermission(AccessControlAction.ServiceAccountsWrite);
-  const [roles, setRoles] = React.useState<Role[]>([]);
+  const [roles, setRoleOptions] = React.useState<Role[]>([]);
 
   const onRoleChange = (role: OrgRole) => {
     onChange({ ...serviceAccount, role: role });
@@ -28,20 +28,20 @@ export function ServiceAccountProfile({ serviceAccount, timeZone, onChange }: Pr
   const onNameChange = (newValue: string) => {
     onChange({ ...serviceAccount, name: newValue });
   };
-  // TODO: this is a temporary solution to fetch roles for service accounts
-  // until we make use of the state from the serviceaccountspage
-  // and pass it down to the serviceaccountprofile
+
   React.useEffect(() => {
-    if (contextSrv.licensedAccessControlEnabled()) {
-      if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
-        fetchRoleOptions(serviceAccount.orgId)
-          .then((roles) => {
-            setRoles(roles);
-          })
-          .catch((err) => {
-            console.log('fetchRoleOptions error: ', err);
-          });
+    async function fetchOptions() {
+      try {
+        if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
+          let options = await fetchRoleOptions(serviceAccount.orgId);
+          setRoleOptions(options);
+        }
+      } catch (e) {
+        console.error('Error loading options for service account');
       }
+    }
+    if (contextSrv.licensedAccessControlEnabled()) {
+      fetchOptions();
     }
   }, [serviceAccount.orgId]);
 

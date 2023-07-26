@@ -1,9 +1,10 @@
 import { Observable } from 'rxjs';
 
-import { Labels } from './data';
+import { DataQuery } from '@grafana/schema';
+
+import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
-import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -54,6 +55,9 @@ export interface LogRowModel {
   // the same as rows final index when rendered.
   rowIndex: number;
 
+  // The value of the the dataframe's id field, if it exists
+  rowId?: string;
+
   // Full DataFrame from which we parsed this log.
   // TODO: refactor this so we do not need to pass whole dataframes in addition to also parsed data.
   dataFrame: DataFrame;
@@ -103,40 +107,21 @@ export interface LogLabelStatsModel {
   value: string;
 }
 
-/** @deprecated will be removed in the next major version */
-export interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
 export enum LogsDedupDescription {
   none = 'No de-duplication',
   exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
+}
+
+export interface LogRowContextOptions {
+  direction?: LogRowContextQueryDirection;
+  limit?: number;
+}
+
+export enum LogRowContextQueryDirection {
+  Backward = 'BACKWARD',
+  Forward = 'FORWARD',
 }
 
 /**
@@ -147,11 +132,12 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions,
-    query?: TQuery
-  ) => Promise<DataQueryResponse>;
+  getLogRowContext: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<DataQueryResponse>;
+
+  /**
+   * Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view.
+   */
+  getLogRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<TQuery | null>;
 
   /**
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
@@ -163,7 +149,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * @alpha
    * @internal
    */
-  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -186,6 +172,26 @@ export enum SupplementaryQueryType {
 }
 
 /**
+ * @internal
+ */
+export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
+
+/**
+ * @internal
+ */
+export type LogsVolumeOption = {
+  type: SupplementaryQueryType.LogsVolume;
+};
+
+/**
+ * @internal
+ */
+export type LogsSampleOptions = {
+  type: SupplementaryQueryType.LogsSample;
+  limit?: number;
+};
+
+/**
  * Types of logs volume responses. A data source may return full range histogram (based on selected range)
  * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
  * @internal
@@ -203,29 +209,6 @@ export type LogsVolumeCustomMetaData = {
   logsVolumeType: LogsVolumeType;
   datasourceName: string;
   sourceQuery: DataQuery;
-};
-
-export const getLogsVolumeAbsoluteRange = (
-  dataFrames: DataFrame[],
-  defaultRange: AbsoluteTimeRange
-): AbsoluteTimeRange => {
-  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
-};
-
-export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
-  const customMeta = dataFrames[0]?.meta?.custom;
-
-  if (customMeta && customMeta.datasourceName) {
-    return {
-      name: customMeta.datasourceName,
-    };
-  }
-
-  return null;
-};
-
-export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
-  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
 /**
@@ -251,7 +234,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If provided query is not suitable for provided supplementary query type, undefined should be returned.
    */
-  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+  getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
@@ -279,4 +262,43 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContextUi !== undefined;
+};
+
+export interface QueryFilterOptions extends KeyValue<string> {}
+export interface ToggleFilterAction {
+  type: 'FILTER_FOR' | 'FILTER_OUT';
+  options: QueryFilterOptions;
+}
+/**
+ * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active
+ * state of filters through `queryHasFilter`, in the Log Details component in Explore.
+ * @internal
+ * @alpha
+ */
+export interface DataSourceWithToggleableQueryFiltersSupport<TQuery extends DataQuery> {
+  /**
+   * Toggle filters on and off from query.
+   * If the filter is already present, it should be removed.
+   * If the opposite filter is present, it should be replaced.
+   */
+  toggleQueryFilter(query: TQuery, filter: ToggleFilterAction): TQuery;
+
+  /**
+   * Given a query, determine if it has a filter that matches the options.
+   */
+  queryHasFilter(query: TQuery, filter: QueryFilterOptions): boolean;
+}
+
+/**
+ * @internal
+ */
+export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
+  return (
+    datasource !== null &&
+    typeof datasource === 'object' &&
+    'toggleQueryFilter' in datasource &&
+    'queryHasFilter' in datasource
+  );
 };

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -25,8 +26,11 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
+	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -81,12 +85,12 @@ type testContext struct {
 
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
-		signedIn := tc.user != nil
+		signedIn := tc.user != nil && !tc.user.IsAnonymous
 		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,
-			SkipCache:    true,
+			SkipDSCache:  true,
 			Logger:       log.New("publicdashboards-test"),
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
@@ -129,13 +133,24 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		}
 	}
 
+	ds := &fakeDatasources.FakeDataSourceService{}
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginFakes.FakePluginStore{
+		PluginList: []plugins.PluginDTO{
+			{
+				JSONData: plugins.JSONData{
+					ID: "mysql",
+				},
+			},
+		},
+	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()))
+
 	return query.ProvideService(
 		setting.NewCfg(),
 		cs,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakeDatasources.FakeDataSourceService{},
 		fpc,
+		pCtxProvider,
 	)
 }
 

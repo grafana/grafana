@@ -14,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,13 +32,21 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
 
-	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
+	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+		return nil, err
+	}
+
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
+		// This will be removed once we've:
+		// 1) removed the feature toggle and
+		// 2) have released enough versions not to support a version without split scopes
+		if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
 			return nil, err
 		}
 	}
@@ -57,11 +67,14 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 	return s
 }
 
+//go:generate  mockery --name store --structname MockStore --outpkg actest --filename store_mock.go --output ../actest/
 type store interface {
 	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
 	SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
 	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
+	SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
+	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 }
 
 // Service is the service implementing role based access control.
@@ -76,13 +89,8 @@ type Service struct {
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
-	enabled := 0
-	if !accesscontrol.IsDisabled(s.cfg) {
-		enabled = 1
-	}
-
 	return map[string]interface{}{
-		"stats.oss.accesscontrol.enabled.count": enabled,
+		"stats.oss.accesscontrol.enabled.count": 1,
 	}
 }
 
@@ -107,11 +115,11 @@ func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUse
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:      user.OrgID,
-		UserID:     user.UserID,
-		Roles:      accesscontrol.GetOrgRoles(user),
-		TeamIDs:    user.Teams,
-		RolePrefix: accesscontrol.ManagedRolePrefix,
+		OrgID:        user.OrgID,
+		UserID:       user.UserID,
+		Roles:        accesscontrol.GetOrgRoles(user),
+		TeamIDs:      user.Teams,
+		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {
 		return nil, err
@@ -161,11 +169,6 @@ func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	// If accesscontrol is disabled no need to register roles
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
-
 	for _, r := range registrations {
 		err := accesscontrol.ValidateFixedRole(r.Role)
 		if err != nil {
@@ -251,15 +254,8 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
 		for i := range basicRole.Permissions {
-			if options.ActionPrefix != "" {
-				if strings.HasPrefix(basicRole.Permissions[i].Action, options.ActionPrefix) {
-					basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
-				}
-			}
-			if options.Action != "" {
-				if basicRole.Permissions[i].Action == options.Action {
-					basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
-				}
+			if PermissionMatchesSearchOptions(basicRole.Permissions[i], options) {
+				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
 			}
 		}
 	}
@@ -413,4 +409,38 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 		return permission.Action == searchOptions.Action
 	}
 	return strings.HasPrefix(permission.Action, searchOptions.ActionPrefix)
+}
+
+func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	// If accesscontrol is disabled no need to save the external service role
+	if accesscontrol.IsDisabled(s.cfg) {
+		return nil
+	}
+
+	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.log.Debug("registering an external service role is behind a feature flag, enable it to use this feature.")
+		return nil
+	}
+
+	if err := cmd.Validate(); err != nil {
+		return err
+	}
+
+	return s.store.SaveExternalServiceRole(ctx, cmd)
+}
+
+func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	// If accesscontrol is disabled no need to delete the external service role
+	if accesscontrol.IsDisabled(s.cfg) {
+		return nil
+	}
+
+	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.log.Debug("deleting an external service role is behind a feature flag, enable it to use this feature.")
+		return nil
+	}
+
+	slug := slugify.Slugify(externalServiceID)
+
+	return s.store.DeleteExternalServiceRole(ctx, slug)
 }

@@ -1,0 +1,10 @@
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: grafana
+      MARIADB_USER: grafana
+      MARIADB_PASSWORD: password
+    ports:
+      - "3306:3306"

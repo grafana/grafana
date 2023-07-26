@@ -26,6 +26,7 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -103,6 +104,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         wrapLogMessage={wrapLogMessage}
                         displayedFields={displayedFields}
                         disableActions={false}
+                        isFilterLabelActive={this.props.isFilterLabelActive}
                       />
                     );
                   })}
@@ -117,12 +119,13 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       onClickHideField={onClickHideField}
                       onClickFilterOutLabel={onClickFilterOutLabel}
                       onClickFilterLabel={onClickFilterLabel}
-                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
                       app={app}
                       disableActions={false}
+                      isFilterLabelActive={this.props.isFilterLabelActive}
                     />
                   );
                 })}
@@ -144,7 +147,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
-                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
@@ -163,7 +166,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
-                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values)}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}

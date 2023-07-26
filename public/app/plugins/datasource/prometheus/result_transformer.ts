@@ -3,7 +3,6 @@ import { flatten, forOwn, groupBy, partition } from 'lodash';
 
 import {
   ArrayDataFrame,
-  ArrayVector,
   CoreApp,
   DataFrame,
   DataFrameType,
@@ -16,15 +15,15 @@ import {
   formatLabels,
   getDisplayProcessor,
   Labels,
-  MutableField,
   PreferredVisualisationType,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  renderLegendFormat,
 } from '@grafana/data';
-import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
+import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
-import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
@@ -71,6 +70,23 @@ export function transformV2(
   request: DataQueryRequest<PromQuery>,
   options: { exemplarTraceIdDestinations?: ExemplarTraceIdDestination[] }
 ) {
+  // migration for dataplane field name issue
+  if (config.featureToggles.prometheusDataplane) {
+    // update displayNameFromDS in the field config
+    response.data.forEach((f: DataFrame) => {
+      const target = request.targets.find((t) => t.refId === f.refId);
+      // check that the legend is selected as auto
+      if (target && target.legendFormat === '__auto') {
+        f.fields.forEach((field) => {
+          if (field.labels?.__name__ && field.labels?.__name__ === field.name) {
+            const fieldCopy = { ...field, name: TIME_SERIES_VALUE_FIELD_NAME };
+            field.config.displayNameFromDS = calculateFieldDisplayName(fieldCopy, f, response.data);
+          }
+        });
+      }
+    });
+  }
+
   const [tableFrames, framesWithoutTable] = partition<DataFrame>(response.data, (df) => isTableResult(df, request));
   const processedTableFrames = transformDFToTable(tableFrames);
 
@@ -105,7 +121,7 @@ export function transformV2(
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
   heatmapResults.forEach((df) => {
     if (df.name == null) {
-      let f = df.fields.find((f) => f.name === 'Value');
+      let f = df.fields.find((f) => f.type === FieldType.number);
 
       if (f) {
         let le = f.labels?.le;
@@ -134,7 +150,7 @@ export function transformV2(
     // Create a new grouping by iterating through the data frames...
     const heatmapResultsGroupedByValues = groupBy<DataFrame>(heatmapResultsGroup, (dataFrame) => {
       // Each data frame has `Time` and `Value` properties, we want to get the values
-      const values = dataFrame.fields.find((field) => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+      const values = dataFrame.fields.find((field) => field.type === FieldType.number);
       // Specific functionality for special "le" quantile heatmap value, we know if this value exists, that we do not want to calculate the heatmap density across data frames from the same quartile
       if (values?.labels && HISTOGRAM_QUANTILE_LABEL_NAME in values.labels) {
         const { le, ...notLE } = values?.labels;
@@ -191,7 +207,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     const valueText = getValueText(refIds.length, refId);
     const valueField = getValueField({ data: [], valueName: valueText });
     const timeField = getTimeField([]);
-    const labelFields: MutableField[] = [];
+    const labelFields: Field[] = [];
 
     // Fill labelsFields with labels from dataFrames
     dataFramesByRefId[refId].forEach((df) => {
@@ -208,7 +224,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
               name: label,
               config: { filterable: true },
               type: numberField ? FieldType.number : FieldType.string,
-              values: new ArrayVector(),
+              values: [],
             });
           }
         });
@@ -216,13 +232,13 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
-      const timeFields = df.fields[0]?.values ?? new ArrayVector();
-      const dataFields = df.fields[1]?.values ?? new ArrayVector();
-      timeFields.toArray().forEach((value) => timeField.values.add(value));
-      dataFields.toArray().forEach((value) => {
-        valueField.values.add(parseSampleValue(value));
+      const timeFields = df.fields[0]?.values ?? [];
+      const dataFields = df.fields[1]?.values ?? [];
+      timeFields.forEach((value) => timeField.values.push(value));
+      dataFields.forEach((value) => {
+        valueField.values.push(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
-        labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
+        labelFields.forEach((field) => field.values.push(getLabelValue(labelsForField, field.name)));
       });
     });
 
@@ -231,7 +247,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       refId,
       fields,
       // Prometheus specific UI for instant queries
-      meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
+      meta: {
+        ...dataFramesByRefId[refId][0].meta,
+        preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType,
+      },
       length: timeField.values.length,
     };
   });
@@ -312,14 +331,13 @@ export function transform(
 
   // Return early if result type is scalar
   if (prometheusResult.resultType === 'scalar') {
-    return [
-      {
-        meta: options.meta,
-        refId: options.refId,
-        length: 1,
-        fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
-      },
-    ];
+    const df: DataFrame = {
+      meta: options.meta,
+      refId: options.refId,
+      length: 1,
+      fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
+    };
+    return [df];
   }
 
   // Return early again if the format is table, this needs special transformation.
@@ -497,26 +515,27 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
       // Labels have string field type, otherwise table tries to figure out the type which can result in unexpected results
       // Only "le" label has a number field type
       const numberField = label === HISTOGRAM_QUANTILE_LABEL_NAME;
-      return {
+      const field: Field = {
         name: label,
         config: { filterable: true },
         type: numberField ? FieldType.number : FieldType.string,
-        values: new ArrayVector(),
+        values: [],
       };
+      return field;
     });
   const valueField = getValueField({ data: [], valueName: valueText });
 
   md.forEach((d) => {
     if (isMatrixData(d)) {
       d.values.forEach((val) => {
-        timeField.values.add(val[0] * 1000);
-        metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
-        valueField.values.add(parseSampleValue(val[1]));
+        timeField.values.push(val[0] * 1000);
+        metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
+        valueField.values.push(parseSampleValue(val[1]));
       });
     } else {
-      timeField.values.add(d.value[0] * 1000);
-      metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
-      valueField.values.add(parseSampleValue(d.value[1]));
+      timeField.values.push(d.value[0] * 1000);
+      metricFields.forEach((metricField) => metricField.values.push(getLabelValue(d.metric, metricField.name)));
+      valueField.values.push(parseSampleValue(d.value[1]));
     }
   });
 
@@ -538,12 +557,12 @@ function getLabelValue(metric: PromMetric, label: string): string | number {
   return '';
 }
 
-function getTimeField(data: PromValue[], isMs = false): MutableField {
+function getTimeField(data: PromValue[], isMs = false): Field<number> {
   return {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
     config: {},
-    values: new ArrayVector<number>(data.map((val) => (isMs ? val[0] : val[0] * 1000))),
+    values: data.map((val) => (isMs ? val[0] : val[0] * 1000)),
   };
 }
 
@@ -561,7 +580,7 @@ function getValueField({
   parseValue = true,
   labels,
   displayNameFromDS,
-}: ValueFieldOptions): MutableField {
+}: ValueFieldOptions): Field {
   return {
     name: valueName,
     type: FieldType.number,
@@ -570,7 +589,7 @@ function getValueField({
       displayNameFromDS,
     },
     labels,
-    values: new ArrayVector<number | null>(data.map((val) => (parseValue ? parseSampleValue(val[1]) : val[1]))),
+    values: data.map((val) => (parseValue ? parseSampleValue(val[1]) : val[1])),
   };
 }
 
@@ -601,7 +620,7 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
 }
 
 function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
-  if (frames.length === 0) {
+  if (frames.length === 0 || (frames.length === 1 && frames[0].length === 0)) {
     return [];
   }
 
@@ -634,16 +653,17 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le20    20  10  30    =>    10  0   30
     le30    30  10  35    =>    10  0   5
     */
+
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const topSeries = seriesList[i].fields.find((s) => s.type === FieldType.number);
+    const bottomSeries = seriesList[i - 1].fields.find((s) => s.type === FieldType.number);
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
 
     for (let j = 0; j < topSeries.values.length; j++) {
-      const bottomPoint = bottomSeries.values.get(j) || [0];
-      topSeries.values.toArray()[j] -= bottomPoint;
+      const bottomPoint = bottomSeries.values[j] || [0];
+      topSeries.values[j] -= bottomPoint;
     }
   }
 
@@ -654,10 +674,13 @@ export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
   try {
-    // fail if not integer. might happen with bad queries
-    le1 = parseSampleValue(s1.name ?? s1.fields[1].name);
-    le2 = parseSampleValue(s2.name ?? s2.fields[1].name);
+    // the state.displayName conditions are here because we also use this sorting util fn
+    // in panels where isHeatmapResult was false but we still want to sort numerically-named
+    // fields after the full unique displayName is cached in field state
+    le1 = parseSampleValue(s1.fields[1].state?.displayName ?? s1.name ?? s1.fields[1].name);
+    le2 = parseSampleValue(s2.fields[1].state?.displayName ?? s2.name ?? s2.fields[1].name);
   } catch (err) {
+    // fail if not integer. might happen with bad queries
     console.error(err);
     return 0;
   }

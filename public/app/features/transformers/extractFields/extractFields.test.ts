@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 
 import { extractFieldsTransformer } from './extractFields';
@@ -187,34 +187,80 @@ describe('Fields from JSON', () => {
       }
     `);
   });
+
+  it('skips null values', async () => {
+    const cfg: ExtractFieldsOptions = {
+      source: 'line',
+      replace: false,
+    };
+    const ctx = { interpolate: (v: string) => v };
+
+    const testDataFrame: DataFrame = {
+      fields: [
+        { config: {}, name: 'Time', type: FieldType.time, values: [1, 2] },
+        { config: {}, name: 'line', type: FieldType.other, values: ['{"foo":"bar"}', null] },
+      ],
+      length: 2,
+    };
+
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrame]);
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toEqual({
+      fields: [
+        {
+          config: {},
+          name: 'Time',
+          type: 'time',
+          values: [1, 2],
+          state: {
+            displayName: 'Time',
+            multipleFrames: false,
+          },
+        },
+        {
+          config: {},
+          name: 'line',
+          type: 'other',
+          values: ['{"foo":"bar"}', null],
+        },
+        {
+          name: 'foo',
+          values: ['bar', undefined],
+          type: 'string',
+          config: {},
+        },
+      ],
+      length: 2,
+    });
+  });
 });
 
 const testFieldTime: Field = {
   config: {},
   name: 'Time',
   type: FieldType.time,
-  values: new ArrayVector([1669638911691]),
+  values: [1669638911691],
 };
 
 const testFieldString: Field = {
   config: {},
   name: 'String',
   type: FieldType.string,
-  values: new ArrayVector(['Hallo World']),
+  values: ['Hallo World'],
 };
 
 const testFieldJSON: Field = {
   config: {},
   name: 'JSON',
   type: FieldType.string,
-  values: new ArrayVector([
+  values: [
     JSON.stringify({
       object: {
         nestedArray: [1, 2, 3, 4],
         nestedString: 'Hallo World',
       },
     }),
-  ]),
+  ],
 };
 
 const testDataFrame: DataFrame = {

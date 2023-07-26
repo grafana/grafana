@@ -1,88 +1,155 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import * as H from 'history';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
-import { UrlSyncManager, SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectState } from '@grafana/scenes';
-import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { Page } from 'app/core/components/Page/Page';
+import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import {
+  getUrlSyncManager,
+  sceneGraph,
+  SceneGridItem,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectStateChangedEvent,
+  SceneObjectUrlSyncHandler,
+  SceneObjectUrlValues,
+  VizPanel,
+} from '@grafana/scenes';
+import appEvents from 'app/core/app_events';
 
-interface DashboardSceneState extends SceneObjectState {
+import { DashboardSceneRenderer } from './DashboardSceneRenderer';
+
+export interface DashboardSceneState extends SceneObjectState {
   title: string;
   uid?: string;
   body: SceneObject;
   actions?: SceneObject[];
   controls?: SceneObject[];
+  isEditing?: boolean;
+  isDirty?: boolean;
+  /** Scene object key for object to inspect */
+  inspectPanelKey?: string;
+  /** Scene object key for object to view in fullscreen */
+  viewPanelKey?: string;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
-  public static Component = DashboardSceneRenderer;
-  private urlSyncManager?: UrlSyncManager;
+  static Component = DashboardSceneRenderer;
 
-  /**
-   * It's better to do this before activate / mount to not trigger unnessary re-renders
-   */
-  public initUrlSync() {
-    if (!this.urlSyncManager) {
-      this.urlSyncManager = new UrlSyncManager(this);
+  protected _urlSync = new DashboardSceneUrlSync(this);
+
+  constructor(state: DashboardSceneState) {
+    super(state);
+
+    this.addActivationHandler(() => {
+      return () => {
+        getUrlSyncManager().cleanUp(this);
+      };
+    });
+
+    this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
+  }
+
+  findPanel(key: string | undefined): VizPanel | null {
+    if (!key) {
+      return null;
     }
 
-    this.urlSyncManager.initSync();
+    const obj = sceneGraph.findObject(this, (obj) => obj.state.key === key);
+    if (obj instanceof VizPanel) {
+      return obj;
+    }
+
+    return null;
   }
-}
 
-function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, body, actions = [], uid, controls } = model.useState();
-  const styles = useStyles2(getStyles);
-
-  const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
-
-  if (uid?.length) {
-    toolbarActions.push(
-      <ToolbarButton
-        icon="apps"
-        onClick={() => locationService.push(`/d/${uid}`)}
-        tooltip="View as Dashboard"
-        key="scene-to-dashboard-switch"
-      />
-    );
-  }
-  const pageToolbar = config.featureToggles.topnav ? (
-    <AppChromeUpdate actions={toolbarActions} />
-  ) : (
-    <PageToolbar title={title}>{toolbarActions}</PageToolbar>
-  );
-
-  return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
-      {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
-        </div>
-      )}
-      <div className={styles.body}>
-        <body.Component model={body} />
-      </div>
-    </Page>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    body: css({
-      flexGrow: 1,
-      display: 'flex',
-      gap: '8px',
-    }),
-    controls: css({
-      display: 'flex',
-      paddingBottom: theme.spacing(2),
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-    }),
+  onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
+    // Temporary hacky way to detect changes
+    if (event.payload.changedObject instanceof SceneGridItem) {
+      this.setState({ isDirty: true });
+    }
   };
+
+  initUrlSync() {
+    getUrlSyncManager().initSync(this);
+  }
+
+  onEnterEditMode = () => {
+    this.setState({ isEditing: true });
+  };
+
+  onDiscard = () => {
+    // TODO open confirm modal if dirty
+    // TODO actually discard changes
+    this.setState({ isEditing: false });
+  };
+
+  onCloseInspectDrawer = () => {
+    locationService.partial({ inspect: null });
+  };
+
+  getPageNav(location: H.Location) {
+    let pageNav: NavModelItem = {
+      text: this.state.title,
+      url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
+    };
+
+    if (this.state.viewPanelKey) {
+      pageNav = {
+        text: 'View panel',
+        parentItem: pageNav,
+      };
+    }
+
+    return pageNav;
+  }
+}
+
+class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
+  constructor(private _scene: DashboardScene) {}
+
+  getKeys(): string[] {
+    return ['inspect', 'viewPanel'];
+  }
+
+  getUrlState(): SceneObjectUrlValues {
+    const state = this._scene.state;
+    return { inspect: state.inspectPanelKey, viewPanel: state.viewPanelKey };
+  }
+
+  updateFromUrl(values: SceneObjectUrlValues): void {
+    const { inspectPanelKey, viewPanelKey } = this._scene.state;
+    const update: Partial<DashboardSceneState> = {};
+
+    // Handle inspect object state
+    if (typeof values.inspect === 'string') {
+      const panel = this._scene.findPanel(values.inspect);
+      if (!panel) {
+        appEvents.emit(AppEvents.alertError, ['Panel not found']);
+        locationService.partial({ inspect: null });
+        return;
+      }
+
+      update.inspectPanelKey = values.inspect;
+    } else if (inspectPanelKey) {
+      update.inspectPanelKey = undefined;
+    }
+
+    // Handle view panel state
+    if (typeof values.viewPanel === 'string') {
+      const panel = this._scene.findPanel(values.viewPanel);
+      if (!panel) {
+        appEvents.emit(AppEvents.alertError, ['Panel not found']);
+        locationService.partial({ viewPanel: null });
+        return;
+      }
+
+      update.viewPanelKey = values.viewPanel;
+    } else if (viewPanelKey) {
+      update.viewPanelKey = undefined;
+    }
+
+    if (Object.keys(update).length > 0) {
+      this._scene.setState(update);
+    }
+  }
 }

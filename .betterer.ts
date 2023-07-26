@@ -2,14 +2,14 @@ import { BettererFileTest } from '@betterer/betterer';
 import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
 import path from 'path';
-import glob from 'glob';
+import { glob } from 'glob';
 
 export default {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
       .exclude(/public\/app\/angular/),
-  'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
+  'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
 };
 
 function countUndocumentedStories() {

@@ -8,6 +8,11 @@ keywords:
   - canvas
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Canvas
 weight: 600
 ---
@@ -53,6 +58,10 @@ The server element enables you to easily represent a single server, a stack of s
 When building a canvas panel, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas panel. Connection anchors are displayed when you hover over an element and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
 
 {{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
+
+You can set both the size and color of connections based on fixed or field values. To do so, enter into panel edit mode, select the connection, and modify the connection's properties in the panel editor.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-0-canvas-service-graph.png" max-width="750px" caption="Canvas service graph" >}}
 
 ## Canvas editing
 

@@ -106,9 +106,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     padding-top: ${theme.spacing(1)};
     padding-bottom: ${theme.spacing(0.25)};
     justify-content: center;
-    border-left: 1px solid ${theme.colors.border.strong};
-    border-right: 1px solid ${theme.colors.border.strong};
-    border-bottom: 1px solid ${theme.colors.border.strong};
+    border-left: 1px solid ${theme.colors.border.medium};
+    border-right: 1px solid ${theme.colors.border.medium};
+    border-bottom: 1px solid ${theme.colors.border.medium};
   `,
 });
 

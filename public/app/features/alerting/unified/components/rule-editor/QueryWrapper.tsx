@@ -4,9 +4,8 @@ import React, { ChangeEvent, useState } from 'react';
 
 import {
   CoreApp,
-  DataQuery,
+  DataSourceApi,
   DataSourceInstanceSettings,
-  getDefaultRelativeTimeRange,
   GrafanaTheme2,
   LoadingState,
   PanelData,
@@ -14,29 +13,23 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import {
-  GraphTresholdsStyleMode,
-  Icon,
-  InlineFormLabel,
-  Input,
-  RelativeTimeRangePicker,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { DataQuery } from '@grafana/schema';
+import { GraphTresholdsStyleMode, Icon, InlineFormLabel, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { TABLE, TIMESERIES } from '../../utils/constants';
-import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
+import { msToSingleUnitDuration } from '../../utils/time';
 import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
 
+import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
 export const DEFAULT_MAX_DATA_POINTS = 43200;
+export const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
+  minInterval?: string | undefined;
 }
 
 interface Props {
@@ -81,8 +74,13 @@ export const QueryWrapper = ({
   onChangeQueryOptions,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const isExpression = isExpressionQuery(query.model);
-  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
+  const [dsInstance, setDsInstance] = useState<DataSourceApi>();
+  const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
+
+  const queryWithDefaults = {
+    ...defaults,
+    ...cloneDeep(query.model),
+  };
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -112,72 +110,70 @@ export const QueryWrapper = ({
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
   function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
-    const queryOptions: AlertQueryOptions = { maxDataPoints: query.model.maxDataPoints };
+    const queryOptions: AlertQueryOptions = {
+      maxDataPoints: query.model.maxDataPoints,
+      minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
+    };
     const alertQueryOptions: AlertQueryOptions = {
       maxDataPoints: queryOptions.maxDataPoints,
+      minInterval: queryOptions.minInterval,
     };
 
-    if (isExpressionQuery(query.model)) {
-      return null;
-    } else {
-      return (
-        <Stack direction="row" alignItems="baseline" gap={1}>
-          <SelectingDataSourceTooltip />
-          {onChangeTimeRange && (
-            <RelativeTimeRangePicker
-              timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-              onChange={(range) => onChangeTimeRange(range, index)}
-            />
-          )}
-          <div className={styles.queryOptions}>
-            <MaxDataPointsOption
-              options={alertQueryOptions}
-              onChange={(options) => onChangeQueryOptions(options, index)}
-            />
-          </div>
-          <AlertConditionIndicator
-            onSetCondition={() => onSetCondition(query.refId)}
-            enabled={condition === query.refId}
-            error={error}
-          />
-        </Stack>
-      );
-    }
+    return (
+      <Stack direction="row" alignItems="baseline" gap={1}>
+        <SelectingDataSourceTooltip />
+        <QueryOptions
+          onChangeTimeRange={onChangeTimeRange}
+          query={query}
+          queryOptions={alertQueryOptions}
+          onChangeQueryOptions={onChangeQueryOptions}
+          index={index}
+        />
+
+        <AlertConditionIndicator
+          onSetCondition={() => onSetCondition(query.refId)}
+          enabled={condition === query.refId}
+          error={error}
+        />
+      </Stack>
+    );
   }
 
+  const showVizualisation = data.state !== LoadingState.NotStarted;
+
   return (
-    <div className={styles.wrapper}>
-      <QueryEditorRow<DataQuery>
-        alerting
-        dataSource={dsSettings}
-        onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
-        id={query.refId}
-        index={index}
-        key={query.refId}
-        data={data}
-        query={cloneDeep(query.model)}
-        onChange={(query) => onChangeQuery(query, index)}
-        onRemoveQuery={onRemoveQuery}
-        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
-        onRunQuery={onRunQueries}
-        queries={queries}
-        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
-        app={CoreApp.UnifiedAlerting}
-        visualization={
-          data.state !== LoadingState.NotStarted ? (
-            <VizWrapper
-              data={data}
-              changePanel={changePluginId}
-              currentPanel={pluginId}
-              thresholds={thresholds}
-              thresholdsType={thresholdsType}
-              onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-            />
-          ) : null
-        }
-        hideDisableQuery={true}
-      />
-    </div>
+    <Stack direction="column" gap={0.5}>
+      <div className={styles.wrapper}>
+        <QueryEditorRow<DataQuery>
+          alerting
+          collapsable={false}
+          dataSource={dsSettings}
+          onDataSourceLoaded={setDsInstance}
+          onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
+          id={query.refId}
+          index={index}
+          key={query.refId}
+          data={data}
+          query={queryWithDefaults}
+          onChange={(query) => onChangeQuery(query, index)}
+          onRemoveQuery={onRemoveQuery}
+          onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
+          onRunQuery={onRunQueries}
+          queries={queries}
+          renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+          app={CoreApp.UnifiedAlerting}
+          hideDisableQuery={true}
+        />
+      </div>
+      {showVizualisation && (
+        <VizWrapper
+          data={data}
+          thresholds={thresholds}
+          thresholdsType={thresholdsType}
+          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
+        />
+      )}
+    </Stack>
   );
 };
 
@@ -186,7 +182,7 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
-function MaxDataPointsOption({
+export function MaxDataPointsOption({
   options,
   onChange,
 }: {
@@ -233,12 +229,60 @@ function MaxDataPointsOption({
   );
 }
 
+export function MinIntervalOption({
+  options,
+  onChange,
+}: {
+  options: AlertQueryOptions;
+  onChange: (options: AlertQueryOptions) => void;
+}) {
+  const value = options.minInterval ?? '';
+
+  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const minInterval = event.target.value;
+    if (minInterval !== value) {
+      onChange({
+        ...options,
+        minInterval,
+      });
+    }
+  };
+
+  return (
+    <Stack direction="row" alignItems="baseline" gap={1}>
+      <InlineFormLabel
+        width={8}
+        tooltip={
+          <>
+            A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if
+            your data is written every minute.
+          </>
+        }
+      >
+        Min interval
+      </InlineFormLabel>
+      <Input
+        type="text"
+        className="width-6"
+        placeholder={DEFAULT_MIN_INTERVAL}
+        spellCheck={false}
+        onBlur={onMinIntervalBlur}
+        defaultValue={value}
+      />
+    </Stack>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     border-radius: ${theme.shape.borderRadius(1)};
+
+    button {
+      overflow: visible;
+    }
   `,
   queryOptions: css`
     margin-bottom: -${theme.spacing(2)};

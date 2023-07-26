@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Alert, useStyles2 } from '@grafana/ui';
 
 import { InstallControlsWarning } from '../components/InstallControls';
 import { getLatestCompatibleVersion, hasInstallControlWarning } from '../helpers';
-import { useIsRemotePluginsAvailable } from '../state/hooks';
+import { useInstallStatus, useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
 export const PluginSubtitle = ({ plugin }: Props) => {
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const styles = useStyles2(getStyles);
+  const { error: errorInstalling } = useInstallStatus();
   if (!plugin) {
     return null;
   }
@@ -28,6 +29,11 @@ export const PluginSubtitle = ({ plugin }: Props) => {
 
   return (
     <div className={styles.subtitle}>
+      {errorInstalling && (
+        <Alert title={'message' in errorInstalling ? errorInstalling.message : ''}>
+          {typeof errorInstalling === 'string' ? errorInstalling : errorInstalling.error}
+        </Alert>
+      )}
       {plugin?.description && <div>{plugin?.description}</div>}
       {plugin?.details?.links && plugin.details.links.length > 0 && (
         <span>

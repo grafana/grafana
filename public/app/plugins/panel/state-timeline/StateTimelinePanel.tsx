@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { getLastStreamingDataFramePacket } from '@grafana/data/src/dataframe/StreamingDataFrame';
 import {
   Portal,
   TooltipDisplayMode,
@@ -18,7 +19,6 @@ import {
   prepareTimelineLegendItems,
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
-import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
@@ -26,11 +26,11 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<PanelOptions> {}
+interface TimelinePanelProps extends PanelProps<Options> {}
 
 /**
  * @alpha
@@ -71,8 +71,8 @@ export const StateTimelinePanel = ({
   };
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data?.series, options.mergeValues ?? true, timeRange, theme),
-    [data, options.mergeValues, timeRange, theme]
+    () => prepareTimelineFields(data.series, options.mergeValues ?? true, timeRange, theme),
+    [data.series, options.mergeValues, timeRange, theme]
   );
 
   const legendItems = useMemo(

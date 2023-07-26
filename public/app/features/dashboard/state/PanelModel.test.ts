@@ -195,6 +195,27 @@ describe('PanelModel', () => {
       expect(saveModel.events).toBe(undefined);
     });
 
+    it('getSaveModel should clean libraryPanels from a collapsed row', () => {
+      const newmodelJson = {
+        type: 'row',
+        panels: [
+          {
+            ...modelJson,
+            libraryPanel: {
+              uid: 'BVIBScisnl',
+              model: modelJson,
+              name: 'Library panel title',
+            },
+          },
+          modelJson,
+        ],
+      };
+      const newmodel = new PanelModel(newmodelJson);
+      const saveModel = newmodel.getSaveModel();
+      expect(saveModel.panels[0].tagrets).toBe(undefined);
+      expect(saveModel.panels[1].targets).toBeTruthy();
+    });
+
     describe('variables interpolation', () => {
       beforeEach(() => {
         model.scopedVars = {
@@ -352,6 +373,44 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('when autoMigrateFrom angular to react', () => {
+      const onPanelTypeChanged = (panel: PanelModel, prevPluginId: string, prevOptions: Record<string, any>) => {
+        panel.fieldConfig = { defaults: { unit: 'bytes' }, overrides: [] };
+        return { name: prevOptions.angular.oldName };
+      };
+
+      const reactPlugin = getPanelPlugin({ id: 'timeseries' })
+        .setPanelChangeHandler(onPanelTypeChanged as any)
+        .useFieldConfig({
+          disableStandardOptions: [FieldConfigProperty.Thresholds],
+        })
+        .setPanelOptions((builder) => {
+          builder.addTextInput({
+            name: 'Name',
+            path: 'name',
+          });
+        });
+
+      beforeEach(() => {
+        model = new PanelModel({
+          autoMigrateFrom: 'graph',
+          oldName: 'old name',
+          type: 'timeseries',
+        });
+
+        model.pluginLoaded(reactPlugin);
+      });
+
+      it('should run panel changed handler and remove old model props', () => {
+        expect(model.options).toEqual({ name: 'old name' });
+        expect(model.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
+        expect(model.autoMigrateFrom).toBe(undefined);
+        expect(model.oldName).toBe(undefined);
+        expect(model.plugin).toBe(reactPlugin);
+        expect(model.type).toBe('timeseries');
+      });
+    });
+
     describe('variables interpolation', () => {
       let panelQueryRunner: any;
 
@@ -440,7 +499,7 @@ describe('PanelModel', () => {
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
         model.getQueryRunner().useLastResultFrom({
-          getLastResult: () => ({} as PanelData),
+          getLastResult: () => ({}) as PanelData,
         } as PanelQueryRunner);
 
         model.destroy();

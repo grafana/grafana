@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -107,6 +108,7 @@ const EmailList = ({
 };
 
 export const EmailSharingConfiguration = () => {
+  const { width } = useWindowSize();
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
@@ -152,7 +154,7 @@ export const EmailSharingConfiguration = () => {
 
   return (
     <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Can view dashboard">
+      <Field label="Can view dashboard" className={styles.field}>
         <InputControl
           name="shareType"
           control={control}
@@ -161,6 +163,7 @@ export const EmailSharingConfiguration = () => {
             return (
               <RadioButtonGroup
                 {...rest}
+                size={width < 480 ? 'sm' : 'md'}
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
                   reportInteraction('grafana_dashboards_public_share_type_clicked', {
@@ -181,6 +184,7 @@ export const EmailSharingConfiguration = () => {
             description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
+            className={styles.field}
           >
             <div className={styles.emailContainer}>
               <Input
@@ -218,20 +222,30 @@ export const EmailSharingConfiguration = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-bottom: ${theme.spacing(2)};
+    label: emailConfigContainer;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
+  `,
+  field: css`
+    label: field-noMargin;
+    margin-bottom: 0;
   `,
   emailContainer: css`
+    label: emailContainer;
     display: flex;
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
+    label: emailInput;
     flex-grow: 1;
   `,
   table: css`
+    label: table;
     display: flex;
     max-height: 220px;
     overflow-y: scroll;
-    margin-bottom: ${theme.spacing(1)};
 
     & tbody {
       display: flex;

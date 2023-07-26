@@ -184,11 +184,11 @@ function inBounds(value: number, min: number | undefined, max: number | undefine
 }
 
 function getEventXY(event: Event): { x: number; y: number } {
-  if ((event as any).changedTouches) {
-    const e = event as TouchEvent;
-    return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+  if (event instanceof TouchEvent) {
+    return { x: event.changedTouches[0].clientX, y: event.changedTouches[0].clientY };
+  } else if (event instanceof MouseEvent) {
+    return { x: event.clientX, y: event.clientY };
   } else {
-    const e = event as MouseEvent;
-    return { x: e.clientX, y: e.clientY };
+    return { x: 0, y: 0 };
   }
 }

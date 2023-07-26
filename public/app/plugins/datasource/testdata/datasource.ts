@@ -15,9 +15,10 @@ import {
   ScopedVars,
   toDataFrame,
   MutableDataFrame,
+  AnnotationQuery,
+  getSearchFilterScopedVar,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 import { Scenario, TestData, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';
@@ -35,6 +36,24 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
   ) {
     super(instanceSettings);
     this.variables = new TestDataVariableSupport();
+    this.annotations = {
+      getDefaultQuery: () => ({ scenarioId: TestDataQueryType.Annotations, lines: 10 }),
+
+      // Make sure annotations have scenarioId set
+      prepareAnnotation: (old: AnnotationQuery<TestData>) => {
+        if (old.target?.scenarioId?.length) {
+          return old;
+        }
+        return {
+          ...old,
+          target: {
+            refId: 'Anno',
+            scenarioId: TestDataQueryType.Annotations,
+            lines: 10,
+          },
+        };
+      },
+    };
   }
 
   getDefaultQuery(): Partial<TestData> {
@@ -66,7 +85,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
         case 'grafana_api':
           streams.push(runGrafanaAPI(target, options));
           break;
-        case 'annotations':
+        case TestDataQueryType.Annotations:
           streams.push(this.annotationDataTopicTest(target, options));
           break;
         case 'variables-query':
@@ -76,7 +95,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
           streams.push(this.nodesQuery(target, options));
           break;
         case 'flame_graph':
-          streams.push(this.flameGraphQuery());
+          streams.push(this.flameGraphQuery(target));
           break;
         case 'trace':
           streams.push(this.trace(target, options));
@@ -144,10 +163,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
   }
 
   annotationDataTopicTest(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
-    const events = this.buildFakeAnnotationEvents(req.range, 50);
+    const events = this.buildFakeAnnotationEvents(req.range, target.lines ?? 10);
     const dataFrame = new ArrayDataFrame(events);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
-
     return of({ key: target.refId, data: [dataFrame] }).pipe(delay(100));
   }
 
@@ -167,10 +185,6 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     }
 
     return events;
-  }
-
-  annotationQuery(options: any) {
-    return Promise.resolve(this.buildFakeAnnotationEvents(options.range, 10));
   }
 
   getQueryDisplayText(query: TestData) {
@@ -228,8 +242,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return of({ data: frames }).pipe(delay(100));
   }
 
-  flameGraphQuery(): Observable<DataQueryResponse> {
-    return of({ data: [flameGraphData] }).pipe(delay(100));
+  flameGraphQuery(target: TestData): Observable<DataQueryResponse> {
+    return of({ data: [{ ...flameGraphData, refId: target.refId }] }).pipe(delay(100));
   }
 
   trace(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {

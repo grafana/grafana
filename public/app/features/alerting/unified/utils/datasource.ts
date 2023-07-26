@@ -191,3 +191,7 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 
   return defaultIsCompatible ? defaultDataSource : getFirstCompatibleDataSource();
 }
+
+export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
+  return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+}

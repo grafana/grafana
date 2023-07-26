@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/hashicorp/go-multierror"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -67,14 +66,15 @@ func Test_expand(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, original, results)
 
-		// TODO: Please update this test in issue https://github.com/grafana/grafana/issues/63686
-		var multierr *multierror.Error
-		require.True(t, errors.As(err, &multierr))
-		require.Equal(t, multierr.Len(), 2)
+		//nolint:errorlint
+		multierr, is := err.(interface{ Unwrap() []error })
+		require.True(t, is)
+		unwrappedErrors := multierr.Unwrap()
+		require.Equal(t, len(unwrappedErrors), 2)
 
 		errsStr := []string{
-			multierr.Errors[0].Error(),
-			multierr.Errors[1].Error(),
+			unwrappedErrors[0].Error(),
+			unwrappedErrors[1].Error(),
 		}
 
 		firstErrStr := "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}Instance {{ $labels. }} has been down for more than 5 minutes': error parsing template __alert_test: template: __alert_test:1: unexpected <.> in operand"
@@ -83,7 +83,7 @@ func Test_expand(t *testing.T) {
 		require.Contains(t, errsStr, firstErrStr)
 		require.Contains(t, errsStr, secondErrStr)
 
-		for _, err := range multierr.Errors {
+		for _, err := range unwrappedErrors {
 			var expandErr template.ExpandError
 			require.True(t, errors.As(err, &expandErr))
 		}
@@ -103,10 +103,11 @@ func Test_expand(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, expected, results)
 
-		// TODO: Please update this test in issue https://github.com/grafana/grafana/issues/63686
-		var multierr *multierror.Error
-		require.True(t, errors.As(err, &multierr))
-		require.Equal(t, multierr.Len(), 1)
+		//nolint:errorlint
+		multierr, is := err.(interface{ Unwrap() []error })
+		require.True(t, is)
+		unwrappedErrors := multierr.Unwrap()
+		require.Equal(t, len(unwrappedErrors), 1)
 
 		// assert each error matches the expected error
 		var expandErr template.ExpandError

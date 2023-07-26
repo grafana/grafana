@@ -1,11 +1,17 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"path"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -33,7 +39,7 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -108,6 +114,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			timeInterval = ""
 		}
 
+		index, ok := jsonData["index"].(string)
+		if !ok {
+			index = ""
+		}
+		if index == "" {
+			index = settings.Database
+		}
+
 		var maxConcurrentShardRequests float64
 
 		switch v := jsonData["maxConcurrentShardRequests"].(type) {
@@ -142,7 +156,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			ID:                         settings.ID,
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
-			Database:                   settings.Database,
+			Database:                   index,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
@@ -154,8 +168,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*es.DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -163,4 +177,69 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*es.DatasourceInfo
 	instance := i.(es.DatasourceInfo)
 
 	return &instance, nil
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger := eslog.FromContext(ctx)
+	// allowed paths for resource calls:
+	// - empty string for fetching db version
+	// - ?/_mapping for fetching index mapping
+	// - _msearch for executing getTerms queries
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+		return fmt.Errorf("invalid resource URL: %s", req.Path)
+	}
+
+	ds, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return err
+	}
+
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return err
+	}
+
+	resourcePath, err := url.Parse(req.Path)
+	if err != nil {
+		return err
+	}
+
+	// We take the path and the query-string only
+	esUrl.RawQuery = resourcePath.RawQuery
+	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
+
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
+	if err != nil {
+		return err
+	}
+
+	response, err := ds.HTTPClient.Do(request)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+
+	responseHeaders := map[string][]string{
+		"content-type": {"application/json"},
+	}
+
+	if response.Header.Get("Content-Encoding") != "" {
+		responseHeaders["content-encoding"] = []string{response.Header.Get("Content-Encoding")}
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status:  response.StatusCode,
+		Headers: responseHeaders,
+		Body:    body,
+	})
 }

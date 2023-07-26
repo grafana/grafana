@@ -15,7 +15,7 @@ import { getSegmentStyles } from './styles';
 
 import { useExpandableLabel, SegmentProps } from '.';
 
-export interface SegmentAsyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
+export interface SegmentAsyncProps<T> extends SegmentProps, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   loadOptions: (query?: string) => Promise<Array<SelectableValue<T>>>;
   /**
@@ -53,6 +53,7 @@ export function SegmentAsync<T>({
 
   if (!expanded) {
     const label = isObject(value) ? value.label : value;
+    const labelAsString = label != null ? String(label) : undefined;
 
     return (
       <Label
@@ -70,7 +71,7 @@ export function SegmentAsync<T>({
                 className
               )}
             >
-              {label || placeholder}
+              {labelAsString || placeholder}
             </InlineLabel>
           )
         }
@@ -109,9 +110,5 @@ function mapStateToNoOptionsMessage<T>(state: AsyncState<Array<SelectableValue<T
     return t('grafana-ui.segment-async.error', 'Failed to load options');
   }
 
-  if (!Array.isArray(state.value) || state.value.length === 0) {
-    return t('grafana-ui.segment-async.no-options', 'No options found');
-  }
-
-  return '';
+  return t('grafana-ui.segment-async.no-options', 'No options found');
 }

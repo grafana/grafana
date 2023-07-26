@@ -1,6 +1,5 @@
 import {
-  ArrayVector,
-  DataFrame,
+  AbsoluteTimeRange,
   FieldType,
   Labels,
   LogLevel,
@@ -8,6 +7,7 @@ import {
   LogsModel,
   LogsSortOrder,
   MutableDataFrame,
+  DataFrame,
 } from '@grafana/data';
 
 import {
@@ -16,6 +16,7 @@ import {
   checkLogsError,
   getLogLevel,
   getLogLevelFromKey,
+  getLogsVolumeMaximumRange,
   logRowsToReadableJson,
   mergeLogsVolumeDataFrames,
   sortLogsResult,
@@ -220,9 +221,25 @@ describe('checkLogsError()', () => {
 
 describe('logRowsToReadableJson', () => {
   const testRow: LogRowModel = {
-    rowIndex: 1,
-    entryFieldIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    rowIndex: 0,
+    entryFieldIndex: 1,
+    dataFrame: {
+      length: 1,
+      fields: [
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: [1],
+        },
+        {
+          name: 'body',
+          type: FieldType.string,
+          config: {},
+          values: ['test entry'],
+        },
+      ],
+    },
     entry: 'test entry',
     hasAnsi: false,
     hasUnescapedContent: false,
@@ -238,11 +255,32 @@ describe('logRowsToReadableJson', () => {
     timeUtc: '',
     uid: '2',
   };
-  const testDf = new MutableDataFrame();
-  testDf.addField({ name: 'foo2', values: ['bar2'] });
+  const testDf: DataFrame = {
+    length: 1,
+    fields: [
+      {
+        name: 'timestamp',
+        type: FieldType.time,
+        config: {},
+        values: [1],
+      },
+      {
+        name: 'body',
+        type: FieldType.string,
+        config: {},
+        values: ['test entry'],
+      },
+      {
+        name: 'foo2',
+        type: FieldType.string,
+        config: {},
+        values: ['bar2'],
+      },
+    ],
+  };
   const testRow2: LogRowModel = {
     rowIndex: 0,
-    entryFieldIndex: -1,
+    entryFieldIndex: 1,
     dataFrame: testDf,
     entry: 'test entry',
     hasAnsi: false,
@@ -296,13 +334,15 @@ describe('mergeLogsVolumeDataFrames', () => {
     const debugVolume1 = mockLogVolume('debug', [2, 3], [2, 3]);
     const debugVolume2 = mockLogVolume('debug', [1, 5], [1, 0]);
 
-    // error 1:    - - - - - 1
-    // error 2:    1 - - - - 1
-    // total:      1 - - - - 2
+    // error 1:    1 - - - - 1
+    // error 2:    1 - - - - -
+    // total:      2 - - - - 1
     const errorVolume1 = mockLogVolume('error', [1, 6], [1, 1]);
     const errorVolume2 = mockLogVolume('error', [1], [1]);
 
-    const merged = mergeLogsVolumeDataFrames([
+    // all totals: 6 5 4 - 0 2
+
+    const { dataFrames: merged, maximum } = mergeLogsVolumeDataFrames([
       infoVolume1,
       infoVolume2,
       debugVolume1,
@@ -318,12 +358,12 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'Time',
             type: FieldType.time,
-            values: new ArrayVector([1, 2, 3]),
+            values: [1, 2, 3],
           },
           {
             name: 'Value',
             type: FieldType.number,
-            values: new ArrayVector([3, 3, 1]),
+            values: [3, 3, 1],
             config: {
               displayNameFromDS: 'info',
             },
@@ -335,12 +375,12 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'Time',
             type: FieldType.time,
-            values: new ArrayVector([1, 2, 3, 5]),
+            values: [1, 2, 3, 5],
           },
           {
             name: 'Value',
             type: FieldType.number,
-            values: new ArrayVector([1, 2, 3, 0]),
+            values: [1, 2, 3, 0],
             config: {
               displayNameFromDS: 'debug',
             },
@@ -352,12 +392,12 @@ describe('mergeLogsVolumeDataFrames', () => {
           {
             name: 'Time',
             type: FieldType.time,
-            values: new ArrayVector([1, 6]),
+            values: [1, 6],
           },
           {
             name: 'Value',
             type: FieldType.number,
-            values: new ArrayVector([2, 1]),
+            values: [2, 1],
             config: {
               displayNameFromDS: 'error',
             },
@@ -365,5 +405,40 @@ describe('mergeLogsVolumeDataFrames', () => {
         ],
       },
     ]);
+    expect(maximum).toBe(6);
+  });
+});
+
+describe('getLogsVolumeDimensions', () => {
+  function mockLogVolumeDataFrame(values: number[], absoluteRange: AbsoluteTimeRange) {
+    return new MutableDataFrame({
+      meta: {
+        custom: {
+          absoluteRange,
+        },
+      },
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [],
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: values,
+        },
+      ],
+    });
+  }
+
+  it('calculates the maximum value and range of all log volumes', () => {
+    const maximumRange = getLogsVolumeMaximumRange([
+      mockLogVolumeDataFrame([], { from: 5, to: 20 }),
+      mockLogVolumeDataFrame([], { from: 10, to: 25 }),
+      mockLogVolumeDataFrame([], { from: 7, to: 23 }),
+    ]);
+
+    expect(maximumRange).toEqual({ from: 5, to: 25 });
   });
 });

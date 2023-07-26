@@ -1,8 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { PanelData, QueryResultMetaStat, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 import { InspectStatsTable } from './InspectStatsTable';
@@ -17,7 +17,6 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   if (!data.request) {
     return null;
   }
-
   let stats: QueryResultMetaStat[] = [];
 
   const requestTime = data.request.endTime ? data.request.endTime - data.request.startTime : -1;
@@ -44,7 +43,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   }
   stats.push({
     displayName: t('dashboard.inspect-stats.queries', 'Number of queries'),
-    value: data.request.targets.length,
+    value: data.request.targets?.length ?? 0,
   });
   stats.push({
     displayName: t('dashboard.inspect-stats.rows', 'Total number rows'),
@@ -64,12 +63,15 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace IDs');
 
   return (
-    <div aria-label={selectors.components.PanelInspector.Stats.content}>
+    <div aria-label={selectors.components.PanelInspector.Stats.content} className={containerStyles}>
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
-      {config.featureToggles.showTraceId && (
-        <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
-      )}
+      <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
     </div>
   );
 };
+
+const containerStyles = css`
+  height: 100%;
+  overflow-y: scroll;
+`;

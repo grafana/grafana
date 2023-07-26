@@ -1,7 +1,7 @@
 import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
+import { AnnotationQuery, CoreApp, DataQueryRequest, DataSourceApi, rangeUtil, ScopedVars } from '@grafana/data';
 
 import { runRequest } from '../query/state/runRequest';
 
@@ -16,7 +16,7 @@ function getNextRequestId() {
 export function executeAnnotationQuery(
   options: AnnotationQueryOptions,
   datasource: DataSourceApi,
-  savedJsonAnno: any
+  savedJsonAnno: AnnotationQuery
 ): Observable<AnnotationQueryResponse> {
   const processor = {
     ...standardAnnotationSupport,
@@ -71,11 +71,12 @@ export function executeAnnotationQuery(
 
   return runRequest(datasource, queryRequest).pipe(
     mergeMap((panelData) => {
-      if (!panelData.series) {
+      // Some annotations set the topic already
+      const data = panelData?.series.length ? panelData.series : panelData.annotations;
+      if (!data?.length) {
         return of({ panelData, events: [] });
       }
-
-      return processor.processEvents!(annotation, panelData.series).pipe(map((events) => ({ panelData, events })));
+      return processor.processEvents!(annotation, data).pipe(map((events) => ({ panelData, events })));
     })
   );
 }

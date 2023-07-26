@@ -63,33 +63,6 @@ describe('createRegistry()', () => {
     );
   });
 
-  it('should register maximum 2 extensions / plugin / placement', () => {
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1] }]);
-
-    expect(Object.getOwnPropertyNames(registry)).toEqual([placement1]);
-
-    // Placement 1
-    expect(registry[placement1]).toHaveLength(2);
-    expect(registry[placement1]).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          pluginId,
-          config: {
-            ...link1,
-            configure: expect.any(Function),
-          },
-        }),
-        expect.objectContaining({
-          pluginId,
-          config: {
-            ...link1,
-            configure: expect.any(Function),
-          },
-        }),
-      ])
-    );
-  });
-
   it('should not register link extensions with invalid path configured', () => {
     const registry = createPluginExtensionRegistry([
       { pluginId, extensionConfigs: [{ ...link1, path: 'invalid-path' }, link2] },

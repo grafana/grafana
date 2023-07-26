@@ -3,7 +3,6 @@ package finder
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -14,7 +13,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,6 +24,11 @@ func TestFinder_Find(t *testing.T) {
 	if err != nil {
 		require.NoError(t, err)
 	}
+
+	cfg := setting.NewCfg()
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name            string
 		pluginDirs      []string
@@ -37,7 +43,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -51,14 +57,11 @@ func TestFinder_Find(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							State:      plugins.AlphaRelease,
+							State:      plugins.ReleaseStateAlpha,
 							Backend:    true,
 							Executable: "test",
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "valid-v2-signature/plugin/plugin.json"):  {},
-							filepath.Join(testData, "valid-v2-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "valid-v2-signature/plugin")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "valid-v2-signature/plugin")),
 					},
 				},
 			},
@@ -71,7 +74,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Parent",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -87,18 +90,13 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
-							filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "duplicate-plugins/nested")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
 					},
 					Children: []*plugins.FoundPlugin{
 						{
 							JSONData: plugins.JSONData{
 								ID:   "test-app",
-								Type: plugins.DataSource,
+								Type: plugins.TypeDataSource,
 								Name: "Child",
 								Info: plugins.Info{
 									Author: plugins.InfoLink{
@@ -114,10 +112,7 @@ func TestFinder_Find(t *testing.T) {
 									Plugins:        []plugins.Dependency{},
 								},
 							},
-							FS: plugins.NewLocalFS(map[string]struct{}{
-								filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-								filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-							}, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+							FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
 						},
 					},
 				},
@@ -131,7 +126,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.App,
+							Type: plugins.TypeApp,
 							Name: "Test App",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -178,14 +173,7 @@ func TestFinder_Find(t *testing.T) {
 								{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer"},
 							},
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "includes-symlinks/MANIFEST.txt"):                 {},
-							filepath.Join(testData, "includes-symlinks/dashboards/connections.json"):  {},
-							filepath.Join(testData, "includes-symlinks/dashboards/extra/memory.json"): {},
-							filepath.Join(testData, "includes-symlinks/plugin.json"):                  {},
-							filepath.Join(testData, "includes-symlinks/symlink_to_txt"):               {},
-							filepath.Join(testData, "includes-symlinks/text.txt"):                     {},
-						}, filepath.Join(testData, "includes-symlinks")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "includes-symlinks")),
 					},
 				},
 			},
@@ -197,7 +185,7 @@ func TestFinder_Find(t *testing.T) {
 				Primary: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
-						Type: plugins.DataSource,
+						Type: plugins.TypeDataSource,
 						Name: "Parent",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -213,18 +201,13 @@ func TestFinder_Find(t *testing.T) {
 							Plugins:        []plugins.Dependency{},
 						},
 					},
-					FS: plugins.NewLocalFS(map[string]struct{}{
-						filepath.Join(testData, "duplicate-plugins/nested/plugin.json"):         {},
-						filepath.Join(testData, "duplicate-plugins/nested/MANIFEST.txt"):        {},
-						filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-						filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-					}, filepath.Join(testData, "duplicate-plugins/nested")),
+					FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
 				},
 				Children: []*plugins.FoundPlugin{
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Child",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -240,10 +223,7 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "duplicate-plugins/nested/nested/plugin.json"):  {},
-							filepath.Join(testData, "duplicate-plugins/nested/nested/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
 					},
 				},
 			},
@@ -251,7 +231,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -264,13 +244,10 @@ func TestFinder_Find(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							State:   plugins.AlphaRelease,
+							State:   plugins.ReleaseStateAlpha,
 							Backend: true,
 						},
-						FS: plugins.NewLocalFS(map[string]struct{}{
-							filepath.Join(testData, "invalid-v1-signature/plugin/plugin.json"):  {},
-							filepath.Join(testData, "invalid-v1-signature/plugin/MANIFEST.txt"): {},
-						}, filepath.Join(testData, "invalid-v1-signature/plugin")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "invalid-v1-signature/plugin")),
 					},
 				},
 			},
@@ -278,7 +255,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder()
+			f := NewLocalFinder(pCfg.DevMode)
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return tc.pluginDirs
@@ -294,14 +271,18 @@ func TestFinder_Find(t *testing.T) {
 				return pluginBundles[i].Primary.JSONData.ID < pluginBundles[j].Primary.JSONData.ID
 			})
 
-			if !cmp.Equal(pluginBundles, tc.expectedBundles, localFSComparer) {
-				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, localFSComparer))
+			if !cmp.Equal(pluginBundles, tc.expectedBundles, fsComparer) {
+				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, fsComparer))
 			}
 		})
 	}
 }
 
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
+	cfg := setting.NewCfg()
+	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
+	require.NoError(t, err)
+
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
 		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
@@ -311,7 +292,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder()
+		finder := NewLocalFinder(pCfg.DevMode)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -326,7 +307,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder()
+		finder := NewLocalFinder(pCfg.DevMode)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -335,143 +316,28 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
 		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
-			return walkFn(path, nil, fmt.Errorf("random error"))
+			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder()
+		finder := NewLocalFinder(pCfg.DevMode)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)
 	})
 }
 
-func TestFinder_validatePluginJSON(t *testing.T) {
-	type args struct {
-		data plugins.JSONData
+var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
+	fs1Files, err := fs1.Files()
+	if err != nil {
+		panic(err)
 	}
-	tests := []struct {
-		name string
-		args args
-		err  error
-	}{
-		{
-			name: "Valid case",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: plugins.DataSource,
-				},
-			},
-		},
-		{
-			name: "Invalid plugin ID",
-			args: args{
-				data: plugins.JSONData{
-					Type: plugins.Panel,
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
-		{
-			name: "Invalid plugin type",
-			args: args{
-				data: plugins.JSONData{
-					ID:   "grafana-plugin-id",
-					Type: "test",
-				},
-			},
-			err: ErrInvalidPluginJSON,
-		},
+	fs2Files, err := fs2.Files()
+	if err != nil {
+		panic(err)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := validatePluginJSON(tt.args.data); !errors.Is(err, tt.err) {
-				t.Errorf("validatePluginJSON() = %v, want %v", err, tt.err)
-			}
-		})
-	}
-}
-
-func TestFinder_readPluginJSON(t *testing.T) {
-	tests := []struct {
-		name       string
-		pluginPath string
-		expected   plugins.JSONData
-		err        error
-	}{
-		{
-			name:       "Valid plugin",
-			pluginPath: "../../testdata/test-app/plugin.json",
-			expected: plugins.JSONData{
-				ID:   "test-app",
-				Type: "app",
-				Name: "Test App",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Test Inc.",
-						URL:  "http://test.com",
-					},
-					Description: "Official Grafana Test App & Dashboard bundle",
-					Version:     "1.0.0",
-					Links: []plugins.InfoLink{
-						{Name: "Project site", URL: "http://project.com"},
-						{Name: "License & Terms", URL: "http://license.com"},
-					},
-					Logos: plugins.Logos{
-						Small: "img/logo_small.png",
-						Large: "img/logo_large.png",
-					},
-					Screenshots: []plugins.Screenshots{
-						{Path: "img/screenshot1.png", Name: "img1"},
-						{Path: "img/screenshot2.png", Name: "img2"},
-					},
-					Updated: "2015-02-10",
-				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion: "3.x.x",
-					Plugins: []plugins.Dependency{
-						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
-					},
-				},
-				Includes: []*plugins.Includes{
-					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer},
-					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer},
-					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer},
-				},
-				Backend: false,
-			},
-		},
-		{
-			name:       "Invalid plugin JSON",
-			pluginPath: "../../testdata/invalid-plugin-json/plugin.json",
-			err:        ErrInvalidPluginJSON,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reader, err := os.Open(tt.pluginPath)
-			require.NoError(t, err)
-			got, err := ReadPluginJSON(reader)
-			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
-			}
-			if !cmp.Equal(got, tt.expected) {
-				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected))
-			}
-			require.NoError(t, reader.Close())
-		})
-	}
-}
-
-var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS) bool {
-	fs1Files := fs1.Files()
-	fs2Files := fs2.Files()
 
 	sort.SliceStable(fs1Files, func(i, j int) bool {
 		return fs1Files[i] < fs1Files[j]
@@ -483,3 +349,9 @@ var localFSComparer = cmp.Comparer(func(fs1 plugins.LocalFS, fs2 plugins.LocalFS
 
 	return cmp.Equal(fs1Files, fs2Files) && fs1.Base() == fs2.Base()
 })
+
+func mustNewStaticFSForTests(t *testing.T, dir string) plugins.FS {
+	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(dir))
+	require.NoError(t, err)
+	return sfs
+}

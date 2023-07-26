@@ -17,6 +17,9 @@ import (
 	"github.com/weaveworks/common/http/client"
 )
 
+const defaultPageSize = 1000
+const maximumPageSize = 5000
+
 func NewRequester() client.Requester {
 	return &http.Client{}
 }
@@ -222,10 +225,17 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error) {
+
+func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, end, limit int64) (queryRes, error) {
 	// Run the pre-flight checks for the query.
 	if start > end {
 		return queryRes{}, fmt.Errorf("start time cannot be after end time")
+	}
+	if limit < 1 {
+		limit = defaultPageSize
+	}
+	if limit > maximumPageSize {
+		limit = maximumPageSize
 	}
 
 	queryURL := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range")
@@ -234,6 +244,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, en
 	values.Set("query", logQL)
 	values.Set("start", fmt.Sprintf("%d", start))
 	values.Set("end", fmt.Sprintf("%d", end))
+	values.Set("limit", fmt.Sprintf("%d", limit))
 
 	queryURL.RawQuery = values.Encode()
 

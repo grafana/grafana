@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-use';
 
@@ -17,7 +17,8 @@ import {
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../../features/alerting/unified/utils/datasource';
+import { AlertingRule, AlertInstanceTotalState, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
@@ -25,9 +26,18 @@ import { UnifiedAlertListOptions } from '../types';
 type Props = {
   rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
+  handleInstancesLimit?: (limit: boolean) => void;
+  limitInstances: boolean;
+  hideViewRuleLinkText?: boolean;
 };
 
-const UngroupedModeView = ({ rules, options }: Props) => {
+function getGrafanaInstancesTotal(totals: Partial<Record<AlertInstanceTotalState, number>>) {
+  return Object.values(totals)
+    .filter((total) => total !== undefined)
+    .reduce((total, currentTotal) => total + currentTotal, 0);
+}
+
+const UngroupedModeView = ({ rules, options, handleInstancesLimit, limitInstances, hideViewRuleLinkText }: Props) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
   const { href: returnTo } = useLocation();
@@ -45,6 +55,15 @@ const UngroupedModeView = ({ rules, options }: Props) => {
           const firstActiveAt = getFirstActiveAt(alertingRule);
           const indentifier = fromCombinedRule(ruleWithLocation.dataSourceName, ruleWithLocation);
           const strIndentifier = stringifyIdentifier(indentifier);
+
+          const grafanaInstancesTotal =
+            ruleWithLocation.dataSourceName === GRAFANA_RULES_SOURCE_NAME
+              ? getGrafanaInstancesTotal(ruleWithLocation.instanceTotals)
+              : undefined;
+          const grafanaFilteredInstancesTotal =
+            ruleWithLocation.dataSourceName === GRAFANA_RULES_SOURCE_NAME
+              ? getGrafanaInstancesTotal(ruleWithLocation.filteredInstanceTotals)
+              : undefined;
 
           const href = createUrl(
             `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
@@ -71,11 +90,15 @@ const UngroupedModeView = ({ rules, options }: Props) => {
                       </div>
                       <Spacer />
                       {href && (
-                        <a href={href} target="__blank" className={styles.link} rel="noopener">
-                          <Stack alignItems="center" gap={1}>
-                            View alert rule
-                            <Icon name={'external-link-alt'} size="sm" />
-                          </Stack>
+                        <a
+                          href={href}
+                          target="__blank"
+                          className={styles.link}
+                          rel="noopener"
+                          aria-label="View alert rule"
+                        >
+                          <span className={cx({ [styles.hidden]: hideViewRuleLinkText })}>View alert rule</span>
+                          <Icon name={'external-link-alt'} size="sm" />
                         </a>
                       )}
                     </Stack>
@@ -96,7 +119,14 @@ const UngroupedModeView = ({ rules, options }: Props) => {
                       )}
                     </div>
                   </div>
-                  <AlertInstances alerts={alertingRule.alerts ?? []} options={options} />
+                  <AlertInstances
+                    alerts={alertingRule.alerts ?? []}
+                    options={options}
+                    grafanaTotalInstances={grafanaInstancesTotal}
+                    grafanaFilteredInstancesTotal={grafanaFilteredInstancesTotal}
+                    handleInstancesLimit={handleInstancesLimit}
+                    limitInstances={limitInstances}
+                  />
                 </div>
               </li>
             );

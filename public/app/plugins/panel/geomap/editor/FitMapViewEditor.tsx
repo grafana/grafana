@@ -4,13 +4,13 @@ import { SelectableValue, StandardEditorContext } from '@grafana/data';
 import { InlineFieldRow, InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { GeomapInstanceState, PanelOptions, MapViewConfig } from '../types';
+import { GeomapInstanceState, Options, MapViewConfig } from '../types';
 
 type Props = {
   labelWidth: number;
   value: MapViewConfig;
   onChange: (value?: MapViewConfig | undefined) => void;
-  context: StandardEditorContext<PanelOptions, GeomapInstanceState>;
+  context: StandardEditorContext<Options, GeomapInstanceState>;
 };
 
 // Data scope options for 'Fit to data'

@@ -8,6 +8,7 @@ import {
   MutableDataFrame,
   dateTime,
   DataQueryRequest,
+  LogRowContextQueryDirection,
 } from '@grafana/data';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -61,7 +62,11 @@ describe('CloudWatchLogsQueryRunner', () => {
       expect(fetchMock.mock.calls[0][0].data.queries[0].endTime).toBe(4);
       expect(fetchMock.mock.calls[0][0].data.queries[0].region).toBe(undefined);
 
-      await runner.getLogRowContext(row, { direction: 'FORWARD' }, { ...validLogsQuery, region: 'eu-east' });
+      await runner.getLogRowContext(
+        row,
+        { direction: LogRowContextQueryDirection.Forward },
+        { ...validLogsQuery, region: 'eu-east' }
+      );
       expect(fetchMock.mock.calls[1][0].data.queries[0].startTime).toBe(4);
       expect(fetchMock.mock.calls[1][0].data.queries[0].region).toBe('eu-east');
     });

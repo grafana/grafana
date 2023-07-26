@@ -2,10 +2,10 @@ import React, { useMemo, useState } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, Button, Icon, HorizontalGroup } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 
 import { MoveToFolderModal } from '../page/components/MoveToFolderModal';
+import { getImportPhrase, getNewDashboardPhrase, getNewFolderPhrase, getNewPhrase } from '../tempI18nPhrases';
 
 export interface Props {
   folder: FolderDTO | undefined;
@@ -43,7 +43,7 @@ export const DashboardActions = ({ folder, canCreateFolders = false, canCreateDa
         {canCreateDashboards && (
           <Menu.Item
             url={actionUrl('new')}
-            label={t('search.dashboard-actions.new-dashboard', 'New Dashboard')}
+            label={getNewDashboardPhrase()}
             onClick={() =>
               reportInteraction('grafana_menu_item_clicked', { url: actionUrl('new'), from: '/dashboards' })
             }
@@ -52,7 +52,7 @@ export const DashboardActions = ({ folder, canCreateFolders = false, canCreateDa
         {canCreateFolders && (config.featureToggles.nestedFolders || !folder?.uid) && (
           <Menu.Item
             url={actionUrl('new_folder')}
-            label={t('search.dashboard-actions.new-folder', 'New Folder')}
+            label={getNewFolderPhrase()}
             onClick={() =>
               reportInteraction('grafana_menu_item_clicked', { url: actionUrl('new_folder'), from: '/dashboards' })
             }
@@ -61,7 +61,7 @@ export const DashboardActions = ({ folder, canCreateFolders = false, canCreateDa
         {canCreateDashboards && (
           <Menu.Item
             url={actionUrl('import')}
-            label={t('search.dashboard-actions.import', 'Import')}
+            label={getImportPhrase()}
             onClick={() =>
               reportInteraction('grafana_menu_item_clicked', { url: actionUrl('import'), from: '/dashboards' })
             }
@@ -82,7 +82,7 @@ export const DashboardActions = ({ folder, canCreateFolders = false, canCreateDa
           )}
           <Dropdown overlay={MenuActions} placement="bottom-start">
             <Button variant="primary">
-              {t('search.dashboard-actions.new', 'New')}
+              {getNewPhrase()}
               <Icon name="angle-down" />
             </Button>
           </Dropdown>

@@ -13,21 +13,32 @@ ignore-generated-header = false
 severity = "warning"
 confidence = 3
 
-[linters-settings.depguard]
-list-type = "blacklist"
-include-go-root = true
-packages = ["io/ioutil"]
-[[linters-settings.depguard.packages-with-error-message]]
-"io/ioutil" = "Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details."
-"gopkg.in/yaml.v2" = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"
-"github.com/pkg/errors" = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library."
-"github.com/xorcare/pointer" = "Use pkg/util.Pointer instead, which is a generic one-liner alternative"
-"github.com/gofrs/uuid" = "Use github.com/google/uuid instead, which we already depend on."
+[linters-settings.depguard.rules.main]
+allow = [] # allow all
+deny = [
+  {pkg = "io/ioutil", desc = "Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details."},
+  {pkg = "gopkg.in/yaml.v2", desc = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"},
+  {pkg = "github.com/pkg/errors", desc = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library."},
+  {pkg = "github.com/xorcare/pointer", desc = "Use pkg/util.Pointer instead, which is a generic one-liner alternative"},
+  {pkg = "github.com/gofrs/uuid", desc = "Use github.com/google/uuid instead, which we already depend on."},
+]
+
+[linters-settings.depguard.rules.coreplugins]
+deny = [
+  {pkg = "github.com/grafana/grafana/pkg/", desc = "Core plugins are not allowed to depend on Grafana core packages"},
+]
+files = [
+  "**/pkg/tsdb/testdatasource/*",
+  "**/pkg/tsdb/testdatasource/**/*",
+]
 
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
 rules = "pkg/ruleguard.rules.go"
+
+[linters-settings.nakedret]
+max-func-lines = 60
 
 [linters]
 disable-all = true
@@ -47,7 +58,6 @@ enable = [
   "ineffassign",
   "misspell",
   "nakedret",
-  "rowserrcheck",
   "exportloopref",
   "staticcheck",
   "stylecheck",
@@ -65,6 +75,7 @@ enable = [
 
 # Disabled linters (might want them later)
 # "unparam"
+# "rowserrcheck" # The linter doesn't detect that both Scan and Close also returns the error message returned by Err.
 
 [issues]
 exclude-use-default = false
@@ -82,6 +93,11 @@ linters = ["stylecheck"]
 text = "ST1001"
 
 # Enable when appropriate
+# http.CloseNotifier has been deprecated since Go 1.11 and an alternative has been available since Go 1.7: We currently need it in pkg/web/response_writer.go.
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "SA1019: http.CloseNotifier"
+
 # strings.Title has been deprecated since Go 1.18 and an alternative has been available since Go 1.0: The rule Title uses for word boundaries does not handle Unicode punctuation properly.
 # Use golang.org/x/text/cases instead.
 [[issues.exclude-rules]]

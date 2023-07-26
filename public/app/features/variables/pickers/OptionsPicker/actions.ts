@@ -1,5 +1,6 @@
 import { debounce, trim } from 'lodash';
 
+import { isEmptyObject, containsSearchFilter } from '@grafana/data';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { variableAdapters } from '../../adapters';
@@ -9,7 +10,7 @@ import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../../state/types';
 import { VariableOption, VariableWithOptions } from '../../types';
-import { containsSearchFilter, getCurrentValue, toVariablePayload } from '../../utils';
+import { getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
 
 import {
@@ -64,25 +65,33 @@ export const filterOrSearchOptions = (
     const { id, queryValue } = getVariablesState(rootStateKey, getState()).optionsPicker;
     const identifier: KeyedVariableIdentifier = { id, rootStateKey: rootStateKey, type: 'query' };
     const variable = getVariable(identifier, getState());
-    if (!hasOptions(variable)) {
+
+    if (!('options' in variable)) {
       return;
     }
 
-    const { query, options } = variable;
     dispatch(toKeyedAction(rootStateKey, updateSearchQuery(searchQuery)));
 
     if (trim(queryValue) === trim(searchQuery)) {
       return;
     }
 
-    if (containsSearchFilter(query)) {
+    const { query, options } = variable;
+
+    const queryTarget = typeof query === 'string' ? query : query.target;
+    if (containsSearchFilter(queryTarget)) {
       return searchForOptionsWithDebounce(dispatch, getState, searchQuery, rootStateKey);
     }
+
     return dispatch(toKeyedAction(rootStateKey, updateOptionsAndFilter(options)));
   };
 };
 
 const setVariable = async (updated: VariableWithOptions) => {
+  if (isEmptyObject(updated.current)) {
+    return;
+  }
+
   const adapter = variableAdapters.get(updated.type);
   await adapter.setValue(updated, updated.current, true);
   return;

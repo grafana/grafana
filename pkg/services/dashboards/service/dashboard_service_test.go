@@ -236,9 +236,16 @@ func TestDashboardService(t *testing.T) {
 			usr := &user.SignedInUser{UserID: 1}
 			ctx := appcontext.WithUser(context.Background(), usr)
 
-			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
+			count, err := service.CountInFolder(ctx, 1, "i am a folder", usr)
 			require.NoError(t, err)
 			require.Equal(t, int64(3), count)
+		})
+
+		t.Run("Delete dashboards in folder", func(t *testing.T) {
+			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUID: "uid"}
+			fakeStore.On("DeleteDashboardsInFolder", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolder(context.Background(), 1, "uid", nil)
+			require.NoError(t, err)
 		})
 	})
 

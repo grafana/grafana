@@ -2,7 +2,6 @@ package definitions
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -16,8 +15,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
@@ -168,6 +165,19 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/templates/test alertmanager RoutePostTestGrafanaTemplates
+//
+// Test Grafana managed templates without saving them.
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//
+//       200: TestTemplatesResults
+//       400: ValidationError
+//       403: PermissionDenied
+//       409: AlertManagerNotReady
+
 // swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
 //
 // get silences
@@ -190,7 +200,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: postSilencesOKBody
+//       202: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
@@ -263,10 +273,6 @@ type TestReceiversConfigBodyParams struct {
 	Receivers []*PostableApiReceiver          `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *TestReceiversConfigBodyParams) ProcessConfig(encrypt EncryptFn) error {
-	return processReceiverConfigs(c.Receivers, encrypt)
-}
-
 type TestReceiversConfigAlertParams struct {
 	Annotations model.LabelSet `yaml:"annotations,omitempty" json:"annotations,omitempty"`
 	Labels      model.LabelSet `yaml:"labels,omitempty" json:"labels,omitempty"`
@@ -292,6 +298,56 @@ type TestReceiverConfigResult struct {
 	Status string `json:"status"`
 	Error  string `json:"error,omitempty"`
 }
+
+// swagger:parameters RoutePostTestGrafanaTemplates
+type TestTemplatesConfigParams struct {
+	// in:body
+	Body TestTemplatesConfigBodyParams
+}
+
+type TestTemplatesConfigBodyParams struct {
+	// Alerts to use as data when testing the template.
+	Alerts []*amv2.PostableAlert `json:"alerts"`
+
+	// Template string to test.
+	Template string `json:"template"`
+
+	// Name of the template file.
+	Name string `json:"name"`
+}
+
+// swagger:model
+type TestTemplatesResults struct {
+	Results []TestTemplatesResult      `json:"results,omitempty"`
+	Errors  []TestTemplatesErrorResult `json:"errors,omitempty"`
+}
+
+type TestTemplatesResult struct {
+	// Name of the associated template definition for this result.
+	Name string `json:"name"`
+
+	// Interpolated value of the template.
+	Text string `json:"text"`
+}
+
+type TestTemplatesErrorResult struct {
+	// Name of the associated template for this error. Will be empty if the Kind is "invalid_template".
+	Name string `json:"name,omitempty"`
+
+	// Kind of template error that occurred.
+	Kind TemplateErrorKind `json:"kind"`
+
+	// Error message.
+	Message string `json:"message"`
+}
+
+// swagger:enum TemplateErrorKind
+type TemplateErrorKind string
+
+const (
+	InvalidTemplate TemplateErrorKind = "invalid_template"
+	ExecutionError  TemplateErrorKind = "execution_error"
+)
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
 type CreateSilenceParams struct {
@@ -550,11 +606,6 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 		}
 	}
 	return UIDs
-}
-
-// ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
-func (c *PostableUserConfig) ProcessConfig(encrypt EncryptFn) error {
-	return processReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -1221,42 +1272,6 @@ type PostableGrafanaReceivers struct {
 }
 
 type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
-
-func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
-	seenUIDs := make(map[string]struct{})
-	// encrypt secure settings for storing them in DB
-	for _, r := range c {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				for k, v := range gr.SecureSettings {
-					encryptedData, err := encrypt(context.Background(), []byte(v))
-					if err != nil {
-						return fmt.Errorf("failed to encrypt secure settings: %w", err)
-					}
-					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
-				}
-				if gr.UID == "" {
-					retries := 5
-					for i := 0; i < retries; i++ {
-						gen := util.GenerateShortUID()
-						_, ok := seenUIDs[gen]
-						if !ok {
-							gr.UID = gen
-							break
-						}
-					}
-					if gr.UID == "" {
-						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
-					}
-				}
-				seenUIDs[gr.UID] = struct{}{}
-			}
-		default:
-		}
-	}
-	return nil
-}
 
 // ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects
 // that have already been parsed.

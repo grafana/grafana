@@ -201,6 +201,9 @@ var (
 
 	// MStatTotalPublicDashboards is a metric total amount of public dashboards
 	MStatTotalPublicDashboards prometheus.Gauge
+
+	// MStatTotalCorrelations is a metric total amount of correlations
+	MStatTotalCorrelations prometheus.Gauge
 )
 
 func init() {
@@ -505,7 +508,7 @@ func init() {
 
 	StatsTotalActiveViewers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_viewers",
-		Help:      "total amount of viewers",
+		Help:      "total amount of active viewers",
 		Namespace: ExporterName,
 	})
 
@@ -590,6 +593,12 @@ func init() {
 	MStatTotalPublicDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_public_dashboard",
 		Help:      "total amount of public dashboards",
+		Namespace: ExporterName,
+	})
+
+	MStatTotalCorrelations = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_correlations",
+		Help:      "total amount of correlations",
 		Namespace: ExporterName,
 	})
 }
@@ -705,5 +714,6 @@ func initMetricVars() {
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
+		MStatTotalCorrelations,
 	)
 }

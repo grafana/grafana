@@ -29,7 +29,7 @@ var logger = log.New("ngalert.eval")
 type EvaluatorFactory interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx EvaluationContext, condition models.Condition) error
-	// BuildRuleEvaluator build an evaluator pipeline ready to evaluate a rule's query
+	// Create builds an evaluator pipeline ready to evaluate a rule's query
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
 }
 
@@ -220,7 +220,7 @@ func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
-func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
+func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
 		// Several existing systems also compare against the value of this header. Altering this constitutes a breaking change.
@@ -233,7 +233,7 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		models.CacheSkipHeaderName: "true",
 	}
 
-	key, ok := models.RuleKeyFromContext(ctx.Ctx)
+	key, ok := models.RuleKeyFromContext(ctx)
 	if ok {
 		headers["X-Rule-Uid"] = key.UID
 		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
@@ -246,7 +246,8 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
 	req := &expr.Request{
 		OrgId:   ctx.User.OrgID,
-		Headers: buildDatasourceHeaders(ctx),
+		Headers: buildDatasourceHeaders(ctx.Ctx),
+		User:    ctx.User,
 	}
 
 	datasources := make(map[string]*datasources.DataSource, len(data))
@@ -268,13 +269,14 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
-			if expr.IsDataSource(q.DatasourceUID) {
-				ds = expr.DataSourceModel()
-			} else {
+			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
+			case expr.TypeDatasourceNode:
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
-				if err != nil {
-					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
-				}
+			default:
+				ds, err = expr.DataSourceModelFromNodeType(nodeType)
+			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 			}
 			datasources[q.DatasourceUID] = ds
 		}
@@ -295,18 +297,25 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 type NumberValueCapture struct {
 	Var    string // RefID
 	Labels data.Labels
-	Value  *float64
+
+	Value *float64
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
-	// eval captures for the '__value_string__' annotation and the Value property of the API response.
-	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
-	captureVal := func(refID string, labels data.Labels, value *float64) {
-		captures = append(captures, NumberValueCapture{
+	// captures contains the values of all instant queries and expressions for each dimension
+	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
+	captureFn := func(refID string, labels data.Labels, value *float64) {
+		m := captures[refID]
+		if m == nil {
+			m = make(map[data.Fingerprint]NumberValueCapture)
+		}
+		fp := labels.Fingerprint()
+		m[fp] = NumberValueCapture{
 			Var:    refID,
 			Value:  value,
 			Labels: labels.Copy(),
-		})
+		}
+		captures[refID] = m
 	}
 
 	// datasourceUIDsForRefIDs is a short-lived lookup table of RefID to DatasourceUID
@@ -320,14 +329,27 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
-		if len(res.Frames) == 0 {
-			// to ensure that NoData is consistent with Results we do not initialize NoData
-			// unless there is at least one RefID that returned no data
+		// There are two possible frame formats for No Data:
+		//
+		// 1. A response with no frames
+		// 2. A response with 1 frame but no fields
+		//
+		// The first format is not documented in the data plane contract but needs to be
+		// supported for older datasource plugins. The second format is documented in
+		// https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/contract.md
+		// and is what datasource plugins should use going forward.
+		if len(res.Frames) <= 1 {
+			// To make sure NoData is nil when Results are also nil we wait to initialize
+			// NoData until there is at least one query or expression that returned no data
 			if result.NoData == nil {
 				result.NoData = make(map[string]string)
 			}
-			if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
-				result.NoData[refID] = s
+			hasNoFrames := len(res.Frames) == 0
+			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
+			if hasNoFrames || hasNoFields {
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
+					result.NoData[refID] = s
+				}
 			}
 		}
 
@@ -341,7 +363,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureVal(frame.RefID, frame.Fields[0].Labels, v)
+			captureFn(frame.RefID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {
@@ -363,13 +385,27 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 		if len(frame.Fields) == 1 {
 			theseLabels := frame.Fields[0].Labels
-			for _, cap := range captures {
-				// matching labels are equal labels, or when one set of labels includes the labels of the other.
-				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) || cap.Labels.Contains(theseLabels) {
+			fp := theseLabels.Fingerprint()
+
+			for _, fps := range captures {
+				// First look for a capture whose labels are an exact match
+				if v, ok := fps[fp]; ok {
 					if frame.Meta.Custom == nil {
 						frame.Meta.Custom = []NumberValueCapture{}
 					}
-					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), cap)
+					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
+				} else {
+					// If no exact match was found, look for captures whose labels are either subsets
+					// or supersets
+					for _, v := range fps {
+						// matching labels are equal labels, or when one set of labels includes the labels of the other.
+						if theseLabels.Equals(v.Labels) || theseLabels.Contains(v.Labels) || v.Labels.Contains(theseLabels) {
+							if frame.Meta.Custom == nil {
+								frame.Meta.Custom = []NumberValueCapture{}
+							}
+							frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
+						}
+					}
 				}
 			}
 		}
@@ -606,15 +642,24 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		return err
 	}
 	for _, query := range req.Queries {
-		if query.DataSource == nil || expr.IsDataSource(query.DataSource.UID) {
+		if query.DataSource == nil {
 			continue
 		}
-		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-		if !found { // technically this should fail earlier during datasource resolution phase.
-			return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-		}
-		if !p.Backend {
-			return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
+		switch expr.NodeTypeFromDatasourceUID(query.DataSource.UID) {
+		case expr.TypeDatasourceNode:
+			p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+			if !found { // technically this should fail earlier during datasource resolution phase.
+				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+			}
+			if !p.Backend {
+				return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
+			}
+		case expr.TypeMLNode:
+			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+			if !found {
+				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+			}
+		case expr.TypeCMDNode:
 		}
 	}
 	_, err = e.create(condition, req)

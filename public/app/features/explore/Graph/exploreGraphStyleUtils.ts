@@ -1,16 +1,18 @@
-import produce from 'immer';
+import { produce } from 'immer';
 
-import { FieldConfigSource } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, StackingMode } from '@grafana/schema';
+import { FieldConfigSource, ThresholdsConfig } from '@grafana/data';
+import { GraphDrawStyle, GraphFieldConfig, GraphThresholdsStyleConfig, StackingMode } from '@grafana/schema';
 import { ExploreGraphStyle } from 'app/types';
 
 export type FieldConfig = FieldConfigSource<GraphFieldConfig>;
 
-export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle): FieldConfig {
+export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle, maximum?: number): FieldConfig {
   return produce(config, (draft) => {
     if (draft.defaults.custom === undefined) {
       draft.defaults.custom = {};
     }
+
+    draft.defaults.max = maximum;
 
     const { custom } = draft.defaults;
 
@@ -53,5 +55,17 @@ export function applyGraphStyle(config: FieldConfig, style: ExploreGraphStyle): 
         throw new Error(`Invalid graph-style: ${invalidValue}`);
       }
     }
+  });
+}
+
+export function applyThresholdsConfig(
+  config: FieldConfig,
+  thresholdsStyle?: GraphThresholdsStyleConfig,
+  thresholdsConfig?: ThresholdsConfig
+): FieldConfig {
+  return produce(config, (draft) => {
+    draft.defaults.thresholds = thresholdsConfig;
+    draft.defaults.custom = draft.defaults.custom ?? {};
+    draft.defaults.custom.thresholdsStyle = thresholdsStyle;
   });
 }

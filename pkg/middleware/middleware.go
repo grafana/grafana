@@ -22,8 +22,11 @@ var (
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
-func HandleNoCacheHeader(ctx *contextmodel.ReqContext) {
-	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+func HandleNoCacheHeaders(ctx *contextmodel.ReqContext) {
+	// X-Grafana-NoCache tells Grafana to skip the cache while retrieving datasource instance metadata
+	ctx.SkipDSCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+	// X-Cache-Skip tells Grafana to skip the Enterprise query/resource cache while issuing query and resource calls
+	ctx.SkipQueryCache = ctx.Req.Header.Get("X-Cache-Skip") == "true"
 }
 
 func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
@@ -49,10 +52,21 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				addNoCacheHeaders(c.Resp)
 			}
 
-			if !cfg.AllowEmbedding {
+			// X-Allow-Embedding header is set for specific URLs that need to be embedded in an iframe regardless
+			// of the configured allow_embedding setting.
+			embeddingHeader := w.Header().Get("X-Allow-Embedding")
+			if !cfg.AllowEmbedding && embeddingHeader != "allow" {
 				addXFrameOptionsDenyHeader(w)
 			}
 			addSecurityHeaders(w, cfg)
+		})
+	}
+}
+
+func AddAllowEmbeddingHeader() web.Handler {
+	return func(c *web.Context) {
+		c.Resp.Before(func(w web.ResponseWriter) {
+			w.Header().Set("X-Allow-Embedding", "allow")
 		})
 	}
 }

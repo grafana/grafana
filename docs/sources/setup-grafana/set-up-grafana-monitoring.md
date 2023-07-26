@@ -8,6 +8,10 @@ keywords:
   - grafana
   - jaeger
   - tracing
+labels:
+  products:
+    - enterprise
+    - oss
 title: Set up Grafana monitoring
 weight: 800
 ---
@@ -20,13 +24,13 @@ Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration's OpenTelemetry section]({{< relref "configure-grafana/#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
+Refer to [Configuration's OpenTelemetry section]({{< relref "./configure-grafana#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
-For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "configure-grafana/#metrics" >}}) and [metrics.graphite]({{< relref "configure-grafana/#metricsgraphite" >}}) in [Configuration]({{< relref "configure-grafana/" >}}).
+For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "./configure-grafana#metrics" >}}) and [metrics.graphite]({{< relref "./configure-grafana#metricsgraphite" >}}) in [Configuration]({{< relref "./configure-grafana" >}}).
 
 ### Available metrics
 
@@ -111,7 +115,7 @@ These instructions assume you have already added Graphite as a data source in Gr
 
 ### Pull metrics from Grafana backend plugin into Prometheus
 
-Any installed [backend plugin]({{< relref "../developers/plugins/backend/" >}}) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
+Any installed [backend plugin]({{< relref "../developers/plugins/introduction-to-plugin-development/backend" >}}) exposes a metrics endpoint through Grafana that you can configure Prometheus to scrape.
 
 These instructions assume you have already added Prometheus as a data source in Grafana.
 
@@ -134,7 +138,7 @@ These instructions assume you have already added Prometheus as a data source in 
    basic_auth_password =
    ```
 
-1. Restart Grafana. Grafana now exposes metrics at `http://localhost:3000/metrics/plugins/<plugin id>`, e.g. http://localhost:3000/metrics/plugins/grafana-github-datasource if you have the [Grafana GitHub datasource](https://grafana.com/grafana/plugins/grafana-github-datasource/) installed.
+1. Restart Grafana. Grafana now exposes metrics at `http://localhost:3000/metrics/plugins/<plugin id>`, e.g. http://localhost:3000/metrics/plugins/grafana-github-datasource if you have the [Grafana GitHub datasource](/grafana/plugins/grafana-github-datasource/) installed.
 1. Add the job to your prometheus.yml file.
    Example:
 
@@ -152,4 +156,4 @@ These instructions assume you have already added Prometheus as a data source in 
 1. Restart Prometheus. Your new job should appear on the Targets tab.
 1. In Grafana, hover your mouse over the **Configuration** (gear) icon on the left sidebar and then click **Data Sources**.
 1. Select the **Prometheus** data source.
-1. Import a Golang application metrics dashboard - for example [Go Processes](https://grafana.com/grafana/dashboards/6671).
+1. Import a Golang application metrics dashboard - for example [Go Processes](/grafana/dashboards/6671).
