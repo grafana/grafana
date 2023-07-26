@@ -17,6 +17,8 @@ import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectPanesEntries } from './state/selectors';
 
+const MIN_PANE_WIDTH = 200;
+
 const styles = {
   pageScrollbarWrapper: css`
     width: 100%;
@@ -38,7 +40,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useExplorePageTitle(props.queryParams);
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
-  const { updateSplitSize, widthCalc, minWidth } = useSplitSizeUpdater(200);
+  const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
@@ -60,8 +62,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}
-        minSize={minWidth}
-        maxSize={minWidth * -1}
+        minSize={MIN_PANE_WIDTH}
+        maxSize={MIN_PANE_WIDTH * -1}
         primary="second"
         splitVisible={hasSplit}
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
