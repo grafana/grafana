@@ -2369,7 +2369,7 @@ func TestProcessEvalResults(t *testing.T) {
 			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items()))
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_state_calculation_duration_seconds The duration of calculation of a single state
+				`# HELP grafana_alerting_state_calculation_duration_seconds The duration of calculation of a single state.
         	            # TYPE grafana_alerting_state_calculation_duration_seconds histogram
         	            grafana_alerting_state_calculation_duration_seconds_bucket{le="0.01"} %[1]d
         	            grafana_alerting_state_calculation_duration_seconds_bucket{le="0.1"} %[1]d
@@ -2380,9 +2380,6 @@ func TestProcessEvalResults(t *testing.T) {
         	            grafana_alerting_state_calculation_duration_seconds_bucket{le="+Inf"} %[1]d
         	            grafana_alerting_state_calculation_duration_seconds_sum 0
         	            grafana_alerting_state_calculation_duration_seconds_count %[1]d
-        	            # HELP grafana_alerting_state_calculation_total Total number of state calculations
-        	            # TYPE grafana_alerting_state_calculation_total counter
-        	            grafana_alerting_state_calculation_total %[1]d
 						`, results)
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_calculation_total")
 			require.NoError(t, err)

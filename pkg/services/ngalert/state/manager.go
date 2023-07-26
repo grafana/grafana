@@ -390,7 +390,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	}
 
 	st.metrics.StateUpdateDuration.Observe(float64(st.clock.Now().Sub(start).Milliseconds()))
-	st.metrics.StateUpdateCount.Inc()
 
 	return nextState
 }
