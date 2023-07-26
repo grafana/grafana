@@ -82,6 +82,7 @@ func TestProcessTicks(t *testing.T) {
 		Clock:                   mockedClock,
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  testTracer,
 	}
 	st := state.NewManager(managerCfg)
 

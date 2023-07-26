@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -84,8 +85,8 @@ type API struct {
 	EvaluatorFactory     eval.EvaluatorFactory
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
-
-	AppUrl *url.URL
+	Tracer               tracing.Tracer
+	AppUrl               *url.URL
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -137,6 +138,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
+			tracer:          api.Tracer,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

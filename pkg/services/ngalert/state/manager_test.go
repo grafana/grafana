@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -201,6 +202,7 @@ func TestWarmStateCache(t *testing.T) {
 		Clock:                   clock.NewMock(),
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	st := state.NewManager(cfg)
 	st.Warm(ctx, dbstore)
@@ -236,6 +238,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		Clock:                   clock.New(),
 		Historian:               hist,
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	st := state.NewManager(cfg)
 
@@ -2335,6 +2338,7 @@ func TestProcessEvalResults(t *testing.T) {
 			Clock:                   clock.New(),
 			Historian:               hist,
 			MaxStateSaveConcurrency: 1,
+			Tracer:                  tracing.InitializeTracerForTest(),
 		}
 		st := state.NewManager(cfg)
 		t.Run(tc.desc, func(t *testing.T) {
@@ -2371,6 +2375,7 @@ func TestProcessEvalResults(t *testing.T) {
 			Clock:                   clk,
 			Historian:               &state.FakeHistorian{},
 			MaxStateSaveConcurrency: 1,
+			Tracer:                  tracing.InitializeTracerForTest(),
 		}
 		st := state.NewManager(cfg)
 		rule := models.AlertRuleGen()()
@@ -2513,6 +2518,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Clock:                   clock.New(),
 			Historian:               &state.FakeHistorian{},
 			MaxStateSaveConcurrency: 1,
+			Tracer:                  tracing.InitializeTracerForTest(),
 		}
 		st := state.NewManager(cfg)
 		st.Warm(ctx, dbstore)
@@ -2593,6 +2599,7 @@ func TestStaleResults(t *testing.T) {
 		Clock:                   clk,
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	st := state.NewManager(cfg)
 
@@ -2761,6 +2768,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Clock:                   clk,
 				Historian:               &state.FakeHistorian{},
 				MaxStateSaveConcurrency: 1,
+				Tracer:                  tracing.InitializeTracerForTest(),
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
@@ -2901,6 +2909,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Clock:                   clk,
 				Historian:               fakeHistorian,
 				MaxStateSaveConcurrency: 1,
+				Tracer:                  tracing.InitializeTracerForTest(),
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
