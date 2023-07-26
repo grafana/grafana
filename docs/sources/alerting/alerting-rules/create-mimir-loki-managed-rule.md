@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure data source-managed alert rules
-weight: 400
+weight: 200
 ---
 
 # Configure data source-managed alert rules
@@ -47,12 +47,6 @@ If you do not want to manage alert rules for a particular Loki or Prometheus dat
 In the following sections, we’ll guide you through the process of creating your data source-managed alert rules.
 
 To create a data source-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
-
-1. Enter an alert rule name
-2. Define query and alert condition
-3. Set evaluation behavior
-4. Add annotations
-5. Configure notifications
 
 ## Set alert rule name
 
