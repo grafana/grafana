@@ -548,13 +548,9 @@ describe('Table', () => {
             ...defaultFrame.fields,
             {
               name: 'nested',
-              type: FieldType.other,
+              type: FieldType.nestedFrames,
               values: [[nestedFrame(0), nestedFrame(1)]],
-              config: {
-                custom: {
-                  nested: true,
-                },
-              },
+              config: {},
             },
           ],
         }),

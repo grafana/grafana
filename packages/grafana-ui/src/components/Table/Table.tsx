@@ -21,7 +21,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, Field, ReducerID } from '@grafana/data';
+import { DataFrame, Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -115,7 +115,7 @@ export const Table = memo((props: Props) => {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const nestedFields = useMemo(() => data.fields.filter((f) => f.config.custom?.nested), [data]);
+  const nestedFields = useMemo(() => data.fields.filter((f) => f.type === FieldType.nestedFrames), [data]);
   const nestedFrames = useMemo(
     () => (nestedFields && nestedFields[0] && nestedFields[0].values ? nestedFields[0].values : []),
     [nestedFields]

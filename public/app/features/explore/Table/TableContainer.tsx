@@ -1,7 +1,15 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, LoadingState, DataFrame } from '@grafana/data';
+import {
+  ValueLinkConfig,
+  applyFieldOverrides,
+  TimeZone,
+  SplitOpen,
+  LoadingState,
+  DataFrame,
+  FieldType,
+} from '@grafana/data';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
@@ -34,7 +42,7 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.config.custom?.nested);
+  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
   getTableHeight(rowCount: number, hasSubFrames: boolean) {
     if (rowCount === 0) {
@@ -66,7 +74,7 @@ export class TableContainer extends PureComponent<Props> {
       // differently and sidestep this getLinks API on a dataframe
       for (const frame of dataFrames) {
         for (const field of frame.fields) {
-          if (field.config.custom?.nested) {
+          if (field.type === FieldType.nestedFrames) {
             for (const nestedFrames of field.values) {
               for (const nf of nestedFrames) {
                 for (const valueField of nf.fields) {

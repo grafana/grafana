@@ -158,13 +158,9 @@ function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldCo
     ...data.fields,
     {
       name: 'nested',
-      type: FieldType.trace,
+      type: FieldType.nestedFrames,
       values: allNestedFrames,
-      config: {
-        custom: {
-          nested: true,
-        },
-      },
+      config: {},
     },
   ];
 

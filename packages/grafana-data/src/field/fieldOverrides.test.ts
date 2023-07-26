@@ -219,12 +219,7 @@ describe('applyFieldOverrides', () => {
         },
         {
           name: 'nested',
-          type: FieldType.other,
-          config: {
-            custom: {
-              nested: true,
-            },
-          },
+          type: FieldType.nestedFrames,
           values: [[f0Nested]],
         },
       ],

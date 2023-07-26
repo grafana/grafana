@@ -143,8 +143,8 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[3].type).toBe('number');
     expect(frame.fields[3].values[2]).toBe(44);
     // Subframes field
-    expect(frame.fields[4].name).toBe('subFrames');
-    expect(frame.fields[4].type).toBe('trace');
+    expect(frame.fields[4].name).toBe('nested');
+    expect(frame.fields[4].type).toBe('nestedFrames');
     // Single spanset
     expect(frame.fields[4].values[0][0].fields[0].name).toBe('traceIdHidden');
     expect(frame.fields[4].values[0][0].fields[0].values[0]).toBe('b1586c3c8c34d');

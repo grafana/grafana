@@ -628,13 +628,8 @@ export function createTableFrameFromTraceQlQuery(
         },
       },
       {
-        name: 'subFrames',
-        type: FieldType.trace,
-        config: {
-          custom: {
-            nested: true,
-          },
-        },
+        name: 'nested',
+        type: FieldType.nestedFrames,
       },
     ],
     meta: {
