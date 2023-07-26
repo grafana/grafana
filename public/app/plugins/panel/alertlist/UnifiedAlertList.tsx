@@ -104,6 +104,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const somePromRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(promRulesRequests);
 
+  const hideViewRuleLinkText = props.width < 320;
+
   // backwards compat for "Inactive" state filter
   useEffect(() => {
     if (props.options.stateFilter.inactive === true) {
@@ -222,6 +224,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
               options={parsedOptions}
               handleInstancesLimit={handleInstancesLimit}
               limitInstances={limitInstances}
+              hideViewRuleLinkText={hideViewRuleLinkText}
             />
           )}
         </section>
@@ -414,5 +417,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   link: css`
     word-break: break-all;
     color: ${theme.colors.primary.text};
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing(1)};
+  `,
+  hidden: css`
+    display: none;
   `,
 });

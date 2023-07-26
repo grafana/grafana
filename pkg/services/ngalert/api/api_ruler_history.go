@@ -29,6 +29,8 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 	to := c.QueryInt64("to")
 	limit := c.QueryInt("limit")
 	ruleUID := c.Query("ruleUID")
+	dashUID := c.Query("dashboardUID")
+	panelID := c.QueryInt64("panelID")
 
 	labels := make(map[string]string)
 	for k, v := range c.Req.URL.Query() {
@@ -40,6 +42,8 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 	query := models.HistoryQuery{
 		RuleUID:      ruleUID,
 		OrgID:        c.OrgID,
+		DashboardUID: dashUID,
+		PanelID:      panelID,
 		SignedInUser: c.SignedInUser,
 		From:         time.Unix(from, 0),
 		To:           time.Unix(to, 0),

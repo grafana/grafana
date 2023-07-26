@@ -79,7 +79,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
-  loginError = undefined;
+  loginError: string | undefined = undefined;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
