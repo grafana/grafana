@@ -6,7 +6,7 @@ import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { clearButtonStyles, Icon, RelativeTimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertQueryOptions, MaxDataPointsOption } from './QueryWrapper';
+import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
 
 export interface QueryOptionsProps {
   query: AlertQuery;
@@ -50,6 +50,7 @@ export const QueryOptions = ({
                 options={queryOptions}
                 onChange={(options) => onChangeQueryOptions(options, index)}
               />
+              <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
             </div>
           </div>
         }
@@ -62,8 +63,13 @@ export const QueryOptions = ({
       </Toggletip>
 
       <div className={styles.staticValues}>
-        <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}</span>
-        {queryOptions.maxDataPoints && <span>, MD {queryOptions.maxDataPoints}</span>}
+        <span>
+          {dateTime(timeRange?.from)
+            .locale('en')
+            .fromNow(true)}
+        </span>
+        {queryOptions.maxDataPoints && <span>, MD = {queryOptions.maxDataPoints}</span>}
+        {queryOptions.minInterval && <span>, Min. Interval = {queryOptions.minInterval}</span>}
       </div>
     </>
   );

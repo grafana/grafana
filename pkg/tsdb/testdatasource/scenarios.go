@@ -249,7 +249,10 @@ type JSONModel struct {
 	Alias              string    `json:"alias"`
 	// Cannot specify a type for csvWave since legacy queries
 	// does not follow the same format as the new ones (and there is no migration).
-	CSVWave interface{} `json:"csvWave"`
+	CSVWave     interface{} `json:"csvWave"`
+	CSVContent  string      `json:"csvContent"`
+	CSVFileName string      `json:"csvFileName"`
+	DropPercent float64     `json:"dropPercent"`
 }
 
 type pulseWave struct {
@@ -374,6 +377,13 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 		}
 
 		stringInput := model.StringInput
+		if strings.TrimSpace(stringInput) == "" {
+			qr := resp.Responses[q.RefID]
+			qr.Frames = data.Frames{
+				data.NewFrame("").SetMeta(&data.FrameMeta{ExecutedQueryString: stringInput}),
+			}
+			return resp, nil
+		}
 		valueField, err := csvLineToField(stringInput)
 		if err != nil {
 			return nil, err

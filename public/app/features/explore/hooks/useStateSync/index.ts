@@ -25,12 +25,7 @@ import { parseURL } from './parseURL';
  * Bi-directionally syncs URL changes with Explore's state.
  */
 export function useStateSync(params: ExploreQueryParams) {
-  const {
-    location,
-    config: {
-      featureToggles: { exploreMixedDatasource },
-    },
-  } = useGrafana();
+  const { location } = useGrafana();
   const dispatch = useDispatch();
   const panesState = useSelector(selectPanes);
   const orgId = useSelector((state) => state.user.orgId);
@@ -170,7 +165,7 @@ export function useStateSync(params: ExploreQueryParams) {
 
       Promise.all(
         Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
-          return getPaneDatasource(datasource, queries, orgId, !!exploreMixedDatasource).then((paneDatasource) => {
+          return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
             return Promise.resolve(
               // Given the Grafana datasource will always be present, this should always be defined.
               paneDatasource
@@ -254,7 +249,7 @@ export function useStateSync(params: ExploreQueryParams) {
     prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, panesState, exploreMixedDatasource, orgId, location, params]);
+  }, [dispatch, panesState, orgId, location, params]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
@@ -303,7 +298,7 @@ async function removeQueriesWithInvalidDatasource(queries: DataQuery[]) {
 
 /**
  * Returns the datasource that an explore pane should be using.
- * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed and `allowMixed` is false.
+ * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed.
  * Otherwise the datasource will be extracetd from the the first query specifying a valid datasource.
  *
  * If there's no datasource in the queries, the last used datasource will be used.
@@ -312,28 +307,22 @@ async function removeQueriesWithInvalidDatasource(queries: DataQuery[]) {
  * @param rootDatasource the top-level datasource specified in the URL
  * @param queries the queries in the pane
  * @param orgId the orgId of the user
- * @param allowMixed whether mixed datasources are allowed
  *
  * @returns the datasource UID that the pane should use, undefined if no suitable datasource is found
  */
 async function getPaneDatasource(
   rootDatasource: DataSourceRef | string | null | undefined,
   queries: DataQuery[],
-  orgId: number,
-  allowMixed: boolean
+  orgId: number
 ) {
-  // If there's a root datasource, use it unless it's mixed and we don't allow mixed.
+  // If there's a root datasource, use it unless it's unavailable
   if (rootDatasource) {
     try {
-      const ds = await getDatasourceSrv().get(rootDatasource);
-
-      if (!isMixedDatasource(ds) || allowMixed) {
-        return ds;
-      }
+      return await getDatasourceSrv().get(rootDatasource);
     } catch (_) {}
   }
 
-  // TODO: if queries have multiple datasources and allowMixed is true, we should return mixed datasource
+  // TODO: if queries have multiple datasources we should return mixed datasource
   // Else we try to find a datasource in the queries, returning the first one that exists
   const queriesWithDS = queries.filter((q) => q.datasource);
   for (const query of queriesWithDS) {

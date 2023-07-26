@@ -7,8 +7,9 @@ import (
 	"io"
 	"io/fs"
 	"log"
-	"os"
 	"strings"
+
+	"os"
 
 	"golang.org/x/mod/modfile"
 )
@@ -69,8 +70,7 @@ func parseGoMod(fileSystem fs.FS, name string) ([]Module, error) {
 }
 
 // Validate that each module has an owner.
-// An example CLI command is `go run dummy/modowners.go check dummy/go.txd`
-// TODO: replace above example with final filepath in the end
+// An example CLI command is `go run scripts/modowners/modowners.go check go.mod`
 func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	m, err := parseGoMod(fileSystem, args[0])
 	if err != nil {
@@ -84,17 +84,19 @@ func check(fileSystem fs.FS, logger *log.Logger, args []string) error {
 		}
 	}
 	if fail {
-		return errors.New("modfile is invalid")
+		return errors.New("one or more newly added dependencies do not have an assigned owner - please assign a team as an owner")
 	}
 	return nil
 }
 
-// TODO: owners and modules may optionally take a list (modules for owners, owners for modules)
-// TODO: test with go test
-// Print owners.
+// Print owner(s) for a given dependency.
+// An example CLI command to get a list of all owners in go.mod with a count of the number of dependencies they own is `go run scripts/modowners/modowners.go owners -a -c go.mod`
+// An example CLI command to get the owner for a specific dependency is `go run scripts/modowners/modowners.go owners -d cloud.google.com/go/storage@v1.30.1 go.mod`. You must use `dependency@version`, not `dependency version`.
 func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("owners", flag.ExitOnError)
+	allOwners := fs.Bool("a", false, "print all owners in specified file")
 	count := fs.Bool("c", false, "print count of dependencies per owner")
+	dep := fs.String("d", "", "name of dependency")
 	fs.Parse(args)
 	m, err := parseGoMod(fileSystem, fs.Arg(0))
 	if err != nil {
@@ -102,64 +104,48 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	}
 	owners := map[string]int{}
 	for _, mod := range m {
+		if len(*dep) > 0 && mod.Name == *dep {
+			for _, owner := range mod.Owners {
+				logger.Println(owner)
+				break
+			}
+		}
 		if mod.Indirect == false {
 			for _, owner := range mod.Owners {
 				owners[owner]++
 			}
 		}
 	}
-	for owner, n := range owners {
-		if *count {
-			fmt.Println(owner, n)
-		} else {
-			fmt.Println(owner)
+	if *allOwners {
+		for owner, n := range owners {
+			if *count {
+				logger.Println(owner, n)
+			} else {
+				logger.Println(owner)
+			}
 		}
 	}
 	return nil
 }
 
-/*
-	GOAL:
-	1. if no flags, print all direct dependencies
-	2. if -i, print all dependencies (direct + indirect)
-	3. if -o, print dependencies owned by the owner(s) listed
-	4. if -i and -o, print all dependencies owned by the owner(s) listed
-
-	print all dependencies for each owner listed in CLI after -o flag
-	check each dependency's owners
-
-		if it match one of the owners in the flag/CLI, print it
-		if not skip
-
-	CURRENT ISSUE:
-	owner flag logic not working well with indirect flag logic
-	not sure how to check for both flags
-
-	mod.Owners := [bep, as-code, delivery]
-	flag := [gaas, delivery]
-*/
-
-// Print dependencies. Can specify direct / multiple owners.
-// Example CLI command `go run dummy/modowners.go modules -m dummy/go.txd -o @as-code,@delivery`
+// Print dependencies for a given owner. Can specify one or more owners.
+// An example CLI command to list all direct dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/grafana-authnz-team go.mod`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
-	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
-	modfile := fs.String("m", "go.txd", "use specified modfile")
+	indirect := fs.Bool("i", false, "print indirect dependencies")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
-	m, err := parseGoMod(fileSystem, *modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
+	m, err := parseGoMod(fileSystem, fs.Arg(0))
 	if err != nil {
 		return err
 	}
 
 	ownerFlags := strings.Split(*owner, ",")
 	for _, mod := range m {
-		// If there are owner flags or modfile's dependency has an owner to compare
-		// Else if -i is present and current dependency is indirect
-		if len(*owner) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
-			logger.Println(mod.Name)
-		} else if *indirect && !mod.Indirect {
-			logger.Println(mod.Name)
+		if len(*owner) == 0 || hasCommonElement(mod.Owners, ownerFlags) {
+			if *indirect || !mod.Indirect {
+				logger.Println(mod.Name)
+			}
 		}
 	}
 	return nil
@@ -177,13 +163,15 @@ func hasCommonElement(a []string, b []string) bool {
 }
 
 func main() {
+	log.SetFlags(0)
+	log.SetOutput(os.Stdout)
 	if len(os.Args) < 2 {
 		fmt.Println("usage: modowners subcommand go.mod...")
 		os.Exit(1)
 	}
 	type CmdFunc func(fs.FS, *log.Logger, []string) error
 	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
-	if f, ok := cmds[os.Args[1]]; !ok { // NOTE: both f and ok are visible inside the if / else if statement, but not outside; chaining of ifs very common in go when checking errors and calling multiple funcs
+	if f, ok := cmds[os.Args[1]]; !ok {
 		log.Fatal("invalid command")
 	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {
 		log.Fatal(err)

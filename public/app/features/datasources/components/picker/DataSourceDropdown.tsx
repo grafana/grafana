@@ -203,7 +203,10 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               filterTerm={filterTerm}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 onClose();
-                onChange(ds, defaultQueries);
+                if (ds.uid !== currentValue?.uid) {
+                  onChange(ds, defaultQueries);
+                  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
+                }
               }}
               onClose={onClose}
               current={currentValue}
@@ -254,7 +257,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
       onChange(ds);
-      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
     },
     [onChange]
   );
