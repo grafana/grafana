@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import React, { FormEvent, useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -44,8 +45,6 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
 
   const labelWidth = prometheusConfigOverhaulAuth ? 24 : 26;
 
-  const classWidth = prometheusConfigOverhaulAuth ? 'width-20' : 'width-30';
-
   return (
     <>
       <h6>Azure authentication</h6>
@@ -67,7 +66,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
           <InlineFieldRow>
             <InlineField labelWidth={labelWidth} label="Resource ID" disabled={dataSourceConfig.readOnly}>
               <Input
-                className={classWidth}
+                className={cx(prometheusConfigOverhaulAuth ? 'width-20' : 'width-30')}
                 value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
                 onChange={onResourceIdChange}
               />
