@@ -1,4 +1,4 @@
-import { SystemJS } from '@grafana/runtime';
+import { SystemJS, config } from '@grafana/runtime';
 
 import { sandboxPluginDependencies } from '../sandbox/plugin_dependencies';
 
@@ -17,4 +17,8 @@ export function buildImportMap(importMap: Record<string, System.Module>) {
     acc[key] = module_name;
     return acc;
   }, {});
+}
+
+export function isHostedOnCDN(path: string) {
+  return Boolean(config.pluginsCDNBaseURL) && path.startsWith(config.pluginsCDNBaseURL);
 }

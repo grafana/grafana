@@ -11,6 +11,7 @@ import {
   ENDS_WITH_FILE_EXTENSION_REGEX,
 } from './constants';
 import { SystemJSWithLoaderHooks } from './types';
+import { isHostedOnCDN } from './utils';
 
 export async function decorateSystemJSFetch(
   systemJSFetch: SystemJSWithLoaderHooks['fetch'],
@@ -92,8 +93,4 @@ function preventAMDLoaderCollision(source: string) {
   return `(function(define) {
   ${source}
 })(window.__grafana_amd_define);`;
-}
-
-function isHostedOnCDN(path: string) {
-  return Boolean(config.pluginsCDNBaseURL) && path.startsWith(config.pluginsCDNBaseURL);
 }

@@ -1,7 +1,7 @@
 import { PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
+import { isHostedOnCDN } from '../loader/utils';
 
 import { SandboxEnvironment } from './types';
 
@@ -21,7 +21,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
     scriptCode = patchPluginSourceMap(meta, scriptCode);
 
     // cdn loaded
-  } else if (url.startsWith(config.pluginsCDNBaseURL)) {
+  } else if (isHostedOnCDN(url)) {
     const response = await fetch(url);
     scriptCode = await response.text();
     scriptCode = transformPluginSourceForCDN({
@@ -38,7 +38,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
 }
 
 export async function getPluginCode(meta: PluginMeta): Promise<string> {
-  if (meta.module.startsWith(config.pluginsCDNBaseURL)) {
+  if (isHostedOnCDN(meta.module)) {
     // should load plugin from a CDN
     const url = meta.module;
     const response = await fetch(url);
