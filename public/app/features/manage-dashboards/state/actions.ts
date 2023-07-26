@@ -65,7 +65,7 @@ const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): 
   );
 };
 
-function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
+export function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
   let inputs = dashboardJson.__inputs;
   if (!!state.inputs.libraryPanels.length) {
     const filteredUsedInputs: Input[] = [];
@@ -138,48 +138,57 @@ function processInputs(): ThunkResult<void> {
 
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
   return async function (dispatch) {
-    if (!dashboardJson || !dashboardJson.__elements) {
-      return;
+    const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
+    if (libraryPanelInputs !== undefined) {
+      dispatch(setLibraryPanelInputs(libraryPanelInputs));
     }
-
-    const libraryPanelInputs: LibraryPanelInput[] = [];
-
-    for (const element of Object.values(dashboardJson.__elements)) {
-      if (element.kind !== LibraryElementKind.Panel) {
-        continue;
-      }
-
-      const model = element.model;
-      const { type, description } = model;
-      const { uid, name } = element;
-      const input: LibraryPanelInput = {
-        model: {
-          model,
-          uid,
-          name,
-          version: 0,
-          type,
-          kind: LibraryElementKind.Panel,
-          description,
-        } as LibraryElementDTO,
-        state: LibraryPanelInputState.New,
-      };
-
-      try {
-        const panelInDb = await getLibraryPanel(uid, true);
-        input.state = LibraryPanelInputState.Exists;
-        input.model = panelInDb;
-      } catch (e: any) {
-        if (e.status !== 404) {
-          throw e;
-        }
-      }
-
-      libraryPanelInputs.push(input);
-    }
-
-    dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
+}
+
+export async function getLibraryPanelInputs(dashboardJson?: {
+  __elements?: Record<string, LibraryElementExport>;
+}): Promise<LibraryPanelInput[] | undefined> {
+  if (!dashboardJson || !dashboardJson.__elements) {
+    return;
+  }
+
+  const libraryPanelInputs: LibraryPanelInput[] = [];
+
+  for (const element of Object.values(dashboardJson.__elements)) {
+    if (element.kind !== LibraryElementKind.Panel) {
+      continue;
+    }
+
+    const model = element.model;
+    const { type, description } = model;
+    const { uid, name } = element;
+    const input: LibraryPanelInput = {
+      model: {
+        model,
+        uid,
+        name,
+        version: 0,
+        type,
+        kind: LibraryElementKind.Panel,
+        description,
+      } as LibraryElementDTO,
+      state: LibraryPanelInputState.New,
+    };
+
+    try {
+      const panelInDb = await getLibraryPanel(uid, true);
+      input.state = LibraryPanelInputState.Exists;
+      input.model = panelInDb;
+    } catch (e: any) {
+      if (e.status !== 404) {
+        throw e;
+      }
+    }
+
+    libraryPanelInputs.push(input);
+  }
+
+  return libraryPanelInputs;
 }
 
 export function clearLoadedDashboard(): ThunkResult<void> {
