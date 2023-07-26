@@ -1,4 +1,4 @@
-import { DataFrame, DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
+import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { createLogRow } from './__mocks__/logRow';
