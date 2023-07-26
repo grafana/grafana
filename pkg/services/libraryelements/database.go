@@ -121,7 +121,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		}
 	}
 
-	var updatedModel json.RawMessage
+	updatedModel := cmd.Model
 	var err error
 	if cmd.Kind == int64(model.PanelElement) {
 		updatedModel, err = l.addUidToLibraryPanel(cmd.Model, createUID)
