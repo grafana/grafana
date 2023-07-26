@@ -35,7 +35,10 @@ export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOpt
     ),
 };
 
-const createTimeFormatter =
+/**
+ * @internal
+ */
+export const createTimeFormatter =
   (timeField: string, outputFormat: string) => (fields: Field[], data: DataFrame[], frame: DataFrame) => {
     return fields.map((field) => {
       // Find the configured field
