@@ -7,6 +7,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 node_modules/
+.yarn/.cache/
 
 # Runtime data
 pids
