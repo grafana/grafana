@@ -110,10 +110,11 @@ export interface FeatureToggles {
   transformationsRedesign?: boolean;
   toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
-  disableTraceQLStreaming?: boolean;
+  traceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  prometheusConfigOverhaulAuth?: boolean;
 }

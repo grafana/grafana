@@ -109,6 +109,17 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
               };
             }
             return { data: [] };
+          case AzureQueryType.LocationsQuery:
+            if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
+              const locationMap = await this.datasource.azureMonitorDatasource.getLocations([queryObj.subscription]);
+              const res: Array<{ text: string; value: string }> = [];
+              locationMap.forEach((loc) => {
+                res.push({ text: loc.displayName, value: loc.name });
+              });
+              return {
+                data: res?.length ? [toDataFrame(res)] : [],
+              };
+            }
           default:
             request.targets[0] = queryObj;
             const queryResp = await lastValueFrom(this.datasource.query(request));
