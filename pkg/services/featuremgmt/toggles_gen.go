@@ -148,7 +148,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the still in-development new folder picker to support nested folders
+	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
@@ -175,10 +175,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagLogsSampleInExplore
-	// Enables access to the logs sample feature in Explore
-	FlagLogsSampleInExplore = "logsSampleInExplore"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -195,13 +191,9 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with external auth providers
-	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
-
-	// FlagTraceqlSearch
-	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
-	FlagTraceqlSearch = "traceqlSearch"
+	// FlagGcomOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
+	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
 
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
@@ -402,4 +394,8 @@ const (
 	// FlagSplitScopes
 	// Support faster dashboard and folder search by splitting permission scopes into parts
 	FlagSplitScopes = "splitScopes"
+
+	// FlagAzureMonitorDataplane
+	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
+	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 )

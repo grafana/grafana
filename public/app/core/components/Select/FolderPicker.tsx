@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import { config } from '@grafana/runtime';
 
@@ -13,10 +13,16 @@ interface FolderPickerProps extends NestedFolderPickerProps {
   initialTitle?: string;
 
   /** @deprecated */
+  inputId?: string;
+
+  /** @deprecated */
   dashboardId?: number | string;
 
   /** @deprecated */
   enableCreateNew?: boolean;
+
+  /** @deprecated */
+  skipInitialLoad?: boolean;
 }
 
 // Temporary wrapper component to switch between the NestedFolderPicker and the old flat
@@ -37,9 +43,9 @@ function OldFolderPickerWrapper({
   initialTitle,
   dashboardId,
   enableCreateNew,
+  inputId,
+  skipInitialLoad,
 }: FolderPickerProps) {
-  const [initialFolderUID] = useState(value);
-
   const handleOnChange = useCallback(
     (newFolder: { title: string; uid: string }) => {
       if (onChange) {
@@ -53,8 +59,10 @@ function OldFolderPickerWrapper({
     <OldFolderPicker
       onChange={handleOnChange}
       showRoot={showRootFolder}
-      initialFolderUid={initialFolderUID}
+      initialFolderUid={value}
       initialTitle={initialTitle}
+      inputId={inputId}
+      skipInitialLoad={skipInitialLoad}
       dashboardId={dashboardId}
       enableCreateNew={enableCreateNew}
     />

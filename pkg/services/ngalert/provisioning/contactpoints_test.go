@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -310,7 +311,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	c := &definitions.PostableUserConfig{}
 	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
 	require.NoError(t, err)
-	err = c.EncryptConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)

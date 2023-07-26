@@ -156,7 +156,7 @@ export function getPanelMenu(
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
       onClick: onNavigateToExplore,
-      shortcut: 'x',
+      shortcut: 'p x',
     });
   }
 
@@ -282,7 +282,7 @@ export function getPanelMenu(
   const { extensions } = getPluginLinkExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
-    limitPerPlugin: 2,
+    limitPerPlugin: 3,
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
