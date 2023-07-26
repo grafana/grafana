@@ -34,9 +34,9 @@
     <![endif]-->` }}
     
       {{ __dangerouslyInjectHTML `<!--[if !mso]><!-->` }}
-        <link href="https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Inter" rel="stylesheet" type="text/css">
         <style type="text/css">
-          @import url(https://fonts.googleapis.com/css?family=Ubuntu:300,400,500,700);
+          @import url(https://fonts.googleapis.com/css?family=Inter);
         </style>
       {{ __dangerouslyInjectHTML `<!--<![endif]-->` }}
 
@@ -186,7 +186,7 @@
               <tr>
                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                   
-      <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:150%;text-align:left;color:#000000;"><h2>You have been added to {{ .OrgName }}</h2>
+      <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><h2>You have been added to {{ .OrgName }}</h2>
           <strong>{{ .InvitedBy }}</strong> has added you to the <strong>{{ .OrgName }}</strong> organization in Grafana.</div>
     
                 </td>
@@ -195,7 +195,7 @@
               <tr>
                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                   
-      <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:150%;text-align:left;color:#000000;">Once logged in, <strong>{{ .OrgName }}</strong> will be available to switch to in the user interface.</div>
+      <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">Once logged in, <strong>{{ .OrgName }}</strong> will be available to switch to in the user interface.</div>
     
                 </td>
               </tr>
@@ -203,7 +203,7 @@
               <tr>
                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                   
-      <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:150%;text-align:left;color:#000000;">Log in now by clicking the link below:</div>
+      <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">Log in now by clicking the link below:</div>
     
                 </td>
               </tr>
@@ -215,7 +215,7 @@
         <tbody>
           <tr>
             <td align="center" bgcolor="#3D71D9" role="presentation" style="border:none;border-radius:3px;cursor:auto;mso-padding-alt:10px 25px;background:#3D71D9;" valign="middle">
-              <a href="{{ .AppUrl }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Ubuntu, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 10px 25px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank">
+              <a href="{{ .AppUrl }}" rel="noopener" style="display: inline-block; background: #3D71D9; color: #ffffff; font-family: Inter, Helvetica, Arial; font-size: 13px; font-weight: normal; line-height: 120%; margin: 0; text-decoration: none; text-transform: none; padding: 10px 25px; mso-padding-alt: 0px; border-radius: 3px;" target="_blank">
                 Login to Grafana
               </a>
             </td>
@@ -229,7 +229,7 @@
               <tr>
                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                   
-      <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:150%;text-align:left;color:#000000;">You can also copy and paste this link into your browser directly:</div>
+      <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">You can also copy and paste this link into your browser directly:</div>
     
                 </td>
               </tr>
@@ -237,7 +237,7 @@
               <tr>
                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                   
-      <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:150%;text-align:left;color:#000000;"><a rel="noopener" href="{{ .AppUrl }}" style="color: #6E9FFF;">{{ .AppUrl }}</a></div>
+      <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><a rel="noopener" href="{{ .AppUrl }}" style="color: #6E9FFF;">{{ .AppUrl }}</a></div>
     
                 </td>
               </tr>
@@ -275,7 +275,7 @@
               <tr>
                 <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
                   
-      <div style="font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:150%;text-align:center;color:#000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+      <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:center;color:#000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
     
                 </td>
               </tr>

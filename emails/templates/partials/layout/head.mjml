@@ -1,8 +1,10 @@
 <!-- various styles and attributes -->
+<mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter" />
+
 <mj-attributes>
-  <mj-text css-class="txt" align="left" line-height="150%" />
-  <mj-table css-class="txt" />
-  <mj-button background-color="#3D71D9" rel="noopener" />
+  <mj-text font-family="Inter, Helvetica, Arial" css-class="txt" align="left" line-height="150%" />
+  <mj-table font-family="Inter, Helvetica, Arial" css-class="txt" />
+  <mj-button font-family="Inter, Helvetica, Arial" background-color="#3D71D9" rel="noopener" />
   <mj-body css-class="canvas" />
 </mj-attributes>
 
