@@ -194,7 +194,7 @@ export class LokiDatasource
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
-        isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
+        isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -209,7 +209,7 @@ export class LokiDatasource
 
       case SupplementaryQueryType.LogsSample:
         // it has to be a metric query
-        isQuerySuitable = !!(query.expr && !isLogsQuery(query.expr));
+        isQuerySuitable = !!(expr && !isLogsQuery(expr));
         if (!isQuerySuitable) {
           return undefined;
         }

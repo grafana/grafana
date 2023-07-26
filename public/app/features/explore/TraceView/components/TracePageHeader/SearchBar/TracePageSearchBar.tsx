@@ -135,13 +135,12 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     matchesOnly: css`
       display: inline-flex;
-      margin: 0 0 0 10px;
+      margin: 0 0 0 25px;
       vertical-align: middle;
       align-items: center;
 
       span {
         cursor: pointer;
-        margin: 0 0 0 5px;
       }
     `,
     clearMatchesButton: css`
