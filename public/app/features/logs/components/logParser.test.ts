@@ -163,7 +163,7 @@ describe('logParser', () => {
         entryFieldIndex: 10,
         dataFrame: new MutableDataFrame({
           refId: 'A',
-          fields: [{ ...testField }],
+          fields: [testTimeField, testLineField, { ...testField }],
         }),
       });
 
@@ -177,7 +177,7 @@ describe('logParser', () => {
         entryFieldIndex: 10,
         dataFrame: new MutableDataFrame({
           refId: 'A',
-          fields: [{ ...testFieldWithNullValue }],
+          fields: [testTimeField, testLineField, { ...testFieldWithNullValue }],
         }),
       });
 
