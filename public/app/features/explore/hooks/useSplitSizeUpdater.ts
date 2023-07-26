@@ -43,5 +43,5 @@ export const useSplitSizeUpdater = (minWidth: number) => {
     }
   }
 
-  return { updateSplitSize, widthCalc, minWidth };
+  return { updateSplitSize, widthCalc };
 };
