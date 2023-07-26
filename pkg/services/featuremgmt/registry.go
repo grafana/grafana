@@ -200,9 +200,11 @@ var (
 			Owner:       grafanaUserEssentialsSquad,
 		},
 		{
+			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
+			// can afford the breaking change, or we've detemined no one else is relying on it
 			Name:        "topnav",
-			Description: "Enables new top navigation and page layouts",
-			State:       FeatureStateStable,
+			Description: "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
+			State:       FeatureStateDeprecated,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaUserEssentialsSquad,
 		},

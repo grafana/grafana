@@ -124,7 +124,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// Enables new top navigation and page layouts
+	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
