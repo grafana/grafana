@@ -1,8 +1,6 @@
 <mjml>
-  <!-- we define these as global variables so we can refer to it when we are ion a different scope, ie. looping over alerts -->
-  <mj-raw position="file-start">
-    {{- $theme := default "dark" .Theme }}
-  </mj-raw>
+  <!-- global variables -->
+  <mj-include path="./partials/_globals.mjml" />
   <!-- css styling -->
   <mj-include path="./partials/layout/theme.css" type="css" />
   <mj-head>

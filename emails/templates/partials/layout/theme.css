@@ -1,29 +1,36 @@
   .canvas {
-    background-color: {{ ternary "#111217" "#FFF" (eq $theme "dark") }};
+    background-color: {{ ternary "#111217" "#FFF" $wantsDarkTheme }};
   }
 
   .background {
-    background-color: {{ ternary "#22252b" "#FFF" (eq $theme "dark") }};
-    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+    background-color: {{ ternary "#22252b" "#FFF" $wantsDarkTheme }};
+    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" $wantsDarkTheme }};
   }
 
   .border-bottom {
-    border-bottom: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+    border-bottom: 1px solid {{ ternary "#2f3037" "#e4e5e6" $wantsDarkTheme }};
   }
 
   .border-top {
-    border-top: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+    border-top: 1px solid {{ ternary "#2f3037" "#e4e5e6" $wantsDarkTheme }};
   }
 
   .well {
-    background-color: {{ ternary "#111217" "#F4F5F5" (eq $theme "dark") }};
-    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+    background-color: {{ ternary "#111217" "#F4F5F5" $wantsDarkTheme }};
+    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" $wantsDarkTheme }};
   }
 
-  .txt div {
-    color: {{ ternary "#fff" "#24292e" (eq $theme "dark") }} !important;
+  .txt div, .token div {
+    color: {{ ternary "#fff" "#24292e" $wantsDarkTheme }} !important;
   }
 
   .txt tbody tr td {
-    color: {{ ternary "#fff" "#24292e" (eq $theme "dark") }} !important;
+    color: {{ ternary "#fff" "#24292e" $wantsDarkTheme }} !important;
+  }
+
+  .token {
+    background-color: {{ ternary "#111217" "#F4F5F5" $wantsDarkTheme }};
+    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" $wantsDarkTheme }};
+
+    padding: 10px 25px;
   }
