@@ -1,0 +1,29 @@
+  .canvas {
+    background-color: {{ ternary "#111217" "#FFF" (eq $theme "dark") }};
+  }
+
+  .background {
+    background-color: {{ ternary "#22252b" "#FFF" (eq $theme "dark") }};
+    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+  }
+
+  .border-bottom {
+    border-bottom: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+  }
+
+  .border-top {
+    border-top: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+  }
+
+  .well {
+    background-color: {{ ternary "#111217" "#F4F5F5" (eq $theme "dark") }};
+    border: 1px solid {{ ternary "#2f3037" "#e4e5e6" (eq $theme "dark") }};
+  }
+
+  .txt div {
+    color: {{ ternary "#fff" "#24292e" (eq $theme "dark") }} !important;
+  }
+
+  .txt tbody tr td {
+    color: {{ ternary "#fff" "#24292e" (eq $theme "dark") }} !important;
+  }
