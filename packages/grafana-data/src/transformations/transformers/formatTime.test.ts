@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { Field, FieldType } from '../../types/dataFrame';
+import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 
 import { createTimeFormatter, formatTimeTransformer } from './formatTime';
