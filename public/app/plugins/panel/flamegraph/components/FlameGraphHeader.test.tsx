@@ -29,6 +29,7 @@ describe('FlameGraphHeader', () => {
         showResetButton={true}
         colorScheme={ColorScheme.ValueBased}
         onColorSchemeChange={onSchemeChange}
+        isDiffMode={false}
         {...props}
       />
     );

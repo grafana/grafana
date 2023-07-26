@@ -12,7 +12,7 @@ import {
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
 } from '../../constants';
-import { ClickedItemData, ColorScheme, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
@@ -39,7 +39,7 @@ type RenderOptions = {
   totalColorTicks: number;
   // Total ticks used to compute the diff colors
   totalTicksRight: number | undefined;
-  colorScheme: ColorScheme;
+  colorScheme: ColorScheme | ColorSchemeDiff;
   focusedItemData?: ClickedItemData;
 };
 
@@ -228,7 +228,7 @@ export function renderRect(
   topLevelIndex: number,
   foundNames: Set<string> | undefined,
   textAlign: TextAlign,
-  colorScheme: ColorScheme,
+  colorScheme: ColorScheme | ColorSchemeDiff,
   theme: GrafanaTheme2
 ) {
   if (rect.width < HIDE_THRESHOLD) {
@@ -238,12 +238,10 @@ export function renderRect(
   ctx.beginPath();
   ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
 
-  if (rect.ticksRight !== undefined) {
-  }
-
   const color =
-    rect.ticksRight !== undefined
-      ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!)
+    rect.ticksRight !== undefined &&
+    (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+      ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!, colorScheme)
       : colorScheme === ColorScheme.ValueBased
       ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
       : getBarColorByPackage(rect.label, theme);

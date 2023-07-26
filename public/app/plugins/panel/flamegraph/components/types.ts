@@ -49,4 +49,9 @@ export enum ColorScheme {
   PackageBased = 'packageBased',
 }
 
+export enum ColorSchemeDiff {
+  Default = 'default',
+  DiffColorBlind = 'diffColorBlind',
+}
+
 export type TextAlign = 'left' | 'right';
