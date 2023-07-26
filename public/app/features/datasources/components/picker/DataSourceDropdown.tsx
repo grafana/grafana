@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
@@ -21,7 +22,6 @@ import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { applyMaxSize, maxSize } from './popperModifiers';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
-import { FocusScope } from '@react-aria/focus';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
 const INTERACTION_ITEM = {
@@ -74,7 +74,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
-  const [mainElement, setMainElement] = useState<HTMLDivElement | null>();
 
   // Used to position the popper correctly
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
@@ -82,8 +81,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   // Used to handle tabbing inside the dropdown before closing it
   const [focusedElementManually, setFocusedElementManually] = useState<HTMLElement | null>();
-  let isLastKeyTab = false;
-
 
   const openDropdown = () => {
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
@@ -101,19 +98,18 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     const sub = keyboardEvents.subscribe({
       next: (keyEvent) => {
         switch (keyEvent?.code) {
-          case 'ArrowDown': {
+          case 'ArrowDown':
             openDropdown();
             keyEvent.preventDefault();
             break;
-          }
           case 'ArrowUp':
             openDropdown();
             keyEvent.preventDefault();
             break;
           case 'Escape':
             onClose();
-            markerElement?.focus();
             keyEvent.preventDefault();
+            break;
         }
       },
     });
@@ -129,22 +125,15 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     onChange(grafanaDS, [defaultFileUploadQuery]);
   };
 
-  // useEffect(() => {
-  //   focusedElementManually?.addEventListener("onkeydown", onKeyDownInput)
-  // }, [focusedElementManually])
-
   function onKeyDownInput(keyEvent: React.KeyboardEvent<HTMLInputElement>) {
-    if (keyEvent.key === 'Tab' && isOpen) {
-      console.log('Tab keyEvent is called!');
-
+    if (keyEvent.key === 'Tab' && !keyEvent.shiftKey && isOpen) {
       keyEvent.preventDefault();
-
-      // focusedElementManually?.focus();
-
-      isLastKeyTab = true;
-    } else {
-      onKeyDown(keyEvent);
+      focusedElementManually?.focus();
     }
+    if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
+      onClose();
+    }
+    onKeyDown(keyEvent);
   }
 
   const popper = usePopper(markerElement, selectorElement, {
@@ -162,15 +151,10 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   });
 
   const onClose = useCallback(() => {
-    console.log('onClose is called!');
-
-    if (!isLastKeyTab) {
-      setFilterTerm('');
-      setOpen(false);
-    }
-
-    isLastKeyTab = false;
-  }, [setOpen, isLastKeyTab]);
+    setFilterTerm('');
+    setOpen(false);
+    markerElement?.focus();
+  }, [setOpen, markerElement]);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
@@ -179,7 +163,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
-        console.log("element that is caught on the outside: ", element)
         return markerElement ? !markerElement.isSameNode(element) : false;
       },
     },
@@ -195,7 +178,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
 
   return (
-    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container} ref={setMainElement}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
@@ -207,15 +190,12 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue) || placeholder}
           onClick={openDropdown}
-          // onFocus={() => {
-          //   console.log('onFocus is called!');
-          //   setInputHasFocus(true);
-          // }}
-          // onBlur={() => {
-          //   console.log('onBlur is called!');
-          //   setInputHasFocus(false);
-          //   onClose();
-          // }}
+          onFocus={() => {
+            setInputHasFocus(true);
+          }}
+          onBlur={() => {
+            setInputHasFocus(false);
+          }}
           onKeyDown={onKeyDownInput}
           value={filterTerm}
           onChange={(e) => {
@@ -224,20 +204,12 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           }}
           ref={setMarkerElement}
           disabled={disabled}
-        // tabIndex={0}
         ></Input>
       </div>
       {isOpen ? (
         <Portal>
           <div {...underlayProps} />
-          <div
-            ref={ref}
-            {...overlayProps}
-            {...dialogProps}
-            onMouseDown={(e) => {
-              e.preventDefault(); /** Need to prevent default here to stop onMouseDown to trigger onBlur of the input element */
-            }}
-          >
+          <div ref={ref} {...overlayProps} {...dialogProps}>
             <PickerContent
               keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
@@ -256,7 +228,25 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               {...restProps}
               onDismiss={onClose}
               {...popper.attributes.popper}
-            // advancedButtonRef={setFocusedElementManually}
+              advancedButtonRef={(element) => {
+                if (element instanceof HTMLElement) {
+                  // FIXME: This is a hack to make sure that the advanced button is focused when the dropdown is opened.
+                  // This should be avoided. Otherwise we're adding a event listener for every time the dropdown is opened.
+                  // Probably we can pass the marker element to the picker content and set the focus there.
+                  // Or pass a function that says "onBlurFooter" and "onFocusFooter"
+                  setFocusedElementManually(element);
+                  element.addEventListener('keydown', (e: KeyboardEvent) => {
+                    if (e.key === 'Tab' && !e.shiftKey) {
+                      markerElement?.focus();
+                      onClose();
+                    }
+                    if (e.key === 'Tab' && e.shiftKey) {
+                      e.preventDefault();
+                      markerElement?.focus();
+                    }
+                  });
+                }
+              }}
             />
           </div>
         </Portal>
@@ -291,7 +281,7 @@ export interface PickerContentProps extends DataSourceDropdownProps {
   filterTerm?: string;
   onClose: () => void;
   onDismiss: () => void;
-  // advancedButtonRef?: Dispatch<SetStateAction<HTMLElement | null | undefined>>;
+  advancedButtonRef?: Dispatch<SetStateAction<HTMLElement | null | undefined>>;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
@@ -329,8 +319,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           }
         ></DataSourceList>
       </CustomScrollbar>
-      <div className={styles.footer} >
-        <FocusScope restoreFocus>
+      <div className={styles.footer}>
+        <FocusScope>
           <ModalsController>
             {({ showModal, hideModal }) => (
               <Button
@@ -362,7 +352,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                   });
                   reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
                 }}
-              // ref={props.advancedButtonRef}
+                ref={props.advancedButtonRef}
               >
                 Open advanced data source picker
                 <Icon name="arrow-right" />
@@ -370,7 +360,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             )}
           </ModalsController>
           {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
-            <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            <Button variant="secondary" size="sm" onClick={clickAddCSVCallback} tabIndex={0}>
               Add csv or spreadsheet
             </Button>
           )}
