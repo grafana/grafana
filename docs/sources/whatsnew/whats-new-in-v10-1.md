@@ -424,3 +424,13 @@ When saving or moving a dashboard, you can now see the full folder tree when sel
 To get started creating subfolders, enable the `nestedFolders` feature toggle. We recommend that you enable this feature only on test or development instances, rather than in production environments.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.1-subfolders-folder-picker.png" max-width="750px" caption="Selecting a folder in Grafana" >}}
+
+## Activate draft reports
+
+<!-- Robert Horvath -->
+
+_Generally available in Grafana Enterprise, Cloud Free, Cloud Pro, Cloud Advanced_
+
+You can now use the resume and pause report functionality to activate draft reports that have all the required fields filled in.
+
+To learn more, refer to our [create and manage reports documentation]({{< relref "../dashboards/create-reports" >}}).
