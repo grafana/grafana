@@ -6,21 +6,25 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
-  getFieldDisplayName
+  getFieldDisplayName,
+  PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
 
-export function FormatTimeTransfomerEditor({ input, options, onChange }: TransformerUIProps<FormatTimeTransformerOptions>) {
-  console.log(input)
-  const timeFields: Array<SelectableValue<string>> = []
-  
+export function FormatTimeTransfomerEditor({
+  input,
+  options,
+  onChange,
+}: TransformerUIProps<FormatTimeTransformerOptions>) {
+  const timeFields: Array<SelectableValue<string>> = [];
+
   // Get time fields
   for (const frame of input) {
     for (const field of frame.fields) {
       if (field.type === 'time') {
-        const name = getFieldDisplayName(field, frame, input)
-        timeFields.push({label: name, value: name })
+        const name = getFieldDisplayName(field, frame, input);
+        timeFields.push({ label: name, value: name });
       }
     }
   }
@@ -60,11 +64,12 @@ export function FormatTimeTransfomerEditor({ input, options, onChange }: Transfo
           />
         </InlineField>
 
-        <InlineField 
-          label="Format" 
+        <InlineField
+          label="Format"
           labelWidth={10}
           tooltip="The output format for the field specified as a moment.js format string."
-          grow>
+          grow
+        >
           <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>
       </InlineFieldRow>
@@ -77,5 +82,6 @@ export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTi
   editor: FormatTimeTransfomerEditor,
   transformation: standardTransformers.formatTimeTransformer,
   name: standardTransformers.formatTimeTransformer.name,
+  state: PluginState.alpha,
   description: standardTransformers.formatTimeTransformer.description,
 };
