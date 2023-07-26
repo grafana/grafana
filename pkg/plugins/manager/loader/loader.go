@@ -316,14 +316,19 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 func (l *Loader) setImages(p *plugins.Plugin) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
-		*dst, err = l.assetPath.RelativeURL(p, *dst, defaultLogoPath(l.cfg, p.Type))
+		if len(*dst) == 0 {
+			*dst = l.assetPath.DefaultLogoPath(p.Type)
+			continue
+		}
+
+		*dst, err = l.assetPath.RelativeURL(p.JSONData, p.Class, p.FS.Base(), *dst)
 		if err != nil {
 			return fmt.Errorf("logo: %w", err)
 		}
 	}
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		screenshot := &p.Info.Screenshots[i]
-		screenshot.Path, err = l.assetPath.RelativeURL(p, screenshot.Path, "")
+		screenshot.Path, err = l.assetPath.RelativeURL(p.JSONData, p.Class, p.FS.Base(), screenshot.Path)
 		if err != nil {
 			return fmt.Errorf("screenshot %d relative url: %w", i, err)
 		}
@@ -370,10 +375,6 @@ func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plu
 	} else {
 		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
 	}
-}
-
-func defaultLogoPath(cfg *config.Cfg, pluginType plugins.Type) string {
-	return path.Join("/", cfg.GrafanaAppSubURL, fmt.Sprintf("/public/img/icn-%s.svg", string(pluginType)))
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {

@@ -47,14 +47,9 @@ func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugi
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
-// If pathStr is an empty string, defaultStr is returned.
-func (s *Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (string, error) {
-	if pathStr == "" {
-		return defaultStr, nil
-	}
-	if s.cdn.PluginSupported(p.ID) {
-		// CDN
-		return s.cdn.NewCDNURLConstructor(p.ID, p.Info.Version).StringPath(pathStr)
+func (s *Service) RelativeURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir, pathStr string) (string, error) {
+	if s.cdn.PluginSupported(pluginJSON.ID) {
+		return s.cdn.NewCDNURLConstructor(pluginJSON.ID, pluginJSON.Info.Version).StringPath(pathStr)
 	}
 	// Local
 	u, err := url.Parse(pathStr)
@@ -64,9 +59,20 @@ func (s *Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (st
 	if u.IsAbs() {
 		return pathStr, nil
 	}
-	// is set as default or has already been prefixed with base path
-	if pathStr == defaultStr || strings.HasPrefix(pathStr, p.BaseURL) {
+
+	baseURL, err := s.Base(pluginJSON, class, pluginDir)
+	if err != nil {
+		return "", err
+	}
+
+	// has already been prefixed with base path
+	if strings.HasPrefix(pathStr, baseURL) {
 		return pathStr, nil
 	}
-	return path.Join(p.BaseURL, pathStr), nil
+	return path.Join(baseURL, pathStr), nil
+}
+
+// DefaultLogoPath returns the default logo path for the specified plugin type.
+func (s *Service) DefaultLogoPath(pluginType plugins.Type) string {
+	return path.Join("/", s.cfg.GrafanaAppSubURL, fmt.Sprintf("/public/img/icn-%s.svg", string(pluginType)))
 }
