@@ -23,7 +23,7 @@ scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,false,false,false,false
-topnav,GA,@grafana/grafana-frontend-platform,false,false,false,false
+topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false,false
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false,false
 entityStore,experimental,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false,false
