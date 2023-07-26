@@ -332,6 +332,10 @@ function updateEdge(source: FrameVectorSource, graphFrames: GraphFrame) {
     const sourceNodeIndex = nodeIdValues.findIndex((value: string) => value === sourceId);
     const targetNodeIndex = nodeIdValues.findIndex((value: string) => value === targetId);
 
+    if (!field.values[sourceNodeIndex] || !field.values[targetNodeIndex]) {
+      continue;
+    }
+
     const geometryEdge: Geometry = new LineString([
       field.values[sourceNodeIndex].getCoordinates(),
       field.values[targetNodeIndex].getCoordinates(),
