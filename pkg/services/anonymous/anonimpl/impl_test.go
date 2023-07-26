@@ -12,15 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 )
 
-func TestAnonSessionKey(t *testing.T) {
+func TestAnonDeviceKey(t *testing.T) {
 	testCases := []struct {
 		name     string
-		session  *AnonDevice
+		session  *Device
 		expected string
 	}{
 		{
 			name: "should hash correctly",
-			session: &AnonDevice{
+			session: &Device{
 				ip:        "10.10.10.10",
 				userAgent: "test",
 			},
@@ -28,7 +28,7 @@ func TestAnonSessionKey(t *testing.T) {
 		},
 		{
 			name: "should hash correctly with different ip",
-			session: &AnonDevice{
+			session: &Device{
 				ip:        "10.10.10.1",
 				userAgent: "test",
 			},
@@ -36,7 +36,7 @@ func TestAnonSessionKey(t *testing.T) {
 		},
 		{
 			name: "should hash correctly with different user agent",
-			session: &AnonDevice{
+			session: &Device{
 				ip:        "10.10.10.1",
 				userAgent: "test2",
 			},
@@ -58,7 +58,7 @@ func TestAnonSessionKey(t *testing.T) {
 	}
 }
 
-func TestIntegrationAnonSessionService_tag(t *testing.T) {
+func TestIntegrationAnonDeviceService_tag(t *testing.T) {
 	testCases := []struct {
 		name          string
 		req           []*http.Request
@@ -150,7 +150,7 @@ func TestIntegrationAnonSessionService_tag(t *testing.T) {
 }
 
 // Ensure that the local cache prevents request from being tagged
-func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
+func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	fakeStore := remotecache.NewFakeStore(t)
 	anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
 
@@ -161,12 +161,12 @@ func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
 		},
 	}
 
-	anonSession := &AnonDevice{
+	anonDevice := &Device{
 		ip:        "10.30.30.2",
 		userAgent: "test",
 	}
 
-	key, err := anonSession.Key()
+	key, err := anonDevice.Key()
 	require.NoError(t, err)
 
 	anonService.localCache.SetDefault(key, true)

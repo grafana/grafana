@@ -20,12 +20,12 @@ import (
 const thirtyDays = 30 * 24 * time.Hour
 const anonCachePrefix = "anon-session"
 
-type AnonDevice struct {
+type Device struct {
 	ip        string
 	userAgent string
 }
 
-func (a *AnonDevice) Key() (string, error) {
+func (a *Device) Key() (string, error) {
 	key := strings.Builder{}
 	key.WriteString(a.ip)
 	key.WriteString(a.userAgent)
@@ -80,12 +80,12 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		clientIPStr = ""
 	}
 
-	anonSession := &AnonDevice{
+	anonDevice := &Device{
 		ip:        clientIPStr,
 		userAgent: httpReq.UserAgent(),
 	}
 
-	key, err := anonSession.Key()
+	key, err := anonDevice.Key()
 	if err != nil {
 		return err
 	}
