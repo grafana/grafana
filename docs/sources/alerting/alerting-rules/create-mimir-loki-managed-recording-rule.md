@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure recording rules
-weight: 400
+weight: 300
 ---
 
 # Configure recording rules
@@ -46,8 +46,8 @@ This setting has precedence over each individual rule frequency. If a rule frequ
 
 To create recording rules, follow these steps.
 
-1. Click **Alerts & IRM** and then **Alerting**.
-1. Click **Alert rules**.
+1. Click **Alerts & IRM** -> **Alerting** ->
+   **Alert rules**.
 1. Click the **More** dropdown and then **New recording rule**.
 
 1. Set rule name.
