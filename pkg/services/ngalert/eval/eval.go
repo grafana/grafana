@@ -324,8 +324,6 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	for _, next := range c.Data {
 		datasourceUIDsForRefIDs[next.RefID] = next.DatasourceUID
 	}
-	// datasourceExprUID is a special DatasourceUID for expressions
-	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
@@ -347,7 +345,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			hasNoFrames := len(res.Frames) == 0
 			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
 			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
 					result.NoData[refID] = s
 				}
 			}
@@ -442,10 +440,7 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 	// for each Datasource UID we can append them all to a slice and then
 	// sort them once
 	refIDs := make([]string, 0, len(refIDsToDatasourceUIDs))
-	for refID, datasourceUid := range refIDsToDatasourceUIDs {
-		if expr.NodeTypeFromDatasourceUID(datasourceUid) != expr.TypeDatasourceNode {
-			continue
-		} // TODO think about ML node NO-Data... perhaps report original datasource.
+	for refID := range refIDsToDatasourceUIDs {
 		refIDs = append(refIDs, refID)
 	}
 	sort.Strings(refIDs)

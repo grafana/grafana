@@ -354,21 +354,6 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 		require.ElementsMatch(t, []string{"1", "2"}, datasourceUIDs)
 		require.ElementsMatch(t, []string{"A,B", "C"}, refIDs)
 	})
-
-	t.Run("should ignore expression ref-ids", func(t *testing.T) {
-		results := ExecutionResults{
-			NoData: map[string]string{
-				"A":  "ce7e897f-81e5-4be6-9636-a7f26eaf576b",
-				"B1": expr.DatasourceType,
-				"B2": expr.OldDatasourceUID,
-				"C":  expr.MLDatasourceUID,
-			},
-		}
-		v := evaluateExecutionResult(results, time.Time{})
-		require.Len(t, v, 1)
-		require.Equal(t, data.Labels{"datasource_uid": "ce7e897f-81e5-4be6-9636-a7f26eaf576b", "ref_id": "A"}, v[0].Instance)
-		require.Equal(t, NoData, v[0].State)
-	})
 }
 
 func TestValidate(t *testing.T) {
@@ -577,11 +562,23 @@ func TestEvaluate(t *testing.T) {
 			Data: []models.AlertQuery{{
 				RefID:         "A",
 				DatasourceUID: "test",
+			}, {
+				RefID:         "B",
+				DatasourceUID: expr.DatasourceUID,
+			}, {
+				RefID:         "C",
+				DatasourceUID: expr.OldDatasourceUID,
+			}, {
+				RefID:         "D",
+				DatasourceUID: expr.MLDatasourceUID,
 			}},
 		},
 		resp: backend.QueryDataResponse{
 			Responses: backend.Responses{
 				"A": {Frames: nil},
+				"B": {Frames: []*data.Frame{{Fields: nil}}},
+				"C": {Frames: nil},
+				"D": {Frames: []*data.Frame{{Fields: nil}}},
 			},
 		},
 		expected: Results{{
