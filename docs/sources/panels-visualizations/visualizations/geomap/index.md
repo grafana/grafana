@@ -81,7 +81,7 @@ The Geomap visualization supports showing multiple layers. Each layer determines
 
 ### Types
 
-There are six map layer types to choose from in the Geomap visualization.
+There are seven map layer types to choose from in the Geomap visualization.
 
 - [Markers]({{< relref "#markers-layer" >}}) renders a marker at each data point.
 - [Heatmap]({{< relref "#heatmap-layer" >}}) visualizes a heatmap of the data.
