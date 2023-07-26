@@ -237,7 +237,10 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
       },
 
       // Marker overlay options
-      registerOptionsUI: (builder) => {
+      registerOptionsUI: (builder, context) => {
+        // TODO hook up to data frame logic for nodes and edges
+        const nodes = context?.data[0];
+        const edges = context?.data[1];
         builder
           .addCustomEditor({
             id: 'config.style',
@@ -247,6 +250,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
             editor: StyleEditor,
             settings: {
               displayRotation: true,
+              frameMatcher: (frame: DataFrame) => frame === nodes,
             },
             defaultValue: defaultOptions.style,
           })
@@ -257,7 +261,8 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
             name: 'Edge Styles',
             editor: StyleEditor,
             settings: {
-              edgeEditor: true,
+              hideSymbol: true,
+              frameMatcher: (frame: DataFrame) => frame === edges,
             },
             defaultValue: defaultOptions.style,
           })
