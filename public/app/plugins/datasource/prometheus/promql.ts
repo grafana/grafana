@@ -521,6 +521,12 @@ export const FUNCTIONS = [
     detail: 'last_over_time(range-vector)',
     documentation: 'The most recent point value in specified interval.',
   },
+  {
+    insertText: 'present_over_time',
+    label: 'present_over_time',
+    detail: 'present_over_time(range-vector)',
+    documentation: 'The value 1 for any series in the specified interval.',
+  },
 ];
 
 export const PROM_KEYWORDS = FUNCTIONS.map((keyword) => keyword.label);
