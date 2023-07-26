@@ -9,6 +9,7 @@ import { concatenateTransformRegistryItem } from './editors/ConcatenateTransform
 import { convertFieldTypeTransformRegistryItem } from './editors/ConvertFieldTypeTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from './editors/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from './editors/FilterByRefIdTransformerEditor';
+import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 import { groupByTransformRegistryItem } from './editors/GroupByTransformerEditor';
 import { groupingToMatrixTransformRegistryItem } from './editors/GroupingToMatrixTransformerEditor';
 import { histogramTransformRegistryItem } from './editors/HistogramTransformerEditor';
@@ -29,7 +30,6 @@ import { prepareTimeseriesTransformerRegistryItem } from './prepareTimeSeries/Pr
 import { rowsToFieldsTransformRegistryItem } from './rowsToFields/RowsToFieldsTransformerEditor';
 import { spatialTransformRegistryItem } from './spatial/SpatialTransformerEditor';
 import { timeSeriesTableTransformRegistryItem } from './timeSeriesTable/TimeSeriesTableTransformEditor';
-import { formatTimeTransformerRegistryItem } from './editors/FormatTimeTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> => {
   return [
