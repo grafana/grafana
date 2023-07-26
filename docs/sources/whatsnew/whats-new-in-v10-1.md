@@ -101,7 +101,7 @@ To try out the visualizations and widgets split, enable the `vizAndWidgetSplit` 
 
 ### Geomap network layer
 
-_Experimental in all editions of Grafana._
+_Available in public preview in all editions of Grafana._
 
 <!-- Nathan Marrs -->
 
