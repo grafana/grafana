@@ -183,7 +183,12 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 					q, params := filter.Where()
 					recQry, recQryParams := filter.With()
 					params = append(recQryParams, params...)
-					_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+					leftJoin := filter.LeftJoin()
+					s := recQry + "\nSELECT COUNT(*) FROM dashboard WHERE " + q
+					if leftJoin != "" {
+						s = recQry + "\nSELECT COUNT(*) FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
+					}
+					_, err := sess.SQL(s, params...).Get(&result)
 					return err
 				})
 				require.NoError(t, err)
@@ -352,7 +357,12 @@ func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *t
 					q, params := filter.Where()
 					recQry, recQryParams := filter.With()
 					params = append(recQryParams, params...)
-					_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+					s := recQry + "\nSELECT COUNT(*) FROM dashboard WHERE " + q
+					leftJoin := filter.LeftJoin()
+					if leftJoin != "" {
+						s = recQry + "\nSELECT COUNT(*) FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
+					}
+					_, err := sess.SQL(s, params...).Get(&result)
 					return err
 				})
 				require.NoError(t, err)
@@ -468,7 +478,12 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 					q, params := filter.Where()
 					recQry, recQryParams := filter.With()
 					params = append(recQryParams, params...)
-					err := sess.SQL(recQry+"\nSELECT title FROM dashboard WHERE "+q, params...).Find(&result)
+					s := recQry + "\nSELECT dashboard.title FROM dashboard WHERE " + q
+					leftJoin := filter.LeftJoin()
+					if leftJoin != "" {
+						s = recQry + "\nSELECT dashboard.title FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
+					}
+					err := sess.SQL(s, params...).Find(&result)
 					return err
 				})
 				require.NoError(t, err)
@@ -604,7 +619,12 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 					q, params := filter.Where()
 					recQry, recQryParams := filter.With()
 					params = append(recQryParams, params...)
-					err := sess.SQL(recQry+"\nSELECT title FROM dashboard WHERE "+q, params...).Find(&result)
+					s := recQry + "\nSELECT dashboard.title FROM dashboard WHERE " + q
+					leftJoin := filter.LeftJoin()
+					if leftJoin != "" {
+						s = recQry + "\nSELECT dashboard.title FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
+					}
+					err := sess.SQL(s, params...).Find(&result)
 					return err
 				})
 				require.NoError(t, err)
