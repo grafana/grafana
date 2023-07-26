@@ -99,6 +99,18 @@ To try out the visualizations and widgets split, enable the `vizAndWidgetSplit` 
 
 {{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
 
+### Heatmap visualizations now support datalinks
+
+_Generally available in all editions of Grafana._
+
+<!-- Nathan Marrs -->
+
+You can now add datalinks to heatmap visualizations. This allows you to add links to other dashboards, panels, or external URLs that are relevant to the data in your heatmap. This feature was a community contribution!
+
+To learn more, refer to both our [heatmap documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}) and our [datalink documentation]({{< relref "../panels-visualizations/configure-data-links/" >}}).
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-heatmap-datalinks.png" max-width="750px" caption="Heatmap datalink support" >}}
+
 ## Data sources
 
 ### Step editor in Loki
