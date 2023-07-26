@@ -77,6 +77,14 @@ _Generally available in all editions of Grafana._
 
 With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
 
+### Logs: See more log lines in logs context
+
+<!-- Gabor Farkas, Sven Grossmann -->
+
+_Generally available in all editions of Grafana._
+
+Log context allows you to view additional lines surrounding a specific log entry. With this enhancement, you can access as many log lines as needed within the log context. As you scroll through the logs, Grafana dynamically loads more log lines, ensuring a seamless and continuous viewing experience.
+
 ### Visualizations and Widgets split
 
 <!-- Alexa Vargas, Juan Cabanas -->
