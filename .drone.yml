@@ -3023,7 +3023,7 @@ steps:
   - publish-linux-packages-rpm
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_grafanauploads_base64
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
@@ -4612,6 +4612,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: fcf3c6f58b564b3ca60bb9ba1d5c9e6dd167f2661e591f3c37c0f32a3ec9df3e
+hmac: 3667a0151d11fbabfc3d6e07a704363d852a9134e33b20b94345d044f5ddeb88
 
 ...
