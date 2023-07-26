@@ -301,7 +301,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
 		}
 		if baseInterval != SchedulerBaseInterval {
-			cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", uaCfg.BaseInterval, "default", SchedulerBaseInterval)
+			cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", baseInterval, "default", SchedulerBaseInterval)
 		}
 		uaCfg.BaseInterval = baseInterval
 	} else if baseInterval != SchedulerBaseInterval {
