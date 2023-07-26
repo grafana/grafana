@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure Grafana-managed alert rules
-weight: 400
+weight: 100
 ---
 
 # Configure Grafana-managed alert rules
@@ -35,12 +35,6 @@ Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >
 In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
-
-1. Enter an alert rule name
-1. Define query and alert condition
-1. Set evaluation behavior
-1. Add annotations
-1. Configure notifications
 
 ## Set alert rule name
 
@@ -140,15 +134,15 @@ All alert rules and instances, irrespective of their labels, match the default n
 
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
-2. Preview your alert instance routing set up.
+1. Preview your alert instance routing set up.
 
    Based on the labels added, alert instances are routed to the following notification policies displayed.
 
    Expand each notification policy below to view more details.
 
-3. Click **See details** to view alert routing details and an email preview.
+1. Click **See details** to view alert routing details and an email preview.
 
-4. Click **Save rule**.
+1. Click **Save rule**.
 
 ### Single and multi-dimensional rule
 
