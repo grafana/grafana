@@ -407,6 +407,46 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.7 START -->
+
+# 9.5.7 (2023-07-20)
+
+### Features and enhancements
+
+- **Alerting:** Sort NumberCaptureValues in EvaluationString. [#71930](https://github.com/grafana/grafana/issues/71930), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Alerting:** No longer silence paused alerts during legacy migration. [#71765](https://github.com/grafana/grafana/issues/71765), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Chore:** Upgrade Go to 1.20.6. [#71446](https://github.com/grafana/grafana/issues/71446), [@sakjur](https://github.com/sakjur)
+- **Alerting:** Remove and revert flag alertingBigTransactions. [#70910](https://github.com/grafana/grafana/issues/70910), [@santihernandezc](https://github.com/santihernandezc)
+- **Alerting:** Migrate unknown NoData\Error settings to the default. [#70905](https://github.com/grafana/grafana/issues/70905), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Tempo:** Escape regex-sensitive characters in span name before building promql query. [#68318](https://github.com/grafana/grafana/issues/68318), [@joey-grafana](https://github.com/joey-grafana)
+- **Alerting:** Update grafana/alerting to ce9fba9. [#67685](https://github.com/grafana/grafana/issues/67685), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Chore:** Upgrade Go to 1.20.6. (Enterprise)
+
+### Bug fixes
+
+- **Plugins:** Only configure plugin proxy transport once. [#71741](https://github.com/grafana/grafana/issues/71741), [@wbrowne](https://github.com/wbrowne)
+- **Alerting:** Fix unique violation when updating rule group with title chains/cycles. [#71330](https://github.com/grafana/grafana/issues/71330), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Fix:** Change getExistingDashboardByTitleAndFolder to get dashboard by title, not slug. [#70961](https://github.com/grafana/grafana/issues/70961), [@yangkb09](https://github.com/yangkb09)
+- **Alerting:** Convert 'Both' type Prometheus queries to 'Range' in migration. [#70907](https://github.com/grafana/grafana/issues/70907), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Alerting:** Support newer http_config struct. [#69718](https://github.com/grafana/grafana/issues/69718), [@gillesdemey](https://github.com/gillesdemey)
+- **InfluxDB:** Interpolate retention policies. [#69299](https://github.com/grafana/grafana/issues/69299), [@itsmylife](https://github.com/itsmylife)
+- **StatusHistory:** Fix rendering of value-mapped null. [#69107](https://github.com/grafana/grafana/issues/69107), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Fix provenance guard checks for Alertmanager configuration to not cause panic when compared nested objects. [#69092](https://github.com/grafana/grafana/issues/69092), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **AnonymousAuth:** Fix concurrent read-write crash. [#68802](https://github.com/grafana/grafana/issues/68802), [@Jguer](https://github.com/Jguer)
+- **AzureMonitor:** Ensure legacy properties containing template variables are correctly migrated. [#68790](https://github.com/grafana/grafana/issues/68790), [@aangelisc](https://github.com/aangelisc)
+- **Explore:** Remove data source onboarding page. [#68643](https://github.com/grafana/grafana/issues/68643), [@harisrozajac](https://github.com/harisrozajac)
+- **Dashboard:** Re-align Save form. [#68625](https://github.com/grafana/grafana/issues/68625), [@polibb](https://github.com/polibb)
+- **Azure Monitor:** Fix bug that did not show alert rule preview. [#68582](https://github.com/grafana/grafana/issues/68582), [@alyssabull](https://github.com/alyssabull)
+- **Histogram:** Respect min/max panel settings for x-axis. [#68244](https://github.com/grafana/grafana/issues/68244), [@leeoniya](https://github.com/leeoniya)
+- **Heatmap:** Fix color rendering for value ranges < 1. [#68163](https://github.com/grafana/grafana/issues/68163), [@leeoniya](https://github.com/leeoniya)
+- **Heatmap:** Handle unsorted timestamps in calculate mode. [#68150](https://github.com/grafana/grafana/issues/68150), [@leeoniya](https://github.com/leeoniya)
+- **Google Cloud Monitor:** Fix mem usage for dropdown. [#67949](https://github.com/grafana/grafana/issues/67949), [@asimpson](https://github.com/asimpson)
+- **AzureMonitor:** Fix logs query multi-resource and timespan values. [#67932](https://github.com/grafana/grafana/issues/67932), [@aangelisc](https://github.com/aangelisc)
+- **Utils:** Reimplement util.GetRandomString to avoid modulo bias. [#66970](https://github.com/grafana/grafana/issues/66970), [@DanCech](https://github.com/DanCech)
+- **License:** Enable FeatureUserLimit for all products. (Enterprise)
+- **Auth:** Remove ldap init sync. (Enterprise)
+
+<!-- 9.5.7 END -->
 <!-- 9.5.6 START -->
 
 # 9.5.6 (2023-07-11)
