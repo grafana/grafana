@@ -537,7 +537,7 @@ export function useFieldOverrides(
         dataLinkPostProcessor,
       }),
     };
-    if (data.annotations) {
+    if (data.annotations && data.annotations.length > 0) {
       panelData.annotations = applyFieldOverrides({
         data: data.annotations,
         fieldConfig: {
