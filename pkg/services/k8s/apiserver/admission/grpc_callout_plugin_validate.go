@@ -18,21 +18,21 @@ package admission
 
 import (
 	"context"
-	"fmt"
-	"io"
-
+	"encoding/json"
+	"errors"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"io"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	admissionsV1 "k8s.io/api/admission/v1"
+	authenticationV1 "k8s.io/api/authentication/v1"
 	"k8s.io/apiserver/pkg/admission"
 
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const PluginNameGrpcCalloutPluginValidate = "GrpcCalloutPluginValidate"
-
-var (
-	_ backend.CallResourceResponseSender = &grpcCalloutPluginValidate{}
-)
 
 // Register registers a plugin
 func RegisterGrpcCalloutPluginValidate(plugins *admission.Plugins, pluginsClient plugins.Client) {
@@ -48,18 +48,55 @@ type grpcCalloutPluginValidate struct {
 
 var _ admission.ValidationInterface = grpcCalloutPluginValidate{}
 
-func (g grpcCalloutPluginValidate) Send(response *backend.CallResourceResponse) error {
-	fmt.Printf("Backend response is: +%v", response)
-	return nil
-}
-
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
-func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	// kind := a.GetKind()
-	if true { // kind.Group == "charandas.example.com" && kind.Kind == "TestObject"
-		return g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
+func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	var finalErr error
+
+	wrappedSender := callResourceResponseSenderFunc(func(response *backend.CallResourceResponse) error {
+		// err = errors.New("some validation error")
+		admissionResponse := &admissionsV1.AdmissionResponse{}
+		if err := json.Unmarshal(response.Body, &admissionResponse); err != nil {
+			finalErr = errors.New("Admission response from plugin is malformed")
+		}
+
+		if !admissionResponse.Allowed {
+			finalErr = admission.NewForbidden(a, errors.New("admission control is denying all modifications"))
+		}
+		return nil
+	})
+
+	kind := a.GetKind()
+	userInfo := a.GetUserInfo()
+	admissionRequest := &admissionsV1.AdmissionRequest{
+		UID:             "0",
+		Kind:            v1.GroupVersionKind(a.GetKind()),
+		Resource:        v1.GroupVersionResource(a.GetResource()),
+		SubResource:     a.GetSubresource(),
+		RequestKind:     nil,
+		RequestResource: nil,
+		Name:            a.GetName(),
+		Namespace:       a.GetNamespace(),
+		Operation:       admissionsV1.Operation(a.GetOperation()),
+		UserInfo: authenticationV1.UserInfo{
+			Username: userInfo.GetName(),
+			Groups:   userInfo.GetGroups(),
+			UID:      userInfo.GetUID(),
+		},
+		Object: runtime.RawExtension{
+			Object: a.GetObject(),
+		},
+		OldObject: runtime.RawExtension{
+			Object: a.GetOldObject(),
+		},
+		DryRun:  nil,
+		Options: runtime.RawExtension{},
+	}
+
+	admissionRequestBody, _ := json.Marshal(admissionRequest)
+	if kind.Group == "charandas.example.com" && kind.Kind == "TestObject" {
+		g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
 			Path:   "/k8s/admission/mutation",
-			Method: "GET",
+			Method: "POST",
 			PluginContext: backend.PluginContext{
 				OrgID:                      0,
 				PluginID:                   "charandas-callbackadmissionexample-app",
@@ -67,11 +104,11 @@ func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Att
 				AppInstanceSettings:        &backend.AppInstanceSettings{},
 				DataSourceInstanceSettings: nil,
 			},
-			Body: []byte("{\"kind\":\"TestObject\",\"apiVersion\":\"charandas.example.com/v1\",\\}}"),
-		}, g)
+			Body: admissionRequestBody,
+		}, wrappedSender)
 	}
 
-	return nil
+	return finalErr
 }
 
 // Handles returns true if this admission controller can handle the given operation
@@ -85,4 +122,10 @@ func NewGrpcCalloutPluginValidate(pluginsClient plugins.Client) admission.Interf
 	return &grpcCalloutPluginValidate{
 		pluginsClient: pluginsClient,
 	}
+}
+
+type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
+
+func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
+	return fn(res)
 }

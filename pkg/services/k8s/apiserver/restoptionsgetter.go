@@ -51,7 +51,7 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	if resource.Resource == "grafanaresourcedefinitions" {
+	if resource.Resource == "grafanaresourcedefinitions" || resource.Resource == "testobjects" {
 		return f.fallback.GetRESTOptions(resource)
 	}
 
@@ -88,6 +88,7 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 		) (storage.Interface, factory.DestroyFunc, error) {
 			var dualWrite DualWriter
 			var found kindsys.Core
+
 			kinds := f.registry.All()
 			for _, k := range kinds {
 				if k.Props().Common().PluralMachineName == config.GroupResource.Resource {
