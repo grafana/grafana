@@ -402,4 +402,8 @@ const (
 	// FlagPrometheusConfigOverhaulAuth
 	// Update the Prometheus configuration page with the new auth component
 	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
+
+	// FlagConfigurableSchedulerTick
+	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
+	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
 )
