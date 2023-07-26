@@ -65,7 +65,7 @@ func (sloQ *cloudMonitoringSLO) setParams(startTime time.Time, endTime time.Time
 	params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
 	params.Add("filter", sloQ.getFilter())
-	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(sloQ.parameters.AlignmentPeriod, intervalMs, durationSeconds))
+	params.Add("aggregation.alignmentPeriod", calculateAlignmentPeriod(*sloQ.parameters.AlignmentPeriod, intervalMs, durationSeconds))
 	if sloQ.parameters.SelectorName == "select_slo_health" {
 		params.Add("aggregation.perSeriesAligner", "ALIGN_MEAN")
 	} else {

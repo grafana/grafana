@@ -155,7 +155,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 	if t != PreprocessorTypeNone {
 		// Move aggregation to secondaryAggregation
 		timeSeriesFilter.parameters.SecondaryAlignmentPeriod = timeSeriesFilter.parameters.AlignmentPeriod
-		timeSeriesFilter.parameters.SecondaryCrossSeriesReducer = timeSeriesFilter.parameters.CrossSeriesReducer
+		timeSeriesFilter.parameters.SecondaryCrossSeriesReducer = &timeSeriesFilter.parameters.CrossSeriesReducer
 		timeSeriesFilter.parameters.SecondaryPerSeriesAligner = timeSeriesFilter.parameters.PerSeriesAligner
 		timeSeriesFilter.parameters.SecondaryGroupBys = timeSeriesFilter.parameters.GroupBys
 
@@ -169,7 +169,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 		if t == PreprocessorTypeDelta {
 			aligner = "ALIGN_DELTA"
 		}
-		timeSeriesFilter.parameters.PerSeriesAligner = aligner
+		timeSeriesFilter.parameters.PerSeriesAligner = strPtr(aligner)
 	}
 }
 
@@ -181,43 +181,47 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 	params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
 	params.Add("filter", timeSeriesFilter.getFilter())
-	params.Add("view", query.View)
+	params.Add("view", *query.View)
 
 	if query.CrossSeriesReducer == "" {
 		query.CrossSeriesReducer = crossSeriesReducerDefault
 	}
 
-	if query.PerSeriesAligner == "" {
-		query.PerSeriesAligner = perSeriesAlignerDefault
+	if query.PerSeriesAligner == strPtr("") {
+		query.PerSeriesAligner = strPtr(perSeriesAlignerDefault)
 	}
 
 	timeSeriesFilter.setPreprocessor()
 
-	alignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
+	alignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 	if query.CrossSeriesReducer != "" {
 		params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
 	}
-	if query.PerSeriesAligner != "" {
-		params.Add("aggregation.perSeriesAligner", query.PerSeriesAligner)
+	if query.PerSeriesAligner != strPtr("") {
+		params.Add("aggregation.perSeriesAligner", *query.PerSeriesAligner)
 	}
 	for _, groupBy := range query.GroupBys {
 		params.Add("aggregation.groupByFields", groupBy)
 	}
 
-	if query.SecondaryAlignmentPeriod != "" {
-		secondaryAlignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
+	if query.SecondaryAlignmentPeriod != strPtr("") {
+		secondaryAlignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
 		params.Add("secondaryAggregation.alignmentPeriod", secondaryAlignmentPeriod)
 	}
-	if query.SecondaryCrossSeriesReducer != "" {
-		params.Add("secondaryAggregation.crossSeriesReducer", query.SecondaryCrossSeriesReducer)
+	if query.SecondaryCrossSeriesReducer != strPtr("") {
+		params.Add("secondaryAggregation.crossSeriesReducer", *query.SecondaryCrossSeriesReducer)
 	}
-	if query.SecondaryPerSeriesAligner != "" {
-		params.Add("secondaryAggregation.perSeriesAligner", query.SecondaryPerSeriesAligner)
+	if query.SecondaryPerSeriesAligner != strPtr("") {
+		params.Add("secondaryAggregation.perSeriesAligner", *query.SecondaryPerSeriesAligner)
 	}
 	for _, groupBy := range query.SecondaryGroupBys {
 		params.Add("secondaryAggregation.groupByFields", groupBy)
 	}
 
 	timeSeriesFilter.params = params
+}
+
+func strPtr(s string) *string {
+	return &s
 }

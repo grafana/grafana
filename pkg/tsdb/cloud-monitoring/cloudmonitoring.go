@@ -234,12 +234,12 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			rawQuery["timeSeriesList"] == nil &&
 			rawQuery["sloQuery"] == nil {
 			// migrate legacy query
-			var mq timeSeriesList
+			var mq dataquery.TimeSeriesList
 			err = json.Unmarshal(q.JSON, &mq)
 			if err != nil {
 				return err
 			}
-			q.QueryType = string(dataquery.QueryTypeAnnotation)
+			q.QueryType = string(dataquery.QueryTypeTimeSeriesList)
 			gq := grafanaQuery{
 				TimeSeriesList: &mq,
 			}
@@ -271,10 +271,10 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
 
 			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
-				rawQuery["timeSeriesQuery"] = &timeSeriesQuery{
+				rawQuery["timeSeriesQuery"] = &dataquery.TimeSeriesQuery{
 					ProjectName: toString(metricQuery["projectName"]),
 					Query:       toString(metricQuery["query"]),
-					GraphPeriod: toString(metricQuery["graphPeriod"]),
+					GraphPeriod: strPtr(toString(metricQuery["graphPeriod"])),
 				}
 				q.QueryType = string(dataquery.QueryTypeTimeSeriesQuery)
 			} else {
@@ -282,7 +282,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 				if err != nil {
 					return err
 				}
-				tsl := &timeSeriesList{}
+				tsl := &dataquery.TimeSeriesList{}
 				err = json.Unmarshal(tslb, tsl)
 				if err != nil {
 					return err
@@ -403,8 +403,8 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				logger:  logger,
 				aliasBy: q.AliasBy,
 			}
-			if q.TimeSeriesList.View == "" {
-				q.TimeSeriesList.View = "FULL"
+			if q.TimeSeriesList.View == strPtr("") {
+				q.TimeSeriesList.View = strPtr("FULL")
 			}
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
