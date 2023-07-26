@@ -561,11 +561,19 @@ func TestEvaluate(t *testing.T) {
 			Data: []models.AlertQuery{{
 				RefID:         "A",
 				DatasourceUID: "test",
+			}, {
+				RefID:         "B",
+				DatasourceUID: expr.DatasourceUID,
+			}, {
+				RefID:         "C",
+				DatasourceUID: expr.OldDatasourceUID,
 			}},
 		},
 		resp: backend.QueryDataResponse{
 			Responses: backend.Responses{
 				"A": {Frames: nil},
+				"B": {Frames: []*data.Frame{{Fields: nil}}},
+				"C": {Frames: nil},
 			},
 		},
 		expected: Results{{
