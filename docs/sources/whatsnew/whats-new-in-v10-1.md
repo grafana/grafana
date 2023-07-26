@@ -109,7 +109,7 @@ You can now display network data in the Geomap visualization by using the new be
 
 To learn more, refer to our [Geomap network layer documentation]({{< relref "../panels-visualizations/visualizations/geomap/#network-layer-beta" >}})
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer.png" max-width="750px" caption="Geomap network layer" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 
 ### Heatmap visualizations now support datalinks
 
