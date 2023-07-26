@@ -2920,7 +2920,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://grafana-prerelease/artifacts/downloads/*$${DRONE_TAG}/oss/**.deb
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.deb
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -2941,7 +2941,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://grafana-prerelease/artifacts/downloads/*$${DRONE_TAG}/oss/**.rpm
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -4487,8 +4487,3 @@ get:
   path: infra/data/ci/github/grafanabot
 kind: secret
 name: github_token
----
-kind: signature
-hmac: f6b35e423df93c4cbe13528ef3e8994259c66016dddf2a4d7873837e51011585
-
-...
