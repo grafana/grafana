@@ -73,7 +73,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultima
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
-			dataSource, err = dc.store.AddDataSource(ctx, insertCmd)
+			dataSource, err := dc.store.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
 			}
@@ -205,8 +205,8 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 		}
 
 		// Skip publishing the event as the data source is not really deleted, it will be re-created during provisioning
+		// This is to avoid cleaning up correlations related to the data source
 		isUltimatelyDeleted := ultimatelyDeleted[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}]
-		dc.log.Info("ultimately deleted?", "name", ds.Name, "orgId", ds.OrgID, "deleted", isUltimatelyDeleted)
 		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: !isUltimatelyDeleted}
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
