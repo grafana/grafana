@@ -24,7 +24,9 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     header: css({
       display: 'flex',
-      justifyContent: 'space-between',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      justifyItems: 'center',
       cursor: 'pointer',
       padding: '7px 10px',
       width: '100%',
@@ -35,7 +37,7 @@ const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme2) => {
       },
     }),
     label: css({
-      flexGrow: 0,
+      flexGrow: 1,
     }),
     icon: css({
       paddingRight: '2px',
