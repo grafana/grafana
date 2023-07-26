@@ -102,104 +102,104 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
       legend = <ObservablePropsWrapper watch={legendProps} initialSubProps={{}} child={MarkersLegend} />;
     }
 
-    if (!style.fields && !edgeStyle.fields && !hasArrows) {
-      // Set a global style
-      vectorLayer.setStyle(style.maker(style.base));
-    } else {
-      vectorLayer.setStyle((feature: FeatureLike) => {
-        const geom = feature.getGeometry();
-        const idx = feature.get('rowIndex');
-        const dims = style.dims;
+    vectorLayer.setStyle((feature: FeatureLike) => {
+      const geom = feature.getGeometry();
+      const idx = feature.get('rowIndex');
+      const dims = style.dims;
 
-        // For edges
-        if (geom?.getType() === 'LineString' && geom instanceof SimpleGeometry) {
-          const edgeDims = edgeStyle.dims;
-          const edgeTextConfig = edgeStyle.config.textConfig;
-          const edgeId = Number(feature.getId());
-          const coordinates = geom.getCoordinates();
-          const opacity = edgeStyle.config.opacity ?? 1;
-          if (coordinates && edgeDims) {
-            const segmentStartCoords = coordinates[0];
-            const segmentEndCoords = coordinates[1];
-            const color1 = tinycolor(
-              theme.visualization.getColorByName((edgeDims.color && edgeDims.color.get(edgeId)) ?? edgeStyle.base.color)
-            )
-              .setAlpha(opacity)
-              .toString();
-            const color2 = tinycolor(
-              theme.visualization.getColorByName((edgeDims.color && edgeDims.color.get(edgeId)) ?? edgeStyle.base.color)
-            )
-              .setAlpha(opacity)
-              .toString();
-            const arrowSize1 = (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size;
-            const arrowSize2 = (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size;
-            const styles = [];
+      if (!style.fields && !edgeStyle.fields && !hasArrows && geom?.getType() !== 'LineString') {
+        // Set a global style
+        return style.maker(style.base);
+      }
 
-            const flowStyle = new FlowLine({
-              visible: true,
-              lineCap: config.arrow === 0 ? 'round' : 'square',
-              color: color1,
-              color2: color2,
-              width: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
-              width2: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
-            });
+      // For edges
+      if (geom?.getType() === 'LineString' && geom instanceof SimpleGeometry) {
+        const edgeDims = edgeStyle.dims;
+        const edgeTextConfig = edgeStyle.config.textConfig;
+        const edgeId = Number(feature.getId());
+        const coordinates = geom.getCoordinates();
+        const opacity = edgeStyle.config.opacity ?? 1;
+        if (coordinates && edgeDims) {
+          const segmentStartCoords = coordinates[0];
+          const segmentEndCoords = coordinates[1];
+          const color1 = tinycolor(
+            theme.visualization.getColorByName((edgeDims.color && edgeDims.color.get(edgeId)) ?? edgeStyle.base.color)
+          )
+            .setAlpha(opacity)
+            .toString();
+          const color2 = tinycolor(
+            theme.visualization.getColorByName((edgeDims.color && edgeDims.color.get(edgeId)) ?? edgeStyle.base.color)
+          )
+            .setAlpha(opacity)
+            .toString();
+          const arrowSize1 = (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size;
+          const arrowSize2 = (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size;
+          const styles = [];
 
-            if (config.arrow) {
-              flowStyle.setArrow(config.arrow);
-              if (config.arrow > 0) {
-                flowStyle.setArrowColor(color2);
-                flowStyle.setArrowSize((arrowSize2 ?? 0) * 2);
-              } else {
-                flowStyle.setArrowColor(color1);
-                flowStyle.setArrowSize((arrowSize1 ?? 0) * 2);
-              }
+          const flowStyle = new FlowLine({
+            visible: true,
+            lineCap: config.arrow === 0 ? 'round' : 'square',
+            color: color1,
+            color2: color2,
+            width: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
+            width2: (edgeDims.size && edgeDims.size.get(edgeId)) ?? edgeStyle.base.size,
+          });
+
+          if (config.arrow) {
+            flowStyle.setArrow(config.arrow);
+            if (config.arrow > 0) {
+              flowStyle.setArrowColor(color2);
+              flowStyle.setArrowSize((arrowSize2 ?? 0) * 2);
+            } else {
+              flowStyle.setArrowColor(color1);
+              flowStyle.setArrowSize((arrowSize1 ?? 0) * 2);
             }
-            const LS = new LineString([segmentStartCoords, segmentEndCoords]);
-            flowStyle.setGeometry(LS);
-
-            const fontFamily = theme.typography.fontFamily;
-            if (edgeDims.text) {
-              const labelStyle = new Style({
-                zIndex: 10,
-                text: new Text({
-                  text: edgeDims.text.get(edgeId),
-                  font: `normal ${edgeTextConfig?.fontSize}px ${fontFamily}`,
-                  fill: new Fill({ color: color1 ?? defaultStyleConfig.color.fixed }),
-                  stroke: new Stroke({
-                    color: tinycolor(theme.visualization.getColorByName('text')).setAlpha(opacity).toString(),
-                    width: Math.max(edgeTextConfig?.fontSize! / 10, 1),
-                  }),
-                  ...edgeTextConfig,
-                }),
-              });
-              labelStyle.setGeometry(LS);
-              styles.push(labelStyle);
-            }
-            styles.push(flowStyle);
-            return styles;
           }
-        }
-        if (!dims || !isNumber(idx)) {
-          return style.maker(style.base);
-        }
+          const LS = new LineString([segmentStartCoords, segmentEndCoords]);
+          flowStyle.setGeometry(LS);
 
-        const values = { ...style.base };
+          const fontFamily = theme.typography.fontFamily;
+          if (edgeDims.text) {
+            const labelStyle = new Style({
+              zIndex: 10,
+              text: new Text({
+                text: edgeDims.text.get(edgeId),
+                font: `normal ${edgeTextConfig?.fontSize}px ${fontFamily}`,
+                fill: new Fill({ color: color1 ?? defaultStyleConfig.color.fixed }),
+                stroke: new Stroke({
+                  color: tinycolor(theme.visualization.getColorByName('text')).setAlpha(opacity).toString(),
+                  width: Math.max(edgeTextConfig?.fontSize! / 10, 1),
+                }),
+                ...edgeTextConfig,
+              }),
+            });
+            labelStyle.setGeometry(LS);
+            styles.push(labelStyle);
+          }
+          styles.push(flowStyle);
+          return styles;
+        }
+      }
+      if (!dims || !isNumber(idx)) {
+        return style.maker(style.base);
+      }
 
-        if (dims.color) {
-          values.color = dims.color.get(idx);
-        }
-        if (dims.size) {
-          values.size = dims.size.get(idx);
-        }
-        if (dims.text) {
-          values.text = dims.text.get(idx);
-        }
-        if (dims.rotation) {
-          values.rotation = dims.rotation.get(idx);
-        }
-        return style.maker(values);
-      });
-    }
+      const values = { ...style.base };
+
+      if (dims.color) {
+        values.color = dims.color.get(idx);
+      }
+      if (dims.size) {
+        values.size = dims.size.get(idx);
+      }
+      if (dims.text) {
+        values.text = dims.text.get(idx);
+      }
+      if (dims.rotation) {
+        values.rotation = dims.rotation.get(idx);
+      }
+      return style.maker(values);
+    });
 
     return {
       init: () => vectorLayer,
