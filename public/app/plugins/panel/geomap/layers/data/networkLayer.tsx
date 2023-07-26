@@ -296,6 +296,11 @@ function updateEdge(source: FrameVectorSource, frames: DataFrame[]) {
   const frameNodes = networkFrames.nodes[0];
   const frameEdges = networkFrames.edges[0];
 
+  if (!frameNodes || !frameEdges) {
+    // TODO: provide helpful error message / link to docs for how to format data
+    return;
+  }
+
   const info = getGeometryField(frameNodes, source.location);
   if (!info.field) {
     source.changed();
