@@ -34,8 +34,15 @@ type accessControlDashboardPermissionFilter struct {
 	recursiveQueriesAreSupported bool
 }
 
+type PermissionsFilter interface {
+	With() (string, []interface{})
+	Where() (string, []interface{})
+
+	buildClauses()
+}
+
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) *accessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) PermissionsFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
@@ -71,13 +78,23 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		}
 	}
 
-	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
-		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+	var f PermissionsFilter
+	if features.IsEnabled(featuremgmt.FlagPermissionsFilterRemoveSubquery) {
+		f = &accessControlDashboardPermissionFilterNoFolderSubquery{
+			accessControlDashboardPermissionFilter: accessControlDashboardPermissionFilter{
+				user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
+				recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+			},
+		}
+	} else {
+		f = &accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
+			recursiveQueriesAreSupported: recursiveQueriesAreSupported,
+		}
+
 	}
-
 	f.buildClauses()
+	return f
 
-	return &f
 }
 
 // Where returns:

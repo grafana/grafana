@@ -1,0 +1,5 @@
+package permissions
+
+type accessControlDashboardPermissionFilterNoFolderSubquery struct {
+	accessControlDashboardPermissionFilter
+}
