@@ -95,13 +95,13 @@ There are seven map layer types to choose from in the Geomap visualization.
 Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
 {{% /admonition %}}
 
-There are also two alpha layer types.
+There are also two experimental (or alpha) layer types.
 
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
 
 {{% admonition type="note" %}}
-To enable alpha layers:
+To enable experimental layers:
 Set `enable_alpha` to `true` in your configuration file:
 
 ```
@@ -109,7 +109,7 @@ Set `enable_alpha` to `true` in your configuration file:
 enable_alpha = true
 ```
 
-To enable the alpha layers using Docker, run the following command:
+To enable the experimental layers using Docker, run the following command:
 
 ```
 docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
@@ -237,11 +237,11 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
 
-- **Marker Size** configures the size of the marker. The default is `Fixed size`, which makes all marker sizes the same regardless of the data points. However, there is also an option to scale the markers to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
+- **Size** configures the size of the marker. The default is `Fixed size`, which makes all marker sizes the same regardless of the data points. However, there is also an option to scale the markers to the corresponding data points. `Min` and `Max` marker sizes have to be set such that the Marker layer can scale within this range.
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
-- **Marker Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set in the `Thresholds` section.
 - **Fill opacity** configures the transparency of each marker.
-- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed size`, which makes all markers rotate to the same angle the same regardless of the data points. However, there is also an option to rotate the markers tied to field data.
+- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed size`, which makes all markers rotate to the same angle regardless of the data points. However, there is also an option to rotate the markers tied to field data.
 - **Text label** configures a text label for each marker.
 - **Show legend** allows you to toggle the legend for the layer.
 - **Display tooltip** allows you to toggle tooltips for the layer.
@@ -288,10 +288,10 @@ The Night / Day layer displays night and day regions based on the current time r
 
 ### Options
 
-- **Show** toggles time source from panel time range
-- **Night region color** picks color for night region
-- **Display sun** toggles sun icon
-- **Opacity** from 0 (transparent) to 1 (opaque)
+- **Show** toggles the time source from panel time range.
+- **Night region color** picks the color for the night region.
+- **Display sun** toggles the sun icon.
+- **Opacity** set the opacity from `0` (transparent) to `1` (opaque).
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
@@ -340,19 +340,19 @@ The Photos layer renders a photo at each data point.
 
 ### Options
 
-- **Image Source Field** select a string field containing image data in either of the following formats
+- **Image Source field** allows you to select a string field containing image data in either of the following formats:
   - **Image URLs**
-  - **Base64 encoded** image binary ("data:image/png;base64,...")
-- **Kind** select the frame style around the images
+  - **Base64 encoded**  - Image binary ("data:image/png;base64,...")
+- **Kind** sets the frame style around the images. Choose from:
   - **Square**
   - **Circle**
   - **Anchored**
   - **Folio**
-- **Crop** toggle if the images are cropped to fit
-- **Shadow** toggle a box shadow behind the images
-- **Border** set the border size around images
-- **Border color** set the border color around images
-- **Radius** set the overall size of images in pixels
+- **Crop** toggles whether the images are cropped to fit.
+- **Shadow** toggles a box shadow behind the images.
+- **Border** sets the border size around images.
+- **Border color** sets the border color around images.
+- **Radius** sets the overall size of images in pixels.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
@@ -374,7 +374,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
 
 ### Options
 
-- **Arrow** sets the arrow styling to display for each edge.
+- **Arrow** sets the arrow styling to display for each edge. Choose from:
   - **None**
   - **Forward**
   - **Reverse**
@@ -388,7 +388,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
 - **Color** configures the color of the node. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set in the `Thresholds` section.
 - **Fill opacity** configures the transparency of each node.
-- **Rotation angle** configures the rotation angle of each node. The default is `Fixed size`, which makes all nodes rotate to the same angle the same regardless of the data points. However, there is also an option to rotate the nodes tied to field data.
+- **Rotation angle** configures the rotation angle of each node. The default is `Fixed size`, which makes all nodes rotate to the same angle regardless of the data points. However, there is also an option to rotate the nodes tied to field data.
 - **Text label** configures a text label for each node.
 
 #### Edge styles
