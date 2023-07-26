@@ -44,8 +44,6 @@ export const createTimeFormatter =
   (timeField: string, outputFormat: string, useTimezone: boolean) => (fields: Field[]) => {
     const tz = getTimeZone();
 
-    console.log(tz);
-
     return fields.map((field) => {
       // Find the configured field
       if (field.name === timeField) {
