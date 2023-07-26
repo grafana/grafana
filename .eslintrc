@@ -88,6 +88,39 @@
           }
         ]
       }
+    },
+    {
+      "files": [
+        "public/app/plugins/datasource/testdata/*.{ts,tsx}",
+        "public/app/plugins/datasource/testdata/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              // generic rules
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types instead."
+              },
+              {
+                "name": "react-i18next",
+                "importNames": ["Trans", "t"],
+                "message": "Please import from app/core/internationalization instead"
+              }
+            ],
+            // new rules
+            "patterns": [
+              {
+                "group": ["**/app/*"],
+                "message": "Core plugins are not allowed to depend on Grafana core packages"
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

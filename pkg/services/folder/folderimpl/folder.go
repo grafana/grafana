@@ -127,7 +127,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	// do not get guardian by the folder ID because it differs from the nested folder ID
 	// and the legacy folder ID has been associated with the permissions:
 	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByUID(ctx, dashFolder.UID, dashFolder.OrgID, cmd.SignedInUser)
+	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			continue
 		}
 
-		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+		g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
@@ -509,7 +509,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			}
 
 			if cmd.ForceDeleteRules {
-				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
+				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser); err != nil {
 					return err
 				}
 			}
@@ -525,9 +525,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
+		if err := v.DeleteInFolder(ctx, orgID, folderUID, user); err != nil {
 			return err
 		}
 	}

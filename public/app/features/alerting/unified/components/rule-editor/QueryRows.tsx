@@ -2,7 +2,14 @@ import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  LoadingState,
+  PanelData,
+  rangeUtil,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
@@ -61,7 +68,11 @@ export class QueryRows extends PureComponent<Props> {
         }
         return {
           ...item,
-          model: { ...item.model, maxDataPoints: options.maxDataPoints },
+          model: {
+            ...item.model,
+            maxDataPoints: options.maxDataPoints,
+            intervalMs: options.minInterval ? rangeUtil.intervalToMs(options.minInterval) : undefined,
+          },
         };
       })
     );

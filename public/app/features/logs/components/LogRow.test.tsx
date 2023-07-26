@@ -66,6 +66,7 @@ describe('LogRow', () => {
         logRowUid: 'log-row-id',
         datasourceType: 'unknown',
       });
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
     });
 
     it('highlights row with same permalink-id', () => {
@@ -104,10 +105,17 @@ describe('LogRow', () => {
       expect(scrollIntoView).toHaveBeenCalled();
     });
 
-    it('not calls `scrollIntoView` if permalink does not match', () => {
+    it('does not call `scrollIntoView` if permalink does not match', () => {
       const scrollIntoView = jest.fn();
       setup({ permalinkedRowId: 'wrong-log-row-id', scrollIntoView });
       expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('calls `scrollIntoView` once', async () => {
+      const scrollIntoView = jest.fn();
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView });
+      await userEvent.hover(screen.getByText('test123'));
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
     });
   });
 

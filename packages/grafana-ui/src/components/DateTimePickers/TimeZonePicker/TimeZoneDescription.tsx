@@ -28,6 +28,11 @@ const useDescription = (info?: TimeZoneInfo): string => {
       return '';
     }
 
+    if (info.name === 'Europe/Simferopol') {
+      // See https://github.com/grafana/grafana/issues/72031
+      return 'Ukraine, EEST';
+    }
+
     if (info.countries.length > 0) {
       const country = info.countries[0];
       parts.push(country.name);
