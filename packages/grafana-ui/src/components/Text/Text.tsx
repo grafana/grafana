@@ -53,7 +53,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
 
     const tooltipText = typeof children === 'string' ? children : getTooltipText(children);
 
-    if (truncate === false) {
+    if (truncate === false || element === 'span') {
       return childElement;
     } else {
       return <Tooltip content={tooltipText}>{childElement}</Tooltip>;
