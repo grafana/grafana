@@ -34,13 +34,14 @@ func TestService(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			svc := ProvideService(pluginscdn.ProvideService(&config.Cfg{
+			cfg := &config.Cfg{
 				PluginsCDNURLTemplate: tc.cdnBaseURL,
 				PluginSettings: map[string]map[string]string{
 					"one": {"cdn": "true"},
 					"two": {},
 				},
-			}))
+			}
+			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
 
 			const tableOldPath = "/grafana/public/app/plugins/panel/table-old"
 			jsonData := map[string]plugins.JSONData{
@@ -119,4 +120,45 @@ func TestService(t *testing.T) {
 			})
 		})
 	}
+
+	t.Run("With App Sub URL", func(t *testing.T) {
+		for _, tc := range []struct {
+			appSubURL string
+		}{
+			{
+				appSubURL: "grafana",
+			},
+			{
+				appSubURL: "/grafana",
+			},
+			{
+				appSubURL: "grafana/",
+			},
+			{
+				appSubURL: "/grafana/",
+			},
+		} {
+			cfg := &config.Cfg{GrafanaAppSubURL: tc.appSubURL}
+			svc := ProvideService(cfg, pluginscdn.ProvideService(cfg))
+
+			dir := "/plugins/test-datasource"
+			p := plugins.JSONData{ID: "test-datasource"}
+
+			base, err := svc.Base(p, plugins.ClassExternal, dir)
+			require.NoError(t, err)
+			require.Equal(t, "/grafana/public/plugins/test-datasource", base)
+
+			mod, err := svc.Module(p, plugins.ClassExternal, dir)
+			require.NoError(t, err)
+			require.Equal(t, "/grafana/public/plugins/test-datasource/module.js", mod)
+
+			base, err = svc.Base(p, plugins.ClassCore, dir)
+			require.NoError(t, err)
+			require.Equal(t, "/grafana/public/app/plugins/test-datasource", base)
+
+			mod, err = svc.Module(p, plugins.ClassCore, dir)
+			require.NoError(t, err)
+			require.Equal(t, "core:plugin/test-datasource", mod)
+		}
+	})
 }

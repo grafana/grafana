@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Service provides methods for constructing asset paths for plugins.
@@ -17,21 +17,22 @@ import (
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
 type Service struct {
 	cdn *pluginscdn.Service
+	cfg *config.Cfg
 }
 
-func ProvideService(cdn *pluginscdn.Service) *Service {
-	return &Service{cdn: cdn}
+func ProvideService(cfg *config.Cfg, cdn *pluginscdn.Service) *Service {
+	return &Service{cdn: cdn, cfg: cfg}
 }
 
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		return path.Join(setting.AppSubUrl, "/public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
+		return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "")
 	}
-	return path.Join(setting.AppSubUrl, "/public/plugins", pluginJSON.ID), nil
+	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
@@ -42,7 +43,7 @@ func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugi
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "module.js")
 	}
-	return path.Join(setting.AppSubUrl, "/public/plugins", pluginJSON.ID, "module.js"), nil
+	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", pluginJSON.ID, "module.js"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.

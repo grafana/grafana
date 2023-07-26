@@ -22,8 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ plugins.ErrorResolver = (*Loader)(nil)
@@ -179,7 +177,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildPlugin(plugin.Parent, plugin)
+			configureAppChildPlugin(l.cfg, plugin.Parent, plugin)
 		}
 
 		verifiedPlugins = append(verifiedPlugins, plugin)
@@ -318,7 +316,7 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 func (l *Loader) setImages(p *plugins.Plugin) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
-		*dst, err = l.assetPath.RelativeURL(p, *dst, defaultLogoPath(p.Type))
+		*dst, err = l.assetPath.RelativeURL(p, *dst, defaultLogoPath(l.cfg, p.Type))
 		if err != nil {
 			return fmt.Errorf("logo: %w", err)
 		}
@@ -359,23 +357,23 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	}
 }
 
-func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
-	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 
+	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	if parent.IsCorePlugin() {
-		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
+		child.Module = path.Join("app/plugins/app", parent.ID, appSubPath, "module")
 	} else {
-		child.Module = util.JoinURLFragments(setting.AppSubUrl+"/public/plugins/"+parent.ID, appSubPath) + "/module.js"
+		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
 	}
 }
 
-func defaultLogoPath(pluginType plugins.Type) string {
-	return setting.AppSubUrl + "/public/img/icn-" + string(pluginType) + ".svg"
+func defaultLogoPath(cfg *config.Cfg, pluginType plugins.Type) string {
+	return path.Join("/", cfg.GrafanaAppSubURL, fmt.Sprintf("/public/img/icn-%s.svg", string(pluginType)))
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {

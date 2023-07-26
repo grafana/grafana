@@ -433,6 +433,46 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Load a plugin with app sub url set",
+			class: plugins.ClassExternal,
+			cfg: &config.Cfg{
+				DevMode:          true,
+				GrafanaAppSubURL: "grafana",
+			},
+			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test-datasource",
+						Type: plugins.TypeDataSource,
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "/grafana/public/img/icn-datasource.svg",
+								Large: "/grafana/public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+						State:   plugins.ReleaseStateAlpha,
+					},
+					Class:     plugins.ClassExternal,
+					Module:    "/grafana/public/plugins/test-datasource/module.js",
+					BaseURL:   "/grafana/public/plugins/test-datasource",
+					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					Signature: plugins.SignatureStatusUnsigned,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
@@ -1481,11 +1521,38 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 			BaseURL: "/public/app/plugins/app/testdata-app",
 		}
 
-		configureAppChildPlugin(parent, child)
+		configureAppChildPlugin(&config.Cfg{}, parent, child)
 
 		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)
 		require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
+
+		configureAppChildPlugin(&config.Cfg{GrafanaAppSubURL: "/grafana"}, parent, child)
+
+		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
+		require.Equal(t, "testdata-app", child.IncludedInAppID)
+		require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
+	})
+
+	t.Run("When setting paths based on external plugin with app sub URL", func(t *testing.T) {
+		child := &plugins.Plugin{
+			FS: fakes.NewFakePluginFiles("/plugins/parent-app/child-panel"),
+		}
+		parent := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Type: plugins.TypeApp,
+				ID:   "testdata-app",
+			},
+			Class:   plugins.ClassExternal,
+			FS:      fakes.NewFakePluginFiles("/plugins/parent-app"),
+			BaseURL: "/grafana/plugins/parent-app",
+		}
+
+		configureAppChildPlugin(&config.Cfg{GrafanaAppSubURL: "/grafana"}, parent, child)
+
+		require.Equal(t, "/grafana/public/plugins/testdata-app/child-panel/module.js", child.Module)
+		require.Equal(t, "testdata-app", child.IncludedInAppID)
+		require.Equal(t, "/grafana/plugins/parent-app", child.BaseURL)
 	})
 }
 
@@ -1494,7 +1561,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg.DevMode),
+		assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg.DevMode),
 		signature.ProvideService(statickey.New()), angularInspector, &fakes.FakeOauthService{})
 
 	for _, cb := range cbs {
