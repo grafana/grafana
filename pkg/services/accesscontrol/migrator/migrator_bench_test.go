@@ -9,6 +9,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+func benchScopeSplitV1(b *testing.B, count int) {
+	store := db.InitTestDB(b)
+	// Populate permissions
+	require.NoError(b, batchInsertPermissions(count, store), "could not insert permissions")
+	logger := log.New("migrator.test")
+	b.ResetTimer()
+
+	for n := 0; n < b.N; n++ {
+		err := MigrateScopeSplitV1(store, logger)
+		require.NoError(b, err)
+	}
+}
+
 func benchScopeSplit(b *testing.B, count int) {
 	store := db.InitTestDB(b)
 	// Populate permissions
@@ -30,3 +43,7 @@ func BenchmarkMigrateScopeSplit_50K(b *testing.B) { benchScopeSplit(b, 50000) }
 // Prev migration time:    pg: 18.5s/op, mysql8: 20.2s/op
 // Concurrent batch time:  pg: 1.90s/op, mysql8: 4.4s/op
 func BenchmarkMigrateScopeSplit_100K(b *testing.B) { benchScopeSplit(b, 100000) }
+
+func BenchmarkMigrateScopeSplitV1_50K(b *testing.B) { benchScopeSplitV1(b, 50000) }
+
+func BenchmarkMigrateScopeSplitV1_100K(b *testing.B) { benchScopeSplitV1(b, 100000) }
