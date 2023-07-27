@@ -24,8 +24,8 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       backgroundColor: theme.colors.background.primary,
       zIndex: -1,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderTopLeftRadius: theme.shape.borderRadius(),
-      borderBottomLeftRadius: theme.shape.borderRadius(),
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderBottomLeftRadius: theme.shape.radius.default,
 
       '&:after': {
         display: 'block',
