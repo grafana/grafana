@@ -1,9 +1,8 @@
 {
   "extends": "./.config/tsconfig.json",
   "compilerOptions": {
-    "typeRoots": [],
-    "rootDir": "../../../"
+    "typeRoots": []
   },
-  "include": ["./src", ".config/types", "../../app/types", "../../../packages/grafana-ui/src/types/*.d.ts"],
+  "include": ["./src", ".config/types"],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
 }
