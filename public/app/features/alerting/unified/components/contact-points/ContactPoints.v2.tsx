@@ -316,22 +316,20 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
 
   return (
     <div className={styles.integrationWrapper}>
-      <Stack direction="column" gap={0}>
-        <div className={styles.receiverDescriptionRow}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            <Stack direction="row" alignItems="center" gap={0.5}>
-              {iconName && <Icon name={iconName} />}
-              <Text variant="body" color="primary">
-                {receiverName}
-              </Text>
-            </Stack>
-            {description && (
-              <Text variant="bodySmall" color="secondary">
-                {description}
-              </Text>
-            )}
+      <Stack direction="column" gap={0.5}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            {iconName && <Icon name={iconName} />}
+            <Text variant="body" color="primary">
+              {receiverName}
+            </Text>
           </Stack>
-        </div>
+          {description && (
+            <Text variant="bodySmall" color="secondary">
+              {description}
+            </Text>
+          )}
+        </Stack>
         {hasMetadata && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
       </Stack>
     </div>
@@ -358,28 +356,26 @@ const ContactPointReceiverSummary = ({ receivers }: ContactPointReceiverSummaryP
   return (
     <div className={styles.integrationWrapper}>
       <Stack direction="column" gap={0}>
-        <div className={styles.receiverDescriptionRow}>
-          <Stack direction="row" alignItems="center" gap={1}>
-            {Object.entries(countByType).map(([type, receivers], index) => {
-              const iconName = INTEGRATION_ICONS[type];
-              const receiverName = receiverTypeNames[type] ?? upperFirst(type);
-              const isLastItem = size(countByType) - 1 === index;
+        <Stack direction="row" alignItems="center" gap={1}>
+          {Object.entries(countByType).map(([type, receivers], index) => {
+            const iconName = INTEGRATION_ICONS[type];
+            const receiverName = receiverTypeNames[type] ?? upperFirst(type);
+            const isLastItem = size(countByType) - 1 === index;
 
-              return (
-                <React.Fragment key={type}>
-                  <Stack direction="row" alignItems="center" gap={0.5}>
-                    {iconName && <Icon name={iconName} />}
-                    <Text variant="body" color="primary">
-                      {receiverName}
-                      {receivers.length > 1 && <> ({receivers.length})</>}
-                    </Text>
-                  </Stack>
-                  {!isLastItem && '⋅'}
-                </React.Fragment>
-              );
-            })}
-          </Stack>
-        </div>
+            return (
+              <React.Fragment key={type}>
+                <Stack direction="row" alignItems="center" gap={0.5}>
+                  {iconName && <Icon name={iconName} />}
+                  <Text variant="body" color="primary">
+                    {receiverName}
+                    {receivers.length > 1 && <> ({receivers.length})</>}
+                  </Text>
+                </Stack>
+                {!isLastItem && '⋅'}
+              </React.Fragment>
+            );
+          })}
+        </Stack>
       </Stack>
     </div>
   );
@@ -446,25 +442,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   integrationWrapper: css`
     position: relative;
+
     background: ${theme.colors.background.primary};
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
 
     border-bottom: solid 1px ${theme.colors.border.weak};
   `,
   headerWrapper: css`
-    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
-
     background: ${theme.colors.background.secondary};
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
 
     border-bottom: solid 1px ${theme.colors.border.weak};
     border-top-left-radius: ${theme.shape.borderRadius()};
     border-top-right-radius: ${theme.shape.borderRadius()};
   `,
-  receiverDescriptionRow: css`
-    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
-  `,
   metadataRow: css`
-    padding: 0 ${theme.spacing(1.5)} ${theme.spacing(1.5)} ${theme.spacing(1.5)};
-
     border-bottom-left-radius: ${theme.shape.borderRadius()};
     border-bottom-right-radius: ${theme.shape.borderRadius()};
   `,
