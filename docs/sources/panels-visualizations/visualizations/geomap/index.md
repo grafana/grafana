@@ -237,11 +237,11 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
 
-- **Size** configures the size of the marker. The default is `Fixed size`, which makes all marker sizes the same regardless of the data points. However, there is also an option to scale the markers to the corresponding data points. `Min` and `Max` marker sizes have to be set such that the Marker layer can scale within this range.
+- **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
-- **Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set in the `Thresholds` section.
+- **Color** configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
 - **Fill opacity** configures the transparency of each marker.
-- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed size`, which makes all markers rotate to the same angle regardless of the data points. However, there is also an option to rotate the markers tied to field data.
+- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field.
 - **Text label** configures a text label for each marker.
 - **Show legend** allows you to toggle the legend for the layer.
 - **Display tooltip** allows you to toggle tooltips for the layer.
@@ -367,14 +367,14 @@ The Photos layer renders a photo at each data point.
 The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
-The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization]({{< relref "../node-graph/#data-api" >}}) with the addition of [geospatial data]({{< relref "#location">}}) included the nodes data. The geospatial data is used to render the nodes on the map.
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization]({{< relref "../node-graph/#data-api" >}}) with the addition of [geospatial data]({{< relref "#location">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 {{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
 
 ### Options
 
-- **Arrow** sets the arrow styling to display for each edge. Choose from:
+- **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
   - **None**
   - **Forward**
   - **Reverse**
@@ -384,17 +384,17 @@ The Network layer renders a network graph. This layer supports the same [data fo
 
 #### Node styles
 
-- **Size** configures the size of the node. The default is `Fixed size`, which makes all node sizes the same regardless of the data points. However, there is also an option to scale the nodes to the corresponding data points. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range.
+- **Size** configures the size of the nodes. The default is `Fixed size`, which makes all node sizes the same regardless of the data; however, there is also an option to size the nodes based on data corresponding to a selected field. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range.
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
-- **Color** configures the color of the node. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set in the `Thresholds` section.
+- **Color** configures the color of the nodes. The default `Fixed color` sets all nodes to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
 - **Fill opacity** configures the transparency of each node.
-- **Rotation angle** configures the rotation angle of each node. The default is `Fixed size`, which makes all nodes rotate to the same angle regardless of the data points. However, there is also an option to rotate the nodes tied to field data.
+- **Rotation angle** configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field.
 - **Text label** configures a text label for each node.
 
 #### Edge styles
 
-- **Size** configures the size of the edge. The default is `Fixed size`, which makes all edge sizes the same regardless of the data points. However, there is also an option to scale the edges to the corresponding data points. `Min` and `Max` edge sizes have to be set such that the edges can scale within this range.
-- **Color** configures the color of the edge. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
+- **Size** configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range.
+- **Color** configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
 - **Fill opacity** configures the transparency of each edge.
 - **Text label** configures a text label for each edge.
 
