@@ -267,7 +267,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             border: `1px solid ${color.border}`,
             color: color.text,
-            borderRadius: theme.shape.borderRadius(),
+            borderRadius: theme.shape.radius.default,
             padding: '8px',
           })}
         >
