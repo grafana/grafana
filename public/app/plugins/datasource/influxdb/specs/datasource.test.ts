@@ -354,6 +354,9 @@ describe('InfluxDataSource', () => {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });
+        if (!query.tags?.length) {
+          throw new Error('Tags are not defined');
+        }
         const value = query.tags[0].value;
         const scopedVars = 'interpolationText|interpolationText2';
         expect(value).toBe(scopedVars);

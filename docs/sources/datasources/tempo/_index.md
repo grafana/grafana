@@ -370,12 +370,7 @@ To open a query in Tempo with the span name of that row automatically set in the
 
 ## Span Filters
 
-{{% admonition type="note" %}}
-This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
-{{% /admonition %}}
-
-![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
 
 Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
 
@@ -385,6 +380,8 @@ You can add one or more of the following filters:
 - Span name
 - Duration
 - Tags (which include tags, process tags, and log fields)
+
+To only show the spans you have matched, you can press the `Show matches only` toggle.
 
 ## Link to a trace ID from logs
 

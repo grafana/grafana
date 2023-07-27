@@ -67,6 +67,7 @@
       "move": ""
     },
     "folder-picker": {
+      "accessible-label": "",
       "button-label": "",
       "empty-message": "",
       "error-title": "",
@@ -258,6 +259,7 @@
     "error": {
       "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },

@@ -95,6 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
+  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }
@@ -666,7 +667,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logsnavigation and padding */}
                 <LogsTable
-                  rows={logRows}
                   logsSortOrder={this.state.logsSortOrder}
                   range={this.props.range}
                   splitOpen={this.props.splitOpen}
@@ -703,6 +703,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onPermalinkClick={this.onPermalinkClick}
                   permalinkedRowId={this.props.panelState?.logs?.id}
                   scrollIntoView={this.scrollIntoView}
+                  isFilterLabelActive={this.props.isFilterLabelActive}
                 />
               </div>
             )}

@@ -29,7 +29,6 @@ export interface FeatureToggles {
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  newTraceViewHeader?: boolean;
   correlations?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
@@ -56,19 +55,16 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
-  showTraceId?: boolean;
   emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  onlyExternalOrgRoleSync?: boolean;
-  traceqlSearch?: boolean;
+  gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   prometheusResourceBrowserCache?: boolean;
@@ -100,6 +96,7 @@ export interface FeatureToggles {
   dashboardEmbed?: boolean;
   frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  lokiFormatQuery?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
@@ -111,7 +108,14 @@ export interface FeatureToggles {
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
+  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
-  disableTraceQLStreaming?: boolean;
+  traceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
+  featureToggleAdminPage?: boolean;
+  awsAsyncQueryCaching?: boolean;
+  splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
+  prometheusConfigOverhaulAuth?: boolean;
+  configurableSchedulerTick?: boolean;
 }

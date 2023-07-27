@@ -23,6 +23,9 @@ trigger = {
             "latest.json",
         ],
     },
+    "repo": [
+        "grafana/grafana",
+    ],
 }
 
 def enterprise_downstream_pipeline():
