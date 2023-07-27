@@ -316,7 +316,7 @@ Currently only supported for Prometheus data sources. The `$__rate_interval` var
 
 ### $\_\_rate_interval_ms
 
-This variable is the `$__rate_interval` variable in milliseconds, not a time interval formatted string. For example, if the `$__rate_interval` is `20m` then the `$__rate_interval_ms` is `1200000`.
+This variable is the `$__rate_interval` variable in milliseconds, not a time-interval-formatted string. For example, if the `$__rate_interval` is `20m` then the `$__rate_interval_ms` is `1200000`.
 
 ### $timeFilter or $\_\_timeFilter
 
