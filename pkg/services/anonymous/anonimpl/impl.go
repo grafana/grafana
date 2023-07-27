@@ -90,14 +90,14 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		clientIPStr = ""
 	}
 
-	anonDevice := &Device{
+	taggedDevice := &Device{
 		Kind:      kind,
 		IP:        clientIPStr,
 		UserAgent: httpReq.UserAgent(),
 		LastSeen:  time.Now().UTC(),
 	}
 
-	key, err := anonDevice.Key()
+	key, err := taggedDevice.Key()
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 
 	a.localCache.SetDefault(key, struct{}{})
 
-	deviceJSON, err := json.Marshal(anonDevice)
+	deviceJSON, err := json.Marshal(taggedDevice)
 	if err != nil {
 		return err
 	}
