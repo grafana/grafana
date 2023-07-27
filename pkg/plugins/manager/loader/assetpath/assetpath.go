@@ -24,32 +24,46 @@ func ProvideService(cfg *config.Cfg, cdn *pluginscdn.Service) *Service {
 	return &Service{cdn: cdn, cfg: cfg}
 }
 
+type PluginInfo struct {
+	pluginJSON plugins.JSONData
+	class      plugins.Class
+	dir        string
+}
+
+func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.FS) PluginInfo {
+	return PluginInfo{
+		pluginJSON: pluginJSON,
+		class:      class,
+		dir:        fs.Base(),
+	}
+}
+
 // Base returns the base path for the specified plugin.
-func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
-	if class == plugins.ClassCore {
-		return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
+func (s *Service) Base(n PluginInfo) (string, error) {
+	if n.class == plugins.ClassCore {
+		return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/app/plugins", string(n.pluginJSON.Type), filepath.Base(n.dir)), nil
 	}
-	if s.cdn.PluginSupported(pluginJSON.ID) {
-		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "")
+	if s.cdn.PluginSupported(n.pluginJSON.ID) {
+		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "")
 	}
-	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", pluginJSON.ID), nil
+	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", n.pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
-func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
-	if class == plugins.ClassCore {
-		return path.Join("core:plugin", filepath.Base(pluginDir)), nil
+func (s *Service) Module(n PluginInfo) (string, error) {
+	if n.class == plugins.ClassCore {
+		return path.Join("core:plugin", filepath.Base(n.dir)), nil
 	}
-	if s.cdn.PluginSupported(pluginJSON.ID) {
-		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "module.js")
+	if s.cdn.PluginSupported(n.pluginJSON.ID) {
+		return s.cdn.AssetURL(n.pluginJSON.ID, n.pluginJSON.Info.Version, "module.js")
 	}
-	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", pluginJSON.ID, "module.js"), nil
+	return path.Join("/", s.cfg.GrafanaAppSubURL, "/public/plugins", n.pluginJSON.ID, "module.js"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
-func (s *Service) RelativeURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir, pathStr string) (string, error) {
-	if s.cdn.PluginSupported(pluginJSON.ID) {
-		return s.cdn.NewCDNURLConstructor(pluginJSON.ID, pluginJSON.Info.Version).StringPath(pathStr)
+func (s *Service) RelativeURL(n PluginInfo, pathStr string) (string, error) {
+	if s.cdn.PluginSupported(n.pluginJSON.ID) {
+		return s.cdn.NewCDNURLConstructor(n.pluginJSON.ID, n.pluginJSON.Info.Version).StringPath(pathStr)
 	}
 	// Local
 	u, err := url.Parse(pathStr)
@@ -60,7 +74,7 @@ func (s *Service) RelativeURL(pluginJSON plugins.JSONData, class plugins.Class, 
 		return pathStr, nil
 	}
 
-	baseURL, err := s.Base(pluginJSON, class, pluginDir)
+	baseURL, err := s.Base(n)
 	if err != nil {
 		return "", err
 	}

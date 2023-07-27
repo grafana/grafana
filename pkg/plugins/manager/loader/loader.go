@@ -289,11 +289,12 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 }
 
 func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) (*plugins.Plugin, error) {
-	baseURL, err := l.assetPath.Base(pluginJSON, class, files.Base())
+	info := assetpath.NewPluginInfo(pluginJSON, class, files)
+	baseURL, err := l.assetPath.Base(info)
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
 	}
-	moduleURL, err := l.assetPath.Module(pluginJSON, class, files.Base())
+	moduleURL, err := l.assetPath.Module(info)
 	if err != nil {
 		return nil, fmt.Errorf("module url: %w", err)
 	}
@@ -314,6 +315,7 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 }
 
 func (l *Loader) setImages(p *plugins.Plugin) error {
+	info := assetpath.NewPluginInfo(p.JSONData, p.Class, p.FS)
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
 		if len(*dst) == 0 {
@@ -321,14 +323,14 @@ func (l *Loader) setImages(p *plugins.Plugin) error {
 			continue
 		}
 
-		*dst, err = l.assetPath.RelativeURL(p.JSONData, p.Class, p.FS.Base(), *dst)
+		*dst, err = l.assetPath.RelativeURL(info, *dst)
 		if err != nil {
 			return fmt.Errorf("logo: %w", err)
 		}
 	}
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		screenshot := &p.Info.Screenshots[i]
-		screenshot.Path, err = l.assetPath.RelativeURL(p.JSONData, p.Class, p.FS.Base(), screenshot.Path)
+		screenshot.Path, err = l.assetPath.RelativeURL(info, screenshot.Path)
 		if err != nil {
 			return fmt.Errorf("screenshot %d relative url: %w", i, err)
 		}
