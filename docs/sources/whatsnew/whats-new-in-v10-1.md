@@ -69,6 +69,12 @@ _Generally available in all editions of Grafana._
 
 When working with times it can be useful to have different time formats. The new format time transformation allows any time format supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation this can also be used to bucket days, weeks, and other time windows together.
 
+### Join by fields transformation outer join (tabular) option
+
+<!-- Brendan O'Handley -->
+
+The join by fields transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time series data where the join values are never repeated.
+
 ### Logs: Log rows menu when using displayed fields
 
 <!-- Matías Wenceslao Chomicki -->
