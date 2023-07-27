@@ -11,7 +11,6 @@ weight: 500
 
 This page explains how to install and run Grafana on Kubernetes (K8S). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
-
 ## Before you begin
 
 To follow this guide, you need:
@@ -22,14 +21,150 @@ To follow this guide, you need:
 
 - To use managed cloud services such as [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), or [Azure Kubernetes Service (AKS)](https://azure.microsoft.com/en-us/) if you are considering using Kubernetes in a production environment.**
 
+## System Requirements 
 
+This section provides minimum hardware and software requirements.
 
+### Minimum Hardware Requirements
 
+- Disk Space = 1 GB
+- Memory = 750 MiB (approx 750 MB)
+- CPU = 250m (approx 2.5 cores)
+
+### Supported databases
+
+For a list of supported databases, refer to [supported databases](https://grafana.com/docs/grafana/latest/setup-grafana/installation/#supported-databases).
+
+### Supported web browsers
+
+For a list of support web browsers, refer to [supported web browsers](https://grafana.com/docs/grafana/latest/setup-grafana/installation/#supported-web-browsers).
+
+> **Note:** Make sure to enable port 3000 in your network environment as this is the Grafana default port.
 
 ## Deploy Grafana OSS on Kubernetes
 
-This section explains how to install Grafana using Kubernetes.
-If you are interested in the Grafana Enterprise version of this information, see [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).
+This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes,  refer to [Deploy Grafana Enterprise on Kubernetes](https://grafana.com/docs/grafana/latest/setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes).
+
+When you deploy an application in Kubernetes, it will use its default namespace which may have other applications running and can cause conflicts and other issues.
+
+As best practice, create a new namespace, as Kubernetes does allow users to create namespaces which will allow us to easily manage,  organize, allocate, and manage cluster resources. Refer to the Kubernetes official documentation for more reference about the [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
+
+1. To create a namespace, run the following command:
+   ```bash
+   kubectl create namespace my-grafana
+   ```
+   In this example, the namespace is `my-grafana`
+
+1. To verify and view the newly created namespace, run the following command:
+   ```bash
+   kubectl get namespace my-grafana
+   ```
+   The output of the command confirms that the namespace is created successfully.
+
+
+1. Create a file called `grafana.yaml`. This file will contain the YAML code aka manifest for deploying Grafana.
+   ```bash
+   touch grafana.yaml
+   ```
+    In the following steps you define the following three objects in the YAML file.
+
+    | Object | Description |
+    | ------ | ------ |
+    | Persistent Volume Claim (PVC) | This object stores the data. |
+    | Service | This object provides network access to the Pod defined in the deployment. |
+    | Deployment | This object is responsible for creating the pods, ensuring they stay up to date, and  managing Replicaset and Rolling updates. |
+
+1. Copy and paste the following contents and save it in the grafana.yaml file.
+   
+```yaml
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+          - 0
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http-grafana
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /robots.txt
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 3000
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 250m
+              memory: 750Mi
+          volumeMounts:
+            - mountPath: /var/lib/grafana
+              name: grafana-pv
+      volumes:
+        - name: grafana-pv
+          persistentVolumeClaim:
+            claimName: grafana-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+spec:
+  ports:
+    - port: 3000
+      protocol: TCP
+      targetPort: http-grafana
+  selector:
+    app: grafana
+  sessionAffinity: None
+  type: LoadBalancer
+```
+
+
+
+
+
 
 
 
@@ -125,11 +260,6 @@ spec:
 ```
 
 ### Send the manifest to the Kubernetes API server
-
-```bash
-curl -X POST -d "api_key=$api_key&api_username=$username" https://community.grafana.com//admin/plugins/explorer/queries/$query_id/run
-```
-
 
 1. Run the following command:
    `kubectl apply -f grafana.yaml`
