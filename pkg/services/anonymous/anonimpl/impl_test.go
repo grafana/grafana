@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -204,6 +205,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedAnonCount, stats["stats.anonymous.session.count"].(int64))
+			assert.Equal(t, tc.expectedAnonCount, stats["stats.anonymous.device.count"].(int64))
 			assert.Equal(t, tc.expectedAuthedCount, stats["stats.users.device.count"].(int64))
 
 			if tc.expectedDevice != nil {
@@ -216,6 +218,9 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				gotDevice := &Device{}
 				err = json.Unmarshal(k, gotDevice)
 				require.NoError(t, err)
+
+				assert.NotNil(t, gotDevice.LastSeen)
+				gotDevice.LastSeen = time.Time{}
 
 				assert.Equal(t, tc.expectedDevice, gotDevice)
 			}
@@ -239,6 +244,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 		Kind:      anonymous.AnonDevice,
 		IP:        "10.30.30.2",
 		UserAgent: "test",
+		LastSeen:  time.Now().UTC(),
 	}
 
 	key, err := anonDevice.Key()

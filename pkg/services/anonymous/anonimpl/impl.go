@@ -25,6 +25,7 @@ type Device struct {
 	Kind      anonymous.DeviceKind `json:"kind"`
 	IP        string               `json:"ip"`
 	UserAgent string               `json:"user_agent"`
+	LastSeen  time.Time            `json:"last_seen"`
 }
 
 func (a *Device) Key() (string, error) {
@@ -71,6 +72,7 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interfa
 
 	return map[string]interface{}{
 		"stats.anonymous.session.count": anonDeviceCount, // keep session for legacy data
+		"stats.anonymous.device.count":  anonDeviceCount,
 		"stats.users.device.count":      authedDeviceCount,
 	}, nil
 }
@@ -92,6 +94,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		Kind:      kind,
 		IP:        clientIPStr,
 		UserAgent: httpReq.UserAgent(),
+		LastSeen:  time.Now().UTC(),
 	}
 
 	key, err := anonDevice.Key()
