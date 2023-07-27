@@ -26,14 +26,14 @@ func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg) *Service {
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		NewLocalSource(plugins.ClassCore, s.corePluginPaths(s.gCfg.StaticRootPath)),
+		NewLocalSource(plugins.ClassCore, corePluginPaths(s.gCfg.StaticRootPath)),
 		NewLocalSource(plugins.ClassBundled, []string{s.gCfg.BundledPluginsPath}),
 		NewLocalSource(plugins.ClassExternal, append([]string{s.cfg.PluginsPath}, pluginFSPaths(s.cfg.PluginSettings)...)),
 	}
 }
 
 // corePluginPaths provides a list of the Core plugin file system paths
-func (s *Service) corePluginPaths(staticRootPath string) []string {
+func corePluginPaths(staticRootPath string) []string {
 	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
 	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
 	decoupledPluginPaths := filepath.Join(staticRootPath, "plugins")
