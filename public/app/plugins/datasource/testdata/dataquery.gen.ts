@@ -116,6 +116,7 @@ export interface TestData extends common.DataQuery {
    */
   dropPercent?: number;
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
+  flamegraphDiff?: boolean;
   labels?: string;
   levelColumn?: boolean;
   lines?: number;
@@ -130,7 +131,6 @@ export interface TestData extends common.DataQuery {
   stream?: StreamingQuery;
   stringInput?: string;
   usa?: USAQuery;
-  flamegraphDiff?: boolean;
 }
 
 export const defaultTestData: Partial<TestData> = {
