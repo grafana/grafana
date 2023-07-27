@@ -2993,7 +2993,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - export DESTINATION=grafana-prerelease
+  - export DESTINATION=gs://grafana-prerelease
   - cd /src && ./scripts/drone_publish_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -3050,7 +3050,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - export DESTINATION=grafana-prerelease
+  - export DESTINATION=gs://grafana-prerelease
   - cd /src && ./scripts/drone_publish_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -4564,6 +4564,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d8d0924bde06def64d1267fa3ac77d25c978e4cfde2bf31f1f2821a18c909876
+hmac: 4a4afb0cd555ae8a80a91ab7b828bd3969df0cb20ada138532b00518f576d000
 
 ...
