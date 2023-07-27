@@ -187,6 +187,96 @@ func TestService_UpdateDataSource(t *testing.T) {
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
 		require.ErrorIs(t, err, datasources.ErrDataSourceNameExists)
 	})
+
+	t.Run("should merge cmd.SecureJsonData with db data", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		expectedDbKey := "db-secure-key"
+		expectedDbValue := "db-secure-value"
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			SecureJsonData: map[string]string{
+				expectedDbKey: expectedDbValue,
+			},
+		})
+		require.NoError(t, err)
+
+		expectedOgKey := "cmd-secure-key"
+		expectedOgValue := "cmd-secure-value"
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "test-datasource-updated",
+			SecureJsonData: map[string]string{
+				expectedOgKey: expectedOgValue,
+			},
+		}
+
+		ds, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+
+		secret, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		assert.Equal(t, secret[expectedDbKey], expectedDbValue)
+		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
+	})
+
+	t.Run("should preserve cmd.SecureJsonData when cmd.IgnoreOldSecureJsonData=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		notExpectedDbKey := "db-secure-key"
+		dbValue := "db-secure-value"
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			SecureJsonData: map[string]string{
+				notExpectedDbKey: dbValue,
+			},
+		})
+		require.NoError(t, err)
+
+		expectedOgKey := "cmd-secure-key"
+		expectedOgValue := "cmd-secure-value"
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "test-datasource-updated",
+			SecureJsonData: map[string]string{
+				expectedOgKey: expectedOgValue,
+			},
+			IgnoreOldSecureJsonData: true,
+		}
+
+		ds, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+
+		secret, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
+		_, ok := secret[notExpectedDbKey]
+		assert.False(t, ok)
+	})
 }
 
 func TestService_NameScopeResolver(t *testing.T) {

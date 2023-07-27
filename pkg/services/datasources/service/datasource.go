@@ -644,9 +644,11 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		cmd.SecureJsonData = make(map[string]string)
 	}
 
-	for k, v := range decrypted {
-		if _, ok := cmd.SecureJsonData[k]; !ok {
-			cmd.SecureJsonData[k] = v
+	if !cmd.IgnoreOldSecureJsonData {
+		for k, v := range decrypted {
+			if _, ok := cmd.SecureJsonData[k]; !ok {
+				cmd.SecureJsonData[k] = v
+			}
 		}
 	}
 
