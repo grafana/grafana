@@ -223,14 +223,13 @@ func TestService_UpdateDataSource(t *testing.T) {
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
 
 		assert.Equal(t, cmd.SecureJsonData[expectedDbKey], expectedDbValue)
 		assert.Equal(t, cmd.SecureJsonData[expectedOgKey], expectedOgValue)
-
-		require.NoError(t, err)
 	})
 
-	t.Run("should preserve cmd.SecureJsonData when cmd.SecureJsonOverwrite=true", func(t *testing.T) {
+	t.Run("should preserve cmd.SecureJsonData when cmd.IgnoreOldSecureJsonData=true", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -262,17 +261,17 @@ func TestService_UpdateDataSource(t *testing.T) {
 			SecureJsonData: map[string]string{
 				expectedOgKey: expectedOgValue,
 			},
-			SecureJsonOverwrite: true,
+			IgnoreOldSecureJsonData: true,
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+
+		require.NoError(t, err)
 
 		assert.Equal(t, cmd.SecureJsonData[expectedOgKey], expectedOgValue)
 
 		_, ok := cmd.SecureJsonData[notExpectedDbKey]
 		assert.False(t, ok)
-
-		require.NoError(t, err)
 	})
 }
 
