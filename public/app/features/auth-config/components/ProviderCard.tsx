@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Card, useStyles2, Icon, Tooltip } from '@grafana/ui';
+import { Badge, Card, useStyles2, Icon } from '@grafana/ui';
 
 import { BASE_PATH } from '../constants';
 
@@ -12,23 +12,13 @@ type Props = {
   providerId: string;
   displayName: string;
   enabled: boolean;
-  configFoundInIniFile?: boolean;
   configPath?: string;
   authType?: string;
   badges?: JSX.Element[];
   onClick?: () => void;
 };
 
-export function ProviderCard({
-  providerId,
-  displayName,
-  enabled,
-  configFoundInIniFile,
-  configPath,
-  authType,
-  badges,
-  onClick,
-}: Props) {
+export function ProviderCard({ providerId, displayName, enabled, configPath, authType, badges, onClick }: Props) {
   const styles = useStyles2(getStyles);
   configPath = BASE_PATH + (configPath || providerId);
 
@@ -39,20 +29,6 @@ export function ProviderCard({
         <span className={styles.name}>{displayName}</span>
       </div>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
-      {configFoundInIniFile && (
-        <>
-          <span className={styles.smallText}>
-            <Tooltip
-              content={`Note: Settings enabled in the .ini configuration file will overwritten by the current settings.`}
-            >
-              <>
-                <Icon name="adjust-circle" />
-                Configuration found in .ini file
-              </>
-            </Tooltip>
-          </span>
-        </>
-      )}
       <div className={styles.footer}>
         <div className={styles.badgeContainer}>
           {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="blue" />}
