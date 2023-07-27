@@ -3703,14 +3703,14 @@ __metadata:
   dependencies:
     "@babel/core": 7.22.1
     "@emotion/css": 11.11.2
-    "@grafana/data": 10.1.0-pre
-    "@grafana/e2e": 10.1.0-pre
-    "@grafana/e2e-selectors": 10.1.0-pre
+    "@grafana/data": 10.1.0-128299pre
+    "@grafana/e2e": 10.1.0-128299pre
+    "@grafana/e2e-selectors": 10.1.0-128299pre
     "@grafana/eslint-config": 6.0.0
-    "@grafana/runtime": 10.1.0-pre
-    "@grafana/schema": 10.1.0-pre
+    "@grafana/runtime": 10.1.0-128299pre
+    "@grafana/schema": 10.1.0-128299pre
     "@grafana/tsconfig": ^1.3.0-rc1
-    "@grafana/ui": 10.1.0-pre
+    "@grafana/ui": 10.1.0-128299pre
     "@swc/core": ^1.3.62
     "@swc/helpers": ^0.5.0
     "@swc/jest": ^0.2.26
@@ -3845,6 +3845,42 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/data@npm:10.1.0-128299pre":
+  version: 10.1.0-128299pre
+  resolution: "@grafana/data@npm:10.1.0-128299pre"
+  dependencies:
+    "@braintree/sanitize-url": 6.0.2
+    "@grafana/schema": 10.1.0-128299pre
+    "@types/d3-interpolate": ^3.0.0
+    "@types/string-hash": 1.1.1
+    d3-interpolate: 3.0.1
+    date-fns: 2.30.0
+    dompurify: ^2.4.3
+    eventemitter3: 5.0.0
+    fast_array_intersect: 1.1.0
+    history: 4.10.1
+    lodash: 4.17.21
+    marked: 5.1.1
+    marked-mangle: 1.1.0
+    moment: 2.29.4
+    moment-timezone: 0.5.41
+    ol: 7.4.0
+    papaparse: 5.4.1
+    react-use: 17.4.0
+    regenerator-runtime: 0.13.11
+    rxjs: 7.8.0
+    string-hash: ^1.1.3
+    tinycolor2: 1.6.0
+    tslib: 2.6.0
+    uplot: 1.6.24
+    xss: ^1.0.14
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
+  checksum: d1c24d19c51685714dc4607eceb5d8619863f438d0e835d2cd2245b5848e6e95ec3679c22d06676bfa88db12a0ef57f06c685b38dae9d082a80f99804e24b255
+  languageName: node
+  linkType: hard
+
 "@grafana/e2e-selectors@10.2.0-pre, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
@@ -3875,7 +3911,52 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/e2e@10.1.0-pre, @grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
+"@grafana/e2e-selectors@npm:10.1.0-128299pre":
+  version: 10.1.0-128299pre
+  resolution: "@grafana/e2e-selectors@npm:10.1.0-128299pre"
+  dependencies:
+    "@grafana/tsconfig": ^1.2.0-rc1
+    tslib: 2.6.0
+    typescript: 4.8.4
+  checksum: 542d70fef89804c9490383dca6a18be60926e729d91167c565b7cbc470715c7ccd91d317d37f4891f70299062711068f7e6e771fd297b940f82f4430137dd294
+  languageName: node
+  linkType: hard
+
+"@grafana/e2e@npm:10.1.0-128299pre":
+  version: 10.1.0-128299pre
+  resolution: "@grafana/e2e@npm:10.1.0-128299pre"
+  dependencies:
+    "@babel/core": 7.22.1
+    "@babel/preset-env": 7.22.4
+    "@cypress/webpack-preprocessor": 5.17.0
+    "@grafana/e2e-selectors": 10.1.0-128299pre
+    "@grafana/tsconfig": ^1.2.0-rc1
+    "@mochajs/json-file-reporter": ^1.2.0
+    babel-loader: 9.1.2
+    blink-diff: 1.0.13
+    chrome-remote-interface: 0.32.1
+    commander: 8.3.0
+    cypress: 9.5.1
+    cypress-file-upload: 5.0.8
+    devtools-protocol: 0.0.1113774
+    execa: 5.1.1
+    lodash: 4.17.21
+    mocha: 10.2.0
+    resolve-bin: 1.0.1
+    rimraf: 5.0.1
+    tracelib: 1.0.1
+    ts-loader: 8.4.0
+    tslib: 2.6.0
+    typescript: 4.8.4
+    uuid: 9.0.0
+    yaml: ^2.0.0
+  bin:
+    grafana-e2e: bin/grafana-e2e.js
+  checksum: 50e5b07b0be757c7169331c9618e0cf9a3037db5be803977b89bbdda4170039f309c9cc7a11658ea2ecdb733129645519acb3f688008374f2013523005e0175d
+  languageName: node
+  linkType: hard
+
+"@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
   dependencies:
@@ -4041,7 +4122,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@10.1.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@npm:10.1.0-128299pre":
+  version: 10.1.0-128299pre
+  resolution: "@grafana/runtime@npm:10.1.0-128299pre"
+  dependencies:
+    "@grafana/data": 10.1.0-128299pre
+    "@grafana/e2e-selectors": 10.1.0-128299pre
+    "@grafana/faro-web-sdk": 1.1.0
+    "@grafana/ui": 10.1.0-128299pre
+    history: 4.10.1
+    lodash: 4.17.21
+    rxjs: 7.8.0
+    systemjs: 0.20.19
+    tslib: 2.6.0
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
+  checksum: 7b2fdb1118ee279c4366aac07a119e607253b6355ac35b6b11a1ba059f119ca578c517d8adf5f8d383a2c1f59694101710c8b89fd28261844800b9c2107cfb0f
+  languageName: node
+  linkType: hard
+
+"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -4121,6 +4222,15 @@ __metadata:
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
+
+"@grafana/schema@npm:10.1.0-128299pre":
+  version: 10.1.0-128299pre
+  resolution: "@grafana/schema@npm:10.1.0-128299pre"
+  dependencies:
+    tslib: 2.6.0
+  checksum: 67e2f0c62e201b0a0ac7a5a6de58efbfa0c4b9977bf4b6140f7e9ab89c80d627df6e28a48317b740825ea628607f2b06f6bce9fb879e91afb01779fc8dc29a76
+  languageName: node
+  linkType: hard
 
 "@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
@@ -4300,6 +4410,83 @@ __metadata:
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
+
+"@grafana/ui@npm:10.1.0-128299pre":
+  version: 10.1.0-128299pre
+  resolution: "@grafana/ui@npm:10.1.0-128299pre"
+  dependencies:
+    "@emotion/css": 11.11.2
+    "@emotion/react": 11.11.1
+    "@grafana/data": 10.1.0-128299pre
+    "@grafana/e2e-selectors": 10.1.0-128299pre
+    "@grafana/faro-web-sdk": 1.1.0
+    "@grafana/schema": 10.1.0-128299pre
+    "@leeoniya/ufuzzy": 1.0.8
+    "@monaco-editor/react": 4.5.1
+    "@popperjs/core": 2.11.6
+    "@react-aria/button": 3.8.0
+    "@react-aria/dialog": 3.5.3
+    "@react-aria/focus": 3.13.0
+    "@react-aria/menu": 3.10.0
+    "@react-aria/overlays": 3.15.0
+    "@react-aria/utils": 3.18.0
+    "@react-stately/menu": 3.5.3
+    ansicolor: 1.1.100
+    calculate-size: 1.1.1
+    classnames: 2.3.2
+    core-js: 3.31.0
+    d3: 7.8.5
+    date-fns: 2.30.0
+    hoist-non-react-statics: 3.3.2
+    i18next: ^22.0.0
+    i18next-browser-languagedetector: ^7.0.2
+    immutable: 4.3.0
+    is-hotkey: 0.2.0
+    jquery: 3.7.0
+    lodash: 4.17.21
+    memoize-one: 6.0.0
+    moment: 2.29.4
+    monaco-editor: 0.34.0
+    ol: 7.4.0
+    prismjs: 1.29.0
+    rc-cascader: 3.12.1
+    rc-drawer: 6.3.0
+    rc-slider: 10.2.1
+    rc-time-picker: ^3.7.3
+    rc-tooltip: 6.0.1
+    react-beautiful-dnd: 13.1.1
+    react-calendar: 4.3.0
+    react-colorful: 5.6.1
+    react-custom-scrollbars-2: 4.5.0
+    react-dropzone: 14.2.3
+    react-highlight-words: 0.20.0
+    react-hook-form: 7.5.3
+    react-i18next: ^12.0.0
+    react-inlinesvg: 3.0.2
+    react-loading-skeleton: 3.3.1
+    react-popper: 2.3.0
+    react-popper-tooltip: 4.4.2
+    react-router-dom: 5.3.3
+    react-select: 5.7.0
+    react-select-event: ^5.1.0
+    react-table: 7.8.0
+    react-transition-group: 4.4.5
+    react-use: 17.4.0
+    react-window: 1.8.8
+    rxjs: 7.8.0
+    slate: 0.47.9
+    slate-plain-serializer: 0.7.13
+    slate-react: 0.22.10
+    tinycolor2: 1.6.0
+    tslib: 2.6.0
+    uplot: 1.6.24
+    uuid: 9.0.0
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
+  checksum: e38c94f28b1b166a00723dc5c3b3de288ec4b9411c9779855d3b8423fef8effba9f3ad2ce85384282bdc50f72fe127931a71670e95115cfe2c79634d64ffb6cf
+  languageName: node
+  linkType: hard
 
 "@hapi/hoek@npm:^9.0.0":
   version: 9.3.0
