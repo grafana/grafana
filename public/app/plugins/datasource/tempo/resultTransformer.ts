@@ -526,6 +526,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
           ],
         },
       },
+      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' } },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
       { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
       { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
@@ -550,23 +551,15 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
 }
 
 function transformToTraceData(data: TraceSearchMetadata) {
-  let traceName = '';
-  if (data.rootServiceName) {
-    traceName += data.rootServiceName + ' ';
-  }
-  if (data.rootTraceName) {
-    traceName += data.rootTraceName;
-  }
-
   const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
-
-  let startTime = !isNaN(traceStartTime) ? dateTimeFormat(traceStartTime) : '';
+  const startTime = !isNaN(traceStartTime) ? dateTimeFormat(traceStartTime) : '';
 
   return {
     traceID: data.traceID,
     startTime,
     traceDuration: data.durationMs?.toString(),
-    traceName,
+    traceService: data.rootServiceName || '',
+    traceName: data.rootTraceName || '',
   };
 }
 
@@ -612,6 +605,7 @@ export function createTableFrameFromTraceQlQuery(
           },
         },
       },
+      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Service' } },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
       {
         name: 'traceDuration',
