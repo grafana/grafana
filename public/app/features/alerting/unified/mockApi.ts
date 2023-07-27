@@ -8,9 +8,9 @@ import { backendSrv } from '../../../core/services/backend_srv';
 import {
   AlertmanagerConfig,
   AlertManagerCortexConfig,
+  AlertmanagerReceiver,
   EmailConfig,
   MatcherOperator,
-  Receiver,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 
@@ -84,7 +84,7 @@ class EmailConfigBuilder {
 }
 
 class AlertmanagerReceiverBuilder {
-  private receiver: Receiver = { name: '', email_configs: [] };
+  private receiver: AlertmanagerReceiver = { name: '', email_configs: [] };
 
   withName(name: string): AlertmanagerReceiverBuilder {
     this.receiver.name = name;
@@ -124,7 +124,7 @@ export function mockApi(server: SetupServer) {
   };
 }
 
-// Creates a MSW server and sets up beforeAll and afterAll handlers for it
+// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
 export function setupMswServer() {
   const server = setupServer();
 

@@ -2,6 +2,8 @@ import { isArray, isNil, omitBy } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
+  AlertmanagerReceiver,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   Receiver,
   Route,
@@ -18,7 +20,7 @@ import {
 } from '../types/receiver-form';
 
 export function grafanaReceiverToFormValues(
-  receiver: Receiver,
+  receiver: GrafanaManagedContactPoint,
   notifiers: NotifierDTO[]
 ): [ReceiverFormValues<GrafanaChannelValues>, GrafanaChannelMap] {
   const channelMap: GrafanaChannelMap = {};
@@ -92,7 +94,7 @@ export function formValuesToCloudReceiver(
   values: ReceiverFormValues<CloudChannelValues>,
   defaults: CloudChannelValues
 ): Receiver {
-  const recv: Receiver = {
+  const recv: AlertmanagerReceiver = {
     name: values.name,
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
@@ -101,11 +103,10 @@ export function formValuesToCloudReceiver(
       send_resolved: sendResolved ?? defaults.sendResolved,
     });
 
-    const configsKey = `${type}_configs`;
-    if (!recv[configsKey]) {
-      recv[configsKey] = [channel];
+    if (!(`${type}_configs` in recv)) {
+      recv[`${type}_configs`] = [channel];
     } else {
-      (recv[configsKey] as unknown[]).push(channel);
+      (recv[`${type}_configs`] as unknown[]).push(channel);
     }
   });
   return recv;
