@@ -67,7 +67,7 @@ const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): 
 
 export function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
   let inputs = dashboardJson.__inputs;
-  if (!!state.inputs.libraryPanels.length) {
+  if (!!state.inputs.libraryPanels?.length) {
     const filteredUsedInputs: Input[] = [];
     dashboardJson.__inputs?.forEach((input: Input) => {
       if (!input?.usage?.libraryPanels) {
@@ -139,17 +139,15 @@ function processInputs(): ThunkResult<void> {
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
   return async function (dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
-    if (libraryPanelInputs !== undefined) {
-      dispatch(setLibraryPanelInputs(libraryPanelInputs));
-    }
+    dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
 }
 
 export async function getLibraryPanelInputs(dashboardJson?: {
   __elements?: Record<string, LibraryElementExport>;
-}): Promise<LibraryPanelInput[] | undefined> {
+}): Promise<LibraryPanelInput[]> {
   if (!dashboardJson || !dashboardJson.__elements) {
-    return;
+    return [];
   }
 
   const libraryPanelInputs: LibraryPanelInput[] = [];
