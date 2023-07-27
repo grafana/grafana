@@ -23,6 +23,7 @@ import {
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
+import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
@@ -232,7 +233,15 @@ interface ContactPointHeaderProps {
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
   const styles = useStyles2(getStyles);
+  const { selectedAlertmanager } = useAlertmanager();
+  const permissions = getNotificationsPermissions(selectedAlertmanager ?? '');
+
   const isReferencedByPolicies = policies > 0;
+  const isGranaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+
+  // we make a distinction here becase for "canExport" we show the menu item, if not we hide it
+  const canExport = isGranaManagedAlertmanager;
+  const allowedToExport = contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
 
   return (
     <div className={styles.headerWrapper}>
@@ -267,12 +276,28 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         >
           {provisioned ? 'View' : 'Edit'}
         </LinkButton>
+        {/* TODO probably want to split this off since there's lots of RBAC involved here */}
         <Dropdown
           overlay={
             <Menu>
-              {/* TODO we don't support exporting a single contact point yet */}
-              {/* <Menu.Item label="Export" icon="download-alt" /> */}
-              <Menu.Divider />
+              {canExport && (
+                <>
+                  <Menu.Item
+                    icon="download-alt"
+                    label={isOrgAdmin() ? 'Export' : 'Export redacted'}
+                    disabled={!allowedToExport}
+                    url={createUrl(`/api/v1/provisioning/contact-points/export/`, {
+                      download: 'true',
+                      format: 'yaml',
+                      decrypt: isOrgAdmin().toString(),
+                      name: name,
+                    })}
+                    target="_blank"
+                    data-testid="export"
+                  />
+                  <Menu.Divider />
+                </>
+              )}
               <Menu.Item
                 label="Delete"
                 icon="trash-alt"
