@@ -389,7 +389,9 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		PreviousStateReason: oldReason,
 	}
 
-	st.metrics.StateUpdateDuration.Observe(float64(st.clock.Now().Sub(start).Milliseconds()))
+	if st.metrics != nil {
+		st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
+	}
 
 	return nextState
 }
