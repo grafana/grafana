@@ -79,7 +79,6 @@ def rgm_build(script = "drone_publish_main.sh"):
         "image": "grafana/grafana-build:dev-fda506a",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
-            "export DESTINATION=gs://grafana-prerelease",
             "cd /src && ./scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets,
