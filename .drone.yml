@@ -437,7 +437,6 @@ steps:
   name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
-  failure: ignore
   image: golang:1.20.6
   name: validate-modfile
 trigger:
@@ -1648,7 +1647,6 @@ steps:
   name: lint-backend
 - commands:
   - go run scripts/modowners/modowners.go check go.mod
-  failure: ignore
   image: golang:1.20.6
   name: validate-modfile
 - commands:
@@ -4970,6 +4968,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: cc3cdda004221d95f32b2753fa6c1d4fde277abaeee96ca6e6287b5c100fb52e
+hmac: 0b15074f9917243cc6f49b3f1267d45150b0809d6f9d8f34b3c0402ce252d687
 
 ...
