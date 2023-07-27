@@ -22,7 +22,6 @@ import {
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
-import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
@@ -251,38 +250,20 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         )}
         {provisioned && <ProvisioningBadge />}
         <Spacer />
-        <ConditionalWrap
-          shouldWrap={provisioned}
-          wrap={(children) => (
-            <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
-              {children}
-            </Tooltip>
-          )}
+        <LinkButton
+          tooltipPlacement="top"
+          tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
+          variant="secondary"
+          size="sm"
+          icon={provisioned ? 'document-info' : 'edit'}
+          type="button"
+          disabled={disabled}
+          aria-label={`${provisioned ? 'view' : 'edit'}-action`}
+          data-testid={`${provisioned ? 'view' : 'edit'}-action`}
+          href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
         >
-          {/* TODO maybe we can make an abstraction around these disabled buttons with conditional tooltip for provisioned resources? */}
-          <ConditionalWrap
-            shouldWrap={provisioned}
-            wrap={(children) => (
-              <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
-                <span>{children}</span>
-              </Tooltip>
-            )}
-          >
-            <LinkButton
-              variant="secondary"
-              size="sm"
-              icon={provisioned ? 'document-info' : 'edit'}
-              type="button"
-              disabled={disabled}
-              aria-label={`${provisioned ? 'view' : 'edit'}-action`}
-              data-testid={`${provisioned ? 'view' : 'edit'}-action`}
-              href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
-            >
-              {provisioned ? 'View' : 'Edit'}
-            </LinkButton>
-          </ConditionalWrap>
-        </ConditionalWrap>
-
+          {provisioned ? 'View' : 'Edit'}
+        </LinkButton>
         <Dropdown
           overlay={
             <Menu>
