@@ -2,9 +2,12 @@ import React from 'react';
 
 import { PluginExtensionPoints, type PluginExtensionLinkConfig } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
+import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
 import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
+import { changeCorrelationsEditorMode } from '../state/main';
+import { runQueries } from '../state/query';
 
 import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
@@ -36,6 +39,22 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
             title: getAddToDashboardTitle(),
             body: ({ onDismiss }) => <AddToDashboardForm onClose={onDismiss!} exploreId={context?.exploreId!} />,
           });
+        },
+      }),
+      createExtensionLinkConfig<PluginExtensionExploreContext>({
+        title: 'Add Correlation',
+        description: 'Create a correlation from this query',
+        extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+        icon: 'link',
+        configure: () => {
+          return {};
+        },
+        onClick: (_, { context }) => {
+          console.log(context?.exploreId);
+          dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+          if (context?.exploreId) {
+            dispatch(runQueries({ exploreId: context?.exploreId }));
+          }
         },
       }),
     ];

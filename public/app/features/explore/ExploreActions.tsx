@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { useDispatch, useSelector } from 'app/types';
 
-import { splitOpen, splitClose } from './state/main';
+import { splitOpen, splitClose, changeCorrelationsEditorMode } from './state/main';
 import { runQueries } from './state/query';
 import { isSplit, selectPanes } from './state/selectors';
 
@@ -65,6 +65,15 @@ export const ExploreActions = () => {
         });
       }
     } else {
+      actionsArr.push({
+        id: 'correlations-editor',
+        name: 'Correlations editor',
+        perform: () => {
+          dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+          dispatch(runQueries({ exploreId: keys[0] }));
+        },
+      });
+
       actionsArr.push({
         id: 'explore/run-query',
         name: 'Run query',

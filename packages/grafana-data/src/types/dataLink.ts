@@ -19,6 +19,7 @@ export interface DataLinkClickEvent<T = any> {
 export enum DataLinkConfigOrigin {
   Datasource = 'Datasource',
   Correlations = 'Correlations',
+  ExploreCorrelationsEditor = 'CorrelationsEditor',
 }
 
 /**

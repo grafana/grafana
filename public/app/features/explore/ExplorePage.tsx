@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { inRange } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useWindowSize } from 'react-use';
@@ -26,6 +26,9 @@ const styles = {
     min-height: 0;
     height: 100%;
     position: relative;
+  `,
+  correlationsEditorIndicator: css`
+    border: 4px solid limegreen;
   `,
 };
 
@@ -87,7 +90,11 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }
 
   return (
-    <div className={styles.pageScrollbarWrapper}>
+    <div
+      className={cx(styles.pageScrollbarWrapper, {
+        [styles.correlationsEditorIndicator]: exploreState.correlationsEditorMode,
+      })}
+    >
       <ExploreActions />
 
       <SplitPaneWrapper

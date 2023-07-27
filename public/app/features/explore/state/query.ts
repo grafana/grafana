@@ -513,6 +513,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       cache,
       supplementaryQueries,
     } = exploreItemState;
+    const isCorrelationsEditorMode = getState().explore.correlationsEditorMode;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -531,7 +532,15 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     if (cachedValue) {
       newQuerySource = combineLatest([of(cachedValue), correlations$]).pipe(
         mergeMap(([data, correlations]) =>
-          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
+          decorateData(
+            data,
+            queryResponse,
+            absoluteRange,
+            refreshInterval,
+            queries,
+            correlations,
+            isCorrelationsEditorMode
+          )
         )
       );
 
@@ -577,7 +586,15 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         correlations$,
       ]).pipe(
         mergeMap(([data, correlations]) =>
-          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
+          decorateData(
+            data,
+            queryResponse,
+            absoluteRange,
+            refreshInterval,
+            queries,
+            correlations,
+            isCorrelationsEditorMode
+          )
         )
       );
 

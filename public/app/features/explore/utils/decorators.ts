@@ -10,6 +10,7 @@ import {
   PanelData,
   standardTransformers,
   preProcessPanelData,
+  DataLinkConfigOrigin,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -93,13 +94,44 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithCorrelations = ({
+  isCorrelationsEditorMode,
   queries,
   correlations,
 }: {
+  isCorrelationsEditorMode: boolean;
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
 }) => {
   return (data: PanelData): PanelData => {
+    if (isCorrelationsEditorMode) {
+      for (const frame of data.series) {
+        for (const field of frame.fields) {
+          field.config.links =
+            field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.ExploreCorrelationsEditor) || [];
+
+          const availableVars: Record<string, string> = {};
+          frame.fields.map((field) => {
+            availableVars[`${field.name}`] = "${__data.fields.['" + `${field.name}` + `']}`;
+          });
+          field.config.links.push({
+            url: '',
+            origin: DataLinkConfigOrigin.ExploreCorrelationsEditor,
+            title: `Correlate with ${field.name}`,
+            internal: {
+              datasourceUid: 'default',
+              datasourceName: 'default',
+              query: {},
+              panelsState: {
+                //mode: 'CorrelationsEditor',
+                //resultsField: field.name,
+                correlations: { vars: availableVars },
+              },
+            },
+          });
+        }
+      }
+    }
+
     if (queries?.length && correlations?.length) {
       const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
       attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
@@ -255,11 +287,12 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
-  correlations: CorrelationData[] | undefined
+  correlations: CorrelationData[] | undefined,
+  isCorrelationsEditorMode: boolean
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithCorrelations({ queries, correlations })),
+    map(decorateWithCorrelations({ isCorrelationsEditorMode, queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),

@@ -50,6 +50,11 @@ export interface ExploreState {
   richHistoryLimitExceededWarningShown: boolean;
 
   /**
+   * True if Explore is in correlations editor mode, where every field shows a correlation data link and normal data links do not display
+   */
+  correlationsEditorMode: boolean;
+
+  /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
   largerExploreId?: keyof ExploreState['panes'];

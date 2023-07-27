@@ -105,6 +105,13 @@ const createNewSplitOpenPane = createAsyncThunk(
   }
 );
 
+/**
+ * Moves explore into and out of correlations editor mode
+ */
+export const changeCorrelationsEditorMode = createAction<{
+  correlationsEditorMode: boolean;
+}>('explore/changeCorrelationsEditorMode');
+
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
   getTimeSrv: () => TimeSrv;
@@ -141,6 +148,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
+  correlationsEditorMode: false,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -250,6 +258,14 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       panes: {},
+    };
+  }
+
+  if (changeCorrelationsEditorMode.match(action)) {
+    const { correlationsEditorMode } = action.payload;
+    return {
+      ...state,
+      correlationsEditorMode,
     };
   }
 
