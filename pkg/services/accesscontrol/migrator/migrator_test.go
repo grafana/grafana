@@ -15,7 +15,8 @@ import (
 
 func batchInsertPermissions(cnt int, sqlStore db.DB) error {
 	now := time.Now()
-	return ac.ConcurrentBatch(ac.Concurrency, cnt, ac.BatchSize, func(start, end int) error {
+
+	return batch(cnt, ac.BatchSize, func(start, end int) error {
 		n := end - start
 		permissions := make([]ac.Permission, 0, n)
 		for i := start + 1; i < end+1; i++ {
