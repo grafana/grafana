@@ -126,6 +126,11 @@ spec:
 
 ### Send the manifest to the Kubernetes API server
 
+```bash
+curl -X POST -d "api_key=$api_key&api_username=$username" https://community.grafana.com//admin/plugins/explorer/queries/$query_id/run
+```
+
+
 1. Run the following command:
    `kubectl apply -f grafana.yaml`
 
