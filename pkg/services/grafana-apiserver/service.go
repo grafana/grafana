@@ -135,11 +135,11 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
 	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	grafanaAdmission.RegisterGrpcCalloutPluginValidate(o.RecommendedOptions.Admission.Plugins, s.pluginsClient)
+	grafanaAdmission.RegisterGrpcCalloutAdmissionInPlugin(o.RecommendedOptions.Admission.Plugins, s.pluginsClient)
 
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields, grafanaAdmission.PluginNameGrpcCalloutPluginValidate}
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields, grafanaAdmission.PluginNameGrpcCalloutAdmissionInPlugin}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields, grafanaAdmission.PluginNameGrpcCalloutPluginValidate}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields, grafanaAdmission.PluginNameGrpcCalloutAdmissionInPlugin}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{

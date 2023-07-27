@@ -32,24 +32,34 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-const PluginNameGrpcCalloutPluginValidate = "GrpcCalloutPluginValidate"
+const PluginNameGrpcCalloutAdmissionInPlugin = "GrpcCalloutAdmissionInPlugin"
 
 // Register registers a plugin
-func RegisterGrpcCalloutPluginValidate(plugins *admission.Plugins, pluginsClient plugins.Client) {
-	plugins.Register(PluginNameGrpcCalloutPluginValidate, func(config io.Reader) (admission.Interface, error) {
-		return NewGrpcCalloutPluginValidate(pluginsClient), nil
+func RegisterGrpcCalloutAdmissionInPlugin(plugins *admission.Plugins, pluginsClient plugins.Client) {
+	plugins.Register(PluginNameGrpcCalloutAdmissionInPlugin, func(config io.Reader) (admission.Interface, error) {
+		return NewGrpcCalloutAdmissionInPlugin(pluginsClient), nil
 	})
 }
 
 // example of admission plugin that will deny any resource with name "deny"
-type grpcCalloutPluginValidate struct {
+type grpcCalloutAdmissionInPlugin struct {
 	pluginsClient plugins.Client
 }
 
-var _ admission.ValidationInterface = grpcCalloutPluginValidate{}
+var _ admission.MutationInterface = grpcCalloutAdmissionInPlugin{}
+var _ admission.ValidationInterface = grpcCalloutAdmissionInPlugin{}
+
+// Admit makes an admission decision based on the request attributes.
+func (g grpcCalloutAdmissionInPlugin) Admit(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	return g.proxyAdminOrValidate(ctx, a, o, true)
+}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
-func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (g grpcCalloutAdmissionInPlugin) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	return g.proxyAdminOrValidate(ctx, a, o, false)
+}
+
+func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, isMutating bool) error {
 	var finalErr error
 
 	wrappedSender := callResourceResponseSenderFunc(func(response *backend.CallResourceResponse) error {
@@ -60,8 +70,9 @@ func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Att
 		}
 
 		if !admissionResponse.Allowed {
-			finalErr = admission.NewForbidden(a, errors.New("admission control is denying all modifications"))
+			finalErr = admission.NewForbidden(a, errors.New("could not pass validation performed by plugin"))
 		}
+
 		return nil
 	})
 
@@ -93,9 +104,14 @@ func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Att
 	}
 
 	admissionRequestBody, _ := json.Marshal(admissionRequest)
+	path := "/k8s/admission/validation"
+
+	if isMutating {
+		path = "/k8s/admission/mutation"
+	}
 	if kind.Group == "charandas.example.com" && kind.Kind == "TestObject" {
 		g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
-			Path:   "/k8s/admission/mutation",
+			Path:   path,
 			Method: "POST",
 			PluginContext: backend.PluginContext{
 				OrgID:                      0,
@@ -113,13 +129,17 @@ func (g grpcCalloutPluginValidate) Validate(ctx context.Context, a admission.Att
 
 // Handles returns true if this admission controller can handle the given operation
 // where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
-func (grpcCalloutPluginValidate) Handles(operation admission.Operation) bool {
-	return true
+func (grpcCalloutAdmissionInPlugin) Handles(operation admission.Operation) bool {
+	switch operation {
+	case admission.Create, admission.Update:
+		return true
+	}
+	return false
 }
 
-// NewGrpcCalloutPluginValidate creates an always deny admission handler
-func NewGrpcCalloutPluginValidate(pluginsClient plugins.Client) admission.Interface {
-	return &grpcCalloutPluginValidate{
+// NewGrpcCalloutAdmissionInPlugin creates an always deny admission handler
+func NewGrpcCalloutAdmissionInPlugin(pluginsClient plugins.Client) admission.Interface {
+	return &grpcCalloutAdmissionInPlugin{
 		pluginsClient: pluginsClient,
 	}
 }

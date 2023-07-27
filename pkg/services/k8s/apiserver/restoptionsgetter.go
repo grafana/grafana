@@ -51,6 +51,8 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+	// NOTE: since entitystorage depends on a kindsys.Core for the moment to extract info such as Name, MachineName
+	// and my test plugin resource doesn't have an equivalent, opting for filestorage
 	if resource.Resource == "grafanaresourcedefinitions" || resource.Resource == "testobjects" {
 		return f.fallback.GetRESTOptions(resource)
 	}
