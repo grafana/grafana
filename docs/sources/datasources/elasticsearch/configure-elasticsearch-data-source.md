@@ -137,17 +137,19 @@ You can optionally configure the two Logs parameters **Message field name** and 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch, set:
 
 - **Message field name:** `message`
+
 - **Level field name:** `fields.level`
 
 ### Data links
 
-Data links create a link from a specified field that can be accessed in Explore's logs view.
+Data links create a link from a specified field that can be accessed in Explore's logs view. You can add multiple data links
 
-Each data link configuration consists of:
+Each data link configuration consists off:
 
-| Parameter         | Description                                                                                                                                                                                                                         |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Field**         | Sets the name of the field used by the data link.                                                                                                                                                                                   |
-| **URL/query**     | Sets the full link URL if the link is external. If the link is internal, this input serves as a query for the target data source.<br/>In both cases, you can interpolate the value from the field with the `${__value.raw }` macro. |
-| **URL Label**     | (Optional) Sets a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.                                                 |
-| **Internal link** | Sets whether the link is internal or external. For an internal link, you can select the target data source with a data source selector. This supports only tracing data sources.                                                    |
+- **Field** - Sets the name of the field used by the data link.
+
+- **URL/query** Sets the full link URL if the link is external. If the link is internal, this input serves as a query for the target data source.<br/>In both cases, you can interpolate the value from the field with the `${__value.raw }` macro.
+
+- **URL Label** (Optional) Sets a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
+
+- **Internal link** - Toggle on to set an internal link. For an internal link, you can select the target data source with a data source selector. This supports only tracing data sources.
