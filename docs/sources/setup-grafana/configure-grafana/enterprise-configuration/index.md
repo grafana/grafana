@@ -37,7 +37,7 @@ the instance.
 Available in Grafana Enterprise version 7.4 and later.
 {{% /admonition %}}
 
-When enabled, Grafana will send the license and usage statistics to
+When enabled, Grafana will send the license and usage statistics on a daily basis to
 the license issuer. If the license has been updated on the issuer's
 side to be valid for a different number of users or a new duration,
 your Grafana instance will be updated with the new terms
