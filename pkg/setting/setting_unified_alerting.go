@@ -32,7 +32,7 @@ const (
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
 				"uid": "grafana-default-email",
-				"name": "email receiver",
+				"name": "grafana-default-email",
 				"type": "email",
 				"isDefault": true,
 				"settings": {
