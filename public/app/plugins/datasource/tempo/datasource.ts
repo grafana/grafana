@@ -223,10 +223,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
-            streaming: appliedQuery.streaming,
+            streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (appliedQuery.streaming) {
+          if (config.featureToggles.traceQLStreaming) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql));
           } else {
             subQueries.push(
@@ -260,10 +260,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           app: options.app ?? '',
           grafana_version: config.buildInfo.version,
           query: queryValue ?? '',
-          streaming: targets.traceqlSearch[0].streaming,
+          streaming: config.featureToggles.traceQLStreaming,
         });
 
-        if (targets.traceqlSearch[0].streaming) {
+        if (config.featureToggles.traceQLStreaming) {
           subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch, queryValue));
         } else {
           subQueries.push(
