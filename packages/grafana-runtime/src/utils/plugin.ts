@@ -29,9 +29,13 @@ export const SystemJS = window.System;
  * @param options - plugin styling for light and dark theme.
  * @public
  */
-export function loadPluginCss(options: PluginCssOptions): Promise<any> {
-  const cssPath = config.bootData.user.theme === 'light' ? options.light : options.dark;
-  return SystemJS.import(cssPath);
+export async function loadPluginCss(options: PluginCssOptions): Promise<any> {
+  try {
+    const cssPath = config.bootData.user.theme === 'light' ? options.light : options.dark;
+    return await SystemJS.import(cssPath);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 interface PluginImportUtils {
