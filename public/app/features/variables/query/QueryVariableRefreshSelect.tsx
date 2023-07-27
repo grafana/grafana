@@ -25,7 +25,6 @@ export function QueryVariableRefreshSelect({ onChange, refresh }: PropsWithChild
     },
   });
 
-  console.log('cambié');
   const value = useMemo(
     () => REFRESH_OPTIONS.find((o) => o.value === refresh)?.value ?? REFRESH_OPTIONS[0].value,
     [refresh]
