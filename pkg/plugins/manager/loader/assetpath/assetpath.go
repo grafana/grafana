@@ -25,7 +25,17 @@ func ProvideService(cdn *pluginscdn.Service) *Service {
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
+		typ := string(pluginJSON.Type)
+		baseDir := filepath.Base(pluginDir)
+		if strings.Contains(pluginDir, "public/plugins") {
+			// Decoupled core plugin
+			if baseDir == "dist" || baseDir == "src" {
+				parentDir := filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
+				baseDir = filepath.Join(parentDir, baseDir)
+			}
+			return path.Join("public/plugins", baseDir), nil
+		}
+		return path.Join("public/app/plugins", typ, baseDir), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "")
@@ -36,7 +46,15 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
+		baseDir := filepath.Base(pluginDir)
+		if strings.Contains(pluginDir, "public/plugins") {
+			// Decoupled core plugin
+			if baseDir == "dist" || baseDir == "src" {
+				parentDir := filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
+				baseDir = parentDir
+			}
+		}
+		return path.Join("app/plugins", string(pluginJSON.Type), baseDir, "module"), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "module")
