@@ -15,6 +15,7 @@ import (
 //go:generate go run ./commands/generate_datasources/main.go
 //go:generate mockery --name Service --structname FakePublicDashboardService --inpackage --filename public_dashboard_service_mock.go
 type Service interface {
+	GetPublicDashboardForView(ctx context.Context, accessToken string) (*dtos.DashboardFullWithMeta, error)
 	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error)
 	FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error)
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
