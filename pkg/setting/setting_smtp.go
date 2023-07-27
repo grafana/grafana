@@ -1,6 +1,9 @@
 package setting
 
-import "github.com/grafana/grafana/pkg/util"
+import (
+	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
+)
 
 type SmtpSettings struct {
 	Enabled        bool
@@ -18,7 +21,13 @@ type SmtpSettings struct {
 	SendWelcomeEmailOnSignUp bool
 	TemplatesPatterns        []string
 	ContentTypes             []string
+	Theme                    string
 }
+
+const (
+	darkTheme  = "dark"
+	lightTheme = "light"
+)
 
 func (cfg *Cfg) readSmtpSettings() {
 	sec := cfg.Raw.Section("smtp")
@@ -38,4 +47,13 @@ func (cfg *Cfg) readSmtpSettings() {
 	cfg.Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
 	cfg.Smtp.TemplatesPatterns = util.SplitString(emails.Key("templates_pattern").MustString("emails/*.html, emails/*.txt"))
 	cfg.Smtp.ContentTypes = util.SplitString(emails.Key("content_types").MustString("text/html"))
+	cfg.Smtp.Theme = emailTheme(emails)
+}
+
+func emailTheme(emails *ini.Section) string {
+	emailTheme := emails.Key("theme").MustString(darkTheme)
+	if emailTheme != darkTheme && emailTheme != lightTheme {
+		return darkTheme
+	}
+	return emailTheme
 }
