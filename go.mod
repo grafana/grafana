@@ -31,7 +31,7 @@ replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
 require (
-	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
+	cloud.google.com/go/storage v1.30.1
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest v0.11.28 // @grafana/backend-platform
