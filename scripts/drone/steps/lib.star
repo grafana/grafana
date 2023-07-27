@@ -261,7 +261,6 @@ def validate_modfile_step():
     return {
         "name": "validate-modfile",
         "image": images["go_image"],
-        "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
         ],
