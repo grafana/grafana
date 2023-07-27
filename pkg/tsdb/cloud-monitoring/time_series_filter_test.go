@@ -38,7 +38,8 @@ func TestTimeSeriesFilter(t *testing.T) {
 	})
 
 	t.Run("parses params with preprocessor", func(t *testing.T) {
-		query := &cloudMonitoringTimeSeriesList{parameters: &dataquery.TimeSeriesList{Preprocessor: "rate"}}
+		var r dataquery.PreprocessorType = "rate"
+		query := &cloudMonitoringTimeSeriesList{parameters: &dataquery.TimeSeriesList{Preprocessor: &r}}
 		query.setParams(time.Time{}, time.Time{}, 0, 0)
 
 		assert.Equal(t, "0001-01-01T00:00:00Z", query.params.Get("interval.startTime"))
