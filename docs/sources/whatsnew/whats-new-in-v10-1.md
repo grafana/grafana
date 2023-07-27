@@ -220,7 +220,7 @@ For Elasticsearch metric queries in Explore, you can now see the sample of log l
 
 _Experimental in all editions of Grafana_
 
-Data source plugin developers can now use any plugin to visualize the data in Explore. Similarly to `preferredVisualizationType` we have introduced an experimental API to render visualization by plugin ID. In the returned data frame, set meta option `preferredVisualisationPluginId` to a plugin ID you want to be used when showing the data for given data frame.
+Data source plugin developers can now use any plugin to visualize data in Explore. Similar to `preferredVisualizationType`, we've introduced an experimental API to render visualizations by plugin ID. In the returned data frame, set the meta option `preferredVisualisationPluginId` to the plugin ID you want to be used when showing the data for given data frame.
 
 ## Alerting
 
