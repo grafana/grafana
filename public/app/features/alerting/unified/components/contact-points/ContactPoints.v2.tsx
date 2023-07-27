@@ -325,6 +325,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   const styles = useStyles2(getStyles);
 
   const iconName = INTEGRATION_ICONS[type];
+  const hasMetadata = diagnostics !== undefined;
 
   // TODO get the actual name of the type from /ngalert if grafanaManaged AM
   const receiverName = receiverTypeNames[type] ?? upperFirst(type);
@@ -347,7 +348,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
             )}
           </Stack>
         </div>
-        {diagnostics && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
+        {hasMetadata && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
       </Stack>
     </div>
   );
@@ -414,16 +415,11 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
         {/* this is shown when the last delivery failed – we don't show any additional metadata */}
         {failedToSend ? (
           <>
-            {/* TODO we might need an error variant for MetaText, dito for success */}
-            <Text color="error" variant="bodySmall" weight="bold">
-              <Stack direction="row" alignItems={'center'} gap={0.5}>
-                <Tooltip content={diagnostics.lastNotifyAttemptError!}>
-                  <span>
-                    <Icon name="exclamation-circle" /> Last delivery attempt failed
-                  </span>
-                </Tooltip>
-              </Stack>
-            </Text>
+            <MetaText color="error" icon="exclamation-circle">
+              <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+                <span>Last delivery attempt failed</span>
+              </Tooltip>
+            </MetaText>
           </>
         ) : (
           <>

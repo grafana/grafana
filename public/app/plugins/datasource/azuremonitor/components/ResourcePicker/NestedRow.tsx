@@ -78,7 +78,7 @@ const NestedRow = ({
 
         <td className={styles.cell}>{row.typeLabel}</td>
 
-        <td className={styles.cell}>{row.locationDisplayName ?? '-'}</td>
+        <td className={styles.cell}>{row.location ?? '-'}</td>
       </tr>
 
       {isOpen &&

@@ -1359,7 +1359,7 @@ func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUse
 }
 
 // GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return model.LibraryElementDTO{}, nil
 }
 
