@@ -2864,7 +2864,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://grafana-prerelease/artifacts/downloads/*$${DRONE_TAG}/oss/**.deb
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.deb
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -2885,7 +2885,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://grafana-prerelease/artifacts/downloads/*$${DRONE_TAG}/oss/**.rpm
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -4403,6 +4403,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 474d45dba3a551fd41d59408c07839a33a68970e8e2eafee9d6123340e7315b9
+hmac: fea954e374466f10a93678ac2910c7a336844c27ff29d7957f4791fe4f692643
 
 ...
