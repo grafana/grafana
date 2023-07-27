@@ -28,7 +28,7 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
+  ({ element = 'span', variant, weight, color, truncate = false, italic, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
         (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
@@ -36,24 +36,43 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       )
     );
 
+    const targetRef = React.useRef<HTMLElement>(null);
+    React.useImperativeHandle<HTMLElement | null, HTMLElement | null>(ref, () => targetRef.current);
+
     const childElement = createElement(
       element,
       {
         className: styles,
-        ref,
+        ref: targetRef,
       },
       children
     );
+    const [isOverflowing, setIsOverflowing] = React.useState(false);
+
+    React.useLayoutEffect(() => {
+      const { current } = targetRef;
+      const trigger = () => {
+        if (current?.scrollWidth && current.offsetWidth) {
+          if (current.scrollWidth > current.offsetWidth) {
+            setIsOverflowing(true);
+          } else {
+            setIsOverflowing(false);
+          }
+        }
+      };
+      if (current) {
+        trigger();
+      }
+    }, [targetRef.current?.scrollWidth, targetRef.current?.offsetWidth]);
 
     const getTooltipText = (children: NonNullable<React.ReactNode>) => {
       const html = ReactDomServer.renderToStaticMarkup(<>{children}</>);
       const getRidOfTags = html.replace(/(<([^>]+)>)/gi, '');
       return getRidOfTags;
     };
-
     const tooltipText = typeof children === 'string' ? children : getTooltipText(children);
 
-    if (truncate === false || element === 'span') {
+    if (truncate === false || element === 'span' || !isOverflowing) {
       return childElement;
     } else {
       return <Tooltip content={tooltipText}>{childElement}</Tooltip>;
