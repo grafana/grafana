@@ -1,23 +1,28 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2, NavIndex, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Button, ModalsController, PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useDispatch, useSelector } from 'app/types';
+import { DashboardRoutes, useDispatch, useSelector } from 'app/types';
 
+import { getNavModel } from '../../../core/selectors/navModel';
 import { updateTimeZoneForSession } from '../../profile/state/reducers';
+import { getPageNavFromSlug, getRootContentNavModel } from '../../storage/StorageFolderPage';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { SaveDashboardDrawer } from '../components/EmbeddedDashboard/SaveDashboardDrawer';
+import { PanelEditor } from '../components/PanelEditor/PanelEditor';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
-import { DashboardModel } from '../state';
+import { DashboardModel, PanelModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
+
+import { State } from './DashboardPage';
 
 interface EmbeddedDashboardPageRouteParams {
   uid: string;
@@ -27,6 +32,7 @@ interface EmbeddedDashboardPageRouteSearchParams {
   callbackUrl?: string;
   json?: string;
   accessToken?: string;
+  editPanel?: string;
 }
 
 export type Props = GrafanaRouteComponentProps<
@@ -34,13 +40,14 @@ export type Props = GrafanaRouteComponentProps<
   EmbeddedDashboardPageRouteSearchParams
 >;
 
-export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
+export default function EmbeddedDashboardPage({ route, match, queryParams }: Props) {
   const dispatch = useDispatch();
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
+  const navIndex = useSelector((state) => state.navIndex);
   const dashboard = dashboardState.getModel();
   const [dashboardJson, setDashboardJson] = useState('');
-
+  const [editPanel, setEditPanel] = useState<PanelModel | null>(null);
   /**
    * Create dashboard model and initialize the dashboard from JSON
    */
@@ -73,6 +80,27 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!dashboard) {
+      return;
+    }
+    const urlEditPanelId = queryParams.editPanel;
+
+    if (!editPanel && urlEditPanelId) {
+      const panel = dashboard.getPanelByUrlId(urlEditPanelId);
+      console.log('panel', panel);
+      if (panel) {
+        if (dashboard.canEditPanel(panel)) {
+          setEditPanel(panel);
+        }
+      }
+    }
+    // Leaving edit mode
+    else if (editPanel && !urlEditPanelId) {
+      setEditPanel(null);
+    }
+  }, [dashboard, editPanel, queryParams.editPanel]);
+
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
   }
@@ -81,14 +109,32 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
     return <p>Not available</p>;
   }
 
+  const { pageNav, sectionNav } = updateStatePageNavFromProps({
+    dashboard,
+    navIndex,
+    route,
+    match,
+    editPanel: !!editPanel,
+  });
   return (
-    <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
-      {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
-      <div>
-        <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={null} hidePanelMenus />
-      </div>
-    </Page>
+    <>
+      <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
+        <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
+        {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
+        <div>
+          <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={editPanel} />
+        </div>
+      </Page>
+      {editPanel && (
+        <PanelEditor
+          dashboard={dashboard}
+          sourcePanel={editPanel}
+          tab={queryParams.tab}
+          sectionNav={sectionNav}
+          pageNav={pageNav}
+        />
+      )}
+    </>
   );
 }
 
@@ -146,3 +192,49 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
+type PageState = {
+  dashboard: DashboardModel;
+  navIndex: NavIndex;
+  route: GrafanaRouteComponentProps['route'];
+  match: GrafanaRouteComponentProps['match'];
+  editPanel: boolean;
+};
+
+function updateStatePageNavFromProps({ dashboard, navIndex, route, match, editPanel }: PageState) {
+  let sectionNav: NavModel = { main: { text: '', children: [] }, node: { text: '' } };
+  let pageNav: NavModelItem = { text: '' };
+
+  const defaultState = { sectionNav, pageNav };
+  if (!dashboard) {
+    return defaultState;
+  }
+
+  if (route.routeName === DashboardRoutes.Path) {
+    sectionNav = getRootContentNavModel();
+    const pageNav = getPageNavFromSlug(match.params.slug!);
+    if (pageNav?.parentItem) {
+      pageNav.parentItem = pageNav.parentItem;
+    }
+  } else {
+    sectionNav = getNavModel(navIndex, 'dashboards/browse');
+  }
+
+  if (editPanel) {
+    pageNav = {
+      ...pageNav,
+      text: `Edit panel`,
+      parentItem: pageNav,
+      url: undefined,
+    };
+  }
+
+  if (pageNav === pageNav && sectionNav === sectionNav) {
+    return defaultState;
+  }
+
+  return {
+    pageNav,
+    sectionNav,
+  };
+}
