@@ -3,11 +3,13 @@ package clients
 import (
 	"context"
 	"errors"
+	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,20 +20,23 @@ import (
 var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService, features *featuremgmt.FeatureManager) *Session {
+func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
+	features *featuremgmt.FeatureManager, anonDeviceService anonymous.Service) *Session {
 	return &Session{
-		cfg:            cfg,
-		features:       features,
-		sessionService: sessionService,
-		log:            log.New(authn.ClientSession),
+		cfg:               cfg,
+		features:          features,
+		sessionService:    sessionService,
+		log:               log.New(authn.ClientSession),
+		anonDeviceService: anonDeviceService,
 	}
 }
 
 type Session struct {
-	cfg            *setting.Cfg
-	features       *featuremgmt.FeatureManager
-	sessionService auth.UserTokenService
-	log            log.Logger
+	cfg               *setting.Cfg
+	features          *featuremgmt.FeatureManager
+	sessionService    auth.UserTokenService
+	log               log.Logger
+	anonDeviceService anonymous.Service
 }
 
 func (s *Session) Name() string {
@@ -59,6 +64,27 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			return nil, authn.ErrTokenNeedsRotation.Errorf("token needs to be rotated")
 		}
 	}
+
+	// Tag authed devices
+	httpReqCopy := &http.Request{}
+	if r.HTTPRequest != nil && r.HTTPRequest.Header != nil {
+		// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
+		httpReqCopy.Header = r.HTTPRequest.Header.Clone()
+		httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
+	}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Warn("tag anon session panic", "err", err)
+			}
+		}()
+
+		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
+		defer cancel()
+		if err := s.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AuthedDevice); err != nil {
+			s.log.Warn("failed to tag anonymous session", "error", err)
+		}
+	}()
 
 	return &authn.Identity{
 		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
