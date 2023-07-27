@@ -86,7 +86,7 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -119,7 +119,7 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -160,7 +160,7 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 	// Required for cases when caller wants to immediately interact with the newly created object
 	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -215,7 +215,7 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusInternalServerError, "move folder failed", err)
 		}
 
-		g, err := guardian.NewByUID(c.Req.Context(), cmd.UID, c.OrgID, c.SignedInUser)
+		g, err := guardian.NewByFolder(c.Req.Context(), theFolder, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.Err(err)
 		}
@@ -251,7 +251,7 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g, err := guardian.NewByUID(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), result, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
