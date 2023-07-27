@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { /*useEffect,*/ useId, useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
