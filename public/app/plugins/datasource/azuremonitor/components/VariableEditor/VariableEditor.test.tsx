@@ -258,10 +258,12 @@ describe('VariableEditor:', () => {
       await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
       await selectAndRerender('select query type', 'Resource Names', onChange, rerender);
       await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      await selectAndRerender('select region', 'North Europe', onChange, rerender);
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.ResourceNamesQuery,
           subscription: 'sub',
+          region: 'northeurope',
           refId: 'A',
         })
       );
@@ -318,6 +320,22 @@ describe('VariableEditor:', () => {
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           queryType: AzureQueryType.WorkspacesQuery,
+          subscription: 'sub',
+          refId: 'A',
+        })
+      );
+    });
+
+    it('should run the query if requesting regions', async () => {
+      const onChange = jest.fn();
+      const { rerender } = render(<VariableEditor {...defaultProps} onChange={onChange} />);
+      // wait for initial load
+      await waitFor(() => expect(screen.getByText('Logs')).toBeInTheDocument());
+      await selectAndRerender('select query type', 'Regions', onChange, rerender);
+      await selectAndRerender('select subscription', 'Primary Subscription', onChange, rerender);
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queryType: AzureQueryType.LocationsQuery,
           subscription: 'sub',
           refId: 'A',
         })

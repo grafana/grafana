@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.0-pre";
+export const pluginVersion = "10.2.0-pre";
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
@@ -51,10 +51,6 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Query traces by span name
    */
   spanName?: string;
-  /**
-   * Use the streaming API to get partial results as they are available
-   */
-  streaming?: boolean;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
