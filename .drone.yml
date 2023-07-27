@@ -2991,6 +2991,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export DESTINATION=grafana-prerelease
   - cd /src && ./scripts/drone_publish_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -3008,7 +3009,7 @@ steps:
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
   failure: ignore
-  image: grafana/grafana-build:dev-bd41660
+  image: grafana/grafana-build:dev-fda506a
   name: rgm-build
   volumes:
   - name: docker
@@ -3047,6 +3048,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
+  - export DESTINATION=grafana-prerelease
   - cd /src && ./scripts/drone_publish_tag_grafana.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -3064,7 +3066,7 @@ steps:
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
   failure: ignore
-  image: grafana/grafana-build:dev-bd41660
+  image: grafana/grafana-build:dev-fda506a
   name: rgm-build
   volumes:
   - name: docker
@@ -4560,6 +4562,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: dca7d3bf3cbb6a45f45dfb3871d7d964f21b3bf36e8500c2749bf63841f10be5
+hmac: 96c0aa2795b34cff5fd37f6f97dd6444c820f9dfd502adb98870193a313717cc
 
 ...
