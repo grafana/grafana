@@ -4,6 +4,8 @@ import { toSelectableValue } from '../utils/toSelectableValue';
 
 import { Seg } from './Seg';
 
+const DEFAULT_POLICY = 'default';
+
 // we use the value "default" as a magic-value, it means
 // we use the default retention-policy.
 // unfortunately, IF the user has a retention-policy named "default",
@@ -32,7 +34,12 @@ export const FromSection = ({
 }: Props): JSX.Element => {
   const handlePolicyLoadOptions = async () => {
     const allPolicies = await getPolicyOptions();
-    return allPolicies.map(toSelectableValue);
+    // if `default` does not exist in the list of policies, we add it
+    const allPoliciesWithDefault = allPolicies.some((p) => p === 'default')
+      ? allPolicies
+      : [DEFAULT_POLICY, ...allPolicies];
+
+    return allPoliciesWithDefault.map(toSelectableValue);
   };
 
   const handleMeasurementLoadOptions = async (filter: string) => {
@@ -44,7 +51,7 @@ export const FromSection = ({
     <>
       <Seg
         allowCustomValue
-        value={policy ?? ''}
+        value={policy ?? 'using default policy'}
         loadOptions={handlePolicyLoadOptions}
         onChange={(v) => {
           onChange(v.value, measurement);
