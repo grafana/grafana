@@ -75,189 +75,120 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
     | Deployment | This object is responsible for creating the pods, ensuring they stay up to date, and  managing Replicaset and Rolling updates. |
 
 1. Copy and paste the following contents and save it in the grafana.yaml file.
-   
-```yaml
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: grafana
-  name: grafana
-spec:
-  selector:
-    matchLabels:
-      app: grafana
-  template:
-    metadata:
-      labels:
-        app: grafana
-    spec:
-      securityContext:
-        fsGroup: 472
-        supplementalGroups:
-          - 0
-      containers:
-        - name: grafana
-          image: grafana/grafana:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 3000
-              name: http-grafana
-              protocol: TCP
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /robots.txt
-              port: 3000
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            successThreshold: 1
-            timeoutSeconds: 2
-          livenessProbe:
-            failureThreshold: 3
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            successThreshold: 1
-            tcpSocket:
-              port: 3000
-            timeoutSeconds: 1
-          resources:
-            requests:
-              cpu: 250m
-              memory: 750Mi
-          volumeMounts:
-            - mountPath: /var/lib/grafana
-              name: grafana-pv
-      volumes:
-        - name: grafana-pv
-          persistentVolumeClaim:
-            claimName: grafana-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: grafana
-spec:
-  ports:
-    - port: 3000
-      protocol: TCP
-      targetPort: http-grafana
-  selector:
-    app: grafana
-  sessionAffinity: None
-  type: LoadBalancer
-```
+   ```yaml
+   ---
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: grafana-pvc
+   spec:
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 1Gi
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     labels:
+       app: grafana
+     name: grafana
+   spec:
+     selector:
+       matchLabels:
+         app: grafana
+     template:
+       metadata:
+         labels:
+           app: grafana
+       spec:
+         securityContext:
+           fsGroup: 472
+           supplementalGroups:
+             - 0
+         containers:
+           - name: grafana
+             image: grafana/grafana:latest
+             imagePullPolicy: IfNotPresent
+             ports:
+               - containerPort: 3000
+                 name: http-grafana
+                 protocol: TCP
+             readinessProbe:
+               failureThreshold: 3
+               httpGet:
+                 path: /robots.txt
+                 port: 3000
+                 scheme: HTTP
+               initialDelaySeconds: 10
+               periodSeconds: 30
+               successThreshold: 1
+               timeoutSeconds: 2
+             livenessProbe:
+               failureThreshold: 3
+               initialDelaySeconds: 30
+               periodSeconds: 10
+               successThreshold: 1
+               tcpSocket:
+                 port: 3000
+               timeoutSeconds: 1
+             resources:
+               requests:
+                 cpu: 250m
+                 memory: 750Mi
+             volumeMounts:
+               - mountPath: /var/lib/grafana
+                 name: grafana-pv
+         volumes:
+           - name: grafana-pv
+             persistentVolumeClaim:
+               claimName: grafana-pvc
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: grafana
+   spec:
+     ports:
+       - port: 3000
+         protocol: TCP
+         targetPort: http-grafana
+     selector:
+       app: grafana
+     sessionAffinity: None
+     type: LoadBalancer
+   ```
+
+1. Run the following command to send the manifest to the Kubernetes API server:
+   ```bash
+   kubectl apply -f grafana.yaml --namespace=my-grafana
+   ```
+   This command creates the PVC, Deployment, and Service objects.
+
+1. Complete the following steps to verify the deployment status of each object.
+   1. For PVC , run the following command:
+         ```bash
+         kubectl get pvc --namespace=my-grafana -o wide
+         ```
+
+   2. For Deployment, run the following command:
+         ```bash
+         kubectl get deployments --namespace=my-grafana -o wide
+         ```
+
+   3. For Services, run the following command:
+         ```bash
+         kubectl get svc --namespace=my-grafana -o wide
+         ```
+
+## Access Grafana on Managed K8s Providers
+
+In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via Web browser is straightforward if it is deployed on a Managed Kubernetes Providers as it uses the cloud provider’s LoadBalancer to which the external load balancer routes, are automatically created.
 
 
 
 
-
-
-
-
-
-### Create a Grafana Kubernetes manifest
-
-1. Create a file called `grafana.yaml`.
-1. Copy and paste the following contents and save the file.
-
-```yaml
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: grafana
-  name: grafana
-spec:
-  selector:
-    matchLabels:
-      app: grafana
-  template:
-    metadata:
-      labels:
-        app: grafana
-    spec:
-      securityContext:
-        fsGroup: 472
-        supplementalGroups:
-          - 0
-      containers:
-        - name: grafana
-          image: grafana/grafana:9.1.0
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 3000
-              name: http-grafana
-              protocol: TCP
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /robots.txt
-              port: 3000
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            successThreshold: 1
-            timeoutSeconds: 2
-          livenessProbe:
-            failureThreshold: 3
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            successThreshold: 1
-            tcpSocket:
-              port: 3000
-            timeoutSeconds: 1
-          resources:
-            requests:
-              cpu: 250m
-              memory: 750Mi
-          volumeMounts:
-            - mountPath: /var/lib/grafana
-              name: grafana-pv
-      volumes:
-        - name: grafana-pv
-          persistentVolumeClaim:
-            claimName: grafana-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: grafana
-spec:
-  ports:
-    - port: 3000
-      protocol: TCP
-      targetPort: http-grafana
-  selector:
-    app: grafana
-  sessionAffinity: None
-  type: LoadBalancer
-```
 
 ### Send the manifest to the Kubernetes API server
 
