@@ -8,6 +8,6 @@ import (
 type FakeAnonymousSessionService struct {
 }
 
-func (f *FakeAnonymousSessionService) TagSession(ctx context.Context, httpReq *http.Request) error {
+func (f *FakeAnonymousSessionService) TagDevice(ctx context.Context, httpReq *http.Request) error {
 	return nil
 }
