@@ -25,17 +25,11 @@ func ProvideService(cdn *pluginscdn.Service) *Service {
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		typ := string(pluginJSON.Type)
-		baseDir := filepath.Base(pluginDir)
+		baseDir := getBaseDir(pluginDir, true)
 		if strings.Contains(pluginDir, "public/plugins") {
-			// Decoupled core plugin
-			if baseDir == "dist" || baseDir == "src" {
-				parentDir := filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
-				baseDir = filepath.Join(parentDir, baseDir)
-			}
 			return path.Join("public/plugins", baseDir), nil
 		}
-		return path.Join("public/app/plugins", typ, baseDir), nil
+		return path.Join("public/app/plugins", string(pluginJSON.Type), baseDir), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "")
@@ -46,14 +40,7 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		baseDir := filepath.Base(pluginDir)
-		if strings.Contains(pluginDir, "public/plugins") {
-			// Decoupled core plugin
-			if baseDir == "dist" || baseDir == "src" {
-				parentDir := filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
-				baseDir = parentDir
-			}
-		}
+		baseDir := getBaseDir(pluginDir, false)
 		return path.Join("app/plugins", string(pluginJSON.Type), baseDir, "module"), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
@@ -85,4 +72,20 @@ func (s *Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (st
 		return pathStr, nil
 	}
 	return path.Join(p.BaseURL, pathStr), nil
+}
+
+func getBaseDir(pluginDir string, keepSrcDir bool) string {
+	baseDir := filepath.Base(pluginDir)
+	if strings.Contains(pluginDir, "public/plugins") {
+		// Decoupled core plugins will be suffixed with "dist" if they have been built or "src" if not.
+		// e.g. public/plugins/testdata/src
+		if baseDir == "dist" || baseDir == "src" {
+			parentDir := filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
+			if keepSrcDir {
+				return filepath.Join(parentDir, baseDir)
+			}
+			return parentDir
+		}
+	}
+	return baseDir
 }
