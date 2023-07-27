@@ -1,16 +1,18 @@
 import { RelativeTimeRange } from '@grafana/data';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
   PromRulesResponse,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
@@ -21,6 +23,7 @@ import {
   paramsWithMatcherAndState,
   prepareRulesFilterQueryParams,
 } from './prometheus';
+import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
 export type ResponseLabels = {
   labels: AlertInstances[];
@@ -129,6 +132,45 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
       transformResponse: (response: PromRulesResponse): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
+      },
+    }),
+
+    prometheusRuleNamespace: build.query<RuleNamespace, { ruleIdentifier: RuleIdentifier }>({
+      query: ({ ruleIdentifier }) => {
+        const queryParams = new URLSearchParams();
+        if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
+          queryParams.set('file', ruleIdentifier.namespace);
+          queryParams.set('rule_group', ruleIdentifier.groupName);
+        }
+
+        return {
+          url: `api/prometheus/${getDatasourceAPIUid(ruleIdentifier.ruleSourceName)}/api/v1/rules`,
+          params: Object.fromEntries(queryParams),
+        };
+      },
+      transformResponse: (response: PromRulesResponse): RuleNamespace => {
+        return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME)[0];
+      },
+    }),
+
+    rulerRules: build.query<
+      RulerRulesConfigDTO,
+      { rulerConfig: RulerDataSourceConfig; filter?: FetchRulerRulesFilter }
+    >({
+      query: ({ rulerConfig, filter }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).rules(filter);
+        return { url: path, params };
+      },
+    }),
+
+    // TODO This should be probably a separate ruler API file
+    rulerRuleGroup: build.query<
+      RulerRuleGroupDTO,
+      { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
+    >({
+      query: ({ rulerConfig, namespace, group }) => {
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+        return { url: path, params };
       },
     }),
 

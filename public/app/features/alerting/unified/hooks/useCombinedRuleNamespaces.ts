@@ -115,6 +115,26 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
+export function combinePromAndRulerRules(
+  rulesSource: RulesSource,
+  promNamespace: RuleNamespace,
+  rulerGroup?: RulerRuleGroupDTO
+): CombinedRuleNamespace {
+  const ns: CombinedRuleNamespace = {
+    rulesSource: rulesSource,
+    name: promNamespace.name,
+    groups: [],
+  };
+
+  // The order is important. Adding Ruler rules overrides Prometheus rules
+  if (rulerGroup) {
+    addRulerGroupsToCombinedNamespace(ns, [rulerGroup]);
+  }
+  addPromGroupsToCombinedNamespace(ns, promNamespace.groups);
+
+  return ns;
+}
+
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups
 export function flattenGrafanaManagedRules(namespaces: CombinedRuleNamespace[]) {
   return namespaces.map((namespace) => {

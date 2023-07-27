@@ -1,6 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { getRulesPermissions } from '../utils/access-control';
 import { isGrafanaRulerRule } from '../utils/rules';
 
@@ -15,6 +16,8 @@ interface ResultBag {
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
   const dataSources = useUnifiedAlertingSelector((state) => state.dataSources);
+  const { currentData: dsFeatures } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({ rulesSourceName });
+
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
   const rulePermission = getRulesPermissions(rulesSourceName);
@@ -55,7 +58,8 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   }
 
   // prom rules are only editable by users with Editor role and only if rules source supports editing
-  const isRulerAvailable = Boolean(dataSources[rulesSourceName]?.result?.rulerConfig);
+  const isRulerAvailable =
+    Boolean(dataSources[rulesSourceName]?.result?.rulerConfig) || Boolean(dsFeatures?.rulerConfig);
   const canEditCloudRules = contextSrv.hasAccess(rulePermission.update, contextSrv.isEditor);
   const canRemoveCloudRules = contextSrv.hasAccess(rulePermission.delete, contextSrv.isEditor);
 

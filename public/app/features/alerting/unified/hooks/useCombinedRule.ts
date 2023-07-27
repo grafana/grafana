@@ -1,16 +1,24 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { alertRuleApi } from '../api/alertRuleApi';
+import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { fetchPromAndRulerRulesAction } from '../state/actions';
+import { getDataSourceByName } from '../utils/datasource';
 import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
-import { isRulerNotSupportedResponse } from '../utils/rules';
+import {
+  isCloudRuleIdentifier,
+  isGrafanaRuleIdentifier,
+  isPrometheusRuleIdentifier,
+  isRulerNotSupportedResponse,
+} from '../utils/rules';
 
-import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
+import { combinePromAndRulerRules, useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useCombinedRule(
@@ -119,4 +127,75 @@ function getRequestState(
   }
 
   return state;
+}
+
+export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): {
+  loading: boolean;
+  error?: Error;
+  result?: CombinedRule;
+} {
+  const { ruleSourceName } = ruleIdentifier;
+  const dsSettings = getDataSourceByName(ruleSourceName);
+
+  const { currentData: dsFeatures, isLoading: isLoadingDsFeatures } =
+    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+      rulesSourceName: ruleSourceName,
+    });
+
+  const { currentData: promRuleNs, isLoading: isLoadingPromRules } =
+    alertRuleApi.endpoints.prometheusRuleNamespace.useQuery({
+      ruleIdentifier: ruleIdentifier,
+    });
+
+  const [fetchRulerRuleGroup, { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup }] =
+    alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+
+  const [fetchRulerRules, { currentData: rulerRules, isLoading: isLoadingRulerRules }] =
+    alertRuleApi.endpoints.rulerRules.useLazyQuery();
+
+  useEffect(() => {
+    if (!dsFeatures?.rulerConfig) {
+      return;
+    }
+
+    if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
+      fetchRulerRuleGroup({
+        rulerConfig: dsFeatures.rulerConfig,
+        namespace: ruleIdentifier.namespace,
+        group: ruleIdentifier.groupName,
+      });
+    } else if (isGrafanaRuleIdentifier(ruleIdentifier)) {
+      fetchRulerRules({ rulerConfig: dsFeatures.rulerConfig });
+    }
+  }, [dsFeatures, fetchRulerRuleGroup, fetchRulerRules, ruleIdentifier]);
+
+  const rule = useMemo(() => {
+    if (!dsSettings || !promRuleNs) {
+      return;
+    }
+
+    // TODO Add support for Grafana rules
+    const namespace = combinePromAndRulerRules(dsSettings, promRuleNs, rulerRuleGroup);
+    if (!namespace) {
+      return;
+    }
+
+    for (const group of namespace.groups) {
+      for (const rule of group.rules) {
+        const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+
+        if (ruleId.equal(id, ruleIdentifier)) {
+          return rule;
+        }
+      }
+    }
+
+    return;
+  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, dsSettings]);
+
+  return {
+    loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || isLoadingRulerRules,
+    error: undefined, // TODO
+    result: rule,
+  };
 }

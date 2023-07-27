@@ -13,7 +13,7 @@ import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertQuery, GrafanaRuleDefinition } from '../../../../../types/unified-alerting-dto';
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../GrafanaRuleQueryViewer';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
-import { useCombinedRule } from '../../hooks/useCombinedRule';
+import { useCombinedRuleLight } from '../../hooks/useCombinedRule';
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
 import { useCleanAnnotations } from '../../utils/annotations';
 import { getRulesSourceByName } from '../../utils/datasource';
@@ -44,9 +44,19 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const [expandQuery, setExpandQuery] = useToggle(false);
 
   const { id } = match.params;
-  const identifier = ruleId.tryParse(id, true);
+  const identifier = useMemo(() => {
+    if (!id) {
+      throw new Error('Rule ID is required');
+    }
 
-  const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+    return ruleId.parse(id, true);
+  }, [id]);
+
+  // const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+  const { loading, error, result: rule } = useCombinedRuleLight({ ruleIdentifier: identifier });
+
+  useCombinedRuleLight({ ruleIdentifier: identifier });
+
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
