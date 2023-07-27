@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
@@ -14,7 +13,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
   DashboardInput,
@@ -82,7 +82,7 @@ export const ImportDashboardForm = ({
       <Field label="Folder">
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <FolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
+            <OldFolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
           )}
           name="folder"
           control={control}

@@ -48,7 +48,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
     (p) => providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.enabled
   );
   const availableProviders = authProviders.filter(
-    (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured
+    (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.hide
   );
   const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
