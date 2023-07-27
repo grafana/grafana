@@ -22,8 +22,6 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashboardModel, PanelModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
 
-import { State } from './DashboardPage';
-
 interface EmbeddedDashboardPageRouteParams {
   uid: string;
 }
@@ -117,14 +115,12 @@ export default function EmbeddedDashboardPage({ route, match, queryParams }: Pro
     editPanel: !!editPanel,
   });
   return (
-    <>
-      <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-        <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
-        {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
-        <div>
-          <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={editPanel} />
-        </div>
-      </Page>
+    <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
+      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
+      {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
+      <div>
+        <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={editPanel} />
+      </div>
       {editPanel && (
         <PanelEditor
           dashboard={dashboard}
@@ -134,7 +130,7 @@ export default function EmbeddedDashboardPage({ route, match, queryParams }: Pro
           pageNav={pageNav}
         />
       )}
-    </>
+    </Page>
   );
 }
 

@@ -41,6 +41,7 @@ export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
         path: '/d-embed',
         pageClass: 'dashboard-embed',
         routeName: DashboardRoutes.Embedded,
+        chromeless: true,
         component: SafeDynamicImport(
           () =>
             import(
