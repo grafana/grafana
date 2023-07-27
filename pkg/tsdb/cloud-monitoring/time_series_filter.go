@@ -12,7 +12,6 @@ import (
 	"github.com/huandu/xstrings"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
@@ -152,7 +151,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
 	// and the aggregation that is specified in the UI becomes the secondary aggregation
 	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	var p dataquery.PreprocessorType = *timeSeriesFilter.parameters.Preprocessor
+	var p = *timeSeriesFilter.parameters.Preprocessor
 	t := toPreprocessorType(string(p))
 	if t != PreprocessorTypeNone {
 		// Move aggregation to secondaryAggregations

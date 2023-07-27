@@ -22,7 +22,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *ba
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
 			timeSeriesQuery.parameters.GraphPeriod = strPtr(interval.Text)
 		}
-		return fmt.Sprintf(" | graph_period %s", timeSeriesQuery.parameters.GraphPeriod)
+		return fmt.Sprintf(" | graph_period %s", *timeSeriesQuery.parameters.GraphPeriod)
 	}
 	return ""
 }

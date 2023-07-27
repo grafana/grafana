@@ -52,7 +52,7 @@ func (sloQ *cloudMonitoringSLO) getFilter() string {
 	sloName := fmt.Sprintf("projects/%s/services/%s/serviceLevelObjectives/%s", sloQ.parameters.ProjectName, sloQ.parameters.ServiceId, sloQ.parameters.SloId)
 
 	if sloQ.parameters.SelectorName == "select_slo_burn_rate" {
-		return fmt.Sprintf(`%s("%s", "%s")`, sloQ.parameters.SelectorName, sloName, sloQ.parameters.LookbackPeriod)
+		return fmt.Sprintf(`%s("%s", "%s")`, sloQ.parameters.SelectorName, sloName, *sloQ.parameters.LookbackPeriod)
 	} else {
 		return fmt.Sprintf(`%s("%s")`, sloQ.parameters.SelectorName, sloName)
 	}
