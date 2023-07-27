@@ -6,5 +6,5 @@ import (
 )
 
 type Service interface {
-	TagSession(context.Context, *http.Request) error
+	TagDevice(context.Context, *http.Request) error
 }

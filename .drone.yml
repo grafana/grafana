@@ -2417,6 +2417,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2740,7 +2742,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://grafana-prerelease/artifacts/downloads/*$${DRONE_TAG}/oss/**.deb
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.deb
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -2761,7 +2763,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://grafana-prerelease/artifacts/downloads/*$${DRONE_TAG}/oss/**.rpm
+    package_path: gs://grafana-prerelease/artifacts/downloads/*${DRONE_TAG}/oss/**.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -2774,7 +2776,7 @@ steps:
   - publish-linux-packages-rpm
   environment:
     GCP_KEY:
-      from_secret: gcp_grafanauploads
+      from_secret: gcp_grafanauploads_base64
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.3
@@ -3129,7 +3131,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -3878,7 +3880,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -4562,6 +4564,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 96c0aa2795b34cff5fd37f6f97dd6444c820f9dfd502adb98870193a313717cc
+hmac: d8d0924bde06def64d1267fa3ac77d25c978e4cfde2bf31f1f2821a18c909876
 
 ...
