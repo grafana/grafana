@@ -9,20 +9,34 @@ const borderRadiusRule = createRule({
       CallExpression(node) {
         if (
           node.callee.type === AST_NODE_TYPES.Identifier &&
-          node.callee.name === 'css' &&
-          node.arguments[0].type === 'ObjectExpression'
+          node.callee.name === 'css'
         ) {
-          for (let property of node.arguments[0].properties) {
-            if (
-              property.type === AST_NODE_TYPES.Property &&
-              property.key.type === AST_NODE_TYPES.Identifier &&
-              property.key.name === 'borderRadius' &&
-              property.value.type === AST_NODE_TYPES.Literal
-            ) {
-              context.report({
-                node: property,
-                messageId: 'borderRadiusId',
-              });
+          const cssObjects = node.arguments.flatMap((node) => {
+            switch (node.type) {
+              case AST_NODE_TYPES.ObjectExpression:
+                return [node];
+              case AST_NODE_TYPES.ArrayExpression:
+                return node.elements.filter(v => v.type === AST_NODE_TYPES.ObjectExpression);
+              default:
+                return [];
+            }
+          });
+
+          for (const cssObject of cssObjects) {
+            if (cssObject.type === AST_NODE_TYPES.ObjectExpression) {
+              for (const property of cssObject.properties) {
+                if (
+                  property.type === AST_NODE_TYPES.Property &&
+                  property.key.type === AST_NODE_TYPES.Identifier &&
+                  property.key.name === 'borderRadius' &&
+                  property.value.type === AST_NODE_TYPES.Literal
+                ) {
+                  context.report({
+                    node: property,
+                    messageId: 'borderRadiusId',
+                  });
+                }
+              }
             }
           }
         }
@@ -45,4 +59,3 @@ const borderRadiusRule = createRule({
 });
 
 module.exports = borderRadiusRule;
-
