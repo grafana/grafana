@@ -135,8 +135,9 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   `,
   scaleGradient: css`
     background: linear-gradient(90deg, ${colors.join()});
-    height: 10px;
+    height: 9px;
     pointer-events: none;
+    border-radius: 2px;
   `,
   legendValues: css`
     display: flex;
@@ -156,12 +157,12 @@ const getStyles = (theme: GrafanaTheme2, colors: string[]) => ({
   `,
   follower: css`
     position: absolute;
-    height: 14px;
-    width: 14px;
+    height: 13px;
+    width: 13px;
     border-radius: 2px;
     transform: translateX(-50%) translateY(-50%);
     border: 2px solid ${theme.colors.background.secondary};
-    margin-top: 5px;
+    top: 5px;
   `,
   disabled: css`
     color: ${theme.colors.text.disabled};
