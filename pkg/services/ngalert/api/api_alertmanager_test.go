@@ -174,7 +174,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 12,
 			},
 		}
-		request := createAmConfigRequest(t, validConfig)
+		request := createAmConfigRequest(t, validNewConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -191,7 +191,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 1,
 			},
 		}
-		request := createAmConfigRequest(t, validConfig)
+		request := createAmConfigRequest(t, validExistingConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -208,7 +208,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 3, // Org 3 was initialized with broken config.
 			},
 		}
-		request := createAmConfigRequest(t, validConfig)
+		request := createAmConfigRequest(t, validNewConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -291,7 +291,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
-			request := createAmConfigRequest(t, validConfig)
+			request := createAmConfigRequest(t, validExistingConfig)
 
 			_ = sut.RoutePostAlertingConfig(rc, request)
 
@@ -655,8 +655,8 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	t.Helper()
 
 	configs := map[int64]*ngmodels.AlertConfiguration{
-		1: {AlertmanagerConfiguration: validConfig, OrgID: 1},
-		2: {AlertmanagerConfiguration: validConfig, OrgID: 2},
+		1: {AlertmanagerConfiguration: validExistingConfig, OrgID: 1},
+		2: {AlertmanagerConfiguration: validExistingConfig, OrgID: 2},
 		3: {AlertmanagerConfiguration: brokenConfig, OrgID: 3},
 	}
 	configStore := notifier.NewFakeConfigStore(t, configs)
@@ -684,7 +684,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	return mam
 }
 
-var validConfig = `{
+var validExistingConfig = `{
 	"template_files": {
 		"a": "template"
 	},
@@ -695,12 +695,35 @@ var validConfig = `{
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
+				"uid": "grafana-default-email",
+				"name": "grafana-default-email",
 				"type": "email",
 				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validNewConfig = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "new contact"
+		},
+		"receivers": [{
+			"name": "new contact",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "new contact",
+				"type": "email",
+				"settings": {
+					"addresses": "<new@email.com>"
 				}
 			}]
 		}]
@@ -719,8 +742,8 @@ var validConfigWithSecureSetting = `{
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
+				"uid": "grafana-default-email",
+				"name": "grafana-default-email",
 				"type": "email",
 				"isDefault": true,
 				"settings": {
@@ -751,8 +774,8 @@ var brokenConfig = `
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "abc",
-				"name": "default-email",
+				"uid": "grafana-default-email",
+				"name": "grafana-default-email",
 				"type": "email",
 				"isDefault": true,
 				"settings": {}

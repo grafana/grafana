@@ -440,8 +440,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 					  "name": "grafana-default-email",
 					  "grafana_managed_receiver_configs": [
 						{
-						  "uid": "uxwfZvtnz",
-						  "name": "email receiver",
+						  "uid": "grafana-default-email",
+						  "name": "grafana-default-email",
 						  "type": "email",
 						  "disableResolveMessage": false,
 						  "settings": {
@@ -497,8 +497,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 					  "name": "grafana-default-email",
 					  "grafana_managed_receiver_configs": [
 						{
-						  "uid": "uxwfZvtnz",
-						  "name": "email receiver",
+						  "uid": "grafana-default-email",
+						  "name": "grafana-default-email",
 						  "type": "email",
 						  "disableResolveMessage": false,
 						  "settings": {
@@ -542,8 +542,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 					  "name": "grafana-default-email",
 					  "grafana_managed_receiver_configs": [
 						{
-						  "uid": "uxwfZvtnz",
-						  "name": "email receiver",
+						  "uid": "grafana-default-email",
+						  "name": "grafana-default-email",
 						  "type": "email",
 						  "disableResolveMessage": false,
 						  "settings": {
@@ -601,8 +601,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 					  "name": "grafana-default-email",
 					  "grafana_managed_receiver_configs": [
 						{
-						  "uid": "uxwfZvtnz",
-						  "name": "email receiver",
+						  "uid": "grafana-default-email",
+						  "name": "grafana-default-email",
 						  "type": "email",
 						  "disableResolveMessage": false,
 						  "settings": {
@@ -659,8 +659,8 @@ func Test_ConfigUnmashaling(t *testing.T) {
 					  "name": "grafana-default-email",
 					  "grafana_managed_receiver_configs": [
 						{
-						  "uid": "uxwfZvtnz",
-						  "name": "email receiver",
+						  "uid": "grafana-default-email",
+						  "name": "grafana-default-email",
 						  "type": "email",
 						  "disableResolveMessage": false,
 						  "settings": {

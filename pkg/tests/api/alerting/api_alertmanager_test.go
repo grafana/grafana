@@ -78,15 +78,14 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		{
 			"alertmanager_config": {
 				"route": {
-					"receiver": "grafana-default-email"
+					"receiver": "new contact"
 				},
 				"receivers": [{
-					"name": "grafana-default-email",
+					"name": "new contact",
 					"grafana_managed_receiver_configs": [{
 						"uid": "",
-						"name": "email receiver",
+						"name": "new contact",
 						"type": "email",
-						"isDefault": true,
 						"settings": {
 							"addresses": "<example@email.com>"
 						}
@@ -147,15 +146,15 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			"template_files": null,
 			"alertmanager_config": {
 				"route": {
-					"receiver": "grafana-default-email"
+					"receiver": "new contact"
 				},
 				"templates": null,
 				"receivers": [{
-					"name": "grafana-default-email",
+					"name": "new contact",
 					"grafana_managed_receiver_configs": [{
 						"disableResolveMessage": false,
 						"uid": "",
-						"name": "email receiver",
+						"name": "new contact",
 						"type": "email",
 						"secureFields": {},
 						"settings": {
@@ -1877,8 +1876,8 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		"receivers": [{
 			"name": "grafana-default-email",
 			"grafana_managed_receiver_configs": [{
-				"uid": "",
-				"name": "email receiver",
+				"uid": "grafana-default-email",
+				"name": "grafana-default-email",
 				"type": "email",
 				"disableResolveMessage": false,
 				"settings": {

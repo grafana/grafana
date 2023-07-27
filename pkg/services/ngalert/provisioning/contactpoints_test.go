@@ -31,8 +31,9 @@ func TestContactPointService(t *testing.T) {
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Len(t, cps, 2)
+		require.Equal(t, "a new receiver", cps[0].Name)
+		require.Equal(t, "grafana-default-email", cps[1].Name)
 	})
 
 	t.Run("service filters contact points by name", func(t *testing.T) {
@@ -43,13 +44,13 @@ func TestContactPointService(t *testing.T) {
 
 		q := ContactPointQuery{
 			OrgID: 1,
-			Name:  "slack receiver",
+			Name:  "a new receiver",
 		}
 		cps, err := sut.GetContactPoints(context.Background(), q, nil)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Equal(t, "a new receiver", cps[0].Name)
 	})
 
 	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
@@ -61,9 +62,9 @@ func TestContactPointService(t *testing.T) {
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
-		require.Len(t, cps, 2)
-		require.Equal(t, "test-contact-point", cps[1].Name)
-		require.Equal(t, "slack", cps[1].Type)
+		require.Len(t, cps, 3)
+		require.Equal(t, "test-contact-point", cps[2].Name)
+		require.Equal(t, "slack", cps[2].Type)
 	})
 
 	t.Run("it's possible to use a custom uid", func(t *testing.T) {
@@ -77,8 +78,8 @@ func TestContactPointService(t *testing.T) {
 
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
-		require.Len(t, cps, 2)
-		require.Equal(t, customUID, cps[1].UID)
+		require.Len(t, cps, 3)
+		require.Equal(t, customUID, cps[2].UID)
 	})
 
 	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
@@ -203,8 +204,8 @@ func TestContactPointService(t *testing.T) {
 
 				cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 				require.NoError(t, err)
-				require.Equal(t, newCp.UID, cps[1].UID)
-				require.Equal(t, test.from, models.Provenance(cps[1].Provenance))
+				require.Equal(t, newCp.UID, cps[2].UID)
+				require.Equal(t, test.from, models.Provenance(cps[2].Provenance))
 
 				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
 				if test.errNil {
@@ -212,8 +213,8 @@ func TestContactPointService(t *testing.T) {
 
 					cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 					require.NoError(t, err)
-					require.Equal(t, newCp.UID, cps[1].UID)
-					require.Equal(t, test.to, models.Provenance(cps[1].Provenance))
+					require.Equal(t, newCp.UID, cps[2].UID)
+					require.Equal(t, test.to, models.Provenance(cps[2].Provenance))
 				} else {
 					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
 				}
@@ -249,8 +250,8 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Len(t, cps, 2)
+		require.Equal(t, "a new receiver", cps[0].Name)
 		require.Equal(t, definitions.RedactedValue, cps[0].Settings.Get("url").MustString())
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user not Org Admin", func(t *testing.T) {
@@ -269,8 +270,8 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, OrgRole: org.RoleAdmin})
 		require.NoError(t, err)
 
-		require.Len(t, cps, 1)
-		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Len(t, cps, 2)
+		require.Equal(t, "a new receiver", cps[0].Name)
 		require.Equal(t, "secure url", cps[0].Settings.Get("url").MustString())
 	})
 }
