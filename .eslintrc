@@ -90,10 +90,7 @@
       }
     },
     {
-      "files": [
-        "public/app/plugins/datasource/testdata/*.{ts,tsx}",
-        "public/app/plugins/datasource/testdata/**/*.{ts,tsx}"
-      ],
+      "files": ["public/plugins/testdata/*.{ts,tsx}", "public/plugins/testdata/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
