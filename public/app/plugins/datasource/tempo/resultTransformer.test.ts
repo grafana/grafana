@@ -110,15 +110,18 @@ describe('createTableFrameFromSearch()', () => {
     // TraceID must have unit = 'string' to prevent the ID from rendering as Infinity
     expect(frame.fields[0].config.unit).toBe('string');
 
-    expect(frame.fields[1].name).toBe('traceName');
-    expect(frame.fields[1].values[0]).toBe('c10d7ca4e3a00354 ');
+    expect(frame.fields[1].name).toBe('traceService');
+    expect(frame.fields[1].values[0]).toBe('requester');
 
-    expect(frame.fields[2].name).toBe('startTime');
-    expect(frame.fields[2].values[0]).toBe('2022-01-28 03:00:28');
-    expect(frame.fields[2].values[1]).toBe('2022-01-27 22:56:06');
+    expect(frame.fields[2].name).toBe('traceName');
+    expect(frame.fields[2].values[0]).toBe('app');
 
-    expect(frame.fields[3].name).toBe('traceDuration');
-    expect(frame.fields[3].values[0]).toBe(65);
+    expect(frame.fields[3].name).toBe('startTime');
+    expect(frame.fields[3].values[0]).toBe('2022-01-28 03:00:28');
+    expect(frame.fields[3].values[1]).toBe('2022-01-27 22:56:06');
+
+    expect(frame.fields[4].name).toBe('traceDuration');
+    expect(frame.fields[4].values[0]).toBe(65);
   });
 });
 
@@ -126,6 +129,7 @@ describe('createTableFrameFromTraceQlQuery()', () => {
   test('transforms TraceQL response to DataFrame', () => {
     const frameList = createTableFrameFromTraceQlQuery(traceQlResponse.traces, defaultSettings);
     const frame = frameList[0];
+    console.log(frame.fields);
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceID');
     expect(frame.fields[0].values[0]).toBe('b1586c3c8c34d');
@@ -134,14 +138,18 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[1].name).toBe('startTime');
     expect(frame.fields[1].type).toBe('string');
     expect(frame.fields[1].values[1]).toBe('2022-01-27 22:56:06');
-    // Trace name field
-    expect(frame.fields[2].name).toBe('traceName');
+    // Trace service field
+    expect(frame.fields[2].name).toBe('traceService');
     expect(frame.fields[2].type).toBe('string');
-    expect(frame.fields[2].values[0]).toBe('lb HTTP Client');
+    expect(frame.fields[2].values[0]).toBe('lb');
+    // Trace name field
+    expect(frame.fields[3].name).toBe('traceName');
+    expect(frame.fields[3].type).toBe('string');
+    expect(frame.fields[3].values[0]).toBe('HTTP Client');
     // Duration field
-    expect(frame.fields[3].name).toBe('traceDuration');
-    expect(frame.fields[3].type).toBe('number');
-    expect(frame.fields[3].values[2]).toBe(44);
+    expect(frame.fields[4].name).toBe('traceDuration');
+    expect(frame.fields[4].type).toBe('number');
+    expect(frame.fields[4].values[2]).toBe(44);
   });
 });
 

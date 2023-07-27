@@ -2278,7 +2278,8 @@ export const tempoSearchResponse = {
   traces: [
     {
       traceID: 'e641dcac1c3a0565',
-      rootServiceName: 'c10d7ca4e3a00354',
+      rootServiceName: 'requester',
+      rootTraceName: 'app',
       startTimeUnixNano: '1643356828724000000',
       durationMs: 65,
     },
