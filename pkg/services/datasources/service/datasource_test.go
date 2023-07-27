@@ -222,11 +222,14 @@ func TestService_UpdateDataSource(t *testing.T) {
 			},
 		}
 
-		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		ds, err = dsService.UpdateDataSource(context.Background(), cmd)
 		require.NoError(t, err)
 
-		assert.Equal(t, cmd.SecureJsonData[expectedDbKey], expectedDbValue)
-		assert.Equal(t, cmd.SecureJsonData[expectedOgKey], expectedOgValue)
+		secret, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		assert.Equal(t, secret[expectedDbKey], expectedDbValue)
+		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
 	})
 
 	t.Run("should preserve cmd.SecureJsonData when cmd.IgnoreOldSecureJsonData=true", func(t *testing.T) {
@@ -264,13 +267,14 @@ func TestService_UpdateDataSource(t *testing.T) {
 			IgnoreOldSecureJsonData: true,
 		}
 
-		_, err = dsService.UpdateDataSource(context.Background(), cmd)
-
+		ds, err = dsService.UpdateDataSource(context.Background(), cmd)
 		require.NoError(t, err)
 
-		assert.Equal(t, cmd.SecureJsonData[expectedOgKey], expectedOgValue)
+		secret, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
 
-		_, ok := cmd.SecureJsonData[notExpectedDbKey]
+		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
+		_, ok := secret[notExpectedDbKey]
 		assert.False(t, ok)
 	})
 }
