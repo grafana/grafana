@@ -44,6 +44,8 @@ type PermissionsFilter interface {
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
+// The filter is configured to use the new permissions filter (without subqueries) if the feature flag is enabled
+// The filter is configured to use the old permissions filter (with subqueries) if the feature flag is disabled
 func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) PermissionsFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
@@ -98,7 +100,7 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 }
 
 func (f *accessControlDashboardPermissionFilter) LeftJoin() string {
-	return " dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id"
+	return ""
 }
 
 // Where returns:
