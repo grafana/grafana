@@ -3008,7 +3008,7 @@ steps:
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
   failure: ignore
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-bd41660
   name: rgm-build
   volumes:
   - name: docker
@@ -3064,7 +3064,7 @@ steps:
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
   failure: ignore
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-bd41660
   name: rgm-build
   volumes:
   - name: docker
@@ -4560,6 +4560,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 02436ad63fea0cc66112ef6d9fe06c47059419ecca7f52a0410f964f581da2b0
+hmac: dca7d3bf3cbb6a45f45dfb3871d7d964f21b3bf36e8500c2749bf63841f10be5
 
 ...
