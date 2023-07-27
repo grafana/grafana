@@ -10,6 +10,7 @@ const inputFrame: DataFrame = {
       type: FieldType.time,
       config: {},
       values: [1005, 1001, 1003, 1002, 1003],
+      nanos: [0, 0, 5, 0, 0],
     },
     {
       name: 'value',
