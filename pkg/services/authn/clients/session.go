@@ -28,6 +28,7 @@ func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService,
 		sessionService:    sessionService,
 		log:               log.New(authn.ClientSession),
 		anonDeviceService: anonDeviceService,
+		tagDevices:        cfg.TagAuthedDevices,
 	}
 }
 
@@ -36,6 +37,7 @@ type Session struct {
 	features          *featuremgmt.FeatureManager
 	sessionService    auth.UserTokenService
 	log               log.Logger
+	tagDevices        bool
 	anonDeviceService anonymous.Service
 }
 
@@ -65,26 +67,28 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		}
 	}
 
-	// Tag authed devices
-	httpReqCopy := &http.Request{}
-	if r.HTTPRequest != nil && r.HTTPRequest.Header != nil {
-		// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
-		httpReqCopy.Header = r.HTTPRequest.Header.Clone()
-		httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
-	}
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Warn("tag anon session panic", "err", err)
+	if s.tagDevices {
+		// Tag authed devices
+		httpReqCopy := &http.Request{}
+		if r.HTTPRequest != nil && r.HTTPRequest.Header != nil {
+			// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
+			httpReqCopy.Header = r.HTTPRequest.Header.Clone()
+			httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
+		}
+		go func() {
+			defer func() {
+				if err := recover(); err != nil {
+					s.log.Warn("tag anon session panic", "err", err)
+				}
+			}()
+
+			newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
+			defer cancel()
+			if err := s.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AuthedDevice); err != nil {
+				s.log.Warn("failed to tag anonymous session", "error", err)
 			}
 		}()
-
-		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
-		defer cancel()
-		if err := s.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AuthedDevice); err != nil {
-			s.log.Warn("failed to tag anonymous session", "error", err)
-		}
-	}()
+	}
 
 	return &authn.Identity{
 		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
