@@ -99,6 +99,9 @@ def rgm_main():
         ],
         "branch": "main",
         "paths": docs_paths,
+        "repo": [
+            "grafana/grafana",
+        ],
     }
 
     return pipeline(

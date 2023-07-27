@@ -3025,6 +3025,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4556,6 +4558,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 74a204c9e3a3a95bf9ebfac2111a07a59cc50e507e56b724354c04cf080a0530
+hmac: 4dab5540224fa874ec46cb062c8b89730b7b42bb9237ec3f4c02b469786966cf
 
 ...
