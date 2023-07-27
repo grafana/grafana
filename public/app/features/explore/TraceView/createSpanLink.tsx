@@ -552,7 +552,11 @@ function getTimeRangeFromSpan(
 }
 
 // Interpolates span attributes into trace to metric query, or returns default query
-function buildMetricsQuery(query: TraceToMetricQuery, tags: TraceToLogsTag[] = [], span: TraceSpan): string {
+function buildMetricsQuery(
+  query: TraceToMetricQuery,
+  tags: Array<{ key: string; value?: string }> = [],
+  span: TraceSpan
+): string {
   if (!query.query) {
     return `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
   }
