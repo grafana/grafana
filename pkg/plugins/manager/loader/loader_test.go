@@ -18,10 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -540,61 +541,6 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 		if !cmp.Equal(got, expected, compareOpts...) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
-	})
-}
-
-func TestLoader_setDefaultNavURL(t *testing.T) {
-	t.Run("When including a dashboard with DefaultNav: true", func(t *testing.T) {
-		pluginWithDashboard := &plugins.Plugin{
-			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
-				{
-					Type:       "dashboard",
-					DefaultNav: true,
-					UID:        "",
-				},
-			}},
-		}
-		logger := log.NewTestLogger()
-		pluginWithDashboard.SetLogger(logger)
-
-		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
-			setDefaultNavURL(pluginWithDashboard)
-			require.Equal(t, "", pluginWithDashboard.DefaultNavURL)
-			require.NotZero(t, logger.WarnLogs.Calls)
-			require.Equal(t, "Included dashboard is missing a UID field", logger.WarnLogs.Message)
-		})
-
-		t.Run("Default nav URL is set if dashboard UID field is set", func(t *testing.T) {
-			pluginWithDashboard.Includes[0].UID = "a1b2c3"
-
-			setDefaultNavURL(pluginWithDashboard)
-			require.Equal(t, "/d/a1b2c3", pluginWithDashboard.DefaultNavURL)
-		})
-	})
-
-	t.Run("When including a page with DefaultNav: true", func(t *testing.T) {
-		pluginWithPage := &plugins.Plugin{
-			JSONData: plugins.JSONData{Includes: []*plugins.Includes{
-				{
-					Type:       "page",
-					DefaultNav: true,
-					Slug:       "testPage",
-				},
-			}},
-		}
-
-		t.Run("Default nav URL is set using slug", func(t *testing.T) {
-			setDefaultNavURL(pluginWithPage)
-			require.Equal(t, "/plugins/page/testPage", pluginWithPage.DefaultNavURL)
-		})
-
-		t.Run("Default nav URL is set using slugified Name field if Slug field is empty", func(t *testing.T) {
-			pluginWithPage.Includes[0].Slug = ""
-			pluginWithPage.Includes[0].Name = "My Test Page"
-
-			setDefaultNavURL(pluginWithPage)
-			require.Equal(t, "/plugins/page/my-test-page", pluginWithPage.DefaultNavURL)
-		})
 	})
 }
 
@@ -1257,13 +1203,19 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	child.Parent = parent
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
-		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
-			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
+			l.discovery = discovery.New(l.cfg, discovery.Opts{
+				FindFilterFuncs: []discovery.FindFilterFunc{
+					func(ctx context.Context, class plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+						return discovery.NewDuplicatePluginFilterStep(l.pluginRegistry).Filter(ctx, bundles)
+					},
+				},
+			},
+			)
 		})
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1286,7 +1238,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, procMgr)
+		verifyState(t, expected, l.pluginRegistry, procPrvdr, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
 			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1308,7 +1260,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 			}
 
-			verifyState(t, expected, reg, procPrvdr, procMgr)
+			verifyState(t, expected, l.pluginRegistry, procPrvdr, procMgr)
 		})
 	})
 
@@ -1466,36 +1418,15 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	})
 }
 
-func Test_setPathsBasedOnApp(t *testing.T) {
-	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
-		child := &plugins.Plugin{
-			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
-		}
-		parent := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				Type: plugins.TypeApp,
-				ID:   "testdata-app",
-			},
-			Class:   plugins.ClassCore,
-			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
-			BaseURL: "public/app/plugins/app/testdata-app",
-		}
-
-		configureAppChildPlugin(parent, child)
-
-		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
-		require.Equal(t, "testdata-app", child.IncludedInAppID)
-		require.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
-	})
-}
-
 func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	angularInspector, err := angularinspector.NewStaticInspector()
+	reg := fakes.NewFakePluginRegistry()
+	assets := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
 	require.NoError(t, err)
-	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
+	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg.DevMode),
-		signature.ProvideService(statickey.New()), angularInspector, &fakes.FakeOauthService{})
+		assets, angularInspector, &fakes.FakeOauthService{},
+		discovery.New(cfg, discovery.Opts{}), bootstrap.New(cfg, bootstrap.Opts{}))
 
 	for _, cb := range cbs {
 		cb(l)
@@ -1504,13 +1435,15 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	return l
 }
 
-func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegistry,
+func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,
 	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager) {
 	t.Helper()
 
 	for _, p := range ps {
-		if !cmp.Equal(p, reg.Store[p.ID], compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts...))
+		regP, exists := reg.Plugin(context.Background(), p.ID)
+		require.True(t, exists)
+		if !cmp.Equal(p, regP, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, regP, compareOpts...))
 		}
 
 		if p.Backend {
