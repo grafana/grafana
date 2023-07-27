@@ -1,10 +1,11 @@
+import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
@@ -35,6 +36,7 @@ export function VariableEditorList({
   onDelete,
   onDuplicate,
 }: Props): ReactElement {
+  const styles = useStyles2(getStyles);
   const onDragEnd = (result: DropResult) => {
     if (!result.destination || !result.source) {
       return;
@@ -51,7 +53,7 @@ export function VariableEditorList({
 
         {variables.length > 0 && (
           <Stack direction="column" gap={4}>
-            <div style={{ overflow: 'scroll', width: '100%' }}>
+            <div className={styles.tableContainer}>
               <table
                 className="filter-table filter-table--hover"
                 aria-label={selectors.pages.Dashboard.Settings.Variables.List.table}
@@ -132,3 +134,10 @@ function EmptyVariablesList({ onAdd }: { onAdd: () => void }): ReactElement {
     </div>
   );
 }
+
+const getStyles = () => ({
+  tableContainer: css`
+    overflow: scroll;
+    width: 100%;
+  `,
+});
