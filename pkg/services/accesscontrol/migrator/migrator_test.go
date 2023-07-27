@@ -53,8 +53,9 @@ func TestMigrateScopeSplit(t *testing.T) {
 	require.NoError(t, errFind, "could not find permissions in store")
 
 	for i := range permissions {
-		require.NotEmpty(t, permissions[i].Kind, "kind is not populated")
-		require.NotEmpty(t, permissions[i].Attribute, "attribute is not populated")
-		require.NotEmpty(t, permissions[i].Scope, "scope is not populated")
+		require.Equal(t, fmt.Sprintf("resource:uid:%v", i+1), permissions[i].Scope, "scope should have been preserved")
+		require.Equal(t, "resource", permissions[i].Kind)
+		require.Equal(t, "uid", permissions[i].Attribute)
+		require.Equal(t, fmt.Sprintf("%v", i+1), permissions[i].Identifier)
 	}
 }
