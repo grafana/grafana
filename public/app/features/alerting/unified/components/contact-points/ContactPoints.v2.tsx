@@ -3,6 +3,7 @@ import { SerializedError } from '@reduxjs/toolkit';
 import { groupBy, size, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { ReactNode, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -30,6 +31,7 @@ import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { createUrl } from '../../utils/url';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
@@ -242,8 +244,9 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         </Stack>
         {isReferencedByPolicies ? (
           <MetaText>
-            {/* TODO make this a link to the notification policies page with the filter applied */}
-            is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
+            <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
+              is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
+            </Link>
           </MetaText>
         ) : (
           <UnusedContactPointBadge />

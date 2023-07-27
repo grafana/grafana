@@ -10,6 +10,7 @@ import {
 import { NotifierStatus, ReceiversStateDTO } from 'app/types';
 
 import { extractReceivers } from '../../utils/receivers';
+import { computeInheritedTree } from '../notification-policies/Filters';
 
 import { RECEIVER_STATUS_KEY } from './useContactPoints';
 
@@ -84,7 +85,10 @@ export function enhanceContactPointsWithStatus(
   status: ReceiversStateDTO[] = []
 ): ContactPointWithStatus[] {
   const contactPoints = result.alertmanager_config.receivers ?? [];
-  const usedContactPoints = getUsedContactPoints(result?.alertmanager_config?.route ?? {});
+
+  // compute the entire inherited tree before finding what notification policies are using a particular contact point
+  const fullyInheritedTree = computeInheritedTree(result?.alertmanager_config?.route ?? {});
+  const usedContactPoints = getUsedContactPoints(fullyInheritedTree);
   const usedContactPointsByName = countBy(usedContactPoints);
 
   return contactPoints.map((contactPoint) => {
