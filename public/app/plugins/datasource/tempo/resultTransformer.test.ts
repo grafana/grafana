@@ -129,7 +129,6 @@ describe('createTableFrameFromTraceQlQuery()', () => {
   test('transforms TraceQL response to DataFrame', () => {
     const frameList = createTableFrameFromTraceQlQuery(traceQlResponse.traces, defaultSettings);
     const frame = frameList[0];
-    console.log(frame.fields);
     // Trace ID field
     expect(frame.fields[0].name).toBe('traceID');
     expect(frame.fields[0].values[0]).toBe('b1586c3c8c34d');
