@@ -3001,7 +3001,7 @@ steps:
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
-      from_secret: rgm_global_gcp_key_base64
+      from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
     GPG_PASSPHRASE:
@@ -3058,7 +3058,7 @@ steps:
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
-      from_secret: rgm_global_gcp_key_base64
+      from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
     GPG_PASSPHRASE:
@@ -4516,19 +4516,13 @@ kind: secret
 name: enterprise2-cdn-path
 ---
 get:
-  name: gcp_service_account_base64
+  name: gcp_service_account_prod_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
 name: gcp_key_base64
 ---
 get:
-  name: gcp_global_service_account_base64
-  path: infra/data/ci/grafana-release-eng/rgm
-kind: secret
-name: rgm_global_gcp_key_base64
----
-get:
-  name: destination
+  name: destination_prod
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
 name: destination
@@ -4564,6 +4558,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 4a4afb0cd555ae8a80a91ab7b828bd3969df0cb20ada138532b00518f576d000
+hmac: b5b1af713bae6d6556303a55047e4448f8bcdb176a7936019e3e146b208aeded
 
 ...

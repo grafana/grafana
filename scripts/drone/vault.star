@@ -12,7 +12,6 @@ azure_sp_app_id = "azure_sp_app_id"
 azure_sp_app_pw = "azure_sp_app_pw"
 azure_tenant = "azure_tenant"
 
-rgm_global_gcp_key_base64 = "rgm_global_gcp_key_base64"
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
 rgm_github_token = "github_token"
@@ -109,17 +108,12 @@ def secrets():
         vault_secret(
             rgm_gcp_key_base64,
             "infra/data/ci/grafana-release-eng/rgm",
-            "gcp_service_account_base64",
-        ),
-        vault_secret(
-            rgm_global_gcp_key_base64,
-            "infra/data/ci/grafana-release-eng/rgm",
-            "gcp_global_service_account_base64",
+            "gcp_service_account_prod_base64",
         ),
         vault_secret(
             rgm_destination,
             "infra/data/ci/grafana-release-eng/rgm",
-            "destination",
+            "destination_prod",
         ),
         vault_secret(
             rgm_dagger_token,

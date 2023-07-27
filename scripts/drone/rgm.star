@@ -34,12 +34,12 @@ load(
     "from_secret",
     "rgm_dagger_token",
     "rgm_destination",
+    "rgm_gcp_key_base64",
     "rgm_github_token",
-    "rgm_global_gcp_key_base64",
 )
 
 rgm_env_secrets = {
-    "GCP_KEY_BASE64": from_secret(rgm_global_gcp_key_base64),
+    "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
     "DESTINATION": from_secret(rgm_destination),
     "GITHUB_TOKEN": from_secret(rgm_github_token),
     "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
