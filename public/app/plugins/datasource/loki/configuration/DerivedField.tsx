@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
 import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Switch } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -145,7 +145,7 @@ export const DerivedField = (props: Props) => {
           <Field label="" className={styles.dataSource}>
             <DataSourcePicker
               tracing={true}
-              onChange={(ds) =>
+              onChange={(ds: DataSourceInstanceSettings) =>
                 onChange({
                   ...value,
                   datasourceUid: ds.uid,
