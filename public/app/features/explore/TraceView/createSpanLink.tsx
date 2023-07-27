@@ -17,7 +17,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -115,7 +115,18 @@ export function createSpanLinkFactory({
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
+const defaultKeys = [
+  'cluster',
+  'hostname',
+  'namespace',
+  'pod',
+  'service.name',
+  'service.namespace',
+  'deployment.environment',
+].map((k) => ({
+  key: k,
+  value: k.includes('.') ? k.replace('.', '_') : undefined,
+}));
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -149,7 +160,8 @@ function legacyCreateSpanLinkFactory(
     //  deprecated blob format and we can map the link easily in data frame.
     if (logsDataSourceSettings && traceToLogsOptions) {
       const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
-      const tagsToUse = traceToLogsOptions.tags || defaultKeys;
+      const tagsToUse =
+        traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : defaultKeys;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
           tags = getFormattedTags(span, tagsToUse);
@@ -480,7 +492,7 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
  */
 function getFormattedTags(
   span: TraceSpan,
-  tags: Array<{ key: string; value?: string }>,
+  tags: TraceToLogsTag[],
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
 ) {
   // In order, try to use mapped tags -> tags -> default tags
