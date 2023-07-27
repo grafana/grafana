@@ -20,7 +20,7 @@ weight: 100
 
 ## Create and manage alerting resources using file provisioning
 
-Provision your alerting resources using files from disk. When you start Grafana, the data from these files is created in your Grafana system. Grafana adds any new resources you created, updates any that you changed, and deletes old ones.
+Provision your alerting resources using files from the `alerting` folder inside your [configured `provisioning` directory](/docs/sources/tutorials/provision-dashboards-and-data-sources/index.md#paths.provisioning). When you start Grafana, the data from these files is created in your Grafana system. Grafana adds any new resources you created, updates any that you changed, and deletes old ones.
 
 Arrange your files in a directory in a way that best suits your use case. For example, you can choose a team-based layout where every team has its own file, you can have one big file for all your teams; or you can have one file per resource type.
 
@@ -47,8 +47,9 @@ Create or delete alert rules in your Grafana instance(s).
 
    If you do not delete the alert rule, it will clash with the provisioned alert rule once uploaded.
 
-Here is an example of a configuration file for creating alert rules.
+Here is an example of a configuration file for creating alert rules. You can name this file whatever you want, but it must be inside the `alerting` subfolder of your [configured `provisioning` directory](/docs/sources/tutorials/provision-dashboards-and-data-sources/index.md#paths.provisioning). 
 
+📄 `my_provisioning_dir/alerting/alert_rules.yaml`
 ```yaml
 # config file version
 apiVersion: 1
@@ -121,6 +122,8 @@ groups:
 
 Here is an example of a configuration file for deleting alert rules.
 
+
+📄 `my_provisioning_dir/alerting/delete_old_alert_rules.yaml`
 ```yaml
 # config file version
 apiVersion: 1
@@ -145,8 +148,10 @@ Create or delete contact points in your Grafana instance(s).
 
 1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
-Here is an example of a configuration file for creating contact points.
+Here is an example of a configuration file for creating contact points. You can name this file whatever you want, but it must be inside the `alerting` subfolder of your [configured `provisioning` directory](/docs/sources/tutorials/provision-dashboards-and-data-sources/index.md#paths.provisioning).
 
+
+📄 `my_provisioning_dir/alerting/my_contact_points.yaml`
 ```yaml
 # config file version
 apiVersion: 1
@@ -504,8 +509,10 @@ Create or reset the notification policy tree in your Grafana instance(s).
 
 4. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
-Here is an example of a configuration file for creating notification policies.
+Here is an example of a configuration file for creating notification policiies. You can name this file whatever you want, but it must be inside the `alerting` subfolder of your [configured `provisioning` directory](/docs/sources/tutorials/provision-dashboards-and-data-sources/index.md#paths.provisioning).
 
+
+📄 `my_provisioning_dir/alerting/foo_notification_policies.yaml`
 ```yaml
 # config file version
 apiVersion: 1
@@ -594,8 +601,10 @@ Create or delete templates in your Grafana instance(s).
 
 2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
-Here is an example of a configuration file for creating templates.
+Here is an example of a configuration file for creating templates. You can name this file whatever you want, but it must be inside the `alerting` subfolder of your [configured `provisioning` directory](/docs/sources/tutorials/provision-dashboards-and-data-sources/index.md#paths.provisioning).
 
+
+📄 `my_provisioning_dir/alerting/foo_notification_policies.yaml`
 ```yaml
 # config file version
 apiVersion: 1
@@ -634,7 +643,10 @@ Create or delete mute timings in your Grafana instance(s).
 
 1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
-Here is an example of a configuration file for creating mute timings.
+Here is an example of a configuration file for creating mute timings. You can name this file whatever you want, but it must be inside the `alerting` subfolder of your [configured `provisioning` directory](/docs/sources/tutorials/provision-dashboards-and-data-sources/index.md#paths.provisioning).
+
+
+📄 `my_provisioning_dir/alerting/mute_timings.yaml`
 
 ```yaml
 # config file version

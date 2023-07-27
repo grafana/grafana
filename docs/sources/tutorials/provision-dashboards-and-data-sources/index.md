@@ -46,7 +46,7 @@ Grafana supports configuration as code through _provisioning_. The resources tha
 - [Data sources](/docs/grafana/latest/administration/provisioning/#datasources)
 - [Alert notification channels](/docs/grafana/latest/administration/provisioning/#alert-notification-channels)
 
-## Set the provisioning directory
+## <a name="paths.provisioning"></a>Set the provisioning directory
 
 Before you can start provisioning resources, Grafana needs to know where to find the _provisioning directory_. The provisioning directory contains configuration files that are applied whenever Grafana starts and continuously updated while running.
 
@@ -70,6 +70,10 @@ provisioning/
   dashboards/
     <yaml files>
   notifiers/
+    <yaml files>
+  plugins/
+    <yaml files>
+  alerting/
     <yaml files>
 ```
 
