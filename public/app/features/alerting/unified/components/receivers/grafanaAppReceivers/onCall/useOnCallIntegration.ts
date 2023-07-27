@@ -9,10 +9,7 @@ import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
 import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 
-import { ReceiverTypes } from './onCall';
-
-// TODO This value needs to be changed to grafana_alerting when the OnCall team introduces the necessary changes
-export const GRAFANA_ONCALL_INTEGRATION_TYPE = 'grafana';
+import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
 
 export enum OnCallIntegrationType {
   NewIntegration = 'new_oncall_integration',
@@ -48,7 +45,7 @@ function useOnCallPluginStatus() {
     }
     // TODO Support for V2 integration should be added when the OnCall team introduces the necessary changes
 
-    return OnCallIntegrationStatus.V1;
+    return OnCallIntegrationStatus.V2;
   }, [isOnCallEnabled]);
 
   const isAlertingV2IntegrationEnabled = useMemo(
@@ -69,28 +66,25 @@ export function useOnCallIntegration() {
   const { isOnCallEnabled, integrationStatus, isAlertingV2IntegrationEnabled, isOnCallStatusLoading, onCallError } =
     useOnCallPluginStatus();
 
-  const { useCreateIntegrationMutation, useGetOnCallIntegrationsQuery } = onCallApi;
+  const { useCreateIntegrationMutation, useGrafanaOnCallIntegrationsQuery, useLazyValidateIntegrationNameQuery } =
+    onCallApi;
 
+  const [validateIntegrationNameQuery] = useLazyValidateIntegrationNameQuery();
   const [createIntegrationMutation] = useCreateIntegrationMutation();
 
   const {
-    data: onCallIntegrations = [],
+    data: grafanaOnCallIntegrations = [],
     isLoading: isLoadingOnCallIntegrations,
     isError: isIntegrationsQueryError,
-  } = useGetOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
+  } = useGrafanaOnCallIntegrationsQuery(undefined, { skip: !isAlertingV2IntegrationEnabled });
 
   const onCallFormValidators = useMemo(() => {
-    // URL should be one of exsiting OnCall integrations of "grafana_alerting" type
-    const grafanaOnCallIntegrations = onCallIntegrations.filter(
-      (i) => i.integration === GRAFANA_ONCALL_INTEGRATION_TYPE
-    );
-
     return {
-      integration_name: (value: string) => {
+      integration_name: async (value: string) => {
+        const isValid = await validateIntegrationNameQuery(value).unwrap();
+        // TODO
         // The name needs to be unique among all OnCall integrations
-        return onCallIntegrations.map((i) => i.verbal_name).includes(value)
-          ? 'Integration of this name already exists in OnCall'
-          : true;
+        return isValid ? true : 'Integration of this name already exists in OnCall';
       },
       url: (value: string) => {
         if (!isAlertingV2IntegrationEnabled) {
@@ -102,7 +96,7 @@ export function useOnCallIntegration() {
           : 'Selection of existing OnCall integration is required';
       },
     };
-  }, [onCallIntegrations, isAlertingV2IntegrationEnabled]);
+  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled]);
 
   const extendOnCalReceivers = useCallback(
     (receiver: Receiver): Receiver => {
@@ -196,13 +190,11 @@ export function useOnCallIntegration() {
             element: 'select',
             required: true,
             showWhen: { field: 'integration_type', is: 'existing_oncall_integration' },
-            selectOptions: onCallIntegrations
-              .filter((i) => i.integration === GRAFANA_ONCALL_INTEGRATION_TYPE)
-              .map((i) => ({
-                label: i.verbal_name,
-                description: i.integration_url,
-                value: i.integration_url,
-              })),
+            selectOptions: grafanaOnCallIntegrations.map((i) => ({
+              label: i.display_name,
+              description: i.integration_url,
+              value: i.integration_url,
+            })),
           })
         );
 
@@ -211,7 +203,7 @@ export function useOnCallIntegration() {
 
       return notifier;
     },
-    [onCallIntegrations, isAlertingV2IntegrationEnabled]
+    [grafanaOnCallIntegrations, isAlertingV2IntegrationEnabled]
   );
 
   return {

@@ -1,6 +1,6 @@
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
-import { useGetOnCallIntegrationsQuery } from '../../../api/onCallApi';
+import { onCallApi } from '../../../api/onCallApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 
@@ -9,7 +9,7 @@ import { AmRouteReceiver, ReceiverWithTypes } from './types';
 
 export const useGetGrafanaReceiverTypeChecker = () => {
   const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
-  const { data } = useGetOnCallIntegrationsQuery(undefined, {
+  const { data } = onCallApi.useGrafanaOnCallIntegrationsQuery(undefined, {
     skip: !isOnCallEnabled,
   });
   const getGrafanaReceiverType = (receiver: Receiver): SupportedPlugin | undefined => {

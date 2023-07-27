@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
-import { useGetOnCallIntegrationsQuery } from '../../../api/onCallApi';
+import { onCallApi } from '../../../api/onCallApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { createBridgeURL } from '../../PluginBridge';
@@ -26,7 +26,7 @@ const onCallReceiverMeta: ReceiverMetadata = {
 
 export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, ReceiverMetadata> => {
   const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
-  const { data: onCallIntegrations = [] } = useGetOnCallIntegrationsQuery(undefined, {
+  const { data: onCallIntegrations = [] } = onCallApi.useGrafanaOnCallIntegrationsQuery(undefined, {
     skip: !isOnCallEnabled,
   });
 
@@ -52,7 +52,7 @@ export const useReceiversMetadata = (receivers: Receiver[]): Map<Receiver, Recei
         result.set(receiver, {
           ...onCallReceiverMeta,
           externalUrl: matchingOnCallIntegration
-            ? createBridgeURL(SupportedPlugin.OnCall, `/integrations/${matchingOnCallIntegration.id}`)
+            ? createBridgeURL(SupportedPlugin.OnCall, `/integrations/${matchingOnCallIntegration.value}`)
             : undefined,
           warning: matchingOnCallIntegration ? undefined : 'OnCall Integration no longer exists',
         });

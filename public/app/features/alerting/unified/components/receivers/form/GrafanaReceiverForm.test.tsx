@@ -12,7 +12,7 @@ import { AlertmanagerConfigBuilder, mockApi, setupMswServer } from '../../../moc
 import { grafanaAlertNotifiersMock } from '../../../mockGrafanaNotifiers';
 import { onCallPluginMetaMock } from '../../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
+import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../grafanaAppReceivers/onCall/onCall';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 

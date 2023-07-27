@@ -18,7 +18,7 @@ import {
 } from '../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../types';
 
-import { CreateIntegrationDTO, OnCallIntegration } from './api/onCallApi';
+import { CreateIntegrationDTO, NewOnCallIntegrationDTO } from './api/onCallApi';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -145,7 +145,7 @@ class AlertmanagerReceiverBuilder {
 }
 
 export class OnCallIntegrationBuilder {
-  private onCallIntegration: OnCallIntegration = {
+  private onCallIntegration: NewOnCallIntegrationDTO = {
     id: uniqueId('oncall-integration-mock-'),
     integration: '',
     integration_url: '',
@@ -217,7 +217,7 @@ export function mockApi(server: SetupServer) {
 
         server.use(
           rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, (_, res, ctx) =>
-            res(ctx.status(200), ctx.json<OnCallIntegration[]>(integrations))
+            res(ctx.status(200), ctx.json<NewOnCallIntegrationDTO[]>(integrations))
           )
         );
       },
@@ -231,7 +231,7 @@ export function mockApi(server: SetupServer) {
 
               return res(
                 ctx.status(200),
-                ctx.json<OnCallIntegration>({
+                ctx.json<NewOnCallIntegrationDTO>({
                   id: integrationId,
                   integration: body.integration,
                   integration_url: `https://oncall-endpoint.example.com/${integrationId}`,

@@ -19,7 +19,7 @@ interface Props {
   pathSuffix?: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
-  customValidator?: (value: string) => boolean | string;
+  customValidator?: (value: string) => boolean | string | Promise<boolean | string>;
 }
 
 export const OptionField: FC<Props> = ({
