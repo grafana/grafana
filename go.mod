@@ -323,7 +323,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ecordell/optgen v0.0.6 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
-	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
+	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect

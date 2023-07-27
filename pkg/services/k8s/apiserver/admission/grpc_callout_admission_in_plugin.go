@@ -20,16 +20,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"io"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	jsonpatch "github.com/evanphx/json-patch"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/plugins"
+	admissionV1 "k8s.io/api/admission/v1"
+	authenticationV1 "k8s.io/api/authentication/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	admissionsV1 "k8s.io/api/admission/v1"
-	authenticationV1 "k8s.io/api/authentication/v1"
+	runtimeJson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/apiserver/pkg/admission"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 const PluginNameGrpcCalloutAdmissionInPlugin = "GrpcCalloutAdmissionInPlugin"
@@ -64,7 +66,7 @@ func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, 
 
 	wrappedSender := callResourceResponseSenderFunc(func(response *backend.CallResourceResponse) error {
 		// err = errors.New("some validation error")
-		admissionResponse := &admissionsV1.AdmissionResponse{}
+		admissionResponse := &admissionV1.AdmissionResponse{}
 		if err := json.Unmarshal(response.Body, &admissionResponse); err != nil {
 			finalErr = errors.New("Admission response from plugin is malformed")
 		}
@@ -73,12 +75,36 @@ func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, 
 			finalErr = admission.NewForbidden(a, errors.New("could not pass validation performed by plugin"))
 		}
 
+		if isMutating {
+			obj := a.GetObject()
+			var patchedJS []byte
+			jsonSerializer := runtimeJson.NewSerializer(runtimeJson.DefaultMetaFactory, o.GetObjectCreater(), o.GetObjectTyper(), false)
+			switch *admissionResponse.PatchType {
+			// VerifyAdmissionResponse normalizes to v1 patch types, regardless of the AdmissionReview version used
+			case admissionV1.PatchTypeJSONPatch:
+				objJS, err := runtime.Encode(jsonSerializer, obj)
+				if err != nil {
+					finalErr = admission.NewForbidden(a, errors.New("Could not serialize object to JSON for patching"))
+				} else {
+					patchObj, _ := jsonpatch.DecodePatch(admissionResponse.Patch)
+					patchedJS, _ = patchObj.Apply(objJS)
+					jsonSerializer.Decode(patchedJS, &schema.GroupVersionKind{
+						Group:   "charandas.example.com",
+						Version: "v1",
+						Kind:    "TestObject",
+					}, obj)
+
+				}
+
+			}
+		}
+
 		return nil
 	})
 
 	kind := a.GetKind()
 	userInfo := a.GetUserInfo()
-	admissionRequest := &admissionsV1.AdmissionRequest{
+	admissionRequest := &admissionV1.AdmissionRequest{
 		UID:             "0",
 		Kind:            v1.GroupVersionKind(a.GetKind()),
 		Resource:        v1.GroupVersionResource(a.GetResource()),
@@ -87,7 +113,7 @@ func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, 
 		RequestResource: nil,
 		Name:            a.GetName(),
 		Namespace:       a.GetNamespace(),
-		Operation:       admissionsV1.Operation(a.GetOperation()),
+		Operation:       admissionV1.Operation(a.GetOperation()),
 		UserInfo: authenticationV1.UserInfo{
 			Username: userInfo.GetName(),
 			Groups:   userInfo.GetGroups(),
