@@ -296,14 +296,14 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
     ],
   },
   {
-    name: 'VictorOps',
-    description: 'Send notifications to VictorOps',
+    name: 'Splunk OnCall',
+    description: 'Send notifications to Splunk OnCall',
     type: 'victorops',
     info: '',
-    heading: 'VictorOps settings',
+    heading: 'Splunk OnCall settings',
     options: [
-      option('api_key', 'API key', 'The API key to use when talking to the VictorOps API.'),
-      option('api_url', 'API URL', 'The VictorOps API URL.'),
+      option('api_key', 'API key', 'The API key to use when talking to the Splunk OnCall API.'),
+      option('api_url', 'API URL', 'The Splunk OnCall API URL.'),
       option('routing_key', 'Routing key', 'A key used to map the alert to a team.', { required: true }),
       option('message_type', 'Message type', 'Describes the behavior of the alert (CRITICAL, WARNING, INFO).'),
       option('entity_display_name', 'Entity display name', 'Contains summary of the alerted problem.', {
