@@ -16,7 +16,7 @@ import (
 func batchInsertPermissions(cnt int, sqlStore db.DB) error {
 	now := time.Now()
 
-	return batch(cnt, ac.BatchSize, func(start, end int) error {
+	return batch(cnt, batchSize, func(start, end int) error {
 		n := end - start
 		permissions := make([]ac.Permission, 0, n)
 		for i := start + 1; i < end+1; i++ {
@@ -40,13 +40,13 @@ func TestMigrateScopeSplit(t *testing.T) {
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Populate permissions
-	require.NoError(t, batchInsertPermissions(3*ac.BatchSize, sqlStore), "could not insert permissions")
+	require.NoError(t, batchInsertPermissions(3*batchSize, sqlStore), "could not insert permissions")
 
 	// Migrate
 	require.NoError(t, MigrateScopeSplit(sqlStore, logger))
 
 	// Check migration result
-	permissions := make([]ac.Permission, 0, 3*ac.BatchSize)
+	permissions := make([]ac.Permission, 0, 3*batchSize)
 	errFind := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		return sess.Find(&permissions)
 	})

@@ -11,6 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
+var (
+	batchSize = 1000
+)
+
 func MigrateScopeSplit(db db.DB, log log.Logger) error {
 	t := time.Now()
 	ctx := context.Background()
@@ -30,7 +34,7 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 		return nil
 	}
 
-	errBatchUpdate := batch(len(permissions), ac.BatchSize, func(start, end int) error {
+	errBatchUpdate := batch(len(permissions), batchSize, func(start, end int) error {
 		n := end - start
 
 		// IDs to remove
