@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Badge, Card, useStyles2, Icon, Tooltip } from '@grafana/ui';
+import { Badge, Card, useStyles2 } from '@grafana/ui';
 
 import { BASE_PATH } from '../constants';
 
@@ -12,43 +12,19 @@ type Props = {
   providerId: string;
   displayName: string;
   enabled: boolean;
-  configFoundInIniFile?: boolean;
   configPath?: string;
   authType?: string;
   badges?: JSX.Element[];
   onClick?: () => void;
 };
 
-export function ProviderCard({
-  providerId,
-  displayName,
-  enabled,
-  configFoundInIniFile,
-  configPath,
-  authType,
-  badges,
-  onClick,
-}: Props) {
+export function ProviderCard({ providerId, displayName, enabled, configPath, authType, badges, onClick }: Props) {
   const styles = useStyles2(getStyles);
   configPath = BASE_PATH + (configPath || providerId);
 
   return (
     <Card href={configPath} className={styles.container} onClick={() => onClick && onClick()}>
       <Card.Heading className={styles.name}>{displayName}</Card.Heading>
-      {configFoundInIniFile && (
-        <>
-          <span className={styles.initext}>
-            <Tooltip
-              content={`Note: Settings enabled in the .ini configuration file will overwritten by the current settings.`}
-            >
-              <>
-                <Icon name="adjust-circle" />
-                Configuration found in .ini file
-              </>
-            </Tooltip>
-          </span>
-        </>
-      )}
       <div className={styles.footer}>
         {authType && <Badge text={authType} color="blue" icon="info-circle" />}
         {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="red" />}
@@ -81,12 +57,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.h4.fontSize};
       color: ${theme.colors.text.primary};
       margin: 0;
-    `,
-    initext: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(1)} 0; // Add some padding
-      max-width: 90%; // Add a max-width to prevent text from stretching too wide
     `,
   };
 };
