@@ -163,8 +163,10 @@ Example of constructing a data frame with specific meta information in `typescri
 const result = new MutableDataFrame({
     fields: [...],
     meta: {
-        limit: 1000,
-        error: "Error information"
+        custom: {
+          limit: 1000,
+          error: "Error information"
+        }
     },
 });
 ```
@@ -195,7 +197,9 @@ Example of constructing a data frame that includes searchWords in `typescript`:
 const result = new MutableDataFrame({
     fields: [...],
     meta: {
+      custom: {
         searchWords: ["foo", "bar", "baz"],
+      }
     },
 });
 ```
