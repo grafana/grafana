@@ -315,7 +315,6 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 				},
 			},
 		}
-
 	}
 
 	return leDtos, nil

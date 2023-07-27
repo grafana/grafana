@@ -96,5 +96,4 @@ func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string
 	}
 
 	return updatedModel, nil
-
 }
