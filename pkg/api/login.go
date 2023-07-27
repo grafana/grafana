@@ -115,7 +115,8 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		return
 	}
 
-	if hs.tryAutoLogin(c) {
+	// If user is not already signed in via auth-proxy, try auto-login
+	if !c.IsSignedIn && hs.tryAutoLogin(c) {
 		return
 	}
 
