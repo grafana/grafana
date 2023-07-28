@@ -15,11 +15,6 @@ jobs:
     env:
       ARTIFACT_NAME: 'levitate' # The name of the artifact that we would like to download
       ARTIFACT_FOLDER: '${{ github.workspace }}/tmp' # The name of the folder where we will download the artifact to
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      artifacts: read
 
     steps:
     - uses: actions/checkout@v3
@@ -124,7 +119,7 @@ jobs:
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
     - name: Post to Slack
       id: slack
-      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
@@ -137,15 +132,13 @@ jobs:
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
-        HAS_SECRETS: ${{ (github.repository == "grafana/grafana" || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
 
     # Add the label
     - name: Add "levitate breaking change" label
-      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
-        HAS_SECRETS: ${{ (secrets.GH_BOT_ACCESS_TOKEN != '') || '' }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -158,11 +151,10 @@ jobs:
 
     # Remove label (no more breaking changes)
     - name: Remove "levitate breaking change" label
-      if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
-        HAS_SECRETS: ${{ (secrets.GH_BOT_ACCESS_TOKEN != '') || '' }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -177,11 +169,10 @@ jobs:
     # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
     # Related issue: https://github.com/renovatebot/renovate/issues/1908
     - name: Add "grafana/plugins-platform-frontend" as a reviewer
-      if: steps.levitate-run.outputs.exit_code && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
+      if: steps.levitate-run.outputs.exit_code && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
-        HAS_SECRETS: ${{ (secrets.GH_BOT_ACCESS_TOKEN != '') || '' }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -195,11 +186,10 @@ jobs:
 
     # Remove reviewers (no more breaking changes)
     - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
-      if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
+      if: steps.levitate-run.outputs.exit_code == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
       uses: actions/github-script@v6
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
-        HAS_SECRETS: ${{ (secrets.GH_BOT_ACCESS_TOKEN != '') || '' }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |

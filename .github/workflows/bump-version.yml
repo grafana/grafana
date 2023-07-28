@@ -9,7 +9,6 @@ env:
   YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
   main:
-    if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
       # This is a basic workflow to help you get started with Actions

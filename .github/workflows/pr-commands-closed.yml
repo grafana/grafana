@@ -2,13 +2,11 @@ name: Run when PRs are closed
 on:
   pull_request:
     types:
-      - closed
+      - closed      
 concurrency:
   group: pr-commands-closed-${{ github.event.number }}
 jobs:
   close_job:
-    permissions:
-      pull-requests: write
     # this job will only run if the PR has been closed without being merged
     if: github.event.pull_request.merged == false
     runs-on: ubuntu-latest
@@ -17,4 +15,4 @@ jobs:
         echo PR #${{ github.event.number }} has been closed without being merged, removing milestone.
         gh pr edit ${{ github.event.number }} --milestone "" --repo $GITHUB_REPOSITORY
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
