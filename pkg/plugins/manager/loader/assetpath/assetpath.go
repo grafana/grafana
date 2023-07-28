@@ -21,7 +21,7 @@ type Service struct {
 }
 
 func ProvideService(cfg *config.Cfg, cdn *pluginscdn.Service) *Service {
-	return &Service{cdn: cdn, cfg: cfg}
+	return &Service{cfg: cfg, cdn: cdn}
 }
 
 type PluginInfo struct {
@@ -36,6 +36,10 @@ func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.
 		class:      class,
 		dir:        fs.Base(),
 	}
+}
+
+func DefaultService(cfg *config.Cfg) *Service {
+	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg)}
 }
 
 // Base returns the base path for the specified plugin.

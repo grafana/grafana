@@ -34,6 +34,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   permissions?: UserPermission;
   analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
+  authenticatedBy: string;
 
   constructor() {
     this.id = 0;
@@ -59,6 +60,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.analytics = {
       identifier: '',
     };
+    this.authenticatedBy = '';
 
     if (config.bootData.user) {
       extend(this, config.bootData.user);
@@ -259,6 +261,11 @@ export class ContextSrv {
 
     // skip if we are using auth_token in url
     if (!!params.get('auth_token')) {
+      return false;
+    }
+
+    // skip if the user has been authenticated by authproxy and does not have a login token
+    if (this.user.authenticatedBy === 'authproxy' && !config.auth.AuthProxyEnableLoginToken) {
       return false;
     }
 
