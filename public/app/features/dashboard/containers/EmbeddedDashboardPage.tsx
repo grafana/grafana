@@ -65,7 +65,7 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
             routeName: route.routeName,
             fixUrl: false,
             keybindingSrv: context.keybindings,
-            dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
+            dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true, isEmbedded: true } },
           })
         );
       })
