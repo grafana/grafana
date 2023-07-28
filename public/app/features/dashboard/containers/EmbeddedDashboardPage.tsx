@@ -83,7 +83,6 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
 
     if (!editPanel && urlEditPanelId) {
       const panel = dashboard.getPanelByUrlId(urlEditPanelId);
-      console.log('panel', panel);
       if (panel) {
         if (dashboard.canEditPanel(panel)) {
           setEditPanel(panel);
@@ -106,7 +105,12 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
 
   return (
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
+      <Toolbar
+        dashboard={dashboard}
+        callbackUrl={queryParams.callbackUrl}
+        dashboardJson={dashboardJson}
+        editMode={!!editPanel}
+      />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div>
         <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={editPanel} />
@@ -127,9 +131,10 @@ interface ToolbarProps {
   dashboard: DashboardModel;
   callbackUrl?: string;
   dashboardJson: string;
+  editMode?: boolean;
 }
 
-const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
+const Toolbar = ({ dashboard, callbackUrl, dashboardJson, editMode }: ToolbarProps) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
@@ -147,6 +152,11 @@ const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
 
   return (
     <PageToolbar title={dashboard.title} buttonOverflowAlignment="right" className={styles.toolbar}>
+      {!!editMode && (
+        <Button variant={'secondary'} onClick={() => window.history.back()}>
+          Back
+        </Button>
+      )}
       {!dashboard.timepicker.hidden && (
         <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
       )}
