@@ -148,7 +148,7 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
-		RuleGroupIndex:  1,
+		RuleGroupIndex:  1, // Every rule is in its own group.
 		IsPaused:        isPaused,
 		NoDataState:     transNoData(l, da.ParsedSettings.NoDataState),
 		ExecErrState:    transExecErr(l, da.ParsedSettings.ExecutionErrorState),
