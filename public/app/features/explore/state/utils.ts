@@ -157,7 +157,7 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 }
 
-function parseRawTime(value: string | DateTime): TimeFragment | null {
+export function parseRawTime(value: string | DateTime): TimeFragment | null {
   if (value === null) {
     return null;
   }
