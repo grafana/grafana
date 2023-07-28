@@ -26,7 +26,7 @@ func ProvideService(cdn *pluginscdn.Service) *Service {
 func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
 		baseDir := getBaseDir(pluginDir, true)
-		if strings.Contains(pluginDir, "public/plugins") {
+		if isDecoupledPlugin(pluginDir) {
 			return path.Join("public/plugins", baseDir), nil
 		}
 		return path.Join("public/app/plugins", string(pluginJSON.Type), baseDir), nil
@@ -74,9 +74,13 @@ func (s *Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (st
 	return path.Join(p.BaseURL, pathStr), nil
 }
 
+func isDecoupledPlugin(pluginDir string) bool {
+	return strings.Contains(filepath.ToSlash(pluginDir), "public/plugins")
+}
+
 func getBaseDir(pluginDir string, keepSrcDir bool) string {
 	baseDir := filepath.Base(pluginDir)
-	if strings.Contains(pluginDir, "public/plugins") {
+	if isDecoupledPlugin(pluginDir) {
 		// Decoupled core plugins will be suffixed with "dist" if they have been built or "src" if not.
 		// e.g. public/plugins/testdata/src
 		if baseDir == "dist" || baseDir == "src" {
