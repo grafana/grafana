@@ -210,7 +210,7 @@ Loki and Elasticsearch data source configuration pages have been redesigned to m
 
 _Generally available in all editions of Grafana._
 
-In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
+In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day. With this change we aim to reduce the server load with long-range queries, and to progressively display results, metrics or logs, starting with the most recent data and going backwards.
 
 ### Easier to use query editor for Elasticsearch
 
@@ -260,13 +260,13 @@ InfluxDB backend mode was available for a while but it had some compatibility is
 
 ## Explore
 
-### Logs: Choose which fields to display in a log line
+### Logs: Log rows menu available when displaying selected fields
 
 <!-- Matías Wenceslao Chomicki -->
 
 _Generally available in all editions of Grafana._
 
-When you're browsing logs in Explore, you can click on the "eye" icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. This is helpful for scanning through your logs.
+When you're browsing logs in Explore, you can click on the "eye" icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. In this view, we now show the log row menu on mouse-over with options such as show context (if available), copy log line, and copy shortlink.
 
 {{< figure src="/media/docs/grafana/log-field-picker-10-1.gif" max-width="750px" caption="Log rows menu" >}}
 
