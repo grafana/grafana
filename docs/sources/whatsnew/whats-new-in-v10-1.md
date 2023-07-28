@@ -17,7 +17,7 @@ weight: -38
 
 # What’s new in Grafana v10.1
 
-Welcome to Grafana 10.1! Read on to learn about changes to dashboards and visualizations, data sources, and security and authentication and more. We're particularly excited about a set of improvements to visualizing logs from [Loki](https://grafana.com/products/cloud/logs/) and other logging data sources in Explore mode, and our Flame graph panel, used to visualize profiling data from [Pyroscope](https://grafana.com/blog/2023/03/15/pyroscope-grafana-phlare-join-for-oss-continuous-profiling/?pg=oss-phlare&plcmt=top-promo-banner) and other continuous profiling data sources.
+Welcome to Grafana 10.1! Read on to learn about changes to dashboards and visualizations, data sources, security and authentication and more. We're particularly excited about a set of improvements to visualizing logs from [Loki](https://grafana.com/products/cloud/logs/) and other logging data sources in Explore mode, and our Flame graph panel, used to visualize profiling data from [Pyroscope](https://grafana.com/blog/2023/03/15/pyroscope-grafana-phlare-join-for-oss-continuous-profiling/?pg=oss-phlare&plcmt=top-promo-banner) and other continuous profiling data sources.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.1, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.1/index.md" >}}).
 
@@ -69,6 +69,8 @@ To see the widget editor in Grafana OSS or Enterprise, enable the `vizAndWidgetS
 {{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
 
 ### Transformations redesign
+
+<!-- Catherine Gui -->
 
 The transformations tab has an improved user experience and visual redesign. Now, you can explore transformations with categories and illustrations.
 
