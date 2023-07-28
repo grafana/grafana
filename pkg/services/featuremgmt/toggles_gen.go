@@ -343,10 +343,6 @@ const (
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 
-	// FlagElasticToggleableFilters
-	// Enable support to toggle filters off from the query through the Logs Details component
-	FlagElasticToggleableFilters = "elasticToggleableFilters"
-
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
