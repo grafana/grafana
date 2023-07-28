@@ -91,15 +91,6 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	// <VERIFICATION STAGE>
 	verifiedPlugins := make([]*plugins.Plugin, 0, len(bootstrappedPlugins))
 	for _, plugin := range bootstrappedPlugins {
-		// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
-		// It could be loaded later as an external plugin.
-		if l.cfg.Features != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) &&
-			src.PluginClass(ctx) == plugins.ClassCore &&
-			l.cfg.SkipCorePlugins[plugin.ID] {
-			l.log.Debug("Skipping plugin loading as a core plugin", "pluginID", plugin.ID)
-			continue
-		}
-
 		signingError := l.signatureValidator.Validate(plugin)
 		if signingError != nil {
 			l.log.Warn("Skipping loading plugin due to problem with signature",

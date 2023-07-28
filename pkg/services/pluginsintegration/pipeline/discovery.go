@@ -21,6 +21,9 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pluginFinder finder.Finder, pluginRe
 			func(ctx context.Context, _ plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return discovery.NewDuplicatePluginFilterStep(pluginRegistry).Filter(ctx, bundles)
 			},
+			func(ctx context.Context, cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+				return discovery.NewCorePluginFilterStep(cfg).Filter(ctx, cl, bundles)
+			},
 		},
 	})
 }
