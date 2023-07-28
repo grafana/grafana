@@ -1,3 +1,5 @@
+import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
+
 import { toUtc } from '@grafana/data';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
@@ -10,13 +12,7 @@ jest.mock('app/core/utils/explore', () => ({
 
 describe('v1 migrator', () => {
   describe('parse', () => {
-    beforeEach(function () {
-      jest.spyOn(console, 'error').mockImplementation(() => void 0);
-    });
-
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
+    silenceConsoleOutput();
 
     it('correctly returns default state when no params are provided', () => {
       expect(v1Migrator.parse({})).toMatchObject({
