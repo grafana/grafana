@@ -26,19 +26,33 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useTreeInteractions } from './hooks';
-import { FolderChange, FolderUID } from './types';
 
-interface NestedFolderPickerProps {
-  value?: FolderUID;
-  // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
-  // vs removing selection (if possible?)
-  onChange?: (folder: FolderChange) => void;
+export interface NestedFolderPickerProps {
+  /* Folder UID to show as selected */
+  value?: string;
+
+  /** Show an invalid state around the folder picker */
+  invalid?: boolean;
+
+  /* Whether to show the root 'Dashboards' (formally General) folder as selectable */
+  showRootFolder?: boolean;
+
+  /* Folder UIDs to exclude from the picker, to prevent invalid operations */
   excludeUIDs?: string[];
+
+  /* Callback for when the user selects a folder */
+  onChange?: (folderUID: string, folderName: string) => void;
 }
 
 const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
-export function NestedFolderPicker({ value, onChange, excludeUIDs = [] }: NestedFolderPickerProps) {
+export function NestedFolderPicker({
+  value,
+  invalid,
+  showRootFolder = true,
+  excludeUIDs,
+  onChange,
+}: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -101,10 +115,7 @@ export function NestedFolderPicker({ value, onChange, excludeUIDs = [] }: Nested
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
       if (onChange) {
-        onChange({
-          uid: item.uid,
-          title: item.title,
-        });
+        onChange(item.uid, item.title);
       }
       setOverlayOpen(false);
     },
@@ -150,20 +161,22 @@ export function NestedFolderPicker({ value, onChange, excludeUIDs = [] }: Nested
       excludeUIDs
     );
 
-    // Increase the level of each item to 'make way' for the fake root Dashboards item
-    for (const item of flatTree) {
-      item.level += 1;
-    }
+    if (showRootFolder) {
+      // Increase the level of each item to 'make way' for the fake root Dashboards item
+      for (const item of flatTree) {
+        item.level += 1;
+      }
 
-    flatTree.unshift({
-      isOpen: true,
-      level: 0,
-      item: {
-        kind: 'folder',
-        title: 'Dashboards',
-        uid: '',
-      },
-    });
+      flatTree.unshift({
+        isOpen: true,
+        level: 0,
+        item: {
+          kind: 'folder',
+          title: 'Dashboards',
+          uid: '',
+        },
+      });
+    }
 
     // If the root collection hasn't loaded yet, create loading placeholders
     if (!rootCollection) {
@@ -171,7 +184,7 @@ export function NestedFolderPicker({ value, onChange, excludeUIDs = [] }: Nested
     }
 
     return flatTree;
-  }, [search, searchState.value, rootCollection, childrenCollections, folderOpenState, excludeUIDs]);
+  }, [search, searchState.value, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -208,6 +221,7 @@ export function NestedFolderPicker({ value, onChange, excludeUIDs = [] }: Nested
     return (
       <Trigger
         label={label}
+        invalid={invalid}
         isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
         ref={setTriggerRef}
@@ -230,6 +244,7 @@ export function NestedFolderPicker({ value, onChange, excludeUIDs = [] }: Nested
         prefix={label ? <Icon name="folder" /> : null}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
+        invalid={invalid}
         className={styles.search}
         onKeyDown={handleKeyDown}
         onChange={(e) => setSearch(e.currentTarget.value)}

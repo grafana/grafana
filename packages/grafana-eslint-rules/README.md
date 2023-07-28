@@ -17,3 +17,7 @@ Now, we prefer using data-testid for E2E selectors.
 Check if border-radius theme tokens are used.
 
 To improve the consistency across Grafana we encourage devs to use tokens instead of custom values. In this case, we want the `borderRadius` to use the appropiate token such as `theme.shape.borderRadius()` or `theme.shape.radius.circle`.
+
+### `@grafana/theme-token-usage`
+
+Used to find all instances of `theme` tokens being used in the codebase and emit the counts as metrics. Should **not** be used as an actual lint rule!

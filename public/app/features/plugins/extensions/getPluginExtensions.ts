@@ -78,6 +78,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           title: overrides?.title || extensionConfig.title,
           description: overrides?.description || extensionConfig.description,
           path: overrides?.path || extensionConfig.path,
+          category: overrides?.category || extensionConfig.category,
         };
 
         extensions.push(extension);
@@ -125,6 +126,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       description = config.description,
       path = config.path,
       icon = config.icon,
+      category = config.category,
       ...rest
     } = overrides;
 
@@ -137,10 +139,10 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
-      throw new Error(
-        `Invalid extension "${config.title}". Trying to override not-allowed properties: ${Object.keys(rest).join(
+      logWarning(
+        `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
           ', '
-        )}`
+        )} which will be ignored.`
       );
     }
 
@@ -149,6 +151,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       description,
       path,
       icon,
+      category,
     };
   } catch (error) {
     if (error instanceof Error) {

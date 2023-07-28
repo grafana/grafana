@@ -6,7 +6,7 @@ import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { toUtc, dateTimeParse } from '../datetime';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue, TimeZone } from '../types';
-import { EnumFieldConfig, Field, FieldType } from '../types/dataFrame';
+import { Field, FieldType } from '../types/dataFrame';
 import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
@@ -44,6 +44,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const field = options.field as Field;
   const config = field.config ?? {};
+  const { palette } = options.theme.visualization;
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
@@ -70,8 +71,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
   } else if (!unit && field.type === FieldType.string) {
     unit = 'string';
-  } else if (field.type === FieldType.enum) {
-    return getEnumDisplayProcessor(options.theme, config.type?.enum);
   }
 
   const hasCurrencyUnit = unit?.startsWith('currency');
@@ -114,6 +113,28 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
         if (mappingResult.icon != null) {
           icon = mappingResult.icon;
+        }
+      }
+    } else if (field.type === FieldType.enum) {
+      // Apply enum display handling if field is enum type and no mappings are specified
+      if (value == null) {
+        return {
+          text: '',
+          numeric: NaN,
+        };
+      }
+
+      const enumIndex = +value;
+      if (config && config.type && config.type.enum) {
+        const { text: enumText, color: enumColor } = config.type.enum;
+
+        text = enumText ? enumText[enumIndex] : `${value}`;
+        // If no color specified in enum field config we will fallback to iterating through the theme palette
+        color = enumColor ? enumColor[enumIndex] : undefined;
+
+        if (color == null) {
+          const namedColor = palette[enumIndex % palette.length];
+          color = options.theme.visualization.getColorByName(namedColor);
         }
       }
     }
@@ -190,41 +211,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
 function toStringProcessor(value: unknown): DisplayValue {
   return { text: toString(value), numeric: anyToNumber(value) };
-}
-
-export function getEnumDisplayProcessor(theme: GrafanaTheme2, cfg?: EnumFieldConfig): DisplayProcessor {
-  const config = {
-    text: cfg?.text ?? [],
-    color: cfg?.color ?? [],
-  };
-  // use the theme specific color values
-  config.color = config.color.map((v) => theme.visualization.getColorByName(v));
-
-  return (value: unknown) => {
-    if (value == null) {
-      return {
-        text: '',
-        numeric: NaN,
-      };
-    }
-    const idx = +value;
-    let text = config.text[idx];
-    if (text == null) {
-      text = `${value}`; // the original value
-    }
-    let color = config.color[idx];
-    if (color == null) {
-      // constant color for index
-      const { palette } = theme.visualization;
-      color = palette[idx % palette.length];
-      config.color[idx] = color;
-    }
-    return {
-      text,
-      numeric: idx,
-      color,
-    };
-  };
 }
 
 export function getRawDisplayProcessor(): DisplayProcessor {

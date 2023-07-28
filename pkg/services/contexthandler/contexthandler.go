@@ -52,50 +52,50 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	authnService authn.Service, anonSessionService anonymous.Service,
+	authnService authn.Service, anonDeviceService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:                cfg,
-		AuthTokenService:   tokenService,
-		JWTAuthService:     jwtService,
-		RemoteCache:        remoteCache,
-		RenderService:      renderService,
-		SQLStore:           sqlStore,
-		tracer:             tracer,
-		authProxy:          authProxy,
-		authenticator:      authenticator,
-		loginService:       loginService,
-		apiKeyService:      apiKeyService,
-		userService:        userService,
-		orgService:         orgService,
-		oauthTokenService:  oauthTokenService,
-		features:           features,
-		authnService:       authnService,
-		anonSessionService: anonSessionService,
-		singleflight:       new(singleflight.Group),
+		Cfg:               cfg,
+		AuthTokenService:  tokenService,
+		JWTAuthService:    jwtService,
+		RemoteCache:       remoteCache,
+		RenderService:     renderService,
+		SQLStore:          sqlStore,
+		tracer:            tracer,
+		authProxy:         authProxy,
+		authenticator:     authenticator,
+		loginService:      loginService,
+		apiKeyService:     apiKeyService,
+		userService:       userService,
+		orgService:        orgService,
+		oauthTokenService: oauthTokenService,
+		features:          features,
+		authnService:      authnService,
+		anonDeviceService: anonDeviceService,
+		singleflight:      new(singleflight.Group),
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg                *setting.Cfg
-	AuthTokenService   auth.UserTokenService
-	JWTAuthService     auth.JWTVerifierService
-	RemoteCache        *remotecache.RemoteCache
-	RenderService      rendering.Service
-	SQLStore           db.DB
-	tracer             tracing.Tracer
-	authProxy          *authproxy.AuthProxy
-	authenticator      loginpkg.Authenticator
-	loginService       login.Service
-	apiKeyService      apikey.Service
-	userService        user.Service
-	orgService         org.Service
-	oauthTokenService  oauthtoken.OAuthTokenService
-	features           *featuremgmt.FeatureManager
-	authnService       authn.Service
-	singleflight       *singleflight.Group
-	anonSessionService anonymous.Service
+	Cfg               *setting.Cfg
+	AuthTokenService  auth.UserTokenService
+	JWTAuthService    auth.JWTVerifierService
+	RemoteCache       *remotecache.RemoteCache
+	RenderService     rendering.Service
+	SQLStore          db.DB
+	tracer            tracing.Tracer
+	authProxy         *authproxy.AuthProxy
+	authenticator     loginpkg.Authenticator
+	loginService      login.Service
+	apiKeyService     apikey.Service
+	userService       user.Service
+	orgService        org.Service
+	oauthTokenService oauthtoken.OAuthTokenService
+	features          *featuremgmt.FeatureManager
+	authnService      authn.Service
+	singleflight      *singleflight.Group
+	anonDeviceService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -242,7 +242,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			// update last seen every 5min
 			if reqContext.ShouldUpdateLastSeenAt() {
 				reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
-				if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
+				err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID, OrgID: reqContext.OrgID})
+				if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 					reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 				}
 			}
@@ -281,7 +282,7 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 				reqContext.Logger.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := h.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
+		if err := h.anonDeviceService.TagDevice(context.Background(), httpReqCopy); err != nil {
 			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
