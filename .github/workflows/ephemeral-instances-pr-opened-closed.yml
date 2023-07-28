@@ -6,7 +6,7 @@ jobs:
   handle-pull-request-event:
     runs-on: ubuntu-latest
     continue-on-error: true
-    steps:        
+    steps:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -20,13 +20,13 @@ jobs:
           private_key: ${{ secrets.EI_APP_PRIVATE_KEY }}
 
       - name: Checkout ephemeral instances repository
-        uses: actions/checkout@v3  
+        uses: actions/checkout@v3
         with:
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
           path: ephemeral
-        
+
       - name: Run action
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}

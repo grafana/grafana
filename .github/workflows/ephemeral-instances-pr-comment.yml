@@ -2,15 +2,15 @@ name: 'Ephemeral instances: PR comment'
 on:
   issue_comment:
     types: [created]
-jobs:      
+jobs:
   handle-pull-request-event:
     if: github.event.sender.type == 'User' && 
         github.event.issue.pull_request &&
         startsWith(github.event.comment.body, '/deploy-to-hg')
-    runs-on: 
+    runs-on:
       labels: ubuntu-latest-8-cores
     continue-on-error: true
-    steps:        
+    steps:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -24,13 +24,13 @@ jobs:
           private_key: ${{ secrets.EI_APP_PRIVATE_KEY }}
 
       - name: Checkout ephemeral instances repository
-        uses: actions/checkout@v3  
+        uses: actions/checkout@v3
         with:
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
           path: ephemeral
-        
+
       - name: Run action
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}
