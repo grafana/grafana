@@ -15,8 +15,13 @@ on:
       - demilestoned
 concurrency:
   group: pr-checks-${{ github.event.number }}
+permissions:
+  contents: write
 jobs:
   main:
+    permissions:
+      actions: write
+      contents: read
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
