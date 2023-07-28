@@ -2100,6 +2100,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+<<<<<<< HEAD
 name: release-whatsnew-checker
 node:
   type: no-parallel
@@ -2650,6 +2651,8 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+=======
+>>>>>>> 971f5f14be (CI: Make RGM the main pipeline for prerelease (#72295))
 name: publish-docker-public
 node:
   type: no-parallel
@@ -2972,13 +2975,13 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on:
-- release-build-e2e-publish
-- release-windows
+depends_on: []
+environment:
+  EDITION: oss
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: verify-prerelease-assets
+name: release-whatsnew-checker
 node:
   type: no-parallel
 platform:
@@ -2987,21 +2990,157 @@ platform:
 services: []
 steps:
 - commands:
-  - apt-get update && apt-get install -yq gettext
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
-  - '! cat /tmp/stat.log | grep "No URLs matched"'
-  depends_on:
-  - clone
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
-    BUCKET:
-      from_secret: prerelease_bucket
-    GCP_KEY:
-      from_secret: gcp_key
-  failure: ignore
-  image: google/cloud-sdk:431.0.0
-  name: gsutil-stat
+    CGO_ENABLED: 0
+  image: golang:1.20.6
+  name: compile-build-cmd
+- commands:
+  - ./bin/build whatsnew-checker
+  depends_on:
+  - compile-build-cmd
+  image: golang:1.20.6
+  name: whats-new-checker
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-test-frontend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.40/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - yarn install --immutable
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: yarn-install
+- commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.5
+  name: betterer-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.7.5
+  name: test-frontend
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.6
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-jsonnet
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.7.5
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.5
+  name: test-backend
+- commands:
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.5
+  name: test-backend-integration
 trigger:
   event:
     exclude:
@@ -3119,6 +3258,8 @@ trigger:
     - docs/**
     - packages/**/*.md
     - latest.json
+  repo:
+  - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3127,7 +3268,9 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
+depends_on:
+- release-test-backend
+- release-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3212,11 +3355,11 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-prerelease-dev/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
   - windows-init
   environment:
@@ -3269,7 +3412,7 @@ steps:
   depends_on:
   - clone
   environment:
-    BUCKET: grafana-prerelease-dev
+    BUCKET: grafana-prerelease
     GCP_KEY:
       from_secret: gcp_key
   failure: ignore
@@ -4423,6 +4566,7 @@ kind: secret
 name: enterprise2-cdn-path
 ---
 get:
+<<<<<<< HEAD
   name: security_prefix
   path: infra/data/ci/grafana-release-eng/enterprise2
 kind: secret
@@ -4430,12 +4574,15 @@ name: enterprise2_security_prefix
 ---
 get:
   name: gcp_service_account_base64
+=======
+  name: gcp_service_account_prod_base64
+>>>>>>> 971f5f14be (CI: Make RGM the main pipeline for prerelease (#72295))
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
 name: gcp_key_base64
 ---
 get:
-  name: destination
+  name: destination_prod
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
 name: destination
@@ -4489,6 +4636,10 @@ kind: secret
 name: github_token
 ---
 kind: signature
+<<<<<<< HEAD
 hmac: a9ced789528f5c4d3beaa2953dfb530209303af99278a20ee2246db6e8cbbd75
+=======
+hmac: 4dab5540224fa874ec46cb062c8b89730b7b42bb9237ec3f4c02b469786966cf
+>>>>>>> 971f5f14be (CI: Make RGM the main pipeline for prerelease (#72295))
 
 ...
