@@ -3,7 +3,7 @@ const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator((name) => `https://github.com/grafana/grafana#${name}`);
 
-const borderRadiusRule = createRule({
+const themeTokenUsage = createRule({
   create(context) {
     return {
       Identifier: function (node) {
@@ -23,7 +23,7 @@ const borderRadiusRule = createRule({
             paths.unshift('theme');
             context.report({
               node: lastAncestor,
-              messageId: "themeImport",
+              messageId: "themeTokenUsed",
               data: {
                 identifier: paths.join('.')
               }
@@ -33,19 +33,19 @@ const borderRadiusRule = createRule({
       }
     };
   },
-  name: 'theme-imports',
+  name: 'theme-token-usage',
   meta: {
     type: 'problem',
     docs: {
-      description: 'Check for theme token imports',
+      description: 'Check for theme token usage',
       recommended: false,
     },
     messages: {
-      themeImport: 'Theme token import: {{ identifier }}',
+      themeTokenUsed: '{{ identifier }}',
     },
     schema: [],
   },
   defaultOptions: [],
 });
 
-module.exports = borderRadiusRule;
+module.exports = themeTokenUsage;
