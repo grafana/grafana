@@ -556,15 +556,15 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			name            string
 			cfg             *config.Cfg
 			pluginPaths     []string
-			appURL          string
 			existingPlugins map[string]struct{}
 			want            []*plugins.Plugin
 			pluginErrors    map[string]*plugins.Error
 		}{
 			{
-				name:   "Load multiple plugins (broken, valid, unsigned)",
-				cfg:    &config.Cfg{},
-				appURL: "http://localhost:3000",
+				name: "Load multiple plugins (broken, valid, unsigned)",
+				cfg: &config.Cfg{
+					GrafanaAppURL: "http://localhost:3000",
+				},
 				pluginPaths: []string{
 					"../testdata/invalid-plugin-json",    // test-app
 					"../testdata/valid-v2-pvt-signature", // test
@@ -624,12 +624,6 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 			})
 			t.Run(tt.name, func(t *testing.T) {
-				origAppURL := setting.AppUrl
-				t.Cleanup(func() {
-					setting.AppUrl = origAppURL
-				})
-				setting.AppUrl = tt.appURL
-
 				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
 						return plugins.ClassExternal
@@ -667,14 +661,14 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		name            string
 		cfg             *config.Cfg
 		pluginPaths     []string
-		appURL          string
 		existingPlugins map[string]struct{}
 		want            []*plugins.Plugin
 	}{
 		{
-			name:        "Load plugin defining one RBAC role",
-			cfg:         &config.Cfg{},
-			appURL:      "http://localhost:3000",
+			name: "Load plugin defining one RBAC role",
+			cfg: &config.Cfg{
+				GrafanaAppURL: "http://localhost:3000",
+			},
 			pluginPaths: []string{"../testdata/test-app-with-roles"},
 			want: []*plugins.Plugin{
 				{
@@ -731,11 +725,6 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		origAppURL := setting.AppUrl
-		t.Cleanup(func() {
-			setting.AppUrl = origAppURL
-		})
-		setting.AppUrl = "http://localhost:3000"
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
@@ -775,14 +764,6 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 	}
 
 	t.Run("Private signature verification ignores trailing slash in root URL", func(t *testing.T) {
-		origAppURL := setting.AppUrl
-		origAppSubURL := setting.AppSubUrl
-		t.Cleanup(func() {
-			setting.AppUrl = origAppURL
-			setting.AppSubUrl = origAppSubURL
-		})
-		setting.AppUrl = defaultAppURL
-
 		paths := []string{"../testdata/valid-v2-pvt-signature-root-url-uri"}
 
 		expected := []*plugins.Plugin{
@@ -818,7 +799,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
+		l := newLoader(t, &config.Cfg{GrafanaAppURL: defaultAppURL}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
