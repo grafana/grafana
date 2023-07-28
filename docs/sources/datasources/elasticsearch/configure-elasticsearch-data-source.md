@@ -94,13 +94,13 @@ The following settings are specific to Elasticsearch.
 
 - **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
 
-- **Time field name** -
-
-- **Max concurrent shard requests** -
-
 - **Pattern** -
 
-- **Min time interval** setting defines a lower limit for the auto group-by time interval.
+- **Time field name** - name of the time field. The default value is @timestamp. You can enter a different name.
+
+- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. Default is 5. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
+
+- **Min time interval** - Defines a lower limit for the auto group-by time interval.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 
@@ -136,9 +136,9 @@ You can optionally configure the two Logs parameters **Message field name** and 
 
 For example, if you're using a default setup of Filebeat for shipping logs to Elasticsearch, set:
 
-- **Message field name:** `message`
+- **Message field name:** `message` - Used to grab actual log messgae from the default source.
 
-- **Level field name:** `fields.level`
+- **Level field name:** `fields.level` If configured determines the error level or type of loevel 9info error, warning for log level problems.
 
 ### Data links
 

@@ -72,3 +72,5 @@ If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/refe
 
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
+
+- **Metric** -
