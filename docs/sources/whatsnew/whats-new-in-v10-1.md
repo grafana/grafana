@@ -227,6 +227,8 @@ The Elasticsearch query editor now allows convenient switching between logs, met
 
 ### Metrics explorer
 
+<!-- Catherine Gui -->
+
 The Metrics explorer is a new feature that enhances metrics browsing in the Prometheus query builder. The Metrics explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name or description, and filter on the Prometheus type.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Searching in Metrics explorer" >}}
