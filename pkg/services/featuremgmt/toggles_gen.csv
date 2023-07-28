@@ -83,7 +83,6 @@ exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,fa
 recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
 alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
-elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,false,true
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,false,true
 logsExploreTableVisualisation,experimental,@grafana/observability-logs,false,false,false,true

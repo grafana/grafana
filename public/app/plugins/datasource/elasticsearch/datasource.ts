@@ -56,7 +56,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addFilterToQuery, escapeFilter, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import {
+  addFilterToQuery,
+  escapeFilter,
+  escapeFilterValue,
+  queryHasFilter,
+  removeFilterFromQuery,
+} from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -959,6 +965,7 @@ export class ElasticDatasource
        * colons, which needs to be escaped.
        */
       key = escapeFilter(key);
+      value = escapeFilterValue(value);
       switch (operator) {
         case '=':
           return `${key}:"${value}"`;
