@@ -11,6 +11,8 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -46,32 +48,53 @@ func (e MigrationError) Error() string {
 
 func (e *MigrationError) Unwrap() error { return e.Err }
 
+type MigrationService struct {
+	store db.DB
+	cfg   *setting.Cfg
+	log   log.Logger
+}
+
+func NewMigrationService(log log.Logger, store db.DB, cfg *setting.Cfg) *MigrationService {
+	return &MigrationService{
+		log:   log,
+		cfg:   cfg,
+		store: store,
+	}
+}
+
 type migration struct {
-	migrator.MigrationBase
-	// session and mg are attached for convenience.
-	sess *xorm.Session
-	mg   *migrator.Migrator
+	sess    *xorm.Session
+	log     log.Logger
+	store   db.DB
+	dialect migrator.Dialect
+	cfg     *setting.Cfg
 
 	seenUIDs uidSet
 	silences map[int64][]*pb.MeshSilence
 }
 
-func Start(migrator *migrator.Migrator) error {
-	err := migrator.InTransaction(func(sess *xorm.Session) error {
+func (ms *MigrationService) Start() error {
+	err := ms.store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 		mg := &migration{
 			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: migrator.Dialect.SupportEngine()},
+			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: ms.store.GetDialect().SupportEngine()},
 			silences: make(map[int64][]*pb.MeshSilence),
+			log:      ms.log,
+			dialect:  ms.store.GetDialect(),
+			cfg:      ms.cfg,
+			store:    ms.store,
+			sess:     sess.Session,
 		}
 
-		err := mg.Exec(sess, migrator)
+		err := mg.Exec()
 		if err != nil {
-			migrator.Logger.Error("Executing migration failed", "error", err)
+			ms.log.Error("Executing migration failed", "error", err)
 			return err
 		}
 
 		return nil
 	})
+
 	if err != nil {
 		return fmt.Errorf("%v: %w", "migration failed", err)
 	}
@@ -80,15 +103,12 @@ func Start(migrator *migrator.Migrator) error {
 }
 
 //nolint:gocyclo
-func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	m.sess = sess
-	m.mg = mg
-
+func (m *migration) Exec() error {
 	dashAlerts, err := m.slurpDashAlerts()
 	if err != nil {
 		return err
 	}
-	mg.Logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
+	m.log.Info("alerts found to migrate", "alerts", len(dashAlerts))
 
 	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
@@ -108,8 +128,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	generalFolderCache := make(map[int64]*dashboard)
 
 	folderHelper := folderHelper{
-		sess: sess,
-		mg:   mg,
+		sess:    m.sess,
+		dialect: m.dialect,
 	}
 
 	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
@@ -135,7 +155,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
-		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
+		l := m.log.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
 		l.Debug("migrating alert rule to Unified Alerting")
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
@@ -238,7 +258,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
-			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+			m.log.Error("alert migration error: failed to write silence file", "err", err)
 		}
 	}
 
@@ -247,7 +267,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		return err
 	}
 
-	err = m.insertRules(mg, rulesPerOrg)
+	err = m.insertRules(m.store, rulesPerOrg)
 	if err != nil {
 		return err
 	}
@@ -261,12 +281,12 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	return nil
 }
 
-func (m *migration) insertRules(mg *migrator.Migrator, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
+func (m *migration) insertRules(store db.DB, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
 	for _, rules := range rulesPerOrg {
 		for rule := range rules {
 			var err error
-			if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
-				err = mg.InTransaction(func(sess *xorm.Session) error {
+			if strings.HasPrefix(m.dialect.DriverName(), migrator.Postgres) {
+				err = store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 					_, err := sess.Insert(rule)
 					return err
 				})
@@ -343,7 +363,7 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 				if value, ok := sjd[key]; ok {
 					decryptedData, err := util.Decrypt(value, setting.SecretKey)
 					if err != nil {
-						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
+						m.log.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
 						return fallback
 					}
 					return string(decryptedData)
