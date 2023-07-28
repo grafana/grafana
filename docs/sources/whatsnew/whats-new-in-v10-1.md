@@ -175,6 +175,18 @@ Streaming is available for both the Search and TraceQL query types, and you'll g
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
 
+### Tempo Search - powered by TraceQL
+
+<!-- André Pereira -->
+
+_Generally available in all editions of Grafana._
+
+The Search query type was replaced with a new editor powered by TraceQL. This new editor allows you to use the same query language for both Search and TraceQL queries. This change also brings a new UI that makes it easier to write queries and explore your data while using the powerful features offered by TraceQL.
+
+The previous Search interface is now deprecated and will be removed in a future release. We recommend that you start using the new editor as soon as possible and migrate existing dashboards.
+
+{{< figure src="/media/docs/grafana/data-sources/tempo-search.png" max-width="750px" caption="Tempo Search editor powered by TraceQL" >}}
+
 ### Span filtering for traces is GA
 
 _Generally available in all editions of Grafana._
