@@ -11,7 +11,7 @@ import (
 
 func (st DBstore) ListAlertInstanceData(ctx context.Context, cmd *models.ListAlertInstancesQuery) (result []*models.AlertInstanceData, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.SQL("SELECT * FROM alert_instance_data")
+		q := sess.SQL("SELECT * FROM alert_instance_data").Where("expires_at >", time.Now())
 		if cmd.RuleOrgID > 0 {
 			q = q.Where("org_id = ?", cmd.RuleOrgID)
 		}
