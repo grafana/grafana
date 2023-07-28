@@ -48,6 +48,7 @@ type CurrentUser struct {
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 	Analytics                  AnalyticsSettings  `json:"analytics"`
+	AuthenticatedBy            string             `json:"authenticatedBy"`
 }
 
 type AnalyticsSettings struct {
