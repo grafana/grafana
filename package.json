@@ -40,6 +40,7 @@
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes:generate": "esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
+    "themes:usage": "eslint . --ext .tsx,.ts --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
     "watch": "yarn start -d watch,start core:start --watchTheme",
