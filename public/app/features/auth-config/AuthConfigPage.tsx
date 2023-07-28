@@ -86,7 +86,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 key={provider.id}
                 providerId={provider.id}
                 displayName={provider.displayName}
-                authType={provider.type}
+                authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
                 configPath={provider.configPath}
                 onClick={() => {

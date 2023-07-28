@@ -28,7 +28,6 @@ export function ProviderCard({ providerId, displayName, enabled, configPath, aut
         <span className={styles.smallText}>{authType}</span>
         <span className={styles.name}>{displayName}</span>
       </div>
-      <Card.Heading className={styles.name}>{displayName}</Card.Heading>
       <div className={styles.footer}>
         <div className={styles.badgeContainer}>
           {enabled ? <Badge text="Enabled" color="green" icon="check" /> : <Badge text="Not enabled" color="blue" />}
@@ -71,6 +70,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       font-size: ${theme.typography.h4.fontSize};
       color: ${theme.colors.text.primary};
       margin: 0;
+      margin-top: ${theme.spacing(-1)};
     `,
     smallText: css`
       font-size: ${theme.typography.bodySmall.fontSize};
