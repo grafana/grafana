@@ -149,13 +149,27 @@ A new linking of Loki log lines in Explore allows you to quickly navigate to spe
 
 <!-- André Pereira -->
 
-_Generally available in all editions of Grafana._
+_Experimental in all editions of Grafana._
 
 Grafana's Tempo data source now supports _streaming_ responses to TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for big queries that take a long time to return a response.
 
-To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll see incoming traces right away on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+To use this feature, enable the `traceQLStreaming` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
-{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
+Streaming is available for both the Search and TraceQL query types, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}
+
+### Tempo Search - powered by TraceQL
+
+<!-- André Pereira -->
+
+_Generally available in all editions of Grafana._
+
+The Search query type was replaced with a new editor powered by TraceQL. This new editor allows you to use the same query language for both Search and TraceQL queries. This change also brings a new UI that makes it easier to write queries and explore your data while using the powerful features offered by TraceQL.
+
+The previous Search interface is now deprecated and will be removed in a future release. We recommend that you start using the new editor as soon as possible and migrate existing dashboards.
+
+{{< figure src="/media/docs/grafana/data-sources/tempo-search.png" max-width="750px" caption="Tempo Search editor powered by TraceQL" >}}
 
 ### Span filtering for traces is GA
 
@@ -197,6 +211,14 @@ Loki and Elasticsearch data source configuration pages have been redesigned to m
 _Generally available in all editions of Grafana._
 
 In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
+
+### Easier to use query editor for Elasticsearch
+
+<!-- Gabor Farkas -->
+
+_Generally available in all editions of Grafana._
+
+The Elasticsearch query editor now allows convenient switching between logs, metrics, and raw data directly from the top, eliminating the need to go through the metric selector.
 
 ### Metrics explorer
 
