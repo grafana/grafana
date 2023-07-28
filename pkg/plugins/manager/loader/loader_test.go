@@ -1419,7 +1419,11 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assets, angularInspector, &fakes.FakeOauthService{},
-		discovery.New(cfg, discovery.Opts{}), bootstrap.New(cfg, bootstrap.Opts{}))
+		discovery.New(cfg, discovery.Opts{
+			FindFilterFuncs: []discovery.FindFilterFunc{
+				discovery.NewCorePluginFilterStep(cfg).Filter,
+			},
+		}), bootstrap.New(cfg, bootstrap.Opts{}))
 
 	for _, cb := range cbs {
 		cb(l)
