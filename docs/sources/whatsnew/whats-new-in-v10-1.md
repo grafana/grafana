@@ -232,7 +232,7 @@ In response to different query performance scenarios, we implemented query split
 
 _Generally available in all editions of Grafana._
 
-In the Elasticsearch query editor, you can easily switch between logs, metrics and raw data at the top of the editor, no need to go through the metric selector.
+The Elasticsearch query editor now allows convenient switching between logs, metrics, and raw data directly from the top, eliminating the need to go through the metric selector.
 
 ### Metrics explorer
 
