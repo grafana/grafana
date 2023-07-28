@@ -4,6 +4,7 @@ import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
 import config from 'app/core/config';
 import { defaultFileUploadQuery } from 'app/plugins/datasource/grafana/types';
@@ -145,7 +146,10 @@ describe('DataSourceDropdown', () => {
     it('should display the current selected DS in the selector', async () => {
       getInstanceSettingsMock.mockReturnValue(mockDS2);
       render(<DataSourceDropdown onChange={jest.fn()} current={mockDS2}></DataSourceDropdown>);
-      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', mockDS2.name);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        mockDS2.name
+      );
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
@@ -166,7 +170,10 @@ describe('DataSourceDropdown', () => {
     it('should display the default DS as selected when `current` is not set', async () => {
       getInstanceSettingsMock.mockReturnValue(mockDS2);
       render(<DataSourceDropdown onChange={jest.fn()} current={undefined}></DataSourceDropdown>);
-      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', mockDS2.name);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        mockDS2.name
+      );
       expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
@@ -180,12 +187,15 @@ describe('DataSourceDropdown', () => {
 
     it('should disable the dropdown when `disabled` is true', () => {
       render(<DataSourceDropdown onChange={jest.fn()} disabled></DataSourceDropdown>);
-      expect(screen.getByTestId('Select a data source')).toBeDisabled();
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeDisabled();
     });
 
     it('should assign the correct `id` to the input element to pair it with a label', () => {
       render(<DataSourceDropdown onChange={jest.fn()} inputId={'custom.input.id'}></DataSourceDropdown>);
-      expect(screen.getByTestId('Select a data source')).toHaveAttribute('id', 'custom.input.id');
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'id',
+        'custom.input.id'
+      );
     });
 
     it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
@@ -195,7 +205,10 @@ describe('DataSourceDropdown', () => {
       // Doesn't try to get the default DS
       expect(getListMock).not.toBeCalled();
       expect(getInstanceSettingsMock).not.toBeCalled();
-      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', 'Select data source');
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        'Select data source'
+      );
     });
   });
 

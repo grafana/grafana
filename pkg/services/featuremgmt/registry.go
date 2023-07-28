@@ -577,13 +577,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "elasticToggleableFilters",
-			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between vizualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -674,6 +667,21 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // on by default
+		},
+		{
+			Name:        "prometheusConfigOverhaulAuth",
+			Description: "Update the Prometheus configuration page with the new auth component",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:            "configurableSchedulerTick",
+			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
 		},
 	}
 )

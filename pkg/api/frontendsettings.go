@@ -166,6 +166,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
 			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
 			DisableSyncLock:             hs.Cfg.DisableSyncLock,
+			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
 		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{

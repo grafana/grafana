@@ -1,6 +1,6 @@
 <!-- 10.0.3 START -->
 
-# 10.0.3 (2023-07-18)
+# 10.0.3 (2023-07-26)
 
 ### Features and enhancements
 
@@ -8,6 +8,7 @@
 - **Alerting:** No longer silence paused alerts during legacy migration. [#71761](https://github.com/grafana/grafana/issues/71761), [@JacobsonMT](https://github.com/JacobsonMT)
 - **Auth:** Add support for custom signing keys in auth.azure_ad. [#71708](https://github.com/grafana/grafana/issues/71708), [@Jguer](https://github.com/Jguer)
 - **Chore:** Upgrade Go to 1.20.6. [#71445](https://github.com/grafana/grafana/issues/71445), [@sakjur](https://github.com/sakjur)
+- **Auth:** Remove ldap init sync. (Enterprise)
 - **Chore:** Upgrade Go to 1.20.6. (Enterprise)
 
 ### Bug fixes
@@ -29,6 +30,7 @@
 - **AzureMonitor:** Fix metric names for multi-resources. [#70994](https://github.com/grafana/grafana/issues/70994), [@asimpson](https://github.com/asimpson)
 - **Logs:** Do not insert log-line into log-fields in json download. [#70954](https://github.com/grafana/grafana/issues/70954), [@gabor](https://github.com/gabor)
 - **Loki:** Fix wrong query expression with inline comments. [#70948](https://github.com/grafana/grafana/issues/70948), [@svennergr](https://github.com/svennergr)
+- **License:** Enable FeatureUserLimit for all products. (Enterprise)
 
 <!-- 10.0.3 END -->
 <!-- 10.0.2 START -->

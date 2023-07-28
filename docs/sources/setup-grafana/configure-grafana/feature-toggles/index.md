@@ -117,7 +117,6 @@ Experimental features might be changed or removed without prior notice.
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                                                                                               |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones                                                                                         |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                                                                                                  |
-| `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                                                                                                   |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                                                                                                          |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                                                                                                           |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                                                                                                |
@@ -128,6 +127,7 @@ Experimental features might be changed or removed without prior notice.
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                                                                                                       |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                |
 | `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
+| `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
 
 ## Development feature toggles
 

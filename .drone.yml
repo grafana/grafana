@@ -2994,7 +2994,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -3543,7 +3543,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -4292,7 +4292,7 @@ steps:
   - windows-init
   environment:
     GCP_KEY:
-      from_secret: gcp_key
+      from_secret: gcp_grafanauploads_base64
     GITHUB_TOKEN:
       from_secret: github_token
     PRERELEASE_BUCKET:
@@ -4970,6 +4970,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: b3a378789d0a84f8eedd22567d2ce7609cc9c079bdd58ea8e71d0d9456c423e8
+hmac: cc3cdda004221d95f32b2753fa6c1d4fde277abaeee96ca6e6287b5c100fb52e
 
 ...

@@ -9,7 +9,7 @@ import { getGeometryField, LocationFieldMatchers } from './location';
 export interface FrameVectorSourceOptions {}
 
 export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<T> {
-  constructor(private location: LocationFieldMatchers) {
+  constructor(public location: LocationFieldMatchers) {
     super({});
   }
 
