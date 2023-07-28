@@ -226,6 +226,14 @@ _Generally available in all editions of Grafana._
 
 In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
 
+### Easier to use query editor for Elasticsearch
+
+<!-- Gabor Farkas -->
+
+_Generally available in all editions of Grafana._
+
+The Elasticsearch query editor now allows convenient switching between logs, metrics, and raw data directly from the top, eliminating the need to go through the metric selector.
+
 ### Metrics explorer
 
 The Metrics Explorer is a new feature to enhance metric browsing in the Prometheus query builder. The Metrics Explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name / description, and filter on the Prometheus type.
