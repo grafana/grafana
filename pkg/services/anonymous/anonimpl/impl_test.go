@@ -225,7 +225,6 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.expectedAnonCount, stats["stats.anonymous.session.count"].(int64))
-			assert.Equal(t, tc.expectedAnonCount, stats["stats.anonymous.device.count"].(int64))
 			assert.Equal(t, tc.expectedAuthedCount, stats["stats.users.device.count"].(int64))
 
 			if tc.expectedDevice != nil {

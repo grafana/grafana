@@ -72,7 +72,6 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interfa
 
 	return map[string]interface{}{
 		"stats.anonymous.session.count": anonDeviceCount, // keep session for legacy data
-		"stats.anonymous.device.count":  anonDeviceCount,
 		"stats.users.device.count":      authedDeviceCount,
 	}, nil
 }
