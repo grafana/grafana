@@ -1541,7 +1541,6 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 
 		assert.Equal(t, 3, totalQueries)
 	})
-
 }
 
 func TestGroupQueriesByDataSource(t *testing.T) {
