@@ -22,6 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type Server interface {
+	modules.Engine
+}
+
 // Options contains parameters for the New function.
 type Options struct {
 	HomePath    string

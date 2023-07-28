@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -17,17 +18,14 @@ var WireSet = wire.NewSet(
 
 var DependencyWireSet = wire.NewSet(
 	setting.NewCfgFromArgs,
-	routing.NewRouteRegister,
+	routing.ProvideRegister,
+	wire.Bind(new(routing.RouteRegister), new(*routing.RouteRegisterImpl)),
 )
 
 var StandaloneWireSet = wire.NewSet(
 	WireSet,
 	DependencyWireSet,
 	modules.WireSet,
+	certgenerator.WireSet,
 	ProvideStandalone,
 )
-
-func InitializeStandalone() (*standalone, error) {
-	wire.Build(StandaloneWireSet)
-	return &standalone{}, nil
-}

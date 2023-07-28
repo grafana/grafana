@@ -415,7 +415,7 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 )
 
-func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (modules.Engine, error) {
+func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (Server, error) {
 	wire.Build(wireExtsSet)
 	return &ServerImpl{}, nil
 }
@@ -428,4 +428,9 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 	wire.Build(wireExtsCLISet)
 	return Runner{}, nil
+}
+
+func InitializeForGrafanaAPIServer(cla setting.CommandLineArgs) (*grafanaapiserver.Standalone, error) {
+	wire.Build(grafanaapiserver.StandaloneWireSet)
+	return &grafanaapiserver.Standalone{}, nil
 }

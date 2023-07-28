@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/process"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -225,23 +226,37 @@ func RunServer(opt ServerOptions) error {
 
 	configOptions := strings.Split(configOverrides, " ")
 
-	s, err := server.Initialize(
-		setting.CommandLineArgs{
-			Config:   configFile,
-			HomePath: homePath,
-			// tailing arguments have precedence over the options string
-			Args: append(configOptions, opt.Context.Args().Slice()...),
-		},
-		server.Options{
-			PidFile:     pidFile,
-			Version:     opt.Version,
-			Commit:      opt.Commit,
-			BuildBranch: opt.BuildBranch,
-		},
-		api.ServerOptions{},
-	)
+	cla := setting.CommandLineArgs{
+		Config:   configFile,
+		HomePath: homePath,
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, opt.Context.Args().Slice()...),
+	}
+	cfg, err := setting.NewCfgFromArgs(cla)
 	if err != nil {
 		return err
+	}
+
+	var s server.Server
+	if len(cfg.Target) == 1 && cfg.Target[0] == modules.GrafanaAPIServer {
+		s, err = server.InitializeForGrafanaAPIServer(cla)
+		if err != nil {
+			return err
+		}
+	} else {
+		s, err = server.Initialize(
+			cla,
+			server.Options{
+				PidFile:     pidFile,
+				Version:     opt.Version,
+				Commit:      opt.Commit,
+				BuildBranch: opt.BuildBranch,
+			},
+			api.ServerOptions{},
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	ctx := context.Background()
@@ -261,7 +276,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(ctx context.Context, s *server.ServerImpl) {
+func listenToSystemSignals(ctx context.Context, s server.Server) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
