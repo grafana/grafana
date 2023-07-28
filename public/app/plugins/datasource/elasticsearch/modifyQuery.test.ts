@@ -39,6 +39,10 @@ describe('queryHasFilter', () => {
     expect(queryHasFilter('label\\:name:"value"', 'label:name', 'value')).toBe(true);
     expect(queryHasFilter('-label\\:name:"value"', 'label:name', 'value', '-')).toBe(true);
   });
+  it('should support filters containing quotes', () => {
+    expect(queryHasFilter('label\\:name:"some \\"value\\""', 'label:name', 'some "value"')).toBe(true);
+    expect(queryHasFilter('-label\\:name:"some \\"value\\""', 'label:name', 'some "value"', '-')).toBe(true);
+  });
 });
 
 describe('addFilterToQuery', () => {
@@ -56,6 +60,9 @@ describe('addFilterToQuery', () => {
   });
   it('should support filters with colons', () => {
     expect(addFilterToQuery('', 'label:name', 'value')).toBe('label\\:name:"value"');
+  });
+  it('should support filters with quotes', () => {
+    expect(addFilterToQuery('', 'label:name', 'the "value"')).toBe('label\\:name:"the \\"value\\""');
   });
 });
 
@@ -96,5 +103,8 @@ describe('removeFilterFromQuery', () => {
   });
   it('should support filters with colons', () => {
     expect(removeFilterFromQuery('label\\:name:"value"', 'label:name', 'value')).toBe('');
+  });
+  it('should support filters with quotes', () => {
+    expect(removeFilterFromQuery('label\\:name:"the \\"value\\""', 'label:name', 'the "value"')).toBe('');
   });
 });

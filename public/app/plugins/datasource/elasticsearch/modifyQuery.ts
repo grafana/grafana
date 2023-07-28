@@ -20,6 +20,7 @@ export function findFilterNode(
   modifier: ModifierType = ''
 ): NodeTerm | null {
   const field = `${modifier}${lucene.term.escape(key)}`;
+  value = lucene.phrase.escape(value);
   let ast: AST | null = parseQuery(query);
   if (!ast) {
     return null;
@@ -61,6 +62,7 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
   }
 
   key = lucene.term.escape(key);
+  value = lucene.phrase.escape(value);
   const filter = `${modifier}${key}:"${value}"`;
 
   return query === '' ? filter : `${query} AND ${filter}`;
@@ -119,11 +121,19 @@ function removeNodeFromTree(ast: AST, node: NodeTerm): AST {
 }
 
 /**
- * Filters can possibly contain colons, which are used as a separator in the query.
+ * Filters can possibly reserved characters such as colons which are part of the Lucene syntax.
  * Use this function to escape filter keys.
  */
 export function escapeFilter(value: string) {
   return lucene.term.escape(value);
+}
+
+/**
+ * Values can possibly reserved special characters such as quotes.
+ * Use this function to escape filter values.
+ */
+export function escapeFilterValue(value: string) {
+  return lucene.phrase.escape(value);
 }
 
 /**

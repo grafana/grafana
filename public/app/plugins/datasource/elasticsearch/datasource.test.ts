@@ -1361,6 +1361,15 @@ describe('addAdhocFilters', () => {
       const query = ds.addAdHocFilters('');
       expect(query).toBe('field\\:name:"field:value"');
     });
+
+    it('should escape characters in filter values', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field "value"', condition: '' }]);
+
+      const query = ds.addAdHocFilters('');
+      expect(query).toBe('field\\:name:"field \\"value\\""');
+    });
   });
 
   describe('with multiple ad hoc filters', () => {
