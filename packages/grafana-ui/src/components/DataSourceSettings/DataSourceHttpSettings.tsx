@@ -89,15 +89,17 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     const isAzureAuthEnabled =
       (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
     setAzureAuthEnabled(isAzureAuthEnabled);
-    const tmpOauthPassThru =
-      dataSourceConfig.jsonData.oauthPassThru !== undefined ? dataSourceConfig.jsonData.oauthPassThru : false;
-    onChange({
-      ...dataSourceConfig,
-      jsonData: {
-        ...dataSourceConfig.jsonData,
-        oauthPassThru: isAzureAuthEnabled ? false : tmpOauthPassThru,
-      },
-    });
+    if (isAzureAuthEnabled) {
+      const tmpOauthPassThru =
+        dataSourceConfig.jsonData.oauthPassThru !== undefined ? dataSourceConfig.jsonData.oauthPassThru : false;
+      onChange({
+        ...dataSourceConfig,
+        jsonData: {
+          ...dataSourceConfig.jsonData,
+          oauthPassThru: isAzureAuthEnabled ? false : tmpOauthPassThru,
+        },
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [azureAuthSettings]);
 
