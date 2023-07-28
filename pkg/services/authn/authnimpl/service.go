@@ -57,7 +57,7 @@ func ProvideService(
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
 	usageStats usagestats.Service,
-	anonSessionService anonymous.Service,
+	anonDeviceService anonymous.Service,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -88,7 +88,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonSessionService))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonDeviceService))
 	}
 
 	var proxyClients []authn.ProxyClient
