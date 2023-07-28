@@ -5,21 +5,35 @@ on:
     types: [opened, closed, edited, reopened, assigned, unassigned, labeled, unlabeled]
     labels:
       - 'type/epic'
-      
+
 env:
-  GITHUB_TOKEN: ${{ secrets.GH_BOT_PROJECTS_ACCESS_TOKEN }}
+  GH_TOKEN: ${{ secrets.GH_BOT_PROJECTS_ACCESS_TOKEN }}
   ORGANIZATION: ${{ github.repository_owner }}
   REPO: ${{ github.event.repository.name }}
   PARENT_PROJECT: 304
   CHILD_PROJECT_1: 78
   CHILD_PROJECT_2: 111
   CHILD_PROJECT_3: 202
-    
+
 concurrency:
   group: issue-add-to-parent-project-${{ github.event.number }}
 jobs:
+  config:
+    runs-on: "ubuntu-latest"
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: "Check for secrets"
+        id: check
+        shell: bash
+        run: |
+          if [ -n "${{ (secrets.GH_BOT_PROJECTS_ACCESS_TOKEN != '') || '' }}" ]; then
+            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+          fi
+
   main:
-    if: contains(github.event.issue.labels.*.name, 'type/epic')
+    needs: config
+    if: needs.config.outputs.has-secrets && contains(github.event.issue.labels.*.name, 'type/epic')
     runs-on: ubuntu-latest
     steps:
       - name: Check if issue is in child or parent projects
@@ -46,7 +60,7 @@ jobs:
                 }
               }
             }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
-            
+
             echo 'IN_PARENT_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.PARENT_PROJECT }}) | .project != null' projects_data.json) >> $GITHUB_ENV
             echo 'PARENT_PROJ_STATUS_ID='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.PARENT_PROJECT }}) | select(.fieldValueByName != null) | .fieldValueByName.optionId' projects_data.json) >> $GITHUB_ENV
             echo 'ITEM_ID='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.PARENT_PROJECT }}) | .id' projects_data.json) >> $GITHUB_ENV
@@ -96,7 +110,7 @@ jobs:
                 }
               }
             }' -f project=$PROJECT_ID -f issue=${{ github.event.issue.node_id }} --jq '.data.addProjectV2ItemById.item.id')"
- 
+
             echo 'ITEM_ID='$item_id >> $GITHUB_ENV
       - name: Set parent project status Done
         if: contains(env.CHILD_PROJ_STATUS, 'Done')
@@ -124,7 +138,7 @@ jobs:
                 projectId: $project
                 itemId: $item
                 fieldId: $status_field
-                value: { 
+                value: {
                   singleSelectOptionId: $status_value
                   }
               }) {
