@@ -33,27 +33,11 @@ func (e MigrationError) Error() string {
 
 func (e *MigrationError) Unwrap() error { return e.Err }
 
-// RerunDashAlertMigration force the dashboard alert migration to run
-// to make sure that the Alertmanager configurations will be created for each organisation
-func RerunDashAlertMigration(mg *migrator.Migrator) {
-	logs, err := mg.GetMigrationLog()
-	if err != nil {
-		mg.Logger.Error("Alert migration failure: could not get migration log", "error", err)
-		os.Exit(1)
-	}
-
+// FixEarlyMigration fixes UA configs created before 8.2 with org_id=0 and moves some files like __default__.tmpl.
+// The only use of this migration is when a user enabled ng-alerting before 8.2.
+func FixEarlyMigration(mg *migrator.Migrator) {
 	cloneMigTitle := fmt.Sprintf("clone %s", migTitle)
-
-	_, migrationRun := logs[cloneMigTitle]
-	ngEnabled := mg.Cfg.UnifiedAlerting.IsEnabled()
-
-	switch {
-	case ngEnabled && !migrationRun:
-		// The only use of this migration is when a user enabled ng-alerting before 8.2.
-		mg.AddMigration(cloneMigTitle, &upgradeNgAlerting{})
-		// if user disables the feature flag and enables it back.
-		// This migration does not need to be run because the original migration AddDashAlertMigration does what's needed
-	}
+	mg.AddMigration(cloneMigTitle, &upgradeNgAlerting{})
 }
 
 func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
