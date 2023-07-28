@@ -165,11 +165,13 @@ A new linking of Loki log lines in Explore allows you to quickly navigate to spe
 
 <!-- André Pereira -->
 
-_Generally available in all editions of Grafana._
+_Experimental in all editions of Grafana._
 
 Grafana's Tempo data source latest upgrade includes support for streaming responses of TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for those long queries that take a long time to return a response.
 
-To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+To use this feature, enable the `traceQLStreaming` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+
+Streaming is available for both the Search and TraceQL query types, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
 
