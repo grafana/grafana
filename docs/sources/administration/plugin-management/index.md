@@ -191,6 +191,10 @@ All plugins is signed under a _signature level_. The signature level determines 
 | Community        | <p>Community plugins have dependent technologies that are open source and not for profit.</p><p>Community plugins are published in the official Grafana catalog, and are available to the Grafana community.</p>         |
 | Commercial       | <p>Commercial plugins have dependent technologies that are closed source or commercially backed.</p><p>Commercial Plugins are published on the official Grafana catalog, and are available to the Grafana community.</p> |
 
+{{% admonition type="note" %}}
+Grafana Labs does not support community plugins. This means that Grafana Support will not be able to help you with any problems you encounter with community plugins. However, we encourage you to contact the plugin author for support if you have any problems.
+{{% /admonition %}}
+
 ### Allow unsigned plugins
 
 > **Note:** Unsigned plugins are not supported in Grafana Cloud.
