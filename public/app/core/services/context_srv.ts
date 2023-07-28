@@ -265,7 +265,7 @@ export class ContextSrv {
     }
 
     // skip if the user has been authenticated by authproxy
-    if (this.user.authenticatedBy === 'authproxy') {
+    if (this.user.authenticatedBy === 'authproxy' && !config.auth.AuthProxyEnableLoginToken) {
       return false;
     }
 
