@@ -123,7 +123,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	require.NoError(t, err)
 
 	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
-	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
+	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
 
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
