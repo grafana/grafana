@@ -66,11 +66,6 @@ func (m *service) Init(_ context.Context) error {
 	var err error
 
 	m.log.Debug("Initializing module manager", "targets", m.targets)
-	for mod, targets := range dependencyMap {
-		if err := m.moduleManager.AddDependency(mod, targets...); err != nil {
-			return err
-		}
-	}
 
 	m.serviceMap, err = m.moduleManager.InitModuleServices(m.targets...)
 	if err != nil {
@@ -150,12 +145,18 @@ func (m *service) Shutdown(ctx context.Context, reason string) error {
 // RegisterModule registers a module with the dskit module manager.
 func (m *service) RegisterModule(name string, initFn func() (services.Service, error)) {
 	m.moduleManager.RegisterModule(name, initFn)
+	if dependencyMap[name] != nil {
+		m.moduleManager.AddDependency(name, dependencyMap[name]...)
+	}
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
 // Invisible modules are not visible to the user, and are intended to be used as dependencies.
 func (m *service) RegisterInvisibleModule(name string, initFn func() (services.Service, error)) {
 	m.moduleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
+	if dependencyMap[name] != nil {
+		m.moduleManager.AddDependency(name, dependencyMap[name]...)
+	}
 }
 
 // IsModuleEnabled returns true if the module is enabled.

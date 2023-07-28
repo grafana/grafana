@@ -237,10 +237,14 @@ func RunServer(opt ServerOptions) error {
 		return err
 	}
 
+	ctx := context.Background()
 	var s server.Server
 	if len(cfg.Target) == 1 && cfg.Target[0] == modules.GrafanaAPIServer {
 		s, err = server.InitializeForGrafanaAPIServer(cla)
 		if err != nil {
+			return err
+		}
+		if err := s.Init(ctx); err != nil {
 			return err
 		}
 	} else {
@@ -258,8 +262,6 @@ func RunServer(opt ServerOptions) error {
 			return err
 		}
 	}
-
-	ctx := context.Background()
 
 	go listenToSystemSignals(ctx, s)
 

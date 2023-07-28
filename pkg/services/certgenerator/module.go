@@ -9,8 +9,8 @@ import (
 
 type ModuleRegistration struct{}
 
-func ProvideModuleRegistraion(svc certgenerator.ServiceInterface, mod modules.Manager) *ModuleRegistration {
-	mod.RegisterInvisibleModule(modules.CertGenerator, func() (services.Service, error) {
+func ProvideModuleRegistration(svc certgenerator.ServiceInterface, mod modules.Manager) *ModuleRegistration {
+	mod.RegisterModule(modules.CertGenerator, func() (services.Service, error) {
 		return svc, nil
 	})
 	return &ModuleRegistration{}
