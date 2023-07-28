@@ -129,6 +129,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		return err
 	}
 
+	// remove existing tag when device switches to another kind
 	untagKind := anonymous.AnonDevice
 	if kind == anonymous.AnonDevice {
 		untagKind = anonymous.AuthedDevice
