@@ -152,7 +152,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
 	// and the aggregation that is specified in the UI becomes the secondary aggregation
 	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	t := toPreprocessorType(string(timeSeriesFilter.parameters.Preprocessor))
+	t := toPreprocessorType(string(*timeSeriesFilter.parameters.Preprocessor))
 	if t != PreprocessorTypeNone {
 		// Move aggregation to secondaryAggregations
 		timeSeriesFilter.parameters.SecondaryAlignmentPeriod = timeSeriesFilter.parameters.AlignmentPeriod
@@ -193,7 +193,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 	}
 
 	if timeSeriesFilter.parameters.Preprocessor == nil {
-		var p dataquery.PreprocessorType
+		var p dataquery.PreprocessorType = ""
 		timeSeriesFilter.parameters.Preprocessor = &p
 	}
 
@@ -201,6 +201,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 
 	if query.AlignmentPeriod == nil {
 		query.AlignmentPeriod = strPtr("")
+	}
+
+	if query.PerSeriesAligner == nil {
+		query.PerSeriesAligner = strPtr("")
 	}
 
 	alignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
@@ -219,10 +223,11 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 		secondaryAlignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
 		params.Add("secondaryAggregation.alignmentPeriod", secondaryAlignmentPeriod)
 	}
-	if query.SecondaryCrossSeriesReducer != strPtr("") {
+	if query.SecondaryCrossSeriesReducer == nil {
+		query.SecondaryCrossSeriesReducer = strPtr("")
 		params.Add("secondaryAggregation.crossSeriesReducer", *query.SecondaryCrossSeriesReducer)
 	}
-	if query.SecondaryPerSeriesAligner != strPtr("") {
+	if query.SecondaryAlignmentPeriod != strPtr("") {
 		params.Add("secondaryAggregation.perSeriesAligner", *query.SecondaryPerSeriesAligner)
 	}
 	for _, groupBy := range query.SecondaryGroupBys {
