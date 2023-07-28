@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { createElement, CSSProperties, useCallback } from 'react';
+import React, { createElement, CSSProperties, useCallback, useMemo } from 'react';
 import ReactDomServer from 'react-dom/server';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
@@ -48,22 +48,31 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       children
     );
     const [isOverflowing, setIsOverflowing] = React.useState(false);
-
+    const resizeObserver = useMemo(
+      () =>
+        new ResizeObserver((entries) => {
+          for (let entry of entries) {
+            if (entry.target.clientWidth && entry.target.scrollWidth) {
+              if (entry.target.scrollWidth > entry.target.clientWidth) {
+                setIsOverflowing(true);
+              }
+              if (entry.target.scrollWidth <= entry.target.clientWidth) {
+                setIsOverflowing(false);
+              }
+            }
+          }
+        }),
+      []
+    );
     React.useLayoutEffect(() => {
       const { current } = targetRef;
-      const trigger = () => {
-        if (current?.scrollWidth && current.offsetWidth) {
-          if (current.scrollWidth > current.offsetWidth) {
-            setIsOverflowing(true);
-          } else {
-            setIsOverflowing(false);
-          }
-        }
-      };
       if (current) {
-        trigger();
+        resizeObserver.observe(current);
       }
-    }, [targetRef.current?.scrollWidth, targetRef.current?.offsetWidth]);
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [resizeObserver]);
 
     const getTooltipText = (children: NonNullable<React.ReactNode>) => {
       const html = ReactDomServer.renderToStaticMarkup(<>{children}</>);
