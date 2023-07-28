@@ -28,8 +28,10 @@ type alertRule struct {
 	Data            []alertQuery
 	IntervalSeconds int64
 	Version         int64
-	UID             string `xorm:"uid"`
-	NamespaceUID    string `xorm:"namespace_uid"`
+	UID             string  `xorm:"uid"`
+	NamespaceUID    string  `xorm:"namespace_uid"`
+	DashboardUID    *string `xorm:"dashboard_uid"`
+	PanelID         *int64  `xorm:"panel_id"`
 	RuleGroup       string
 	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
@@ -139,6 +141,8 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
+		DashboardUID:    &da.DashboardUID,
+		PanelID:         &da.PanelId,
 		RuleGroup:       name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
