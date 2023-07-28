@@ -15,8 +15,6 @@ import (
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const (
@@ -118,7 +116,7 @@ func (m *migration) writeSilencesFile(orgID int64) error {
 		}
 	}
 
-	f, err := openReplace(silencesFileNameForOrg(m.mg, orgID))
+	f, err := openReplace(silencesFileNameForOrg(m.cfg.DataPath, orgID))
 	if err != nil {
 		return err
 	}
@@ -130,12 +128,8 @@ func (m *migration) writeSilencesFile(orgID int64) error {
 	return f.Close()
 }
 
-func getSilenceFileNamesForAllOrgs(mg *migrator.Migrator) ([]string, error) {
-	return filepath.Glob(filepath.Join(mg.Cfg.DataPath, "alerting", "*", "silences"))
-}
-
-func silencesFileNameForOrg(mg *migrator.Migrator, orgID int64) string {
-	return filepath.Join(mg.Cfg.DataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
+func silencesFileNameForOrg(dataPath string, orgID int64) string {
+	return filepath.Join(dataPath, "alerting", strconv.Itoa(int(orgID)), "silences")
 }
 
 // replaceFile wraps a file that is moved to another filename on closing.

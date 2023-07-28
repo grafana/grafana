@@ -46,7 +46,7 @@ WHERE org_id IN (SELECT id from org)
 // ParsedSettings property of the dash alert.
 func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	dashAlerts := []dashAlert{}
-	err := m.sess.SQL(fmt.Sprintf(slurpDashSQL, m.mg.Dialect.Quote("for"))).Find(&dashAlerts)
+	err := m.sess.SQL(fmt.Sprintf(slurpDashSQL, m.dialect.Quote("for"))).Find(&dashAlerts)
 
 	if err != nil {
 		return nil, err

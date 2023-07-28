@@ -47,8 +47,8 @@ type dashboardACL struct {
 func (p dashboardACL) TableName() string { return "dashboard_acl" }
 
 type folderHelper struct {
-	sess *xorm.Session
-	mg   *migrator.Migrator
+	sess    *xorm.Session
+	dialect migrator.Dialect
 }
 
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
@@ -238,7 +238,7 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardACL, error) {
 	var err error
 
-	falseStr := m.mg.Dialect.BooleanStr(false)
+	falseStr := m.dialect.BooleanStr(false)
 
 	result := make([]*dashboardACL, 0)
 	rawSQL := `
