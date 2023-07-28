@@ -173,7 +173,7 @@ To use this feature, enable the `traceQLStreaming` feature toggle. If you’re u
 
 Streaming is available for both the Search and TraceQL query types, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
 
-{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
+{{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}
 
 ### Tempo Search - powered by TraceQL
 
