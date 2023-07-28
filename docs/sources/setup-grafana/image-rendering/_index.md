@@ -32,6 +32,10 @@ You can also render a PNG by hovering over the panel to display the actions menu
 
 Alert notifications can include images, but rendering many images at the same time can overload the server where the renderer is running. For instructions of how to configure this, see [concurrent_render_limit]({{< relref "../configure-grafana#concurrent_render_limit" >}}).
 
+## Enabling Image Rendering for Grafana Cloud
+
+For Grafana Cloud, image rendering is enabled automatically. There is no need to install the plugin or configure Grafana.
+
 ## Install Grafana Image Renderer plugin
 
 {{% admonition type="note" %}}
@@ -39,6 +43,15 @@ Starting from Grafana v7.0.0, all PhantomJS support has been removed. Please use
 {{% /admonition %}}
 
 To install the plugin, refer to the [Grafana Image Renderer Installation instructions](/grafana/plugins/grafana-image-renderer/?tab=installation#installation).
+
+## Testing Image Rendering
+Once you have enabled image rendering, you can test if it is working by following these steps:
+
+* Go to a panel that you want to render as an image.
+* Click the dropdown arrow next to the panel title.
+* Click Share > Direct link rendered image.
+
+If image rendering is working correctly, you will see a link to the rendered image. You can click on the link to open the image in a new tab.
 
 ## Configuration
 
@@ -466,3 +479,9 @@ RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
   }
 }
 ```
+## Features Not Available in Grafana Cloud
+The Grafana Image Renderer plugin includes a number of features that are not available in Grafana Cloud. These features include:
+
+* Rendering metrics
+* Rendering configuration
+* Rendering multiple panels at once
