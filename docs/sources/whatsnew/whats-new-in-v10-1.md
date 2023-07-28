@@ -17,7 +17,7 @@ weight: -38
 
 # What’s new in Grafana v10.1
 
-Welcome to Grafana 10.1! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication. We're particularly excited about a set of improvements to visualizing logs from [Loki](https://grafana.com/products/cloud/logs/) and other logging data sources in Explore mode, and our flamegraph panel, used to visualize profiling data from [Pyroscope](https://grafana.com/blog/2023/03/15/pyroscope-grafana-phlare-join-for-oss-continuous-profiling/?pg=oss-phlare&plcmt=top-promo-banner) and other continuous profiling data sources.
+Welcome to Grafana 10.1! Read on to learn about changes to dashboards and visualizations, data sources, and security and authentication and more. We're particularly excited about a set of improvements to visualizing logs from [Loki](https://grafana.com/products/cloud/logs/) and other logging data sources in Explore mode, and our Flame graph panel, used to visualize profiling data from [Pyroscope](https://grafana.com/blog/2023/03/15/pyroscope-grafana-phlare-join-for-oss-continuous-profiling/?pg=oss-phlare&plcmt=top-promo-banner) and other continuous profiling data sources.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.1, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.1/index.md" >}}).
 
@@ -39,28 +39,28 @@ Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/
 
 ## Dashboards and visualizations
 
-### Flamegraph improvements
+### Flame graph improvements
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 <!-- Andrej Ocenas -->
 
-We have added 4 new features to the flamegraph visualization:
+We've added four new features to the Flame graph visualization:
 
-- **Sandwich view**: You can now show a sandwich of any symbol in the flamegraph. Sandwich view will show all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
-- **Switching color scheme**: You can now switch color scheme between color gradient by the relative value of a symbol or by package name of a symbol.
-- **Switching symbol name alignment**: Symbols with long names may be problematic to differentiate if they have the same prefix. This new option allows you to align the text to left or right so that you can see the part of the symbol name that is important.
-- **Improved navigation**: You can also highlight a symbol or switch on sandwich view for a symbol from the table. Also, a new status bar on top of the flamegraph gives you an overview of which views are enabled.
+- **Sandwich view**: You can now show a sandwich view of any symbol in the flame graph. Sandwich view shows all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
+- **Switching color scheme**: You can now switch color scheme between a color gradient based on the relative value of a symbol or by the package name of a symbol.
+- **Switching symbol name alignment**: Symbols with long names may be hard to differentiate if they have the same prefix. This new option allows you to align the text to the left or right so that you can see the part of the symbol name that's important.
+- **Improved navigation**: You can also highlight a symbol or enable sandwich view for a symbol from the table. Also, a new status bar on top of the flame graph displays which views are enabled.
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
 
-### Distinguish Widgets from visualizations
+### Distinguish widgets from visualizations
 
 <!-- Alexa Vargas, Juan Cabanas -->
 
-_Experimental in all editions of Grafana._
+_Experimental in all editions of Grafana_
 
-This experimental feature introduces a clear distinction between two different categories of panel plugin types: visualization panels that consume a data source and a new type called _widgets_ that don't require a data source.
+This experimental feature introduces a clear distinction between two different categories of panel plugin types: visualization panels that consume a data source and a new type, called _widgets_, that don't require a data source.
 
 Now, you can easily add widgets like Text, News, and Annotation list without the need to select a data source. The plugins list and library panels are filtered based on whether you've selected a widget or visualization, providing a streamlined editing experience.
 
@@ -68,19 +68,26 @@ To see the widget editor in Grafana OSS or Enterprise, enable the `vizAndWidgetS
 
 {{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
 
-### Transformations facelift
+### Transformations redesign
 
-The transformations tab has an improved user experience and visual redesign! Now you can explore transformations with categories and illustrations.
+<!-- contributor?? -->
+<!-- missing availability -->
+
+The transformations tab has an improved user experience and visual redesign. Now, you can explore transformations with categories and illustrations.
+
+<!--possible edit to second sentence - Now transformations are categorized and each transformation type has an illustration to help you with the selection process.-->
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
 
-### Format Time Transformation
+### Format Time transformation
 
 <!-- Kyle Cunningham -->
 
-_Available in public preview in all editions of Grafana._
+_Available in public preview in all editions of Grafana_
 
-When working with date and time data, it can be useful to have different time formats. With the new format time transformation, you can convert any time format to any other supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation, this can also be used to bucket days, weeks, and other time windows together.
+When working with date and time data, it can be useful to have different time formats. With the new Format Time transformation, you can convert any time format to any other one supported by Moment.js. When used in conjunction with the Group by Value transformation, this can also be used to bucket days, weeks, and other time windows together.
+
+<!--question, do we mean the Group by transformation with a setting of Value?-->
 
 {{< figure src="/media/docs/grafana/format-time-10-1.gif" max-width="750px" caption="Format time transformation" >}}
 
@@ -88,11 +95,11 @@ When working with date and time data, it can be useful to have different time fo
 
 <!-- Brendan O'Handley -->
 
-The join by fields transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL-like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time series data where the join values are never repeated.
+The Join by field transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL-like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time-series data where the join values are never repeated.
 
-### Disconnect values in time series, trend, and state timeline visualizations
+### Disconnect values in Time series, Trend, and State timeline visualizations
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 
@@ -100,11 +107,11 @@ You can now choose whether to set a threshold above which values in the data sho
 
 To learn more, refer to our [disconnect values documentation]({{< relref "../panels-visualizations/visualizations/time-series/#disconnect-values" >}}).
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in Time series, Trend, and State timeline visualizations" >}}
 
-### Geomap network layer
+### Geomap Network layer
 
-_Available in public preview in all editions of Grafana._
+_Available in public preview in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 
@@ -112,17 +119,17 @@ You can now display network data in the Geomap visualization by using the new be
 
 To learn more, refer to our [Geomap network layer documentation]({{< relref "../panels-visualizations/visualizations/geomap/#network-layer-beta" >}}).
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap Network layer" >}}
 
-### Heatmap visualizations now support datalinks
+### Heatmap visualizations now support data links
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 <!-- Nathan Marrs -->
 
-You can now add datalinks to heatmap visualizations. This allows you to add links to other dashboards, panels, or external URLs that are relevant to the data in your heatmap. This feature was a community contribution!
+You can now add data links to Heatmap visualizations. This allows you to add links to other dashboards, panels, or external URLs that are relevant to the data in your heatmap. We're pleased to highlight that this feature was a community contribution.
 
-To learn more, refer to both our [heatmap documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}) and our [datalink documentation]({{< relref "../panels-visualizations/configure-data-links/" >}}).
+To learn more, refer to both our [Heatmap documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}) and our [Configure data links documentation]({{< relref "../panels-visualizations/configure-data-links/" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-heatmap-datalinks.png" max-width="750px" caption="Heatmap datalink support" >}}
 
@@ -132,11 +139,13 @@ To learn more, refer to both our [heatmap documentation]({{< relref "../panels-v
 
 <!-- Ivana Huckova -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-We've improved the Loki query editor by adding a new step editor. This editor allows you to specify a value for the _step_ parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want to get a matrix response from your queries.
+We've improved the Loki query editor by adding a new **Step** editor field. This editor allows you to specify a value for the `step` parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want a matrix response from your queries.
 
-By default, the step parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki step parameter, you can visit [the Loki step parameter documentation](<(https://grafana.com/docs/loki/latest/api/#step-versus-interval)>).
+By default, the `step` parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki `step` parameter, you can visit [the Loki step parameter documentation](/docs/loki/latest/api/#step-versus-interval).
+
+<!--confirm this link is working with website build-->
 
 {{< figure src="/media/docs/grafana/data-sources/loki-step-editor.png" max-width="750px" caption="New Loki step editor" >}}
 
@@ -144,9 +153,11 @@ By default, the step parameter is set to the value of the `$__interval` variable
 
 <!-- Sven Grossmann -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it with a blue background, making it easy to identify and focus on the relevant information.
+
+<!--this background doesn't appear blue in the image; is this true?-->
 
 {{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
 
@@ -154,23 +165,23 @@ A new linking of Loki log lines in Explore allows you to quickly navigate to spe
 
 <!-- André Pereira -->
 
-_Experimental in all editions of Grafana._
+_Experimental in all editions of Grafana_
 
-Grafana's Tempo data source now supports _streaming_ responses to TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for big queries that take a long time to return a response.
+Grafana's Tempo data source now supports _streaming_ responses to TraceQL queries. With this feature, you can now see partial query results as they come in, so you no longer have to wait for the whole query to finish. This is perfect for big queries that take a long time to return a response.
 
 To use this feature, enable the `traceQLStreaming` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
-Streaming is available for both the Search and TraceQL query types, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+Streaming is available for both the **Search** and **TraceQL** query types, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming-v2.mp4" >}}
 
-### Tempo Search - powered by TraceQL
+### Tempo Search powered by TraceQL
 
 <!-- André Pereira -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-The Search query type was replaced with a new editor powered by TraceQL. This new editor allows you to use the same query language for both Search and TraceQL queries. This change also brings a new UI that makes it easier to write queries and explore your data while using the powerful features offered by TraceQL.
+The **Search** query type was replaced with a new editor powered by TraceQL. This new editor allows you to use the same query language for both Search and TraceQL queries. This change also brings a new UI that makes it easier to write queries and explore your data while using the powerful features offered by TraceQL.
 
 The previous Search interface is now deprecated and will be removed in a future release. We recommend that you start using the new editor as soon as possible and migrate existing dashboards.
 
@@ -178,24 +189,22 @@ The previous Search interface is now deprecated and will be removed in a future 
 
 ### Span filtering for traces is GA
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 <!-- Joey Tawadrous -->
 
-Since the last release, we've made several improvements to span filtering. We're promoting span filters out of public preview and into general availability.
+Since the last release, we've made several improvements to span filtering. Now, we're promoting span filters out of public preview and into general availability.
 
-Span filters allow you to work much more efficiently with traces that consist of a large number of spans.
-
-Span filters exist above the trace view and allow you to filter the spans that are shown in the trace view. The more filters you add, the more specific are the filtered spans.
+Span filters allow you to work much more efficiently with traces that consist of a large number of spans. Span filters exist above the trace view and allow you to filter the spans that are shown in the trace view. The more filters you add, the more specific the filtered spans.
 
 Currently, you can add one or more of the following filters:
 
-- Service name
-- Span name
+- Service Name
+- Span Name
 - Duration
-- Tags (which include tags, process tags, and log fields)
+- Tags (which includes tags, process tags, and log fields)
 
-To only show the spans you have matched, you can press the `Show matches only` toggle.
+To only show the spans you've matched, you can enable the **Show matches only** toggle.
 
 Learn more about span filtering in our [Tempo data source documentation]({{< relref "../datasources/tempo/#span-filters" >}}).
 
@@ -205,63 +214,68 @@ Learn more about span filtering in our [Tempo data source documentation]({{< rel
 
 <!-- Matías Wenceslao Chomicki -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages and tooltips to assist you with configuring and customizing data sources.
+The Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages, as well as tooltips to assist you with configuring and customizing data sources.
+
+<!-- this is unclear - where are these links that are going to configuration pages? are we talking about two different configuration pages?-->
 
 ### Loki query splitting
 
 <!-- Matías Wenceslao Chomicki -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-In response to different query performance scenarios, we implemented query splitting, where queries that request more than a day of data are split in sub-requests of 1 day duration each. For example, requesting 7 days of logs will produce 7 requests of 1 day.
+In response to different query performance scenarios, we've implemented query splitting. Now, queries that request more than a day of data are split into sub-requests, each with a duration of one day. For example, requesting seven days of logs will produce seven requests of one day.
 
 ### Easier to use query editor for Elasticsearch
 
 <!-- Gabor Farkas -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 The Elasticsearch query editor now allows convenient switching between logs, metrics, and raw data directly from the top, eliminating the need to go through the metric selector.
 
 ### Metrics explorer
 
-The Metrics Explorer is a new feature to enhance metric browsing in the Prometheus query builder. The Metrics Explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name / description, and filter on the Prometheus type.
+The Metrics explorer is a new feature that enhances metrics browsing in the Prometheus query builder. The Metrics explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name or description, and filter on the Prometheus type.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Metrics explorer" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Searching in Metrics explorer" >}}
 
-## Redshift And Athena: Async Query Data Support
+<!--should the next four entries all be under Data sources?-->
+
+## Redshift and Athena: Async query data support
 
 <!-- Isabella Siu, Kevin Yu, Andrés Martínez -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-Async Query Data Support in Redshift and Athena makes queries over multiple requests (starting, checking its status, and fetching the results) instead of single request queries. This is useful for queries that can potentially run for a long time and timeout. This feature has been available behind a feature toggle for some time and is now be generally available and enabled by default.
+Async query data support in Redshift and Athena makes queries over multiple requests (starting, checking status, and fetching the results) instead of in a single request query. This is useful for queries that can potentially run for a long time and time out. This feature was previously available behind a feature toggle and is now be generally available and enabled by default.
 
-## Redshift And Athena: Async Query Caching
+## Redshift and Athena: Async query caching
 
 <!-- Isabella Siu -->
 
-_Experimental in Enterprise, Cloud Pro, and Cloud Advanced_
+_Experimental in Grafana Enterprise, Cloud Pro, and Cloud Advanced_
 
-This adds support for query caching of async queries in the Athena and Redshift Data Source Plugins. To test this feature enable both the `useCachingService` and `awsAsyncQueryCaching` feature toggles. If you’re using Grafana Cloud and would like to enable this experimental feature, please contact customer support.
+This feature adds support for query caching of async queries in the Athena and Redshift data source plugins. To try this feature, enable both the `useCachingService` and `awsAsyncQueryCaching` feature toggles. If you’re using Grafana Cloud and would like to enable this experimental feature, please contact customer support.
 
-### CloudWatch Logs Monaco query editor
+### CloudWatch logs Monaco query editor
 
 <!-- Isabella Siu, Kevin Yu -->
 
 _Experimental in all editions of Grafana_
 
-The CloudWatch Logs query editor is moving from being a Slate-based editor to a Monaco-based editor. This new Monaco-based editor will provide improved syntax highlighting, and auto-completion. Enable the `cloudWatchLogsMonacoEditor` feature toggle to use the Monaco-based query editor. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+The CloudWatch logs query editor is moving from being a Slate-based editor to a Monaco-based editor. This new Monaco-based editor will provide improved syntax highlighting, and auto-completion. To use the Monaco-based query editor, enable the `cloudWatchLogsMonacoEditor` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
 ### InfluxDB Backend Mode
 
 <!-- Ismail Simsek -->
 
-_Behind the feature toggle `influxdbBackendMigration`_
+<!-- what's the availability and have contributor check over edits-->
 
-InfluxDB backend mode was available for a while but it had some compatibility issues. All those issues were addressed and there is no more compatibility issues. In the future backend mode will be the default one and we will deprecate frontend mode. Users won't need to do anything specific when we make it enabled by default. If you'd like to try backend mode right away you can enable `influxdbBackendMigration` feature toggle.
+Previously, InfluxDB backend mode was available, however, there were compatibility issues that needed to be addressed. In this release, we've addressed these issues and
+promoted this feature from experimental to public preview. In the future, backend mode will be the default, and we'll deprecate frontend mode. To try backend mode, enable the `influxdbBackendMigration` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
 ## Explore
 
@@ -269,17 +283,19 @@ InfluxDB backend mode was available for a while but it had some compatibility is
 
 <!-- Matías Wenceslao Chomicki -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-When you're browsing logs in Explore, you can click on the "eye" icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. This is helpful for scanning through your logs.
+When you're browsing logs in Explore, you can now click eye icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. This is helpful for scanning through your logs.
 
 {{< figure src="/media/docs/grafana/log-field-picker-10-1.gif" max-width="750px" caption="Log rows menu" >}}
+
+<!--This entry isn't very accessible, needs edit-->
 
 ### Logs: Improved rendering performance of log lines
 
 <!-- Matías Wenceslao Chomicki -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 Browsing log lines is faster than ever, after a series of performance optimizations to log-related components.
 
@@ -287,7 +303,7 @@ Browsing log lines is faster than ever, after a series of performance optimizati
 
 <!-- Gabor Farkas, Sven Grossmann -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
 Log context allows you to view additional lines surrounding a specific log entry. With this enhancement, you can access as many log lines as needed within the log context. As you scroll through the logs, Grafana dynamically loads more log lines, ensuring a seamless and continuous viewing experience.
 
@@ -295,9 +311,9 @@ Log context allows you to view additional lines surrounding a specific log entry
 
 <!-- Gareth Dawson -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-For Elasticsearch metric queries in Explore, you can now see the sample of log lines that contributed to the displayed results. To see these logs, click on the collapsed Logs sample panel under your graph or table panel. If you want to interact with your log lines or modify the log query, click on the “Open logs in split view” button and the log query will be executed in the split view.
+For Elasticsearch metric queries in Explore, you can now see the sample of log lines that contributed to the displayed results. To see these logs, click the collapsed Logs sample panel under your graph or table panel. If you want to interact with the log lines or modify the log query, click the **Open logs in split view** button and the log query will be executed in the split view.
 
 ### Panel plugins in Explore
 
@@ -309,9 +325,9 @@ Data source plugin developers can now use any plugin to visualize data in Explor
 
 ## Alerting
 
-_All Alerting features are generally available in all editions of Grafana._
+_All Alerting features are generally available in all editions of Grafana_
 
-We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our Alerting documentation.
+We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our [Alerting documentation]({{< relref "../../alerting" >}}).
 
 ### Alert rules
 
@@ -321,7 +337,9 @@ We’ve made the following changes to alert rules.
 
 _This feature is for Grafana-managed alert rules only._
 
-Preview how your alert instances will be routed if they fire while you are creating your alert rule. View routing for each Alertmanager you have configured to receive Grafana-managed alerts and if required, you can easily make adjustments to your custom labels to change the way your alert instances are routed.
+<!-- make suggestions in GitHub directly to make some of these clearer-->
+
+Preview how your alert instances will be routed if they fire while you're creating your alert rule. View routing for each Alertmanager you have configured to receive Grafana-managed alerts and if required, you can easily make adjustments to your custom labels to change the way your alert instances are routed.
 
 {{< figure src="/media/docs/alerting/alert-routing-preview.png" max-width="750px" caption="Alert instance routing preview" >}}
 
@@ -388,44 +406,44 @@ Labels are colored according to the label key, which makes it easier to track an
 
 <!-- Jo Guerreiro, AuthNZ -->
 
-_Generally available in Grafana Open Source, Enterprise, and Cloud._
+_Generally available in all editions of Grafana_
 
-This change impacts `GitHub` OAuth, `Gitlab` OAuth, `Okta` OAuth and `Generic` OAuth.
+This change impacts `GitHub`,`Gitlab, `Okta`, and `Generic` OAuth.
 
-Currently if no organization role mapping is found for a user when connecting using OAuth, Grafana doesn’t update the user’s organization role.
+Previously, if no organization role mapping was found for a user when they connect using OAuth, Grafana didn’t update the user’s organization role.
 
-With Grafana 10.1, on every login, if the `role_attribute_path` property does not return a role, then the user is assigned the role specified by the `auto_assign_org_role` option or the default role for the organization, by default, Viewer.
+Now, on every login, if the `role_attribute_path` property doesn't return a role, then the user is assigned the role specified by the `auto_assign_org_role` option or the default role for the organization, which is Viewer by default.
 
 To avoid overriding manually set roles, enable the `skip_org_role_sync` option in the Grafana configuration for your OAuth provider before the user logs in for the first time.
 
-### Preventing manual role updates for externally synced roles
+### Prevent manual role updates for externally synced roles
 
 <!-- Ieva Vasiljeva, AuthNZ -->
 
-_Generally available in Grafana Open Source, Enterprise, and Cloud._
+_Generally available in all editions of Grafana_
 
-This change impacts all instances that use an external authentication provider and have [role mapping enabled.
+This change impacts all instances that use an external authentication provider and have role mapping enabled.
 
-Currently, it is possible to manually update a user's organization role (Viewer, Editor or Admin) even if this role is managed by an external authentication provider.
-This means that roles can be manually set for the duration of a user's session, but are overridden by the external authentication provider the next time the user logs in.
-If the `onlyExternalOrgRoleSync` feature toggle is enabled, manual role updates for externally managed roles are not allowed.
+Previously, it was possible to manually update a user's organization role (Viewer, Editor, or Admin) even if this role was managed by an external authentication provider.
+This means that roles could be manually set for the duration of a user's session, but were overridden by the external authentication provider the next time the user logged in.
+If the `onlyExternalOrgRoleSync` feature toggle was enabled, only then were manual role updates for externally managed roles not allowed.
 
-With Grafana 10.1, you can no longer manually update externally managed organization roles.
-We have removed this feature toggle with Grafana 10.1, and have defaulted to locking the organization role of users authenticated by an external provider.
+Now, you can no longer manually update externally managed organization roles.
+We've removed the `onlyExternalOrgRoleSync` feature toggle, and have defaulted to locking the organization role of users authenticated by an external provider.
 
 If you prefer to manage your users' organization roles manually, enable the `skip_org_role_sync` option in the Grafana configuration for your authentication provider.
 
-Refer to the [release notes of Grafana 9.5]({{< relref "../whatsnew/whats-new-in-v9-5/#auth-lock-organization-roles-synced-from-auth-providers" >}}) for context on the previous work done to build up to this change.
+For context on the previous work done leading up to this change, refer to the [Grafana v9.5 What's new]({{< relref "../whatsnew/whats-new-in-v9-5/#auth-lock-organization-roles-synced-from-auth-providers" >}}).
 
 ### GitLab OIDC support
 
 <!-- Jo Guerreiro, AuthNZ -->
 
-_Generally available in Grafana Open Source, Enterprise, and Cloud._
+_Generally available in all editions of Grafana_
 
-Grafana 10.1 now supports GitLab OIDC through the `GitLab` OAuth provider in addition to the existing `GitLab` OAuth2 provider. This allows you to use GitLab OIDC to authenticate users in Grafana.
+Grafana now supports GitLab OIDC through the `GitLab` OAuth provider in addition to the existing `GitLab` OAuth2 provider. This allows you to use GitLab OIDC to authenticate users in Grafana.
 
-This allows Grafana to reduce the access scope to only the required scopes for authentication and authorization instead
+This change also allows Grafana to reduce the access scope to only the required scopes for authentication and authorization instead
 of full read API access.
 
 To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/" >}}).
@@ -434,9 +452,9 @@ To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab a
 
 <!-- Jo Guerreiro, AuthNZ -->
 
-_Generally available in Grafana Open Source, Enterprise, and Cloud._
+_Generally available in all editions of Grafana_
 
-Grafana 10.1 now supports Google OIDC through the `Google` OAuth provider in addition to the existing `Google` OAuth2 provider. This allows you to use Google OIDC to authenticate users in Grafana, which in turn lets Grafana reduce the access scope to only the required scopes for authentication and authorization.
+Grafana now supports Google OIDC through the `Google` OAuth provider in addition to the existing `Google` OAuth2 provider. This allows you to use Google OIDC to authenticate users in Grafana, which in turn, lets Grafana reduce the access scope to only the required scopes for authentication and authorization.
 
 This release also adds support for Google OIDC in Team Sync. You can now easily add users to teams by using their Google groups.
 
@@ -448,37 +466,39 @@ To learn how to migrate your Google OAuth2 setup to OIDC and how to set up Team 
 
 <!-- Giuseppe Guerra, Plugins Platform -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-We've made the following updates in Grafana 10.1 to increase awareness of [Angular deprecation]({{< relref "../developers/angular_deprecation/" >}}) and its side effects in future releases of Grafana:
+We've made the following updates to increase awareness of the [Angular deprecation]({{< relref "../developers/angular_deprecation/" >}}) and its consequences in future releases of Grafana:
 
 #### UI changes
 
-- Added an "Angular" badge next to affected plugins in the plugins catalog.
+- Added an **Angular** badge next to affected plugins in the plugins catalog.
 - Added an alert at the top of a plugin's page in the plugins catalog when browsing Angular plugins.
-- Added an alert at the top of the query editor when editing panels which use Angular data source plugins.
+- Added an alert at the top of the query editor when editing panels that use Angular data source plugins.
 
 #### Other changes
 
 - Angular Plugins will not be loaded if [angular_support_enabled]({{< relref "../setup-grafana/configure-grafana/#angular_support_enabled" >}}) is set to `false`.
 
-You can [refer to our documentation]({{< relref "../developers/angular_deprecation/" >}}) to learn more about Angular deprecation.
+Learn more in our [Angular support deprecation documentation]({{< relref "../developers/angular_deprecation/" >}}).
 
 ### Deprecated provisioning of data sources with invalid UIDs
 
 <!-- Giuseppe Guerra, Plugins Platform -->
 
-_Generally available in all editions of Grafana._
+_Generally available in all editions of Grafana_
 
-Grafana 10.1 logs an error when provisioning data sources with invalid UIDs. A valid uid is a combination of a-z, A-Z, 0-9 (alphanumeric), `-` (dash) and `_` (underscore) characters, maximum length 40.
+Grafana now logs an error when provisioning data sources with invalid UIDs. A valid UID is a combination of a-z, A-Z, 0-9 (alphanumeric), `-` (dash), and `_` (underscore), with a maximum length of 40 characters.
 
-**Provisioning data sources with invalid UIDs will be removed in future versions of Grafana, and will return an error instead.**
+Provisioning data sources with invalid UIDs will be removed in future versions of Grafana, and will return an error instead.
 
 ## Subfolders: folder selection
 
 <!-- Zsofia Komaromi -->
 
-_Available in public preview in Grafana Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced_
+<!--should this not be under Dashboards and visualizations?-->
+
+_Available in public preview in all editions of Grafana_
 
 When saving or moving a dashboard, you can now see the full folder tree when selecting the destination folder.
 
@@ -488,10 +508,12 @@ To get started creating subfolders, enable the `nestedFolders` feature toggle. W
 
 ## Activate draft reports
 
+<!--should this be under dashboards since it's a function of dashboards-->
+
 <!-- Robert Horvath -->
 
-_Generally available in Grafana Enterprise, Cloud Free, Cloud Pro, Cloud Advanced_
+_Generally available in Grafana Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced_
 
 You can now use the resume and pause report functionality to activate draft reports that have all the required fields filled in.
 
-To learn more, refer to our [create and manage reports documentation]({{< relref "../dashboards/create-reports" >}}).
+To learn more, refer to our [Create and manage reports documentation]({{< relref "../dashboards/create-reports" >}}).
