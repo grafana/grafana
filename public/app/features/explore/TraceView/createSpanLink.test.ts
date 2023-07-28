@@ -61,7 +61,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}'
+          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\", service_namespace=\\"namespace1\\"}","refId":""}]}'
         )}`
       );
     });
@@ -164,7 +164,7 @@ describe('createSpanLinkFactory', () => {
             datasource: 'loki1_uid',
             queries: [
               {
-                expr: '{cluster="cluster1", hostname="hostname1"} |="7946b05c2e2e4e5a" |="6605c7b08e715d6c"',
+                expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |="7946b05c2e2e4e5a" |="6605c7b08e715d6c"',
                 refId: '',
               },
             ],
@@ -266,10 +266,7 @@ describe('createSpanLinkFactory', () => {
         createTraceSpan({
           process: {
             serviceName: 'service',
-            tags: [
-              { key: 'service.name', value: 'serviceName' },
-              { key: 'k8s.pod.name', value: 'podName' },
-            ],
+            tags: [{ key: 'k8s.pod.name', value: 'podName' }],
           },
         })
       );
@@ -352,7 +349,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"splunkUID","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}]}'
+          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"splunkUID","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" service_namespace=\\"namespace1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}]}'
         )}`
       );
     });
@@ -693,7 +690,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(decodeURIComponent(linkDef!.href)).toContain(
-        `datasource":"${searchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]`
+        `datasource":"${searchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\" AND service_namespace:\\"namespace1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]`
       );
     });
 
@@ -732,7 +729,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
+          `{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\" AND service_namespace:\\"namespace1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
         )}`
       );
     });
@@ -883,7 +880,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(decodeURIComponent(linkDef!.href)).toContain(
-        `datasource":"${searchUID}","queries":[{"query":"cluster=\\"cluster1\\" AND hostname=\\"hostname1\\"","refId":""}]`
+        `datasource":"${searchUID}","queries":[{"query":"cluster=\\"cluster1\\" AND hostname=\\"hostname1\\" AND service_namespace=\\"namespace1\\"","refId":""}]`
       );
     });
 
@@ -922,7 +919,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster=\\"cluster1\\" AND hostname=\\"hostname1\\"","refId":""}]}`
+          `{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster=\\"cluster1\\" AND hostname=\\"hostname1\\" AND service_namespace=\\"namespace1\\"","refId":""}]}`
         )}`
       );
     });
@@ -1146,7 +1143,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Logs);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"falconLogScaleUID","queries":[{"lsql":"cluster=\\"cluster1\\" OR hostname=\\"hostname1\\" or \\"7946b05c2e2e4e5a\\" or \\"6605c7b08e715d6c\\"","refId":""}]}'
+          '{"range":{"from":"1602637200000","to":"1602637201000"},"datasource":"falconLogScaleUID","queries":[{"lsql":"cluster=\\"cluster1\\" OR hostname=\\"hostname1\\" OR service_namespace=\\"namespace1\\" or \\"7946b05c2e2e4e5a\\" or \\"6605c7b08e715d6c\\"","refId":""}]}'
         )}`
       );
     });
@@ -1326,6 +1323,10 @@ function createTraceSpan(overrides: Partial<TraceSpan> = {}) {
         {
           key: 'label2',
           value: 'val2',
+        },
+        {
+          key: 'service.namespace',
+          value: 'namespace1',
         },
       ],
     },
