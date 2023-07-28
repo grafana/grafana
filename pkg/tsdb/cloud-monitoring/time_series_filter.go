@@ -12,6 +12,7 @@ import (
 	"github.com/huandu/xstrings"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
@@ -151,8 +152,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
 	// and the aggregation that is specified in the UI becomes the secondary aggregation
 	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	var p = *timeSeriesFilter.parameters.Preprocessor
-	t := toPreprocessorType(string(p))
+	t := toPreprocessorType(string(timeSeriesFilter.parameters.Preprocessor))
 	if t != PreprocessorTypeNone {
 		// Move aggregation to secondaryAggregations
 		timeSeriesFilter.parameters.SecondaryAlignmentPeriod = timeSeriesFilter.parameters.AlignmentPeriod
@@ -192,7 +192,16 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 		query.PerSeriesAligner = strPtr(perSeriesAlignerDefault)
 	}
 
+	if timeSeriesFilter.parameters.Preprocessor == nil {
+		var p dataquery.PreprocessorType
+		timeSeriesFilter.parameters.Preprocessor = &p
+	}
+
 	timeSeriesFilter.setPreprocessor()
+
+	if query.AlignmentPeriod == nil {
+		query.AlignmentPeriod = strPtr("")
+	}
 
 	alignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
