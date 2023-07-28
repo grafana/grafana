@@ -116,4 +116,6 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  prometheusConfigOverhaulAuth?: boolean;
+  configurableSchedulerTick?: boolean;
 }

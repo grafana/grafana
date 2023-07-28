@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 )
 
 var (
@@ -65,10 +66,22 @@ type Signature struct {
 var _ plugins.SignatureCalculator = &Signature{}
 
 func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+	return NewCalculator(cfg, kr)
+}
+
+func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
 	return &Signature{
 		kr:  kr,
 		cfg: cfg,
-		log: log.New("plugin.signature"),
+		log: log.New("plugins.signature"),
+	}
+}
+
+func DefaultCalculator(cfg *config.Cfg) *Signature {
+	return &Signature{
+		kr:  statickey.New(),
+		cfg: cfg,
+		log: log.New("plugins.signature"),
 	}
 }
 
