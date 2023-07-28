@@ -240,4 +240,5 @@ export interface AuthSettings {
   GoogleSkipOrgRoleSync?: boolean;
   GenericOAuthSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
+  AuthProxyEnableLoginToken?: boolean;
 }

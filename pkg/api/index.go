@@ -105,6 +105,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
+			AuthenticatedBy:            c.SignedInUser.AuthenticatedBy,
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
