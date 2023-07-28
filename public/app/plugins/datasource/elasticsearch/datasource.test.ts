@@ -1237,7 +1237,6 @@ describe('toggleQueryFilter', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
-    config.featureToggles.elasticToggleableFilters = true;
   });
   describe('with empty query', () => {
     let query: ElasticsearchQuery;
