@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -48,20 +49,6 @@ func (e MigrationError) Error() string {
 
 func (e *MigrationError) Unwrap() error { return e.Err }
 
-type MigrationService struct {
-	store db.DB
-	cfg   *setting.Cfg
-	log   log.Logger
-}
-
-func NewMigrationService(log log.Logger, store db.DB, cfg *setting.Cfg) *MigrationService {
-	return &MigrationService{
-		log:   log,
-		cfg:   cfg,
-		store: store,
-	}
-}
-
 type migration struct {
 	sess    *xorm.Session
 	log     log.Logger
@@ -73,33 +60,8 @@ type migration struct {
 	silences map[int64][]*pb.MeshSilence
 }
 
-func (ms *MigrationService) Start() error {
-	err := ms.store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		mg := &migration{
-			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: ms.store.GetDialect().SupportEngine()},
-			silences: make(map[int64][]*pb.MeshSilence),
-			log:      ms.log,
-			dialect:  ms.store.GetDialect(),
-			cfg:      ms.cfg,
-			store:    ms.store,
-			sess:     sess.Session,
-		}
-
-		err := mg.Exec()
-		if err != nil {
-			ms.log.Error("Executing migration failed", "error", err)
-			return err
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("%v: %w", "migration failed", err)
-	}
-
-	return nil
+func getSilenceFileNamesForAllOrgs(dataPath string) ([]string, error) {
+	return filepath.Glob(filepath.Join(dataPath, "alerting", "*", "silences"))
 }
 
 //nolint:gocyclo

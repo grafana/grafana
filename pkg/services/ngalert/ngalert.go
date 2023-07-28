@@ -28,9 +28,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngProvisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -68,6 +70,7 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
+	provisioningService provisioning.ProvisioningService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -94,9 +97,13 @@ func ProvideService(
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
+		ProvisioningService:  provisioningService,
 	}
 
-	if ng.IsDisabled() {
+	// Migration
+	ng.MigrationService = migration.NewMigrationService(ng.Log, ng.SQLStore, ng.Cfg, ng.KVStore, ng.ProvisioningService)
+
+	if ng.isDisabled() {
 		return ng, nil
 	}
 
@@ -138,6 +145,10 @@ type AlertNG struct {
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
+
+	// Migration service
+	ProvisioningService provisioning.ProvisioningService
+	MigrationService    migration.MigrationService
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -237,11 +248,11 @@ func (ng *AlertNG) init() error {
 	ng.schedule = scheduler
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log, ng.accesscontrol)
-	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
-	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
+	policyService := ngProvisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := ngProvisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log, ng.accesscontrol)
+	templateService := ngProvisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
+	muteTimingService := ngProvisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
+	alertRuleService := ngProvisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
@@ -319,6 +330,15 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 // Run starts the scheduler and Alertmanager.
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting")
+
+	if err := ng.MigrationService.Start(ctx); err != nil {
+		return err
+	}
+
+	if ng.isDisabled() {
+		return nil
+	}
+
 	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
@@ -338,8 +358,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	return children.Wait()
 }
 
-// IsDisabled returns true if the alerting service is disabled for this instance.
-func (ng *AlertNG) IsDisabled() bool {
+// isDisabled returns true if unified alerting  is disabled for this instance.
+// This is purposefully not exported so that the legacy migration rollback can run with unified alerting disabled.
+func (ng *AlertNG) isDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}
