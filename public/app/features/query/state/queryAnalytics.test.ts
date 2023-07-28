@@ -108,7 +108,10 @@ function getTestDataForVariable(requestApp: string, series: DataFrame[] = []): P
   return {
     request: {
       app: requestApp,
-      variableName: 'variable_name',
+      origin: {
+        type: 'variable',
+        reference: 'variable_name',
+      },
       startTime: now.unix(),
       endTime: now.add(1, 's').unix(),
     } as DataQueryRequest,
@@ -156,7 +159,10 @@ describe('emitDataRequestEvent - from a dashboard variable', () => {
         datasourceUid: datasource.uid,
         datasourceType: datasource.type,
         source: 'dashboard',
-        variableName: 'variable_name',
+        origin: {
+          type: 'variable',
+          reference: 'variable_name',
+        },
         dashboardUid: 'test', // from dashboard srv
         dataSize: 0,
         duration: 1,

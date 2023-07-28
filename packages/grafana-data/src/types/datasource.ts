@@ -505,6 +505,16 @@ export interface DataQueryError {
   type?: DataQueryErrorType;
 }
 
+/**
+ * Describes the origin of the data request.
+ *
+ * @public
+ */
+export interface DataRequestOrigin {
+  type: 'panel' | 'variable';
+  reference: string;
+}
+
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
 
@@ -521,8 +531,11 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   queryCachingTTL?: number | null;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
+  /**
+   * @deprecated use origin instead
+   */
   panelId?: number;
-  variableName?: string; // When the query is made by a dashboard-variable
+  origin?: DataRequestOrigin;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
 

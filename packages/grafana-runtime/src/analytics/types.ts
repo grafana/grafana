@@ -1,4 +1,4 @@
-import { CoreApp } from '@grafana/data';
+import { CoreApp, DataRequestOrigin } from '@grafana/data';
 
 import { EchoEvent, EchoEventType } from '../services/EchoSrv';
 
@@ -28,12 +28,15 @@ export interface DataRequestInfo extends Partial<DashboardInfo> {
   datasourceId: number;
   datasourceUid: string;
   datasourceType: string;
+  /**
+   * @deprecated use origin instead
+   */
   panelId?: number;
-  variableName?: string;
   panelName?: string;
   duration: number;
   error?: string;
   dataSize?: number;
+  origin?: DataRequestOrigin;
 }
 
 /**

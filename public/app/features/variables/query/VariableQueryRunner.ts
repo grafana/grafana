@@ -184,7 +184,10 @@ export class VariableQueryRunner {
       app: CoreApp.Dashboard,
       requestId: uuidv4(),
       timezone: '',
-      variableName: variable.name,
+      origin: {
+        type: 'variable',
+        reference: variable.name,
+      },
       range,
       interval: '',
       intervalMs: 0,

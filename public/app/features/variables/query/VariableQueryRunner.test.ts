@@ -122,7 +122,10 @@ describe('VariableQueryRunner', () => {
           expect(queryRunner.runRequest).toBeCalledWith(
             expect.anything(),
             expect.objectContaining({
-              variableName: 'query',
+              origin: {
+                type: 'variable',
+                reference: 'query',
+              },
             })
           );
           expect(datasource.metricFindQuery).not.toHaveBeenCalled();
