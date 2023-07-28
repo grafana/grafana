@@ -70,12 +70,7 @@ To see the widget editor in Grafana OSS or Enterprise, enable the `vizAndWidgetS
 
 ### Transformations redesign
 
-<!-- contributor?? -->
-<!-- missing availability -->
-
 The transformations tab has an improved user experience and visual redesign. Now, you can explore transformations with categories and illustrations.
-
-<!--possible edit to second sentence - Now transformations are categorized and each transformation type has an illustration to help you with the selection process.-->
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
 
@@ -86,8 +81,6 @@ The transformations tab has an improved user experience and visual redesign. Now
 _Available in public preview in all editions of Grafana_
 
 When working with date and time data, it can be useful to have different time formats. With the new Format Time transformation, you can convert any time format to any other one supported by Moment.js. When used in conjunction with the Group by Value transformation, this can also be used to bucket days, weeks, and other time windows together.
-
-<!--question, do we mean the Group by transformation with a setting of Value?-->
 
 {{< figure src="/media/docs/grafana/format-time-10-1.gif" max-width="750px" caption="Format time transformation" >}}
 
@@ -145,8 +138,6 @@ We've improved the Loki query editor by adding a new **Step** editor field. This
 
 By default, the `step` parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki `step` parameter, you can visit [the Loki step parameter documentation](/docs/loki/latest/api/#step-versus-interval).
 
-<!--confirm this link is working with website build-->
-
 {{< figure src="/media/docs/grafana/data-sources/loki-step-editor.png" max-width="750px" caption="New Loki step editor" >}}
 
 ### Copy link to a Loki log line
@@ -156,8 +147,6 @@ By default, the `step` parameter is set to the value of the `$__interval` variab
 _Generally available in all editions of Grafana_
 
 A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it with a blue background, making it easy to identify and focus on the relevant information.
-
-<!--this background doesn't appear blue in the image; is this true?-->
 
 {{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
 
@@ -218,8 +207,6 @@ _Generally available in all editions of Grafana_
 
 The Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages, as well as tooltips to assist you with configuring and customizing data sources.
 
-<!-- this is unclear - where are these links that are going to configuration pages? are we talking about two different configuration pages?-->
-
 ### Loki query splitting
 
 <!-- Matías Wenceslao Chomicki -->
@@ -241,8 +228,6 @@ The Elasticsearch query editor now allows convenient switching between logs, met
 The Metrics explorer is a new feature that enhances metrics browsing in the Prometheus query builder. The Metrics explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name or description, and filter on the Prometheus type.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Searching in Metrics explorer" >}}
-
-<!--should the next four entries all be under Data sources?-->
 
 ## Redshift and Athena: Async query data support
 
@@ -272,8 +257,6 @@ The CloudWatch logs query editor is moving from being a Slate-based editor to a 
 
 <!-- Ismail Simsek -->
 
-<!-- what's the availability and have contributor check over edits-->
-
 Previously, InfluxDB backend mode was available, however, there were compatibility issues that needed to be addressed. In this release, we've addressed these issues and
 promoted this feature from experimental to public preview. In the future, backend mode will be the default, and we'll deprecate frontend mode. To try backend mode, enable the `influxdbBackendMigration` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
@@ -288,8 +271,6 @@ _Generally available in all editions of Grafana_
 When you're browsing logs in Explore, you can now click eye icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. This is helpful for scanning through your logs.
 
 {{< figure src="/media/docs/grafana/log-field-picker-10-1.gif" max-width="750px" caption="Log rows menu" >}}
-
-<!--This entry isn't very accessible, needs edit-->
 
 ### Logs: Improved rendering performance of log lines
 
@@ -336,8 +317,6 @@ We’ve made the following changes to alert rules.
 #### Alert instance routing preview
 
 _This feature is for Grafana-managed alert rules only._
-
-<!-- make suggestions in GitHub directly to make some of these clearer-->
 
 Preview how your alert instances will be routed if they fire while you're creating your alert rule. View routing for each Alertmanager you have configured to receive Grafana-managed alerts and if required, you can easily make adjustments to your custom labels to change the way your alert instances are routed.
 
@@ -496,8 +475,6 @@ Provisioning data sources with invalid UIDs will be removed in future versions o
 
 <!-- Zsofia Komaromi -->
 
-<!--should this not be under Dashboards and visualizations?-->
-
 _Available in public preview in all editions of Grafana_
 
 When saving or moving a dashboard, you can now see the full folder tree when selecting the destination folder.
@@ -507,8 +484,6 @@ To get started creating subfolders, enable the `nestedFolders` feature toggle. W
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.1-subfolders-folder-picker.png" max-width="750px" caption="Selecting a folder in Grafana" >}}
 
 ## Activate draft reports
-
-<!--should this be under dashboards since it's a function of dashboards-->
 
 <!-- Robert Horvath -->
 
