@@ -133,7 +133,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			expectedAnonCount:   1,
 			expectedAuthedCount: 0,
 		}, {
-			name: "repeat request should tag if different kind",
+			name: "authed request should untag anon",
 			req: []tagReq{{httpReq: &http.Request{
 				Header: http.Header{
 					"User-Agent":      []string{"test"},
@@ -150,8 +150,28 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				kind: anonymous.AuthedDevice,
 			},
 			},
-			expectedAnonCount:   1,
+			expectedAnonCount:   0,
 			expectedAuthedCount: 1,
+		}, {
+			name: "anon request should untag authed",
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":      []string{"test"},
+					"X-Forwarded-For": []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AuthedDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":      []string{"test"},
+					"X-Forwarded-For": []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			},
+			},
+			expectedAnonCount:   1,
+			expectedAuthedCount: 0,
 		},
 		{
 			name: "tag 4 different requests",

@@ -77,6 +77,19 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interfa
 	}, nil
 }
 
+func (a *AnonDeviceService) untagDevice(ctx context.Context, device *Device) error {
+	key, err := device.Key()
+	if err != nil {
+		return err
+	}
+
+	if err := a.remoteCache.Delete(ctx, key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
 	addr := web.RemoteAddr(httpReq)
 	ip, err := network.GetIPFromAddress(addr)
@@ -113,5 +126,21 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		return err
 	}
 
-	return a.remoteCache.Set(ctx, key, deviceJSON, thirtyDays)
+	if err := a.remoteCache.Set(ctx, key, deviceJSON, thirtyDays); err != nil {
+		return err
+	}
+
+	untagKind := anonymous.AnonDevice
+	if kind == anonymous.AnonDevice {
+		untagKind = anonymous.AuthedDevice
+	}
+	if err := a.untagDevice(ctx, &Device{
+		Kind:      untagKind,
+		IP:        taggedDevice.IP,
+		UserAgent: taggedDevice.UserAgent,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
