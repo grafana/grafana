@@ -66,7 +66,7 @@ func (hs *HTTPServer) pluginMetricsScrapeTargetsEndpoint(ctx *web.Context) {
 
 	var sdConfig discovery.Configs
 	for _, p := range hs.pluginStore.Plugins(ctx.Req.Context()) {
-		if p.Class == plugins.External { // TODO and is configured to expose metrics
+		if p.Class == plugins.ClassExternal { // TODO && is configured to expose metrics
 			sdConfig = append(sdConfig, discovery.StaticConfig{{
 				Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(pluginMetricEndpoint(ctx.Req, p.ID))}},
 				Labels: model.LabelSet{
