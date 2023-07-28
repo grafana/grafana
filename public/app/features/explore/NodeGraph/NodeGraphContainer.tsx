@@ -5,7 +5,7 @@ import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
@@ -56,6 +56,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const [open, toggleOpen] = useToggle(false);
   const toggled = () => {
     toggleOpen();
+    console.log('toggled');
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
@@ -81,12 +82,12 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     ) : null;
 
   return (
-    <Collapse
-      label={<span>Node graph{countWarning} </span>}
-      collapsible={withTraceView}
+    <PanelChrome
+      title={`Node graph${countWarning}`}
       // We allow collapsing this only when it is shown together with trace view.
-      isOpen={withTraceView ? open : true}
-      onToggle={withTraceView ? () => toggled() : undefined}
+      collapsible={true}
+      isOpen={!!withTraceView}
+      toggleOpen={!!withTraceView ? () => toggled() : undefined}
     >
       <div
         ref={containerRef}
@@ -101,7 +102,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       >
         <NodeGraph dataFrames={frames} getLinks={getLinks} />
       </div>
-    </Collapse>
+    </PanelChrome>
   );
 }
 
