@@ -107,7 +107,6 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 			permSelector.WriteRune(')')
 
-			f.folderIsRequired = true
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
 				switch f.recursiveQueriesAreSupported {
@@ -121,11 +120,18 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 					builder.WriteString(nestedFoldersSelectors)
 					args = append(args, nestedFoldersArgs...)
 				}
+				f.folderIsRequired = true
 				builder.WriteString(") AND NOT dashboard.is_folder)")
 			default:
-				builder.WriteString("(folder.uid IN ")
-				builder.WriteString(permSelector.String())
-				args = append(args, permSelectorArgs...)
+				builder.WriteString("(")
+				if len(permSelectorArgs) > 0 {
+					builder.WriteString("folder.uid IN ")
+					builder.WriteString(permSelector.String())
+					args = append(args, permSelectorArgs...)
+					f.folderIsRequired = true
+				} else {
+					builder.WriteString("1 = 0 ")
+				}
 				builder.WriteString(" AND NOT dashboard.is_folder)")
 			}
 		} else {
