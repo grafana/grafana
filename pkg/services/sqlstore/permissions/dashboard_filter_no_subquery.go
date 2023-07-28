@@ -179,9 +179,13 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 					args = append(args, nestedFoldersArgs...)
 				}
 			default:
-				builder.WriteString("(dashboard.uid IN ")
-				builder.WriteString(permSelector.String())
-				args = append(args, permSelectorArgs...)
+				if len(permSelectorArgs) > 0 {
+					builder.WriteString("(dashboard.uid IN ")
+					builder.WriteString(permSelector.String())
+					args = append(args, permSelectorArgs...)
+				} else {
+					builder.WriteString("(1 = 0")
+				}
 			}
 			builder.WriteString(" AND dashboard.is_folder)")
 		} else {
