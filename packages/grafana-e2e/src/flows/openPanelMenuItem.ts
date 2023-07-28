@@ -2,6 +2,7 @@ import { e2e } from '../index';
 
 export enum PanelMenuItems {
   Edit = 'Edit',
+  Export = 'Export',
   Inspect = 'Inspect',
   More = 'More...',
   Extensions = 'Extensions',

@@ -47,7 +47,7 @@ describe('inspector download', () => {
         const text = await blob.text();
 
         expect(text).toEqual(expected);
-        expect(filename).toEqual(`${title}-data-${dateTimeFormat(1400000000000)}.csv`);
+        expect(filename).toEqual(`${title}-${dateTimeFormat(1400000000000)}.csv`);
       }
     );
   });

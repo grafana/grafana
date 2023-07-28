@@ -1,7 +1,5 @@
-import domtoimage from 'dom-to-image';
 import saveAs from 'file-saver';
 import { toCanvas } from 'html-to-image';
-import html2canvas from 'html2canvas';
 import { firstValueFrom } from 'rxjs';
 import * as XLSX from 'xlsx';
 
@@ -9,6 +7,7 @@ import {
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
+  FieldType,
   formattedValueToString,
   PanelData,
   PanelModel,
@@ -22,7 +21,7 @@ import { downloadDataFrameAsCsv } from 'app/features/inspector/utils/download';
 import { ExportType, ExportPayload } from './types';
 
 export async function exportSelect(payload: ExportPayload) {
-  const preData = payload.data?.series || [];
+  let preData = payload.data?.series || [];
   let dataFrames = getProcessedData({ withTransforms: true, withFieldConfig: true }, preData, payload.panel);
 
   const transformer = {
@@ -32,25 +31,29 @@ export async function exportSelect(payload: ExportPayload) {
 
   if (dataFrames.length > 1) {
     transformDataFrame([transformer], dataFrames).subscribe((data) => {
-      dataFrames = data; //, () => sub.unsubscribe();
+      dataFrames = data;
     });
   }
+
+  // TODO: Add custom exporting and/or all panel exports
 
   switch (payload.format) {
     case ExportType.jpeg:
     case ExportType.png:
     case ExportType.bmp:
-      exportImage(payload);
+      const panelCanvas = await toCanvas(payload.htmlElement, {
+        style: { transform: 'translate(0px, 0px)' },
+      });
+      exportImage(panelCanvas, payload.format, payload.panel.title);
       break;
     case ExportType.csv:
-      downloadDataFrameAsCsv(dataFrames[0], payload.panel.title);
+      exportCSV(dataFrames[0], payload.panel.title);
       break;
     case ExportType.xlsx:
       exportExcel(dataFrames[0], payload.panel.title);
       break;
     case ExportType.panelJson:
       exportPanelJSON(payload.panel.getSaveModel(), payload.panel.title);
-      console.log(payload.panel.getSaveModel());
       break;
     case ExportType.dataJson:
       exportDataJSON(payload.data, payload.panel.title);
@@ -65,6 +68,10 @@ export async function exportSelect(payload: ExportPayload) {
       exportDataJSON(panelData, payload.panel.title);
       break;
   }
+}
+
+export function exportCSV(data: DataFrame, title: string) {
+  downloadDataFrameAsCsv(data, title);
 }
 
 export function exportPanelJSON(panelData: PanelModel, title: string) {
@@ -111,42 +118,12 @@ export function exportExcel(data: DataFrame, title: string) {
   saveAs(blob, fileName);
 }
 
-export async function exportImage(payload: ExportPayload) {
-  let mockHTMLElement = document.createElement('a');
-  //const mockHTMLChildElement = document.createElement("div");
-  //mockHTMLElement = mockHTMLElement.appendChild(mockHTMLChildElement);
+// TODO: maybe borders and/or watermarK?
 
-  console.log(mockHTMLElement);
-  // console.log(await toCanvas(mockHTMLElement, { style: { transform: 'translate(0px, 0px)' } }))
+export async function exportImage(panelCanvas: HTMLCanvasElement, format: ExportType, title: string) {
+  const fileName = `${title}-${dateTimeFormat(new Date())}.${format}`;
 
-  // NOT WORKING FOR NEWS, GEOMAP, LOGS - new maybe due to nested images? geomap operation is insecure
-  /*const panelCanvas:HTMLCanvasElement = await toCanvas(payload.htmlElement, { style: { transform: 'translate(0px, 0px)' } });
-
-  const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`;
-  let a = document.createElement('canvas');
-  //a = await toCanvas(payload.htmlElement ?? new Node(), { style: { transform: 'translate(0px, 0px)' } });
-
-  console.log("pc", panelCanvas as HTMLCanvasElement, a);
-  //a.toBlob((blob) => { saveAs(blob as Blob, fileName) }, `image/${payload.format}`);
-  (panelCanvas as HTMLCanvasElement).toBlob((blob) => { saveAs(blob as Blob, fileName) }, `image/${payload.format}`);  */
-
-  // HTML2CANVAS
-  /*const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`; // CONSOLE LOGS A LOT
-  const panelCanvas = await html2canvas(payload.htmlElement);
-  panelCanvas.toBlob((blob) => { saveAs(blob as Blob, fileName) }, `image/${payload.format}`); */
-
-  // HTML-TO-IMAGE
-  const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`;
-  const panelCanvas = await toCanvas(payload.htmlElement ?? new Node(), {
-    style: { transform: 'translate(0px, 0px)' },
-  });
   panelCanvas.toBlob((blob) => {
     saveAs(blob ?? new Blob(), fileName);
-  }, `image/${payload.format}`);
-
-  // DOM-TO-IMAGE
-  /*const fileName = `${payload.panel.title}-${dateTimeFormat(new Date())}.${payload.format}`; 
-  let panelBlob = await domtoimage.toBlob(payload.htmlElement);
-  panelBlob = panelBlob.slice(0, panelBlob.size, `image/${payload.format}`)
-  saveAs(panelBlob, fileName); */
+  }, `image/${format}`);
 }

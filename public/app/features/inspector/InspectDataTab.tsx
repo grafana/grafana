@@ -323,8 +323,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
 }
 
 export function getProcessedData(options: GetDataOptions, data: DataFrame[], panel?: PanelModel): DataFrame[] {
-  console.log('preProcessedDataIN', data);
-
   if (!options.withFieldConfig || !panel) {
     return applyRawFieldOverrides(data);
   }

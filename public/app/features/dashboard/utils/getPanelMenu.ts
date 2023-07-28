@@ -68,13 +68,9 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
 
-  //=================
+  //================= WORKING HERE
 
   const onExportPanel = (exportType: ExportType) => {
-    // event.preventDefault();
-    //todo avoid as   DONE? (or maybe causes problems elsewhere) // NOW UNDONE
-    // const exportHtmlElement: HTMLElement = event.target;
-
     reportInteraction('dashboards_panelheader_menu', {
       item: 'createExportPanel',
       exportType: exportType ?? ExportType.jpeg,
@@ -173,7 +169,7 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  const subMenuEnable = false; // UX UX UX UX UX UX UX UX
+  const subMenuEnable = true; // ============
 
   const exportMenu: PanelMenuItem[] = [];
   let exportImageMenu = exportMenu;
@@ -187,19 +183,16 @@ export function getPanelMenu(
 
   exportImageMenu.push({
     text: `PNG`,
-    iconClassName: 'camera',
     onClick: () => onExportPanel(ExportType.png),
   });
 
   exportImageMenu.push({
     text: `JPEG`,
-    iconClassName: 'camera',
     onClick: () => onExportPanel(ExportType.jpeg),
   });
 
   exportImageMenu.push({
     text: `BMP`,
-    iconClassName: 'camera',
     onClick: () => onExportPanel(ExportType.bmp),
   });
 
@@ -213,34 +206,27 @@ export function getPanelMenu(
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
     exportDataMenu.push({
       text: `CSV`,
-      iconClassName: 'book',
       onClick: () => onExportPanel(ExportType.csv),
     });
 
     exportDataMenu.push({
       text: `Excel`,
-      iconClassName: 'book',
       onClick: () => onExportPanel(ExportType.xlsx),
     });
 
-    // MAYBE add back numbers?
-
     exportDataMenu.push({
       text: `Data JSON`,
-      iconClassName: 'book',
       onClick: () => onExportPanel(ExportType.dataJson),
     });
 
     exportDataMenu.push({
       text: `DataFrame JSON`,
-      iconClassName: 'book',
       onClick: () => onExportPanel(ExportType.dataFrameJson),
     });
   }
 
   exportDataMenu.push({
     text: `Panel JSON`,
-    iconClassName: 'book',
     onClick: () => onExportPanel(ExportType.panelJson),
   });
 
@@ -248,15 +234,20 @@ export function getPanelMenu(
     exportMenu.push({
       type: 'submenu',
       text: `Image`,
+      iconClassName: 'camera',
       subMenu: exportImageMenu,
     });
 
     exportMenu.push({
       type: 'submenu',
       text: `Data`,
+      iconClassName: 'book',
       subMenu: exportDataMenu,
     });
   }
+
+  // TODO: Re-implement feature toggle
+  // TODO: Remove optional submenu syntax
 
   const featureToggleEnabled = true;
 
@@ -266,7 +257,6 @@ export function getPanelMenu(
       type: 'submenu',
       text: t('panel.header-menu.export', `Export`),
       iconClassName: 'download-alt',
-      // shortcut: 't', // if multiple letters, overlaps with > symbol
       subMenu: exportMenu,
     });
   }

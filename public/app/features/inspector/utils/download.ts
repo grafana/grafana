@@ -63,8 +63,8 @@ export function downloadDataFrameAsCsv(
     type: 'text/csv;charset=utf-8',
   });
 
-  const transformation = transformId !== DataTransformerID.noop ? '-as-' + transformId.toLocaleLowerCase() : '';
-  const fileName = `${title}-data${transformation}-${dateTimeFormat(new Date())}.csv`;
+  const transformation = transformId !== DataTransformerID.noop ? '-data-as-' + transformId.toLocaleLowerCase() : '';
+  const fileName = `${title}${transformation}-${dateTimeFormat(new Date())}.csv`;
   saveAs(blob, fileName);
 }
 
