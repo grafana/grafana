@@ -13,9 +13,14 @@ import (
 
 type accessControlDashboardPermissionFilterNoFolderSubquery struct {
 	accessControlDashboardPermissionFilter
+
+	folderIsRequired bool
 }
 
 func (f *accessControlDashboardPermissionFilterNoFolderSubquery) LeftJoin() string {
+	if !f.folderIsRequired {
+		return ""
+	}
 	return " dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id"
 }
 
@@ -102,6 +107,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 			permSelector.WriteRune(')')
 
+			f.folderIsRequired = true
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
 				switch f.recursiveQueriesAreSupported {
