@@ -20,12 +20,12 @@ import (
 const thirtyDays = 30 * 24 * time.Hour
 const anonCachePrefix = "anon-session"
 
-type AnonSession struct {
+type Device struct {
 	ip        string
 	userAgent string
 }
 
-func (a *AnonSession) Key() (string, error) {
+func (a *Device) Key() (string, error) {
 	key := strings.Builder{}
 	key.WriteString(a.ip)
 	key.WriteString(a.userAgent)
@@ -38,14 +38,14 @@ func (a *AnonSession) Key() (string, error) {
 	return strings.Join([]string{anonCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), nil
 }
 
-type AnonSessionService struct {
+type AnonDeviceService struct {
 	remoteCache remotecache.CacheStorage
 	log         log.Logger
 	localCache  *localcache.CacheService
 }
 
-func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageStats usagestats.Service) *AnonSessionService {
-	a := &AnonSessionService{
+func ProvideAnonymousDeviceService(remoteCache remotecache.CacheStorage, usageStats usagestats.Service) *AnonDeviceService {
+	a := &AnonDeviceService{
 		remoteCache: remoteCache,
 		log:         log.New("anonymous-session-service"),
 		localCache:  localcache.New(29*time.Minute, 15*time.Minute),
@@ -56,7 +56,7 @@ func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageS
 	return a
 }
 
-func (a *AnonSessionService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
 	sessionCount, err := a.remoteCache.Count(ctx, anonCachePrefix)
 	if err != nil {
 		return nil, nil
@@ -67,7 +67,7 @@ func (a *AnonSessionService) usageStatFn(ctx context.Context) (map[string]interf
 	}, nil
 }
 
-func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Request) error {
+func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request) error {
 	addr := web.RemoteAddr(httpReq)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
@@ -80,12 +80,12 @@ func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Reque
 		clientIPStr = ""
 	}
 
-	anonSession := &AnonSession{
+	anonDevice := &Device{
 		ip:        clientIPStr,
 		userAgent: httpReq.UserAgent(),
 	}
 
-	key, err := anonSession.Key()
+	key, err := anonDevice.Key()
 	if err != nil {
 		return err
 	}
