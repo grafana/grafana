@@ -88,15 +88,17 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
     }, [isOverflowing, resizeObserver, truncate]);
 
     const getTooltipText = (children: NonNullable<React.ReactNode>) => {
+      if (typeof children === 'string') {
+        return children;
+      }
       const html = ReactDomServer.renderToStaticMarkup(<>{children}</>);
       const getRidOfTags = html.replace(/(<([^>]+)>)/gi, '');
       return getRidOfTags;
     };
-    const tooltipText = typeof children === 'string' ? children : getTooltipText(children);
 
     if (truncate === true && isOverflowing && element !== 'span') {
       return (
-        <Tooltip ref={internalRef} content={tooltipText}>
+        <Tooltip ref={internalRef} content={getTooltipText(children)}>
           {childElement}
         </Tooltip>
       );
