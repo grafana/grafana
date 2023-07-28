@@ -197,12 +197,12 @@ func addAlertInstanceDataMigration(mg *migrator.Migrator) {
 	alertInstanceData := migrator.Table{
 		Name: "alert_instance_data",
 		Columns: []*migrator.Column{
-			{Name: "rule_org_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "rule_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: false, Default: "0"},
 			{Name: "data", Type: migrator.DB_LongBlob, Nullable: false},
 			{Name: "expires_at", Type: migrator.DB_DateTime, Nullable: false},
 		},
-		PrimaryKeys: []string{"rule_org_id", "rule_uid"},
+		PrimaryKeys: []string{"org_id", "rule_uid"},
 	}
 
 	mg.AddMigration("create alert_instance_data table", migrator.NewAddTableMigration(alertInstanceData))
@@ -210,7 +210,6 @@ func addAlertInstanceDataMigration(mg *migrator.Migrator) {
 		Cols: []string{"expires_at"},
 		Type: migrator.IndexType,
 	}))
-
 }
 
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {

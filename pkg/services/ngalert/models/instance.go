@@ -17,7 +17,7 @@ type AlertInstance struct {
 }
 
 type AlertInstanceData struct {
-	RuleOrgID int64     `xorm:"rule_org_id"`
+	OrgID     int64     `xorm:"rule_org_id"`
 	RuleUID   string    `xorm:"rule_uid"`
 	Data      []byte    `xorm:"data"`
 	ExpiresAt time.Time `xorm:"expires_at"`
@@ -57,8 +57,8 @@ func (i InstanceStateType) IsValid() bool {
 
 // ListAlertInstancesQuery is the query list alert Instances.
 type ListAlertInstancesQuery struct {
-	RuleUID   string
 	RuleOrgID int64 `json:"-"`
+	RuleUID   string
 }
 
 // ValidateAlertInstance validates that the alert instance contains an alert rule id,

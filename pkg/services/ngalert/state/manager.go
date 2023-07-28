@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"context"
+	"fmt"
 	"io"
 	"net/url"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -40,7 +42,7 @@ type Manager struct {
 	cache       *cache
 	ResendDelay time.Duration
 
-	instanceStore InstanceStore
+	instanceStore InstanceDataStore
 	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
@@ -52,7 +54,7 @@ type Manager struct {
 type ManagerCfg struct {
 	Metrics       *metrics.State
 	ExternalURL   *url.URL
-	InstanceStore InstanceStore
+	InstanceStore InstanceDataStore
 	Images        ImageCapturer
 	Clock         clock.Clock
 	Historian     Historian
@@ -95,123 +97,86 @@ func (st *Manager) Run(ctx context.Context) error {
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 	if st.instanceStore == nil {
-		st.log.Info("Skip warming the state because instance store is not configured")
+		st.log.Info("Skipping warming the state cache")
 		return
 	}
-	startTime := time.Now()
-	st.log.Info("Warming state cache for startup")
 
-	orgIds, err := st.instanceStore.FetchOrgIdsFromInstanceData(ctx)
+	start := time.Now()
+	st.log.Info("Deleting expired instance data before warming")
+	st.deleteOldInstanceData(ctx, st.log)
+	st.log.Info("Deleting expired instance data before warming done", "duration", time.Since(start))
+
+	start = time.Now()
+	st.log.Info("Warming state cache")
+
+	// Despite deleting expired state caches, there might be some states that have not expired
+	// but their rules have been deleted. We'll create a lookup table of all known rules and
+	// ignore alert instances that are not in this table.
+	rulesForAllOrgs, err := rulesReader.ListAlertRules(ctx, &ngModels.ListAlertRulesQuery{})
 	if err != nil {
-		st.log.Error("Unable to fetch orgIds", "error", err)
+		st.log.Error("Unable to fetch rules", "error", err)
+		return
+	}
+	exists := make(map[ngModels.AlertRuleKey]struct{})
+	for _, rule := range rulesForAllOrgs {
+		exists[rule.GetKey()] = struct{}{}
 	}
 
-	statesCount := 0
-	states := make(map[int64]map[string]*ruleStates, len(orgIds))
-	for _, orgId := range orgIds {
-		// Get Rules
-		ruleCmd := ngModels.ListAlertRulesQuery{
-			OrgID: orgId,
-		}
+	// Next get all non-expired alert instance data to warm up the state cache
+	alertInstanceData, err := st.instanceStore.ListAlertInstanceData(ctx, &ngModels.ListAlertInstancesQuery{})
+	if err != nil {
+		st.log.Error("Unable to fetch previous state", "error", err)
+		return
+	}
 
-		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
+	states := make(map[int64]map[string]*ruleStates)
+	for _, data := range alertInstanceData {
+		alertInstances, err := unmarshalInstanceData(data)
 		if err != nil {
-			st.log.Error("Unable to fetch previous state", "error", err)
+			st.log.Error("Failed to unmarshal alert instance data", "error", err)
+			continue
 		}
-
-		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
-		for _, rule := range alertRules {
-			ruleByUID[rule.UID] = rule
-		}
-
-		orgStates := make(map[string]*ruleStates, len(ruleByUID))
-		states[orgId] = orgStates
-
-		// Get Instances
-		cmd := ngModels.ListAlertInstancesQuery{
-			RuleOrgID: orgId,
-		}
-		alertInstanceData, err := st.instanceStore.ListAlertInstanceData(ctx, &cmd)
-		if err != nil {
-			st.log.Error("Unable to fetch previous state", "error", err)
-			return
-		}
-
-		alertInstances := make([]*ngModels.AlertInstance, 0)
-		for _, n := range alertInstanceData {
-			r, err := zlib.NewReader(bytes.NewReader(n.Data))
-			if err != nil {
-				st.log.Error("Failed to create zlib reader", "error", err)
-				return
-			}
-			b := bytes.Buffer{}
-			if _, err := io.Copy(&b, r); err != nil {
-				st.log.Error("Failed to copy from zlib", "error", err)
-				return
-			}
-			if err := r.Close(); err != nil {
-				st.log.Error("Failed to close zlib reader", "error", err)
-				return
-			}
-			p := pb.AlertInstances{}
-			if err := proto.Unmarshal(b.Bytes(), &p); err != nil {
-				st.log.Error("Failed to unmarshal protobuf", "error", err)
-			}
-			for _, i := range p.Instances {
-				v := ngModels.AlertInstance{
-					AlertInstanceKey: ngModels.AlertInstanceKey{
-						RuleOrgID:  i.Key.RuleOrgId,
-						RuleUID:    i.Key.RuleUid,
-						LabelsHash: i.Key.LabelsHash,
-					},
-					Labels:            i.Labels,
-					CurrentState:      ngModels.InstanceStateType(i.CurrentState),
-					CurrentReason:     i.CurrentReason,
-					LastEvalTime:      i.LastEvalTime.AsTime(),
-					CurrentStateSince: i.CurrentStateSince.AsTime(),
-					CurrentStateEnd:   i.CurrentStateEnd.AsTime(),
-				}
-				alertInstances = append(alertInstances, &v)
-			}
-		}
-
-		for _, entry := range alertInstances {
-			ruleForEntry, ok := ruleByUID[entry.RuleUID]
-			if !ok {
-				// TODO Should we delete the orphaned state from the db?
+		for _, next := range alertInstances {
+			if _, ok := exists[ngModels.AlertRuleKey{OrgID: next.RuleOrgID, UID: next.RuleUID}]; !ok {
+				st.log.Debug("Skipping alert instances for deleted rule", "org", next.RuleOrgID, "uid", next.RuleUID)
 				continue
 			}
-
-			rulesStates, ok := orgStates[entry.RuleUID]
+			orgStates, ok := states[next.RuleOrgID]
+			if !ok {
+				orgStates = make(map[string]*ruleStates)
+			}
+			rulesStates, ok := orgStates[next.RuleUID]
 			if !ok {
 				rulesStates = &ruleStates{states: make(map[string]*State)}
-				orgStates[entry.RuleUID] = rulesStates
+				orgStates[next.RuleUID] = rulesStates
 			}
-
-			lbs := map[string]string(entry.Labels)
-			cacheID, err := entry.Labels.StringKey()
+			lbs := map[string]string(next.Labels)
+			cacheID, err := next.Labels.StringKey()
 			if err != nil {
-				st.log.Error("Error getting cacheId for entry", "error", err)
+				st.log.Error("Error getting cacheID for entry", "error", err)
 			}
-
 			rulesStates.states[cacheID] = &State{
-				AlertRuleUID:         entry.RuleUID,
-				OrgID:                entry.RuleOrgID,
+				AlertRuleUID:         next.RuleUID,
+				OrgID:                next.RuleOrgID,
 				CacheID:              cacheID,
 				Labels:               lbs,
-				State:                translateInstanceState(entry.CurrentState),
-				StateReason:          entry.CurrentReason,
+				State:                translateInstanceState(next.CurrentState),
+				StateReason:          next.CurrentReason,
 				LastEvaluationString: "",
-				StartsAt:             entry.CurrentStateSince,
-				EndsAt:               entry.CurrentStateEnd,
-				LastEvaluationTime:   entry.LastEvalTime,
-				Annotations:          ruleForEntry.Annotations,
+				StartsAt:             next.CurrentStateSince,
+				EndsAt:               next.CurrentStateEnd,
+				LastEvaluationTime:   next.LastEvalTime,
 			}
-			statesCount++
+			states[next.RuleOrgID] = orgStates
 		}
 	}
 	st.cache.setAllStates(states)
-	st.log.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
+
+	for _, rule := range rulesForAllOrgs {
+		st.deleteStaleStatesFromCache(ctx, st.log, time.Now(), rule)
+	}
+
+	st.log.Info("Warming state cache done", "duration", time.Since(start))
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
@@ -254,7 +219,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 	}
 
 	if st.instanceStore != nil {
-		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		_, err := st.instanceStore.DeleteAlertInstanceData(ctx, ruleKey)
 		if err != nil {
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
@@ -401,72 +366,17 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, expir
 	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
-
 	start := time.Now()
 	logger.Debug("Saving alert states", "count", len(states))
-
-	p := &pb.AlertInstances{Instances: make([]*pb.AlertInstance, 0, len(states))}
-	for _, state := range states {
-		// Do not save normal state to database and remove transition to Normal state but keep mapped states
-		if st.doNotSaveNormalState && IsNormalStateWithNoReason(state.State) && !state.Changed() {
-			continue
-		}
-		key, err := state.GetAlertInstanceKey()
-		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored", "cacheID", state.CacheID, "error", err, "labels", state.Labels.String())
-			return
-		}
-		p.Instances = append(p.Instances, &pb.AlertInstance{
-			Key: &pb.AlertInstance_AlertInstanceKey{
-				RuleOrgId:  key.RuleOrgID,
-				RuleUid:    key.RuleUID,
-				LabelsHash: key.LabelsHash,
-			},
-			Labels:            state.Labels,
-			CurrentState:      state.State.State.String(),
-			CurrentReason:     state.State.StateReason,
-			LastEvalTime:      timestamppb.New(state.LastEvaluationTime),
-			CurrentStateSince: timestamppb.New(state.StartsAt),
-			CurrentStateEnd:   timestamppb.New(state.EndsAt),
-		})
-	}
-
-	out, err := proto.Marshal(p)
+	data, err := newInstanceData(states[0].GetRuleKey(), expiresAt, states)
 	if err != nil {
-		logger.Error("Failed to marshal protobuf", "error", err)
+		logger.Error("Failed to create instance data", "error", err)
 		return
 	}
-
-	b := bytes.Buffer{}
-	w := zlib.NewWriter(&b)
-	if _, err := w.Write(out); err != nil {
-		logger.Error("Failed to write to zlib writer", "error", err)
-		return
-	}
-	if err := w.Close(); err != nil {
-		logger.Error("Failed to close zlib writer", "error", err)
-		return
-	}
-
-	logger.Debug("Reduced size summary", "without_compression", len(out), "with_compression", b.Len())
-
-	// It is assumed that all the states are from the same alert rule, as that's what ProcessEvalResults does
-	key, err := states[0].GetAlertInstanceKey()
-	if err != nil {
-		logger.Error("Unexpected error getting alert instance key", "error", err)
-		return
-	}
-
-	if err = st.instanceStore.SaveAlertInstanceData(ctx, ngModels.AlertInstanceData{
-		RuleOrgID: key.RuleOrgID,
-		RuleUID:   key.RuleUID,
-		Data:      b.Bytes(),
-		ExpiresAt: expiresAt,
-	}); err != nil {
+	if err = st.instanceStore.SaveAlertInstanceData(ctx, *data); err != nil {
 		logger.Error("Failed to save alert instance data", "error", err)
 		return
 	}
-
 	logger.Debug("Saving alert states done", "count", len(states), "duration", time.Since(start))
 }
 
@@ -482,7 +392,7 @@ func (st *Manager) deleteOldInstanceData(ctx context.Context, logger log.Logger)
 	}
 }
 
-func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
+func (st *Manager) deleteAlertStates(_ context.Context, logger log.Logger, states []StateTransition) {
 	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
@@ -497,11 +407,6 @@ func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, sta
 			continue
 		}
 		toDelete = append(toDelete, key)
-	}
-
-	err := st.instanceStore.DeleteAlertInstances(ctx, toDelete...)
-	if err != nil {
-		logger.Error("Failed to delete stale states", "error", err)
 	}
 }
 
@@ -565,4 +470,89 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
 	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+}
+
+func newInstanceData(key ngModels.AlertRuleKey, expiresAt time.Time, states []StateTransition) (*ngModels.AlertInstanceData, error) {
+	p := &pb.AlertInstances{Instances: make([]*pb.AlertInstance, 0, len(states))}
+	for _, state := range states {
+		// Do not save normal state to database and remove transition to Normal state but keep mapped states
+		if IsNormalStateWithNoReason(state.State) {
+			continue
+		}
+		key, err := state.GetAlertInstanceKey()
+		if err != nil {
+			return nil, err
+		}
+		p.Instances = append(p.Instances, &pb.AlertInstance{
+			Key: &pb.AlertInstance_AlertInstanceKey{
+				RuleOrgId:  key.RuleOrgID,
+				RuleUid:    key.RuleUID,
+				LabelsHash: key.LabelsHash,
+			},
+			Labels:            state.Labels,
+			CurrentState:      state.State.State.String(),
+			CurrentReason:     state.State.StateReason,
+			LastEvalTime:      timestamppb.New(state.LastEvaluationTime),
+			CurrentStateSince: timestamppb.New(state.StartsAt),
+			CurrentStateEnd:   timestamppb.New(state.EndsAt),
+		})
+	}
+
+	out, err := proto.Marshal(p)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to marshal protobuf: %w", err)
+	}
+
+	b := bytes.Buffer{}
+	w := zlib.NewWriter(&b)
+	if _, err := w.Write(out); err != nil {
+		return nil, fmt.Errorf("Failed to write to zlib writer: %w", err)
+	}
+	if err := w.Close(); err != nil {
+		return nil, fmt.Errorf("Failed to close zlib writer: %w", err)
+	}
+	logger.Debug("Reduced size summary", "without_compression", len(out), "with_compression", b.Len())
+
+	return &ngModels.AlertInstanceData{
+		OrgID:     key.OrgID,
+		RuleUID:   key.UID,
+		Data:      b.Bytes(),
+		ExpiresAt: expiresAt,
+	}, nil
+}
+
+func unmarshalInstanceData(data *ngModels.AlertInstanceData) ([]*ngModels.AlertInstance, error) {
+	result := make([]*ngModels.AlertInstance, 0)
+	r, err := zlib.NewReader(bytes.NewReader(data.Data))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create zlib reader: %w", err)
+	}
+	b := bytes.Buffer{}
+	if _, err := io.Copy(&b, r); err != nil {
+		return nil, fmt.Errorf("Failed to copy from zlib: %w", err)
+	}
+	if err := r.Close(); err != nil {
+		return nil, fmt.Errorf("Failed to close zlib reader: %w", err)
+	}
+	p := pb.AlertInstances{}
+	if err := proto.Unmarshal(b.Bytes(), &p); err != nil {
+		return nil, fmt.Errorf("Failed to unmarshal protobuf: %w", err)
+	}
+	for _, i := range p.Instances {
+		v := ngModels.AlertInstance{
+			AlertInstanceKey: ngModels.AlertInstanceKey{
+				RuleOrgID:  i.Key.RuleOrgId,
+				RuleUID:    i.Key.RuleUid,
+				LabelsHash: i.Key.LabelsHash,
+			},
+			Labels:            i.Labels,
+			CurrentState:      ngModels.InstanceStateType(i.CurrentState),
+			CurrentReason:     i.CurrentReason,
+			LastEvalTime:      i.LastEvalTime.AsTime(),
+			CurrentStateSince: i.CurrentStateSince.AsTime(),
+			CurrentStateEnd:   i.CurrentStateEnd.AsTime(),
+		}
+		result = append(result, &v)
+	}
+	return result, nil
 }

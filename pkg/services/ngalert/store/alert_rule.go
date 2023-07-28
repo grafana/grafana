@@ -328,7 +328,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		q := sess.Table("alert_rule")
 
-		if query.OrgID >= 0 {
+		if query.OrgID > 0 {
 			q = q.Where("org_id = ?", query.OrgID)
 		}
 
