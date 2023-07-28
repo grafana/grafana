@@ -57,27 +57,8 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 }
 
 func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
-	logs, err := mg.GetMigrationLog()
-	if err != nil {
-		mg.Logger.Error("Alert migration failure: could not get migration log", "error", err)
-		os.Exit(1)
-	}
-
 	migrationID := "update dashboard_uid and panel_id from existing annotations"
-	_, migrationRun := logs[migrationID]
-	ngEnabled := mg.Cfg.UnifiedAlerting.IsEnabled()
-	undoMigrationID := "undo " + migrationID
-
-	if ngEnabled && !migrationRun {
-		// If ngalert is enabled and the migration has not been run then run it.
-		mg.AddMigration(migrationID, &updateDashboardUIDPanelIDMigration{})
-	} else if !ngEnabled && migrationRun {
-		// If ngalert is disabled and the migration has been run then remove it
-		// from the migration log so it will run if ngalert is re-enabled.
-		mg.AddMigration(undoMigrationID, &clearMigrationEntry{
-			migrationID: migrationID,
-		})
-	}
+	mg.AddMigration(migrationID, &updateDashboardUIDPanelIDMigration{})
 }
 
 // updateDashboardUIDPanelIDMigration sets the dashboard_uid and panel_id columns
