@@ -10,6 +10,10 @@ keywords:
   - Token
   - Org
   - Organization
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'API Tutorial: Create API tokens and dashboards for an organization'
 weight: 150
 ---

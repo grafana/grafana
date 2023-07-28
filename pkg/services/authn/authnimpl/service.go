@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -58,7 +57,7 @@ func ProvideService(
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
 	usageStats usagestats.Service,
-	anonSessionService anonymous.Service,
+	anonDeviceService anonymous.Service,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -89,7 +88,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonSessionService))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonDeviceService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -143,7 +142,7 @@ func ProvideService(
 			connector, errConnector := socialService.GetConnector(name)
 			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
 			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("Failed to configure oauth client", "client", clientName, "err", multierror.Append(errConnector, errHTTPClient))
+				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
 			} else {
 				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
 			}
@@ -156,10 +155,10 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableDisabledUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
+		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	}
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
@@ -201,7 +200,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 					return nil, err
 				}
 
-				authErr = multierror.Append(authErr, err)
+				authErr = errors.Join(authErr, err)
 				// try next
 				continue
 			}
@@ -271,6 +270,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()

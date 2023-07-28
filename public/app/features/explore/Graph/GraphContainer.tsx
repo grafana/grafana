@@ -18,8 +18,9 @@ import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
 import { loadGraphStyle } from './utils';
 
-interface Props extends Pick<PanelChromeProps, 'width' | 'height' | 'statusMessage'> {
-  loading: boolean;
+interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
+  width: number;
+  height: number;
   data: DataFrame[];
   annotations?: DataFrame[];
   eventBus: EventBus;

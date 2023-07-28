@@ -1,10 +1,20 @@
+import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector, StoreState } from 'app/types';
+import { useSelector, StoreState, useDispatch } from 'app/types';
 
-import { ROOT_PAGE_SIZE } from '../api/services';
-import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
+import { PAGE_SIZE } from '../api/services';
+import {
+  BrowseDashboardsState,
+  DashboardsTreeItem,
+  DashboardTreeSelection,
+  DashboardViewItemWithUIItems,
+  UIDashboardViewItem,
+} from '../types';
+
+import { fetchNextChildrenPage } from './actions';
+import { getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
@@ -94,6 +104,31 @@ export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
+export function useLoadNextChildrenPage(
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
+) {
+  const dispatch = useDispatch();
+  const requestInFlightRef = useRef(false);
+
+  const handleLoadMore = useCallback(
+    (folderUID: string | undefined) => {
+      if (requestInFlightRef.current) {
+        return Promise.resolve();
+      }
+
+      requestInFlightRef.current = true;
+
+      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, excludeKinds, pageSize: PAGE_SIZE }));
+      promise.finally(() => (requestInFlightRef.current = false));
+
+      return promise;
+    },
+    [dispatch, excludeKinds]
+  );
+
+  return handleLoadMore;
+}
+
 /**
  * Creates a list of items, with level indicating it's 'nested' in the tree structure
  *
@@ -103,23 +138,38 @@ export function useActionSelectionState() {
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-function createFlatTree(
+export function createFlatTree(
   folderUID: string | undefined,
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0
+  level = 0,
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
+  excludeUIDs: string[] = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
+    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
+      return [];
+    }
+
+    const mappedChildren = createFlatTree(
+      item.uid,
+      rootCollection,
+      childrenByUID,
+      openFolders,
+      level + 1,
+      excludeKinds,
+      excludeUIDs
+    );
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder) {
+    if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
         item: { kind: 'ui', uiKind: 'empty-folder', uid: item.uid + 'empty-folder' },
+        parentUID,
       });
     }
 
@@ -141,26 +191,22 @@ function createFlatTree(
     ? isOpen && collection?.items // keep seperate lines
     : collection?.items;
 
-  let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
+  let children = (items || []).flatMap((item) => {
+    return mapItem(item, folderUID, level);
+  });
 
-  if (level === 0 && collection && !collection.isFullyLoaded) {
-    children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
+  // this is very custom to the folder picker right now
+  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
+  // so we need to check that we're ignoring dashboards and we've fetched all the folders
+  // TODO generalize this properly (e.g. split state by kind?)
+  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
+
+  const showPlaceholders =
+    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+
+  if (showPlaceholders) {
+    children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
   }
 
   return children;
-}
-
-function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
-  return new Array(amount).fill(null).map((_, index) => {
-    return {
-      parentUID,
-      level,
-      isOpen: false,
-      item: {
-        kind: 'ui' as const,
-        uiKind: 'pagination-placeholder' as const,
-        uid: `${parentUID}-pagination-${index}`,
-      },
-    };
-  });
 }

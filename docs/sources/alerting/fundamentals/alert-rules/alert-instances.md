@@ -1,11 +1,17 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-instances/
 description: Learn about Grafana alert instances
 keywords:
   - grafana
   - alerting
   - instances
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert instances
-weight: 103
+weight: 105
 ---
 
 # Alert instances

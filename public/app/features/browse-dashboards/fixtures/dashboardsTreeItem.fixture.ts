@@ -60,7 +60,7 @@ export function wellFormedFolder(
       ...itemPartial,
     },
     level: 0,
-    isOpen: true,
+    isOpen: false,
     ...partial,
   };
 }

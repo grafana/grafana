@@ -41,7 +41,7 @@ export const Basic: StoryFn<typeof ContextMenu> = (args: ContextMenuProps) => {
 export const WithState: StoryFn<typeof WithContextMenu> = (args: WithContextMenuProps) => {
   return (
     <WithContextMenu {...args}>
-      {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
+      {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} tooltip="More information" />}
     </WithContextMenu>
   );
 };

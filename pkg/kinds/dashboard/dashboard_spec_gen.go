@@ -293,13 +293,13 @@ type DataTransformerConfig struct {
 
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
-	Options interface{} `json:"options"`
+	Options any `json:"options"`
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
-	Id    string       `json:"id"`
-	Value *interface{} `json:"value,omitempty"`
+	Id    string `json:"id"`
+	Value *any   `json:"value,omitempty"`
 }
 
 // Map a field to a color.
@@ -363,7 +363,7 @@ type FieldConfig struct {
 
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
-	Custom map[string]interface{} `json:"custom,omitempty"`
+	Custom map[string]any `json:"custom,omitempty"`
 
 	// Specify the number of decimals Grafana includes in the rendered value.
 	// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value.
@@ -385,10 +385,10 @@ type FieldConfig struct {
 	Filterable *bool `json:"filterable,omitempty"`
 
 	// The behavior when clicking on a result
-	Links []interface{} `json:"links,omitempty"`
+	Links []any `json:"links,omitempty"`
 
 	// Convert input values into a display string
-	Mappings []interface{} `json:"mappings,omitempty"`
+	Mappings []any `json:"mappings,omitempty"`
 
 	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
 	Max *float32 `json:"max,omitempty"`
@@ -510,7 +510,7 @@ type MatcherConfig struct {
 	Id string `json:"id"`
 
 	// The matcher options. This is specific to the matcher implementation.
-	Options *interface{} `json:"options,omitempty"`
+	Options *any `json:"options,omitempty"`
 }
 
 // Dashboard panels are the basic visualization building blocks.
@@ -550,7 +550,7 @@ type Panel struct {
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
 
 	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
-	Options map[string]interface{} `json:"options"`
+	Options map[string]any `json:"options"`
 
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
@@ -612,13 +612,13 @@ type RangeMap struct {
 	// Range to match against and the result to apply when the value is within the range
 	Options struct {
 		// Min value of the range. It can be null which means -Infinity
-		From float64 `json:"from"`
+		From *float64 `json:"from"`
 
 		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
 
 		// Max value of the range. It can be null which means +Infinity
-		To float64 `json:"to"`
+		To *float64 `json:"to"`
 	} `json:"options"`
 	Type RangeMapType `json:"type"`
 }
@@ -658,7 +658,7 @@ type RowPanel struct {
 	Id int `json:"id"`
 
 	// List of panels in the row
-	Panels []interface{} `json:"panels"`
+	Panels []any `json:"panels"`
 
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
@@ -740,7 +740,7 @@ type Spec struct {
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	Id *int64 `json:"id,omitempty"`
+	Id *int64 `json:"id"`
 
 	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`
@@ -751,10 +751,10 @@ type Spec struct {
 	LiveNow *bool `json:"liveNow,omitempty"`
 
 	// List of dashboard panels
-	Panels []interface{} `json:"panels,omitempty"`
+	Panels []any `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	Refresh *interface{} `json:"refresh,omitempty"`
+	Refresh *any `json:"refresh,omitempty"`
 
 	// This property should only be used in dashboards defined by plugins.  It is a quick check
 	// to see if the version has changed since the last time.
@@ -856,7 +856,7 @@ type SpecialValueMatch string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
-type Target = map[string]interface{}
+type Target = map[string]any
 
 // User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
 // They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
@@ -866,7 +866,7 @@ type Threshold struct {
 
 	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 	// Nulls currently appear here when serializing -Infinity to JSON.
-	Value float32 `json:"value"`
+	Value *float32 `json:"value"`
 }
 
 // Thresholds configuration for the panel
@@ -945,7 +945,7 @@ type VariableModel struct {
 	Options []VariableOption `json:"options,omitempty"`
 
 	// Query used to fetch values for a variable
-	Query *interface{} `json:"query,omitempty"`
+	Query *any `json:"query,omitempty"`
 
 	// Options to config when to refresh a variable
 	// `0`: Never refresh the variable
@@ -974,10 +974,10 @@ type VariableOption struct {
 	Selected *bool `json:"selected,omitempty"`
 
 	// Text to be displayed for the option
-	Text interface{} `json:"text"`
+	Text any `json:"text"`
 
 	// Value of the option
-	Value interface{} `json:"value"`
+	Value any `json:"value"`
 }
 
 // Options to config when to refresh a variable

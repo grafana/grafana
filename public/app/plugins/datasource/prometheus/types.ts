@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
 import { Prometheus as GenPromQuery } from './dataquery.gen';
-import { QueryEditorMode } from './querybuilder/shared/types';
+import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
   /**
@@ -16,7 +16,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  // store the metrics modal additional settings
+  // store the metrics explorer additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
@@ -44,6 +44,8 @@ export interface PromOptions extends DataSourceJsonData {
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
+  disableRecordingRules?: boolean;
+  sigV4Auth?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -191,6 +193,8 @@ export interface PromVariableQuery extends DataQuery {
   metric?: string;
   varQuery?: string;
   seriesQuery?: string;
+  labelFilters?: QueryBuilderLabelFilter[];
+  match?: string;
 }
 
 export type StandardPromVariableQuery = {

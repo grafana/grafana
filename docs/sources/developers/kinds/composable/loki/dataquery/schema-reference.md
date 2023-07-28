@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: LokiDataQuery kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -25,7 +30,7 @@ title: LokiDataQuery kind
 | `maxLines`     | integer | No       |         | Used to limit the number of log rows returned.                                                                                                                                                                                                          |
 | `queryType`    | string  | No       |         | Specify the query flavor<br/>TODO make this required and give it a default                                                                                                                                                                              |
 | `range`        | boolean | No       |         | @deprecated, now use queryType.                                                                                                                                                                                                                         |
-| `resolution`   | integer | No       |         | Used to scale the interval value.                                                                                                                                                                                                                       |
+| `resolution`   | integer | No       |         | @deprecated, now use step.                                                                                                                                                                                                                              |
 | `step`         | string  | No       |         | Used to set step value for range queries.                                                                                                                                                                                                               |
 
 

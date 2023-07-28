@@ -38,7 +38,14 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
+export const SaveDashboardAsForm = ({
+  dashboard,
+  isLoading,
+  isNew,
+  onSubmit,
+  onCancel,
+  onSuccess,
+}: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
@@ -52,8 +59,9 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
     if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
       return 'Dashboard name cannot be the same as folder name';
     }
+
     try {
-      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid, dashboardName);
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid ?? 'general', dashboardName);
       return true;
     } catch (e) {
       return e instanceof Error ? e.message : 'Dashboard name is invalid';
@@ -70,7 +78,7 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
 
         const clone = getSaveAsDashboardClone(dashboard);
         clone.title = data.title;
-        if (!data.copyTags) {
+        if (!isNew && !data.copyTags) {
           clone.tags = [];
         }
 
@@ -103,9 +111,11 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
               render={({ field: { ref, ...field } }) => (
                 <FolderPicker
                   {...field}
-                  dashboardId={dashboard.id}
-                  initialFolderUid={dashboard.meta.folderUid}
+                  onChange={(uid: string, title: string) => field.onChange({ uid, title })}
+                  value={field.value?.uid}
+                  // Old folder picker fields
                   initialTitle={dashboard.meta.folderTitle}
+                  dashboardId={dashboard.id}
                   enableCreateNew
                 />
               )}
@@ -122,8 +132,8 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
               Cancel
             </Button>
-            <Button type="submit" aria-label="Save dashboard button">
-              Save
+            <Button disabled={isLoading} type="submit" aria-label="Save dashboard button">
+              {isLoading ? 'Saving...' : 'Save'}
             </Button>
           </HorizontalGroup>
         </>

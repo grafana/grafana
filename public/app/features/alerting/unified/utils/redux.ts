@@ -188,6 +188,14 @@ export function isAsyncRequestMapSlicePending<T>(slice: AsyncRequestMapSlice<T>)
   return Object.values(slice).some(isAsyncRequestStatePending);
 }
 
+export function isAsyncRequestMapSlicePartiallyDispatched<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some((state) => state.dispatched);
+}
+
+export function isAsyncRequestMapSlicePartiallyFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).some(isAsyncRequestStateFulfilled);
+}
+
 export function isAsyncRequestStatePending<T>(state?: AsyncRequestState<T>): boolean {
   if (!state) {
     return false;

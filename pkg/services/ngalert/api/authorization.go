@@ -185,7 +185,9 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Grafana-only Provisioning Read Paths
 	case http.MethodGet + "/api/v1/provisioning/policies",
+		http.MethodGet + "/api/v1/provisioning/policies/export",
 		http.MethodGet + "/api/v1/provisioning/contact-points",
+		http.MethodGet + "/api/v1/provisioning/contact-points/export",
 		http.MethodGet + "/api/v1/provisioning/templates",
 		http.MethodGet + "/api/v1/provisioning/templates/{name}",
 		http.MethodGet + "/api/v1/provisioning/mute-timings",

@@ -2481,7 +2481,6 @@ func TestProcessBuckets(t *testing.T) {
 		  }
 		]
 	  }
-		  
 	`)
 
 			result, err := queryDataTest(query, response)
@@ -3305,7 +3304,7 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 2)
 		require.Equal(t, "bar", flattened["foo"])
 		require.Equal(t, "qux", flattened["nested.bax.baz"])
@@ -3340,9 +3339,110 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 1)
 		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+	})
+
+	t.Run("does not affect any non-nested JSON", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": "",
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName": "",
+		}, flatten(target, 10))
+	})
+
+	t.Run("flattens up to maxDepth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens up to maxDepth with multiple keys in target", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens multiple objects of the same max depth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
+	})
+
+	t.Run("only flattens multiple entries in the same key", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName":  "",
+				"innerFieldName1": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName.innerFieldName1":  "",
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("combines nested field names", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
+	})
+
+	t.Run("will preserve only one key with the same name", func(t *testing.T) {
+		// This test documents that in the unlikely case of a collision of a flattened name and an existing key, only
+		// one entry's value will be preserved at random
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "one of these values will be lost",
+			},
+			"fieldName.innerFieldName": "this may be lost",
+		}
+
+		result := flatten(target, 10)
+		assert.Len(t, result, 1)
+		_, ok := result["fieldName.innerFieldName"]
+		assert.True(t, ok)
 	})
 }
 

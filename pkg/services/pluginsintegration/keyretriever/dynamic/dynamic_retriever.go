@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,9 +29,8 @@ type ManifestKeys struct {
 }
 
 type KeyRetriever struct {
-	cfg   *setting.Cfg
-	log   log.Logger
-	flags featuremgmt.FeatureToggles
+	cfg *setting.Cfg
+	log log.Logger
 
 	lock    sync.Mutex
 	cli     http.Client
@@ -41,20 +40,19 @@ type KeyRetriever struct {
 
 var _ plugins.KeyRetriever = (*KeyRetriever)(nil)
 
-func ProvideService(cfg *setting.Cfg, kv plugins.KeyStore, flags featuremgmt.FeatureToggles) *KeyRetriever {
+func ProvideService(cfg *setting.Cfg, kv plugins.KeyStore) *KeyRetriever {
 	kr := &KeyRetriever{
-		cfg:   cfg,
-		flags: flags,
-		log:   log.New("plugin.signature.key_retriever"),
-		cli:   makeHttpClient(),
-		kv:    kv,
+		cfg: cfg,
+		log: log.New("plugin.signature.key_retriever"),
+		cli: makeHttpClient(),
+		kv:  kv,
 	}
 	return kr
 }
 
 // IsDisabled disables dynamic retrieval of public keys from the API server.
 func (kr *KeyRetriever) IsDisabled() bool {
-	return !kr.flags.IsEnabled(featuremgmt.FlagPluginsAPIManifestKey)
+	return kr.cfg.PluginSkipPublicKeyDownload
 }
 
 func (kr *KeyRetriever) Run(ctx context.Context) error {
@@ -137,8 +135,18 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 		}
 	}()
 
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return err
+	}
+
+	if err := json.Unmarshal(body, &data); err != nil {
+		kr.log.Debug("error unmarshalling response body", "error", err, "body", string(body))
+		return fmt.Errorf("error unmarshalling response body: %w", err)
 	}
 
 	if len(data.Items) == 0 {

@@ -2,10 +2,7 @@ import React from 'react';
 
 import { Alert } from '@grafana/ui';
 
-import { useAlertManagerSourceName } from '../hooks/useAlertManagerSourceName';
 import { AlertManagerDataSource } from '../utils/datasource';
-
-import { AlertManagerPicker } from './AlertManagerPicker';
 
 interface Props {
   availableAlertManagers: AlertManagerDataSource[];
@@ -18,25 +15,14 @@ const NoAlertManagersAvailable = () => (
 );
 
 const OtherAlertManagersAvailable = () => (
-  <Alert title="Selected Alertmanager not found. Select a different Alertmanager." severity="warning">
-    Selected Alertmanager no longer exists or you may not have permission to access it.
+  <Alert title="Selected Alertmanager not found." severity="warning">
+    The selected Alertmanager no longer exists or you may not have permission to access it. You can select a different
+    Alertmanager from the dropdown.
   </Alert>
 );
 
 export const NoAlertManagerWarning = ({ availableAlertManagers }: Props) => {
-  const [_, setAlertManagerSourceName] = useAlertManagerSourceName(availableAlertManagers);
   const hasOtherAMs = availableAlertManagers.length > 0;
 
-  return (
-    <div>
-      {hasOtherAMs ? (
-        <>
-          <AlertManagerPicker onChange={setAlertManagerSourceName} dataSources={availableAlertManagers} />
-          <OtherAlertManagersAvailable />
-        </>
-      ) : (
-        <NoAlertManagersAvailable />
-      )}
-    </div>
-  );
+  return <div>{hasOtherAMs ? <OtherAlertManagersAvailable /> : <NoAlertManagersAvailable />}</div>;
 };

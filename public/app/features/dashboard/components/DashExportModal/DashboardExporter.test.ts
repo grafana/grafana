@@ -1,6 +1,7 @@
 import { find } from 'lodash';
 
 import { DataSourceInstanceSettings, DataSourceRef, PanelPluginMeta } from '@grafana/data';
+import { Dashboard, ThresholdsMode } from '@grafana/schema';
 import config from 'app/core/config';
 
 import { LibraryElementKind } from '../../../library-panels/types';
@@ -91,6 +92,80 @@ it('handles a default datasource in a template variable', async () => {
   const exporter = new DashboardExporter();
   const exported: any = await exporter.makeExportable(dashboardModel);
   expect(exported.templating.list[0].datasource.uid).toBe('${DS_GFDB}');
+});
+
+it('replaces datasource ref in library panel', async () => {
+  const dashboard: Dashboard = {
+    style: 'dark',
+    editable: true,
+    graphTooltip: 1,
+    schemaVersion: 38,
+    panels: [
+      {
+        id: 1,
+        title: 'Panel title',
+        type: 'timeseries',
+        options: {
+          cellHeight: 'sm',
+          footer: {
+            countRows: false,
+            fields: '',
+            reducer: ['sum'],
+            show: false,
+          },
+          showHeader: true,
+        },
+        transformations: [],
+        transparent: false,
+        fieldConfig: {
+          defaults: {
+            custom: {
+              align: 'auto',
+              cellOptions: {
+                type: 'auto',
+              },
+              inspect: false,
+            },
+            mappings: [],
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                {
+                  color: 'green',
+                  value: 10,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        gridPos: {
+          h: 8,
+          w: 12,
+          x: 0,
+          y: 0,
+        },
+        libraryPanel: {
+          name: 'Testing lib panel',
+          uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+        },
+      },
+    ],
+  };
+
+  const dashboardModel = new DashboardModel(dashboard, {});
+
+  const exporter = new DashboardExporter();
+  const exported = await exporter.makeExportable(dashboardModel);
+  if ('error' in exported) {
+    throw new Error('error should not be returned when making exportable json');
+  }
+  expect(exported.__elements!['c46a6b49-de40-43b3-982c-1b5e1ec084a4'].model.datasource.uid).toBe('${DS_GFDB}');
+  expect(exported.__inputs![0].name).toBe('DS_GFDB');
 });
 
 it('If a panel queries has no datasource prop ignore it', async () => {
@@ -376,8 +451,7 @@ describe('given dashboard with repeated panels', () => {
     expect(element.name).toBe('Library Panel 2');
     expect(element.kind).toBe(LibraryElementKind.Panel);
     expect(element.model).toEqual({
-      datasource: { type: 'other2', uid: '$ds' },
-      targets: [{ refId: 'A', datasource: { type: 'other2', uid: '$ds' } }],
+      datasource: { type: 'testdb', uid: '${DS_GFDB}' },
       type: 'graph',
     });
   });

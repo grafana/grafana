@@ -1,18 +1,20 @@
 ---
 headless: true
+labels:
+  products:
+    - enterprise
+    - oss
 ---
 
-[//]: # 'This file documents the Search query type for the Tempo data source. It is available as a public preview.'
+[//]: # 'This file documents the Search query type for the Tempo data source.'
 [//]: # 'This shared file is included in these locations:'
 [//]: # '/grafana/docs/sources/datasources/tempo/query-editor/index.md'
+[//]: # '/website/docs/grafana-cloud/data-configuration/traces/traces-query-editor.md'
+[//]: #
 [//]: # 'If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.'
 [//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
 
 # Create TraceQL queries using Search
-
-{{% admonition type="note" %}}
-This new Search query type is available as an experimental feature. This feature is under active development and is not production ready. To try this feature, enable the `traceqlSearch` feature flag in Grafana (read [documentation](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/)). Grafana Cloud users should contact Grafana Support to enable this feature.
-{{% /admonition %}}
 
 Using the Search tab in Explore, you can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 

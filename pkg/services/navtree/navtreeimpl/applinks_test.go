@@ -38,7 +38,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app1",
 			Name: "Test app1 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
@@ -61,7 +61,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app2",
 			Name: "Test app2 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Hello",
@@ -78,7 +78,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app3",
 			Name: "Test app3 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Default page",
@@ -294,7 +294,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should replace page from plugin", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{
 			"/connections/add-new-connection": {SectionID: "connections"},
@@ -334,7 +333,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should not register pages under the app plugin section unless AddToNav=true", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -403,7 +401,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 	testApp1 := plugins.PluginDTO{
 		JSONData: plugins.JSONData{
-			ID: "test-app1", Name: "Test app1 name", Type: plugins.App,
+			ID: "test-app1", Name: "Test app1 name", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",

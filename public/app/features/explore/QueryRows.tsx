@@ -6,7 +6,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
@@ -15,10 +14,10 @@ import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
-const makeSelectors = (exploreId: ExploreId) => {
+const makeSelectors = (exploreId: string) => {
   const exploreItemSelector = getExploreItemSelector(exploreId);
   return {
     getQueries: createSelector(exploreItemSelector, (s) => s!.queries),

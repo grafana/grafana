@@ -9,12 +9,21 @@
 
 package dataquery
 
+// Defines values for SearchStreamingState.
+const (
+	SearchStreamingStateDone      SearchStreamingState = "done"
+	SearchStreamingStateError     SearchStreamingState = "error"
+	SearchStreamingStatePending   SearchStreamingState = "pending"
+	SearchStreamingStateStreaming SearchStreamingState = "streaming"
+)
+
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeSearch        TempoQueryType = "search"
 	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeTraceId       TempoQueryType = "traceId"
 	TempoQueryTypeTraceql       TempoQueryType = "traceql"
 	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
 	TempoQueryTypeUpload        TempoQueryType = "upload"
@@ -35,7 +44,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -52,8 +61,11 @@ type DataQuery struct {
 	RefId string `json:"refId"`
 }
 
+// The state of the TraceQL streaming search query
+type SearchStreamingState string
+
 // TempoDataQuery defines model for TempoDataQuery.
-type TempoDataQuery = map[string]interface{}
+type TempoDataQuery = map[string]any
 
 // TempoQuery defines model for TempoQuery.
 type TempoQuery struct {
@@ -66,7 +78,7 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{}    `json:"datasource,omitempty"`
+	Datasource *any            `json:"datasource,omitempty"`
 	Filters    []TraceqlFilter `json:"filters"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
@@ -77,10 +89,10 @@ type TempoQuery struct {
 	// Defines the maximum number of traces that are returned from Tempo
 	Limit *int64 `json:"limit,omitempty"`
 
-	// Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+	// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MaxDuration *string `json:"maxDuration,omitempty"`
 
-	// Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+	// @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MinDuration *string `json:"minDuration,omitempty"`
 
 	// TraceQL query or trace ID
@@ -95,16 +107,19 @@ type TempoQuery struct {
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
-	// Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+	// @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
 	Search *string `json:"search,omitempty"`
+
+	// Use service.namespace in addition to service.name to uniquely identify a service.
+	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
 
 	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 	ServiceMapQuery *string `json:"serviceMapQuery,omitempty"`
 
-	// Query traces by service name
+	// @deprecated Query traces by service name
 	ServiceName *string `json:"serviceName,omitempty"`
 
-	// Query traces by span name
+	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
 }
 
@@ -126,7 +141,7 @@ type TraceqlFilter struct {
 	Tag *string `json:"tag,omitempty"`
 
 	// The value for the search filter
-	Value *interface{} `json:"value,omitempty"`
+	Value *any `json:"value,omitempty"`
 
 	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
 	ValueType *string `json:"valueType,omitempty"`

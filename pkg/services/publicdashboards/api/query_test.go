@@ -189,7 +189,6 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
 
 		testServer := setupTestServer(
 			t,
@@ -313,16 +312,16 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	isEnabled := true
 	savePubDashboardCmd := &SavePublicDashboardDTO{
 		DashboardUid: dashboard.UID,
+		OrgID:        dashboard.OrgID,
 		PublicDashboard: &PublicDashboardDTO{
 			IsEnabled: &isEnabled,
-			OrgId:     dashboard.OrgID,
 		},
 	}
 
 	annotationsService := annotationstest.NewFakeAnnotationsRepo()
 
 	// create public dashboard
-	store := publicdashboardsStore.ProvideStore(db)
+	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)

@@ -40,7 +40,7 @@ export function fetchNextChildrenPageFulfilled(
   }
 
   const { children, page, kind, lastPageOfKind } = payload;
-  const { parentUID } = action.meta.arg;
+  const { parentUID, excludeKinds = [] } = action.meta.arg;
 
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
@@ -50,7 +50,7 @@ export function fetchNextChildrenPageFulfilled(
     lastFetchedKind: kind,
     lastFetchedPage: page,
     lastKindHasMoreItems: !lastPageOfKind,
-    isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
+    isFullyLoaded: !excludeKinds.includes('dashboard') ? kind === 'dashboard' && lastPageOfKind : lastPageOfKind,
   };
 
   if (!parentUID) {
@@ -129,8 +129,11 @@ export function setItemSelectionState(
   state.selectedItems.$all = state.rootItems?.items?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
-export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<{ isSelected: boolean }>) {
-  const { isSelected } = action.payload;
+export function setAllSelection(
+  state: BrowseDashboardsState,
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined }>
+) {
+  const { isSelected, folderUID: folderUIDArg } = action.payload;
 
   state.selectedItems.$all = isSelected;
 
@@ -141,17 +144,27 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
   //    redux, so we just need to iterate over the selected items to flip them to false
 
   if (isSelected) {
-    for (const folderUID in state.childrenByParentUID) {
-      const collection = state.childrenByParentUID[folderUID];
+    // Recursively select the children of the folder in view
+    function selectChildrenOfFolder(folderUID: string | undefined) {
+      const collection = folderUID ? state.childrenByParentUID[folderUID] : state.rootItems;
 
-      for (const child of collection?.items ?? []) {
+      // Bail early if the collection isn't found (not loaded yet)
+      if (!collection) {
+        return;
+      }
+
+      for (const child of collection.items) {
         state.selectedItems[child.kind][child.uid] = isSelected;
+
+        if (child.kind !== 'folder') {
+          continue;
+        }
+
+        selectChildrenOfFolder(child.uid);
       }
     }
 
-    for (const child of state.rootItems?.items ?? []) {
-      state.selectedItems[child.kind][child.uid] = isSelected;
-    }
+    selectChildrenOfFolder(folderUIDArg);
   } else {
     // if deselecting only need to loop over what we've already selected
     for (const kind in state.selectedItems) {

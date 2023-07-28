@@ -70,7 +70,7 @@ export const ResourcePicker = (props: Props) => {
     <InlineFieldRow>
       <InlineField label={null} grow>
         <Input
-          value={name}
+          value={getDisplayName(src, name)}
           placeholder={placeholder}
           readOnly={true}
           prefix={sanitizedSrc && <SanitizedSVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />}
@@ -96,6 +96,8 @@ export const ResourcePicker = (props: Props) => {
               />
             )}
 
+            {/* TODO: fix keyboard a11y */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <div ref={pickerTriggerRef} onClick={showPopper} className={styles.pointer}>
               {size === ResourcePickerSize.SMALL && renderSmallResourcePicker()}
               {size === ResourcePickerSize.NORMAL && renderNormalResourcePicker()}
@@ -106,6 +108,17 @@ export const ResourcePicker = (props: Props) => {
     </PopoverController>
   );
 };
+
+// strip the SVG off icons in the icons folder
+function getDisplayName(src?: string, name?: string): string | undefined {
+  if (src?.startsWith('public/img/icons')) {
+    const idx = name?.lastIndexOf('.svg') ?? 0;
+    if (idx > 0) {
+      return name!.substring(0, idx);
+    }
+  }
+  return name;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pointer: css`

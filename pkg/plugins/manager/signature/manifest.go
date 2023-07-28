@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 )
 
 var (
@@ -58,16 +58,30 @@ func (m *PluginManifest) isV2() bool {
 }
 
 type Signature struct {
-	log log.Logger
 	kr  plugins.KeyRetriever
+	cfg *config.Cfg
+	log log.Logger
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
 func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+	return NewCalculator(cfg, kr)
+}
+
+func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
 	return &Signature{
-		log: log.New("plugin.signature"),
 		kr:  kr,
+		cfg: cfg,
+		log: log.New("plugins.signature"),
+	}
+}
+
+func DefaultCalculator(cfg *config.Cfg) *Signature {
+	return &Signature{
+		kr:  statickey.New(),
+		cfg: cfg,
+		log: log.New("plugins.signature"),
 	}
 }
 
@@ -104,7 +118,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	if len(fsFiles) == 0 {
 		s.log.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
-			Status: plugins.SignatureInvalid,
+			Status: plugins.SignatureStatusInvalid,
 		}, nil
 	}
 
@@ -113,13 +127,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			s.log.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
 			return plugins.Signature{
-				Status: plugins.SignatureUnsigned,
+				Status: plugins.SignatureStatusUnsigned,
 			}, nil
 		}
 
 		s.log.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
-			Status: plugins.SignatureInvalid,
+			Status: plugins.SignatureStatusInvalid,
 		}, nil
 	}
 	defer func() {
@@ -135,7 +149,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	if err != nil || len(byteValue) < 10 {
 		s.log.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
 		return plugins.Signature{
-			Status: plugins.SignatureUnsigned,
+			Status: plugins.SignatureStatusUnsigned,
 		}, nil
 	}
 
@@ -143,33 +157,33 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	if err != nil {
 		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
 		return plugins.Signature{
-			Status: plugins.SignatureInvalid,
+			Status: plugins.SignatureStatusInvalid,
 		}, nil
 	}
 
 	if !manifest.isV2() {
 		return plugins.Signature{
-			Status: plugins.SignatureInvalid,
+			Status: plugins.SignatureStatusInvalid,
 		}, nil
 	}
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.JSONData.ID || manifest.Version != plugin.JSONData.Info.Version {
 		return plugins.Signature{
-			Status: plugins.SignatureModified,
+			Status: plugins.SignatureStatusModified,
 		}, nil
 	}
 
 	// Validate that plugin is running within defined root URLs
 	if len(manifest.RootURLs) > 0 {
-		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
+		if match, err := urlMatch(manifest.RootURLs, s.cfg.GrafanaAppURL, manifest.SignatureType); err != nil {
 			s.log.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
 			s.log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
-				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
+				"appUrl", s.cfg.GrafanaAppURL, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
-				Status: plugins.SignatureInvalid,
+				Status: plugins.SignatureStatusInvalid,
 			}, nil
 		}
 	}
@@ -181,7 +195,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		err = verifyHash(s.log, plugin, p, hash)
 		if err != nil {
 			return plugins.Signature{
-				Status: plugins.SignatureModified,
+				Status: plugins.SignatureStatusModified,
 			}, nil
 		}
 
@@ -195,7 +209,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		f = toSlash(f)
 
 		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
-		if runningWindows && plugin.JSONData.Type == plugins.Renderer && f == "chrome-win/debug.log" {
+		if runningWindows && plugin.JSONData.Type == plugins.TypeRenderer && f == "chrome-win/debug.log" {
 			continue
 		}
 
@@ -210,13 +224,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	if len(unsignedFiles) > 0 {
 		s.log.Warn("The following files were not included in the signature", "plugin", plugin.JSONData.ID, "files", unsignedFiles)
 		return plugins.Signature{
-			Status: plugins.SignatureModified,
+			Status: plugins.SignatureStatusModified,
 		}, nil
 	}
 
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
 	return plugins.Signature{
-		Status:     plugins.SignatureValid,
+		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
 	}, nil
@@ -273,7 +287,7 @@ func urlMatch(specs []string, target string, signatureType plugins.SignatureType
 			return true, nil
 		}
 
-		if signatureType != plugins.PrivateGlobSignature {
+		if signatureType != plugins.SignatureTypePrivateGlob {
 			continue
 		}
 

@@ -66,6 +66,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
     const outputFrame: DataFrame = {
       fields: [],
       length: frame.length,
+      refId: frame.refId,
     };
 
     for (const field of frame.fields) {
@@ -85,14 +86,13 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
 
     output.push(outputFrame);
   }
-
   return output;
 }
 
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {
   id: DataTransformerID.configFromData,
   name: 'Config from query results',
-  description: 'Set unit, min, max and more from data',
+  description: 'Set unit, min, max and more from data.',
   defaultOptions: {
     configRefId: 'config',
     mappings: [],

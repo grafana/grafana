@@ -44,8 +44,9 @@ active_sync_enabled = true
 
 Grafana expects SLO support to be communicated in the metadata
 
-Single Logout is not supported by authentik.
-https://github.com/goauthentik/authentik/issues/3321 
+Single Logout is now supported by authentik in versions `2023.1` and higher;
+
+Source: <https://goauthentik.io/docs/releases/2023.1#new-features>
 
 **Warning** Client signature validation
 
@@ -65,7 +66,7 @@ assertion_attribute_email = http://schemas.xmlsoap.org/ws/2005/05/identity/claim
 assertion_attribute_groups = http://schemas.xmlsoap.org/claims/Group
 assertion_attribute_org = http://schemas.xmlsoap.org/claims/Group
 allow_sign_up = true
-single_logout = false # not supported by authentik
+single_logout = true # supported by authentik v2023.1 and newer
 signature_algorithm = rsa-sha256
 allow_idp_initiated = true
 org_mapping = admin:1:Admin, editor:1:Editor, viewer:1:Viewer

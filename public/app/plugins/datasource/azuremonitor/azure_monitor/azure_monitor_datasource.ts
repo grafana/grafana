@@ -269,27 +269,33 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
   }
 
-  getMetricNames(query: GetMetricNamesQuery) {
+  getMetricNames(query: GetMetricNamesQuery, multipleResources?: boolean, region?: string) {
+    const apiVersion = multipleResources ? this.apiPreviewVersion : this.apiVersion;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      this.apiVersion,
+      apiVersion,
       // Only use the first query, as the metric names should be the same for all queries
       this.replaceSingleTemplateVariables(query),
-      this.templateSrv
+      this.templateSrv,
+      multipleResources,
+      region
     );
     return this.getResource(url).then((result: AzureAPIResponse<Metric>) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
 
-  getMetricMetadata(query: GetMetricMetadataQuery) {
+  getMetricMetadata(query: GetMetricMetadataQuery, multipleResources?: boolean, region?: string) {
     const { metricName } = query;
+    const apiVersion = multipleResources ? this.apiPreviewVersion : this.apiVersion;
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
-      this.apiVersion,
+      apiVersion,
       // Only use the first query, as the metric metadata should be the same for all queries
       this.replaceSingleTemplateVariables(query),
-      this.templateSrv
+      this.templateSrv,
+      multipleResources,
+      region
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
       return ResponseParser.parseMetadata(result, this.templateSrv.replace(metricName));

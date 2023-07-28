@@ -1,3 +1,5 @@
+import { OrgRole } from '@grafana/data';
+
 export enum TeamPermissionLevel {
   Admin = 4,
   Editor = 2,
@@ -5,11 +7,7 @@ export enum TeamPermissionLevel {
   Viewer = 1,
 }
 
-export enum OrgRole {
-  Viewer = 'Viewer',
-  Editor = 'Editor',
-  Admin = 'Admin',
-}
+export { OrgRole as OrgRole };
 
 export interface DashboardAclDTO {
   id?: number;

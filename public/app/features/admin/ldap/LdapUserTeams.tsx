@@ -33,14 +33,10 @@ export const LdapUserTeams = ({ teams, showAttributeMapping }: Props) => {
                         <>
                           <td />
                           <td>
-                            <div className="text-warning">
-                              No match
-                              <Tooltip placement="top" content="No matching teams found" theme={'info'}>
-                                <span className="gf-form-help-icon">
-                                  <Icon name="info-circle" />
-                                </span>
-                              </Tooltip>
-                            </div>
+                            <span className="text-warning">No match</span>
+                            <Tooltip placement="top" content="No matching teams found" theme={'info'}>
+                              <Icon name="info-circle" />
+                            </Tooltip>
                           </td>
                         </>
                       )}

@@ -160,6 +160,210 @@ func TestAlertRuleService(t *testing.T) {
 		require.Equal(t, int64(2), readGroup.Rules[0].Version)
 	})
 
+	t.Run("updating a group to temporarily overlap rule names should not throw unique constraint", func(t *testing.T) {
+		var orgID int64 = 1
+		group := models.AlertRuleGroup{
+			Title:     "overlap-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("overlap-test-rule-1", orgID),
+				dummyRule("overlap-test-rule-2", orgID),
+			},
+		}
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "overlap-test")
+		require.NoError(t, err)
+
+		updatedGroup.Rules[0].Title = "overlap-test-rule-2"
+		updatedGroup.Rules[1].Title = "overlap-test-rule-3"
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "overlap-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 2)
+		require.Equal(t, "overlap-test-rule-2", readGroup.Rules[0].Title)
+		require.Equal(t, "overlap-test-rule-3", readGroup.Rules[1].Title)
+		require.Equal(t, int64(3), readGroup.Rules[0].Version)
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
+	})
+
+	t.Run("updating a group to swap the name of two rules should not throw unique constraint", func(t *testing.T) {
+		var orgID int64 = 1
+		group := models.AlertRuleGroup{
+			Title:     "swap-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("swap-test-rule-1", orgID),
+				dummyRule("swap-test-rule-2", orgID),
+			},
+		}
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "swap-test")
+		require.NoError(t, err)
+
+		updatedGroup.Rules[0].Title = "swap-test-rule-2"
+		updatedGroup.Rules[1].Title = "swap-test-rule-1"
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "swap-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 2)
+		require.Equal(t, "swap-test-rule-2", readGroup.Rules[0].Title)
+		require.Equal(t, "swap-test-rule-1", readGroup.Rules[1].Title)
+		require.Equal(t, int64(3), readGroup.Rules[0].Version) // Needed an extra update to break the update cycle.
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
+	})
+
+	t.Run("updating a group that has a rule name cycle should not throw unique constraint", func(t *testing.T) {
+		var orgID int64 = 1
+		group := models.AlertRuleGroup{
+			Title:     "cycle-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("cycle-test-rule-1", orgID),
+				dummyRule("cycle-test-rule-2", orgID),
+				dummyRule("cycle-test-rule-3", orgID),
+			},
+		}
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "cycle-test")
+		require.NoError(t, err)
+
+		updatedGroup.Rules[0].Title = "cycle-test-rule-2"
+		updatedGroup.Rules[1].Title = "cycle-test-rule-3"
+		updatedGroup.Rules[2].Title = "cycle-test-rule-1"
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "cycle-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 3)
+		require.Equal(t, "cycle-test-rule-2", readGroup.Rules[0].Title)
+		require.Equal(t, "cycle-test-rule-3", readGroup.Rules[1].Title)
+		require.Equal(t, "cycle-test-rule-1", readGroup.Rules[2].Title)
+		require.Equal(t, int64(3), readGroup.Rules[0].Version) // Needed an extra update to break the update cycle.
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
+		require.Equal(t, int64(3), readGroup.Rules[2].Version)
+	})
+
+	t.Run("updating a group that has multiple rule name cycles should not throw unique constraint", func(t *testing.T) {
+		var orgID int64 = 1
+		group := models.AlertRuleGroup{
+			Title:     "multi-cycle-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("multi-cycle-test-rule-1", orgID),
+				dummyRule("multi-cycle-test-rule-2", orgID),
+
+				dummyRule("multi-cycle-test-rule-3", orgID),
+				dummyRule("multi-cycle-test-rule-4", orgID),
+				dummyRule("multi-cycle-test-rule-5", orgID),
+			},
+		}
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "multi-cycle-test")
+		require.NoError(t, err)
+
+		updatedGroup.Rules[0].Title = "multi-cycle-test-rule-2"
+		updatedGroup.Rules[1].Title = "multi-cycle-test-rule-1"
+
+		updatedGroup.Rules[2].Title = "multi-cycle-test-rule-4"
+		updatedGroup.Rules[3].Title = "multi-cycle-test-rule-5"
+		updatedGroup.Rules[4].Title = "multi-cycle-test-rule-3"
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "multi-cycle-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 5)
+		require.Equal(t, "multi-cycle-test-rule-2", readGroup.Rules[0].Title)
+		require.Equal(t, "multi-cycle-test-rule-1", readGroup.Rules[1].Title)
+		require.Equal(t, "multi-cycle-test-rule-4", readGroup.Rules[2].Title)
+		require.Equal(t, "multi-cycle-test-rule-5", readGroup.Rules[3].Title)
+		require.Equal(t, "multi-cycle-test-rule-3", readGroup.Rules[4].Title)
+		require.Equal(t, int64(3), readGroup.Rules[0].Version) // Needed an extra update to break the update cycle.
+		require.Equal(t, int64(3), readGroup.Rules[1].Version)
+		require.Equal(t, int64(3), readGroup.Rules[2].Version) // Needed an extra update to break the update cycle.
+		require.Equal(t, int64(3), readGroup.Rules[3].Version)
+		require.Equal(t, int64(3), readGroup.Rules[4].Version)
+	})
+
+	t.Run("updating a group to recreate a rule using the same name should not throw unique constraint", func(t *testing.T) {
+		var orgID int64 = 1
+		group := models.AlertRuleGroup{
+			Title:     "recreate-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("recreate-test-rule-1", orgID),
+			},
+		}
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup := models.AlertRuleGroup{
+			Title:     "recreate-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("recreate-test-rule-1", orgID),
+			},
+		}
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "recreate-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+		require.Equal(t, "recreate-test-rule-1", readGroup.Rules[0].Title)
+		require.Equal(t, int64(1), readGroup.Rules[0].Version)
+	})
+
+	t.Run("updating a group to create a rule that temporarily overlaps an existing should not throw unique constraint", func(t *testing.T) {
+		var orgID int64 = 1
+		group := models.AlertRuleGroup{
+			Title:     "create-overlap-test",
+			Interval:  60,
+			FolderUID: "my-namespace",
+			Rules: []models.AlertRule{
+				dummyRule("create-overlap-test-rule-1", orgID),
+			},
+		}
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "create-overlap-test")
+		require.NoError(t, err)
+		updatedGroup.Rules[0].Title = "create-overlap-test-rule-2"
+		updatedGroup.Rules = append(updatedGroup.Rules, dummyRule("create-overlap-test-rule-1", orgID))
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), orgID, updatedGroup, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "create-overlap-test")
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 2)
+		require.Equal(t, "create-overlap-test-rule-2", readGroup.Rules[0].Title)
+		require.Equal(t, "create-overlap-test-rule-1", readGroup.Rules[1].Title)
+		require.Equal(t, int64(2), readGroup.Rules[0].Version)
+		require.Equal(t, int64(1), readGroup.Rules[1].Version)
+	})
+
 	t.Run("updating a group by updating a rule should not remove dashboard and panel ids", func(t *testing.T) {
 		dashboardUid := "huYnkl7H"
 		panelId := int64(5678)

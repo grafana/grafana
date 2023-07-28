@@ -8,7 +8,7 @@ const CHEAT_SHEET_ITEMS = [
   },
 ];
 
-const InfluxCheatSheet = (props: any) => (
+export const InfluxCheatSheet = () => (
   <div>
     <h2>InfluxDB Cheat Sheet</h2>
     {CHEAT_SHEET_ITEMS.map((item) => (
@@ -19,5 +19,3 @@ const InfluxCheatSheet = (props: any) => (
     ))}
   </div>
 );
-
-export default InfluxCheatSheet;

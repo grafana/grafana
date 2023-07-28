@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -62,7 +61,7 @@ type OAuth2ServiceImpl struct {
 	publicKey     interface{}
 }
 
-func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
+func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
 	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {

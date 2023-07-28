@@ -11,15 +11,18 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
   const trackColor = theme.colors.primary.main;
   const handleColor = theme.colors.primary.main;
   const blueOpacity = theme.colors.primary.transparent;
-  const hoverSyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
+  const hoverStyle = `box-shadow: 0px 0px 0px 6px ${blueOpacity}`;
 
   return {
-    container: css`
-      width: 100%;
-      margin: ${isHorizontal ? 'inherit' : `${spacing(1, 3, 1, 1)}`};
-      padding-bottom: ${isHorizontal && hasMarks ? theme.spacing(1) : 'inherit'};
-      height: ${isHorizontal ? 'auto' : '100%'};
-    `,
+    container: css({
+      width: '100%',
+      margin: isHorizontal ? 'inherit' : spacing(1, 3, 1, 1),
+      paddingBottom: isHorizontal && hasMarks ? theme.spacing(1) : 'inherit',
+      height: isHorizontal ? 'auto' : '100%',
+    }),
+    // can't write this as an object since it needs to overwrite rc-slider styles
+    // object syntax doesn't support kebab case keys
+    // eslint-disable-next-line @emotion/syntax-preference
     slider: css`
       .rc-slider {
         display: flex;
@@ -47,7 +50,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
       .rc-slider-handle:hover,
       .rc-slider-handle:active,
       .rc-slider-handle-click-focused:focus {
-        ${hoverSyle};
+        ${hoverStyle};
       }
 
       // The triple class names is needed because that's the specificity used in the source css :(
@@ -97,31 +100,31 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
         }
       }
     `,
-    sliderInput: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      width: 100%;
-    `,
-    sliderInputVertical: css`
-      flex-direction: column;
-      height: 100%;
+    sliderInput: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      width: '100%',
+    }),
+    sliderInputVertical: css({
+      flexDirection: 'column',
+      height: '100%',
 
-      .rc-slider {
-        margin: 0;
-        order: 2;
-      }
-    `,
-    sliderInputField: css`
-      margin-left: ${theme.spacing(3)};
-      width: 60px;
-      input {
-        text-align: center;
-      }
-    `,
-    sliderInputFieldVertical: css`
-      margin: 0 0 ${theme.spacing(3)} 0;
-      order: 1;
-    `,
+      '.rc-slider': {
+        margin: 0,
+        order: 2,
+      },
+    }),
+    sliderInputField: css({
+      marginLeft: theme.spacing(3),
+      width: '60px',
+      input: {
+        textAlign: 'center',
+      },
+    }),
+    sliderInputFieldVertical: css({
+      margin: `0 0 ${theme.spacing(3)} 0`,
+      order: 1,
+    }),
   };
 });

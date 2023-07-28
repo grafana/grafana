@@ -20,9 +20,11 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
-	hist := historian.NewAnnotationBackend(&as, nil, nil, metrics)
+	store := historian.NewAnnotationStore(&as, nil, metrics)
+	hist := historian.NewAnnotationBackend(store, nil, metrics)
 	cfg := state.ManagerCfg{
-		Historian: hist,
+		Historian:               hist,
+		MaxStateSaveConcurrency: 1,
 	}
 	sut := state.NewManager(cfg)
 	now := time.Now().UTC()

@@ -5,10 +5,10 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { LogRowModel } from '@grafana/data';
 
-import { LogContextProvider } from '../LogContextProvider';
+import { LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
 import { ContextFilter, LokiQuery } from '../types';
 
-import { LokiContextUi, LokiContextUiProps } from './LokiContextUi';
+import { IS_LOKI_LOG_CONTEXT_UI_OPEN, LokiContextUi, LokiContextUiProps } from './LokiContextUi';
 
 // we have to mock out reportInteraction, otherwise it crashes the test.
 jest.mock('@grafana/runtime', () => ({
@@ -19,8 +19,13 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/store', () => {
   return {
     set() {},
-    getBool() {
-      return true;
+    getBool(key: string, defaultValue?: boolean) {
+      const item = window.localStorage.getItem(key);
+      if (item === null) {
+        return defaultValue;
+      } else {
+        return item === 'true';
+      }
     },
     delete() {},
   };
@@ -28,7 +33,7 @@ jest.mock('app/core/store', () => {
 
 const setupProps = (): LokiContextUiProps => {
   const defaults: LokiContextUiProps = {
-    logContextProvider: mockLogContextProvider as unknown as LogContextProvider,
+    logContextProvider: Object.assign({}, mockLogContextProvider) as unknown as LogContextProvider,
     updateFilter: jest.fn(),
     row: {
       entry: 'WARN test 1.23 on [xxx]',
@@ -42,6 +47,7 @@ const setupProps = (): LokiContextUiProps => {
       expr: '{label1="value1"} | logfmt',
       refId: 'A',
     },
+    runContextQuery: jest.fn(),
   };
 
   return defaults;
@@ -55,13 +61,24 @@ const mockLogContextProvider = {
     ])
   ),
   processContextFiltersToExpr: jest.fn().mockImplementation(
-    (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+    (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
       `{${contextFilters
         .filter((filter) => filter.enabled)
         .map((filter) => `${filter.label}="${filter.value}"`)
         .join('` ')}}`
   ),
+  processPipelineStagesToExpr: jest
+    .fn()
+    .mockImplementation((currentExpr: string, query: LokiQuery | undefined) => `${currentExpr} | newOperation`),
   getLogRowContext: jest.fn(),
+  queryContainsValidPipelineStages: jest.fn().mockReturnValue(true),
+  prepareExpression: jest.fn().mockImplementation(
+    (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+      `{${contextFilters
+        .filter((filter) => filter.enabled)
+        .map((filter) => `${filter.label}="${filter.value}"`)
+        .join('` ')}}`
+  ),
 };
 
 describe('LokiContextUi', () => {
@@ -78,6 +95,15 @@ describe('LokiContextUi', () => {
   });
   afterAll(() => {
     global = savedGlobal;
+  });
+
+  beforeEach(() => {
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, 'true');
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
   });
 
   it('renders and shows executed query text', async () => {
@@ -190,6 +216,72 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
       expect(screen.getByText('Refine the search')).toBeInTheDocument();
+    });
+  });
+
+  it('renders pipeline operations switch as enabled when saved in localstorage', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    });
+  });
+
+  it('renders pipeline operations switch as disabled when saved in localstorage', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'false');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+    });
+  });
+
+  it('renders pipeline operations switch if query contains valid pipeline stages', async () => {
+    const props = setupProps();
+    (props.logContextProvider.queryContainsValidPipelineStages as jest.Mock).mockReturnValue(true);
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    });
+  });
+
+  it('does not render pipeline operations switch if query does not contain valid pipeline stages', async () => {
+    const props = setupProps();
+    (props.logContextProvider.queryContainsValidPipelineStages as jest.Mock).mockReturnValue(false);
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByRole('checkbox')).toBeNull();
     });
   });
 

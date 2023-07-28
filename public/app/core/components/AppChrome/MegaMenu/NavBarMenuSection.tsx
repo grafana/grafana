@@ -56,7 +56,7 @@ export function NavBarMenuSection({
         </NavBarMenuItem>
         {children && (
           <Button
-            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section`}
+            aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
             variant="secondary"
             fill="text"
             className={styles.collapseButton}
