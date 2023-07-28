@@ -18,6 +18,11 @@ describe('situation', () => {
       expected: { type: 'SPANSET_EMPTY' },
     },
     {
+      query: '{.}',
+      cursorPos: 2,
+      expected: { type: 'SPANSET_ONLY_DOT' },
+    },
+    {
       query: '{foo}',
       cursorPos: 4,
       expected: { type: 'SPANSET_IN_NAME' },
