@@ -116,13 +116,13 @@ The Text component can be truncated. However, the Text component element rendere
 </Text>
 ```
 
-2. The parent element is not a Text component: the user has to add `overflow: hidden` and `text-overflow: ellipsis` to it. In this case, the user should wrap up this container with a Tooltip, so when the text is truncated its content can still be seen hovering on the text.
+2. The parent element is not a Text component: the user has to add `overflow: hidden`, `text-overflow: ellipsis` and `whiteSpace: 'nowrap'` to it. In this case, the user should wrap up this container with a Tooltip, so when the text is truncated its content can still be seen hovering on the text.
 
 <Preview>
   <Tooltip content="This is a example of a span element truncated by its parent container">
     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
       <Text color="primary" variant="body">
-        {'This is a example of a span element truncated by its parent container'}
+        {'This is a example of a span element truncated by its parent container.'}
       </Text>
     </div>
   </Tooltip>
@@ -131,7 +131,7 @@ The Text component can be truncated. However, the Text component element rendere
 <Tooltip content="This is a example of a span element truncated by its parent container">
   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
     <Text color="primary" variant="body">
-      {'This is a example of a span element truncated by its parent container'}
+      {'This is a example of a span element truncated by its parent container.'}
     </Text>
   </div>
 </Tooltip>
@@ -139,9 +139,9 @@ The Text component can be truncated. However, the Text component element rendere
 
 ### <a name="accessibility"/>**Accessibility**:
 
-- There should be just a h1 heading per page
-- The headings should be organized regarding its importance: h1 has the rank 1 while h6 heading has the rank 6. For example, h1 can be used in the page heading, h2 for the titles of the sections and h3 for the subsections.
-- The ranking of headings should be continuous. An h2 should not be followed by an h5 but an h2 can follow an h5 if this is closing the previous section. Skipping heading ranks should be avoided where possible as it can be confusing.
+- There should be just a `h1` heading per page.
+- The headings should be organized regarding its importance: `h1` has the _rank 1_ while `h6` heading has the _rank 6_. For example, `h1` can be used in the page heading, `h2` for the titles of the sections and `h3` for the subsections.
+- The ranking of headings should be continuous. An `h2` should not be followed by an `h5` but an `h2` can follow an `h5` if this is closing the previous section. Skipping heading ranks should be avoided where possible as it can be confusing.
 
 ## <a name="propstable"/>Props table
 
