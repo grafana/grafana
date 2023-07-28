@@ -11,6 +11,7 @@ import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
+import useAbilities, { Action } from '../../hooks/useAbilities';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
@@ -122,8 +123,12 @@ interface ContactPointHeaderProps {
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
+  const abilities = useAbilities();
 
   const disableActions = disabled || provisioned;
+
+  const [canDelete, allowedToDelete] = abilities[Action.DeleteContactPoint];
+  const [canExport, allowedToExport] = abilities[Action.ExportContactPoint];
 
   return (
     <div className={styles.headerWrapper}>
@@ -166,13 +171,15 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             <Menu>
               <Menu.Item label="Export" icon="download-alt" />
               <Menu.Divider />
-              <Menu.Item
-                label="Delete"
-                icon="trash-alt"
-                destructive
-                disabled={disableActions}
-                onClick={() => onDelete(name)}
-              />
+              {canDelete && (
+                <Menu.Item
+                  label="Delete"
+                  icon="trash-alt"
+                  destructive
+                  disabled={disableActions || !allowedToDelete}
+                  onClick={() => onDelete(name)}
+                />
+              )}
             </Menu>
           }
         >

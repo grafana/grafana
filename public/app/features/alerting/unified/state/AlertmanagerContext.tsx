@@ -2,13 +2,15 @@ import * as React from 'react';
 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import store from 'app/core/store';
+import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
-import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { AlertManagerDataSource, getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface Context {
   selectedAlertmanager: string | undefined;
+  selectedAlertmanagerConfig: AlertManagerDataSourceJsonData | undefined;
   availableAlertManagers: AlertManagerDataSource[];
   setSelectedAlertmanager: (name: string) => void;
 }
@@ -50,8 +52,11 @@ const AlertmanagerProvider = ({ children, accessType }: Props) => {
     ? desiredAlertmanager
     : undefined;
 
+  const selectedAlertmanagerConfig = getDataSourceByName(selectedAlertmanager)?.jsonData;
+
   const value: Context = {
     selectedAlertmanager,
+    selectedAlertmanagerConfig,
     availableAlertManagers,
     setSelectedAlertmanager: updateSelectedAlertmanager,
   };
