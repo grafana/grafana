@@ -308,7 +308,7 @@ Data source plugin developers can now use any plugin to visualize data in Explor
 
 _All Alerting features are generally available in all editions of Grafana_
 
-We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our [Alerting documentation]({{< relref "../../alerting" >}}).
+We’ve made a number of improvements to simplify the alert rule creation process as well as improvements to contact points and alert management. For all the details, refer to our [Alerting documentation]({{< relref "../alerting" >}}).
 
 ### Alert rules
 
