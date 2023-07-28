@@ -316,9 +316,9 @@ export class PanelQueryRunner {
 
     this.subscription = panelData.subscribe({
       next: async (data) => {
-        const panelDataProcessed = await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
-
-        this.lastResult = skipPreProcess ? data : panelDataProcessed;
+        this.lastResult = skipPreProcess
+          ? data
+          : await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
 
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);

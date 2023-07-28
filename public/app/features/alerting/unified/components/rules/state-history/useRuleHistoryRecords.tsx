@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
 import { MappingType, ThresholdsMode } from '@grafana/schema';
-import { OK_COLOR, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 import { normalizeAlertState } from 'app/features/alerting/state/alertDef';
 
 import { labelsMatchMatchers, parseMatchers } from '../../../utils/alertmanager';
@@ -235,7 +235,7 @@ export function logRecordsToDataFrameForPanel(
             case 'pending':
               return theme.colors.warning.main;
             case 'normal':
-              return OK_COLOR; // I did not find the color for normal state(green) in Grafana theme
+              return theme.colors.success.main;
             case 'nodata':
               return theme.colors.info.main;
             case 'paused':

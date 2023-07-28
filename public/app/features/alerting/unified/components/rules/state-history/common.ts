@@ -4,6 +4,7 @@ import { DataFrame, DataFrameJSON, PanelData } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
+import { logInfo, LogMessages } from '../../../Analytics';
 import { StateHistoryImplementation } from '../../../hooks/useStateHistoryModal';
 
 import { isLine, isNumbers, logRecordsToDataFrameForPanel } from './useRuleHistoryRecords';
@@ -108,6 +109,10 @@ export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelDa
   const historyImplementation = getHistoryImplementation();
   const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
 
+  if (!usingLokiAsImplementation) {
+    return panelDataProcessed;
+  }
+
   if (
     usingLokiAsImplementation &&
     panelDataProcessed.alertState?.dashboardId &&
@@ -124,11 +129,15 @@ export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelDa
       });
       const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
       const clonedPanel = cloneDeep(panelDataProcessed);
+      // annotations can be undefined
       clonedPanel.annotations = panelDataProcessed.annotations
         ? panelDataProcessed.annotations.concat(records.dataFrames)
         : panelDataProcessed.annotations;
       return clonedPanel;
     } catch (error) {
+      logInfo(LogMessages.errorGettingLokiHistory, {
+        error: error instanceof Error ? error.message : 'Unknown error getting Loki ash',
+      });
       return panelDataProcessed;
     }
   }
