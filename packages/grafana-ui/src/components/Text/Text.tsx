@@ -54,7 +54,8 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       element,
       {
         className: styles,
-        ref: internalRef,
+        // when overflowing, the internalRef is passed to the tooltip which forwards it on to the child element
+        ref: isOverflowing ? undefined : internalRef,
       },
       children
     );
@@ -94,7 +95,11 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
     const tooltipText = typeof children === 'string' ? children : getTooltipText(children);
 
     if (truncate === true && isOverflowing && element !== 'span') {
-      return <Tooltip content={tooltipText}>{childElement}</Tooltip>;
+      return (
+        <Tooltip ref={internalRef} content={tooltipText}>
+          {childElement}
+        </Tooltip>
+      );
     } else {
       return childElement;
     }
