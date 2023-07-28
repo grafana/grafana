@@ -8,4 +8,5 @@ import (
 var WireSet = wire.NewSet(
 	ProvideService,
 	wire.Bind(new(certgenerator.ServiceInterface), new(*certgenerator.Service)),
+	ProvideModuleRegistraion,
 )

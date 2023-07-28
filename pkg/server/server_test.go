@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func testServer(t *testing.T, m *modules.MockModuleEngine) *Server {
+func testServer(t *testing.T, m *modules.MockModuleEngine) *ServerImpl {
 	t.Helper()
 	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, m)
 	require.NoError(t, err)

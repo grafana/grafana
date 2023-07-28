@@ -10,7 +10,7 @@ import (
 )
 
 func ProvideTestEnv(
-	server *Server,
+	server *ServerImpl,
 	store *sqlstore.SQLStore,
 	ns *notifications.NotificationServiceMock,
 	grpcServer grpcserver.Provider,
@@ -30,7 +30,7 @@ func ProvideTestEnv(
 }
 
 type TestEnv struct {
-	Server              *Server
+	Server              *ServerImpl
 	SQLStore            *sqlstore.SQLStore
 	NotificationService *notifications.NotificationServiceMock
 	GRPCServer          grpcserver.Provider

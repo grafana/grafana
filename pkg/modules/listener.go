@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -38,7 +39,7 @@ func (l *serviceListener) moduleNames() []string {
 
 func (l *serviceListener) Failure(service services.Service) {
 	// if any service fails, stop all services
-	if err := l.service.Shutdown(context.Background()); err != nil {
+	if err := l.service.Shutdown(context.Background(), service.FailureCase().Error()); err != nil {
 		l.log.Error("Failed to stop all modules", "err", err)
 	}
 

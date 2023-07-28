@@ -173,6 +173,7 @@ var wireBasicSet = wire.NewSet(
 	alerting.ProvideAlertEngine,
 	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
 	New,
+	wire.Bind(new(Server), new(*ServerImpl)),
 	api.ProvideHTTPServer,
 	query.ProvideService,
 	wire.Bind(new(query.Service), new(*query.ServiceImpl)),
@@ -414,14 +415,14 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 )
 
-func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
+func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (modules.Engine, error) {
 	wire.Build(wireExtsSet)
-	return &Server{}, nil
+	return &ServerImpl{}, nil
 }
 
 func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
+	return &TestEnv{Server: &ServerImpl{}, SQLStore: &sqlstore.SQLStore{}}, nil
 }
 
 func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {

@@ -37,14 +37,14 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
 	moduleService modules.Engine,
 	_ moduleRegistry.Registry, // imported to invoke initialization via Wire
-) (*Server, error) {
+) (*ServerImpl, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, moduleService)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = s.init(context.Background()); err != nil {
+	if err = s.Init(context.Background()); err != nil {
 		return nil, err
 	}
 
@@ -52,8 +52,8 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 }
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
-	moduleService modules.Engine) (*Server, error) {
-	return &Server{
+	moduleService modules.Engine) (*ServerImpl, error) {
+	return &ServerImpl{
 		HTTPServer:       httpServer,
 		roleRegistry:     roleRegistry,
 		shutdownFinished: make(chan struct{}),
@@ -67,8 +67,8 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 	}, nil
 }
 
-// Server is responsible for managing the lifecycle of services.
-type Server struct {
+// ServerImpl is responsible for managing the lifecycle of services.
+type ServerImpl struct {
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
@@ -86,8 +86,8 @@ type Server struct {
 	moduleService modules.Engine
 }
 
-// init initializes the server and its services.
-func (s *Server) init(ctx context.Context) error {
+// Init initializes the server and its services.
+func (s *ServerImpl) Init(ctx context.Context) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -113,16 +113,16 @@ func (s *Server) init(ctx context.Context) error {
 }
 
 // AwaitHealthy waits for the server to become healthy.
-func (s *Server) AwaitHealthy(ctx context.Context) error {
+func (s *ServerImpl) AwaitHealthy(ctx context.Context) error {
 	return s.moduleService.AwaitHealthy(ctx)
 }
 
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *Server) Run(ctx context.Context) error {
+func (s *ServerImpl) Run(ctx context.Context) error {
 	defer close(s.shutdownFinished)
 
-	if err := s.init(ctx); err != nil {
+	if err := s.Init(ctx); err != nil {
 		return err
 	}
 
@@ -136,11 +136,11 @@ func (s *Server) Run(ctx context.Context) error {
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
 // running background services. Since Run blocks Shutdown supposed to
 // be run from a separate goroutine.
-func (s *Server) Shutdown(ctx context.Context, reason string) error {
+func (s *ServerImpl) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-		if err = s.moduleService.Shutdown(ctx); err != nil {
+		if err = s.moduleService.Shutdown(ctx, reason); err != nil {
 			s.log.Error("Failed to shutdown modules", "error", err)
 		}
 		// Wait for server to shut down
@@ -157,7 +157,7 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 }
 
 // writePIDFile retrieves the current process ID and writes it to file.
-func (s *Server) writePIDFile() error {
+func (s *ServerImpl) writePIDFile() error {
 	if s.pidFile == "" {
 		return nil
 	}

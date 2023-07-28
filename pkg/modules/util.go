@@ -54,7 +54,7 @@ func (m *MockModuleEngine) Run(ctx context.Context) error {
 	return nil
 }
 
-func (m *MockModuleEngine) Shutdown(ctx context.Context) error {
+func (m *MockModuleEngine) Shutdown(ctx context.Context, _ string) error {
 	if m.ShutdownFunc != nil {
 		return m.ShutdownFunc(ctx)
 	}

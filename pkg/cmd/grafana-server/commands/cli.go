@@ -261,7 +261,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(ctx context.Context, s *server.Server) {
+func listenToSystemSignals(ctx context.Context, s *server.ServerImpl) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
