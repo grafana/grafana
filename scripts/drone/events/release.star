@@ -108,7 +108,7 @@ def retrieve_npm_packages_step():
         ],
         "failure": "ignore",
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
@@ -270,7 +270,7 @@ def publish_artifacts_step():
         "name": "publish-artifacts",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -284,7 +284,7 @@ def publish_static_assets_step():
         "name": "publish-static-assets",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
             "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
@@ -299,7 +299,7 @@ def publish_storybook_step():
         "name": "publish-storybook",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -438,7 +438,7 @@ def integration_test_pipelines():
 def verify_release_pipeline(
         name = "verify-prerelease-assets",
         bucket = from_secret(prerelease_bucket),
-        gcp_key = from_secret("gcp_key"),
+        gcp_key = from_secret(gcp_upload_artifacts_key),
         version = "${DRONE_TAG}",
         trigger = release_trigger,
         depends_on = [
