@@ -37,6 +37,10 @@ To see a list of available variables, type `$` in the data link **URL** field to
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 {{% /admonition %}}
 
+{{% admonition type="note" %}}
+Some data sources (Azure Monitor, [Cloudwatch]({{< relref "../../datasources/aws-cloudwatch/query-editor/#deep-link-grafana-panels-to-the-cloudwatch-console-1" >}}) and [Google Cloud Monitoring]({{< relref "../../datasources/google-cloud-monitoring/query-editor/#deep-link-from-grafana-panels-to-the-google-cloud-console-metrics-explorer" >}}) ) will have data links pre-configured, called deep links.
+{{% /admonition %}}
+
 You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}) for more information on template variables.
 
 ## Time range panel variables
