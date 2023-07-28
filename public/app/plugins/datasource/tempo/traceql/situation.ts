@@ -52,7 +52,7 @@ type Resolver = {
 function getErrorNode(tree: Tree, cursorPos: number): SyntaxNode | null {
   const cur = tree.cursorAt(cursorPos);
   do {
-    if (cur.from === cursorPos && cur.to === cursorPos) {
+    if (cur.from === cursorPos || cur.to === cursorPos) {
       const { node } = cur;
       if (node.type.isError) {
         return node;
@@ -152,6 +152,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveExpression,
   },
   {
+    path: [ERROR_NODE_ID, SpansetFilter],
+    fun: resolveErrorInFilterRoot,
+  },
+  {
     path: [SpansetFilter],
     fun: resolveSpanset,
   },
@@ -210,5 +214,13 @@ function resolveExpression(node: SyntaxNode, text: string, pos: number): Situati
   }
   return {
     type: 'SPANSET_EMPTY',
+  };
+}
+
+function resolveErrorInFilterRoot(node: SyntaxNode, text: string, pos: number): Situation {
+  console.log('resolveErrorInFilterRoot', node);
+
+  return {
+    type: 'SPANSET_IN_NAME',
   };
 }
