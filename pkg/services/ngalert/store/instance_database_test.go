@@ -3,7 +3,9 @@ package store_test
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -293,4 +295,155 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, instance2.Labels, alerts[0].Labels)
 		require.Equal(t, instance2.CurrentState, alerts[0].CurrentState)
 	})
+}
+
+func TestListAlertInstanceData(t *testing.T) {
+	ctx := context.Background()
+	_, db := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	t.Run("all instance data is returned", func(t *testing.T) {
+		r1 := tests.CreateTestAlertRule(t, ctx, db, 60, 1)
+		r2 := tests.CreateTestAlertRule(t, ctx, db, 60, 1)
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     1,
+			RuleUID:   r1.UID,
+			Data:      []byte("data1"),
+			ExpiresAt: time.Now().Add(time.Minute),
+		}))
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     1,
+			RuleUID:   r2.UID,
+			Data:      []byte("data2"),
+			ExpiresAt: time.Now().Add(time.Minute),
+		}))
+		cmd := models.ListAlertInstancesQuery{}
+		data, err := db.ListAlertInstanceData(ctx, &cmd)
+		require.NoError(t, err)
+		require.Len(t, data, 2)
+	})
+
+	t.Run("instance data is returned for just the org", func(t *testing.T) {
+		r3 := tests.CreateTestAlertRule(t, ctx, db, 60, 3)
+		r4 := tests.CreateTestAlertRule(t, ctx, db, 60, 4)
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     3,
+			RuleUID:   r3.UID,
+			Data:      []byte("data3"),
+			ExpiresAt: time.Now().Add(time.Minute),
+		}))
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     4,
+			RuleUID:   r4.UID,
+			Data:      []byte("data4"),
+			ExpiresAt: time.Now().Add(time.Minute),
+		}))
+		cmd := models.ListAlertInstancesQuery{
+			RuleOrgID: 3,
+		}
+		data, err := db.ListAlertInstanceData(ctx, &cmd)
+		require.NoError(t, err)
+		require.Len(t, data, 1)
+		assert.Equal(t, data[0].Data, []byte("data3"))
+	})
+
+	t.Run("instance data is returned for just the rule", func(t *testing.T) {
+		r5 := tests.CreateTestAlertRule(t, ctx, db, 60, 5)
+		r6 := tests.CreateTestAlertRule(t, ctx, db, 60, 6)
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     5,
+			RuleUID:   r5.UID,
+			Data:      []byte("data5"),
+			ExpiresAt: time.Now().Add(time.Minute),
+		}))
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     6,
+			RuleUID:   r6.UID,
+			Data:      []byte("data6"),
+			ExpiresAt: time.Now().Add(time.Minute),
+		}))
+		cmd := models.ListAlertInstancesQuery{
+			RuleOrgID: 5,
+			RuleUID:   r5.UID,
+		}
+		data, err := db.ListAlertInstanceData(ctx, &cmd)
+		require.NoError(t, err)
+		require.Len(t, data, 1)
+		assert.Equal(t, data[0].Data, []byte("data5"))
+	})
+
+	t.Run("expired instance data is not returned", func(t *testing.T) {
+		r7 := tests.CreateTestAlertRule(t, ctx, db, 60, 7)
+		require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+			OrgID:     7,
+			RuleUID:   r7.UID,
+			Data:      []byte("data7"),
+			ExpiresAt: time.Now(),
+		}))
+		cmd := models.ListAlertInstancesQuery{}
+		data, err := db.ListAlertInstanceData(ctx, &cmd)
+		require.NoError(t, err)
+		require.Len(t, data, 6)
+	})
+}
+
+func TestDeleteAlertInstanceData(t *testing.T) {
+	ctx := context.Background()
+	_, db := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	r := tests.CreateTestAlertRule(t, ctx, db, 60, 1)
+	require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+		OrgID:     1,
+		RuleUID:   r.UID,
+		Data:      []byte("data1"),
+		ExpiresAt: time.Now().Add(time.Minute),
+	}))
+
+	cmd := models.ListAlertInstancesQuery{}
+	data, err := db.ListAlertInstanceData(ctx, &cmd)
+	require.NoError(t, err)
+	require.Len(t, data, 1)
+
+	ok, err := db.DeleteAlertInstanceData(ctx, models.AlertRuleKey{OrgID: 1, UID: r.UID})
+	require.NoError(t, err)
+	require.True(t, ok)
+
+	cmd = models.ListAlertInstancesQuery{}
+	data, err = db.ListAlertInstanceData(ctx, &cmd)
+	require.NoError(t, err)
+	require.Len(t, data, 0)
+
+	ok, err = db.DeleteAlertInstanceData(ctx, models.AlertRuleKey{OrgID: 1, UID: r.UID})
+	require.NoError(t, err)
+	require.False(t, ok)
+}
+
+func TestDeleteExpiredAlertInstanceData(t *testing.T) {
+	ctx := context.Background()
+	_, db := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	r1 := tests.CreateTestAlertRule(t, ctx, db, 60, 1)
+	require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+		OrgID:     1,
+		RuleUID:   r1.UID,
+		Data:      []byte("data1"),
+		ExpiresAt: time.Now().Add(time.Minute),
+	}))
+
+	// Has not expired so should not be deleted
+	n, err := db.DeleteExpiredAlertInstanceData(ctx)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), n)
+
+	r2 := tests.CreateTestAlertRule(t, ctx, db, 60, 1)
+	require.NoError(t, db.SaveAlertInstanceData(ctx, models.AlertInstanceData{
+		OrgID:     1,
+		RuleUID:   r2.UID,
+		Data:      []byte("data2"),
+		ExpiresAt: time.Now(),
+	}))
+
+	// Last one has expired and should be deleted
+	n, err = db.DeleteExpiredAlertInstanceData(ctx)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), n)
 }

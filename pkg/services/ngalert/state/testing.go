@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -51,6 +52,41 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 
 func (f *FakeInstanceStore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
 	return nil
+}
+
+var _ InstanceDataStore = &FakeInstanceDataStore{}
+
+type FakeInstanceDataStore struct {
+	mtx         sync.Mutex
+	RecordedOps []interface{}
+}
+
+func (f *FakeInstanceDataStore) ListAlertInstanceData(ctx context.Context, q *models.ListAlertInstancesQuery) ([]*models.AlertInstanceData, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, *q)
+	return nil, nil
+}
+
+func (f *FakeInstanceDataStore) SaveAlertInstanceData(_ context.Context, data models.AlertInstanceData) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, data)
+	return nil
+}
+
+func (f *FakeInstanceDataStore) DeleteAlertInstanceData(_ context.Context, key models.AlertRuleKey) (bool, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, key)
+	return true, nil
+}
+
+func (f *FakeInstanceDataStore) DeleteExpiredAlertInstanceData(_ context.Context) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, time.Now())
+	return 0, nil
 }
 
 type FakeRuleReader struct{}
