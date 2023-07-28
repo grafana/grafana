@@ -63,3 +63,7 @@ The following dashboards in Grafana Play provide examples of template variables:
 
 - Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
 - Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- By default, variables will not have a default value. This means that the topmost value in the dropdown will always be selected.
+  - If you want to pre-populate a variable with an empty value, you can use the following workaround:
+    1. Add the `Include All Option` to the variable.
+    2. Set the `Custom all value` to a value like `.+`.  
