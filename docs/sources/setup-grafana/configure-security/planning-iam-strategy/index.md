@@ -75,7 +75,7 @@ Teams provide more flexibility, as resources can be accessible by multiple teams
 
 In contrast, organizations provide more isolation than teams, as resources cannot be shared between organizations.
 They are more difficult to manage than teams, as you must create and update resources for each organization individually.
-Organizations cater to bigger companies or users with intricate access needs, necessitating complete resource segregation.
+Organizations cater to bigger companies, companies with regulations around their data, or users with intricate access needs, necessitating complete resource segregation.
 
 ## Access to external systems
 
