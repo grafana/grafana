@@ -1,5 +1,14 @@
 import { css } from '@emotion/css';
-import React, { createElement, CSSProperties, useCallback, useMemo } from 'react';
+import React, {
+  createElement,
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import ReactDomServer from 'react-dom/server';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
@@ -35,23 +44,25 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
         [color, textAlignment, truncate, italic, weight, variant, element]
       )
     );
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const internalRef = useRef<HTMLElement>(null);
 
-    const targetRef = React.useRef<HTMLElement>(null);
-    React.useImperativeHandle<HTMLElement | null, HTMLElement | null>(ref, () => targetRef.current);
+    // wire up the forwarded ref to the internal ref
+    useImperativeHandle<HTMLElement | null, HTMLElement | null>(ref, () => internalRef.current);
 
     const childElement = createElement(
       element,
       {
         className: styles,
-        ref: targetRef,
+        ref: internalRef,
       },
       children
     );
-    const [isOverflowing, setIsOverflowing] = React.useState(false);
+
     const resizeObserver = useMemo(
       () =>
         new ResizeObserver((entries) => {
-          for (let entry of entries) {
+          for (const entry of entries) {
             if (entry.target.clientWidth && entry.target.scrollWidth) {
               if (entry.target.scrollWidth > entry.target.clientWidth) {
                 setIsOverflowing(true);
@@ -64,15 +75,16 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
         }),
       []
     );
-    React.useLayoutEffect(() => {
-      const { current } = targetRef;
-      if (current) {
+
+    useEffect(() => {
+      const { current } = internalRef;
+      if (current && truncate) {
         resizeObserver.observe(current);
       }
       return () => {
         resizeObserver.disconnect();
       };
-    }, [resizeObserver]);
+    }, [isOverflowing, resizeObserver, truncate]);
 
     const getTooltipText = (children: NonNullable<React.ReactNode>) => {
       const html = ReactDomServer.renderToStaticMarkup(<>{children}</>);
@@ -81,10 +93,10 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
     };
     const tooltipText = typeof children === 'string' ? children : getTooltipText(children);
 
-    if (truncate === false || element === 'span' || !isOverflowing) {
-      return childElement;
-    } else {
+    if (truncate === true && isOverflowing && element !== 'span') {
       return <Tooltip content={tooltipText}>{childElement}</Tooltip>;
+    } else {
+      return childElement;
     }
   }
 );
