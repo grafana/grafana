@@ -12,21 +12,78 @@ weight: -38
 
 # What’s new in Grafana v10.1
 
-Welcome to Grafana 10.1! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication.
+Welcome to Grafana 10.1! Read on to learn about changes to search and navigation, dashboards and visualizations, and security and authentication. We're particularly excited about a set of improvements to visualizing logs from [Loki](https://grafana.com/products/cloud/logs/) and other logging data sources in Explore mode, and our flamegraph panel, used to visualize profiling data from [Pyroscope](https://grafana.com/blog/2023/03/15/pyroscope-grafana-phlare-join-for-oss-continuous-profiling/?pg=oss-phlare&plcmt=top-promo-banner) and other continuous profiling data sources.
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.1, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.1/index.md" >}}).
 
 <!-- Template below
 ## Feature
 <!-- Name of contributor -->
-<!-- [Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]
+<!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise, Cloud Free, Cloud Pro, Cloud Advanced]_
 Description. Include an overview of the feature and problem it solves, and where to learn more (like a link to the docs).
 {{% admonition type="note" %}}
 You must use relative references when linking to docs within the Grafana repo. Please do not use absolute URLs. For more information about relrefs, refer to [Links and references](/docs/writers-toolkit/writing-guide/references/).
 {{% /admonition %}}
 -->
+<!-- Add an image, GIF or video  as below
+
+{{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="DESCRIPTIVE CAPTION" >}}
+
+Learn how to upload images here: https://grafana.com/docs/writers-toolkit/write/image-guidelines/#where-to-store-media-assets
+-->
 
 ## Dashboards and visualizations
+
+### Flamegraph improvements
+
+_Generally available in all editions of Grafana._
+
+<!-- Andrej Ocenas -->
+
+We have added 4 new features to the flamegraph visualization:
+
+- **Sandwich view**: You can now show a sandwich of any symbol in the flamegraph. Sandwich view will show all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
+- **Switching color scheme**: You can now switch color scheme between color gradient by the relative value of a symbol or by package name of a symbol.
+- **Switching symbol name alignment**: Symbols with long names may be problematic to differentiate if they have the same prefix. This new option allows you to align the text to left or right so that you can see the part of the symbol name that is important.
+- **Improved navigation**: You can also highlight a symbol or switch on sandwich view for a symbol from the table. Also, a new status bar on top of the flamegraph gives you an overview of which views are enabled.
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
+
+### Distinguish Widgets from visualizations
+
+<!-- Alexa Vargas, Juan Cabanas -->
+
+_Experimental in all editions of Grafana._
+
+This experimental feature introduces a clear distinction between two different categories of panel plugin types: visualization panels that consume a data source and a new type called _widgets_ that don't require a data source.
+
+Now, you can easily add widgets like Text, News, and Annotation list without the need to select a data source. The plugins list and library panels are filtered based on whether you've selected a widget or visualization, providing a streamlined editing experience.
+
+To see the widget editor in Grafana OSS or Enterprise, enable the `vizAndWidgetSplit` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+
+{{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
+
+### Transformations facelift
+
+The transformations tab has an improved user experience and visual redesign! Now you can explore transformations with categories and illustrations.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
+
+### Format Time Transformation
+
+<!-- Kyle Cunningham -->
+
+_Available in public preview in all editions of Grafana._
+
+When working with date and time data, it can be useful to have different time formats. With the new format time transformation, you can convert any time format to any other supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation, this can also be used to bucket days, weeks, and other time windows together.
+
+{{< figure src="/media/docs/grafana/format-time-10-1.gif" max-width="750px" caption="Format time transformation" >}}
+
+### Join by fields transformation outer join (tabular) option
+
+<!-- Brendan O'Handley -->
+
+The join by fields transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL-like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time series data where the join values are never repeated.
 
 ### Disconnect values in time series, trend, and state timeline visualizations
 
@@ -40,79 +97,6 @@ To learn more, refer to our [disconnect values documentation]({{< relref "../pan
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-disconnect-values-examples.png" max-width="750px" caption="Disconnect values in time series, trend, and state timeline visualizations" >}}
 
-### Flamegraph improvements
-
-_Generally available in all editions of Grafana._
-
-<!-- Andrej Ocenas -->
-
-We have added 4 new features to the flamegraph visualization:
-
-- **Sandwich view**: You can now show a sandwich of any symbol in the flamegraph. Sandwich view will show all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
-- **Switching color scheme**: You can now switch color scheme between color gradient by the relative value of a symbol or by package name of a symbol.
-- **Switching symbol name alignment**: With symbols with long name it may be problematic to differentiate them if they have the same prefix. This new option allows you to align the text to left or right so that you can see the part of the symbol name that is important.
-- **Improved navigation**: You can also highlight a symbol or switch on sandwich view for a symbol from the table. Also, a new status bar on top of the flamegraph gives you an overview of which views are enabled.
-
-{{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
-
-### Transformations redesign
-
-The transformations tab has gotten an improved user experience and visual redesign! Now you can view transformations with categories and illustrations.
-
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
-
-### Format Time Transformation (Alpha)
-
-<!-- Kyle Cunningham -->
-
-_Generally available in all editions of Grafana._
-
-When working with times it can be useful to have different time formats. The new format time transformation allows any time format supported by Moment.js to be used in displaying times. When used in conjunction with the _Group by Value_ transformation this can also be used to bucket days, weeks, and other time windows together.
-
-### Join by fields transformation outer join (tabular) option
-
-<!-- Brendan O'Handley -->
-
-The join by fields transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time series data where the join values are never repeated.
-
-### Logs: Log rows menu when using displayed fields
-
-<!-- Matías Wenceslao Chomicki -->
-
-_Generally available in all editions of Grafana._
-
-When you're browsing logs you can use the Log Details component, that is displayed when you click on a row, to replace the log lines contents with the value of one or more of the log fields or labels by using the "eye" icon. When this feature is in use, you now have access to the menu displayed on mouse-over with options such as show context (if available), copy log to clipboard, or copy shortlink.
-
-### Logs: Improved rendering performance of log lines
-
-<!-- Matías Wenceslao Chomicki -->
-
-_Generally available in all editions of Grafana._
-
-With Grafana 10.1 browsing log lines is faster than ever before after a series of performance optimizations done for log-related components.
-
-### Logs: See more log lines in logs context
-
-<!-- Gabor Farkas, Sven Grossmann -->
-
-_Generally available in all editions of Grafana._
-
-Log context allows you to view additional lines surrounding a specific log entry. With this enhancement, you can access as many log lines as needed within the log context. As you scroll through the logs, Grafana dynamically loads more log lines, ensuring a seamless and continuous viewing experience.
-
-### Visualizations and Widgets split
-
-<!-- Alexa Vargas, Juan Cabanas -->
-
-_Experimental in all editions of Grafana._
-
-This experimental feature introduces a clear distinction between two different categories of panel plugin types: visualization panels that consume a data source and a new type called _widgets_ that don't require a data source.
-
-Now, you can easily add widgets like Text, News, and Annotation list without the need to select a data source. The plugins list and library panels are filtered based on whether you've selected a widget or visualization, providing a streamlined editing experience.
-
-To try out the visualizations and widgets split, enable the `vizAndWidgetSplit` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
-
-{{< figure src="/media/docs/grafana/dashboards/WidgetVizSplit.png" max-width="750px" caption="New widget option added to empty dashboards" >}}
-
 ### Geomap network layer
 
 _Available in public preview in all editions of Grafana._
@@ -121,7 +105,7 @@ _Available in public preview in all editions of Grafana._
 
 You can now display network data in the Geomap visualization by using the new beta Network layer. This layer supports the same data format as the [Node graph visualization]({{< relref "../panels-visualizations/visualizations/node-graph/#data-api" >}}).
 
-To learn more, refer to our [Geomap network layer documentation]({{< relref "../panels-visualizations/visualizations/geomap/#network-layer-beta" >}})
+To learn more, refer to our [Geomap network layer documentation]({{< relref "../panels-visualizations/visualizations/geomap/#network-layer-beta" >}}).
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 
@@ -167,9 +151,9 @@ A new linking of Loki log lines in Explore allows you to quickly navigate to spe
 
 _Generally available in all editions of Grafana._
 
-Grafana's Tempo data source latest upgrade includes support for streaming responses of TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for those long queries that take a long time to return a response.
+Grafana's Tempo data source now supports _streaming_ responses to TraceQL queries. With this feature, you can now see partial query results as they come in, so no more waiting for the whole query to finish. This is perfect for big queries that take a long time to return a response.
 
-To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll get immediate visibility of incoming traces on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
+To use this feature, toggle on the "Stream response" option in either the Search or TraceQL query type, and you'll see incoming traces right away on the results table. This smooth integration makes data exploration a breeze and speeds up decision-making.
 
 {{< video-embed src="/media/docs/grafana/data-sources/tempo-streaming.mp4" >}}
 
@@ -193,6 +177,8 @@ Currently, you can add one or more of the following filters:
 - Tags (which include tags, process tags, and log fields)
 
 To only show the spans you have matched, you can press the `Show matches only` toggle.
+
+Learn more about span filtering in our [Tempo data source documentation]({{< relref "../datasources/tempo/#span-filters" >}}).
 
 {{< figure src="/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png" max-width="750px" caption="Traces span filtering" >}}
 
@@ -251,6 +237,32 @@ _Behind the feature toggle `influxdbBackendMigration`_
 InfluxDB backend mode was available for a while but it had some compatibility issues. All those issues were addressed and there is no more compatibility issues. In the future backend mode will be the default one and we will deprecate frontend mode. Users won't need to do anything specific when we make it enabled by default. If you'd like to try backend mode right away you can enable `influxdbBackendMigration` feature toggle.
 
 ## Explore
+
+### Logs: Choose which fields to display in a log line
+
+<!-- Matías Wenceslao Chomicki -->
+
+_Generally available in all editions of Grafana._
+
+When you're browsing logs in Explore, you can click on the "eye" icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. This is helpful for scanning through your logs.
+
+{{< figure src="/media/docs/grafana/log-field-picker-10-1.gif" max-width="750px" caption="Log rows menu" >}}
+
+### Logs: Improved rendering performance of log lines
+
+<!-- Matías Wenceslao Chomicki -->
+
+_Generally available in all editions of Grafana._
+
+Browsing log lines is faster than ever, after a series of performance optimizations to log-related components.
+
+### Logs: See more log lines in logs context
+
+<!-- Gabor Farkas, Sven Grossmann -->
+
+_Generally available in all editions of Grafana._
+
+Log context allows you to view additional lines surrounding a specific log entry. With this enhancement, you can access as many log lines as needed within the log context. As you scroll through the logs, Grafana dynamically loads more log lines, ensuring a seamless and continuous viewing experience.
 
 ### Elasticsearch logs sample
 
@@ -365,7 +377,7 @@ To avoid overriding manually set roles, enable the `skip_org_role_sync` option i
 
 _Generally available in Grafana Open Source, Enterprise, and Cloud._
 
-This change impacts all instances that use an external authentication provider and have [role mapping]({{< relref "../setup-grafana/configure-security/planning-iam-strategy/#role-sync" >}}) enabled.
+This change impacts all instances that use an external authentication provider and have [role mapping enabled.
 
 Currently, it is possible to manually update a user's organization role (Viewer, Editor or Admin) even if this role is managed by an external authentication provider.
 This means that roles can be manually set for the duration of a user's session, but are overridden by the external authentication provider the next time the user logs in.
