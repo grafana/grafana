@@ -66,6 +66,14 @@ func (m *service) Init(_ context.Context) error {
 	var err error
 
 	m.log.Debug("Initializing module manager", "targets", m.targets)
+	for mod, targets := range dependencyMap {
+		if !m.moduleManager.IsModuleRegistered(mod) {
+			continue
+		}
+		if err := m.moduleManager.AddDependency(mod, targets...); err != nil {
+			return err
+		}
+	}
 
 	m.serviceMap, err = m.moduleManager.InitModuleServices(m.targets...)
 	if err != nil {
