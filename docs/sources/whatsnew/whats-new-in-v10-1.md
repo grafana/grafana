@@ -335,12 +335,12 @@ Enables you to switch to a data source-managed alert rule if your data source is
 #### UI improvements
 
 - **Alert evaluation behavior**: New UI components for creating a folder and adding an evaluation group along with improved text and validation.
-- **Alert Rule list page**: the process of creating recording rules (More drop down) is now separate from Grafana-managed and data source-managed alert rules (**+New alert rule**)
+- **Alert Rule list page**: The process of creating recording rules (**More** drop-down) is now separate from Grafana-managed and data source-managed alert rules (**+New alert rule**)
   .
 - **Annotations display**: Adding a summary, description, and runbook URL as annotations are now optional. The dashboard and panel names are now also linked directly, making it easier to access.
-- **View YAML button**: Displays alert rule configuration in YAML format on the Grafana-managed alert rules form as well as Grafana-managed provisioned and non-provisioned Alert Rule detail view.
-- **Queries and expressions**: Several improvements have been made to the display of queries and expressions, including making Add expression a dropdown and moving Conditions to the header.
-- **Min interval option**: Improves control over query costs and performance by enabling you to adjust the minimum resolution of the data used in your alerting queries.
+- **View YAML button**: Displays alert rule configuration in YAML format on the Grafana-managed alert rules form, as well as the Grafana-managed provisioned and non-provisioned Alert Rule detail view.
+- **Queries and expressions**: Several improvements have been made to the display of queries and expressions, including making **Add expression** a drop-down and moving **Conditions** to the header.
+- **Min interval option**: Improves control over query costs and performance by allowing you to adjust the minimum resolution of the data used in your alerting queries.
 - **In-app guidance for alert rule creation**: Learn about how to create your alert rules interactively with in-app guidance for additional context and links out to our Alerting documentation.
 - **Support for toggling common labels**: Toggle between showing or hiding labels for each individual alert instance.
 
@@ -359,7 +359,7 @@ Adds support for the following contact points when using an external Alertmanage
 
 #### Contact point provisioning file export
 
-Facilitates file provisioning and maintenance for contact points.This feature implements the provisioning API export endpoints for exporting contact points as well as adding export buttons to the contact point list in the UI.
+Facilitates file provisioning and maintenance for contact points. This feature implements the provisioning API export endpoints for exporting contact points as well as adding export buttons to the contact point list in the UI.
 
 ### Notification policies
 
@@ -367,7 +367,7 @@ We’ve made the following changes to notification policies.
 
 #### Notification policy provisioning file export
 
-Facilitates file provisioning and maintenance for notification policies.This feature implements the provisioning API export endpoints for exporting notification policies as well as adding an export button to the root notification policy in the UI.
+Facilitates file provisioning and maintenance for notification policies. This feature implements the provisioning API export endpoints for exporting notification policies as well as adding an export button to the root notification policy in the UI.
 
 ### Alert management
 
