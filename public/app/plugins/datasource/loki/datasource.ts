@@ -106,6 +106,8 @@ export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
 const NS_IN_MS = 1000000;
 
+// hello world
+
 export function makeRequest(
   query: LokiQuery,
   range: TimeRange,
