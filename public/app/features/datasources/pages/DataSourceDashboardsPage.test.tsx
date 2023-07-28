@@ -74,9 +74,9 @@ describe('<DataSourceDashboardsPage>', () => {
     });
   });
 
-  it('should render the dashboards page without an issue', () => {
+  it('should render the dashboards page without an issue', async () => {
     setup(uid, store);
 
-    expect(screen.queryByText(dataSourceName)).toBeVisible();
+    expect(await screen.findByText(dataSourceName)).toBeVisible();
   });
 });
