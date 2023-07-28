@@ -155,7 +155,7 @@ datasources:
     user: grafana
     jsonData:
       tlsAuth: true
-      skipTLSVerify: true
+      tlsSkipVerify: true
       database: grafana
       maxOpenConns: 100 # Grafana v5.4+
       maxIdleConns: 100 # Grafana v5.4+
