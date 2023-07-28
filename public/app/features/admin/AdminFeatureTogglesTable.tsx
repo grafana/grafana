@@ -5,7 +5,7 @@ import { Switch } from '@grafana/ui';
 type FeatureToggle = {
   name: string;
   enabled: boolean;
-  readonly: boolean;
+  description: string;
 };
 
 interface Props {
@@ -35,7 +35,7 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
                 whiteSpace: 'normal',
               }}
             >
-              {'No description'}
+              <div>{featureToggle.description}</div>
             </td>
             <td style={{ lineHeight: 'normal' }}>
               <div>

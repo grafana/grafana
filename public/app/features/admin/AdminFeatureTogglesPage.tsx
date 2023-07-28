@@ -1,28 +1,33 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import config from 'app/core/config';
 
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 
-type FeatureToggle = {
-  name: string;
-  enabled: boolean;
+const getToggles = async () => {
+  return await getBackendSrv().get('/api/featuremgmt');
+};
+
+const getErrorMessage = (error: Error) => {
+  return isFetchError(error) ? error?.data?.message : 'An unexpected error happened.';
 };
 
 export default function AdminFeatureTogglesPage() {
-  const featureToggles: FeatureToggle[] = Object.keys(config.featureToggles).map((name) => {
-    return {
-      name,
-      enabled: true,
-    };
-  });
+  const [state, fetchToggles] = useAsyncFn(async () => await getToggles(), []);
+
+  useEffect(() => {
+    fetchToggles();
+  }, [fetchToggles]);
 
   return (
     <Page navId="feature-toggles">
       <Page.Contents>
         <>
-          <AdminFeatureTogglesTable featureToggles={featureToggles} />
+          {state.error && getErrorMessage(state.error)}
+          {state.loading && 'Fetching feature toggles'}
+          {state.value && <AdminFeatureTogglesTable featureToggles={state.value} />}
         </>
       </Page.Contents>
     </Page>
