@@ -6,7 +6,7 @@ import { loadPluginDashboards } from 'app/features/plugins/admin/state/actions';
 import { PluginDashboard, StoreState, useDispatch, useSelector } from 'app/types';
 
 import DashboardTable from '../components/DashboardsTable';
-import { useLoadDataSource } from '../state';
+import { useInitDataSourceSettings } from '../state';
 
 export type Props = {
   // The UID of the data source
@@ -14,7 +14,7 @@ export type Props = {
 };
 
 export function DataSourceDashboards({ uid }: Props) {
-  useLoadDataSource(uid);
+  useInitDataSourceSettings(uid);
 
   const dispatch = useDispatch();
   const dataSource = useSelector((s: StoreState) => s.dataSources.dataSource);
@@ -26,7 +26,7 @@ export function DataSourceDashboards({ uid }: Props) {
     if (dataSource.id > 0) {
       dispatch(loadPluginDashboards());
     }
-  }, [dispatch, dataSource]);
+  }, [dispatch, dataSource.id]);
 
   const onImportDashboard = (dashboard: PluginDashboard, overwrite: boolean) => {
     dispatch(
