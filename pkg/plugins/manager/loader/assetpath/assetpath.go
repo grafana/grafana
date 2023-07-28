@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
@@ -20,6 +21,10 @@ type Service struct {
 
 func ProvideService(cdn *pluginscdn.Service) *Service {
 	return &Service{cdn: cdn}
+}
+
+func DefaultService(cfg *config.Cfg) *Service {
+	return &Service{cdn: pluginscdn.ProvideService(cfg)}
 }
 
 // Base returns the base path for the specified plugin.

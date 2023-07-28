@@ -11,11 +11,16 @@ import { IntervalInput } from '../IntervalInput/IntervalInput';
 
 import { TagMappingInput } from './TagMappingInput';
 
+export interface TraceToLogsTag {
+  key: string;
+  value?: string;
+}
+
 // @deprecated use getTraceToLogsOptions to get the v2 version of this config from jsonData
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
-  mappedTags?: Array<{ key: string; value?: string }>;
+  mappedTags?: TraceToLogsTag[];
   mapTagNamesEnabled?: boolean;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
@@ -26,7 +31,7 @@ export interface TraceToLogsOptions {
 
 export interface TraceToLogsOptionsV2 {
   datasourceUid?: string;
-  tags?: Array<{ key: string; value?: string }>;
+  tags?: TraceToLogsTag[];
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
@@ -151,7 +156,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace', 'deployment.environment'"
           label="Tags"
           labelWidth={26}
         >
