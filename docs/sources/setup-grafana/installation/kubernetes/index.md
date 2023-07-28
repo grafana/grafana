@@ -186,6 +186,28 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
 
 In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via Web browser is straightforward if it is deployed on a Managed Kubernetes Providers as it uses the cloud provider’s LoadBalancer to which the external load balancer routes, are automatically created.
 
+1. Run the following command to obtain the deployment information:
+   ```bash
+   kubectl get all --namespace=my-grafana
+   ```
+
+   The output returned should look similar to the following output:
+   ```bash
+   NAME                           READY   STATUS    RESTARTS   AGE
+   pod/grafana-69946c9bd6-kwjb6   1/1     Running   0          7m27s
+
+   NAME              TYPE           CLUSTER-IP     EXTERNAL-IP      PORT(S)          AGE
+   service/grafana   LoadBalancer   10.5.243.226   1.120.130.330   3000:31171/TCP   7m27s
+
+   NAME                      READY   UP-TO-DATE   AVAILABLE   AGE
+   deployment.apps/grafana   1/1     1            1           7m29s
+
+   NAME                                 DESIRED   CURRENT   READY   AGE
+   replicaset.apps/grafana-69946c9bd6   1         1         1       7m30s
+   ```
+
+
+
 
 
 
