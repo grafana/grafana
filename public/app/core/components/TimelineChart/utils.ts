@@ -527,7 +527,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   const steps = thresholds.steps;
   const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
-  const fmt = (v: number) => formattedValueToString(disp(v));
+  const fmt = (v: number) => formattedValueToString(disp(v, fieldConfig.decimals ?? 0));
 
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i];
