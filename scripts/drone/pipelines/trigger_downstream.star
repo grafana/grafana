@@ -24,7 +24,7 @@ trigger = {
         ],
     },
     "repo": [
-        "grafana/grafana",
+        "grafana/grafana-security-mirror",
     ],
 }
 
