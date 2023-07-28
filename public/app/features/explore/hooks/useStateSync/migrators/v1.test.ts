@@ -1,6 +1,3 @@
-import { silenceConsoleOutput } from 'test/core/utils/silenceConsoleOutput';
-
-import { toUtc } from '@grafana/data';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { v1Migrator } from './v1';
@@ -12,7 +9,13 @@ jest.mock('app/core/utils/explore', () => ({
 
 describe('v1 migrator', () => {
   describe('parse', () => {
-    silenceConsoleOutput();
+    beforeEach(function () {
+      jest.spyOn(console, 'error').mockImplementation(() => void 0);
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
 
     it('correctly returns default state when no params are provided', () => {
       expect(v1Migrator.parse({})).toMatchObject({
@@ -102,102 +105,6 @@ describe('v1 migrator', () => {
             range: {
               from: 'now',
               to: 'now-5m',
-            },
-          },
-        },
-      });
-    });
-
-    it('correctly parses absolute range', () => {
-      const expectedTime = toUtc(946684800000);
-      expect(
-        v1Migrator.parse({
-          panes: `{
-            "aaa": {
-              "datasource": "my-ds",
-              "queries": [
-                {
-                  "refId": "A"
-                }
-              ],
-              "range": {
-                "from": "946684800000",
-                "to": "946684800000"
-              }
-            }
-          }`,
-        })
-      ).toMatchObject({
-        panes: {
-          aaa: {
-            datasource: 'my-ds',
-            queries: [{ refId: 'A' }],
-            range: {
-              from: expectedTime,
-              to: expectedTime,
-            },
-          },
-        },
-      });
-    });
-
-    it('correctly sets default range when provided range is incorrect', () => {
-      expect(
-        v1Migrator.parse({
-          panes: `{
-            "aaa": {
-              "datasource": "my-ds",
-              "queries": [
-                {
-                  "refId": "A"
-                }
-              ],
-              "range": {
-                "from": "boom",
-                "to": "now"
-              }
-            }
-          }`,
-        })
-      ).toMatchObject({
-        panes: {
-          aaa: {
-            datasource: 'my-ds',
-            queries: [{ refId: 'A' }],
-            range: {
-              from: 'now-6h',
-              to: 'now',
-            },
-          },
-        },
-      });
-    });
-
-    it('correctly sets default range when provided range is incomplete', () => {
-      expect(
-        v1Migrator.parse({
-          panes: `{
-            "aaa": {
-              "datasource": "my-ds",
-              "queries": [
-                {
-                  "refId": "A"
-                }
-              ],
-              "range": {
-                "from": "now-5h"
-              }
-            }
-          }`,
-        })
-      ).toMatchObject({
-        panes: {
-          aaa: {
-            datasource: 'my-ds',
-            queries: [{ refId: 'A' }],
-            range: {
-              from: 'now-6h',
-              to: 'now',
             },
           },
         },

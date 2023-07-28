@@ -2,6 +2,8 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
+import { isDateTime } from '../datetime';
+import { URLRange, RawTimeRange } from '../types';
 import { ExploreUrlState } from '../types/explore';
 
 /**
@@ -211,3 +213,25 @@ export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: bo
   }
   return JSON.stringify(urlState);
 }
+
+/**
+ * Converts RawTimeRange to a string that is stored in the URL
+ * - relative - stays as it is (e.g. "now")
+ * - absolute - converted to ms
+ */
+export const toURLRange = (range: RawTimeRange): URLRange => {
+  let from = range.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString();
+  }
+
+  let to = range.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString();
+  }
+
+  return {
+    from,
+    to,
+  };
+};

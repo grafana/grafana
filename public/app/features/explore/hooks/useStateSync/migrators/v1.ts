@@ -1,6 +1,6 @@
-import { ExploreUrlState, RawTimeRange } from '@grafana/data';
+import { ExploreUrlState } from '@grafana/data';
 import { generateExploreId, safeParseJson } from 'app/core/utils/explore';
-import { DEFAULT_RANGE, parseRawTime } from 'app/features/explore/state/utils';
+import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { hasKey } from '../../utils';
 
@@ -62,30 +62,6 @@ const DEFAULT_STATE: ExploreUrlState = {
   range: DEFAULT_RANGE,
 };
 
-function parseTimeRange(input: object): RawTimeRange {
-  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
-
-  if (
-    hasKey('range', input) &&
-    !!input.range &&
-    typeof input.range === 'object' &&
-    hasKey('from', input.range) &&
-    hasKey('to', input.range) &&
-    typeof input.range.from === 'string' &&
-    typeof input.range.to === 'string'
-  ) {
-    let parsedRange = {
-      from: parseRawTime(input.range.from),
-      to: parseRawTime(input.range.to),
-    };
-    if (parsedRange.from !== null && parsedRange.to !== null) {
-      rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
-    }
-  }
-
-  return rawTimeRange;
-}
-
 function applyDefaults(input: unknown): ExploreUrlState {
   if (!input || typeof input !== 'object') {
     return DEFAULT_STATE;
@@ -102,6 +78,12 @@ function applyDefaults(input: unknown): ExploreUrlState {
       !!input.panelsState &&
       typeof input.panelsState === 'object' && { panelsState: input.panelsState }),
     // range
-    ...{ range: parseTimeRange(input) },
+    ...(hasKey('range', input) &&
+      !!input.range &&
+      typeof input.range === 'object' &&
+      hasKey('from', input.range) &&
+      hasKey('to', input.range) &&
+      typeof input.range.from === 'string' &&
+      typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
   };
 }

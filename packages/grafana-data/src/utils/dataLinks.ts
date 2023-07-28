@@ -12,7 +12,7 @@ import {
 } from '../types';
 
 import { locationUtil } from './location';
-import { serializeStateToUrlParam } from './url';
+import { serializeStateToUrlParam, toURLRange } from './url';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -79,7 +79,7 @@ function generateInternalHref<T extends DataQuery = any>(
   return locationUtil.assureBaseUrl(
     `/explore?left=${encodeURIComponent(
       serializeStateToUrlParam({
-        range: range.raw,
+        range: toURLRange(range.raw),
         datasource: datasourceUid,
         queries: [query],
         panelsState: panelsState,
