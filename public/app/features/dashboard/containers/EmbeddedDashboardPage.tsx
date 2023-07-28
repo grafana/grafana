@@ -1,18 +1,16 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { GrafanaTheme2, NavIndex, NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Button, ModalsController, PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { DashboardRoutes, useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
-import { getNavModel } from '../../../core/selectors/navModel';
 import { updateTimeZoneForSession } from '../../profile/state/reducers';
-import { getPageNavFromSlug, getRootContentNavModel } from '../../storage/StorageFolderPage';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
@@ -38,11 +36,10 @@ export type Props = GrafanaRouteComponentProps<
   EmbeddedDashboardPageRouteSearchParams
 >;
 
-export default function EmbeddedDashboardPage({ route, match, queryParams }: Props) {
+export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
   const dispatch = useDispatch();
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
-  const navIndex = useSelector((state) => state.navIndex);
   const dashboard = dashboardState.getModel();
   const [dashboardJson, setDashboardJson] = useState('');
   const [editPanel, setEditPanel] = useState<PanelModel | null>(null);
@@ -107,13 +104,6 @@ export default function EmbeddedDashboardPage({ route, match, queryParams }: Pro
     return <p>Not available</p>;
   }
 
-  const { pageNav, sectionNav } = updateStatePageNavFromProps({
-    dashboard,
-    navIndex,
-    route,
-    match,
-    editPanel: !!editPanel,
-  });
   return (
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
       <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
@@ -125,9 +115,8 @@ export default function EmbeddedDashboardPage({ route, match, queryParams }: Pro
         <PanelEditor
           dashboard={dashboard}
           sourcePanel={editPanel}
-          tab={queryParams.tab}
-          sectionNav={sectionNav}
-          pageNav={pageNav}
+          sectionNav={{ main: { text: '', children: [] }, node: { text: '' } }}
+          pageNav={{ text: '', children: [] }}
         />
       )}
     </Page>
@@ -188,49 +177,3 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
-
-type PageState = {
-  dashboard: DashboardModel;
-  navIndex: NavIndex;
-  route: GrafanaRouteComponentProps['route'];
-  match: GrafanaRouteComponentProps['match'];
-  editPanel: boolean;
-};
-
-function updateStatePageNavFromProps({ dashboard, navIndex, route, match, editPanel }: PageState) {
-  let sectionNav: NavModel = { main: { text: '', children: [] }, node: { text: '' } };
-  let pageNav: NavModelItem = { text: '' };
-
-  const defaultState = { sectionNav, pageNav };
-  if (!dashboard) {
-    return defaultState;
-  }
-
-  if (route.routeName === DashboardRoutes.Path) {
-    sectionNav = getRootContentNavModel();
-    const pageNav = getPageNavFromSlug(match.params.slug!);
-    if (pageNav?.parentItem) {
-      pageNav.parentItem = pageNav.parentItem;
-    }
-  } else {
-    sectionNav = getNavModel(navIndex, 'dashboards/browse');
-  }
-
-  if (editPanel) {
-    pageNav = {
-      ...pageNav,
-      text: `Edit panel`,
-      parentItem: pageNav,
-      url: undefined,
-    };
-  }
-
-  if (pageNav === pageNav && sectionNav === sectionNav) {
-    return defaultState;
-  }
-
-  return {
-    pageNav,
-    sectionNav,
-  };
-}
