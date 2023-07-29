@@ -46,19 +46,19 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
     return (
       <>
-        <input
-          type="radio"
-          className={styles.radio}
-          onChange={onChange}
-          onClick={onClick}
-          disabled={disabled}
-          id={id}
-          checked={active}
-          name={name}
-          aria-label={ariaLabel || description}
-          ref={ref}
-        />
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
+          <input
+            type="radio"
+            className={styles.radio}
+            onChange={onChange}
+            onClick={onClick}
+            disabled={disabled}
+            id={id}
+            checked={active}
+            name={name}
+            aria-label={ariaLabel || description}
+            ref={ref}
+          />
           {children}
         </label>
       </>
@@ -78,10 +78,6 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
 
   return {
     radio: css({
-      position: 'absolute',
-      opacity: 0,
-      zIndex: -1000,
-
       '&:checked + label': {
         color: theme.colors.text.primary,
         fontWeight: theme.typography.fontWeightMedium,
@@ -99,8 +95,10 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       },
     }),
     radioLabel: css({
-      display: 'inline-block',
-      position: 'relative',
+      display: 'grid',
+      gridTemplateColumns: '16px auto auto',
+      gap: '8px',
+      justifyContent: 'start',
       fontSize,
       height: `${labelHeight}px`,
       // Deduct border from line-height for perfect vertical centering on windows and linux
