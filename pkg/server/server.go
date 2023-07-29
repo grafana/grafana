@@ -112,11 +112,6 @@ func (s *Server) init(ctx context.Context) error {
 	return s.roleRegistry.RegisterFixedRoles(ctx)
 }
 
-// AwaitHealthy waits for the server to become healthy.
-func (s *Server) AwaitHealthy(ctx context.Context) error {
-	return s.moduleService.AwaitHealthy(ctx)
-}
-
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
 func (s *Server) Run(ctx context.Context) error {

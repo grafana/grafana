@@ -27,17 +27,9 @@ func (m *MockModuleManager) RegisterInvisibleModule(name string, initFn func() (
 }
 
 type MockModuleEngine struct {
-	AwaitHealthyFunc func(context.Context) error
-	InitFunc         func(context.Context) error
-	RunFunc          func(context.Context) error
-	ShutdownFunc     func(context.Context) error
-}
-
-func (m *MockModuleEngine) AwaitHealthy(ctx context.Context) error {
-	if m.AwaitHealthyFunc != nil {
-		return m.AwaitHealthyFunc(ctx)
-	}
-	return nil
+	InitFunc     func(context.Context) error
+	RunFunc      func(context.Context) error
+	ShutdownFunc func(context.Context) error
 }
 
 func (m *MockModuleEngine) Init(ctx context.Context) error {

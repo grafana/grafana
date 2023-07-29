@@ -15,7 +15,6 @@ import (
 )
 
 type Engine interface {
-	AwaitHealthy(context.Context) error
 	Init(context.Context) error
 	Run(context.Context) error
 	Shutdown(context.Context) error
@@ -58,14 +57,6 @@ func ProvideService(
 
 		features: features,
 	}
-}
-
-// AwaitHealthy waits for all registered modules to be healthy.
-func (m *service) AwaitHealthy(ctx context.Context) error {
-	if m.serviceManager == nil {
-		return errors.New("service manager has not been initialized")
-	}
-	return m.serviceManager.AwaitHealthy(ctx)
 }
 
 // Init initializes all registered modules.
