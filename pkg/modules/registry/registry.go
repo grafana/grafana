@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 )
 
 type Registry interface{}
@@ -27,7 +26,6 @@ func ProvideRegistry(
 	certGenerator certgenerator.ServiceInterface,
 	httpServer *api.HTTPServer,
 	provisioningService *provisioning.ProvisioningServiceImpl,
-	secretsMigrator *migrations.SecretMigrationProviderImpl,
 ) *registry {
 	return newRegistry(
 		log.New("modules.registry"),
@@ -37,7 +35,6 @@ func ProvideRegistry(
 		certGenerator,
 		httpServer,
 		provisioningService,
-		secretsMigrator,
 	)
 }
 
