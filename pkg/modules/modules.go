@@ -3,7 +3,6 @@ package modules
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -11,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/systemd"
 )
 
 type Engine interface {
@@ -63,10 +61,6 @@ func ProvideService(
 func (m *service) Init(_ context.Context) error {
 	var err error
 
-	if err = m.processFeatureFlags(); err != nil {
-		return err
-	}
-
 	m.log.Debug("Initializing module manager", "targets", m.targets)
 	for mod, targets := range dependencyMap {
 		if err := m.moduleManager.AddDependency(mod, targets...); err != nil {
@@ -114,13 +108,6 @@ func (m *service) Run(ctx context.Context) error {
 		return err
 	}
 
-	err = m.serviceManager.AwaitHealthy(ctx)
-	if err != nil {
-		return err
-	}
-
-	systemd.NotifyReady(m.log)
-
 	err = m.serviceManager.AwaitStopped(ctx)
 	if err != nil {
 		return err
@@ -163,32 +150,4 @@ func (m *service) RegisterInvisibleModule(name string, initFn func() (services.S
 // IsModuleEnabled returns true if the module is enabled.
 func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
-}
-
-// processFeatureFlags adds or removes targets based on feature flags.
-func (m *service) processFeatureFlags() error {
-	// add GrafanaAPIServer to targets if feature is enabled
-	if m.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		m.targets = append(m.targets, GrafanaAPIServer)
-	}
-
-	if !m.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		// error if GrafanaAPIServer is in targets
-		for _, t := range m.targets {
-			if t == GrafanaAPIServer {
-				return fmt.Errorf("feature flag %s is disabled, but target %s is still enabled", featuremgmt.FlagGrafanaAPIServer, GrafanaAPIServer)
-			}
-		}
-
-		// error if GrafanaAPIServer is a dependency of a target
-		for parent, targets := range dependencyMap {
-			for _, t := range targets {
-				if t == GrafanaAPIServer && m.IsModuleEnabled(parent) {
-					return fmt.Errorf("feature flag %s is disabled, but target %s is enabled with dependency on %s", featuremgmt.FlagGrafanaAPIServer, parent, GrafanaAPIServer)
-				}
-			}
-		}
-	}
-
-	return nil
 }

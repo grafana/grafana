@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 )
 
-func TestNewRegistry(t *testing.T) {
+func TestRegistry(t *testing.T) {
 	var registeredInvisibleModules []string
 	var registeredModules []string
 

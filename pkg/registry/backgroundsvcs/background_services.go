@@ -97,13 +97,13 @@ func ProvideBackgroundServiceRegistry(
 
 // BackgroundServiceRegistry provides background services.
 type BackgroundServiceRegistry struct {
-	services []registry.BackgroundService
+	Services []registry.BackgroundService
 }
 
-func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundServiceRegistry {
-	return &BackgroundServiceRegistry{services: s}
+func NewBackgroundServiceRegistry(services ...registry.BackgroundService) *BackgroundServiceRegistry {
+	return &BackgroundServiceRegistry{services}
 }
 
 func (r *BackgroundServiceRegistry) GetServices() []registry.BackgroundService {
-	return r.services
+	return r.Services
 }
