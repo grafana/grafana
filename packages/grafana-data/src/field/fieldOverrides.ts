@@ -411,7 +411,7 @@ export const getLinksSupplier =
           internalLink: link.internal,
           scopedVars: dataLinkScopedVars,
           field,
-          range: link.internal.range ?? ({} as any),
+          range: link.internal.range,
           replaceVariables,
         });
       }

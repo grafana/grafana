@@ -14,8 +14,7 @@ const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
 
 const DATE_AS_DATE_TIME = toUtc([2000, 1, 1]);
 const DATE_AS_MS = '949363200000';
-const DEFAULT_TIME_RANGE = createTimeRange(DATE_AS_DATE_TIME, DATE_AS_DATE_TIME);
-const DEFAULT_TIME_RANGE_AS_STRING = `"range":{"from":"${DATE_AS_MS}","to":"${DATE_AS_MS}"}`;
+const TIME_RANGE = createTimeRange(DATE_AS_DATE_TIME, DATE_AS_DATE_TIME);
 
 describe('mapInternalLinkToExplore', () => {
   it('creates internal link', () => {
@@ -33,7 +32,6 @@ describe('mapInternalLinkToExplore', () => {
       link: dataLink,
       internalLink: dataLink.internal,
       scopedVars: {},
-      range: DEFAULT_TIME_RANGE,
       field: {
         name: 'test',
         type: FieldType.number,
@@ -43,11 +41,10 @@ describe('mapInternalLinkToExplore', () => {
       replaceVariables: (val) => val,
     });
 
-    const expectedURL = `{${DEFAULT_TIME_RANGE_AS_STRING},"datasource":"uid","queries":[{"query":"12344"}]}`;
     expect(link).toEqual(
       expect.objectContaining({
         title: 'dsName',
-        href: `/explore?left=${encodeURIComponent(expectedURL)}`,
+        href: `/explore?left=${encodeURIComponent('{"datasource":"uid","queries":[{"query":"12344"}]}')}`,
         onClick: undefined,
       })
     );
@@ -75,7 +72,6 @@ describe('mapInternalLinkToExplore', () => {
       link: dataLink,
       internalLink: dataLink.internal!,
       scopedVars: {},
-      range: DEFAULT_TIME_RANGE,
       field: {
         name: 'test',
         type: FieldType.number,
@@ -85,11 +81,12 @@ describe('mapInternalLinkToExplore', () => {
       replaceVariables: (val) => val,
     });
 
-    const expectedURL = `{${DEFAULT_TIME_RANGE_AS_STRING},"datasource":"uid","queries":[{"query":"12344"}],"panelsState":{"trace":{"spanId":"abcdef"}}}`;
     expect(link).toEqual(
       expect.objectContaining({
         title: 'dsName',
-        href: `/explore?left=${encodeURIComponent(expectedURL)}`,
+        href: `/explore?left=${encodeURIComponent(
+          '{"datasource":"uid","queries":[{"query":"12344"}],"panelsState":{"trace":{"spanId":"abcdef"}}}'
+        )}`,
         onClick: undefined,
       })
     );
@@ -121,7 +118,7 @@ describe('mapInternalLinkToExplore', () => {
       scopedVars: {
         var1: { text: '', value: 'val1' },
       },
-      range: DEFAULT_TIME_RANGE,
+      range: TIME_RANGE,
       field: {
         name: 'test',
         type: FieldType.number,
