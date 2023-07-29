@@ -9,13 +9,11 @@ const (
 	CertGenerator string = "cert-generator"
 	// GrafanaAPIServer is the Kubertenes API server for Grafana Resources
 	GrafanaAPIServer string = "grafana-apiserver"
-	// Provisioning sets up Grafana with preconfigured datasources, dashboards, etc.
-	Provisioning string = "provisioning"
 )
 
 // dependencyMap defines Module Targets => Dependencies
 var dependencyMap = map[string][]string{
-	BackgroundServices: {Provisioning},
+	BackgroundServices: {},
 
 	CertGenerator:    {},
 	GrafanaAPIServer: {CertGenerator},
