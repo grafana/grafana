@@ -12,12 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-const GENERAL_FOLDER = "General Alerting"
-
-// FOLDER_CREATED_BY us used to track folders created by this migration
-// during alert migration cleanup.
-const FOLDER_CREATED_BY = -8
-
 var migTitle = "move dashboard alerts to unified alerting"
 
 const codeMigration = "code migration"
@@ -92,30 +86,6 @@ func (m *updateDashboardUIDPanelIDMigration) Exec(sess *xorm.Session, mg *migrat
 		}
 	}
 	return nil
-}
-
-// clearMigrationEntry removes an entry fromt the migration_log table.
-// This migration is not recorded in the migration_log so that it can re-run several times.
-type clearMigrationEntry struct {
-	migrator.MigrationBase
-
-	migrationID string
-}
-
-func (m *clearMigrationEntry) SQL(dialect migrator.Dialect) string {
-	return "clear migration entry code migration"
-}
-
-func (m *clearMigrationEntry) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	_, err := sess.SQL(`DELETE from migration_log where migration_id = ?`, m.migrationID).Query()
-	if err != nil {
-		return fmt.Errorf("failed to clear migration entry %v: %w", m.migrationID, err)
-	}
-	return nil
-}
-
-func (m *clearMigrationEntry) SkipMigrationLog() bool {
-	return true
 }
 
 type AlertConfiguration struct {
@@ -254,60 +224,5 @@ func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migra
 }
 
 func (u *upgradeNgAlerting) SQL(migrator.Dialect) string {
-	return codeMigration
-}
-
-// CreateDefaultFoldersForAlertingMigration creates a folder dedicated for alerting if no folders exist
-func CreateDefaultFoldersForAlertingMigration(mg *migrator.Migrator) {
-	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
-		return
-	}
-	mg.AddMigration("create default alerting folders", &createDefaultFoldersForAlertingMigration{})
-}
-
-type createDefaultFoldersForAlertingMigration struct {
-	migrator.MigrationBase
-}
-
-func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-	helper := folderHelper{
-		sess: sess,
-		mg:   migrator,
-	}
-
-	var rows []struct {
-		Id   int64
-		Name string
-	}
-
-	if err := sess.Table("org").Cols("id", "name").Find(&rows); err != nil {
-		return fmt.Errorf("failed to read the list of organizations: %w", err)
-	}
-
-	orgsWithFolders, err := helper.getOrgsIDThatHaveFolders()
-	if err != nil {
-		return fmt.Errorf("failed to list organizations that have at least one folder: %w", err)
-	}
-
-	for _, row := range rows {
-		// if there's at least one folder in the org or if alerting is disabled for that org, skip adding the default folder
-		if _, ok := orgsWithFolders[row.Id]; ok {
-			migrator.Logger.Debug("Skip adding default alerting folder because organization already has at least one folder", "org_id", row.Id)
-			continue
-		}
-		if _, ok := migrator.Cfg.UnifiedAlerting.DisabledOrgs[row.Id]; ok {
-			migrator.Logger.Debug("Skip adding default alerting folder because alerting is disabled for the organization ", "org_id", row.Id)
-			continue
-		}
-		folder, err := helper.createGeneralFolder(row.Id)
-		if err != nil {
-			return fmt.Errorf("failed to create the default alerting folder for organization %s (ID: %d): %w", row.Name, row.Id, err)
-		}
-		migrator.Logger.Info("Created the default folder for alerting", "org_id", row.Id, "folder_name", folder.Title, "folder_uid", folder.Uid)
-	}
-	return nil
-}
-
-func (c createDefaultFoldersForAlertingMigration) SQL(migrator.Dialect) string {
 	return codeMigration
 }

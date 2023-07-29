@@ -75,7 +75,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addEntityEventsTableMigration(mg)
 
 	addPublicDashboardMigration(mg)
-	ualert.CreateDefaultFoldersForAlertingMigration(mg)
 	addDbFileStorageMigration(mg)
 
 	accesscontrol.AddManagedPermissionsMigration(mg, accesscontrol.ManagedPermissionsMigrationID)
