@@ -40,7 +40,7 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery } from './queryUtils';
 import ResponseParser from './response_parser';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -423,6 +423,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = options.database;
     } else if (this.database) {
       params.db = this.database;
+    }
+
+    if (options?.policy && options.policy !== DEFAULT_POLICY) {
+      params.rp = options.policy;
     }
 
     const { q } = data;

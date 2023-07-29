@@ -1,10 +1,9 @@
 import React from 'react';
 
+import { DEFAULT_POLICY } from '../../../../../types';
 import { toSelectableValue } from '../utils/toSelectableValue';
 
 import { Seg } from './Seg';
-
-const DEFAULT_POLICY = 'default';
 
 // we use the value "default" as a magic-value, it means
 // we use the default retention-policy.
