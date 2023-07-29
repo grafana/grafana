@@ -6,10 +6,13 @@ import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
 
-const BasicRoles = Object.values(OrgRole).filter((r) => r !== OrgRole.None);
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
-  label: r,
+const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
+  label: r === OrgRole.None ? 'No basic role' : r,
   value: r,
+  tooltip:
+    r === OrgRole.None
+      ? 'This role has no permissions by default. You may still add specific permissions with the help of RBAC.'
+      : undefined,
 }));
 
 interface Props {

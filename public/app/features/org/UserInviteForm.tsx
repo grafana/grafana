@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { locationUtil } from '@grafana/data';
+import { locationUtil, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
 import { Button, LinkButton, Input, Switch, RadioButtonGroup, Form, Field, InputControl, FieldSet } from '@grafana/ui';
@@ -9,11 +9,14 @@ import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
 
-const roles = [
-  { label: 'Viewer', value: OrgRole.Viewer },
-  { label: 'Editor', value: OrgRole.Editor },
-  { label: 'Admin', value: OrgRole.Admin },
-];
+const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
+  label: r === OrgRole.None ? 'No basic role' : r,
+  value: r,
+  tooltip:
+    r === OrgRole.None
+      ? 'This role has no permissions by default. You may still add specific permissions with the help of RBAC.'
+      : undefined,
+}));
 
 export interface FormModel {
   role: OrgRole;
