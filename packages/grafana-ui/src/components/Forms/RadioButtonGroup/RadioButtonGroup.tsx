@@ -6,6 +6,7 @@ import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
+import { Tooltip } from '../../Tooltip/Tooltip';
 
 import { RadioButtonSize, RadioButton } from './RadioButton';
 
@@ -95,6 +96,11 @@ export function RadioButtonGroup<T>({
             {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
             {opt.label} {opt.component ? <opt.component /> : null}
+            {opt.tooltip && (
+              <Tooltip placement="right-end" interactive={true} content={opt.tooltip}>
+                <Icon name="question-circle" />
+              </Tooltip>
+            )}
           </RadioButton>
         );
       })}
