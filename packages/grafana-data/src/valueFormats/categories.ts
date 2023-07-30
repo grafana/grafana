@@ -23,7 +23,7 @@ import {
   toTimeTicks,
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
-import { binaryPrefix, currency, SIPrefix, metricPrefix } from './symbolFormatters';
+import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
 import {
   locale,
   scaledUnits,
@@ -32,6 +32,7 @@ import {
   ValueFormatCategory,
   stringFormater,
   booleanValueFormatter,
+  scaledMetricUnits,
 } from './valueFormats';
 
 export const getCategories = (scalable = true): ValueFormatCategory[] => {

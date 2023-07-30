@@ -1,4 +1,4 @@
-import { clamp } from 'lodash';
+import { clamp, findLast } from 'lodash';
 
 import { TimeZone } from '../types';
 import { DecimalCount } from '../types/displayValue';
@@ -154,55 +154,23 @@ export function scaledUnits(factor: number, extArray: string[], offset = 0): Val
   };
 }
 
-// [log10(val), [exponent, unit index]]
-const MM_SCALE_MAP = new Map([
-  [0, [0, 0]],
-  [1, [-1, 1]],
-  [2, [-1, 1]],
-  [3, [-3, 2]],
-  [4, [-3, 2]],
-  [5, [-3, 2]],
-  [6, [-6, 3]],
-]);
-const CM_SCALE_MAP = new Map([
-  [-1, [1, 0]],
-  [0, [0, 1]],
-  [1, [0, 1]],
-  [2, [-2, 2]],
-  [3, [-2, 2]],
-  [4, [-2, 2]],
-  [5, [-5, 3]],
-]);
-const M_SCALE_MAP = new Map([
-  [-3, [3, 0]],
-  [-2, [2, 1]],
-  [-1, [2, 1]],
-  [0, [0, 2]],
-  [1, [0, 2]],
-  [2, [0, 2]],
-  [3, [-3, 3]],
-]);
-const KM_SCALE_MAP = new Map([
-  [-6, [6, 0]],
-  [-5, [5, 1]],
-  [-4, [5, 1]],
-  [-3, [3, 2]],
-  [-2, [3, 2]],
-  [-1, [3, 2]],
-  [0, [0, 3]],
-]);
-
-const METRIC_SCALES_ARRAY = [MM_SCALE_MAP, CM_SCALE_MAP, M_SCALE_MAP, KM_SCALE_MAP];
-
-const clampMatrix = [
-  [0, 6],
-  [-1, 5],
-  [-3, 3],
-  [-6, 0],
+const METRIC_PREFIXES = [
+  { symbol: 'm', magnitude: -3 },
+  { symbol: 'c', magnitude: -2 },
+  { symbol: '', magnitude: 0 },
+  { symbol: 'k', magnitude: 3 },
 ];
 
-export function scaledMetricUnits(units: string[], offset = 0): ValueFormatter {
-  return (val: number, decimals?: DecimalCount) => {
+function scaleMetric(val: number, magnitude: number, unit: string) {
+  const baseVal = val * 10 ** magnitude;
+  const scale = Math.floor(Math.log10(baseVal));
+  const prefix = findLast(METRIC_PREFIXES, (p) => p.magnitude <= scale) ?? METRIC_PREFIXES[0];
+  const scaledVal = val * 10 ** (magnitude - prefix.magnitude);
+  return { text: scaledVal.toLocaleString(), suffix: ` ${prefix.symbol}${unit}` };
+}
+
+export function scaledMetricUnits(suffix: string, magnitude = 0): ValueFormatter {
+  return (val: number) => {
     if (val === null || val === undefined) {
       return { text: '' };
     }
@@ -214,17 +182,11 @@ export function scaledMetricUnits(units: string[], offset = 0): ValueFormatter {
     if (val === 0) {
       return {
         text: val.toLocaleString(),
-        suffix: units[offset],
+        suffix,
       };
     }
-    const scales = METRIC_SCALES_ARRAY[offset];
-    const [min, max] = clampMatrix[offset];
-    const [pow, unitIndex] = scales.get(clamp(Math.floor(Math.log10(Math.abs(val))), min, max)) || [0, 0];
 
-    return {
-      text: (val * 10 ** pow).toLocaleString(),
-      suffix: units[unitIndex],
-    };
+    return scaleMetric(val, magnitude, suffix);
   };
 }
 
