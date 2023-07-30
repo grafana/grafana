@@ -410,51 +410,52 @@ This means that REVISION#2 is the current version.
 
 ### Rollback a deployment
 
+When the Grafana deployment becomes unstable due to crash looping, bugs, or xxx, you can roll back a deployment.
+
+By default, Kubernetes deployment rollout history remains in the system so that you can roll back at any time. For more information, refer to  [Rolling Back to a Previous Revision](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-to-a-previous-revision).
+
+1. To list all possible `REVISION`, run the following command:
+   
+   ```bash
+   kubectl rollout history deployment grafana -n my-grafana
+   ```
+
+1. To roll back to a previous version, run the `kubectl rollout undo` command and provide a revision number.
+   
+   Example to roll back to a previous version, specify it in the `--to-revision` parameter.
+   ```bash
+   kubectl rollout undo deployment grafana --to-revision=1 -n my-grafana
+   ```
+
+1. To verify that the rollback on the cluster is successful, run the following command:
+   
+   ```bash
+   kubectl rollout status deployment grafana -n my-grafana
+   ```
+
+1. To verify it, access the Grafana UI in the browser using the provided IP:Port from the command above.
+   
+   The Grafana sign-in page appears.
+
+     1. To sign in to Grafana, enter `admin` for both the username and password.
+     2. On the top right corner, click the help icon which will display the version.
+
+1. To see the new rollout history, run the following command:
+
+   ```bash
+   kubectl rollout history deployment grafana -n my-grafana
+   ```
+
+> **Note:** The last `REVISION` is always the active one, and the number always get incremented automatically.
+
+If you need to go back to any other REVISION, just repeat the above steps and use the correct revision number in the `--to-revision` parameter.
+
+## Troubleshooting
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### Send the manifest to the Kubernetes API server
-
-1. Run the following command:
-   `kubectl apply -f grafana.yaml`
-
-1. Check that it worked by running the following:
-   `kubectl port-forward service/grafana 3000:3000`
-
-1. Navigate to `localhost:3000` in your browser. You should see a Grafana login page.
-
-1. Use `admin` for both the username and password to login.
 
 ## Deploy Grafana Enterprise on Kubernetes
 
