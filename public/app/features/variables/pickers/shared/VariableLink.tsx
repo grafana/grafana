@@ -89,7 +89,7 @@ const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
       <Icon
         className="spin-clockwise"
         name="sync"
-        size="xs"
+        size="sm"
         onClick={onClick}
         aria-label={selectors.components.LoadingIndicator.icon}
       />
