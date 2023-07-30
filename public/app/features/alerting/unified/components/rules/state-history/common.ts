@@ -109,37 +109,34 @@ export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelDa
   const historyImplementation = getHistoryImplementation();
   const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
 
-  if (!usingLokiAsImplementation) {
+  if (
+    !usingLokiAsImplementation ||
+    !panelDataProcessed.alertState?.dashboardId ||
+    !panelDataProcessed.alertState?.panelId
+  ) {
     return panelDataProcessed;
   }
 
-  if (
-    usingLokiAsImplementation &&
-    panelDataProcessed.alertState?.dashboardId &&
-    panelDataProcessed.alertState?.panelId
-  ) {
-    try {
-      // fetch data from Loki state history
-      let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
-        panelID: panelDataProcessed.request?.panelId,
-        dashboardUID: panelDataProcessed.request?.dashboardUID,
-        from: panelDataProcessed.timeRange.from.unix(),
-        to: panelDataProcessed.timeRange.to.unix(),
-        limit: 250,
-      });
-      const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
-      const clonedPanel = cloneDeep(panelDataProcessed);
-      // annotations can be undefined
-      clonedPanel.annotations = panelDataProcessed.annotations
-        ? panelDataProcessed.annotations.concat(records.dataFrames)
-        : panelDataProcessed.annotations;
-      return clonedPanel;
-    } catch (error) {
-      logInfo(LogMessages.errorGettingLokiHistory, {
-        error: error instanceof Error ? error.message : 'Unknown error getting Loki ash',
-      });
-      return panelDataProcessed;
-    }
+  try {
+    // fetch data from Loki state history
+    let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
+      panelID: panelDataProcessed.request?.panelId,
+      dashboardUID: panelDataProcessed.request?.dashboardUID,
+      from: panelDataProcessed.timeRange.from.unix(),
+      to: panelDataProcessed.timeRange.to.unix(),
+      limit: 250,
+    });
+    const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
+    const clonedPanel = cloneDeep(panelDataProcessed);
+    // annotations can be undefined
+    clonedPanel.annotations = panelDataProcessed.annotations
+      ? panelDataProcessed.annotations.concat(records.dataFrames)
+      : panelDataProcessed.annotations;
+    return clonedPanel;
+  } catch (error) {
+    logInfo(LogMessages.errorGettingLokiHistory, {
+      error: error instanceof Error ? error.message : 'Unknown error getting Loki ash',
+    });
+    return panelDataProcessed;
   }
-  return panelDataProcessed;
 };
