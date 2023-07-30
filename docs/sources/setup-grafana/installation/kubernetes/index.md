@@ -309,10 +309,84 @@ For more information about port forwarding, refer to [Use Port Forwarding to Acc
    The Grafana sign-in page appears.
 
    1. To sign in to Grafana, enter `admin` for both the username and password.
-   
 
+## Update an existing deployment using a rolling update strategy
+
+Rolling updates allow deployment updates to take place with no downtime by incrementally updating Pods instances with new ones. The new Pods will be scheduled on nodes with available resources. For more information about rolling updates, refer to [Performing a Rolling Update](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/).
+
+The following steps use the [kubectl annotate](https://jamesdefabia.github.io/docs/user-guide/kubectl/kubectl_annotate/) command to add the metadata and keep track of the deployment.
    
+> **Note:** Instead of using the `annotate` flag, you can still use the `--record` flag. However, it has been deprecated and will be removed in the future version of Kubernetes.
+https://github.com/kubernetes/kubernetes/issues/40422
+
+1. To view the current status of the rollout, run the following command:
    
+   ```bash
+   kubectl rollout history deployment/grafana -n my-grafana
+   ```
+   
+   The output will look similar to this:
+
+   ```bash
+   deployment.apps/grafana 
+   REVISION  CHANGE-CAUSE
+   1         NONE
+   ```
+   
+   The output shows that nothing has been updated or changed after applying the `grafana.yaml` file.
+
+1. To add metadata to keep record of the initial deployment, run the following command:
+   
+   ```bash
+   kubectl annotate deployment/grafana kubernetes.io/change-cause='deployed the default base yaml file' -n my-grafana
+   ```
+
+1. To review the rollout history and verify the changes run the following command:
+
+   ```bash
+   kubectl rollout history deployment/grafana -n my-grafana
+   ```
+   You should see the updated information that you added in the CHANGE-CAUSE earlier.
+
+### Change Grafana image version
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Send the manifest to the Kubernetes API server
 
