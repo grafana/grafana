@@ -184,7 +184,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
 
 ## Access Grafana on Managed K8s Providers
 
-In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via Web browser is straightforward if it is deployed on a Managed Kubernetes Providers as it uses the cloud provider’s LoadBalancer to which the external load balancer routes, are automatically created.
+In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via a Web browser is straightforward if it is deployed on a Managed Kubernetes Providers as it uses the cloud provider’s **LoadBalancer** to which the external load balancer routes, are automatically created.
 
 1. Run the following command to obtain the deployment information:
    ```bash
@@ -206,11 +206,113 @@ In this task, you access Grafana deployed on a Managed Kubernetes provider using
    replicaset.apps/grafana-69946c9bd6   1         1         1       7m30s
    ```
 
+1. Identify the `EXTERNAL-IP` value in the output and type it into your browser.
+   
+   The Grafana sign-in page appears.
 
+   1. To sign in, enter `admin` for both the username and password.
 
+1. If you do not see the EXTERNAL-IP then complete the following steps:
+      
+      a) Run the following command to do a port-forwarding of the Grafana service on port `3000`.
 
+      ```bash
+      kubectl port-forward service/grafana 3000:3000 --namespace=my-grafana
+      ```
+      
+      For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
+      b) Navigate to `localhost:3000` in your browser.
 
+      The Grafana sign-in page appears.
+
+      c) To sign in, enter `admin` for both the username and password.
+
+## Accessing Grafana via Web Browser using minikube
+
+There are multiple ways to access the Grafana UI on a web browser when using minikube. For more information about minikube, refer to [How to access applications running within minikube](https://minikube.sigs.k8s.io/docs/handbook/accessing/).
+
+This section lists the two most common options for accessing an application running in minikube.
+
+### Option 1 Expose the Service
+
+This option uses the `type: LoadBalancer` in the `grafana.yaml` Service manifest, which makes the Service accessible through the `minikube service` command. For more information, refer to [minikube Service command usage](https://minikube.sigs.k8s.io/docs/commands/service/).
+
+1. Run the following command to obtain the Grafana service IP:
+   
+   ```bash
+   minikube service grafana -n my-grafana
+   ```
+
+   The output returns the Kubernetes URL for service in your local cluster.
+
+   ```bash
+   |------------|---------|-------------|------------------------------|
+   | NAMESPACE  |  NAME   | TARGET PORT |             URL              |
+   |------------|---------|-------------|------------------------------|
+   | my-grafana | grafana |        3000 | http://192.168.122.144:32182 |
+   |------------|---------|-------------|------------------------------|
+   🎉  Opening service my-grafana/grafana in default browser...
+   👉  http://192.168.122.144:32182
+   ```
+
+1. Run a curl command to verify whether a given connection should be working in a browser under ideal circumstances.
+   ```bash
+   curl 192.168.122.144:32182
+   ```
+   The following example output determines that an endpoint has been located:
+
+   `<a href="/login">Found</a>.`
+
+1. Access the Grafana UI in the browser using the provided IP:Port from the command above.
+   
+   The Grafana sign-in page appears.
+
+     1. To sign in to Grafana, enter `admin` for both the username and password.
+
+### Option 2 Using Port Forwarding
+
+If Option 1 does not work in your minikube environment (mostly depends on the network), then as an alternative you can use the **port forwarding** option for the Grafana service on port `3000`.
+
+For more information about port forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
+
+1. To find the minikube IP address, run the following command:
+   
+   ```bash
+   minikube ip
+   ```
+   
+   The output contains the IP address that you use to access the Grafana Pod during port forwarding. A Pod is the smallest deployment unit in Kubernetes is the core building block for running applications in a Kubernetes cluster. For more information about Pod’s refer to the [Pod concept](https://kubernetes.io/docs/concepts/workloads/pods/).
+
+2. To obtain the Grafana Pod information, run the following command:
+   
+   ```bash
+   kubectl get pods --namespace=my-grafana
+   ```
+
+   The output should look similar to the following output:
+
+   ```bash
+   NAME                       READY   STATUS    RESTARTS   AGE
+   grafana-58445b6986-dxrrw   1/1     Running   0          9m54s
+   ```
+
+   It shows the Grafana POD name in the NAME column, that you use for port forwarding.
+
+1. Run the following command for enabling the port forwarding on the POD:
+   ```bash
+   kubectl port-forward pod/grafana-58445b6986-dxrrw --namespace=my-grafana --address 0.0.0.0 3000:3000
+   ```
+
+1. To access the Grafana UI on the web browser, type the minikube IP along with the forwarded port. For example `192.168.122.144:3000`
+   
+   The Grafana sign-in page appears.
+
+   1. To sign in to Grafana, enter `admin` for both the username and password.
+   
+
+   
+   
 
 ### Send the manifest to the Kubernetes API server
 
