@@ -350,9 +350,65 @@ https://github.com/kubernetes/kubernetes/issues/40422
 
 ### Change Grafana image version
 
+1. To edit the Grafana version, run the following `kubectl edit` command:
+   
+   ```bash
+   kubectl edit deployment grafana -n my-grafana
+   ```
+   In the editor, change the container image under the `kind: Deployment` section for e.g.:
+
+   From
+
+   - ```yaml image: grafana/grafana-oss:10.0.1```
+
+   To
+
+   - ```yaml image: grafana/grafana-oss-dev:10.1.0-124419pre```
+
+1. Save the changes. You will get a message once your file is saved:
+   ```bash
+   deployment.apps/grafana edited
+   ```
+   This means that the new changes have been applied.
+
+1. To verify that the rollout on the cluster is successful, run the following command:
+   ```bash
+   kubectl rollout status deployment grafana -n my-grafana
+   ```
+   A successful deployment rollout means that the Grafana Dev cluster is now available.
+
+1. To check the statuses of all deployed objects, run the following commands and include the -o wide flag because it provides a more detailed output:
+   ```bash
+   kubectl get all -n my-grafana -o wide
+   ```
+   You should see the newly deployed `grafana-oss-dev` image.
+
+1. To verify it, access the Grafana UI in the browser using the provided IP:Port from the command above.
+   
+   The Grafana sign-in page appears.
+
+     1. To sign in to Grafana, enter `admin` for both the username and password.
+     2. On the top right corner, click the help icon which will display the version.
+  
+1. Add the change cause metadata to keep track of things using the commands:
+   ```bash
+   kubectl annotate deployment grafana -n my-grafana kubernetes.io/change-cause='using grafana-oss-dev:10.1.0-124419pre for testing'
+   ```
+1. To verify, run the `kubectl rollout history` command:
+   ```bash
+   kubectl rollout history deployment grafana -n my-grafana
+   ```
+   You will see an output similar to this:
+   ```bash
+   deployment.apps/grafana 
+   REVISION  CHANGE-CAUSE
+   1         deploying the default yaml
+   2         using grafana-oss-dev:10.1.0-124419pre for testing
+   ```
+This means that REVISION#2 is the current version. 
 
 
-
+### Rollback a deployment
 
 
 
