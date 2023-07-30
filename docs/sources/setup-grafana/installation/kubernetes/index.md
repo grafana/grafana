@@ -452,6 +452,136 @@ If you need to go back to any other REVISION, just repeat the above steps and us
 
 ## Troubleshooting
 
+### Collecting logs
+
+### Increasing log levels to debug mode
+
+
+By default, the Grafana log level is set to info, but you can increase it to debug mode when you want to reproduce a problem. For more information about Grafana log levels, refer to [Configuring logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#log).
+
+The following example uses the Kubernetes ConfigMap which is an API object thatstores non-confidential data in key-value pairs. For more information, refer to [Kubernetes ConfigMap Concept](https://kubernetes.io/docs/concepts/configuration/configmap/).
+
+1. Create a blank file and name it e.g. `grafana.ini` and add the following:
+   ```bash
+   [log]
+   # Either "console", "file", "syslog". Default is console and  file
+   # Use space to separate multiple modes, e.g. "console file"
+   ;mode = console file
+   ;
+   ; # Either "debug", "info", "warn", "error", "critical", default is "info"
+   ; # we change from info to debug level
+   level = debug
+   ```
+   This example adds the portion of the log section from the configuration file. You can refer to the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) documentation to view all the default configuration settings.
+
+1. To add the configuration file into the Kubernetes cluster via the ConfigMap object, run the following command:
+   ```bash
+   kubectl create configmap ge-config --from-file=/path/to/file/grafana.ini -n my-grafana
+   ```
+
+1. Verify the ConfigMap object creation, by using the command:
+   ```bash
+   kubectl get configmap -n my-grafana
+   ```
+
+1. Open the `grafana.yaml` file and In the Deployment section:
+   1. Provide the mount path to the custom configuration (`/etc/grafana`) and reference the newly created ConfigMap for it.
+      
+   ```bash
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     labels:
+       app: grafana
+     name: grafana
+   # the rest of the code remains the same.   
+   ...
+   ....
+   ...
+               requests:
+               cpu: 250m
+               memory: 750Mi
+           volumeMounts:
+             - mountPath: /var/lib/grafana
+               name: grafana-pv
+              # This is to mount the volume for the custom configuration 
+             - mountPath: /etc/grafana
+               name: ge-config    
+       volumes:
+         - name: grafana-pv
+           persistentVolumeClaim:
+             claimName: grafana-pvc
+	       # This is to provide the reference to the configMap for the volume
+         - name: ge-config
+           configMap:
+             name: ge-config
+   ```
+
+1. Deploy the manifest using the following kubectl apply command:
+   ```bash
+   kubectl apply -f grafana.yaml -n my-grafana   
+   ```
+
+1. To verify the status, run the following commands:
+   ```bash
+   # first check the rollout status
+   kubectl rollout status deployment grafana -n my-grafana
+   
+   # then check the deployment and configMap information
+   kubectl get all --namespace=my-grafana
+   ```
+
+1. To verify it, access the Grafana UI in the browser using the provided IP:Port.
+   
+   The Grafana sign-in page appears.
+
+     1. To sign in to Grafana, enter `admin` for both the username and password.
+     2. Navigate to Server Admin -> Settings and then search for log. You should see the level to debug mode.
+
+
+
+
+
+### Using the --dry-run command
+
+You can use the Kubernetes `--dry-run` command to send requests to modifying endpoints and determine if the request would have succeeded.
+
+Performing a dry run can be very useful for catching errors or unintended consequences before they occur.  For more information, refer to [Kubernetes Dry-run](https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/576-dry-run/README.md).
+
+Example:
+
+Perform a dry run when you make changes to the `grafana.yaml` such as using a new image version, or adding new labels and you want to determine if there are syntax errors or conflicts.
+
+To perform a dry run, run the following command:
+```bash
+kubectl apply -f grafana.yaml --dry-run=server
+```
+If there are no errors, then the output will look similar to this:
+```bash
+persistentvolumeclaim/grafana-pvc unchanged (server dry run)
+deployment.apps/grafana unchanged (server dry run)
+service/grafana unchanged (server dry run)
+```
+
+Incase, if there are any errors or warnings, you will see them in the terminal.
+
+## Removing the Grafana Deployment
+
+Incase if you want to remove any of deployment objects, then it can be done using the `kubectl delete command`.
+
+Example:
+
+1. If you want to remove the complete Grafana depomyent, run the following command:
+   ```bash
+   kubectl delete -f grafana.yaml -n=my-grafana
+   ```
+   It will delete the Deployment, persistentvolumeclaim and service objects.
+
+1. To delete the ConfigMap, run the following command:
+   ```bash
+   kubectl delete configmap ge-config -n my-grafana
+   ```
 
 
 
