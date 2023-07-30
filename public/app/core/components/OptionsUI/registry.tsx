@@ -110,7 +110,8 @@ export const getAllOptionEditors = () => {
     },
   };
 
-  const unit: StandardEditorsRegistryItem<string> = {
+  // const unit: StandardEditorsRegistryItem<string> = {
+  const unit: StandardEditorsRegistryItem<{ type: string; scalable: boolean }> = {
     id: 'unit',
     name: 'Unit',
     description: 'Allows unit input',

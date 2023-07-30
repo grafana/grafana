@@ -45,7 +45,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const field = options.field as Field;
   const config = field.config ?? {};
 
-  let unit = config.unit;
+  let unit = config.unit?.type;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
   let showMs = false;
 

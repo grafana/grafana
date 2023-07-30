@@ -184,7 +184,8 @@ export interface TimeSeries extends QueryResultBase {
    */
   title?: string;
   datapoints: TimeSeriesPoints;
-  unit?: string;
+  // unit?: string;
+  unit?: { type: string; scalable: boolean };
   tags?: Labels;
 }
 

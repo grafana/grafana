@@ -174,8 +174,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
   } else {
     // Not time!
-    if (xField.config.unit) {
-      xScaleUnit = xField.config.unit;
+    if (xField.config.unit.type) {
+      xScaleUnit = xField.config.unit.type;
     }
 
     builder.addScale({
@@ -302,7 +302,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
       let incrs: uPlot.Axis.Incrs | undefined;
 
-      if (IEC_UNITS.has(config.unit!)) {
+      if (IEC_UNITS.has(config.unit?.type!)) {
         incrs = BIN_INCRS;
       }
 

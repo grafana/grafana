@@ -66,7 +66,8 @@ export interface FieldConfig<TOptions = any> {
   filterable?: boolean;
 
   // Numeric Options
-  unit?: string;
+  // unit?: string;
+  unit?: { type: string; scalable: boolean };
   decimals?: DecimalCount; // Significant digits (for display)
   min?: number | null;
   max?: number | null;

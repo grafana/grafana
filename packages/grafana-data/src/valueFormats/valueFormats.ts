@@ -254,8 +254,8 @@ export function stringFormater(value: number): FormattedValue {
   return { text: `${value}` };
 }
 
-function buildFormats() {
-  categories = getCategories();
+function buildFormats(scalable = true) {
+  categories = getCategories(scalable);
 
   for (const cat of categories) {
     for (const format of cat.formats) {
@@ -343,15 +343,17 @@ export function getValueFormatterIndex(): ValueFormatterIndex {
   return index;
 }
 
-export function getValueFormats() {
-  if (!hasBuiltIndex) {
-    buildFormats();
-  }
+export function getValueFormats(scalable = true) {
+  // if (!hasBuiltIndex) {
+  //   buildFormats();
+  // }
+  buildFormats(scalable);
 
   return categories.map((cat) => {
     return {
       text: cat.name,
       submenu: cat.formats.map((format) => {
+        // format.fn = scalable ? toFixedUnit : format.fn;
         return {
           text: format.name,
           value: format.id,

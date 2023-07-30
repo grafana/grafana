@@ -90,7 +90,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
       name: TIME_SERIES_VALUE_FIELD_NAME,
       type: FieldType.number,
       config: {
-        unit: timeSeries.unit,
+        unit: timeSeries.unit?.type,
       },
       values: values,
       labels: timeSeries.tags,
@@ -370,7 +370,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
         alias: frame.name,
         target: getFieldDisplayName(valueField, frame),
         datapoints: rows,
-        unit: fields[0].config ? fields[0].config.unit : undefined,
+        unit: fields[0].config.type ? fields[0].config.unit?.type : undefined,
         refId: frame.refId,
         meta: frame.meta,
       } as TimeSeries;

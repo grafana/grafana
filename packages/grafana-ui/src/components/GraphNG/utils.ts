@@ -161,7 +161,7 @@ export function buildScaleKey(config: FieldConfig<GraphFieldConfig>) {
     config.custom?.axisPlacement !== undefined ? config.custom?.axisPlacement : AxisPlacement.Auto
   }`;
 
-  const scaleUnit = config.unit ?? FIXED_UNIT;
+  const scaleUnit = config.unit?.type ?? FIXED_UNIT;
 
   const scaleDistribution = config.custom?.scaleDistribution
     ? getScaleDistributionPart(config.custom.scaleDistribution)

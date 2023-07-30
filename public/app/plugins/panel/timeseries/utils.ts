@@ -129,8 +129,8 @@ export function prepareGraphableFields(
             }),
           };
 
-          if (!isBooleanUnit(config.unit)) {
-            config.unit = 'bool';
+          if (!isBooleanUnit(config.unit?.type)) {
+            config.unit.type = 'bool';
             copy.display = getDisplayProcessor({ field: copy, theme });
           }
 
