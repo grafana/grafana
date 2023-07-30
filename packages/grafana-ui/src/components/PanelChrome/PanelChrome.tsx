@@ -71,16 +71,22 @@ interface AutoSize extends BaseProps {
 
 interface Collapsible {
   collapsible: boolean;
-  isOpen?: boolean; //TODO: rename to something like defaultOpen
-  toggleOpen?: () => void;
+  /**
+   * used to set collapsed or expanded state on initial render
+   */
+  defaultExpanded?: boolean;
+  /**
+   * callback when collapsing or expanding the panel
+   */
+  toggleCollapse?: () => void;
   hoverHeader?: never;
   hoverHeaderOffset?: never;
 }
 
 interface HoverHeader {
   collapsible?: never;
-  isOpen?: never;
-  toggleOpen?: never;
+  defaultExpanded?: never;
+  toggleCollapse?: never;
   hoverHeader?: boolean;
   hoverHeaderOffset?: number;
 }
@@ -115,18 +121,18 @@ export function PanelChrome({
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
-  isOpen = true,
-  toggleOpen,
+  defaultExpanded = true,
+  toggleCollapse,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
 
-  const [isPanelOpen, toggleIsPanelOpen] = useToggle(isOpen);
+  const [isOpen, toggleOpen] = useToggle(defaultExpanded);
 
   const toggle = () => {
-    toggleIsPanelOpen();
-    toggleOpen?.();
+    toggleOpen();
+    toggleCollapse?.();
   };
 
   const hasHeader = !hoverHeader;
@@ -139,7 +145,7 @@ export function PanelChrome({
     padding,
     theme,
     headerHeight,
-    isPanelOpen,
+    isOpen,
     height,
     width
   );
@@ -149,7 +155,7 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const containerStyles: CSSProperties = { width, height: isPanelOpen ? height : headerHeight };
+  const containerStyles: CSSProperties = { width, height: isOpen ? height : headerHeight };
   if (displayMode === 'transparent') {
     containerStyles.backgroundColor = 'transparent';
     containerStyles.border = 'none';
@@ -170,11 +176,11 @@ export function PanelChrome({
         type="button"
         className={styles.clearButtonStyles}
         onClick={() => toggle()}
-        aria-expanded={isPanelOpen}
-        aria-controls={isPanelOpen ? panelContentId : undefined}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? panelContentId : undefined}
       >
         <Icon
-          name={isPanelOpen ? 'angle-down' : 'angle-right'}
+          name={isOpen ? 'angle-down' : 'angle-right'}
           aria-hidden={!!title}
           aria-label={!title ? 'toggle collapse panel' : undefined}
         />
@@ -275,7 +281,7 @@ export function PanelChrome({
         </div>
       )}
 
-      {isPanelOpen && (
+      {isOpen && (
         <div
           id={panelContentId}
           className={cx(styles.content, height === undefined && styles.containNone)}
