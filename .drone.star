@@ -12,11 +12,9 @@ load("scripts/drone/events/main.star", "main_pipelines")
 load(
     "scripts/drone/events/release.star",
     "integration_test_pipelines",
-    "oss_pipelines",
     "publish_artifacts_pipelines",
     "publish_npm_pipelines",
     "publish_packages_pipeline",
-    "verify_release_pipeline",
 )
 load(
     "scripts/drone/rgm.star",
@@ -43,12 +41,10 @@ def main(_ctx):
     return (
         pr_pipelines() +
         main_pipelines() +
-        oss_pipelines() +
         publish_image_pipelines_public() +
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
-        [verify_release_pipeline()] +
         rgm() +
         [windows_test_backend({
             "event": ["promote"],

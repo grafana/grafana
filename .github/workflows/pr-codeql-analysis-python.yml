@@ -7,9 +7,6 @@ on:
     paths:
       - '**/*.py'
 
-permissions:
-  security-events: write
-
 jobs:
   analyze:
     name: Analyze
