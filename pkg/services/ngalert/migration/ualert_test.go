@@ -15,12 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var MigTitle = migTitle
-var RmMigTitle = rmMigTitle
-var ClearMigrationEntryTitle = clearMigrationEntryTitle
-
-type RmMigration = rmMigration
-
 // UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
 func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
 	var rawMatchers [][3]string

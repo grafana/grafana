@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -79,22 +78,7 @@ func (ms *MigrationService) Start(ctx context.Context) error {
 
 		// Revert migration
 		ms.log.Info("Reverting legacy migration")
-		err = ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-			// WithTransactionalDbSession does not store its session in ctx, so we need to do it manually.
-			withTransaction := context.WithValue(ctx, sqlstore.ContextSessionKey{}, sess)
-			err := ms.revert(sess.Session)
-			if err != nil {
-				return err
-			}
-
-			// Since both revert and this modifies kv_store, we use the same transaction in both writes to prevent Lock Wait Timeout.
-			err = ms.SetMigrated(withTransaction, false)
-			if err != nil {
-				return fmt.Errorf("setting migration status: %w", err)
-			}
-
-			return nil
-		})
+		err := ms.Revert(ctx)
 		if err != nil {
 			return fmt.Errorf("reverting migration: %w", err)
 		}
@@ -139,63 +123,73 @@ func (ms *MigrationService) Start(ctx context.Context) error {
 	return nil
 }
 
-func (ms *MigrationService) revert(sess *xorm.Session) error {
-	_, err := sess.Exec("delete from alert_rule")
-	if err != nil {
-		return err
-	}
-
-	_, err = sess.Exec("delete from alert_rule_version")
-	if err != nil {
-		return err
-	}
-
-	_, err = sess.Exec("delete from dashboard_acl where dashboard_id IN (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
-	if err != nil {
-		return err
-	}
-
-	_, err = sess.Exec("delete from dashboard where created_by = ?", FOLDER_CREATED_BY)
-	if err != nil {
-		return err
-	}
-
-	_, err = sess.Exec("delete from alert_configuration")
-	if err != nil {
-		return err
-	}
-
-	_, err = sess.Exec("delete from ngalert_configuration")
-	if err != nil {
-		return err
-	}
-
-	_, err = sess.Exec("delete from alert_instance")
-	if err != nil {
-		return err
-	}
-
-	exists, err := sess.IsTableExist("kv_store")
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		_, err = sess.Exec("delete from kv_store where namespace = ?", notifier.KVNamespace)
+func (ms *MigrationService) Revert(ctx context.Context) error {
+	return ms.store.WithTransactionalDbSession(ctx, func(dbSess *db.Session) error {
+		sess := dbSess.Session
+		_, err := sess.Exec("delete from alert_rule")
 		if err != nil {
 			return err
 		}
-	}
 
-	files, err := getSilenceFileNamesForAllOrgs(ms.cfg.DataPath)
-	if err != nil {
-		return err
-	}
-	for _, f := range files {
-		if err := os.Remove(f); err != nil {
-			ms.log.Error("alert migration error: failed to remove silence file", "file", f, "err", err)
+		_, err = sess.Exec("delete from alert_rule_version")
+		if err != nil {
+			return err
 		}
-	}
 
-	return nil
+		_, err = sess.Exec("delete from dashboard_acl where dashboard_id IN (select id from dashboard where created_by = ?)", FOLDER_CREATED_BY)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("delete from dashboard where created_by = ?", FOLDER_CREATED_BY)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("delete from alert_configuration")
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("delete from ngalert_configuration")
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Exec("delete from alert_instance")
+		if err != nil {
+			return err
+		}
+
+		exists, err := sess.IsTableExist("kv_store")
+		if err != nil {
+			return err
+		}
+
+		if exists {
+			_, err = sess.Exec("delete from kv_store where namespace = ?", notifier.KVNamespace)
+			if err != nil {
+				return err
+			}
+		}
+
+		files, err := getSilenceFileNamesForAllOrgs(ms.cfg.DataPath)
+		if err != nil {
+			return err
+		}
+		for _, f := range files {
+			if err := os.Remove(f); err != nil {
+				ms.log.Error("alert migration error: failed to remove silence file", "file", f, "err", err)
+			}
+		}
+
+		// Since both revert and this modifies kv_store, we use the same transaction in both writes to prevent Lock Wait Timeout.
+		withTransaction := context.WithValue(ctx, sqlstore.ContextSessionKey{}, dbSess)
+		err = ms.SetMigrated(withTransaction, false)
+		if err != nil {
+			return fmt.Errorf("setting migration status: %w", err)
+		}
+
+		return nil
+	})
 }
