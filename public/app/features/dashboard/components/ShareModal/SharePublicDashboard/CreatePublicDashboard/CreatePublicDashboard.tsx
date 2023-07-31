@@ -39,7 +39,7 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const disableInputs = !hasWritePermissions || isSaveLoading || isError;
 
   const onCreate = async () => {
-    reportInteraction('grafana_dashboards_public_create_clicked');
+    reportInteraction('dashboards_sharing_actions_clicked', { item: 'generate_public_url' });
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
   };
 

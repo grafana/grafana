@@ -68,7 +68,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_snapshot_share_viewed');
     this.getSnaphotShareOptions();
   }
 
@@ -114,8 +113,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         step: 2,
       });
     } finally {
-      reportInteraction('grafana_dashboards_snapshot_created', {
-        location: external ? 'raintank' : 'local',
+      reportInteraction('dashboards_sharing_actions_clicked', {
+        item: external ? 'publish_snapshot' : 'local_snapshot',
       });
       this.setState({ isLoading: false });
     }

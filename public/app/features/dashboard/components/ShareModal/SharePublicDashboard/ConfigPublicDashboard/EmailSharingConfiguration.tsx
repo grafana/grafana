@@ -147,7 +147,7 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     //TODO: add if it's domain or not when developed.
-    reportInteraction('grafana_dashboards_public_add_share_email_clicked');
+    reportInteraction('dashboards_sharing_actions_clicked', { item: 'invite_public_dashboard' });
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };

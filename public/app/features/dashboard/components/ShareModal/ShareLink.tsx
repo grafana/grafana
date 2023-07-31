@@ -33,7 +33,6 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_link_share_viewed');
     this.buildUrl();
   }
 
@@ -73,6 +72,10 @@ export class ShareLink extends PureComponent<Props, State> {
   getShareUrl = () => {
     return this.state.shareUrl;
   };
+
+  onCopy() {
+    reportInteraction('dashboards_sharing_actions_clicked', { item: 'copy_link' });
+  }
 
   render() {
     const { panel, dashboard } = this.props;
@@ -118,7 +121,7 @@ export class ShareLink extends PureComponent<Props, State> {
               value={shareUrl}
               readOnly
               addonAfter={
-                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl}>
+                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onCopy}>
                   <Trans i18nKey="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }

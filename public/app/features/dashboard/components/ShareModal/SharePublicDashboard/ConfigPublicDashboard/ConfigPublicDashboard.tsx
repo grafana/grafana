@@ -104,6 +104,10 @@ const ConfigPublicDashboard = () => {
     });
   };
 
+  function onCopyURL() {
+    reportInteraction('dashboards_sharing_actions_clicked', { item: 'copy_public_url' });
+  }
+
   return (
     <div className={styles.configContainer}>
       {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
@@ -127,6 +131,7 @@ const ConfigPublicDashboard = () => {
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+              onClipboardCopy={onCopyURL}
             >
               Copy
             </ClipboardButton>

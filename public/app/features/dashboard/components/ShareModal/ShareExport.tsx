@@ -32,10 +32,6 @@ export class ShareExport extends PureComponent<Props, State> {
     this.exporter = new DashboardExporter();
   }
 
-  componentDidMount() {
-    reportInteraction('grafana_dashboards_export_share_viewed');
-  }
-
   onShareExternallyChange = () => {
     this.setState({
       shareExternally: !this.state.shareExternally,
@@ -115,6 +111,7 @@ export class ShareExport extends PureComponent<Props, State> {
     });
     const time = new Date().getTime();
     saveAs(blob, `${dash.title}-${time}.json`);
+    reportInteraction('dashboards_sharing_actions_clicked', { item: 'save_export' });
   };
 
   openJsonModal = (clone: object) => {
