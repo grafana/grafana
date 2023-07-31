@@ -595,17 +595,21 @@ func (r *loginHookTest) LoginHook(loginInfo *loginservice.LoginInfo, req *contex
 	r.info = loginInfo
 }
 
+// TOREMOVE: remove with context handler auth
 func TestLoginPostRunLokingHook(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	hookService := &hooks.HooksService{}
 	hs := &HTTPServer{
 		log:              log.New("test"),
-		Cfg:              setting.NewCfg(),
+		Cfg:              sc.cfg,
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),
 		HooksService:     hookService,
+		authnService:     sc.ctxHdlr.AuthnService,
 	}
+
+	sc.cfg.AuthBrokerEnabled = false
 
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Header.Set("Content-Type", "application/json")

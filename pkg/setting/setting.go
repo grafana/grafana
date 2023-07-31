@@ -965,11 +965,12 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:      []string{"all"},
-		Logger:      log.New("settings"),
-		Raw:         ini.Empty(),
-		Azure:       &azsettings.AzureSettings{},
-		RBACEnabled: true,
+		Target:            []string{"all"},
+		Logger:            log.New("settings"),
+		Raw:               ini.Empty(),
+		Azure:             &azsettings.AzureSettings{},
+		RBACEnabled:       true,
+		AuthBrokerEnabled: true,
 	}
 }
 
