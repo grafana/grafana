@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -46,6 +47,38 @@ type Dashboard struct {
 
 	Title string
 	Data  *simplejson.Json
+}
+
+type TimeRange struct {
+	From string
+	To   string
+}
+
+func (d *Dashboard) GetTimeRange() (*TimeRange, error) {
+	if d.Data == nil {
+		return nil, errors.New("dashboard data is missing")
+	}
+	timeField, ok := d.Data.CheckGet("time")
+	if !ok {
+		return nil, errors.New("dashboard data is missing time field")
+	}
+	fromField, ok := timeField.CheckGet("from")
+	if !ok {
+		return nil, errors.New("time field is missing from")
+	}
+	from, err := fromField.String()
+	if err != nil {
+		return nil, fmt.Errorf("from field is not a string: %w", err)
+	}
+	toField, ok := timeField.CheckGet("to")
+	if !ok {
+		return nil, errors.New("time field is missing to")
+	}
+	to, err := toField.String()
+	if err != nil {
+		return nil, fmt.Errorf("to field is not a string: %w", err)
+	}
+	return &TimeRange{From: from, To: to}, nil
 }
 
 func (d *Dashboard) SetID(id int64) {

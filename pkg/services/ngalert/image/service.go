@@ -48,6 +48,7 @@ type ImageService interface {
 // screenshots of alert rules that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
 	cache             CacheService
+	dashboards        dashboards.DashboardService
 	limiter           screenshot.RateLimiter
 	logger            log.Logger
 	screenshots       screenshot.ScreenshotService
@@ -60,6 +61,7 @@ type ScreenshotImageService struct {
 // NewScreenshotImageService returns a new ScreenshotImageService.
 func NewScreenshotImageService(
 	cache CacheService,
+	dashboards dashboards.DashboardService,
 	limiter screenshot.RateLimiter,
 	logger log.Logger,
 	screenshots screenshot.ScreenshotService,
@@ -68,6 +70,7 @@ func NewScreenshotImageService(
 	uploads *UploadingService) ImageService {
 	return &ScreenshotImageService{
 		cache:             cache,
+		dashboards:        dashboards,
 		limiter:           limiter,
 		logger:            logger,
 		screenshots:       screenshots,
@@ -106,7 +109,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		}
 	}
 
-	return NewScreenshotImageService(cache, limiter, log.New("ngalert.image"),
+	return NewScreenshotImageService(cache, ds, limiter, log.New("ngalert.image"),
 		screenshots, screenshotTimeout, db, uploads), nil
 }
 
@@ -138,11 +141,32 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		OrgID:        r.OrgID,
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
+		From:         screenshot.DefaultFrom,
+		To:           screenshot.DefaultTo,
 		Timeout:      s.screenshotTimeout,
 	}
 
+	// Get the dashboard to set the time range for the screenshot
+	dashboard, err := s.dashboards.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		OrgID: r.OrgID,
+		UID:   dashboardUID,
+	})
+	if err != nil {
+		logger.Error("Failed to get dashboard for screenshot", "error", err)
+		return nil, err
+	}
+
+	tr, err := dashboard.GetTimeRange()
+	if err != nil {
+		logger.Warn("Failed to get time range from dashboard, using default",
+			"from", screenshot.DefaultFrom, "to", screenshot.DefaultTo)
+	} else {
+		opts.From = tr.From
+		opts.To = tr.To
+	}
+
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,
-	// deduplicated on a base64 hash of the screenshot options.
+	// deduplicated on a base64 hash of the screenshot options
 	optsHash := base64.StdEncoding.EncodeToString(opts.Hash())
 
 	// If there is an image is in the cache return it instead of taking another screenshot
@@ -152,13 +176,12 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	}
 
 	logger.Debug("Requesting screenshot")
-
 	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
 		// We create both a context with timeout and set a timeout in ScreenshotOptions. The timeout
 		// in the context is used for both database queries and the request to the rendering service,
 		// while the timeout in ScreenshotOptions is passed to the rendering service where it is used as
 		// a client timeout. It is not recommended to pass a context without a deadline and the context
-		// deadline should be at least as long as the timeout in ScreenshotOptions.
+		// deadline should be at least as long as the timeout in ScreenshotOptions
 		screenshotCtx, cancelFunc := context.WithTimeout(ctx, s.screenshotTimeout)
 		defer cancelFunc()
 
@@ -170,13 +193,14 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 			}
 			return nil, err
 		}
-
 		logger.Debug("Took screenshot", "path", screenshot.Path)
 		image := models.Image{Path: screenshot.Path}
 
-		// Uploading images is optional
+		// Uploading images is optional. If uploading the screenshot fails the error is logged and
+		// the image is saved to the database with just a path on disk as it might still be useful
 		if s.uploads != nil {
-			if image, err = s.uploads.Upload(ctx, image); err != nil {
+			image, err = s.uploads.Upload(ctx, image)
+			if err != nil {
 				logger.Warn("Failed to upload image", "error", err)
 			} else {
 				logger.Debug("Uploaded image", "url", image.URL)
@@ -186,8 +210,8 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		if err := s.store.SaveImage(ctx, &image); err != nil {
 			return nil, fmt.Errorf("failed to save image: %w", err)
 		}
-		logger.Debug("Saved image", "token", image.Token)
 
+		logger.Debug("Saved image", "token", image.Token)
 		return image, nil
 	})
 	if err != nil {
@@ -196,9 +220,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	image := result.(models.Image)
 	if err = s.cache.Set(ctx, optsHash, image); err != nil {
-		s.logger.Warn("Failed to cache image",
-			"token", image.Token,
-			"error", err)
+		s.logger.Warn("Failed to save image to cache", "token", image.Token, "error", err)
 	}
 
 	return &image, nil
