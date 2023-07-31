@@ -174,7 +174,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
 
 1. Complete the following steps to verify the deployment status of each object.
    
-   1. For PVC , run the following command:
+   a. For PVC, run the following command:
    
          ```bash
          kubectl get pvc --namespace=my-grafana -o wide
