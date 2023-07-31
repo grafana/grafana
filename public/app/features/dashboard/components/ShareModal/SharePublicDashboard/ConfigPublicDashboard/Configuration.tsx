@@ -7,7 +7,7 @@ import { reportInteraction } from '@grafana/runtime/src';
 import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 
-import { shareDashboardType } from '../../utils';
+import { shareAnalyticsEventNames, shareDashboardType } from '../../utils';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
@@ -39,7 +39,7 @@ export const Configuration = ({
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
               onChange={(e) => {
-                reportInteraction('dashboards_sharing_actions_clicked', {
+                reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
                   item: e.currentTarget.checked ? 'enable_time' : 'disable_time',
                   sharing_category: shareDashboardType.publicDashboard,
                 });
@@ -52,7 +52,7 @@ export const Configuration = ({
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                reportInteraction('dashboards_sharing_actions_clicked', {
+                reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
                   item: e.currentTarget.checked ? 'enable_annotations' : 'disable_annotations',
                   sharing_category: shareDashboardType.publicDashboard,
                 });

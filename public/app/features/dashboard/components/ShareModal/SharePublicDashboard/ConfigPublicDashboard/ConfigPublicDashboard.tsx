@@ -25,7 +25,7 @@ import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
-import { shareDashboardType } from '../../utils';
+import { shareAnalyticsEventNames, shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
@@ -106,7 +106,7 @@ const ConfigPublicDashboard = () => {
   };
 
   function onCopyURL() {
-    reportInteraction('dashboards_sharing_actions_clicked', {
+    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
       item: 'copy_public_url',
       sharing_category: shareDashboardType.publicDashboard,
     });
@@ -149,7 +149,7 @@ const ConfigPublicDashboard = () => {
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              reportInteraction('dashboards_sharing_actions_clicked', {
+              reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
                 item: e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
                 sharing_category: shareDashboardType.publicDashboard,
               });

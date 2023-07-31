@@ -10,7 +10,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { VariableRefresh } from '../../../variables/types';
 
 import { ShareModalTabProps } from './types';
-import { shareDashboardType } from './utils';
+import { shareAnalyticsEventNames, shareDashboardType } from './utils';
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -114,7 +114,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         step: 2,
       });
     } finally {
-      reportInteraction('dashboards_sharing_actions_clicked', {
+      reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
         item: external ? 'publish_snapshot' : 'local_snapshot',
         sharing_category: shareDashboardType.snapshot,
       });

@@ -150,3 +150,10 @@ export const shareDashboardType: {
   report: 'report',
   publicDashboard: 'public_dashboard',
 };
+
+export const shareAnalyticsEventNames: {
+  [key: string]: string;
+} = {
+  sharingCategoryClicked: 'dashboards_sharing_category_clicked',
+  sharingActionClicked: 'dashboards_sharing_actions_clicked',
+};

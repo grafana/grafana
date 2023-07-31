@@ -25,7 +25,7 @@ import {
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
 
-import { shareDashboardType } from '../../utils';
+import { shareAnalyticsEventNames, shareDashboardType } from '../../utils';
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
@@ -56,7 +56,7 @@ const EmailList = ({
   const isLoading = isDeleteLoading || isReshareLoading;
 
   const onDeleteEmail = (recipientUid: string) => {
-    reportInteraction('dashboards_sharing_actions_clicked', {
+    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
       item: 'delete_email',
       sharing_category: shareDashboardType.publicDashboard,
     });
@@ -64,7 +64,7 @@ const EmailList = ({
   };
 
   const onReshare = (recipientUid: string) => {
-    reportInteraction('dashboards_sharing_actions_clicked', {
+    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
       item: 'reshare_email',
       sharing_category: shareDashboardType.publicDashboard,
     });
@@ -154,7 +154,7 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     //TODO: add if it's domain or not when developed.
-    reportInteraction('dashboards_sharing_actions_clicked', {
+    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
       item: 'invite_public_dashboard',
       sharing_category: shareDashboardType.publicDashboard,
     });
@@ -176,7 +176,7 @@ export const EmailSharingConfiguration = () => {
                 size={width < 480 ? 'sm' : 'md'}
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
-                  reportInteraction('dashboards_sharing_actions_clicked', {
+                  reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
                     item: `share_type_${shareType.toLowerCase()}`,
                     sharing_category: shareDashboardType.publicDashboard,
                   });

@@ -11,7 +11,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
 import { ShareModalTabProps } from './types';
-import { shareDashboardType } from './utils';
+import { shareAnalyticsEventNames, shareDashboardType } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -112,7 +112,7 @@ export class ShareExport extends PureComponent<Props, State> {
     });
     const time = new Date().getTime();
     saveAs(blob, `${dash.title}-${time}.json`);
-    reportInteraction('dashboards_sharing_actions_clicked', {
+    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
       item: 'save_export',
       sharing_category: shareDashboardType.export,
     });
