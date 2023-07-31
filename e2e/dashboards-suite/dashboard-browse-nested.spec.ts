@@ -1,4 +1,5 @@
 import { e2e } from '@grafana/e2e';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { makeNewDashboardRequestBody } from './utils/makeDashboard';
 
@@ -7,6 +8,7 @@ const NUM_ROOT_DASHBOARDS = 60;
 const NUM_NESTED_FOLDERS = 60;
 const NUM_NESTED_DASHBOARDS = 60;
 
+// TODO enable this test when nested folders goes live
 describe('Dashboard browse (nested)', () => {
   const dashboardUIDsToCleanUp: string[] = [];
   const folderUIDsToCleanUp: string[] = [];
@@ -116,24 +118,30 @@ describe('Dashboard browse (nested)', () => {
 
   it('pagination works correctly for folders and root', () => {
     e2e.pages.Dashboards.visit();
-    //Expect A root folder with children to be visible
-    e2e().contains('A root folder with children').should('be.visible');
-    //Expand A root folder with children
-    e2e().get('[aria-label="Expand folder"]').first().click();
-    //Expect Nested folder 00 to be visible
-    e2e().contains('Nested folder 00').should('be.visible');
-    //Scroll the page
-    e2e().get('[role="rowgroup"] > div').scrollTo(0, 500);
 
-    //Expect Nested folder 59 to be visible
-    //Expect Nested Dashboard 00 to be visible
-    //Scroll the page
-    //Expect Nested Dashboard 59 to be visible
-    //Expect Root folder 00 to be visible
-    //Scroll the page
-    //Expect Root folder 59 to be visible
-    //Expect Root dashboard 00 to be visible
-    //Scroll the page
-    //Expect Root dashboard 59 to be visible
+    e2e().contains('A root folder with children').should('be.visible');
+
+    // Expand A root folder with children
+    e2e().get('[aria-label="Expand folder A root folder with children"]').click();
+    e2e().contains('Nested folder 00').should('be.visible');
+
+    // Scroll the page and check visibility of next set of items
+    e2e().get(`[data-testid="${selectors.pages.BrowseDashboards.table.body}"] > div`).scrollTo(0, 1700);
+    e2e().contains('Nested folder 59').should('be.visible');
+    e2e().contains('Nested dashboard 00').should('be.visible');
+
+    // Scroll the page and check visibility of next set of items
+    e2e().get(`[data-testid="${selectors.pages.BrowseDashboards.table.body}"] > div`).scrollTo(0, 3800);
+    e2e().contains('Nested dashboard 59').should('be.visible');
+    e2e().contains('Root folder 00').should('be.visible');
+
+    // Scroll the page and check visibility of next set of items
+    e2e().get(`[data-testid="${selectors.pages.BrowseDashboards.table.body}"] > div`).scrollTo(0, 5900);
+    e2e().contains('Root folder 59').should('be.visible');
+    e2e().contains('Root dashboard 00').should('be.visible');
+
+    // Scroll the page and check visibility of next set of items
+    e2e().get(`[data-testid="${selectors.pages.BrowseDashboards.table.body}"] > div`).scrollTo(0, 8000);
+    e2e().contains('Root dashboard 59').should('be.visible');
   });
 });
