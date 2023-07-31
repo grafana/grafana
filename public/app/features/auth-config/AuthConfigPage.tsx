@@ -22,8 +22,9 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  const { isLoading, providerStatuses } = state.authConfig;
+  const { settings, isLoading, providerStatuses } = state.authConfig;
   return {
+    settings,
     isLoading,
     providerStatuses,
   };
@@ -35,7 +36,12 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSettings }: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({
+  settings,
+  providerStatuses,
+  isLoading,
+  loadSettings,
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -75,6 +81,17 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
     reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
   };
 
+  const getName = (providertype: string) => {
+    // FIXME: could be refactored to be better to detect the different names of the providers we have?
+    if (providertype === 'SAML') {
+      return settings['auth.saml']['name'];
+    }
+    if (providertype === 'LDAP') {
+      return settings['auth.ldap']['name'];
+    }
+    return '';
+  };
+
   return (
     <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
@@ -85,7 +102,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
-                displayName={provider.displayName}
+                displayName={getName(provider.type) ? getName(provider.type) : provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
                 configPath={provider.configPath}
