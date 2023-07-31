@@ -73,12 +73,12 @@ export const generateColumns = (
               const { view } = response;
               const count = Math.min(view.length, 50);
               const hasSelection = selection('*', '*');
-              for (let i = 0; i < count; i++) {
-                const item = view.get(i);
-                if (item.uid && item.kind) {
-                  if (hasSelection === selection(item.kind, item.uid)) {
-                    selectionToggle(item.kind, item.uid);
-                  }
+              if (hasSelection) {
+                clearSelection();
+              } else {
+                for (let i = 0; i < count; i++) {
+                  const item = view.get(i);
+                  selectionToggle(item.kind, item.uid);
                 }
               }
             }}
