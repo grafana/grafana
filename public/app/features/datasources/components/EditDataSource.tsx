@@ -130,6 +130,7 @@ export function EditDataSourceView({
     trackDsConfigClicked('save_and_test');
 
     const eventData = parseEventDataFromDataSource(dataSource);
+
     try {
       await onUpdate({ ...dataSource });
       trackDsConfigUpdated({ item: 'success' });
