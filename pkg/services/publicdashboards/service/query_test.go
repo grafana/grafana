@@ -1528,7 +1528,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		assert.Len(t, queries, 2)
 	})
 
-	t.Run("hidden queries get are not returned", func(t *testing.T) {
+	t.Run("hidden queries are not returned", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
 		require.NoError(t, err)
 
