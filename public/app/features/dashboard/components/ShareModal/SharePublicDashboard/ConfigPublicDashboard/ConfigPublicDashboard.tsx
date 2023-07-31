@@ -25,7 +25,7 @@ import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
-import { sharedCategory } from '../../utils';
+import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
@@ -101,14 +101,14 @@ const ConfigPublicDashboard = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
-      activeTab: sharedCategory.publicDashboard,
+      activeTab: shareDashboardType.publicDashboard,
     });
   };
 
   function onCopyURL() {
     reportInteraction('dashboards_sharing_actions_clicked', {
       item: 'copy_public_url',
-      sharing_category: sharedCategory.publicDashboard,
+      sharing_category: shareDashboardType.publicDashboard,
     });
   }
 
@@ -151,7 +151,7 @@ const ConfigPublicDashboard = () => {
             onChange={(e) => {
               reportInteraction('dashboards_sharing_actions_clicked', {
                 item: e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
-                sharing_category: sharedCategory.publicDashboard,
+                sharing_category: shareDashboardType.publicDashboard,
               });
               onChange('isPaused', e.currentTarget.checked);
             }}

@@ -25,7 +25,7 @@ import {
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
 
-import { sharedCategory } from '../../utils';
+import { shareDashboardType } from '../../utils';
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
@@ -58,7 +58,7 @@ const EmailList = ({
   const onDeleteEmail = (recipientUid: string) => {
     reportInteraction('dashboards_sharing_actions_clicked', {
       item: 'delete_email',
-      sharing_category: sharedCategory.publicDashboard,
+      sharing_category: shareDashboardType.publicDashboard,
     });
     deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
@@ -66,7 +66,7 @@ const EmailList = ({
   const onReshare = (recipientUid: string) => {
     reportInteraction('dashboards_sharing_actions_clicked', {
       item: 'reshare_email',
-      sharing_category: sharedCategory.publicDashboard,
+      sharing_category: shareDashboardType.publicDashboard,
     });
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
@@ -156,7 +156,7 @@ export const EmailSharingConfiguration = () => {
     //TODO: add if it's domain or not when developed.
     reportInteraction('dashboards_sharing_actions_clicked', {
       item: 'invite_public_dashboard',
-      sharing_category: sharedCategory.publicDashboard,
+      sharing_category: shareDashboardType.publicDashboard,
     });
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
@@ -178,7 +178,7 @@ export const EmailSharingConfiguration = () => {
                 onChange={(shareType: PublicDashboardShareType) => {
                   reportInteraction('dashboards_sharing_actions_clicked', {
                     item: `share_type_${shareType.toLowerCase()}`,
-                    sharing_category: sharedCategory.publicDashboard,
+                    sharing_category: shareDashboardType.publicDashboard,
                   });
                   setValue('shareType', shareType);
                   onShareTypeChange(shareType);

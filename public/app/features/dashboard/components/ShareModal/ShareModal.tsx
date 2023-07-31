@@ -17,7 +17,7 @@ import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
 import { ShareModalTabModel } from './types';
-import { sharedCategory } from './utils';
+import { shareDashboardType } from './utils';
 
 const customDashboardTabs: ShareModalTabModel[] = [];
 const customPanelTabs: ShareModalTabModel[] = [];
@@ -32,27 +32,27 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
 
 function getTabs(panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
-  const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: sharedCategory.link, component: ShareLink }];
+  const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: shareDashboardType.link, component: ShareLink }];
 
   if (contextSrv.isSignedIn && config.snapshotEnabled) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
-    tabs.push({ label: snapshotLabel, value: sharedCategory.snapshot, component: ShareSnapshot });
+    tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
   }
 
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');
-    tabs.push({ label: embedLabel, value: sharedCategory.embed, component: ShareEmbed });
+    tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbed });
 
     if (!isPanelModelLibraryPanel(panel)) {
       const libraryPanelLabel = t('share-modal.tab-title.library-panel', 'Library panel');
-      tabs.push({ label: libraryPanelLabel, value: sharedCategory.libraryPanel, component: ShareLibraryPanel });
+      tabs.push({ label: libraryPanelLabel, value: shareDashboardType.libraryPanel, component: ShareLibraryPanel });
     }
     tabs.push(...customPanelTabs);
   } else {
     const exportLabel = t('share-modal.tab-title.export', 'Export');
     tabs.push({
       label: exportLabel,
-      value: sharedCategory.export,
+      value: shareDashboardType.export,
       component: ShareExport,
     });
     tabs.push(...customDashboardTabs);
@@ -61,7 +61,7 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
   if (Boolean(config.featureToggles['publicDashboards'])) {
     tabs.push({
       label: 'Public dashboard',
-      value: sharedCategory.publicDashboard,
+      value: shareDashboardType.publicDashboard,
       component: SharePublicDashboard,
     });
   }

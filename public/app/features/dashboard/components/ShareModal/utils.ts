@@ -138,7 +138,7 @@ export function getLocalTimeZone() {
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
 
-export const sharedCategory: {
+export const shareDashboardType: {
   [key: string]: string;
 } = {
   link: 'link',

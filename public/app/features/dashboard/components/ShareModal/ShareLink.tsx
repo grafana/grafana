@@ -8,7 +8,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
-import { buildImageUrl, buildShareUrl, sharedCategory } from './utils';
+import { buildImageUrl, buildShareUrl, shareDashboardType } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -76,7 +76,7 @@ export class ShareLink extends PureComponent<Props, State> {
   onCopy() {
     reportInteraction('dashboards_sharing_actions_clicked', {
       item: 'copy_link',
-      sharing_category: sharedCategory.link,
+      sharing_category: shareDashboardType.link,
     });
   }
 

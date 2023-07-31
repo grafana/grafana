@@ -11,7 +11,7 @@ import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
 import { ShareModalTabProps } from './types';
-import { sharedCategory } from './utils';
+import { shareDashboardType } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -114,7 +114,7 @@ export class ShareExport extends PureComponent<Props, State> {
     saveAs(blob, `${dash.title}-${time}.json`);
     reportInteraction('dashboards_sharing_actions_clicked', {
       item: 'save_export',
-      sharing_category: sharedCategory.export,
+      sharing_category: shareDashboardType.export,
     });
   };
 
