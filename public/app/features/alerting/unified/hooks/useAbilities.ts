@@ -1,12 +1,10 @@
 import { OrgRole } from '@grafana/data';
-import { contextSrv } from 'app/core/services/context_srv';
+import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getNotificationsPermissions } from '../utils/access-control';
 import { GRAFANA_DATASOURCE_NAME } from '../utils/datasource';
-
-const { hasAccess, hasRole } = contextSrv;
 
 export enum Action {
   // contact points
@@ -36,7 +34,7 @@ function useAbilities(): Abilities {
     selectedAlertmanagerConfig?.implementation!
   );
 
-  const hasRuler = isGrafanaFlavoredAlertmanager || isRulerFlavoredAlertmanager;
+  const hasConfigurationAPI = isGrafanaFlavoredAlertmanager || isRulerFlavoredAlertmanager;
 
   // These are used for interacting with Alertmanager resources where we apply alert.notifications:<name> permissions.
   // There are different permissions based on wether the built-in alertmanager is selected (grafana) or an external one.
@@ -44,14 +42,27 @@ function useAbilities(): Abilities {
 
   // list out all of the abilities, and if the user has permissions to perform them
   const abilities: Abilities = {
-    // contact points
-    [Action.CreateContactPoint]: [hasRuler, hasAccess(notificationsPermissions.create, hasRole(OrgRole.Editor))],
-    [Action.ViewContactPoints]: [hasRuler, hasAccess(notificationsPermissions.read, hasRole(OrgRole.Viewer))],
-    [Action.EditContactPoint]: [hasRuler, hasAccess(notificationsPermissions.update, hasRole(OrgRole.Editor))],
-    [Action.DeleteContactPoint]: [hasRuler, hasAccess(notificationsPermissions.delete, hasRole(OrgRole.Admin))],
+    // -- contact points --
+    [Action.CreateContactPoint]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(notificationsPermissions.create, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [Action.ViewContactPoints]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(notificationsPermissions.read, ctx.hasRole(OrgRole.Viewer)),
+    ],
+    [Action.EditContactPoint]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(notificationsPermissions.update, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [Action.DeleteContactPoint]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(notificationsPermissions.delete, ctx.hasRole(OrgRole.Admin)),
+    ],
+    // only Grafana flavored alertmanager supports exporting
     [Action.ExportContactPoint]: [
-      hasRuler,
-      hasAccess(notificationsPermissions.provisioning.read, hasRole(OrgRole.Viewer)),
+      isGrafanaFlavoredAlertmanager,
+      ctx.hasAccess(notificationsPermissions.provisioning.read, ctx.hasRole(OrgRole.Viewer)),
     ],
   };
 

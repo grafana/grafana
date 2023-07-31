@@ -127,8 +127,8 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
   const disableActions = disabled || provisioned;
 
-  const [canDelete, allowedToDelete] = abilities[Action.DeleteContactPoint];
-  const [canExport, allowedToExport] = abilities[Action.ExportContactPoint];
+  const [supportsDelete, allowedToDelete] = abilities[Action.DeleteContactPoint];
+  const [supportsExport, allowedToExport] = abilities[Action.ExportContactPoint];
 
   return (
     <div className={styles.headerWrapper}>
@@ -169,9 +169,9 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         <Dropdown
           overlay={
             <Menu>
-              <Menu.Item label="Export" icon="download-alt" />
+              {supportsExport && <Menu.Item label="Export" icon="download-alt" disabled={!allowedToExport} />}
               <Menu.Divider />
-              {canDelete && (
+              {supportsDelete && (
                 <Menu.Item
                   label="Delete"
                   icon="trash-alt"
