@@ -660,6 +660,7 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
+			Enabled:         true,
 		},
 		{
 			Name:        "azureMonitorDataplane",
