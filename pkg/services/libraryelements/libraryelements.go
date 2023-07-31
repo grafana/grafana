@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -74,4 +75,25 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Contex
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
+}
+
+func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string) (json.RawMessage, error) {
+	var modelMap map[string]interface{}
+	err := json.Unmarshal(model, &modelMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
+		if uid, ok := libraryPanel["uid"]; ok && uid == "" {
+			libraryPanel["uid"] = newUid
+		}
+	}
+
+	updatedModel, err := json.Marshal(modelMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedModel, nil
 }
