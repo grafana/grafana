@@ -84,3 +84,10 @@ gopkg.in/square/go-jose.v2@v2.6.0
 filippo.io/age@v1.1.1
 github.com/docker/docker@v23.0.4+incompatible
 ```
+
+## Action items
+
+For existing dependencies, please review and update ownership of your team’s dependencies in `go.mod`.
+
+- If any assignments are incorrect, you can replace your team name with the correct team in `go.mod`.
+- If you don’t know who the correct team is, you can reassign the dependency back to backend platform. Afterwards, open a PR and assign backend platform as reviewers.
