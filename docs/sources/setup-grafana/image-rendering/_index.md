@@ -80,12 +80,7 @@ AUTH_TOKEN=-
 }
 ```
 
-<<<<<<< HEAD
-See the [Grafana configuration]({{< relref "../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
-=======
 See [Grafana configuration]({{< relref "../configure-grafana#renderer_token" >}}) for how to configure the token in Grafana.
-
-> > > > > > > b88a321ad2 (Update \_index.md (#72068))
 
 ### Rendering mode
 
