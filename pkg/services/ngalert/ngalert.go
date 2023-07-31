@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	ngProvisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -39,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -70,7 +69,6 @@ func ProvideService(
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
-	provisioningService provisioning.ProvisioningService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -97,11 +95,10 @@ func ProvideService(
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
-		ProvisioningService:  provisioningService,
 	}
 
 	// Migration
-	ng.MigrationService = migration.NewMigrationService(ng.Log, ng.SQLStore, ng.Cfg, ng.KVStore, ng.ProvisioningService)
+	ng.MigrationService = migration.NewMigrationService(ng.Log, ng.SQLStore, ng.Cfg, ng.KVStore)
 
 	if ng.isDisabled() {
 		return ng, nil
@@ -147,8 +144,7 @@ type AlertNG struct {
 	store                *store.DBstore
 
 	// Migration service
-	ProvisioningService provisioning.ProvisioningService
-	MigrationService    migration.MigrationService
+	MigrationService migration.MigrationService
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -248,11 +244,11 @@ func (ng *AlertNG) init() error {
 	ng.schedule = scheduler
 
 	// Provisioning
-	policyService := ngProvisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := ngProvisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log, ng.accesscontrol)
-	templateService := ngProvisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
-	muteTimingService := ngProvisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
-	alertRuleService := ngProvisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
+	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log, ng.accesscontrol)
+	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
+	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
+	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 

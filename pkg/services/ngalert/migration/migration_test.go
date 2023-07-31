@@ -23,7 +23,6 @@ import (
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -101,7 +100,7 @@ func TestServiceStart(t *testing.T) {
 			}()
 
 			ctx := context.Background()
-			service := NewMigrationService(&logtest.Fake{}, sqlStore, tt.config, fakes.NewFakeKVStore(t), provisioning.NewProvisioningServiceMock(ctx))
+			service := NewMigrationService(&logtest.Fake{}, sqlStore, tt.config, fakes.NewFakeKVStore(t))
 
 			err := service.SetMigrated(ctx, tt.isMigrationRun)
 			require.NoError(t, err)
@@ -120,7 +119,7 @@ func TestServiceStart(t *testing.T) {
 func TestAMConfigMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t), provisioning.NewProvisioningServiceMock(context.Background()))
+	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t))
 	tc := []struct {
 		name           string
 		legacyChannels []*models.AlertNotification
@@ -501,7 +500,7 @@ func TestAMConfigMigration(t *testing.T) {
 func TestDashAlertMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t), provisioning.NewProvisioningServiceMock(context.Background()))
+	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t))
 
 	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
 		defer teardown(t, x, service)
