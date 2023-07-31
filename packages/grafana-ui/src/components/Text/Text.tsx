@@ -64,7 +64,7 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       () =>
         new ResizeObserver((entries) => {
           for (const entry of entries) {
-            if (entry.target?.clientWidth && entry.target?.scrollWidth) {
+            if (entry.target.clientWidth && entry.target.scrollWidth) {
               if (entry.target.scrollWidth > entry.target.clientWidth) {
                 setIsOverflowing(true);
               }
