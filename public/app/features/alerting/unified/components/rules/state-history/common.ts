@@ -109,11 +109,12 @@ export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelDa
   const historyImplementation = getHistoryImplementation();
   const usingLokiAsImplementation = historyImplementation === StateHistoryImplementation.Loki;
 
-  if (
+  const notShouldFetchLokiAsh =
     !usingLokiAsImplementation ||
     !panelDataProcessed.alertState?.dashboardId ||
-    !panelDataProcessed.alertState?.panelId
-  ) {
+    !panelDataProcessed.alertState?.panelId;
+
+  if (notShouldFetchLokiAsh) {
     return panelDataProcessed;
   }
 
