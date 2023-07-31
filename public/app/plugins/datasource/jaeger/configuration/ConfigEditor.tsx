@@ -11,6 +11,8 @@ import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsS
 import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
 
+import { TraceIdTimeParams } from './TraceIdTimeParams';
+
 export type Props = DataSourcePluginOptionsEditorProps;
 
 export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
@@ -54,6 +56,8 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
         <Divider hideLine={true} />
         <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+        <Divider hideLine={true} />
+        <TraceIdTimeParams options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
     </div>
   );
