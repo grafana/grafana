@@ -9,27 +9,27 @@ weight: 500
 
 # Deploy Grafana on Kubernetes
 
-This page explains how to install and run Grafana on Kubernetes (K8s). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts).
+On this page, you will find instructions for installing and running Grafana on Kubernetes (K8s) using Kubernetes manifests for the setup. If Helm is your preferred option, refer to [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
 ## Before you begin
 
 To follow this guide, you need:
 
-- The latest version of [Kubernetes](https://kubernetes.io/) running either locally or remotely (on a public or private cloud).
+- The latest version of [Kubernetes](https://kubernetes.io/) running either locally or remotely on a public or private cloud.
 
-- To use in a local environment use any Kubernetes such as [minikube](https://minikube.sigs.k8s.io/docs/), [kind](https://kind.sigs.k8s.io/), [Docker Desktop](https://docs.docker.com/desktop/kubernetes/), and so on.
+- If you plan to use it in a local environment, you can use various Kubernetes options such as Minikube (https://minikube.sigs.k8s.io/docs/), Kind (https://kind.sigs.k8s.io/), Docker Desktop (https://docs.docker.com/desktop/kubernetes/), and others.
 
-- To use managed cloud services such as [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), or [Azure Kubernetes Service (AKS)](https://azure.microsoft.com/en-us/products/kubernetes-service/) if you are considering using Kubernetes in a production environment.
+- If you plan to use Kubernetes in a production setting, it's recommended to utilize managed cloud services like [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), or [Azure Kubernetes Service (AKS)](https://azure.microsoft.com/en-us/products/kubernetes-service/).
 
-## System Requirements
+## System requirements
 
 This section provides minimum hardware and software requirements.
 
 ### Minimum Hardware Requirements
 
-- Disk Space = 1 GB
-- Memory = 750 MiB (approx 750 MB)
-- CPU = 250m (approx 2.5 cores)
+- Disk space: 1 GB
+- Memory: 750 MiB (approx 750 MB)
+- CPU: 250m (approx 2.5 cores)
 
 ### Supported databases
 
@@ -39,15 +39,17 @@ For a list of supported databases, refer to [supported databases](https://grafan
 
 For a list of support web browsers, refer to [supported web browsers](https://grafana.com/docs/grafana/latest/setup-grafana/installation/#supported-web-browsers).
 
-> **Note:** Make sure to enable port `3000` in your network environment as this is the Grafana default port.
+{{% admonition type="note" %}}
+Enable port `3000` in your network environment, as this is the Grafana default port.
+{{% /admonition %}}
 
 ## Deploy Grafana OSS on Kubernetes
 
-This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes,  refer to [Deploy Grafana Enterprise on Kubernetes](https://grafana.com/docs/grafana/latest/setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes).
+This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes, refer to [Deploy Grafana Enterprise on Kubernetes](https://grafana.com/docs/grafana/latest/setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes).
 
-When you deploy an application in Kubernetes, it will use its default namespace which may have other applications running and can cause conflicts and other issues.
+If you deploy an application in Kubernetes, it will use the default namespace which may already have other applications running. This can result in conflicts and other issues.
 
-As best practice, create a new namespace, as Kubernetes does allow users to create namespaces which will allow us to easily manage,  organize, allocate, and manage cluster resources. Refer to the Kubernetes official documentation for more reference about the [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
+It is recommended to create a new namespace in Kubernetes to better manage, organize, allocate, and manage cluster resources. For more information about Namespaces, refer to the official [Kubernetes documentation]( https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 1. To create a namespace, run the following command:
 
@@ -63,7 +65,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
    kubectl get namespace my-grafana
    ```
 
-   The output of the above command will provide more information about the newly created namespace.
+   The output of the command provides more information about the newly created namespace.
 
 1. Create a YAML manifest file named `grafana.yaml`. This file will contain the necessary code for deployment.
 
@@ -196,7 +198,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
 
 ## Access Grafana on Managed K8s Providers
 
-In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via a Web browser is straightforward if it is deployed on a Managed Kubernetes Providers as it uses the cloud provider’s **LoadBalancer** to which the external load balancer routes, are automatically created.
+In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via a web browser is straightforward if it is deployed on a Managed Kubernetes Provider as it uses the cloud provider’s **LoadBalancer** to which the external load balancer routes are automatically created.
 
 1. Run the following command to obtain the deployment information:
 
@@ -248,9 +250,9 @@ There are multiple ways to access the Grafana UI on a web browser when using min
 
 This section lists the two most common options for accessing an application running in minikube.
 
-### Option 1 Expose the Service
+### Option 1: Expose the service
 
-This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest, which makes the Service accessible through the `minikube service` command. For more information, refer to [minikube Service command usage](https://minikube.sigs.k8s.io/docs/commands/service/).
+This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest, which makes the service accessible through the `minikube service` command. For more information, refer to [minikube Service command usage](https://minikube.sigs.k8s.io/docs/commands/service/).
 
 1. Run the following command to obtain the Grafana service IP:
 
@@ -266,17 +268,17 @@ This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest
    |------------|---------|-------------|------------------------------|
    | my-grafana | grafana |        3000 | http://192.168.122.144:32182 |
    |------------|---------|-------------|------------------------------|
-   🎉  Opening service my-grafana/grafana in default browser...
-   👉  http://192.168.122.144:32182
+   Opening service my-grafana/grafana in default browser...
+   http://192.168.122.144:32182
    ```
 
-1. Run a curl command to verify whether a given connection should be working in a browser under ideal circumstances.
+1. Run a curl command to verify whether a given connection should work in a browser under ideal circumstances.
 
    ```bash
    curl 192.168.122.144:32182
    ```
 
-   The following example output determines that an endpoint has been located:
+   The following example output shows that an endpoint has been located:
 
    `<a href="/login">Found</a>.`
 
