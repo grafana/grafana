@@ -176,9 +176,9 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
    
    a. For PVC, run the following command:
    
-         ```bash
-         kubectl get pvc --namespace=my-grafana -o wide
-         ```
+     ```bash
+     kubectl get pvc --namespace=my-grafana -o wide
+     ```
 
    b. For Deployment, run the following command:
    
