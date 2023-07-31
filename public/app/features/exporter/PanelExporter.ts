@@ -7,7 +7,6 @@ import {
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
-  FieldType,
   formattedValueToString,
   PanelData,
   PanelModel,

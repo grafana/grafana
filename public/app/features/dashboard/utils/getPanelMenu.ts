@@ -234,7 +234,7 @@ export function getPanelMenu(
     exportMenu.push({
       type: 'submenu',
       text: `Image`,
-      iconClassName: 'camera',
+      iconClassName: 'image-v',
       subMenu: exportImageMenu,
     });
 

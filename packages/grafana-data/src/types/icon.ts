@@ -139,6 +139,7 @@ export const availableIconsIndex = {
   'horizontal-align-left': true,
   'horizontal-align-right': true,
   hourglass: true,
+  'image-v': true,
   import: true,
   info: true,
   'info-circle': true,

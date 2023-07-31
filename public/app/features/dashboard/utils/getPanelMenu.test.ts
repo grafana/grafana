@@ -69,28 +69,34 @@ describe('getPanelMenu()', () => {
           "iconClassName": "download-alt",
           "subMenu": [
             {
-              "iconClassName": "camera",
-              "onClick": [Function],
-              "text": "PNG",
-            },
-            {
-              "iconClassName": "camera",
-              "onClick": [Function],
-              "text": "JPEG",
-            },
-            {
-              "iconClassName": "camera",
-              "onClick": [Function],
-              "text": "BMP",
-            },
-            {
-              "text": "",
-              "type": "divider",
+              "iconClassName": "image-v",
+              "subMenu": [
+                {
+                  "onClick": [Function],
+                  "text": "PNG",
+                },
+                {
+                  "onClick": [Function],
+                  "text": "JPEG",
+                },
+                {
+                  "onClick": [Function],
+                  "text": "BMP",
+                },
+              ],
+              "text": "Image",
+              "type": "submenu",
             },
             {
               "iconClassName": "book",
-              "onClick": [Function],
-              "text": "Panel JSON",
+              "subMenu": [
+                {
+                  "onClick": [Function],
+                  "text": "Panel JSON",
+                },
+              ],
+              "text": "Data",
+              "type": "submenu",
             },
           ],
           "text": "Export",
@@ -480,28 +486,34 @@ describe('getPanelMenu()', () => {
             "iconClassName": "download-alt",
             "subMenu": [
               {
-                "iconClassName": "camera",
-                "onClick": [Function],
-                "text": "PNG",
-              },
-              {
-                "iconClassName": "camera",
-                "onClick": [Function],
-                "text": "JPEG",
-              },
-              {
-                "iconClassName": "camera",
-                "onClick": [Function],
-                "text": "BMP",
-              },
-              {
-                "text": "",
-                "type": "divider",
+                "iconClassName": "image-v",
+                "subMenu": [
+                  {
+                    "onClick": [Function],
+                    "text": "PNG",
+                  },
+                  {
+                    "onClick": [Function],
+                    "text": "JPEG",
+                  },
+                  {
+                    "onClick": [Function],
+                    "text": "BMP",
+                  },
+                ],
+                "text": "Image",
+                "type": "submenu",
               },
               {
                 "iconClassName": "book",
-                "onClick": [Function],
-                "text": "Panel JSON",
+                "subMenu": [
+                  {
+                    "onClick": [Function],
+                    "text": "Panel JSON",
+                  },
+                ],
+                "text": "Data",
+                "type": "submenu",
               },
             ],
             "text": "Export",

@@ -25,11 +25,11 @@ e2e.scenario({
 
       e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Export, PANEL_UNDER_TEST);
 
-      //expectSubMenuScenario('Image', 'PNG', '.png');
-      //expectSubMenuScenario('Image', 'JPEG', '.jpeg');
-      //expectSubMenuScenario('Image', 'BMP', '.bmp');
+      expectSubMenuScenario('Image', 'PNG', '.png');
+      expectSubMenuScenario('Image', 'JPEG', '.jpeg');
+      expectSubMenuScenario('Image', 'BMP', '.bmp');
 
-      // expectSubMenuScenario('Data', 'CSV', ".csv");
+      expectSubMenuScenario('Data', 'CSV', '.csv');
       expectSubMenuScenario('Data', 'Excel', '.xlsx');
       expectSubMenuScenario('Data', 'Data JSON', '.json');
       expectSubMenuScenario('Data', 'DataFrame JSON', '.json');
