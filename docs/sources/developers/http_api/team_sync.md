@@ -84,7 +84,7 @@ See note in the [introduction]({{< ref "#external-group-synchronization-api" >}}
 **Example Request**:
 
 ```http
-POST /api/teams/1/members HTTP/1.1
+POST /api/teams/1/groups HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
