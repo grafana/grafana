@@ -77,6 +77,20 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
   return [levels, uniqueLabels];
 }
 
+export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
+  if (wrongFields.missingFields.length) {
+    return `Data is missing fields: ${wrongFields.missingFields.join(', ')}`;
+  }
+
+  if (wrongFields.wrongTypeFields.length) {
+    return `Data has fields of wrong type: ${wrongFields.wrongTypeFields
+      .map((f) => `${f.name} has type ${f.type} but should be ${f.expectedTypes.join(' or ')}`)
+      .join(', ')}`;
+  }
+
+  return '';
+}
+
 export type CheckFieldsResult = {
   wrongTypeFields: Array<{ name: string; expectedTypes: FieldType[]; type: FieldType }>;
   missingFields: string[];
@@ -133,7 +147,7 @@ export class FlameGraphDataContainer {
 
     const wrongFields = checkFields(data);
     if (wrongFields) {
-      throw new Error('Malformed dataFrame: value, level and label and self fields of correct type are required.');
+      throw new Error(getMessageCheckFieldsResult(wrongFields));
     }
 
     this.labelField = data.fields.find((f) => f.name === 'label')!;
