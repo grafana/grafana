@@ -187,11 +187,11 @@ export class FlameGraphDataContainer {
     return this.levels!;
   }
 
-  getSandwichLevels(label: string) {
+  getSandwichLevels(label: string): [LevelItem[][], LevelItem[][]] {
     const nodes = this.getNodesWithLabel(label);
 
     if (!nodes?.length) {
-      return [];
+      return [[], []];
     }
 
     const callers = mergeParentSubtrees(nodes, this);

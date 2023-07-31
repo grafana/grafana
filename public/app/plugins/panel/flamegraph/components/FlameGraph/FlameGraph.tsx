@@ -78,7 +78,7 @@ const FlameGraph = ({
       const [callers, callees] = data.getSandwichLevels(sandwichItem);
       levels = [...callers, [], ...callees];
       // We need this separate as in case of diff profile we to compute diff colors based on the original ticks.
-      totalViewTicks = callees.length ? callees[0][0].value : 0;
+      totalViewTicks = callees[0]?.[0]?.value ?? 0;
       callersCount = callers.length;
     }
     return [levels, totalProfileTicks, totalProfileTicksRight, totalViewTicks, callersCount];
@@ -93,14 +93,14 @@ const FlameGraph = ({
   useFlameRender({
     canvasRef: graphRef,
     colorScheme,
-    data: data,
+    data,
     focusedItemData,
-    levels: levels,
+    levels,
     rangeMax,
     rangeMin,
     search,
     textAlign,
-    totalViewTicks: totalViewTicks,
+    totalViewTicks,
     // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
     totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
     totalTicksRight: totalProfileTicksRight,
