@@ -466,7 +466,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef?.type).toBe(SpanLinkType.Metrics);
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
+          '{"range":{"from":"2020-10-14T00:58:00.000Z","to":"2020-10-14T01:02:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
         )}`
       );
     });
@@ -515,7 +515,7 @@ describe('createSpanLinkFactory', () => {
       expect(namedLink!.title).toBe('Named Query');
       expect(namedLink!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
+          '{"range":{"from":"2020-10-14T00:58:00.000Z","to":"2020-10-14T01:02:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
         )}`
       );
 
@@ -525,7 +525,7 @@ describe('createSpanLinkFactory', () => {
       expect(defaultLink!.title).toBe('defaultQuery');
       expect(defaultLink!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service=\\"test service\\"}[5m])) by (le))","refId":"A"}]}'
+          '{"range":{"from":"2020-10-14T00:58:00.000Z","to":"2020-10-14T01:02:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service=\\"test service\\"}[5m])) by (le))","refId":"A"}]}'
         )}`
       );
 
@@ -535,7 +535,7 @@ describe('createSpanLinkFactory', () => {
       expect(unnamedQuery!.title).toBeUndefined();
       expect(unnamedQuery!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"no_name_here","refId":"A"}]}'
+          '{"range":{"from":"2020-10-14T00:58:00.000Z","to":"2020-10-14T01:02:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"no_name_here","refId":"A"}]}'
         )}`
       );
     });
@@ -599,7 +599,7 @@ describe('createSpanLinkFactory', () => {
     expect(links![0].type).toBe(SpanLinkType.Metrics);
     expect(links![0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\", job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}]}'
+        '{"range":{"from":"2020-10-14T00:58:00.000Z","to":"2020-10-14T01:02:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\", job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}]}'
       )}`
     );
   });
