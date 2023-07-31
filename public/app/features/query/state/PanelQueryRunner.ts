@@ -179,6 +179,16 @@ export class PanelQueryRunner {
                     ...fieldConfig!,
                   }),
                 };
+                if (processedData.annotations) {
+                  processedData.annotations = applyFieldOverrides({
+                    data: processedData.annotations,
+                    ...fieldConfig!,
+                    fieldConfig: {
+                      defaults: {},
+                      overrides: [],
+                    },
+                  });
+                }
                 isFirstPacket = false;
               }
             }
