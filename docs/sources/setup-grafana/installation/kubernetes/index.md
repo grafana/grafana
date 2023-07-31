@@ -17,7 +17,7 @@ To follow this guide:
 
 - You need the latest version of [Kubernetes](https://kubernetes.io/) running either locally or remotely on a public or private cloud.
 
-- If you plan to use it in a local environment, you can use various Kubernetes options such as [Minikube](https://minikube.sigs.k8s.io/docs/), [Kind](https://kind.sigs.k8s.io/), [Docker Desktop](https://docs.docker.com/desktop/kubernetes/), and others.
+- If you plan to use it in a local environment, you can use various Kubernetes options such as [minikube](https://minikube.sigs.k8s.io/docs/), [kind](https://kind.sigs.k8s.io/), [Docker Desktop](https://docs.docker.com/desktop/kubernetes/), and others.
 
 - If you plan to use Kubernetes in a production setting, it's recommended to utilize managed cloud services like [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), or [Azure Kubernetes Service (AKS)](https://azure.microsoft.com/en-us/products/kubernetes-service/).
 
@@ -272,7 +272,7 @@ This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest
    http://192.168.122.144:32182
    ```
 
-1. Run a curl command to verify whether a given connection should work in a browser under ideal circumstances.
+1. Run a `curl` command to verify whether a given connection should work in a browser under ideal circumstances.
 
    ```bash
    curl 192.168.122.144:32182
