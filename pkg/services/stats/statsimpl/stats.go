@@ -143,11 +143,10 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		return nil
 	})
 
-	// Execute dashboard analysis in its own query
+	// Execute dashboard size analysis in its own query (these may take time)
 	if err == nil {
 		var rows *sql.Rows
-		db := ss.db.GetSqlxSession()
-		rows, err = db.Query(ctx, `SELECT `+
+		rows, err = ss.db.GetSqlxSession().Query(ctx, `SELECT `+
 			`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`+
 			`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max`,
 			dialect.BooleanStr(false), dialect.BooleanStr(false))
