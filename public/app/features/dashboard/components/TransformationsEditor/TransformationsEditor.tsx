@@ -533,7 +533,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               />
             ) : null}
             {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
-              <div className={cx(styles.listInformationLineWrapper)}>
+              <div className={styles.listInformationLineWrapper}>
                 <span className={styles.listInformationLineText}>Transformations in use</span>{' '}
                 <Button
                   size="sm"
