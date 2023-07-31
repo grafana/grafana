@@ -4115,7 +4115,7 @@ __metadata:
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
-    rollup-plugin-svg-import: ^1.6.0
+    rollup-plugin-svg-import: ^2.0.0
     rxjs: 7.8.1
     sass-loader: 13.3.2
     slate: 0.47.9
@@ -7146,17 +7146,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/pluginutils@npm:^4.1.1":
-  version: 4.2.0
-  resolution: "@rollup/pluginutils@npm:4.2.0"
-  dependencies:
-    estree-walker: ^2.0.1
-    picomatch: ^2.2.2
-  checksum: 2e86d9bfb95919727bcba0bbbdbedc98e25a1e51fe3047f18ec6d85e0743d1c73e1c0de3f9fdbd2ff6b90c32f30d4b2706c9e794f3c2e7a80156980081558e2e
-  languageName: node
-  linkType: hard
-
-"@rollup/pluginutils@npm:^5.0.1":
+"@rollup/pluginutils@npm:^5.0.1, @rollup/pluginutils@npm:^5.0.2":
   version: 5.0.2
   resolution: "@rollup/pluginutils@npm:5.0.2"
   dependencies:
@@ -17651,7 +17641,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"estree-walker@npm:^2.0.1, estree-walker@npm:^2.0.2":
+"estree-walker@npm:^2.0.2":
   version: 2.0.2
   resolution: "estree-walker@npm:2.0.2"
   checksum: 6151e6f9828abe2259e57f5fd3761335bb0d2ebd76dc1a01048ccee22fabcfef3c0859300f6d83ff0d1927849368775ec5a6d265dde2f6de5a1be1721cd94efc
@@ -29051,14 +29041,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-svg-import@npm:^1.6.0":
-  version: 1.6.0
-  resolution: "rollup-plugin-svg-import@npm:1.6.0"
+"rollup-plugin-svg-import@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "rollup-plugin-svg-import@npm:2.0.0"
   dependencies:
-    "@rollup/pluginutils": ^4.1.1
+    "@rollup/pluginutils": ^5.0.2
   peerDependencies:
-    rollup: ">=1.29.0 <3.0.0"
-  checksum: 453862c39d2301563d9d07f6647c295377ff66cf3174d2a0612389fda4bfd9fa72718d90279feb782d3525f1d6f9710e1dc78641cd9d4044360a0179f88054b0
+    rollup: ^2.0.0||^3.0.0
+  checksum: aa944f6ac6bfa90e45ffdd3f04b39919ebfde04f5286a771961c2627ff880242b24e310c7f2280cf897101cfd832f8386b9feb89f7974fa3ecc7016ecaea4ccc
   languageName: node
   linkType: hard
 
