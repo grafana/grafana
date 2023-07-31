@@ -94,9 +94,16 @@ The following settings are specific to Elasticsearch.
 
 - **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
 
-- **Pattern** -
+- **Pattern** - Select the matching pattern if using one in your index name. Options include:
 
-- **Time field name** - name of the time field. The default value is @timestamp. You can enter a different name.
+  - no pattern
+  - hourly
+  - daily
+  - weekly
+  - monthly
+  - yearly
+
+- **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
 
 - **Max concurrent shard requests** - Sets the number of shards being queried at the same time. Default is 5. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
 
