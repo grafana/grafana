@@ -180,7 +180,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
          kubectl get pvc --namespace=my-grafana -o wide
          ```
 
-   2. For Deployment, run the following command:
+   b. For Deployment, run the following command:
    
          ```bash
          kubectl get deployments --namespace=my-grafana -o wide
