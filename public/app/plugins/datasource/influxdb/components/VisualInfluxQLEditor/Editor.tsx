@@ -161,12 +161,7 @@ export const Editor = (props: Props): JSX.Element => {
         <FromSection
           policy={policy ?? retentionPolicies[0]}
           measurement={measurement}
-          getPolicyOptions={() =>
-            withTemplateVariableOptions(
-              allTagKeys.then((keys) => getAllPolicies(datasource)),
-              wrapPure
-            )
-          }
+          getPolicyOptions={() => withTemplateVariableOptions(getAllPolicies(datasource), wrapPure)}
           getMeasurementOptions={(filter) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>
