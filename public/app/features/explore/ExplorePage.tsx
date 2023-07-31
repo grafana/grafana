@@ -56,6 +56,11 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }, [chrome, navModel]);
 
   useEffect(() => {
+    navModel.node.text = `Explore${isCorrelationsEditorMode ? ' (Correlations Editor)' : ''}`
+    chrome.update({ sectionNav: navModel });
+  }, [chrome, isCorrelationsEditorMode, navModel]);
+
+  useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
 

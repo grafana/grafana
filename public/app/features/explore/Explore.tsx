@@ -27,6 +27,8 @@ import {
   withTheme2,
   PanelContainer,
   AdHocFilterItem,
+  InfoBox,
+  Button,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
@@ -60,6 +62,7 @@ import { splitOpen } from './state/main';
 import {
   addQueryRow,
   modifyQueries,
+  saveCurrentCorrelation,
   scanStart,
   scanStopAction,
   selectIsWaitingForData,
@@ -492,6 +495,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       showLogsSample,
+      panelsState,
+      saveCurrentCorrelation,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -512,6 +517,22 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.customFrames,
       ].every((e) => e.length === 0);
 
+      let correlationsBox = undefined;
+      if (panelsState && panelsState.correlations !== undefined) {
+        const vars = Object.entries(panelsState.correlations.vars);
+        correlationsBox = <InfoBox>
+          You can use following variables to set up your correlations:
+          <pre>
+          {
+            vars.map((entry, index) => {
+              return `\$\{${entry[0]}\} = ${entry[1]}\n`
+            })
+          }
+          </pre>
+          Once you&#39;re happy with your setup, click <Button onClick={saveCurrentCorrelation}>Save</Button>
+        </InfoBox>
+      }
+
     return (
       <CustomScrollbar
         testId={selectors.pages.Explore.General.scrollView}
@@ -522,6 +543,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {datasourceInstance ? (
           <div className={styles.exploreContainer}>
             <PanelContainer className={styles.queryContainer}>
+              {correlationsBox}
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
                 addQueryRowButtonDisabled={isLive}
@@ -618,6 +640,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     showRawPrometheus,
     supplementaryQueries,
+    panelsState
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -648,6 +671,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     logsSample,
     showLogsSample,
+    panelsState
   };
 }
 
@@ -662,6 +686,7 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
+  saveCurrentCorrelation
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

@@ -122,17 +122,13 @@ export const decorateWithCorrelations = ({
               datasourceName: 'default',
               query: {},
               panelsState: {
-                //mode: 'CorrelationsEditor',
-                //resultsField: field.name,
-                correlations: { vars: availableVars },
+                correlations: { resultField: field.name, vars: availableVars },
               },
             },
           });
         }
       }
-    }
-
-    if (queries?.length && correlations?.length) {
+    } else if (queries?.length && correlations?.length) {
       const queryRefIdToDataSourceUid = mapValues(groupBy(queries, 'refId'), '0.datasource.uid');
       attachCorrelationsToDataFrames(data.series, correlations, queryRefIdToDataSourceUid);
     }

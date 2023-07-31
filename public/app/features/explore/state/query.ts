@@ -34,8 +34,9 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
+import { CreateCorrelationParams } from 'app/features/correlations/types';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { createCorrelation, getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
@@ -62,6 +63,7 @@ import {
 
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { changeCorrelationsEditorMode, splitClose } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
@@ -1244,3 +1246,42 @@ export const processQueryResponse = (
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };
+
+export function reloadCorrelations(exploreId: string): ThunkResult<void> {
+  return async(dispatch, getState) => {
+    const pane = getState().explore!.panes[exploreId]!;
+
+    if (pane.datasourceInstance?.uid !== undefined) {
+      const correlations = await getCorrelationsBySourceUIDs([pane.datasourceInstance.uid]);
+      dispatch(saveCorrelationsAction({ exploreId, correlations: correlations.correlations || [] }));
+    }
+  }
+}
+
+export function saveCurrentCorrelation(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+
+    const keys = Object.keys(getState().explore!.panes);
+    const sourcePane = getState().explore!.panes[keys[0]]!;
+    const targetPane = getState().explore!.panes[keys[1]]!;
+
+    if (sourcePane.datasourceInstance?.uid && targetPane.datasourceInstance?.uid && targetPane.panelsState?.correlations?.resultField) {
+      const correlation: CreateCorrelationParams = {
+        sourceUID: sourcePane.datasourceInstance.uid,
+        targetUID: targetPane.datasourceInstance.uid,
+        label: `${sourcePane.datasourceInstance.name} to ${targetPane.datasourceInstance.name}`,
+        config: {
+          field: targetPane.panelsState.correlations.resultField,
+          target: targetPane.queries[0],
+          type: 'query',
+        }
+      }
+  
+      await dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+      await createCorrelation(sourcePane.datasourceInstance.uid, correlation);
+      await dispatch(splitClose(keys[1]));
+      await dispatch(reloadCorrelations(keys[0]));
+      dispatch(runQueries({ exploreId: keys[0] }));
+    }
+  }
+}

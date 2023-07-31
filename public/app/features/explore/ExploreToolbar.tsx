@@ -20,9 +20,15 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
-import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
+import {
+  splitClose,
+  splitOpen,
+  maximizePaneAction,
+  evenPaneResizeAction,
+  changeCorrelationsEditorMode,
+} from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isSplit, selectPanesEntries } from './state/selectors';
+import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -59,6 +65,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   );
 
   const panes = useSelector(selectPanesEntries);
+  const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
 
   const shouldRotateSplitIcon = useMemo(
     () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
@@ -113,22 +120,42 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
+  const navBarActions = [
+    <DashNavButton
+      key="share"
+      tooltip="Copy shortened link"
+      icon="share-alt"
+      onClick={onCopyShortLink}
+      aria-label="Copy shortened link"
+    />,
+    <div style={{ flex: 1 }} key="spacer0" />,
+  ];
+
+  if (isCorrelationsEditorMode) {
+    navBarActions.push(
+      <DashNavButton
+        key="x"
+        tooltip="Exit Correlations Editor Mode"
+        icon="times"
+        onClick={() => {
+          dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+          panes.forEach((pane) => {
+            dispatch(runQueries({ exploreId: pane[0] }));
+          });
+        }}
+        aria-label="exit correlations editor mode"
+      > Exit Correlation Editor 
+      </DashNavButton>
+    );
+
+    // navBarActions.push(<div style={{ flex: 1 }} key="spacer1" />);
+  }
+
   return (
     <div ref={topOfViewRef}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <div ref={topOfViewRef}>
-        <AppChromeUpdate
-          actions={[
-            <DashNavButton
-              key="share"
-              tooltip="Copy shortened link"
-              icon="share-alt"
-              onClick={onCopyShortLink}
-              aria-label="Copy shortened link"
-            />,
-            <div style={{ flex: 1 }} key="spacer" />,
-          ]}
-        />
+        <AppChromeUpdate actions={navBarActions} />
       </div>
       <PageToolbar
         aria-label="Explore toolbar"

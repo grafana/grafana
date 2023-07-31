@@ -23,6 +23,7 @@ export interface ExplorePanelsState extends Partial<Record<PreferredVisualisatio
  * Keep a list of vars the correlations editor in explore will use
  */
 export interface ExploreCorrelationsPanelState {
+  resultField: string;
   vars: Record<string, string>;
 }
 
