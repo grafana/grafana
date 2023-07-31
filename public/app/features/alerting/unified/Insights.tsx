@@ -5,50 +5,87 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+const FIRING_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+const TOTAL_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json [1w]))';
+
+const WORST_OFFENDERS_ALERTS_THIS_WEEK =
+  'sum by (folderUID, group) (count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+
+//since all cloud instances have a provisioned alert state history data source,
+//we should be able to use its uid here
+const datasourceUid = 'CKA1_2hVz';
+
 function getScene() {
   const queryRunner1 = new SceneQueryRunner({
     datasource: {
       type: 'loki',
-      //since all cloud instances have a provisioned alert state history data source,
-      //we should be able to use its uid here
-      uid: 'CKA1_2hVz',
+      uid: datasourceUid,
     },
     queries: [
       {
         refId: 'A',
-        expr: '{from="state-history"} | json | current="Alerting"',
+        expr: FIRING_QUERIES_LAST_WEEK,
       },
     ],
   });
 
   const queryRunner2 = new SceneQueryRunner({
     datasource: {
-      type: 'prometheus',
-      uid: 'gdev-prometheus',
+      type: 'loki',
+      uid: datasourceUid,
     },
     queries: [
       {
         refId: 'A',
-        expr: 'avg by (job, instance, mode) (rate(node_cpu_seconds_total[5m]))',
+        expr: TOTAL_QUERIES_LAST_WEEK,
+      },
+    ],
+  });
+
+  const queryRunner3 = new SceneQueryRunner({
+    datasource: {
+      type: 'loki',
+      uid: 'CKA1_2hVz',
+    },
+    queries: [
+      {
+        refId: 'A',
+        instant: true,
+        expr: WORST_OFFENDERS_ALERTS_THIS_WEEK,
       },
     ],
   });
 
   return new EmbeddedScene({
     body: new SceneFlexLayout({
+      direction: 'row',
       children: [
         new SceneFlexItem({
           width: '50%',
           height: 300,
-          body: PanelBuilders.table()
-            .setTitle('Panel using alert state history data source')
-            .setData(queryRunner1)
-            .build(),
+          body: PanelBuilders.stat().setTitle('Firing queries last week').setData(queryRunner1).build(),
         }),
         new SceneFlexItem({
           width: '50%',
           height: 300,
-          body: PanelBuilders.timeseries().setTitle('Panel using prometheus data source').setData(queryRunner2).build(),
+          body: PanelBuilders.stat().setTitle('Total queries last week').setData(queryRunner2).build(),
+        }),
+        new SceneFlexItem({
+          width: '100%',
+          height: 300,
+          body: PanelBuilders.table()
+            .setTitle(WORST_OFFENDERS_ALERTS_THIS_WEEK)
+            .setData(queryRunner3)
+            .setOverrides((b) =>
+              b
+                .matchFieldsWithNameByRegex('.*')
+                .overrideFilterable(false)
+                .matchFieldsWithName('Time')
+                .overrideCustomFieldConfig('hidden', true)
+                .matchFieldsWithName('Value')
+                .overrideDisplayName('Fires Last Week')
+            )
+            .build(),
         }),
       ],
     }),
