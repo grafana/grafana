@@ -7,10 +7,11 @@ import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { TraceIdTimeParams } from 'app/core/components/TraceIdTimeParams';
 import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
+
+import { TraceIdTimeParams } from './TraceIdTimeParams';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
@@ -55,6 +56,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
         <Divider hideLine={true} />
         <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+        <Divider hideLine={true} />
         <TraceIdTimeParams options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
     </div>
