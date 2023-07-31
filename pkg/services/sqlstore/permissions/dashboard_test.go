@@ -620,7 +620,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 					s := recQry + "\nSELECT dashboard.title FROM dashboard WHERE " + q
 					leftJoin := filter.LeftJoin()
 					if leftJoin != "" {
-						s = recQry + "\nSELECT dashboard.title FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
+						s = recQry + "\nSELECT dashboard.title FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q + " ORDER BY dashboard.id ASC"
 					}
 					err := sess.SQL(s, params...).Find(&result)
 					return err
