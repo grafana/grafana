@@ -115,6 +115,39 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
+// TODO This should be used in the useCombinedRules hook
+export function combineRulesNamespaces(
+  rulesSource: RulesSource,
+  promNamespaces: RuleNamespace[],
+  rulerRules?: RulerRulesConfigDTO
+): CombinedRuleNamespace[] {
+  const namespaces: Record<string, CombinedRuleNamespace> = {};
+
+  // first get all the ruler rules in
+  Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
+    const namespace: CombinedRuleNamespace = {
+      rulesSource,
+      name: namespaceName,
+      groups: [],
+    };
+    namespaces[namespaceName] = namespace;
+    addRulerGroupsToCombinedNamespace(namespace, groups);
+  });
+
+  // then correlate with prometheus rules
+  promNamespaces?.forEach(({ name: namespaceName, groups }) => {
+    const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
+      rulesSource,
+      name: namespaceName,
+      groups: [],
+    });
+
+    addPromGroupsToCombinedNamespace(ns, groups);
+  });
+
+  return Object.values(namespaces);
+}
+
 export function combinePromAndRulerRules(
   rulesSource: RulesSource,
   promNamespace: RuleNamespace,
@@ -126,7 +159,7 @@ export function combinePromAndRulerRules(
     groups: [],
   };
 
-  // The order is important. Adding Ruler rules overrides Prometheus rules
+  // The order is important. Adding Ruler rules overrides Prometheus rules.
   if (rulerGroup) {
     addRulerGroupsToCombinedNamespace(ns, [rulerGroup]);
   }

@@ -5,7 +5,7 @@ import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -52,10 +52,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     return ruleId.parse(id, true);
   }, [id]);
 
-  // const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
   const { loading, error, result: rule } = useCombinedRuleLight({ ruleIdentifier: identifier });
-
-  useCombinedRuleLight({ ruleIdentifier: identifier });
 
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
@@ -130,9 +127,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
     return (
       <Alert title={errorTitle}>
         <details className={styles.errorMessage}>
-          {error?.message ?? errorMessage}
+          {isFetchError(error) ? error.message : errorMessage}
           <br />
-          {!!error?.stack && error.stack}
+          {/* TODO  Fix typescript */}
+          {/* {error && error?.stack} */}
         </details>
       </Alert>
     );

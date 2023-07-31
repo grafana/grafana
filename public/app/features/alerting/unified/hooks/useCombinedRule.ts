@@ -2,13 +2,13 @@ import { useEffect, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { useDispatch } from 'app/types';
-import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRule, RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { fetchPromAndRulerRulesAction } from '../state/actions';
-import { getDataSourceByName } from '../utils/datasource';
+import { getDataSourceByName, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../utils/datasource';
 import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import {
@@ -18,7 +18,11 @@ import {
   isRulerNotSupportedResponse,
 } from '../utils/rules';
 
-import { combinePromAndRulerRules, useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
+import {
+  combinePromAndRulerRules,
+  combineRulesNamespaces,
+  useCombinedRuleNamespaces,
+} from './useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useCombinedRule(
@@ -131,26 +135,28 @@ function getRequestState(
 
 export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): {
   loading: boolean;
-  error?: Error;
   result?: CombinedRule;
+  error?: unknown;
 } {
   const { ruleSourceName } = ruleIdentifier;
   const dsSettings = getDataSourceByName(ruleSourceName);
 
-  const { currentData: dsFeatures, isLoading: isLoadingDsFeatures } =
-    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
-      rulesSourceName: ruleSourceName,
-    });
+  const { dsFeatures, isLoadingDsFeatures } = useDataSourceFeatures(ruleSourceName);
 
-  const { currentData: promRuleNs, isLoading: isLoadingPromRules } =
-    alertRuleApi.endpoints.prometheusRuleNamespace.useQuery({
-      ruleIdentifier: ruleIdentifier,
-    });
+  const {
+    currentData: promRuleNs,
+    isLoading: isLoadingPromRules,
+    error: promRuleNsError,
+  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+    ruleIdentifier: ruleIdentifier,
+  });
 
-  const [fetchRulerRuleGroup, { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup }] =
-    alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+  const [
+    fetchRulerRuleGroup,
+    { currentData: rulerRuleGroup, isLoading: isLoadingRulerGroup, error: rulerRuleGroupError },
+  ] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
 
-  const [fetchRulerRules, { currentData: rulerRules, isLoading: isLoadingRulerRules }] =
+  const [fetchRulerRules, { currentData: rulerRules, isLoading: isLoadingRulerRules, error: rulerRulesError }] =
     alertRuleApi.endpoints.rulerRules.useLazyQuery();
 
   useEffect(() => {
@@ -170,32 +176,83 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
   }, [dsFeatures, fetchRulerRuleGroup, fetchRulerRules, ruleIdentifier]);
 
   const rule = useMemo(() => {
-    if (!dsSettings || !promRuleNs) {
+    if (!promRuleNs) {
       return;
     }
 
-    // TODO Add support for Grafana rules
-    const namespace = combinePromAndRulerRules(dsSettings, promRuleNs, rulerRuleGroup);
-    if (!namespace) {
+    if (isGrafanaRuleIdentifier(ruleIdentifier)) {
+      const combinedNamespaces = combineRulesNamespaces('grafana', promRuleNs, rulerRules);
+
+      for (const namespace of combinedNamespaces) {
+        for (const group of namespace.groups) {
+          for (const rule of group.rules) {
+            const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+
+            if (ruleId.equal(id, ruleIdentifier)) {
+              return rule;
+            }
+          }
+        }
+      }
+    }
+
+    if (!dsSettings) {
       return;
     }
 
-    for (const group of namespace.groups) {
-      for (const rule of group.rules) {
-        const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+    if (
+      promRuleNs.length === 1 &&
+      (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier))
+    ) {
+      const namespace = combinePromAndRulerRules(dsSettings, promRuleNs[0], rulerRuleGroup);
+      if (!namespace) {
+        return;
+      }
 
-        if (ruleId.equal(id, ruleIdentifier)) {
-          return rule;
+      for (const group of namespace.groups) {
+        for (const rule of group.rules) {
+          const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+
+          if (ruleId.equal(id, ruleIdentifier)) {
+            return rule;
+          }
         }
       }
     }
 
     return;
-  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, dsSettings]);
+  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, rulerRules, dsSettings]);
 
   return {
     loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || isLoadingRulerRules,
-    error: undefined, // TODO
+    error: promRuleNsError ?? rulerRuleGroupError ?? rulerRulesError,
     result: rule,
   };
+}
+
+const grafanaRulerConfig: RulerDataSourceConfig = {
+  dataSourceName: GRAFANA_RULES_SOURCE_NAME,
+  apiVersion: 'legacy',
+};
+
+const grafanaDsFeatures = {
+  rulerConfig: grafanaRulerConfig,
+};
+
+export function useDataSourceFeatures(dataSourceName: string) {
+  const isGrafanaDs = isGrafanaRulesSource(dataSourceName);
+
+  const { currentData: dsFeatures, isLoading: isLoadingDsFeatures } =
+    featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery(
+      {
+        rulesSourceName: dataSourceName,
+      },
+      { skip: isGrafanaDs }
+    );
+
+  if (isGrafanaDs) {
+    return { isLoadingDsFeatures: false, dsFeatures: grafanaDsFeatures };
+  }
+
+  return { isLoadingDsFeatures, dsFeatures };
 }

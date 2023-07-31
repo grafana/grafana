@@ -135,7 +135,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
     }),
 
-    prometheusRuleNamespace: build.query<RuleNamespace, { ruleIdentifier: RuleIdentifier }>({
+    prometheusRuleNamespaces: build.query<RuleNamespace[], { ruleIdentifier: RuleIdentifier }>({
       query: ({ ruleIdentifier }) => {
         const queryParams = new URLSearchParams();
         if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
@@ -148,8 +148,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           params: Object.fromEntries(queryParams),
         };
       },
-      transformResponse: (response: PromRulesResponse): RuleNamespace => {
-        return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME)[0];
+      transformResponse: (response: PromRulesResponse): RuleNamespace[] => {
+        return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
       },
     }),
 
