@@ -17,6 +17,9 @@ export class FlameGraphSuggestionsSupplier {
     }
 
     const dataFrame = builder.data.series[0];
+    if (!dataFrame) {
+      return;
+    }
     const wrongFields = checkFields(dataFrame);
     if (wrongFields) {
       return;
