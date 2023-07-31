@@ -86,9 +86,6 @@ export const AuthConfigPageUnconnected = ({
     if (providertype === 'SAML') {
       return settings['auth.saml']['name'];
     }
-    if (providertype === 'LDAP') {
-      return settings['auth.ldap']['name'];
-    }
     return '';
   };
 
