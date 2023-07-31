@@ -70,7 +70,7 @@ Grafana includes three special data sources:
 
 These built-in core data sources are also included in the Grafana documentation:
 
-- [Alertmanager][({{< relref "./alertmanager" >}})
+- [Alertmanager]({{< relref "./alertmanager" >}})
 - [AWS CloudWatch]({{< relref "./aws-cloudwatch" >}})
 - [Azure Monitor]({{< relref "./azure-monitor" >}})
 - [Elasticsearch]({{< relref "./elasticsearch" >}})

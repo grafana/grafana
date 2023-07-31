@@ -40,18 +40,18 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Set the data source's basic configuration options:
 
-   | Name                    | Description                                                                                                                          |
-   | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-   | **Name**                | Sets the name you use to refer to the data source in panels and queries.                                                             |
-   | **Default**             | Sets whether the data source is pre-selected for new panels. You can set only one default data source per organization.              |
-   | **URL**                 | Sets the HTTP protocol, IP, and port of your graphite-web or graphite-api installation.                                              |
-   | **Auth**                | For details, refer to [Configure Authentication][configure-authentication]. |
-   | **Basic Auth**          | Enables basic authentication to the data source.                                                                                     |
-   | **User**                | Sets the user name for basic authentication.                                                                                         |
-   | **Password**            | Sets the password for basic authentication.                                                                                          |
-   | **Custom HTTP Headers** | Click **Add header** to add a custom HTTP header.                                                                                    |
-   | **Header**              | Defines the custom header name.                                                                                                      |
-   | **Value**               | Defines the custom header value.                                                                                                     |
+   | Name                    | Description                                                                                                             |
+   | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+   | **Name**                | Sets the name you use to refer to the data source in panels and queries.                                                |
+   | **Default**             | Sets whether the data source is pre-selected for new panels. You can set only one default data source per organization. |
+   | **URL**                 | Sets the HTTP protocol, IP, and port of your graphite-web or graphite-api installation.                                 |
+   | **Auth**                | For details, refer to [Configure Authentication][configure-authentication].                                             |
+   | **Basic Auth**          | Enables basic authentication to the data source.                                                                        |
+   | **User**                | Sets the user name for basic authentication.                                                                            |
+   | **Password**            | Sets the password for basic authentication.                                                                             |
+   | **Custom HTTP Headers** | Click **Add header** to add a custom HTTP header.                                                                       |
+   | **Header**              | Defines the custom header name.                                                                                         |
+   | **Value**               | Defines the custom header value.                                                                                        |
 
 You can also configure settings specific to the Graphite data source:
 
