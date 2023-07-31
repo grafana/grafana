@@ -38,20 +38,19 @@ interface CustomHeaderRowProps {
 
 const getCustomHeaderRowStyles = stylesFactory(() => {
   return {
-    layout: css`
-      display: flex;
-      align-items: center;
-      margin-bottom: 4px;
-      > * {
-        margin-left: 4px;
-        margin-bottom: 0;
-        height: 100%;
-        &:first-child,
-        &:last-child {
-          margin-left: 0;
-        }
-      }
-    `,
+    layout: css({
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: '4px',
+      '> *': {
+        marginLeft: '4px',
+        marginBottom: 0,
+        height: '100%',
+        '&:first-child, &:last-child': {
+          marginLeft: 0,
+        },
+      },
+    }),
   };
 });
 

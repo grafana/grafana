@@ -10,14 +10,14 @@ export interface Props {
 
 export const StoryExample = ({ name, children }: Props) => {
   const theme = useTheme2();
-  const style = css`
-    width: 100%;
-    padding: 16px;
-  `;
-  const heading = css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: 16px;
-  `;
+  const style = css({
+    width: '100%',
+    padding: '16px',
+  });
+  const heading = css({
+    color: theme.colors.text.secondary,
+    marginBottom: '16px',
+  });
 
   return (
     <div className={style}>

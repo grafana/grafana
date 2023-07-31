@@ -64,7 +64,16 @@ const AmRoutes = () => {
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
-  const { result, config, loading: resultLoading, error: resultError } = useAlertmanagerConfig(selectedAlertmanager);
+  const {
+    currentData: result,
+    isLoading: resultLoading,
+    error: resultError,
+  } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const config = result?.alertmanager_config;
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },
@@ -187,7 +196,7 @@ const AmRoutes = () => {
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
-  const isLoading = !result && resultLoading;
+  const isFetching = !result && resultLoading;
   const haveError = resultError && !resultLoading;
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
@@ -215,7 +224,7 @@ const AmRoutes = () => {
         />
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+        {isFetching && <LoadingPlaceholder text="Loading Alertmanager config..." />}
         {haveError && (
           <Alert severity="error" title="Error loading Alertmanager config">
             {resultError.message || 'Unknown error.'}

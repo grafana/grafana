@@ -25,6 +25,7 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
@@ -1154,6 +1155,21 @@ export class DashboardModel implements TimeModel {
       panel.legend.show = !panelLegendsOn;
       panel.render();
     }
+  }
+
+  toggleExemplarsForAll() {
+    for (const panel of this.panels) {
+      for (const target of panel.targets) {
+        if (!(target.datasource && target.datasource.type === 'prometheus')) {
+          continue;
+        }
+
+        const promTarget = target as PromQuery;
+        promTarget.exemplar = !promTarget.exemplar;
+      }
+    }
+
+    this.startRefresh();
   }
 
   getVariables() {

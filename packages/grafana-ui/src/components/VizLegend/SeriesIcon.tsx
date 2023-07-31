@@ -51,11 +51,11 @@ export const SeriesIcon = React.memo(
 );
 
 const getStyles = () => ({
-  forcedColors: css`
-    @media (forced-colors: active) {
-      forced-color-adjust: none;
-    }
-  `,
+  forcedColors: css({
+    '@media (forced-colors: active)': {
+      forcedColorAdjust: 'none',
+    },
+  }),
 });
 
 SeriesIcon.displayName = 'SeriesIcon';

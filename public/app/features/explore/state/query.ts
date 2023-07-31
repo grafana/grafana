@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
+import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
 import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -249,26 +249,24 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: string, index: number): ThunkResult<void> {
+export function addQueryRow(exploreId: string, index: number): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
-    const queries = getState().explore.panes[exploreId]!.queries;
+    const pane = getState().explore.panes[exploreId]!;
     let datasourceOverride = undefined;
 
-    // if this is the first query being added, check for a root datasource
-    // if it's not mixed, send it as an override. generateEmptyQuery doesn't have access to state
-    if (queries.length === 0) {
-      const rootDatasource = getState().explore.panes[exploreId]!.datasourceInstance;
-      if (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed) {
-        datasourceOverride = rootDatasource;
-      }
+    // if we are not in mixed mode, use root datasource
+    if (!pane.datasourceInstance?.meta.mixed) {
+      datasourceOverride = pane.datasourceInstance?.getRef();
+    } else {
+      // else try to get the datasource from the last query that defines one, falling back to the default datasource
+      datasourceOverride = findLast(pane.queries, (query) => !!query.datasource)?.datasource || undefined;
     }
 
-    const query = await generateEmptyQuery(queries, index, datasourceOverride?.getRef());
+    const query = await generateEmptyQuery(pane.queries, index, datasourceOverride);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
 }
-
 /**
  * Cancel running queries
  */

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -130,10 +129,6 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.CreateOrgCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-	acEnabled := !hs.AccessControl.IsDisabled()
-	if !acEnabled && !(setting.AllowUserOrgCreate || c.IsGrafanaAdmin) {
-		return response.Error(http.StatusForbidden, "Access denied", nil)
 	}
 
 	cmd.UserID = c.UserID

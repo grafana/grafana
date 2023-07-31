@@ -1,3 +1,5 @@
+@use 'sass:math';
+
 /// Grid system
 //
 // Generate semantic grid columns with these mixins.
@@ -39,27 +41,27 @@
   padding-left: calc($grid-gutter-width / 2);
 
   @if $enable-flex {
-    flex: 0 0 percentage(calc($size / $columns));
+    flex: 0 0 math.percentage(calc($size / $columns));
     // Add a `max-width` to ensure content within each column does not blow out
     // the width of the column. Applies to IE10+ and Firefox. Chrome and Safari
     // do not appear to require this.
-    max-width: percentage(calc($size / $columns));
+    max-width: math.percentage(calc($size / $columns));
   } @else {
     float: left;
-    width: percentage(calc($size / $columns));
+    width: math.percentage(calc($size / $columns));
   }
 }
 
 @mixin make-col-offset($size, $columns: $grid-columns) {
-  margin-left: percentage(calc($size / $columns));
+  margin-left: math.percentage(calc($size / $columns));
 }
 
 @mixin make-col-push($size, $columns: $grid-columns) {
-  left: if($size > 0, percentage(calc($size / $columns)), auto);
+  left: if($size > 0, math.percentage(calc($size / $columns)), auto);
 }
 
 @mixin make-col-pull($size, $columns: $grid-columns) {
-  right: if($size > 0, percentage(calc($size / $columns)), auto);
+  right: if($size > 0, math.percentage(calc($size / $columns)), auto);
 }
 
 @mixin make-col-modifier($type, $size, $columns) {

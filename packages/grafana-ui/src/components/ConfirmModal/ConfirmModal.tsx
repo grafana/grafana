@@ -131,9 +131,9 @@ export const ConfirmModal = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 500px;
-  `,
+  modal: css({
+    width: '500px',
+  }),
   modalText: css({
     fontSize: theme.typography.h5.fontSize,
     color: theme.colors.text.primary,

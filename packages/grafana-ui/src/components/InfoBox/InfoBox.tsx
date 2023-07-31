@@ -47,9 +47,9 @@ InfoBox.displayName = 'InfoBox';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    docsLink: css`
-      display: inline-block;
-      margin-top: ${theme.spacing(2)};
-    `,
+    docsLink: css({
+      display: 'inline-block',
+      marginTop: theme.spacing(2),
+    }),
   };
 });

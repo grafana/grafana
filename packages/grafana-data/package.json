@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/data",
-  "version": "10.1.0-pre",
+  "version": "10.2.0-pre",
   "description": "Grafana Data Library",
   "keywords": [
     "typescript"
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "6.0.2",
-    "@grafana/schema": "10.1.0-pre",
+    "@grafana/schema": "10.2.0-pre",
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "1.1.1",
     "d3-interpolate": "3.0.1",
@@ -46,7 +46,8 @@
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "marked": "4.2.12",
+    "marked": "5.1.1",
+    "marked-mangle": "1.1.0",
     "moment": "2.29.4",
     "moment-timezone": "0.5.43",
     "ol": "7.4.0",
@@ -74,7 +75,7 @@
     "@types/jest": "29.2.3",
     "@types/jquery": "3.5.16",
     "@types/lodash": "4.14.195",
-    "@types/marked": "4.0.8",
+    "@types/marked": "5.0.1",
     "@types/node": "18.16.19",
     "@types/papaparse": "5.3.7",
     "@types/react": "18.2.15",

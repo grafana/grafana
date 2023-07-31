@@ -1,7 +1,11 @@
 ---
 description: Install guide for Grafana on RHEL and Fedora.
-title: Install Grafana on RHEL or Fedora
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: RHEL or Fedora
+title: Install Grafana on RHEL or Fedora
 weight: 200
 ---
 
