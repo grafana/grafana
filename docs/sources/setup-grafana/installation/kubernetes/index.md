@@ -50,35 +50,37 @@ When you deploy an application in Kubernetes, it will use its default namespace 
 As best practice, create a new namespace, as Kubernetes does allow users to create namespaces which will allow us to easily manage,  organize, allocate, and manage cluster resources. Refer to the Kubernetes official documentation for more reference about the [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 1. To create a namespace, run the following command:
-   
+
    ```bash
    kubectl create namespace my-grafana
    ```
+
    In this example, the namespace is `my-grafana`
 
 1. To verify and view the newly created namespace, run the following command:
-   
+
    ```bash
    kubectl get namespace my-grafana
    ```
+
    The output of the above command will provide more information about the newly created namespace.
 
 1. Create a YAML manifest file named `grafana.yaml`. This file will contain the necessary code for deployment.
-   
+
    ```bash
    touch grafana.yaml
    ```
 
-    In the next step you define the following three objects in the YAML file.
+   In the next step you define the following three objects in the YAML file.
 
-    | Object | Description |
-    | ------ | ------ |
-    | Persistent Volume Claim (PVC) | This object stores the data. |
-    | Service | This object provides network access to the Pod defined in the deployment. |
-    | Deployment | This object is responsible for creating the pods, ensuring they stay up to date, and  managing Replicaset and Rolling updates. |
+   | Object                        | Description                                                                                                                   |
+   | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+   | Persistent Volume Claim (PVC) | This object stores the data.                                                                                                  |
+   | Service                       | This object provides network access to the Pod defined in the deployment.                                                     |
+   | Deployment                    | This object is responsible for creating the pods, ensuring they stay up to date, and managing Replicaset and Rolling updates. |
 
 1. Copy and paste the following contents and save it in the `grafana.yaml` file.
-   
+
    ```yaml
    ---
    apiVersion: v1
@@ -165,7 +167,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
    ```
 
 1. Run the following command to send the manifest to the Kubernetes API server:
-   
+
    ```bash
    kubectl apply -f grafana.yaml --namespace=my-grafana
    ```
@@ -173,31 +175,31 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
    This command creates the PVC, Deployment, and Service objects.
 
 1. Complete the following steps to verify the deployment status of each object.
-   
+
    a. For PVC, run the following command:
-   
-      ```bash
-      kubectl get pvc --namespace=my-grafana -o wide
-      ```
+
+   ```bash
+   kubectl get pvc --namespace=my-grafana -o wide
+   ```
 
    b. For Deployment, run the following command:
-   
-         ```bash
-         kubectl get deployments --namespace=my-grafana -o wide
-         ```
 
-   3. For Service, run the following command:
-   
-         ```bash
-         kubectl get svc --namespace=my-grafana -o wide
-         ```
+   ```bash
+   kubectl get deployments --namespace=my-grafana -o wide
+   ```
+
+   c. For Service, run the following command:
+
+   ```bash
+   kubectl get svc --namespace=my-grafana -o wide
+   ```
 
 ## Access Grafana on Managed K8s Providers
 
 In this task, you access Grafana deployed on a Managed Kubernetes provider using a web browser. Accessing Grafana via a Web browser is straightforward if it is deployed on a Managed Kubernetes Providers as it uses the cloud provider’s **LoadBalancer** to which the external load balancer routes, are automatically created.
 
 1. Run the following command to obtain the deployment information:
-   
+
    ```bash
    kubectl get all --namespace=my-grafana
    ```
@@ -219,26 +221,26 @@ In this task, you access Grafana deployed on a Managed Kubernetes provider using
    ```
 
 1. Identify the **EXTERNAL-IP** value in the output and type it into your browser.
-   
+
    1. The Grafana sign-in page appears.
 
    1. To sign in, enter `admin` for both the username and password.
 
-3. If you do not see the EXTERNAL-IP then complete the following steps:
-      
-      a) Run the following command to do a port-forwarding of the Grafana service on port `3000`.
+1. If you do not see the EXTERNAL-IP then complete the following steps:
 
-      ```bash
-      kubectl port-forward service/grafana 3000:3000 --namespace=my-grafana
-      ```
-      
-      For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
+   a) Run the following command to do a port-forwarding of the Grafana service on port `3000`.
 
-      b) Navigate to `localhost:3000` in your browser.
+   ```bash
+   kubectl port-forward service/grafana 3000:3000 --namespace=my-grafana
+   ```
 
-      c) The Grafana sign-in page appears.
+   For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
-      c) To sign in, enter `admin` for both the username and password.
+   b) Navigate to `localhost:3000` in your browser.
+
+   c) The Grafana sign-in page appears.
+
+   c) To sign in, enter `admin` for both the username and password.
 
 ## Access Grafana using minikube
 
@@ -251,7 +253,7 @@ This section lists the two most common options for accessing an application runn
 This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest, which makes the Service accessible through the `minikube service` command. For more information, refer to [minikube Service command usage](https://minikube.sigs.k8s.io/docs/commands/service/).
 
 1. Run the following command to obtain the Grafana service IP:
-   
+
    ```bash
    minikube service grafana --namespace=my-grafana
    ```
@@ -273,15 +275,16 @@ This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest
    ```bash
    curl 192.168.122.144:32182
    ```
+
    The following example output determines that an endpoint has been located:
 
    `<a href="/login">Found</a>.`
 
 1. Access the Grafana UI in the browser using the provided IP:Port from the command above. For example `192.168.122.144:32182`
-   
-     1. The Grafana sign-in page appears.
 
-     1. To sign in to Grafana, enter `admin` for both the username and password.
+   1. The Grafana sign-in page appears.
+
+   1. To sign in to Grafana, enter `admin` for both the username and password.
 
 ### Option 2 Using Port Forwarding
 
@@ -290,17 +293,17 @@ If Option 1 does not work in your minikube environment (mostly depends on the ne
 For more information about port forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
 1. To find the minikube IP address, run the following command:
-   
+
    ```bash
    minikube ip
    ```
-   
+
    The output contains the IP address that you use to access the Grafana Pod during port forwarding.
-   
+
    A Pod is the smallest deployment unit in Kubernetes is the core building block for running applications in a Kubernetes cluster. For more information about Pod’s refer to the [Pod concept](https://kubernetes.io/docs/concepts/workloads/pods/).
 
 2. To obtain the Grafana Pod information, run the following command:
-   
+
    ```bash
    kubectl get pods --namespace=my-grafana
    ```
@@ -321,7 +324,7 @@ For more information about port forwarding, refer to [Use Port Forwarding to Acc
    ```
 
 4. To access the Grafana UI on the web browser, type the minikube IP along with the forwarded port. For example `192.168.122.144:3000`
-   
+
    1. The Grafana sign-in page appears.
 
    1. To sign in to Grafana, enter `admin` for both the username and password.
@@ -331,28 +334,28 @@ For more information about port forwarding, refer to [Use Port Forwarding to Acc
 Rolling updates allow deployment updates to take place with no downtime by incrementally updating Pods instances with new ones. The new Pods will be scheduled on nodes with available resources. For more information about rolling updates, refer to [Performing a Rolling Update](https://kubernetes.io/docs/tutorials/kubernetes-basics/update/update-intro/).
 
 The following steps use the `kubectl annotate` command to add the metadata and keep track of the deployment. For more information about `kubectl annotate`, refer to [kubectl annotate documentation](https://jamesdefabia.github.io/docs/user-guide/kubectl/kubectl_annotate/).
-   
+
 > **Note:** Instead of using the `annotate` flag, you can still use the `--record` flag. However, it has been deprecated and will be removed in the future version of Kubernetes.
-https://github.com/kubernetes/kubernetes/issues/40422
+> https://github.com/kubernetes/kubernetes/issues/40422
 
 1. To view the current status of the rollout, run the following command:
-   
+
    ```bash
    kubectl rollout history deployment/grafana --namespace=my-grafana
    ```
-   
+
    The output will look similar to this:
 
    ```bash
-   deployment.apps/grafana 
+   deployment.apps/grafana
    REVISION  CHANGE-CAUSE
    1         NONE
    ```
-   
+
    The output shows that nothing has been updated or changed after applying the `grafana.yaml` file.
 
 2. To add metadata to keep record of the initial deployment, run the following command:
-   
+
    ```bash
    kubectl annotate deployment/grafana kubernetes.io/change-cause='deployed the default base yaml file' --namespace=my-grafana
    ```
@@ -368,7 +371,7 @@ https://github.com/kubernetes/kubernetes/issues/40422
 ### Change Grafana image version
 
 1. To change the deployed Grafana version, run the following `kubectl edit` command:
-   
+
    ```bash
    kubectl edit deployment grafana --namespace=my-grafana
    ```
@@ -377,16 +380,17 @@ https://github.com/kubernetes/kubernetes/issues/40422
 
    - From
 
-     - ```yaml image: grafana/grafana-oss:10.0.1```
+     - `yaml image: grafana/grafana-oss:10.0.1`
 
    - To
-     - ```yaml image: grafana/grafana-oss-dev:10.1.0-124419pre```
+     - `yaml image: grafana/grafana-oss-dev:10.1.0-124419pre`
 
 1. Save the changes. You will get a message once your file is saved:
 
    ```bash
    deployment.apps/grafana edited
    ```
+
    This means that the new changes have been applied.
 
 1. To verify that the rollout on the cluster is successful, run the following command:
@@ -406,11 +410,11 @@ https://github.com/kubernetes/kubernetes/issues/40422
    You should see the newly deployed `grafana-oss-dev` image.
 
 1. To verify it, access the Grafana UI in the browser using the provided IP:Port from the command above.
-   
+
    1. The Grafana sign-in page appears.
    1. To sign in to Grafana, enter `admin` for both the username and password.
    1. On the top right corner, click the help icon which will display the version.
-  
+
 1. Add the change cause metadata to keep track of things using the commands:
 
    ```bash
@@ -426,7 +430,7 @@ https://github.com/kubernetes/kubernetes/issues/40422
    You will see an output similar to this:
 
    ```bash
-   deployment.apps/grafana 
+   deployment.apps/grafana
    REVISION  CHANGE-CAUSE
    1         deploying the default yaml
    2         using grafana-oss-dev:10.1.0-124419pre for testing
@@ -443,13 +447,13 @@ When the Grafana deployment becomes unstable due to crash looping, bugs, etc. yo
 By default, Kubernetes deployment rollout history remains in the system so that you can roll back at any time. For more information, refer to  [Rolling Back to a Previous Revision](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-back-to-a-previous-revision).
 
 1. To list all possible `REVISION`, run the following command:
-   
+
    ```bash
    kubectl rollout history deployment grafana --namespace=my-grafana
    ```
 
 1. To roll back to a previous version, run the `kubectl rollout undo` command and provide a revision number.
-   
+
    Example: To roll back to a previous version, specify it `REVISION` number (which was displayed via `kubectl rollout history deployment` command) in the `--to-revision` parameter.
 
    ```bash
@@ -457,7 +461,7 @@ By default, Kubernetes deployment rollout history remains in the system so that 
    ```
 
 1. To verify that the rollback on the cluster is successful, run the following command:
-   
+
    ```bash
    kubectl rollout status deployment grafana --namespace=my-grafana
    ```
@@ -483,6 +487,7 @@ If you need to go back to any other `REVISION`, just repeat the above steps and 
 It is important to view the Grafana server logs while troubleshooting any issues.
 
 1. To check the Grafana logs, run the following command:
+
    ```bash
    # dump Pod logs for a Deployment (single-container case)
    kubectl logs --namespace=my-grafana deploy/grafana
@@ -514,7 +519,7 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
    This example adds the portion of the log section from the configuration file. You can refer to the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) documentation to view all the default configuration settings.
 
 1. To add the configuration file into the Kubernetes cluster via the ConfigMap object, run the following command:
-   
+
    ```bash
    kubectl create configmap ge-config --from-file=/path/to/file/grafana.ini --namespace=my-grafana
    ```
@@ -526,9 +531,9 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
    ```
 
 1. Open the `grafana.yaml` file and In the Deployment section:
-   
+
    1. Provide the mount path to the custom configuration (`/etc/grafana`) and reference the newly created ConfigMap for it.
-      
+
    ```bash
    ---
    apiVersion: apps/v1
@@ -537,7 +542,7 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
      labels:
        app: grafana
      name: grafana
-   # the rest of the code remains the same.   
+   # the rest of the code remains the same.
    ...
    ....
    ...
@@ -547,14 +552,14 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
            volumeMounts:
              - mountPath: /var/lib/grafana
                name: grafana-pv
-              # This is to mount the volume for the custom configuration 
+              # This is to mount the volume for the custom configuration
              - mountPath: /etc/grafana
-               name: ge-config    
+               name: ge-config
        volumes:
          - name: grafana-pv
            persistentVolumeClaim:
              claimName: grafana-pvc
-	       # This is to provide the reference to the ConfigMap for the volume
+          # This is to provide the reference to the ConfigMap for the volume
          - name: ge-config
            configMap:
              name: ge-config
@@ -563,7 +568,7 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
 1. Deploy the manifest using the following kubectl apply command:
 
    ```bash
-   kubectl apply -f grafana.yaml --namespace=my-grafana   
+   kubectl apply -f grafana.yaml --namespace=my-grafana
    ```
 
 1. To verify the status, run the following commands:
@@ -571,7 +576,7 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
    ```bash
    # first check the rollout status
    kubectl rollout status deployment grafana --namespace=my-grafana
-   
+
    # then check the deployment and configMap information
    kubectl get all --namespace=my-grafana
    ```
