@@ -70,7 +70,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 		orgService:        orgService,
 		oauthTokenService: oauthTokenService,
 		features:          features,
-		authnService:      authnService,
+		AuthnService:      authnService,
 		anonDeviceService: anonDeviceService,
 		singleflight:      new(singleflight.Group),
 	}
@@ -93,7 +93,7 @@ type ContextHandler struct {
 	orgService        org.Service
 	oauthTokenService oauthtoken.OAuthTokenService
 	features          *featuremgmt.FeatureManager
-	authnService      authn.Service
+	AuthnService      authn.Service
 	singleflight      *singleflight.Group
 	anonDeviceService anonymous.Service
 	// GetTime returns the current time.
@@ -171,7 +171,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		if h.Cfg.AuthBrokerEnabled {
-			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+			identity, err := h.AuthnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
 				if errors.Is(err, auth.ErrInvalidSessionToken) {
 					// Burn the cookie in case of invalid, expired or missing token
