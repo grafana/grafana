@@ -222,13 +222,13 @@ In this task, you access Grafana deployed on a Managed Kubernetes provider using
 
 1. Identify the **EXTERNAL-IP** value in the output and type it into your browser.
 
-   1. The Grafana sign-in page appears.
+   The Grafana sign-in page appears.
 
-   1. To sign in, enter `admin` for both the username and password.
+1. To sign in, enter `admin` for both the username and password.
 
-1. If you do not see the EXTERNAL-IP then complete the following steps:
+1. If you do not see the EXTERNAL-IP, complete the following steps:
 
-   a) Run the following command to do a port-forwarding of the Grafana service on port `3000`.
+   a. Run the following command to do a port-forwarding of the Grafana service on port `3000`.
 
    ```bash
    kubectl port-forward service/grafana 3000:3000 --namespace=my-grafana
@@ -236,11 +236,11 @@ In this task, you access Grafana deployed on a Managed Kubernetes provider using
 
    For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
-   b) Navigate to `localhost:3000` in your browser.
+   b. Navigate to `localhost:3000` in your browser.
 
-   c) The Grafana sign-in page appears.
+   The Grafana sign-in page appears.
 
-   c) To sign in, enter `admin` for both the username and password.
+   c. To sign in, enter `admin` for both the username and password.
 
 ## Access Grafana using minikube
 
