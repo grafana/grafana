@@ -12,6 +12,7 @@ type CloudWatchSettings struct {
 	awsds.AWSDatasourceSettings
 	Namespace               string `json:"customMetricsNamespaces"`
 	SecureSocksProxyEnabled bool   `json:"enableSecureSocksProxy"` // this can be removed when https://github.com/grafana/grafana/issues/39089 is implemented
+	LogsTimeout             string `json:"logsTimeout"`
 }
 
 func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {

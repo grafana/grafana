@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -54,7 +55,11 @@ var logger = log.New("tsdb.cloudwatch")
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	logger.Debug("Initializing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
+	// logs timeout deafult is 30 minutes, the same as timeout in frontend logs query
+	// note: for alerting queries, the context will be cancelled before that unless evaluation_timeout_seconds in defaults.ini is increased (default: 30s)
+	defaultLogsTimeout := time.Minute * 30
+
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features, defaultLogsTimeout)
 
 	return &CloudWatchService{
 		Cfg:      cfg,
@@ -71,7 +76,7 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles, logsTimeout ...time.Duration) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
@@ -80,6 +85,11 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
+
+	if len(logsTimeout) == 1 && logsTimeout[0] != 0 {
+		e.logsTimeoutDefault = logsTimeout[0]
+	}
+
 	return e
 }
 
@@ -116,6 +126,8 @@ type cloudWatchExecutor struct {
 	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
+	// can be reduced to shorten tests
+	logsTimeoutDefault time.Duration
 }
 
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
@@ -147,13 +159,6 @@ func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.Call
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := logger.FromContext(ctx)
-	/*
-		Unlike many other data sources, with Cloudwatch Logs query requests don't receive the results as the response
-		to the query, but rather an ID is first returned. Following this, a client is expected to send requests along
-		with the ID until the status of the query is complete, receiving (possibly partial) results each time. For
-		queries made via dashboards and Explore, the logic of making these repeated queries is handled on the
-		frontend, but because alerts and expressions are executed on the backend the logic needs to be reimplemented here.
-	*/
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
