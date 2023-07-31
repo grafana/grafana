@@ -15,7 +15,7 @@ export type ThemeSpacingArgument = number | string;
  * The different signatures imply different meaning for their arguments that can't be expressed structurally.
  * We express the difference with variable names.
  * tslint:disable:unified-signatures */
-export interface ThemeSpacing extends ThemeSpacingTokens {
+export interface ThemeSpacing extends SpacingTokens {
   (): string;
   (value: ThemeSpacingArgument): string;
   (topBottom: ThemeSpacingArgument, rightLeft: ThemeSpacingArgument): string;
@@ -30,11 +30,11 @@ export interface ThemeSpacing extends ThemeSpacingTokens {
 }
 
 // Possible spacing token options
-type SpacingTokens = 0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10;
+export type ThemeSpacingTokens = 0 | 0.25 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10;
 
 // Spacing tokens as represented in the theme
-type ThemeSpacingTokens = {
-  [key in `x${Exclude<SpacingTokens, 0.25 | 0.5 | 1.5 | 2.5> | '0_25' | '0_5' | '1_5' | '2_5'}`]: string;
+type SpacingTokens = {
+  [key in `x${Exclude<ThemeSpacingTokens, 0.25 | 0.5 | 1.5 | 2.5> | '0_25' | '0_5' | '1_5' | '2_5'}`]: string;
 };
 
 /** @internal */
@@ -76,6 +76,8 @@ export function createSpacing(options: ThemeSpacingOptions = {}): ThemeSpacing {
   spacing.gridSize = gridSize;
 
   // Design system spacing tokens
+  // Added in v10.2 of Grafana, if using spacing in a plugin that needs compatibility with older versions
+  // use the spacing function instead.
   spacing.x0 = '0px';
   spacing.x0_25 = '2px';
   spacing.x0_5 = '4px';
