@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, useEffect, useState } from 'react';
+import React, { PureComponent, useState } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
