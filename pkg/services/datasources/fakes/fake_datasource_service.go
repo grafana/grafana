@@ -41,9 +41,8 @@ func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datas
 	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
-	query.Result = s.DataSources
-	return nil
+func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	return s.DataSources, nil
 }
 
 func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
@@ -133,4 +132,8 @@ func (s *FakeDataSourceService) DecryptedBasicAuthPassword(ctx context.Context, 
 
 func (s *FakeDataSourceService) DecryptedPassword(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	return "", nil
+}
+
+func (s *FakeDataSourceService) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	return nil, nil
 }

@@ -33,9 +33,9 @@ export const LabelBrowserModal = (props: Props) => {
       return;
     }
 
-    datasource.languageProvider.start().then(() => {
+    datasource.languageProvider.fetchLabels().then((labels) => {
       setLabelsLoaded(true);
-      setHasLogLabels(datasource.languageProvider.getLabelKeys().length > 0);
+      setHasLogLabels(labels.length > 0);
     });
   }, [datasource, isOpen]);
 

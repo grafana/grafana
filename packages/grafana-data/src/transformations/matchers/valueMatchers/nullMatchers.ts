@@ -10,7 +10,7 @@ const isNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   description: 'Match where value for given field is null.',
   get: () => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       return value == null;
     };
   },
@@ -27,7 +27,7 @@ const isNotNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   description: 'Match where value for given field is not null.',
   get: () => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       return value != null;
     };
   },

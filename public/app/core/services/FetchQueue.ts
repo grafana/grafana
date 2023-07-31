@@ -35,7 +35,7 @@ export class FetchQueue {
       const { id, state, options } = entry;
 
       if (!this.state[id]) {
-        this.state[id] = { state: FetchStatus.Pending, options: {} as BackendSrvRequest };
+        this.state[id] = { state: FetchStatus.Pending, options: { url: '' } };
       }
 
       if (state === FetchStatus.Done) {

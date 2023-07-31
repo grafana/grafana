@@ -219,7 +219,7 @@ describe('filterByName transformer', () => {
             },
           };
           for (const key of Object.keys(variables)) {
-            return target.replace(`$${key}`, variables[key].value);
+            return target.replace(`$${key}`, variables[key]!.value);
           }
           return target;
         },

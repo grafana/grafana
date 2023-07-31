@@ -5,8 +5,13 @@ keywords:
   - troubleshooting
   - support
   - dashboards
-title: Send a panel to Grafana Labs support
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menutitle: Send panel to support
+title: Send a panel to Grafana Labs support
 weight: 100
 ---
 
@@ -18,7 +23,9 @@ The panel that you send includes all query response data and all visualizations 
 
 1. Open the dashboard that contains the panel you want to send to Grafana Labs.
 
-1. Hover your mouse cursor over the panel title and click **More > Get help**.
+1. Hover over any part of the panel to display the actions menu on the top right corner.
+
+1. Click the menu and select **More > Get help**.
 
    Grafana opens a standalone support dashboard that contains the data you are sending to Grafana Labs Technical Support.
 
@@ -28,9 +35,9 @@ The panel that you send includes all query response data and all visualizations 
 
 1. To send the panel data to Grafana Labs via Github:
 
-   a. Click **Copy for Github**.
+   a. Click **Copy to clipboard**.
 
-   b. In the [Grafana/Grafana](https://github.com/grafana/grafana) repository, create an issue and paste the contents of the support dashboard.
+   b. In the [Grafana/Grafana](https://github.com/grafana/grafana) repository, create an issue, and paste the contents of the support dashboard.
 
 1. To send the panel data to Grafana Labs via a support ticket:
 

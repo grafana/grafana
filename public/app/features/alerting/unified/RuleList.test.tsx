@@ -41,6 +41,7 @@ jest.mock('./api/ruler');
 jest.mock('../../../core/hooks/useMediaQueryChange');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
@@ -116,16 +117,17 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byRole('link', { name: 'Create alert rule' }),
-  exportButton: byRole('button', { name: /export/i }),
+  newRuleButton: byRole('link', { name: 'New alert rule' }),
+  moreButton: byRole('button', { name: 'More' }),
+  exportButton: byRole('link', { name: /export/i }),
   editGroupModal: {
     dialog: byRole('dialog'),
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),
     ruleGroupInput: byRole('textbox', { name: /Evaluation group/ }),
     intervalInput: byRole('textbox', {
-      name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
+      name: /Evaluation interval How often is the rule evaluated. Applies to every rule within the group./i,
     }),
-    saveButton: byRole('button', { name: /Save changes/ }),
+    saveButton: byRole('button', { name: /Save/ }),
   },
 };
 
@@ -322,6 +324,10 @@ describe('RuleList', () => {
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
+
+    await waitFor(() => expect(groups[0]).toHaveTextContent(/firing|pending|normal/));
+    await waitFor(() => expect(groups[1]).toHaveTextContent(/firing|pending|normal/));
+
     expect(groups[0]).toHaveTextContent('1 firing');
     expect(groups[1]).toHaveTextContent('1 firing');
     expect(groups[1]).toHaveTextContent('1 pending');
@@ -356,7 +362,7 @@ describe('RuleList', () => {
 
     const ruleDetails = ui.expandedContent.get(ruleRows[1]);
 
-    expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
+    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
     expect(ruleDetails).toHaveTextContent('Expressiontopk ( 5 , foo ) [ 5m ]');
     expect(ruleDetails).toHaveTextContent('messagegreat alert');
     expect(ruleDetails).toHaveTextContent('Matching instances');
@@ -367,8 +373,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firing foo=barseverity=warning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firing foo=bazseverity=error2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firing foobar severitywarning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firing foobaz severityerror2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
@@ -489,11 +495,12 @@ describe('RuleList', () => {
     });
 
     await renderRuleList();
+
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    await userEvent.type(filterInput, 'label:foo=bar');
+    await userEvent.type(filterInput, 'label:foo=bar{Enter}');
 
     // Input is debounced so wait for it to be visible
     await waitFor(() => expect(filterInput).toHaveValue('label:foo=bar'));
@@ -508,21 +515,21 @@ describe('RuleList', () => {
     await userEvent.click(ui.ruleCollapseToggle.get(ruleRows[0]));
     const ruleDetails = ui.expandedContent.get(ruleRows[0]);
 
-    expect(ruleDetails).toHaveTextContent('Labelsseverity=warningfoo=bar');
+    expect(ruleDetails).toHaveTextContent('Labels severitywarning foobar');
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, 'label:foo!=bar label:foo!=baz');
+    await userEvent.type(filterInput, 'label:foo!=bar label:foo!=baz{Enter}');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, 'label:"foo=~b.+"');
+    await userEvent.type(filterInput, 'label:"foo=~b.+"{Enter}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, 'label:region=US');
+    await userEvent.type(filterInput, 'label:region=US{Enter}');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
@@ -619,12 +626,7 @@ describe('RuleList', () => {
       // make changes to form
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
-      await userEvent.type(
-        screen.getByRole('textbox', {
-          name: /rule group evaluation interval evaluation interval should be smaller or equal to 'for' values for existing rules in this group\./i,
-        }),
-        '5m'
-      );
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
       await userEvent.click(ui.editGroupModal.saveButton.get());
@@ -691,10 +693,13 @@ describe('RuleList', () => {
 
         renderRuleList();
 
+        await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
       it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
         enableRBAC();
+
+        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));
@@ -703,6 +708,7 @@ describe('RuleList', () => {
 
         renderRuleList();
 
+        await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.query()).not.toBeInTheDocument();
       });
     });
@@ -825,7 +831,7 @@ describe('RuleList', () => {
 
       await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
-      const button = screen.getByText('Create alert rule');
+      const button = screen.getByText('New alert rule');
 
       button.addEventListener('click', (event) => event.preventDefault(), false);
 

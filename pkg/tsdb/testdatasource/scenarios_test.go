@@ -3,15 +3,17 @@ package testdatasource
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	// nolint:depguard // Lint exception can be removed once we move testdata to a separate module
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func TestTestdataScenarios(t *testing.T) {
@@ -21,11 +23,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
 			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			model := simplejson.New()
-			model.Set("startValue", 1.234)
-			modelBytes, err := model.MarshalJSON()
-			require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
@@ -34,7 +31,7 @@ func TestTestdataScenarios(t *testing.T) {
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
-				JSON:          modelBytes,
+				JSON:          []byte(`{"startValue": 1.234}`),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -65,10 +62,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
 			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			model := simplejson.New()
-			modelBytes, err := model.MarshalJSON()
-			require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
@@ -77,7 +70,7 @@ func TestTestdataScenarios(t *testing.T) {
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
-				JSON:          modelBytes,
+				JSON:          []byte(`{}`),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -96,7 +89,7 @@ func TestTestdataScenarios(t *testing.T) {
 			require.Len(t, dResp.Frames, 1)
 			frame := dResp.Frames[0]
 			require.Greater(t, frame.Rows(), 50)
-			require.Len(t, frame.Fields, 5)
+			require.Len(t, frame.Fields, 6)
 			require.Equal(t, "Time", frame.Fields[0].Name)
 			require.Equal(t, "Value", frame.Fields[1].Name)
 			require.Equal(t, "Min", frame.Fields[2].Name)
@@ -119,12 +112,6 @@ func TestTestdataScenarios(t *testing.T) {
 		t.Run("Should return a table with some nil values", func(t *testing.T) {
 			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
 
-			model := simplejson.New()
-			model.Set("withNil", true)
-
-			modelBytes, err := model.MarshalJSON()
-			require.NoError(t, err)
-
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
@@ -133,7 +120,7 @@ func TestTestdataScenarios(t *testing.T) {
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
-				JSON:          modelBytes,
+				JSON:          []byte(`{"withNil": true}`),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -152,12 +139,13 @@ func TestTestdataScenarios(t *testing.T) {
 			require.Len(t, dResp.Frames, 1)
 			frame := dResp.Frames[0]
 			require.Greater(t, frame.Rows(), 50)
-			require.Len(t, frame.Fields, 5)
+			require.Len(t, frame.Fields, 6)
 			require.Equal(t, "Time", frame.Fields[0].Name)
 			require.Equal(t, "Value", frame.Fields[1].Name)
 			require.Equal(t, "Min", frame.Fields[2].Name)
 			require.Equal(t, "Max", frame.Fields[3].Name)
 			require.Equal(t, "Info", frame.Fields[4].Name)
+			require.Equal(t, "State", frame.Fields[5].Name)
 
 			valNil := false
 			minNil := false
@@ -192,23 +180,46 @@ func TestParseLabels(t *testing.T) {
 		"job":      "foo",
 		"instance": "bar",
 	}
+	seriesIndex := rand.Int()
 
-	tcs := []struct {
-		model map[string]interface{}
+	tests := []struct {
+		name     string
+		model    JSONModel
+		expected data.Labels
 	}{
-		{model: map[string]interface{}{
-			"labels": `{job="foo", instance="bar"}`,
-		}},
-		{model: map[string]interface{}{
-			"labels": `job=foo, instance=bar`,
-		}},
-		{model: map[string]interface{}{
-			"labels": `job = foo,instance = bar`,
-		}},
+		{
+			name:     "wrapped in {} and quoted value ",
+			model:    JSONModel{Labels: `{job="foo", instance="bar"}`},
+			expected: expectedTags,
+		},
+		{
+			name:     "comma-separated non-quoted",
+			model:    JSONModel{Labels: `job=foo, instance=bar`},
+			expected: expectedTags,
+		},
+		{
+			name:     "comma-separated quoted",
+			model:    JSONModel{Labels: `job="foo"", instance="bar"`},
+			expected: expectedTags,
+		},
+		{
+			name:     "comma-separated with spaces, non quoted",
+			model:    JSONModel{Labels: `job = foo,instance = bar`},
+			expected: expectedTags,
+		},
+		{
+			name:  "expands $seriesIndex",
+			model: JSONModel{Labels: `job=series-$seriesIndex,instance=bar`},
+			expected: data.Labels{
+				"job":      fmt.Sprintf("series-%d", seriesIndex),
+				"instance": "bar",
+			},
+		},
 	}
 
-	for i, tc := range tcs {
-		model := simplejson.NewFromAny(tc.model)
-		assert.Equal(t, expectedTags, parseLabels(model), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
+	for i, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, parseLabels(tc.model, seriesIndex), fmt.Sprintf("Actual tags in test case %d doesn't match expected tags", i+1))
+		})
 	}
 }

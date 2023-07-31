@@ -10,17 +10,19 @@ import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from 
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
+import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  query: QueryWithDefaults;
-  onChange: (query: SQLQuery) => void;
-  onRunQuery: () => void;
-  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
-  queryRowFilter: QueryRowFilter;
+  isPostgresInstance?: boolean;
   isQueryRunnable: boolean;
-  isDatasetSelectorHidden?: boolean;
+  onChange: (query: SQLQuery) => void;
+  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
+  onRunQuery: () => void;
+  preconfiguredDataset: string;
+  query: QueryWithDefaults;
+  queryRowFilter: QueryRowFilter;
 }
 
 const editorModes = [
@@ -30,13 +32,14 @@ const editorModes = [
 
 export function QueryHeader({
   db,
+  isPostgresInstance,
+  isQueryRunnable,
+  onChange,
+  onQueryRowChange,
+  onRunQuery,
+  preconfiguredDataset,
   query,
   queryRowFilter,
-  onChange,
-  onRunQuery,
-  onQueryRowChange,
-  isQueryRunnable,
-  isDatasetSelectorHidden,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -86,7 +89,18 @@ export function QueryHeader({
       sql: undefined,
       rawSql: '',
     };
+
     onChange(next);
+  };
+
+  const datasetDropdownIsAvailable = () => {
+    // If the feature flag is DISABLED, && the datasource is Postgres (`isPostgresInstance`),
+    // we want to hide the dropdown - as per previous behavior.
+    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
@@ -205,24 +219,23 @@ export function QueryHeader({
         <>
           <Space v={0.5} />
           <EditorRow>
-            {isDatasetSelectorHidden ? null : (
+            {datasetDropdownIsAvailable() && (
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  value={query.dataset === undefined ? null : query.dataset}
+                  dataset={query.dataset}
+                  isPostgresInstance={isPostgresInstance}
+                  preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
                 />
               </EditorField>
             )}
-
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                query={query}
-                value={query.table === undefined ? null : query.table}
+                dataset={query.dataset || preconfiguredDataset}
+                table={query.table}
                 onChange={onTableChange}
-                forceFetch={isDatasetSelectorHidden}
-                applyDefault
               />
             </EditorField>
           </EditorRow>

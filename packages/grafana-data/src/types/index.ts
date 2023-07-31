@@ -7,7 +7,6 @@ export * from './dashboard';
 export * from './query';
 export * from './annotations';
 export * from './logs';
-export * from './logsVolume';
 export * from './navModel';
 export * from './select';
 export * from './time';
@@ -38,6 +37,7 @@ export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export type {
   CurrentUserDTO,
+  AnalyticsSettings,
   BootData,
   OAuth,
   OAuthSettings,
@@ -52,8 +52,15 @@ export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
 export {
+  PluginExtensionTypes,
+  PluginExtensionPoints,
   type PluginExtension,
   type PluginExtensionLink,
-  isPluginExtensionLink,
-  PluginExtensionTypes,
+  type PluginExtensionComponent,
+  type PluginExtensionConfig,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionComponentConfig,
+  type PluginExtensionEventHelpers,
+  type PluginExtensionPanelContext,
+  type PluginExtensionDataSourceConfigContext,
 } from './pluginExtensions';

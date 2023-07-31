@@ -9,51 +9,39 @@
  * conf/custom.ini to enable features under development or not yet available in
  * stable version.
  *
- * Only enabled values will be returned in this interface
+ * Only enabled values will be returned in this interface.
+ *
+ * NOTE: the possible values may change between versions without notice, although
+ * this may cause compilation issues when depending on removed feature keys, the
+ * runtime state will continue to work.
  *
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
-  alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
-  database_metrics?: boolean;
-  dashboardPreviews?: boolean;
-  ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
-  lokiLive?: boolean;
-  lokiDataframeApi?: boolean;
+  lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
-  dashboardComments?: boolean;
-  annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
-  k8s?: boolean;
-  dashboardsFromStorage?: boolean;
-  exploreMixedDatasource?: boolean;
-  tracing?: boolean;
-  newTraceView?: boolean;
   correlations?: boolean;
-  cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
-  autoMigrateGraphPanels?: boolean;
+  autoMigrateOldPanels?: boolean;
+  disableAngular?: boolean;
   prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
-  internationalization?: boolean;
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
@@ -61,23 +49,72 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   newPanelChromeUI?: boolean;
-  queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
-  elasticsearchBackendMigration?: boolean;
-  datasourceOnboarding?: boolean;
-  secureSocksDatasourceProxy?: boolean;
-  authnService?: boolean;
+  emptyDashboardPage?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
+  lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  drawerDataSourcePicker?: boolean;
+  gcomOnlyExternalOrgRoleSync?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
+  timeSeriesTable?: boolean;
+  prometheusResourceBrowserCache?: boolean;
+  influxdbBackendMigration?: boolean;
+  clientTokenRotation?: boolean;
+  prometheusDataplane?: boolean;
+  lokiMetricDataplane?: boolean;
+  lokiLogsDataplane?: boolean;
+  dataplaneFrontendFallback?: boolean;
+  disableSSEDataplane?: boolean;
+  alertStateHistoryLokiSecondary?: boolean;
+  alertingNotificationsPoliciesMatchingInstances?: boolean;
+  alertStateHistoryLokiPrimary?: boolean;
+  alertStateHistoryLokiOnly?: boolean;
+  unifiedRequestLog?: boolean;
+  renderAuthJWT?: boolean;
+  pyroscopeFlameGraph?: boolean;
+  externalServiceAuth?: boolean;
+  refactorVariablesTimeRange?: boolean;
+  useCachingService?: boolean;
+  enableElasticsearchBackendQuerying?: boolean;
+  advancedDataSourcePicker?: boolean;
+  faroDatasourceSelector?: boolean;
+  enableDatagridEditing?: boolean;
+  dataSourcePageHeader?: boolean;
+  extraThemes?: boolean;
+  lokiPredefinedOperations?: boolean;
+  pluginsFrontendSandbox?: boolean;
+  dashboardEmbed?: boolean;
+  frontendSandboxMonitorOnly?: boolean;
+  sqlDatasourceDatabaseSelection?: boolean;
+  lokiFormatQuery?: boolean;
+  cloudWatchLogsMonacoEditor?: boolean;
+  exploreScrollableLogsContainer?: boolean;
+  recordedQueriesMulti?: boolean;
+  pluginsDynamicAngularDetectionPatterns?: boolean;
+  alertingLokiRangeToInstant?: boolean;
+  vizAndWidgetSplit?: boolean;
+  prometheusIncrementalQueryInstrumentation?: boolean;
+  logsExploreTableVisualisation?: boolean;
+  awsDatasourcesTempCredentials?: boolean;
+  transformationsRedesign?: boolean;
+  toggleLabelsInLogsUI?: boolean;
+  mlExpressions?: boolean;
+  traceQLStreaming?: boolean;
+  grafanaAPIServer?: boolean;
+  featureToggleAdminPage?: boolean;
+  awsAsyncQueryCaching?: boolean;
+  splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
+  prometheusConfigOverhaulAuth?: boolean;
+  configurableSchedulerTick?: boolean;
 }

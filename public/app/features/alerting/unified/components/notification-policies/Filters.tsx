@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
-import { debounce, pick } from 'lodash';
-import React, { FC, useCallback, useEffect, useRef } from 'react';
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { matcherToObjectMatcher, parseMatchers } from '../../utils/alertmanager';
+import { getInheritedProperties } from '../../utils/notification-policies';
 
 interface NotificationPoliciesFilterProps {
   receivers: Receiver[];
@@ -16,11 +17,11 @@ interface NotificationPoliciesFilterProps {
   onChangeReceiver: (receiver: string | undefined) => void;
 }
 
-const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
+const NotificationPoliciesFilter = ({
   receivers,
   onChangeReceiver,
   onChangeMatchers,
-}) => {
+}: NotificationPoliciesFilterProps) => {
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
@@ -89,6 +90,7 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
         <Select
           id="receiver"
+          aria-label="Search by contact point"
           value={selectedContactPoint}
           options={receiverOptions}
           onChange={(option) => {
@@ -130,22 +132,15 @@ export function findRoutesMatchingPredicate(routeTree: RouteWithID, predicateFn:
 /**
  * This function will compute the full tree with inherited properties – this is mostly used for search and filtering
  */
-export function computeInheritedTree(routeTree: RouteWithID): RouteWithID {
+export function computeInheritedTree<T extends Route>(parent: T): T {
   return {
-    ...routeTree,
-    routes: routeTree.routes?.map((route) => {
-      const inheritableProperties = pick(routeTree, [
-        'receiver',
-        'group_by',
-        'group_wait',
-        'group_interval',
-        'repeat_interval',
-        'mute_time_intervals',
-      ]);
+    ...parent,
+    routes: parent.routes?.map((child) => {
+      const inheritedProperties = getInheritedProperties(parent, child);
 
       return computeInheritedTree({
-        ...inheritableProperties,
-        ...route,
+        ...child,
+        ...inheritedProperties,
       });
     }),
   };

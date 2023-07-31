@@ -29,7 +29,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const migrateAllMock = jest.fn();
   const toggleIncludeExpiredMock = jest.fn();
   const setSearchQueryMock = mockToolkitActionCreator(setSearchQuery);
-  const hideApiKeysMock = jest.fn();
   const props: Props = {
     apiKeys: [] as ApiKey[],
     searchQuery: '',
@@ -39,13 +38,13 @@ const setup = (propOverrides: Partial<Props>) => {
     setSearchQuery: setSearchQueryMock,
     migrateApiKey: migrateApiKeyMock,
     migrateAll: migrateAllMock,
-    hideApiKeys: hideApiKeysMock,
     apiKeysCount: 0,
     timeZone: 'utc',
     includeExpired: false,
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
     canCreate: true,
+    migrationResult: undefined,
   };
 
   Object.assign(props, propOverrides);

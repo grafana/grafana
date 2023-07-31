@@ -2,14 +2,6 @@ import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
 import {
-  ArrayVector,
-  DataFrame,
-  DataQueryResponse,
-  DataQueryResponseData,
-  Field,
-  QueryResultMetaStat,
-} from '@grafana/data';
-import {
   parser,
   LineFilter,
   PipeExact,
@@ -25,11 +17,18 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
+  Distinct,
+  Range,
+  formatLokiQuery,
 } from '@grafana/lezer-logql';
+import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
-import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
+import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
-import { getStreamSelectorPositions } from './modifyQuery';
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from './datasource';
+import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -43,15 +42,7 @@ export function formatQuery(selector: string | undefined): string {
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
   const results = [];
 
-  const tree = parser.parse(input);
-  const filters: SyntaxNode[] = [];
-  tree.iterate({
-    enter: ({ type, node }): void => {
-      if (type.id === LineFilter) {
-        filters.push(node);
-      }
-    },
-  });
+  const filters = getNodesFromQuery(input, [LineFilter]);
 
   for (let filter of filters) {
     const pipeExact = filter.getChild(Filter)?.getChild(PipeExact);
@@ -89,32 +80,32 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   return results;
 }
 
-// we are migrating from `.instant` and `.range` to `.queryType`
-// this function returns a new query object that:
-// - has `.queryType`
-// - does not have `.instant`
-// - does not have `.range`
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
-  //  if queryType field contains invalid data we behave as if the queryType is empty
+  const queryType = getLokiQueryType(query);
+  // instant and range are deprecated, we want to remove them
+  const { instant, range, ...rest } = query;
+  return { ...rest, queryType };
+}
+
+export function getLokiQueryType(query: LokiQuery): LokiQueryType {
+  // we are migrating from `.instant` and `.range` to `.queryType`
+  // this function returns the correct query type
   const { queryType } = query;
   const hasValidQueryType =
     queryType === LokiQueryType.Range || queryType === LokiQueryType.Instant || queryType === LokiQueryType.Stream;
 
   // if queryType exists, it is respected
   if (hasValidQueryType) {
-    const { instant, range, ...rest } = query;
-    return rest;
+    return queryType;
   }
 
   // if no queryType, and instant===true, it's instant
   if (query.instant === true) {
-    const { instant, range, ...rest } = query;
-    return { ...rest, queryType: LokiQueryType.Instant };
+    return LokiQueryType.Instant;
   }
 
   // otherwise it is range
-  const { instant, range, ...rest } = query;
-  return { ...rest, queryType: LokiQueryType.Range };
+  return LokiQueryType.Range;
 }
 
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
@@ -144,91 +135,91 @@ export function parseToNodeNamesArray(query: string): string[] {
   return queryParts;
 }
 
-export function isValidQuery(query: string): boolean {
-  let isValid = true;
+export function isQueryWithNode(query: string, nodeType: number): boolean {
+  let isQueryWithNode = false;
   const tree = parser.parse(query);
   tree.iterate({
     enter: ({ type }): false | void => {
-      if (type.id === ErrorId) {
-        isValid = false;
-      }
-    },
-  });
-  return isValid;
-}
-
-export function isLogsQuery(query: string): boolean {
-  let isLogsQuery = true;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === MetricExpr) {
-        isLogsQuery = false;
-      }
-    },
-  });
-  return isLogsQuery;
-}
-
-export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
-  let parserCount = 0;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LabelParser || type.id === JsonExpressionParser) {
-        parserCount++;
-      }
-    },
-  });
-  return { queryWithParser: parserCount > 0, parserCount };
-}
-
-export function getParserFromQuery(query: string) {
-  const tree = parser.parse(query);
-  let logParser;
-  tree.iterate({
-    enter: (node: SyntaxNode): false | void => {
-      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
-        logParser = query.substring(node.from, node.to).trim();
+      if (type.id === nodeType) {
+        isQueryWithNode = true;
         return false;
       }
     },
   });
+  return isQueryWithNode;
+}
 
-  return logParser;
+export function getNodesFromQuery(query: string, nodeTypes?: number[]): SyntaxNode[] {
+  const nodes: SyntaxNode[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (node): false | void => {
+      if (nodeTypes === undefined || nodeTypes.includes(node.type.id)) {
+        nodes.push(node.node);
+      }
+    },
+  });
+  return nodes;
+}
+
+export function getNodePositionsFromQuery(query: string, nodeTypes?: number[]): NodePosition[] {
+  const positions: NodePosition[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (node): false | void => {
+      if (nodeTypes === undefined || nodeTypes.includes(node.type.id)) {
+        positions.push(NodePosition.fromNode(node.node));
+      }
+    },
+  });
+  return positions;
+}
+
+export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
+  const nodes = getNodesFromQuery(query, [nodeType]);
+  return nodes.length > 0 ? nodes[0] : undefined;
+}
+
+/**
+ * Parses the query and looks for error nodes. If there is at least one, it returns false.
+ * Grafana variables are considered errors, so if you need to validate a query
+ * with variables you should interpolate it first.
+ */
+export function isQueryWithError(query: string): boolean {
+  return isQueryWithNode(query, ErrorId);
+}
+
+export function isLogsQuery(query: string): boolean {
+  return !isQueryWithNode(query, MetricExpr);
+}
+
+export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
+  const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  const parserCount = nodes.length;
+  return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function getParserFromQuery(query: string): string | undefined {
+  const parsers = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  return parsers.length > 0 ? query.substring(parsers[0].from, parsers[0].to).trim() : undefined;
 }
 
 export function isQueryPipelineErrorFiltering(query: string): boolean {
-  let isQueryPipelineErrorFiltering = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type, node }): false | void => {
-      if (type.id === LabelFilter) {
-        const label = node.getChild(Matcher)?.getChild(Identifier);
-        if (label) {
-          const labelName = query.substring(label.from, label.to);
-          if (labelName === '__error__') {
-            isQueryPipelineErrorFiltering = true;
-          }
-        }
+  const labels = getNodesFromQuery(query, [LabelFilter]);
+  for (const node of labels) {
+    const label = node.getChild(Matcher)?.getChild(Identifier);
+    if (label) {
+      const labelName = query.substring(label.from, label.to);
+      if (labelName === '__error__') {
+        return true;
       }
-    },
-  });
-
-  return isQueryPipelineErrorFiltering;
+    }
+  }
+  return false;
 }
 
 export function isQueryWithLabelFormat(query: string): boolean {
-  let queryWithLabelFormat = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LabelFormatExpr) {
-        queryWithLabelFormat = true;
-      }
-    },
-  });
-  return queryWithLabelFormat;
+  return isQueryWithNode(query, LabelFormatExpr);
 }
 
 export function getLogQueryFromMetricsQuery(query: string): string {
@@ -236,62 +227,39 @@ export function getLogQueryFromMetricsQuery(query: string): string {
     return query;
   }
 
-  const tree = parser.parse(query);
-
   // Log query in metrics query composes of Selector & PipelineExpr
-  let selector = '';
-  tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === Selector) {
-        selector = query.substring(from, to);
-        return false;
-      }
-    },
-  });
+  const selectorNode = getNodeFromQuery(query, Selector);
+  if (!selectorNode) {
+    return query;
+  }
+  const selector = query.substring(selectorNode.from, selectorNode.to);
 
-  let pipelineExpr = '';
-  tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === PipelineExpr) {
-        pipelineExpr = query.substring(from, to);
-        return false;
-      }
-    },
-  });
+  const pipelineExprNode = getNodeFromQuery(query, PipelineExpr);
+  const pipelineExpr = pipelineExprNode ? query.substring(pipelineExprNode.from, pipelineExprNode.to) : '';
 
-  return selector + pipelineExpr;
+  return `${selector} ${pipelineExpr}`.trim();
 }
 
 export function isQueryWithLabelFilter(query: string): boolean {
-  const tree = parser.parse(query);
-  let hasLabelFilter = false;
-
-  tree.iterate({
-    enter: ({ type, node }): false | void => {
-      if (type.id === LabelFilter) {
-        hasLabelFilter = true;
-        return;
-      }
-    },
-  });
-
-  return hasLabelFilter;
+  return isQueryWithNode(query, LabelFilter);
 }
 
 export function isQueryWithLineFilter(query: string): boolean {
-  const tree = parser.parse(query);
-  let queryWithLineFilter = false;
+  return isQueryWithNode(query, LineFilter);
+}
 
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LineFilter) {
-        queryWithLineFilter = true;
-        return;
-      }
-    },
-  });
+export function isQueryWithDistinct(query: string): boolean {
+  return isQueryWithNode(query, Distinct);
+}
 
-  return queryWithLineFilter;
+export function isQueryWithRangeVariable(query: string): boolean {
+  const rangeNodes = getNodesFromQuery(query, [Range]);
+  for (const node of rangeNodes) {
+    if (query.substring(node.from, node.to).match(/\[\$__range(_s|_ms)?/)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {
@@ -304,88 +272,64 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
-  const queries = allQueries.filter((query) => !query.hide).filter((query) => !query.refId.includes('do-not-chunk'));
-
-  const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
-  if (instantQueries) {
-    return false;
-  }
+export function requestSupportsSplitting(allQueries: LokiQuery[]) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-chunk'))
+    .filter((query) => query.expr);
 
   return queries.length > 0;
 }
 
-export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
-  if (!currentResult) {
-    return cloneQueryResponse(newResult);
+export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
+  if (!query) {
+    return false;
   }
 
-  newResult.data.forEach((newFrame) => {
-    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
-    if (!currentFrame) {
-      currentResult.data.push(cloneDataFrame(newFrame));
-      return;
-    }
-    combineFrames(currentFrame, newFrame);
+  const lokiQuery = query as LokiQuery;
+  return lokiQuery.expr !== undefined;
+};
+
+export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefined => {
+  if (!query || !isLokiQuery(query)) {
+    return undefined;
+  }
+
+  return query;
+};
+
+export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
+  const isInvalid = isQueryWithError(datasource.interpolateString(query, placeHolderScopedVars));
+
+  reportInteraction('grafana_loki_format_query_clicked', {
+    is_invalid: isInvalid,
+    query_type: isLogsQuery(query) ? 'logs' : 'metric',
   });
 
-  return currentResult;
-}
-
-function combineFrames(dest: DataFrame, source: DataFrame) {
-  const totalFields = dest.fields.length;
-  for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values = new ArrayVector(
-      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
-    );
-  }
-  dest.length += source.length;
-  dest.meta = {
-    ...dest.meta,
-    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
-  };
-}
-
-const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
-
-function getCombinedMetadataStats(
-  destStats: QueryResultMetaStat[],
-  sourceStats: QueryResultMetaStat[]
-): QueryResultMetaStat[] {
-  // in the current approach, we only handle a single stat
-  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
-  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
-
-  if (sourceStat != null && destStat != null) {
-    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT }];
+  if (isInvalid) {
+    return query;
   }
 
-  // maybe one of them exist
-  const eitherStat = sourceStat ?? destStat;
-  if (eitherStat != null) {
-    return [eitherStat];
+  let transformedQuery = replaceVariables(query);
+  const transformationMatches = [];
+  const tree = parser.parse(transformedQuery);
+
+  // Variables are considered errors inside of the parser, so we need to remove them before formatting
+  // We replace all variables with [0s] and keep track of the replaced variables
+  // After formatting we replace [0s] with the original variable
+  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
+    const pattern = /\[__V_[0-2]__\w+__V__\]/g;
+    transformationMatches.push(...transformedQuery.matchAll(pattern));
+    transformedQuery = transformedQuery.replace(pattern, '[0s]');
   }
 
-  return [];
-}
+  let formatted = formatLokiQuery(transformedQuery);
 
-/**
- * Deep clones a DataQueryResponse
- */
-export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
-  const newResponse = {
-    ...response,
-    data: response.data.map(cloneDataFrame),
-  };
-  return newResponse;
-}
+  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
+    transformationMatches.forEach((match) => {
+      formatted = formatted.replace('[0s]', match[0]);
+    });
+  }
 
-function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
-  return {
-    ...frame,
-    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
-      ...field,
-      values: new ArrayVector(field.values.buffer),
-    })),
-  };
+  return returnVariables(formatted);
 }

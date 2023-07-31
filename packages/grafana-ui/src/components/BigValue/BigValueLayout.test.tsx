@@ -1,4 +1,4 @@
-import { ArrayVector, createTheme, FieldType } from '@grafana/data';
+import { createTheme, FieldType } from '@grafana/data';
 
 import { Props, BigValueColorMode, BigValueGraphMode, BigValueTextMode } from './BigValue';
 import { buildLayout, StackedWithChartLayout, StackedWithNoChartLayout, WideWithChartLayout } from './BigValueLayout';
@@ -16,7 +16,7 @@ function getProps(propOverrides?: Partial<Props>): Props {
     sparkline: {
       y: {
         name: '',
-        values: new ArrayVector([1, 2, 3, 4, 3]),
+        values: [1, 2, 3, 4, 3],
         type: FieldType.number,
         config: {},
       },
@@ -68,7 +68,7 @@ describe('BigValueLayout', () => {
           sparkline: {
             y: {
               name: '',
-              values: new ArrayVector([1]),
+              values: [1],
               type: FieldType.number,
               config: {},
             },

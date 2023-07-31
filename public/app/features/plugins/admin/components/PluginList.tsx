@@ -18,8 +18,8 @@ interface Props {
 export const PluginList = ({ plugins, displayMode }: Props) => {
   const isList = displayMode === PluginListDisplayMode.List;
   const styles = useStyles2(getStyles);
-  const location = useLocation();
-  const pathName = config.appSubUrl + location.pathname;
+  const { pathname } = useLocation();
+  const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
   return (
     <div className={cx(styles.container, { [styles.list]: isList })} data-testid="plugin-list">

@@ -23,24 +23,17 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	}
 	ctx := NewTestEnv(t)
 
-	adminUser := User{
-		username: "admin",
-		password: "admin",
-	}
-	viewerUser := User{
-		username: "viewer",
-		password: "viewer",
-	}
-
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleViewer),
-		Password:       viewerUser.password,
-		Login:          viewerUser.username,
-	})
-	ctx.createUser(user.CreateUserCommand{
+	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       adminUser.password,
-		Login:          adminUser.username,
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	viewerUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleViewer),
+		Password:       "viewer",
+		Login:          "viewer",
+		OrgID:          adminUser.User.OrgID,
 	})
 
 	t.Run("Get all correlations", func(t *testing.T) {
@@ -49,17 +42,18 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			res := ctx.Get(GetParams{
 				url:  "/api/datasources/correlations",
 				user: adminUser,
+				page: "0",
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
 
 			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			var response []correlations.Correlation
+			var response correlations.GetCorrelationsResponseBody
 			err = json.Unmarshal(responseBody, &response)
 			require.NoError(t, err)
 
-			require.Len(t, response, 0)
+			require.Len(t, response.Correlations, 0)
 
 			require.NoError(t, res.Body.Close())
 		})
@@ -154,12 +148,12 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			var response []correlations.Correlation
+			var response correlations.GetCorrelationsResponseBody
 			err = json.Unmarshal(responseBody, &response)
 			require.NoError(t, err)
 
-			require.Len(t, response, 1)
-			require.EqualValues(t, correlation, response[0])
+			require.Len(t, response.Correlations, 1)
+			require.EqualValues(t, correlation, response.Correlations[0])
 
 			require.NoError(t, res.Body.Close())
 		})

@@ -1,23 +1,15 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import {
-  DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
-  getDefaultRelativeTimeRange,
-  RelativeTimeRange,
-} from '@grafana/data';
+import { DataQuery, getDefaultRelativeTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
-import {
-  dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
-} from 'app/features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 export interface QueriesAndExpressionsState {
@@ -38,20 +30,24 @@ const initialState: QueriesAndExpressionsState = {
 };
 
 export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
-export const addNewDataQuery = createAction<{
-  ds: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
-  defaultQuery: Partial<DataQuery> | undefined;
-}>('addNewDataQuery');
+export const addNewDataQuery = createAction('addNewDataQuery');
 export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
-export const addNewExpression = createAction('addNewExpression');
+export const addNewExpression = createAction<ExpressionQueryType>('addNewExpression');
 export const removeExpression = createAction<string>('removeExpression');
+export const removeExpressions = createAction('removeExpressions');
+export const addExpressions = createAction<AlertQuery[]>('addExpressions');
 export const updateExpression = createAction<ExpressionQuery>('updateExpression');
 export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: string }>('updateExpressionRefId');
 export const rewireExpressions = createAction<{ oldRefId: string; newRefId: string }>('rewireExpressions');
 export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
 export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
+export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
+
+export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
+  'setRecordingRulesQueries'
+);
 
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
@@ -59,23 +55,35 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(duplicateQuery, (state, { payload }) => {
       state.queries = addQuery(state.queries, payload);
     })
-    .addCase(addNewDataQuery, (state, { payload }) => {
-      const datasource = payload.ds;
+    .addCase(addNewDataQuery, (state) => {
+      const datasource = getDefaultOrFirstCompatibleDataSource();
+      if (!datasource) {
+        return;
+      }
+
       state.queries = addQuery(state.queries, {
         datasourceUid: datasource.uid,
         model: {
+          refId: '',
           datasource: {
             type: datasource.type,
             uid: datasource.uid,
           },
-          ...payload.defaultQuery,
-          refId: '',
         },
       });
     })
     .addCase(setDataQueries, (state, { payload }) => {
       const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
       state.queries = [...payload, ...expressionQueries];
+    })
+    .addCase(setRecordingRulesQueries, (state, { payload }) => {
+      const query = payload.recordingRuleQueries[0];
+      const recordingRuleQuery = {
+        ...query,
+        ...{ expr: payload.expression, model: { expr: payload.expression, refId: query.model.refId } },
+      };
+
+      state.queries = [recordingRuleQuery];
     })
     .addCase(updateMaxDataPoints, (state, action) => {
       state.queries = state.queries.map((query) => {
@@ -89,15 +97,28 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
             }
           : query;
       });
+    })
+    .addCase(updateMinInterval, (state, action) => {
+      state.queries = state.queries.map((query) => {
+        return query.refId === action.payload.refId
+          ? {
+              ...query,
+              model: {
+                ...query.model,
+                intervalMs: action.payload.minInterval ? rangeUtil.intervalToMs(action.payload.minInterval) : undefined,
+              },
+            }
+          : query;
+      });
     });
 
   // expressions actions
   builder
-    .addCase(addNewExpression, (state) => {
+    .addCase(addNewExpression, (state, { payload }) => {
       state.queries = addQuery(state.queries, {
         datasourceUid: ExpressionDatasourceUID,
         model: expressionDatasource.newQuery({
-          type: ExpressionQueryType.math,
+          type: payload,
           conditions: [{ ...defaultCondition, query: { params: [] } }],
           expression: '',
         }),
@@ -105,6 +126,12 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     })
     .addCase(removeExpression, (state, { payload }) => {
       state.queries = state.queries.filter((query) => query.refId !== payload);
+    })
+    .addCase(removeExpressions, (state) => {
+      state.queries = state.queries.filter((query) => !isExpressionQuery(query.model));
+    })
+    .addCase(addExpressions, (state, { payload }) => {
+      state.queries = [...state.queries, ...payload];
     })
     .addCase(updateExpression, (state, { payload }) => {
       state.queries = state.queries.map((query) => {

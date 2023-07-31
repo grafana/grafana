@@ -1,10 +1,11 @@
+import { t } from 'i18next';
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -21,7 +22,7 @@ import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
-import { ActionMeta, SelectBaseProps } from './types';
+import { ActionMeta, InputActionMeta, SelectBaseProps } from './types';
 import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
@@ -87,12 +88,13 @@ const CustomControl = (props: any) => {
   );
 };
 
-export function SelectBase<T>({
+export function SelectBase<T, Rest = {}>({
   allowCustomValue = false,
   allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
+  blurInputOnSelect,
   cacheOptions,
   className,
   closeMenuOnSelect = true,
@@ -123,18 +125,20 @@ export function SelectBase<T>({
   menuPlacement = 'auto',
   menuPosition,
   menuShouldPortal = true,
-  noOptionsMessage = 'No options found',
+  noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
   onBlur,
   onChange,
   onCloseMenu,
   onCreateOption,
   onInputChange,
   onKeyDown,
+  onMenuScrollToBottom,
+  onMenuScrollToTop,
   onOpenMenu,
   onFocus,
   openMenuOnFocus = false,
   options = [],
-  placeholder = 'Choose',
+  placeholder = t('grafana-ui.select.placeholder', 'Choose'),
   prefix,
   renderControl,
   showAllSelectedWhenOpen = true,
@@ -144,13 +148,16 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
-}: SelectBaseProps<T>) {
+  hideSelectedOptions,
+  ...rest
+}: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   const reactSelectRef = useRef<{ controlRef: HTMLElement }>(null);
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
+  const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
@@ -190,8 +197,16 @@ export function SelectBase<T>({
     // If option is passed as a plain value (value property from SelectableValue property)
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
-      // @ts-ignore
-      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => {
+        // @ts-ignore
+        const selectableValue = findSelectedValue(v.value ?? v, options);
+        // If the select allows custom values there likely won't be a selectableValue in options
+        // so we must return a new selectableValue
+        if (!allowCustomValue || selectableValue) {
+          return selectableValue;
+        }
+        return typeof v === 'string' ? toOption(v) : v;
+      });
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
@@ -204,16 +219,20 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
-    captureMenuScroll: false,
+    blurInputOnSelect,
+    captureMenuScroll: onMenuScrollToBottom || onMenuScrollToTop,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
     // So only close if none of the parents are the select menu itself
     defaultValue,
     // Also passing disabled, as this is the new Select API, and I want to use this prop instead of react-select's one
     disabled,
-    filterOption,
+    // react-select always tries to filter the options even at first menu open, which is a problem for performance
+    // in large lists. So we set it to not try to filter the options if there is no input value.
+    filterOption: hasInputValue ? filterOption : null,
     getOptionLabel,
     getOptionValue,
+    hideSelectedOptions,
     inputValue,
     invalid,
     isClearable,
@@ -236,10 +255,15 @@ export function SelectBase<T>({
     menuShouldScrollIntoView: false,
     onBlur,
     onChange: onChangeWithEmpty,
-    onInputChange,
+    onInputChange: (val: string, actionMeta: InputActionMeta) => {
+      setHasInputValue(!!val);
+      onInputChange?.(val, actionMeta);
+    },
     onKeyDown,
     onMenuClose: onCloseMenu,
     onMenuOpen: onOpenMenu,
+    onMenuScrollToBottom: onMenuScrollToBottom,
+    onMenuScrollToTop: onMenuScrollToTop,
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
@@ -341,11 +365,11 @@ export function SelectBase<T>({
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
-            return <SingleValue {...props} disabled={disabled} />;
+            return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: MultiValueRemove,
+          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           ...components,
         }}
         styles={selectStyles}
@@ -353,6 +377,7 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
+        {...rest}
       />
     </>
   );

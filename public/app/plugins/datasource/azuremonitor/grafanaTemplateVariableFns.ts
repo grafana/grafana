@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { isGUIDish } from './components/ResourcePicker/utils';
 import DataSource from './datasource';
 import { AzureMonitorQuery, AzureQueryType } from './types';
@@ -321,10 +319,7 @@ export const migrateQuery = async (
 ): Promise<AzureMonitorQuery> => {
   let query = await migrateStringQueriesToObjectQueries(rawQuery, options);
 
-  if (
-    !config.featureToggles.azLegacyTemplateVariables &&
-    query.queryType === AzureQueryType.GrafanaTemplateVariableFn
-  ) {
+  if (query.queryType === AzureQueryType.GrafanaTemplateVariableFn) {
     query = migrateGrafanaTemplateVariableFn(query);
   }
 

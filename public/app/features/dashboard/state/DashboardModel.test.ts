@@ -1,6 +1,6 @@
 import { keys as _keys } from 'lodash';
 
-import { VariableHide } from '@grafana/data';
+import { dateTime, TimeRange, VariableHide } from '@grafana/data';
 import { defaultVariableModel } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -63,6 +63,25 @@ describe('DashboardModel', () => {
 
     it('should return max id + 1', () => {
       expect(model.getNextPanelId()).toBe(6);
+    });
+  });
+
+  describe('when initalized with duplicate panel ids', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = createDashboardModelFixture({
+        panels: [
+          createPanelJSONFixture({ id: 6 }),
+          createPanelJSONFixture({ id: 2 }),
+          createPanelJSONFixture({}), // undefined
+          createPanelJSONFixture({ id: 2 }),
+        ],
+      });
+    });
+
+    it('should ensure unique panel ids', () => {
+      expect(model.panels.map((p) => p.id)).toEqual([6, 2, 7, 8]);
     });
   });
 
@@ -299,13 +318,11 @@ describe('DashboardModel', () => {
           list: [
             {
               datasource: { uid: 'fake-uid', type: 'prometheus' },
-              showIn: 0,
               name: 'Fake annotation',
               type: 'dashboard',
               iconColor: 'rgba(0, 211, 255, 1)',
               enable: true,
               hide: false,
-              builtIn: 0,
             },
           ],
         },
@@ -644,8 +661,8 @@ describe('DashboardModel', () => {
       model.processRepeats();
       expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       const saveModel = model.getSaveModelClone();
       expect(saveModel.panels.length).toBe(2);
@@ -697,15 +714,15 @@ describe('DashboardModel', () => {
       model.processRepeats();
       expect(model.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(model.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(model.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.snapshot = { timestamp: new Date() };
       const saveModel = model.getSaveModelClone();
       expect(saveModel.panels.filter((x) => x.type === 'row')).toHaveLength(2);
       expect(saveModel.panels.filter((x) => x.type !== 'row')).toHaveLength(4);
-      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc.value).toBe('dc1');
-      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.dc?.value).toBe('dc1');
+      expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app?.value).toBe('se1');
 
       model.collapseRows();
       const savedModelWithCollapsedRows = model.getSaveModelClone();
@@ -1141,8 +1158,35 @@ describe('exitViewPanel', () => {
   });
 });
 
-describe('exitPanelEditor', () => {
-  function getTestContext(pauseAutoRefresh = false) {
+describe('when initEditPanel is called', () => {
+  function getTestContext() {
+    const dashboard = createDashboardModelFixture();
+    const timeSrvMock = {
+      pauseAutoRefresh: jest.fn(),
+      resumeAutoRefresh: jest.fn(),
+      stopAutoRefresh: jest.fn(),
+    } as unknown as TimeSrv;
+    setTimeSrv(timeSrvMock);
+    return { dashboard, timeSrvMock };
+  }
+
+  it('should set panelInEdit', () => {
+    const { dashboard } = getTestContext();
+    dashboard.addPanel({ type: 'timeseries' });
+    dashboard.initEditPanel(dashboard.panels[0]);
+    expect(dashboard.panelInEdit).not.toBeUndefined();
+  });
+
+  it('should stop auto-refresh', () => {
+    const { dashboard, timeSrvMock } = getTestContext();
+    dashboard.addPanel({ type: 'timeseries' });
+    dashboard.initEditPanel(dashboard.panels[0]);
+    expect(timeSrvMock.stopAutoRefresh).toHaveBeenCalled();
+  });
+});
+
+describe('when exitPanelEditor is called', () => {
+  function getTestContext() {
     const panel = new PanelModel({ destroy: jest.fn() });
     const dashboard = createDashboardModelFixture();
     const timeSrvMock = {
@@ -1152,70 +1196,54 @@ describe('exitPanelEditor', () => {
     } as unknown as TimeSrv;
     dashboard.startRefresh = jest.fn();
     dashboard.panelInEdit = panel;
-    if (pauseAutoRefresh) {
-      timeSrvMock.autoRefreshPaused = true;
-    }
     setTimeSrv(timeSrvMock);
     return { dashboard, panel, timeSrvMock };
   }
 
-  describe('when called', () => {
-    it('then panelInEdit is set to undefined', () => {
-      const { dashboard } = getTestContext();
+  it('should set panelInEdit to undefined', () => {
+    const { dashboard } = getTestContext();
 
-      dashboard.exitPanelEditor();
+    dashboard.exitPanelEditor();
 
-      expect(dashboard.panelInEdit).toBeUndefined();
-    });
-
-    it('then destroy is called on panel', () => {
-      const { dashboard, panel } = getTestContext();
-
-      dashboard.exitPanelEditor();
-
-      expect(panel.destroy).toHaveBeenCalled();
-    });
-
-    it('then startRefresh is not called', () => {
-      const { dashboard } = getTestContext();
-
-      dashboard.exitPanelEditor();
-
-      expect(dashboard.startRefresh).not.toHaveBeenCalled();
-    });
-
-    it('then auto refresh property is resumed', () => {
-      const { dashboard, timeSrvMock } = getTestContext(true);
-      dashboard.exitPanelEditor();
-      expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
-    });
+    expect(dashboard.panelInEdit).toBeUndefined();
   });
-});
 
-describe('initEditPanel', () => {
-  function getTestContext() {
-    const dashboard = createDashboardModelFixture();
-    const timeSrvMock = {
-      pauseAutoRefresh: jest.fn(),
-      resumeAutoRefresh: jest.fn(),
-    } as unknown as TimeSrv;
-    setTimeSrv(timeSrvMock);
-    return { dashboard, timeSrvMock };
-  }
+  it('should destroy panel', () => {
+    const { dashboard, panel } = getTestContext();
 
-  describe('when called', () => {
-    it('then panelInEdit is not undefined', () => {
-      const { dashboard } = getTestContext();
-      dashboard.addPanel({ type: 'timeseries' });
-      dashboard.initEditPanel(dashboard.panels[0]);
-      expect(dashboard.panelInEdit).not.toBeUndefined();
-    });
+    dashboard.exitPanelEditor();
 
-    it('then auto-refresh is paused', () => {
-      const { dashboard, timeSrvMock } = getTestContext();
-      dashboard.addPanel({ type: 'timeseries' });
-      dashboard.initEditPanel(dashboard.panels[0]);
-      expect(timeSrvMock.pauseAutoRefresh).toHaveBeenCalled();
-    });
+    expect(panel.destroy).toHaveBeenCalled();
+  });
+
+  it('should not call startRefresh', () => {
+    const { dashboard } = getTestContext();
+
+    dashboard.exitPanelEditor();
+
+    expect(dashboard.startRefresh).not.toHaveBeenCalled();
+  });
+
+  it('should call startRefresh if time range changed during edit', () => {
+    const { dashboard } = getTestContext();
+
+    const range: TimeRange = {
+      from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
+      to: dateTime(new Date().getTime()),
+      raw: {
+        from: 'now-1m',
+        to: 'now',
+      },
+    };
+    dashboard.timeRangeUpdated(range);
+    dashboard.exitPanelEditor();
+
+    expect(dashboard.startRefresh).toHaveBeenCalled();
+  });
+
+  it('then auto refresh property is resumed', () => {
+    const { dashboard, timeSrvMock } = getTestContext();
+    dashboard.exitPanelEditor();
+    expect(timeSrvMock.resumeAutoRefresh).toHaveBeenCalled();
   });
 });

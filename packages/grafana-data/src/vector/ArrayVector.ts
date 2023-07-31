@@ -1,43 +1,38 @@
-import { MutableVector } from '../types/vector';
-
-import { FunctionalVector } from './FunctionalVector';
-
 /**
  * @public
+ *
+ * @deprecated use a simple Array<T>
  */
-export class ArrayVector<T = any> extends FunctionalVector<T> implements MutableVector<T> {
-  buffer: T[];
+export class ArrayVector<T = any> extends Array<T> {
+  get buffer() {
+    return this;
+  }
 
-  constructor(buffer?: T[]) {
+  set buffer(values: any[]) {
+    this.length = 0;
+
+    const len = values?.length;
+
+    if (len) {
+      let chonkSize = 65e3;
+      let numChonks = Math.ceil(len / chonkSize);
+
+      for (let chonkIdx = 0; chonkIdx < numChonks; chonkIdx++) {
+        this.push.apply(this, values.slice(chonkIdx * chonkSize, (chonkIdx + 1) * chonkSize));
+      }
+    }
+  }
+
+  /**
+   * This any type is here to make the change type changes in v10 non breaking for plugins.
+   * Before you could technically assign field.values any typed ArrayVector no matter what the Field<T> T type was.
+   */
+  constructor(buffer?: any[]) {
     super();
-    this.buffer = buffer ? buffer : [];
-  }
-
-  get length() {
-    return this.buffer.length;
-  }
-
-  add(value: T) {
-    this.buffer.push(value);
-  }
-
-  get(index: number): T {
-    return this.buffer[index];
-  }
-
-  set(index: number, value: T) {
-    this.buffer[index] = value;
-  }
-
-  reverse() {
-    this.buffer.reverse();
-  }
-
-  toArray(): T[] {
-    return this.buffer;
+    this.buffer = buffer ?? [];
   }
 
   toJSON(): T[] {
-    return this.buffer;
+    return [...this]; // copy to avoid circular reference (only for jest)
   }
 }

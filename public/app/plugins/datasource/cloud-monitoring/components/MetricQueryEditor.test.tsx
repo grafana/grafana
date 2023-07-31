@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { QueryType } from '../types';
+import { QueryType } from '../types/query';
 
 import { MetricQueryEditor } from './MetricQueryEditor';
 
@@ -54,5 +54,14 @@ describe('MetricQueryEditor', () => {
     render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     const l = await screen.findByLabelText('Project');
     expect(l).toBeInTheDocument();
+  });
+
+  it('renders a Project dropdown', async () => {
+    const query = createMockQuery();
+    query.queryType = QueryType.TIME_SERIES_QUERY;
+
+    render(<MetricQueryEditor {...defaultProps} />);
+    const projectDropdown = await screen.findByLabelText('Project');
+    expect(projectDropdown).toBeInTheDocument();
   });
 });

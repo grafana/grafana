@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { getNavSubTitle, getNavTitle } from '../components/NavBar/navBarItem-translations';
+import { getNavSubTitle, getNavTitle } from '../components/AppChrome/MegaMenu/navBarItem-translations';
 
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 

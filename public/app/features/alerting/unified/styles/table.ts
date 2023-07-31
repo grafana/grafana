@@ -27,6 +27,9 @@ export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
   colExpand: css`
     width: 36px;
   `,
+  nameCell: css`
+    gap: ${theme.spacing(1)};
+  `,
   actionsCell: css`
     text-align: right;
     width: 1%;

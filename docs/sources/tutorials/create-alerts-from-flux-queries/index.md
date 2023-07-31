@@ -1,13 +1,20 @@
 ---
-title: How to create Grafana alerts with InfluxDB and the Flux query language
-summary: Create complex alerts from Flux queries in the new Grafana Alerting
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grant_pinkos
+categories:
+  - alerting
 description: Create complex alerts from Flux queries in the new Grafana Alerting
 id: grafana-alerts-flux-queries
-categories: ['alerting']
-tags: ['advanced']
+labels:
+  products:
+    - enterprise
+    - oss
 status: published
-authors: ['grant_pinkos']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Create complex alerts from Flux queries in the new Grafana Alerting
+tags:
+  - advanced
+title: How to create Grafana alerts with InfluxDB and the Flux query language
 weight: 70
 ---
 
@@ -27,7 +34,7 @@ For Example 1, let's consider the following scenario: we are monitoring one tank
 
 We want to write a Grafana alert that will trigger whenever the temperature in tank `A5` crosses the lower threshold of 30 °C or the upper threshold of 60 °C.
 
-To do this, we'll: 1. create a Grafana alert rule. 1. add a Flux query. 1. add expressions to the alert rule.
+To do this, we'll: create a Grafana alert rule, add a Flux query, and then add expressions to the alert rule.
 
 ### Create a Grafana Alert rule
 

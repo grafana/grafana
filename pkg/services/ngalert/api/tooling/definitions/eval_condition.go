@@ -4,15 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // EvalAlertConditionCommand is the command for evaluating a condition
 type EvalAlertConditionCommand struct {
-	Condition string              `json:"condition"`
-	Data      []models.AlertQuery `json:"data"` // TODO yuri. Create API model for AlertQuery
-	Now       time.Time           `json:"now"`
+	Condition string       `json:"condition"`
+	Data      []AlertQuery `json:"data"`
+	Now       time.Time    `json:"now"`
 }
 
 func (cmd *EvalAlertConditionCommand) UnmarshalJSON(b []byte) error {

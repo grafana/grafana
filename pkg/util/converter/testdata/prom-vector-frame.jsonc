@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -20,6 +24,10 @@
 //  
 //  Frame[1] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -38,6 +46,10 @@
 //  
 //  Frame[2] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -56,6 +68,10 @@
 //  
 //  Frame[3] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -74,6 +90,10 @@
 //  
 //  Frame[4] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "vector"
 //      }
@@ -97,6 +117,10 @@
       "schema": {
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "vector"
           }
@@ -138,6 +162,10 @@
       "schema": {
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "vector"
           }
@@ -179,6 +207,10 @@
       "schema": {
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "vector"
           }
@@ -227,6 +259,10 @@
       "schema": {
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "vector"
           }
@@ -275,6 +311,10 @@
       "schema": {
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "vector"
           }

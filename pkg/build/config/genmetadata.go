@@ -84,7 +84,7 @@ func GenerateMetadata(c *cli.Context) (Metadata, error) {
 		CurrentCommit:  currentCommit,
 	}
 
-	fmt.Printf("building Grafana version: %s, release mode: %+v", metadata.GrafanaVersion, metadata.ReleaseMode)
+	fmt.Printf("building Grafana version: %s, release mode: %+v\n", metadata.GrafanaVersion, metadata.ReleaseMode)
 
 	return metadata, nil
 }
@@ -95,7 +95,7 @@ func generateVersionFromBuildID() (string, error) {
 		return "", fmt.Errorf("unable to get DRONE_BUILD_NUMBER environmental variable")
 	}
 	var err error
-	version, err := GetGrafanaVersion(buildID, ".")
+	version, err := GenerateGrafanaVersion(buildID, ".")
 	if err != nil {
 		return "", err
 	}

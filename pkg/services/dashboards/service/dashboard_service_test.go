@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -120,7 +120,7 @@ func TestDashboardService(t *testing.T) {
 				if origAlertingEnabledSet {
 					origAlertingEnabledVal = *setting.AlertingEnabled
 				}
-				setting.AlertingEnabled = pointer.Bool(true)
+				setting.AlertingEnabled = util.Pointer(true)
 				t.Cleanup(func() {
 					if !origAlertingEnabledSet {
 						setting.AlertingEnabled = nil
@@ -236,9 +236,16 @@ func TestDashboardService(t *testing.T) {
 			usr := &user.SignedInUser{UserID: 1}
 			ctx := appcontext.WithUser(context.Background(), usr)
 
-			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
+			count, err := service.CountInFolder(ctx, 1, "i am a folder", usr)
 			require.NoError(t, err)
 			require.Equal(t, int64(3), count)
+		})
+
+		t.Run("Delete dashboards in folder", func(t *testing.T) {
+			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUID: "uid"}
+			fakeStore.On("DeleteDashboardsInFolder", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolder(context.Background(), 1, "uid", nil)
+			require.NoError(t, err)
 		})
 	})
 

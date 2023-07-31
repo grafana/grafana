@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,20 +14,20 @@ import (
 
 var _ authn.ContextAwareClient = new(Anonymous)
 
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonSessionService anonymous.Service) *Anonymous {
+func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonDeviceService anonymous.Service) *Anonymous {
 	return &Anonymous{
-		cfg:                cfg,
-		log:                log.New("authn.anonymous"),
-		orgService:         orgService,
-		anonSessionService: anonSessionService,
+		cfg:               cfg,
+		log:               log.New("authn.anonymous"),
+		orgService:        orgService,
+		anonDeviceService: anonDeviceService,
 	}
 }
 
 type Anonymous struct {
-	cfg                *setting.Cfg
-	log                log.Logger
-	orgService         org.Service
-	anonSessionService anonymous.Service
+	cfg               *setting.Cfg
+	log               log.Logger
+	orgService        org.Service
+	anonDeviceService anonymous.Service
 }
 
 func (a *Anonymous) Name() string {
@@ -40,13 +41,20 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		return nil, err
 	}
 
+	httpReqCopy := &http.Request{}
+	if r.HTTPRequest != nil && r.HTTPRequest.Header != nil {
+		// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
+		httpReqCopy.Header = r.HTTPRequest.Header.Clone()
+		httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
+	}
+
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				a.log.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := a.anonSessionService.TagSession(context.Background(), r.HTTPRequest); err != nil {
+		if err := a.anonDeviceService.TagDevice(context.Background(), httpReqCopy); err != nil {
 			a.log.Warn("failed to tag anonymous session", "error", err)
 		}
 	}()
@@ -56,7 +64,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		OrgID:        o.ID,
 		OrgName:      o.Name,
 		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
-		ClientParams: authn.ClientParams{},
+		ClientParams: authn.ClientParams{SyncPermissions: true},
 	}, nil
 }
 

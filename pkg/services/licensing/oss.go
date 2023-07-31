@@ -59,15 +59,7 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 			return
 		}
 
-		var adminNodeID string
-
-		if cfg.IsFeatureToggleEnabled("topnav") {
-			adminNodeID = navtree.NavIDCfg
-		} else {
-			adminNodeID = navtree.NavIDAdmin
-		}
-
-		if adminNode := indexData.NavTree.FindById(adminNodeID); adminNode != nil {
+		if adminNode := indexData.NavTree.FindById(navtree.NavIDCfg); adminNode != nil {
 			adminNode.Children = append(adminNode.Children, &navtree.NavLink{
 				Text: "Stats and license",
 				Id:   "upgrading",

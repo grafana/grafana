@@ -46,7 +46,7 @@ func TestTemplateService(t *testing.T) {
 			sut := createTemplateServiceSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Return(fmt.Errorf("failed"))
+				Return(nil, fmt.Errorf("failed"))
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
@@ -69,7 +69,7 @@ func TestTemplateService(t *testing.T) {
 			sut := createTemplateServiceSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Return(nil)
+				Return(nil, nil)
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
@@ -96,7 +96,7 @@ func TestTemplateService(t *testing.T) {
 				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -121,7 +121,7 @@ func TestTemplateService(t *testing.T) {
 				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -273,7 +273,7 @@ func TestTemplateService(t *testing.T) {
 				sut := createTemplateServiceSut()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
@@ -296,7 +296,7 @@ func TestTemplateService(t *testing.T) {
 				sut := createTemplateServiceSut()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 

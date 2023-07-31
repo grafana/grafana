@@ -22,7 +22,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart } from './PieChart';
-import { PieChartLegendOptions, PieChartLegendValues, PanelOptions } from './panelcfg.gen';
+import { PieChartLegendOptions, PieChartLegendValues, Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 const defaultLegendOptions: PieChartLegendOptions = {
@@ -33,7 +33,7 @@ const defaultLegendOptions: PieChartLegendOptions = {
   values: [PieChartLegendValues.Percent],
 };
 
-interface Props extends PanelProps<PanelOptions> {}
+interface Props extends PanelProps<Options> {}
 
 /**
  * @beta
@@ -140,12 +140,14 @@ function getLegend(props: Props, displayValues: FieldDisplay[]) {
     .filter((i): i is VizLegendItem => !!i);
 
   return (
-    <VizLegend
-      items={legendItems}
-      seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
-      placement={legendOptions.placement}
-      displayMode={legendOptions.displayMode}
-    />
+    <VizLayout.Legend placement={legendOptions.placement} width={legendOptions.width}>
+      <VizLegend
+        items={legendItems}
+        seriesVisibilityChangeBehavior={SeriesVisibilityChangeBehavior.Hide}
+        placement={legendOptions.placement}
+        displayMode={legendOptions.displayMode}
+      />
+    </VizLayout.Legend>
   );
 }
 

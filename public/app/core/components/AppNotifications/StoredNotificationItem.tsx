@@ -3,7 +3,6 @@ import { formatDistanceToNow } from 'date-fns';
 import React, { ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Card, Checkbox, useTheme2 } from '@grafana/ui';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
@@ -31,7 +30,6 @@ export const StoredNotificationItem = ({
 }: Props) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const showTraceId = config.featureToggles.tracing && traceId;
 
   return (
     <Card className={className} onClick={onClick}>
@@ -41,7 +39,7 @@ export const StoredNotificationItem = ({
         <Checkbox onChange={onClick} tabIndex={-1} value={isSelected} />
       </Card.Figure>
       <Card.Tags className={styles.trace}>
-        {showTraceId && <span>{`Trace ID: ${traceId}`}</span>}
+        {traceId && <span>{`Trace ID: ${traceId}`}</span>}
         {timestamp && formatDistanceToNow(timestamp, { addSuffix: true })}
       </Card.Tags>
     </Card>

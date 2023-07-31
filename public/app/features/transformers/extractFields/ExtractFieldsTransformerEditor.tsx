@@ -7,6 +7,7 @@ import {
   FieldNamePickerConfigSettings,
   SelectableValue,
   StandardEditorsRegistryItem,
+  TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, InlineSwitch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -26,11 +27,11 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-export const extractFieldsTransformerEditor: React.FC<TransformerUIProps<ExtractFieldsOptions>> = ({
+export const extractFieldsTransformerEditor = ({
   input,
   options,
   onChange,
-}) => {
+}: TransformerUIProps<ExtractFieldsOptions>) => {
   const onPickSourceField = (source?: string) => {
     onChange({
       ...options,
@@ -117,5 +118,6 @@ export const extractFieldsTransformRegistryItem: TransformerRegistryItem<Extract
   editor: extractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
   name: 'Extract fields',
-  description: `Parse fields from content (JSON, labels, etc)`,
+  description: `Parse fields from content (JSON, labels, etc).`,
+  categories: new Set([TransformerCategory.Reformat]),
 };

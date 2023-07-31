@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
@@ -17,7 +17,7 @@ interface Props {
   field?: Field;
 }
 
-export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }) => {
+export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -51,7 +51,7 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="xs">
@@ -93,28 +93,28 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  filterContainer: css`
-    label: filterContainer;
-    width: 100%;
-    min-width: 250px;
-    height: 100%;
-    max-height: 400px;
-    background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
-    padding: ${theme.spacing(2)};
-    margin: ${theme.spacing(1)} 0;
-    box-shadow: 0px 0px 20px ${theme.v1.palette.black};
-    border-radius: ${theme.spacing(0.5)};
-  `,
-  listDivider: css`
-    label: listDivider;
-    width: 100%;
-    border-top: 1px solid ${theme.colors.border.medium};
-    padding: ${theme.spacing(0.5, 2)};
-  `,
-  label: css`
-    margin-bottom: 0;
-  `,
+  filterContainer: css({
+    label: 'filterContainer',
+    width: '100%',
+    minWidth: '250px',
+    height: '100%',
+    maxHeight: '400px',
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(2),
+    margin: theme.spacing(1, 0),
+    boxShadow: theme.shadows.z3,
+    borderRadius: theme.shape.radius.default,
+  }),
+  listDivider: css({
+    label: 'listDivider',
+    width: '100%',
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    padding: theme.spacing(0.5, 2),
+  }),
+  label: css({
+    marginBottom: 0,
+  }),
 });
 
 const stopPropagation = (event: React.MouseEvent) => {

@@ -1,5 +1,4 @@
 import { uniqueId } from 'lodash';
-import { Validate } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -7,12 +6,11 @@ import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
 
-import { matcherToMatcherField, parseMatcher } from './alertmanager';
+import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { normalizeMatchers, parseMatcher } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { parseInterval, timeOptions } from './time';
-
-const defaultValueAndType: [string, string] = ['', ''];
+import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -29,25 +27,6 @@ const matchersToArrayFieldMatchers = (
     ],
     [] as MatcherFieldValue[]
   );
-
-const intervalToValueAndType = (
-  strValue: string | undefined,
-  defaultValue?: typeof defaultValueAndType
-): [string, string] => {
-  if (!strValue) {
-    return defaultValue ?? defaultValueAndType;
-  }
-
-  const [value, valueType] = strValue ? parseInterval(strValue) : [undefined, undefined];
-
-  const timeOption = timeOptions.find((opt) => opt.value === valueType);
-
-  if (!value || !timeOption) {
-    return defaultValueAndType;
-  }
-
-  return [String(value), timeOption.value];
-};
 
 const selectableValueToString = (selectableValue: SelectableValue<string>): string => selectableValue.value!;
 
@@ -80,60 +59,9 @@ export const emptyRoute: FormAmRoute = {
   receiver: '',
   overrideTimings: false,
   groupWaitValue: '',
-  groupWaitValueType: timeOptions[0].value,
   groupIntervalValue: '',
-  groupIntervalValueType: timeOptions[0].value,
   repeatIntervalValue: '',
-  repeatIntervalValueType: timeOptions[0].value,
   muteTimeIntervals: [],
-};
-
-/**
- * We need to deal with multiple (deprecated) properties such as "match" and "match_re"
- * this function will normalize all of the different ways to define matchers in to a single one.
- */
-export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
-  const matchers: ObjectMatcher[] = [];
-
-  if (route.matchers) {
-    route.matchers.forEach((matcher) => {
-      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
-      let operator = MatcherOperator.equal;
-
-      if (isEqual && isRegex) {
-        operator = MatcherOperator.regex;
-      }
-      if (!isEqual && isRegex) {
-        operator = MatcherOperator.notRegex;
-      }
-      if (isEqual && !isRegex) {
-        operator = MatcherOperator.equal;
-      }
-      if (!isEqual && !isRegex) {
-        operator = MatcherOperator.notEqual;
-      }
-
-      matchers.push([name, operator, value]);
-    });
-  }
-
-  if (route.object_matchers) {
-    matchers.push(...route.object_matchers);
-  }
-
-  if (route.match_re) {
-    Object.entries(route.match_re).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.regex, value]);
-    });
-  }
-
-  if (route.match) {
-    Object.entries(route.match).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.equal, value]);
-    });
-  }
-
-  return matchers;
 };
 
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
@@ -168,10 +96,6 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
   const matchers = route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? [];
 
-  const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
-  const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
-  const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
-
   return {
     id,
     // Frontend migration to use object_matchers instead of matchers, match, and match_re
@@ -183,15 +107,12 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     ],
     continue: route.continue ?? false,
     receiver: route.receiver ?? '',
-    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
-    groupBy: route.group_by ?? [],
-    overrideTimings: [groupWaitValue, groupIntervalValue, repeatIntervalValue].some(Boolean),
-    groupWaitValue,
-    groupWaitValueType,
-    groupIntervalValue,
-    groupIntervalValueType,
-    repeatIntervalValue,
-    repeatIntervalValueType,
+    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length > 0,
+    groupBy: route.group_by ?? undefined,
+    overrideTimings: [route.group_wait, route.group_interval, route.repeat_interval].some(Boolean),
+    groupWaitValue: route.group_wait ?? '',
+    groupIntervalValue: route.group_interval ?? '',
+    repeatIntervalValue: route.repeat_interval ?? '',
     routes: formRoutes,
     muteTimeIntervals: route.mute_time_intervals ?? [],
   };
@@ -210,24 +131,24 @@ export const formAmRouteToAmRoute = (
     groupBy,
     overrideTimings,
     groupWaitValue,
-    groupWaitValueType,
     groupIntervalValue,
-    groupIntervalValueType,
     repeatIntervalValue,
-    repeatIntervalValueType,
     receiver,
   } = formAmRoute;
 
-  const group_by = overrideGrouping && groupBy ? groupBy : [];
+  // "undefined" means "inherit from the parent policy", currently supported by group_by, group_wait, group_interval, and repeat_interval
+  const INHERIT_FROM_PARENT = undefined;
+
+  const group_by = overrideGrouping ? groupBy : INHERIT_FROM_PARENT;
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
-  const group_wait = overrideGroupWait ? `${groupWaitValue}${groupWaitValueType}` : undefined;
+  const group_wait = overrideGroupWait ? groupWaitValue : INHERIT_FROM_PARENT;
 
   const overrideGroupInterval = overrideTimings && groupIntervalValue;
-  const group_interval = overrideGroupInterval ? `${groupIntervalValue}${groupIntervalValueType}` : undefined;
+  const group_interval = overrideGroupInterval ? groupIntervalValue : INHERIT_FROM_PARENT;
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
-  const repeat_interval = overrideRepeatInterval ? `${repeatIntervalValue}${repeatIntervalValueType}` : undefined;
+  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
   const object_matchers = formAmRoute.object_matchers
     ?.filter((route) => route.name && route.value && route.operator)
     .map(({ name, operator, value }) => [name, operator, value] as ObjectMatcher);
@@ -300,10 +221,42 @@ export const mapMultiSelectValueToStrings = (
   return selectableValuesToStrings(selectableValues);
 };
 
-export const optionalPositiveInteger: Validate<string> = (value) => {
-  if (!value) {
-    return undefined;
+export function promDurationValidator(duration: string) {
+  if (duration.length === 0) {
+    return true;
   }
 
-  return !/^\d+$/.test(value) ? 'Must be a positive integer.' : undefined;
+  return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
+}
+
+// function to convert ObjectMatchers to a array of strings
+export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
+  return matchers.map((matcher) => {
+    const [name, operator, value] = matcher;
+    return `${name}${operator}${value}`;
+  });
+};
+
+export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
+  if (repeatInterval.length === 0) {
+    return true;
+  }
+
+  const validRepeatInterval = promDurationValidator(repeatInterval);
+  const validGroupInterval = promDurationValidator(groupInterval);
+
+  if (validRepeatInterval !== true) {
+    return validRepeatInterval;
+  }
+
+  if (validGroupInterval !== true) {
+    return validGroupInterval;
+  }
+
+  const repeatDuration = safeParseDurationstr(repeatInterval);
+  const groupDuration = safeParseDurationstr(groupInterval);
+
+  const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
+
+  return isRepeatLowerThanGroupDuration ? 'Repeat interval should be higher or equal to Group interval' : true;
 };

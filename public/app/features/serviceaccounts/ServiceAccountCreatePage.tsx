@@ -100,9 +100,6 @@ export const ServiceAccountCreatePage = ({}: Props): JSX.Element => {
   return (
     <Page navId="serviceaccounts" pageNav={{ text: 'Create service account' }}>
       <Page.Contents>
-        <Page.OldNavOnly>
-          <h3 className="page-sub-heading">Create service account</h3>
-        </Page.OldNavOnly>
         <Form onSubmit={onSubmit} validateOn="onSubmit">
           {({ register, errors }) => {
             return (

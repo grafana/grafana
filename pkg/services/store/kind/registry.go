@@ -144,6 +144,10 @@ func (r *registry) GetSummaryBuilder(kind string) entity.EntitySummaryBuilder {
 	defer r.mutex.RUnlock()
 
 	v, ok := r.kinds[kind]
+	if !ok {
+		// fallback to default
+		v, ok = r.kinds[entity.StandardKindJSONObj]
+	}
 	if ok {
 		return v.builder
 	}

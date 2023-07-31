@@ -36,9 +36,9 @@ FeatureInfoBox.displayName = 'FeatureInfoBox';
 
 const getFeatureInfoBoxStyles = (theme: GrafanaTheme2) => {
   return {
-    badge: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    badge: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };
 
@@ -47,7 +47,7 @@ interface FeatureBadgeProps {
   tooltip?: string;
 }
 
-export const FeatureBadge: React.FC<FeatureBadgeProps> = ({ featureState, tooltip }) => {
+export const FeatureBadge = ({ featureState, tooltip }: FeatureBadgeProps) => {
   const display = getPanelStateBadgeDisplayModel(featureState);
   return <Badge text={display.text} color={display.color} icon={display.icon} tooltip={tooltip} />;
 };

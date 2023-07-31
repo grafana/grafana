@@ -12,11 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type DatasourceInfo struct {
@@ -24,7 +22,6 @@ type DatasourceInfo struct {
 	HTTPClient                 *http.Client
 	URL                        string
 	Database                   string
-	ESVersion                  *semver.Version
 	ConfiguredFields           ConfiguredFields
 	Interval                   string
 	TimeInterval               string
@@ -44,7 +41,6 @@ const loggerName = "tsdb.elasticsearch.client"
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetConfiguredFields() ConfiguredFields
-	GetMinInterval(queryInterval string) (time.Duration, error)
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
 }
@@ -62,7 +58,7 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 	}
 
 	logger := log.New(loggerName).FromContext(ctx)
-	logger.Debug("Creating new client", "version", ds.ESVersion, "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "))
+	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "))
 
 	return &baseClientImpl{
 		logger:           logger,
@@ -85,11 +81,6 @@ type baseClientImpl struct {
 
 func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
 	return c.configuredFields
-}
-
-func (c *baseClientImpl) GetMinInterval(queryInterval string) (time.Duration, error) {
-	timeInterval := c.ds.TimeInterval
-	return intervalv2.GetIntervalFrom(queryInterval, timeInterval, 0, 5*time.Second)
 }
 
 type multiRequest struct {

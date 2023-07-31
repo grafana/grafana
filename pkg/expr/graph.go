@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.
@@ -20,6 +22,8 @@ const (
 	TypeCMDNode NodeType = iota
 	// TypeDatasourceNode is a NodeType for datasource queries.
 	TypeDatasourceNode
+	// TypeMLNode is a NodeType for Machine Learning queries.
+	TypeMLNode
 )
 
 func (nt NodeType) String() string {
@@ -28,6 +32,8 @@ func (nt NodeType) String() string {
 		return "Expression"
 	case TypeDatasourceNode:
 		return "Datasource"
+	case TypeMLNode:
+		return "Machine Learning"
 	default:
 		return "Unknown"
 	}
@@ -50,6 +56,15 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
+		c, span := s.tracer.Start(c, "SSE.ExecuteNode")
+		span.SetAttributes("node.refId", node.RefID(), attribute.Key("node.refId").String(node.RefID()))
+		if node.NodeType() == TypeCMDNode {
+			cmdNode := node.(*CMDNode)
+			inputRefIDs := cmdNode.Command.NeedsVars()
+			span.SetAttributes("node.inputRefIDs", inputRefIDs, attribute.Key("node.inputRefIDs").StringSlice(inputRefIDs))
+		}
+		defer span.End()
+
 		res, err := node.Execute(c, now, vars, s)
 		if err != nil {
 			return nil, err
@@ -149,6 +164,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 
 		rn := &rawNode{
 			Query:      rawQueryProp,
+			QueryRaw:   query.JSON,
 			RefID:      query.RefID,
 			TimeRange:  query.TimeRange,
 			QueryType:  query.QueryType,
@@ -156,11 +172,22 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		}
 
 		var node Node
-
-		if IsDataSource(rn.DataSource.UID) {
-			node, err = buildCMDNode(dp, rn)
-		} else {
+		switch NodeTypeFromDatasourceUID(query.DataSource.UID) {
+		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
+		case TypeCMDNode:
+			node, err = buildCMDNode(dp, rn)
+		case TypeMLNode:
+			if s.features.IsEnabled(featuremgmt.FlagMlExpressions) {
+				node, err = s.buildMLNode(dp, rn, req)
+				if err != nil {
+					err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
+				}
+			}
+		}
+
+		if node == nil && err == nil {
+			err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(query.DataSource.UID))
 		}
 
 		if err != nil {

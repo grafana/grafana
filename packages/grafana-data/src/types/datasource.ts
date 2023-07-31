@@ -18,7 +18,7 @@ import { DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
-  SecureJSONData = {}
+  SecureJSONData = {},
 > {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
@@ -34,7 +34,7 @@ export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
-  TSecureOptions = {}
+  TSecureOptions = {},
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
   components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
 
@@ -57,6 +57,7 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /** @deprecated -- register the annotation support in the instance constructor */
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
     this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;
@@ -154,7 +155,7 @@ export interface DataSourcePluginComponents<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TSecureOptions = {}
+  TSecureOptions = {},
 > {
   QueryCtrl?: any;
   AnnotationsQueryCtrl?: any;
@@ -175,7 +176,7 @@ export interface DataSourcePluginComponents<
 export interface DataSourceConstructor<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > {
   new (instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DSType;
 }
@@ -196,7 +197,7 @@ type VariableSupport<TQuery extends DataQuery, TOptions extends DataSourceJsonDa
 abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TQueryImportConfiguration extends Record<string, object> = {}
+  TQueryImportConfiguration extends Record<string, object> = {},
 > {
   /**
    *  Set in constructor
@@ -259,7 +260,7 @@ abstract class DataSourceApi<
    * a TestingStatus object. Unknown errors and HTTP errors can be re-thrown and will be handled here:
    * public/app/features/datasources/state/actions.ts
    */
-  abstract testDatasource(): Promise<any>;
+  abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
    * Override to skip executing a query
@@ -374,7 +375,7 @@ abstract class DataSourceApi<
 export interface MetadataInspectorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > {
   datasource: DSType;
 
@@ -386,7 +387,7 @@ export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TVQuery extends DataQuery = TQuery
+  TVQuery extends DataQuery = TQuery,
 > {
   datasource: DSType;
   query: TVQuery;
@@ -418,7 +419,7 @@ export enum ExploreMode {
 export type ExploreQueryFieldProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > = QueryEditorProps<DSType, TQuery, TOptions>;
 
 export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
@@ -465,6 +466,18 @@ export interface DataQueryResponse {
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
+
+  /**
+   * traceIds related to the response, if available
+   */
+  traceIds?: string[];
+}
+
+export interface TestDataSourceResponse {
+  status: string;
+  message: string;
+  error?: Error;
+  details?: { message?: string; verboseMessage?: string };
 }
 
 export enum DataQueryErrorType {
@@ -488,6 +501,7 @@ export interface DataQueryError {
   status?: number;
   statusText?: string;
   refId?: string;
+  traceId?: string;
   type?: DataQueryErrorType;
 }
 
@@ -508,8 +522,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
-  /** @deprecate */
-  dashboardId?: number;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
 
@@ -522,6 +534,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Make it possible to hide support queries from the inspector
   hideFromInspector?: boolean;
+
+  // Used to correlate multiple related requests
+  queryGroupId?: string;
 }
 
 export interface DataQueryTimings {
@@ -629,6 +644,8 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
+
+  angularDetected?: boolean;
 }
 
 /**

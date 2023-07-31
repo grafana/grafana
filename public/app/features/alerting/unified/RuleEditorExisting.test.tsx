@@ -1,14 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
-import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
-import { byRole } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
@@ -25,13 +22,17 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mo
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import * as ruleForm from './utils/rule-form';
+import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
     <input value={value} data-testid="expr" onChange={(e) => onChange(e.target.value)} />
   ),
+}));
+
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
 jest.mock('./api/buildInfo');
@@ -46,14 +47,12 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.spyOn(config, 'getAllDataSources');
-jest.spyOn(ruleForm, 'getDefaultQueriesAsync');
 
 jest.setTimeout(60 * 1000);
 
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
-  getDefaultQueriesAsync: jest.mocked(ruleForm.getDefaultQueriesAsync),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -121,17 +120,6 @@ describe('RuleEditor grafana managed rules', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.getDefaultQueriesAsync.mockResolvedValue({
-      queries: [
-        {
-          refId: 'A',
-          relativeTimeRange: { from: 900, to: 1000 },
-          datasourceUid: 'dsuid',
-          model: { refId: 'A' },
-          queryType: 'query',
-        },
-      ],
-    });
     mocks.api.fetchRulerRules.mockResolvedValue({
       [folder.title]: [
         {
@@ -146,16 +134,8 @@ describe('RuleEditor grafana managed rules', () => {
                 uid,
                 namespace_uid: 'abcd',
                 namespace_id: 1,
-                condition: 'A',
-                data: [
-                  {
-                    refId: 'A',
-                    relativeTimeRange: { from: 900, to: 1000 },
-                    datasourceUid: 'dsuid',
-                    model: { refId: 'A' },
-                    queryType: 'query',
-                  },
-                ],
+                condition: 'B',
+                data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
@@ -174,8 +154,8 @@ describe('RuleEditor grafana managed rules', () => {
     expect(nameInput).toHaveValue('my great new rule');
     //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
-    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some summary');
+    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some description');
 
     //check that slashed folders are not in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
@@ -191,9 +171,9 @@ describe('RuleEditor grafana managed rules', () => {
     // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
-    await clickSelectOptionMatch(ui.inputs.annotationKey(2).get(), /Add new/);
-    await userEvent.type(byRole('textbox').get(ui.inputs.annotationKey(2).get()), 'custom');
-    await userEvent.type(ui.inputs.annotationValue(2).get(), 'value');
+    await userEvent.click(screen.getByText('Add custom annotation'));
+    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
+    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
     //add a label
     await userEvent.type(getLabelInput(ui.inputs.labelKey(2).get()), 'custom{enter}');
@@ -203,12 +183,8 @@ describe('RuleEditor grafana managed rules', () => {
     await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
-    //check that '+ Add new' option is in folders drop down even if we don't have values
-    const emptyFolderInput = await ui.inputs.folderContainer.find();
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
-    await renderRuleEditor(uid);
-    await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
-    expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
@@ -223,16 +199,8 @@ describe('RuleEditor grafana managed rules', () => {
             for: '5m',
             grafana_alert: {
               uid,
-              condition: 'A',
-              data: [
-                {
-                  refId: 'A',
-                  relativeTimeRange: { from: 900, to: 1000 },
-                  datasourceUid: 'dsuid',
-                  model: { refId: 'A' },
-                  queryType: 'query',
-                },
-              ],
+              condition: 'B',
+              data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
               is_paused: false,
               no_data_state: 'NoData',

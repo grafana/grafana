@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { omit } from 'lodash';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
+import React, { InputHTMLAttributes } from 'react';
 
 import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
@@ -23,14 +23,14 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
 
 const getSecretFormFieldStyles = () => {
   return {
-    noRadiusInput: css`
-      border-bottom-right-radius: 0 !important;
-      border-top-right-radius: 0 !important;
-    `,
-    noRadiusButton: css`
-      border-bottom-left-radius: 0 !important;
-      border-top-left-radius: 0 !important;
-    `,
+    noRadiusInput: css({
+      borderBottomRightRadius: '0 !important',
+      borderTopRightRadius: '0 !important',
+    }),
+    noRadiusButton: css({
+      borderBottomLeftRadius: '0 !important',
+      borderTopLeftRadius: '0 !important',
+    }),
   };
 };
 /**
@@ -39,7 +39,7 @@ const getSecretFormFieldStyles = () => {
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
  */
-export const SecretFormField: FunctionComponent<Props> = ({
+export const SecretFormField = ({
   label = 'Password',
   labelWidth,
   inputWidth = 12,

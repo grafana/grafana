@@ -22,7 +22,7 @@ type Playlist struct {
 	OrgId    int64  `json:"-" db:"org_id"`
 }
 
-type PlaylistDTO = playlist.Playlist
+type PlaylistDTO = playlist.Spec
 type PlaylistItemDTO = playlist.Item
 type PlaylistItemType = playlist.ItemType
 
@@ -80,4 +80,11 @@ type GetPlaylistByUidQuery struct {
 type GetPlaylistItemsByUidQuery struct {
 	PlaylistUID string
 	OrgId       int64
+}
+
+func PlaylistToResource(p PlaylistDTO) playlist.K8sResource {
+	copy := p
+	r := playlist.NewK8sResource(p.Uid, &copy)
+	copy.Uid = "" // remove it from the payload
+	return r
 }

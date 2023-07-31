@@ -1,36 +1,32 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Footer } from '../Footer/Footer';
-import { PageHeader } from '../PageHeader/PageHeader';
-import { Page as NewPage } from '../PageNew/Page';
-
-import { OldNavOnly } from './OldNavOnly';
 import { PageContents } from './PageContents';
+import { PageHeader } from './PageHeader';
+import { PageTabs } from './PageTabs';
 import { PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
 
-export const OldPage: PageType = ({
+export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  renderTitle,
+  onEditTitle,
+  actions,
+  subTitle,
   children,
   className,
-  toolbar,
-  scrollRef,
-  scrollTop,
-  layout = PageLayoutType.Standard,
-  renderTitle,
-  subTitle,
-  actions,
   info,
+  layout = PageLayoutType.Standard,
+  scrollTop,
+  scrollRef,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -39,87 +35,90 @@ export const OldPage: PageType = ({
 
   usePageTitle(navModel, pageNav);
 
-  const pageHeaderNav = pageNav ?? navModel?.main;
+  const pageHeaderNav = pageNav ?? navModel?.node;
 
-  useEffect(() => {
+  // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
+  // This prevents flickering sectionNav when going from dashboard to settings for example
+  useLayoutEffect(() => {
     if (navModel) {
-      // This is needed for chrome to update it's chromeless state
       chrome.update({
-        sectionNav: navModel.node,
+        sectionNav: navModel,
+        pageNav: pageNav,
+        layout: layout,
       });
-    } else {
-      // Need to trigger a chrome state update for the route change to be processed
-      chrome.update({});
     }
-  }, [navModel, chrome]);
+  }, [navModel, pageNav, chrome, layout]);
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={cx('page-scrollbar-content', className)}>
+          <div className={styles.pageInner}>
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
-                info={info}
+                onEditTitle={onEditTitle}
                 navItem={pageHeaderNav}
                 renderTitle={renderTitle}
+                info={info}
                 subTitle={subTitle}
               />
             )}
-            {children}
-            <Footer />
+            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+            <div className={styles.pageContent}>{children}</div>
           </div>
         </CustomScrollbar>
       )}
       {layout === PageLayoutType.Canvas && (
-        <>
-          {toolbar}
-          <div className={styles.scrollWrapper}>
-            <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-              <div className={cx(styles.content, !toolbar && styles.contentWithoutToolbar)}>{children}</div>
-            </CustomScrollbar>
-          </div>
-        </>
+        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+          <div className={styles.canvasContent}>{children}</div>
+        </CustomScrollbar>
       )}
-      {layout === PageLayoutType.Custom && (
-        <>
-          {toolbar}
-          {children}
-        </>
-      )}
+      {layout === PageLayoutType.Custom && children}
     </div>
   );
 };
 
-OldPage.Contents = PageContents;
-OldPage.OldNavOnly = OldNavOnly;
+Page.Contents = PageContents;
 
-export const Page: PageType = config.featureToggles.topnav ? NewPage : OldPage;
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      label: 'page-wrapper',
+      height: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
+    }),
+    pageContent: css({
+      label: 'page-content',
+      flexGrow: 1,
+    }),
+    pageInner: css({
+      label: 'page-inner',
+      padding: theme.spacing(2),
+      borderRadius: theme.shape.borderRadius(1),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: 'none',
+      background: theme.colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      margin: theme.spacing(0, 0, 0, 0),
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    flex: '1 1 0',
-    flexDirection: 'column',
-    minHeight: 0,
-  }),
-  scrollWrapper: css({
-    width: '100%',
-    flexGrow: 1,
-    minHeight: 0,
-    display: 'flex',
-  }),
-  content: css({
-    display: 'flex',
-    flexDirection: 'column',
-    padding: theme.spacing(0, 2, 2, 2),
-    flexBasis: '100%',
-    flexGrow: 1,
-  }),
-  contentWithoutToolbar: css({
-    padding: theme.spacing(2),
-  }),
-});
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(2, 2, 0, 1),
+        padding: theme.spacing(3),
+      },
+    }),
+    canvasContent: css({
+      label: 'canvas-content',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2),
+      flexBasis: '100%',
+      flexGrow: 1,
+    }),
+  };
+};

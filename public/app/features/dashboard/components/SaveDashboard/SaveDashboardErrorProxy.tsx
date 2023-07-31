@@ -14,21 +14,21 @@ interface SaveDashboardErrorProxyProps {
   /** original dashboard */
   dashboard: DashboardModel;
   /** dashboard save model with applied modifications, i.e. title */
-  dashboardSaveModel: any;
+  dashboardSaveModel: DashboardModel;
   error: FetchError;
   onDismiss: () => void;
 }
 
-export const SaveDashboardErrorProxy: React.FC<SaveDashboardErrorProxyProps> = ({
+export const SaveDashboardErrorProxy = ({
   dashboard,
   dashboardSaveModel,
   error,
   onDismiss,
-}) => {
+}: SaveDashboardErrorProxyProps) => {
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
-    if (error.data && isHandledError(error.data.status)) {
+    if (error.data && proxyHandlesError(error.data.status)) {
       error.isHandled = true;
     }
   }, [error]);
@@ -109,7 +109,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
   );
 };
 
-const isHandledError = (errorStatus: string) => {
+export const proxyHandlesError = (errorStatus: string) => {
   switch (errorStatus) {
     case 'version-mismatch':
     case 'name-exists':

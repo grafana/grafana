@@ -14,13 +14,11 @@ type LoginServiceMock struct {
 	ExpectedError    error
 }
 
-func (s LoginServiceMock) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) error {
+func (s LoginServiceMock) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) (*user.User, error) {
 	if s.ExpectedUserFunc != nil {
-		cmd.Result = s.ExpectedUserFunc(cmd)
-		return s.ExpectedError
+		return s.ExpectedUserFunc(cmd), s.ExpectedError
 	}
-	cmd.Result = s.ExpectedUser
-	return s.ExpectedError
+	return s.ExpectedUser, s.ExpectedError
 }
 
 func (s LoginServiceMock) DisableExternalUser(ctx context.Context, username string) error {

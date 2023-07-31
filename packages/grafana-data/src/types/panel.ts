@@ -66,6 +66,9 @@ export interface PanelData {
 
   /** Contains the range from the request or a shifted time range if a request uses relative time */
   timeRange: TimeRange;
+
+  /** traceIds collected during the processing of the requests */
+  traceIds?: string[];
 }
 
 export interface PanelProps<T = any> {
@@ -160,7 +163,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
  * @internal
  */
 export interface PanelMenuItem {
-  type?: 'submenu' | 'divider';
+  type?: 'submenu' | 'divider' | 'group';
   text: string;
   iconClassName?: IconName;
   onClick?: (event: React.MouseEvent<any>) => void;

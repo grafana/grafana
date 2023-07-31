@@ -6,6 +6,7 @@ import {
   StandardEditorContext,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
@@ -23,7 +24,7 @@ const supplier = (
   addHeatmapCalculationOptions('', builder, options);
 };
 
-export const HeatmapTransformerEditor: React.FC<TransformerUIProps<HeatmapTransformerOptions>> = (props) => {
+export const HeatmapTransformerEditor = (props: TransformerUIProps<HeatmapTransformerOptions>) => {
   useEffect(() => {
     if (!props.options.xBuckets?.mode) {
       const opts = getDefaultOptions(supplier);
@@ -48,4 +49,5 @@ export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransf
   name: heatmapTransformer.name,
   description: heatmapTransformer.description,
   state: PluginState.alpha,
+  categories: new Set([TransformerCategory.CreateNewVisualization]),
 };

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -118,12 +119,10 @@ func (a *AlertStoreMock) PauseAllAlerts(context.Context, *models.PauseAllAlertCo
 
 func TestEngineProcessJob(t *testing.T) {
 	usMock := &usagestats.UsageStatsMock{T: t}
+	usValidatorMock := &validator.FakeUsageStatsValidator{}
 
 	encProvider := encryptionprovider.ProvideEncryptionProvider()
-	cfg := setting.NewCfg()
-	settings := &setting.OSSImpl{Cfg: cfg}
-
-	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, settings)
+	encService, err := encryptionservice.ProvideEncryptionService(encProvider, usMock, setting.NewCfg())
 	require.NoError(t, err)
 	tracer := tracing.InitializeTracerForTest()
 
@@ -131,7 +130,7 @@ func TestEngineProcessJob(t *testing.T) {
 	dsMock := &fd.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{{ID: 1, Type: datasources.DS_PROMETHEUS}},
 	}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock, annotationstest.NewFakeAnnotationsRepo())
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, usValidatorMock, encService, nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock, annotationstest.NewFakeAnnotationsRepo())
 	setting.AlertingEvaluationTimeout = 30 * time.Second
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3

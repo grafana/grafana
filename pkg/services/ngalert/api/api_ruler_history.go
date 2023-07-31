@@ -14,7 +14,7 @@ import (
 )
 
 type Historian interface {
-	QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error)
+	Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error)
 }
 
 type HistorySrv struct {
@@ -27,7 +27,10 @@ const labelQueryPrefix = "labels_"
 func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) response.Response {
 	from := c.QueryInt64("from")
 	to := c.QueryInt64("to")
+	limit := c.QueryInt("limit")
 	ruleUID := c.Query("ruleUID")
+	dashUID := c.Query("dashboardUID")
+	panelID := c.QueryInt64("panelID")
 
 	labels := make(map[string]string)
 	for k, v := range c.Req.URL.Query() {
@@ -39,12 +42,15 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 	query := models.HistoryQuery{
 		RuleUID:      ruleUID,
 		OrgID:        c.OrgID,
+		DashboardUID: dashUID,
+		PanelID:      panelID,
 		SignedInUser: c.SignedInUser,
 		From:         time.Unix(from, 0),
 		To:           time.Unix(to, 0),
+		Limit:        limit,
 		Labels:       labels,
 	}
-	frame, err := srv.hist.QueryStates(c.Req.Context(), query)
+	frame, err := srv.hist.Query(c.Req.Context(), query)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}

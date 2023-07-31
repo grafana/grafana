@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId } from 'testing-library-selector';
@@ -19,7 +19,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { configureStore } from 'app/store/configureStore';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
@@ -46,13 +46,13 @@ const dataSources = {
   }),
 };
 
-const defaultOptions: PanelOptions = {
+const defaultOptions: Options = {
   labels: '',
   alertmanager: 'Alertmanager',
   expandAll: false,
 };
 
-const defaultProps: PanelProps<PanelOptions> = {
+const defaultProps: PanelProps<Options> = {
   data: { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange() },
   id: 1,
   timeRange: getDefaultTimeRange(),
@@ -79,7 +79,7 @@ const defaultProps: PanelProps<PanelOptions> = {
   width: 320,
 };
 
-const renderPanel = (options: PanelOptions = defaultOptions) => {
+const renderPanel = (options: Options = defaultOptions) => {
   const store = configureStore();
   const dash = new DashboardModel({ id: 1 } as Dashboard);
   dash.formatDate = (time: number) => new Date(time).toISOString();
@@ -116,34 +116,30 @@ describe('AlertGroupsPanel', () => {
   });
 
   it('renders the panel with the groups', async () => {
-    await renderPanel();
+    renderPanel();
 
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const groups = ui.group.getAll();
+    const groups = await ui.group.findAll();
 
     expect(groups).toHaveLength(2);
 
     expect(groups[0]).toHaveTextContent('No grouping');
-    expect(groups[1]).toHaveTextContent('severity=warningregion=US-Central');
+    expect(groups[1]).toHaveTextContent('severitywarning regionUS-Central');
 
     const alerts = ui.alert.queryAll();
     expect(alerts).toHaveLength(0);
   });
 
   it('renders panel with groups expanded', async () => {
-    await renderPanel({ labels: '', alertmanager: 'Alertmanager', expandAll: true });
+    renderPanel({ labels: '', alertmanager: 'Alertmanager', expandAll: true });
 
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const alerts = ui.alert.queryAll();
+    const alerts = await ui.alert.findAll();
     expect(alerts).toHaveLength(3);
   });
 
   it('filters alerts by label filter', async () => {
-    await renderPanel({ labels: 'region=US-Central', alertmanager: 'Alertmanager', expandAll: true });
+    renderPanel({ labels: 'region=US-Central', alertmanager: 'Alertmanager', expandAll: true });
 
-    await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
-    const alerts = ui.alert.queryAll();
-
+    const alerts = await ui.alert.findAll();
     expect(alerts).toHaveLength(2);
   });
 });

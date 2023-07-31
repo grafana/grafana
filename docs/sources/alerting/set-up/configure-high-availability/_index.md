@@ -2,6 +2,7 @@
 aliases:
   - ../high-availability/enable-alerting-ha/
   - ../unified-alerting/high-availability/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-high-availability/
 description: Enable alerting high availability
 keywords:
   - grafana
@@ -9,13 +10,18 @@ keywords:
   - tutorials
   - ha
   - high availability
+labels:
+  products:
+    - enterprise
+    - oss
 title: Enable alerting high availability
-weight: 300
+weight: 400
 ---
 
 # Enable alerting high availability
 
 You can enable alerting high availability support by updating the Grafana configuration file. If you run Grafana in a Kubernetes cluster, additional steps are required. Both options are described below.
+Please note that the deduplication is done for the notification, but the alert will still be evaluated on every Grafana instance. This means that events in alerting state history will be duplicated by the number of Grafana instances running.
 
 ## Enable alerting high availability in Grafana
 
@@ -35,12 +41,12 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
 
 If you are using Kubernetes, you can expose the pod IP [through an environment variable](https://kubernetes.io/docs/tasks/inject-data-application/environment-variable-expose-pod-information/) via the container definition.
 
-```bash
+```yaml
 env:
-- name: POD_IP
-  valueFrom:
-    fieldRef:
-      fieldPath: status.podIP
+  - name: POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
 ```
 
 1. Add the port 9094 to the Grafana deployment:
@@ -85,7 +91,7 @@ spec:
     app: grafana
 ```
 
-4. Make sure your grafana deployment has the label matching the selector, e.g. `app:grafana`.
+4. Make sure your grafana deployment has the label matching the selector, e.g. `app:grafana`:
 
 5. Add in the grafana.ini:
 

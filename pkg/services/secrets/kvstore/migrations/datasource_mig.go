@@ -55,12 +55,12 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	if needCompatibility || needMigration {
 		logger.Debug("performing secret migration", "needs migration", needMigration, "needs compatibility", needCompatibility)
 		query := &datasources.GetAllDataSourcesQuery{}
-		err := s.dataSourcesService.GetAllDataSources(ctx, query)
+		dsList, err := s.dataSourcesService.GetAllDataSources(ctx, query)
 		if err != nil {
 			return err
 		}
 
-		for _, ds := range query.Result {
+		for _, ds := range dsList {
 			secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
 			if err != nil {
 				return err

@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
 import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
 import {
   ClipboardButton,
   Field,
@@ -14,11 +12,11 @@ import {
   Input,
   Label,
   ModalsContext,
-  Spinner,
   Switch,
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
@@ -39,10 +37,12 @@ import {
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
+import { SettingsBar } from './SettingsBar';
+import { SettingsSummary } from './SettingsSummary';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
-export interface ConfigPublicDashoardForm {
+export interface ConfigPublicDashboardForm {
   isAnnotationsEnabled: boolean;
   isTimeSelectionEnabled: boolean;
   isPaused: boolean;
@@ -50,12 +50,12 @@ export interface ConfigPublicDashoardForm {
 
 const ConfigPublicDashboard = () => {
   const styles = useStyles2(getStyles);
-  const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
+  const { showModal, hideModal } = useContext(ModalsContext);
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
-    config.licenseInfo.edition === GrafanaEdition.Enterprise && !!config.featureToggles.publicDashboardsEmailSharing;
+    !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
@@ -63,9 +63,11 @@ const ConfigPublicDashboard = () => {
 
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-  const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
+  const isDataLoading = isUpdateLoading || isGetLoading;
+  const disableInputs = !hasWritePermissions || isDataLoading;
+  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
 
-  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
+  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
       isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
@@ -73,7 +75,7 @@ const ConfigPublicDashboard = () => {
     },
   });
 
-  const onUpdate = async (values: ConfigPublicDashoardForm) => {
+  const onUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
     const req = {
@@ -89,7 +91,7 @@ const ConfigPublicDashboard = () => {
     update(req);
   };
 
-  const onChange = async (name: keyof ConfigPublicDashoardForm, value: boolean) => {
+  const onChange = async (name: keyof ConfigPublicDashboardForm, value: boolean) => {
     setValue(name, value);
     await handleSubmit((data) => onUpdate(data))();
   };
@@ -98,30 +100,24 @@ const ConfigPublicDashboard = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
-      activeTab: 'share',
+      activeTab: 'public-dashboard',
     });
   };
 
   return (
-    <div>
+    <div className={styles.configContainer}>
       {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="edit" />}
       {dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />}
       {!!unsupportedDataSources.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      <div className={styles.titleContainer}>
-        <HorizontalGroup spacing="sm" align="center">
-          <h4 className={styles.title}>Settings</h4>
-          {(isUpdateLoading || isGetLoading) && <Spinner size={14} />}
-        </HorizontalGroup>
-      </div>
-      <Configuration disabled={disableInputs} onChange={onChange} register={register} />
-      <hr />
+
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
-      <Field label="Dashboard URL" className={styles.publicUrl}>
+
+      <Field label="Dashboard URL" className={styles.fieldSpace}>
         <Input
-          value={generatePublicDashboardUrl(publicDashboard!)}
+          value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
           disabled={!publicDashboard?.isEnabled}
           data-testid={selectors.CopyUrlInput}
@@ -130,19 +126,16 @@ const ConfigPublicDashboard = () => {
               data-testid={selectors.CopyUrlButton}
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
-              getText={() => generatePublicDashboardUrl(publicDashboard!)}
+              getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
             >
               Copy
             </ClipboardButton>
           }
         />
       </Field>
-      <Layout
-        orientation={isDesktop ? 0 : 1}
-        justify={isDesktop ? 'flex-end' : 'flex-start'}
-        align={isDesktop ? 'center' : 'normal'}
-      >
-        <HorizontalGroup spacing="sm">
+
+      <Field className={styles.fieldSpace}>
+        <Layout>
           <Switch
             {...register('isPaused')}
             disabled={disableInputs}
@@ -161,10 +154,34 @@ const ConfigPublicDashboard = () => {
           >
             Pause sharing dashboard
           </Label>
-        </HorizontalGroup>
+        </Layout>
+      </Field>
+
+      <Field className={styles.fieldSpace}>
+        <SettingsBar
+          title="Settings"
+          headerElement={({ className }) => (
+            <SettingsSummary
+              className={className}
+              isDataLoading={isDataLoading}
+              timeRange={timeRange}
+              timeSelectionEnabled={publicDashboard?.timeSelectionEnabled}
+              annotationsEnabled={publicDashboard?.annotationsEnabled}
+            />
+          )}
+          data-testid={selectors.SettingsDropdown}
+        >
+          <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
+        </SettingsBar>
+      </Field>
+
+      <Layout
+        orientation={isDesktop ? 0 : 1}
+        justify={isDesktop ? 'flex-end' : 'flex-start'}
+        align={isDesktop ? 'center' : 'normal'}
+      >
         <HorizontalGroup justify="flex-end">
           <DeletePublicDashboardButton
-            className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
             type="button"
             disabled={disableInputs}
             data-testid={selectors.DeleteButton}
@@ -187,23 +204,21 @@ const ConfigPublicDashboard = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  titleContainer: css`
-    margin-bottom: ${theme.spacing(2)};
+  configContainer: css`
+    label: config container;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
   `,
-  title: css`
-    margin: 0;
-  `,
-  publicUrl: css`
+  fieldSpace: css`
+    label: field space;
     width: 100%;
-    padding-top: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(3)};
+    margin-bottom: 0;
   `,
-  deleteButton: css`
-    margin-left: ${theme.spacing(3)}; ;
-  `,
-  deleteButtonMobile: css`
-    margin-top: ${theme.spacing(2)}; ;
-  `,
+  timeRange: css({
+    display: 'inline-block',
+  }),
 });
 
 export default ConfigPublicDashboard;

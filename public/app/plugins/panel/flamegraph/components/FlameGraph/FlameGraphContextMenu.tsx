@@ -2,79 +2,56 @@ import React from 'react';
 
 import { MenuItem, ContextMenu } from '@grafana/ui';
 
-import { ContextMenuData } from '../types';
-
-import { ItemWithStart } from './dataTransform';
+import { ClickedItemData } from '../types';
 
 type Props = {
-  contextMenuData: ContextMenuData;
-  levels: ItemWithStart[][];
-  totalTicks: number;
-  graphRef: React.RefObject<HTMLCanvasElement>;
-  setContextMenuData: (event: ContextMenuData | undefined) => void;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
-  setRangeMin: (range: number) => void;
-  setRangeMax: (range: number) => void;
+  itemData: ClickedItemData;
+  onMenuItemClick: () => void;
+  onItemFocus: () => void;
+  onSandwich: () => void;
 };
 
-const FlameGraphContextMenu = ({
-  contextMenuData,
-  graphRef,
-  totalTicks,
-  levels,
-  setContextMenuData,
-  setTopLevelIndex,
-  setSelectedBarIndex,
-  setRangeMin,
-  setRangeMax,
-}: Props) => {
-  const renderMenuItems = () => {
+const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandwich }: Props) => {
+  function renderItems() {
     return (
       <>
         <MenuItem
           label="Focus block"
           icon={'eye'}
           onClick={() => {
-            if (graphRef.current && contextMenuData) {
-              setTopLevelIndex(contextMenuData.levelIndex);
-              setSelectedBarIndex(contextMenuData.barIndex);
-              setRangeMin(levels[contextMenuData.levelIndex][contextMenuData.barIndex].start / totalTicks);
-              setRangeMax(
-                (levels[contextMenuData.levelIndex][contextMenuData.barIndex].start +
-                  levels[contextMenuData.levelIndex][contextMenuData.barIndex].value) /
-                  totalTicks
-              );
-              setContextMenuData(undefined);
-            }
+            onItemFocus();
+            onMenuItemClick();
           }}
         />
         <MenuItem
           label="Copy function name"
           icon={'copy'}
           onClick={() => {
-            if (graphRef.current && contextMenuData) {
-              const bar = levels[contextMenuData.levelIndex][contextMenuData.barIndex];
-              navigator.clipboard.writeText(bar.label).then(() => {
-                setContextMenuData(undefined);
-              });
-            }
+            navigator.clipboard.writeText(itemData.label).then(() => {
+              onMenuItemClick();
+            });
+          }}
+        />
+        <MenuItem
+          label="Sandwich view"
+          icon={'gf-show-context'}
+          onClick={() => {
+            onSandwich();
+            onMenuItemClick();
           }}
         />
       </>
     );
-  };
+  }
 
   return (
     <div data-testid="contextMenu">
-      {contextMenuData.e.clientX && contextMenuData.e.clientY && (
-        <ContextMenu
-          renderMenuItems={() => renderMenuItems()}
-          x={contextMenuData.e.clientX + 10}
-          y={contextMenuData.e.clientY}
-          focusOnOpen={false}
-        ></ContextMenu>
-      )}
+      <ContextMenu
+        renderMenuItems={renderItems}
+        x={itemData.posX + 10}
+        y={itemData.posY}
+        focusOnOpen={false}
+      ></ContextMenu>
     </div>
   );
 };

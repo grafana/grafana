@@ -3,15 +3,14 @@ import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import {
-  CoreApp,
   DataQuery,
-  DataSourceApi,
   DataSourceInstanceSettings,
-  DataSourceJsonData,
   LoadingState,
   PanelData,
+  rangeUtil,
   RelativeTimeRange,
 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -69,36 +68,32 @@ export class QueryRows extends PureComponent<Props> {
         }
         return {
           ...item,
-          model: { ...item.model, maxDataPoints: options.maxDataPoints },
+          model: {
+            ...item.model,
+            maxDataPoints: options.maxDataPoints,
+            intervalMs: options.minInterval ? rangeUtil.intervalToMs(options.minInterval) : undefined,
+          },
         };
       })
     );
   };
 
-  onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
+  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
-    const updatedQueries = await Promise.all(
-      queries.map(async (item, itemIndex) => {
-        if (itemIndex !== index) {
-          return item;
-        }
+    const updatedQueries = queries.map((item, itemIndex) => {
+      if (itemIndex !== index) {
+        return item;
+      }
 
-        const previousSettings = this.getDataSourceSettings(item);
+      const previousSettings = this.getDataSourceSettings(item);
 
-        // Copy model if changing to a datasource of same type.
-        if (settings.type === previousSettings?.type) {
-          return copyModel(item, settings);
-        }
-        let ds;
-        try {
-          ds = await getDataSourceSrv().get(settings.uid); // get new ds
-        } catch (e) {
-          return newModel(item, settings);
-        }
-        return newModel(item, settings, ds);
-      })
-    );
+      // Copy model if changing to a datasource of same type.
+      if (settings.type === previousSettings?.type) {
+        return copyModel(item, settings);
+      }
+      return newModel(item, settings);
+    });
 
     onQueriesChange(updatedQueries);
   };
@@ -159,59 +154,61 @@ export class QueryRows extends PureComponent<Props> {
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query, index) => {
-                  const data: PanelData = this.props.data?.[query.refId] ?? {
-                    series: [],
-                    state: LoadingState.NotStarted,
-                  };
-                  const dsSettings = this.getDataSourceSettings(query);
+                <Stack direction="column">
+                  {queries.map((query, index) => {
+                    const data: PanelData = this.props.data?.[query.refId] ?? {
+                      series: [],
+                      state: LoadingState.NotStarted,
+                    };
+                    const dsSettings = this.getDataSourceSettings(query);
 
-                  const isAlertCondition = this.props.condition === query.refId;
-                  const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
+                    const isAlertCondition = this.props.condition === query.refId;
+                    const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
 
-                  if (!dsSettings) {
+                    if (!dsSettings) {
+                      return (
+                        <DatasourceNotFound
+                          key={`${query.refId}-${index}`}
+                          index={index}
+                          model={query.model}
+                          onUpdateDatasource={() => {
+                            const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
+                            if (defaultDataSource) {
+                              this.onChangeDataSource(defaultDataSource, index);
+                            }
+                          }}
+                          onRemoveQuery={() => {
+                            this.onRemoveQuery(query);
+                          }}
+                        />
+                      );
+                    }
+
                     return (
-                      <DatasourceNotFound
-                        key={`${query.refId}-${index}`}
+                      <QueryWrapper
                         index={index}
-                        model={query.model}
-                        onUpdateDatasource={() => {
-                          const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
-                          if (defaultDataSource) {
-                            this.onChangeDataSource(defaultDataSource, index);
-                          }
-                        }}
-                        onRemoveQuery={() => {
-                          this.onRemoveQuery(query);
-                        }}
+                        key={query.refId}
+                        dsSettings={dsSettings}
+                        data={data}
+                        error={error}
+                        query={query}
+                        onChangeQuery={this.onChangeQuery}
+                        onRemoveQuery={this.onRemoveQuery}
+                        queries={[...queries, ...expressions]}
+                        onChangeDataSource={this.onChangeDataSource}
+                        onDuplicateQuery={this.props.onDuplicateQuery}
+                        onChangeTimeRange={this.onChangeTimeRange}
+                        onChangeQueryOptions={this.onChangeQueryOptions}
+                        thresholds={thresholdByRefId[query.refId]?.config}
+                        thresholdsType={thresholdByRefId[query.refId]?.mode}
+                        onRunQueries={this.props.onRunQueries}
+                        condition={this.props.condition}
+                        onSetCondition={this.props.onSetCondition}
                       />
                     );
-                  }
-
-                  return (
-                    <QueryWrapper
-                      index={index}
-                      key={query.refId}
-                      dsSettings={dsSettings}
-                      data={data}
-                      error={error}
-                      query={query}
-                      onChangeQuery={this.onChangeQuery}
-                      onRemoveQuery={this.onRemoveQuery}
-                      queries={queries}
-                      onChangeDataSource={this.onChangeDataSource}
-                      onDuplicateQuery={this.props.onDuplicateQuery}
-                      onChangeTimeRange={this.onChangeTimeRange}
-                      onChangeQueryOptions={this.onChangeQueryOptions}
-                      thresholds={thresholdByRefId[query.refId]?.config}
-                      thresholdsType={thresholdByRefId[query.refId]?.mode}
-                      onRunQueries={this.props.onRunQueries}
-                      condition={this.props.condition}
-                      onSetCondition={this.props.onSetCondition}
-                    />
-                  );
-                })}
-                {provided.placeholder}
+                  })}
+                  {provided.placeholder}
+                </Stack>
               </div>
             );
           }}
@@ -235,34 +232,13 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
   };
 }
 
-function newModel(
-  item: AlertQuery,
-  settings: DataSourceInstanceSettings,
-  ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>
-): Omit<AlertQuery, 'datasource'> {
-  if (!ds) {
-    return {
-      refId: item.refId,
-      relativeTimeRange: item.relativeTimeRange,
-      queryType: '',
-      datasourceUid: settings.uid,
-      model: {
-        refId: item.refId,
-        hide: false,
-        datasource: {
-          type: settings.type,
-          uid: settings.uid,
-        },
-      },
-    };
-  }
+function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
     datasourceUid: settings.uid,
     model: {
-      ...ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting),
       refId: item.refId,
       hide: false,
       datasource: {
@@ -295,7 +271,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
 
   return (
     <EmptyQueryWrapper>
-      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen>
+      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
         <Card>
           <Card.Heading>This datasource has been removed</Card.Heading>
           <Card.Description>

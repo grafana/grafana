@@ -207,6 +207,43 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
+
+    it('should be possible to filter plugins by type', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterByType=datasource&filterBy=all', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.datasource }),
+      ]);
+      await waitFor(() => expect(queryByText('Plugin 3')).toBeInTheDocument());
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 1')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+    });
+
+    it('should be possible to filter plugins both by type and a keyword', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterByType=datasource&filterBy=all&q=Foo', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Foo plugin', type: PluginType.datasource }),
+      ]);
+      await waitFor(() => expect(queryByText('Foo plugin')).toBeInTheDocument());
+      // Other plugin types shouldn't be shown
+      expect(queryByText('Plugin 1')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+    });
+
+    it('should list all available plugins if the keyword is empty', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=all&q=', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.app }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.panel }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.datasource }),
+      ]);
+
+      // We did not filter for any specific plugin type, so all plugins should be shown
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 2')).toBeInTheDocument();
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+    });
   });
 
   describe('when sorting', () => {

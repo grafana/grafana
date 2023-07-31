@@ -46,27 +46,27 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 	}
 
 	switch plugin.Signature {
-	case plugins.SignatureUnsigned:
+	case plugins.SignatureStatusUnsigned:
 		if authorized := s.authorizer.CanLoadPlugin(plugin); !authorized {
 			s.log.Debug("Plugin is unsigned", "pluginID", plugin.ID)
 			return &plugins.SignatureError{
 				PluginID:        plugin.ID,
-				SignatureStatus: plugins.SignatureUnsigned,
+				SignatureStatus: plugins.SignatureStatusUnsigned,
 			}
 		}
 		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID)
 		return nil
-	case plugins.SignatureInvalid:
+	case plugins.SignatureStatusInvalid:
 		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)
 		return &plugins.SignatureError{
 			PluginID:        plugin.ID,
-			SignatureStatus: plugins.SignatureInvalid,
+			SignatureStatus: plugins.SignatureStatusInvalid,
 		}
-	case plugins.SignatureModified:
+	case plugins.SignatureStatusModified:
 		s.log.Debug("Plugin has a modified signature", "pluginID", plugin.ID)
 		return &plugins.SignatureError{
 			PluginID:        plugin.ID,
-			SignatureStatus: plugins.SignatureModified,
+			SignatureStatus: plugins.SignatureStatusModified,
 		}
 	default:
 		s.log.Debug("Plugin has an unrecognized plugin signature state", "pluginID", plugin.ID, "signature",

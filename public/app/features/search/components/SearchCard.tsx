@@ -181,7 +181,7 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
     card: css`
       background-color: ${theme.colors.background.secondary};
       border: 1px solid ${theme.colors.border.medium};
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.default};
       display: flex;
       flex-direction: column;
 
@@ -241,8 +241,8 @@ const getStyles = (theme: GrafanaTheme2, markerWidth = 0, popperWidth = 0) => {
     info: css`
       align-items: center;
       background-color: ${theme.colors.background.canvas};
-      border-bottom-left-radius: 4px;
-      border-bottom-right-radius: 4px;
+      border-bottom-left-radius: ${theme.shape.radius.default};
+      border-bottom-right-radius: ${theme.shape.radius.default};
       display: flex;
       height: ${theme.spacing(7)};
       gap: ${theme.spacing(1)};

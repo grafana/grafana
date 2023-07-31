@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Placement } from '@popperjs/core';
 import classnames from 'classnames';
-import React, { FC, ReactElement, ReactNode, useRef } from 'react';
+import React, { ReactElement, ReactNode, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -19,7 +19,7 @@ export interface HoverCardProps {
   arrow?: boolean;
 }
 
-export const HoverCard: FC<HoverCardProps> = ({
+export const HoverCard = ({
   children,
   header,
   content,
@@ -29,7 +29,7 @@ export const HoverCard: FC<HoverCardProps> = ({
   wrapperClassName,
   disabled = false,
   ...rest
-}) => {
+}: HoverCardProps) => {
   const popoverRef = useRef<HTMLElement>(null);
   const styles = useStyles2(getStyles);
 
@@ -57,6 +57,8 @@ export const HoverCard: FC<HoverCardProps> = ({
                 wrapperClassName={classnames(styles.popover(arrow ? 1.25 : 0), wrapperClassName)}
                 onMouseLeave={hidePopper}
                 onMouseEnter={showPopper}
+                onFocus={showPopper}
+                onBlur={hidePopper}
                 referenceElement={popoverRef.current}
                 renderArrow={
                   arrow
@@ -70,6 +72,8 @@ export const HoverCard: FC<HoverCardProps> = ({
               ref: popoverRef,
               onMouseEnter: showPopper,
               onMouseLeave: hidePopper,
+              onFocus: showPopper,
+              onBlur: hidePopper,
             })}
           </>
         );

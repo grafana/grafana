@@ -1,15 +1,7 @@
 package definitions
 
 import (
-	"fmt"
-
-	"github.com/grafana/alerting/logging"
-	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
@@ -18,6 +10,14 @@ import (
 //
 //     Responses:
 //       200: ContactPoints
+
+// swagger:route GET /api/v1/provisioning/contact-points/export provisioning stable RouteGetContactpointsExport
+//
+// Export all contact points in provisioning file format.
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: PermissionDenied
 
 // swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
@@ -58,7 +58,7 @@ type ContactPointUIDReference struct {
 	UID string
 }
 
-// swagger:parameters RouteGetContactpoints
+// swagger:parameters RouteGetContactpoints RouteGetContactpointsExport
 type ContactPointParams struct {
 	// Filter by name
 	// in: query
@@ -99,64 +99,22 @@ type EmbeddedContactPoint struct {
 	Provenance string `json:"provenance,omitempty"`
 }
 
+// ContactPointExport is the provisioned file export of alerting.ContactPointV1.
+type ContactPointExport struct {
+	OrgID     int64            `json:"orgId" yaml:"orgId"`
+	Name      string           `json:"name" yaml:"name"`
+	Receivers []ReceiverExport `json:"receivers" yaml:"receivers"`
+}
+
+// ReceiverExport is the provisioned file export of alerting.ReceiverV1.
+type ReceiverExport struct {
+	UID                   string     `json:"uid" yaml:"uid"`
+	Type                  string     `json:"type" yaml:"type"`
+	Settings              RawMessage `json:"settings" yaml:"settings"`
+	DisableResolveMessage bool       `json:"disableResolveMessage" yaml:"disableResolveMessage"`
+}
+
 const RedactedValue = "[REDACTED]"
-
-func (e *EmbeddedContactPoint) Valid(decryptFunc receivers.GetDecryptedValueFn) error {
-	if e.Type == "" {
-		return fmt.Errorf("type should not be an empty string")
-	}
-	if e.Settings == nil {
-		return fmt.Errorf("settings should not be empty")
-	}
-	factory, exists := alertingNotify.Factory(e.Type)
-	if !exists {
-		return fmt.Errorf("unknown type '%s'", e.Type)
-	}
-	jsonBytes, err := e.Settings.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	cfg, _ := receivers.NewFactoryConfig(&receivers.NotificationChannelConfig{
-		Settings: jsonBytes,
-		Type:     e.Type,
-	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) logging.Logger {
-		return &logging.FakeLogger{}
-	}, setting.BuildVersion)
-	if _, err := factory(cfg); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (e *EmbeddedContactPoint) SecretKeys() ([]string, error) {
-	notifiers := channels_config.GetAvailableNotifiers()
-	for _, n := range notifiers {
-		if n.Type == e.Type {
-			secureFields := []string{}
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
-		}
-	}
-	return nil, fmt.Errorf("no secrets configured for type '%s'", e.Type)
-}
-
-func (e *EmbeddedContactPoint) ExtractSecrets() (map[string]string, error) {
-	secrets := map[string]string{}
-	secretKeys, err := e.SecretKeys()
-	if err != nil {
-		return nil, err
-	}
-	for _, secretKey := range secretKeys {
-		secretValue := e.Settings.Get(secretKey).MustString()
-		e.Settings.Del(secretKey)
-		secrets[secretKey] = secretValue
-	}
-	return secrets, nil
-}
 
 func (e *EmbeddedContactPoint) ResourceID() string {
 	return e.UID

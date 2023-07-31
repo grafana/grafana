@@ -5,14 +5,20 @@ aliases:
   - /docs/grafana/next/plugins/datasources/
   - /docs/grafana/next/plugins/developing/development/
   - /docs/grafana/next/plugins/panels/
-title: Legacy plugins
+description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Work with legacy plugins
+weight: 600
 ---
 
-# Legacy plugins
+# Work with legacy plugins
 
-> **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../" >}}).
+> **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to our [Plugins]({{< relref "../../plugins" >}}) documentation.
 
-You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins).
+You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](/plugins/).
 
 Grafana already has a strong community of contributors and plugin developers. By making it easier to develop and install plugins with resources such as this guide, we hope that the community can grow even stronger and develop new plugins that we would never think about.
 
@@ -32,7 +38,7 @@ Example plugins
 
 You might also be interested in the available tutorials around authoring a plugin.
 
-- [Grafana Tutorials](https://grafana.com/tutorials/)
+- [Grafana Tutorials]({{< relref "../create-a-grafana-plugin/develop-a-plugin" >}})
 
 ## What languages?
 
@@ -40,29 +46,29 @@ Since everything turns into JavaScript, it's up to you to choose which language 
 
 ## Buildscript
 
-You can use any build system that supports systemjs. All the built content should end up in a folder named `dist` and be committed to the repository. By committing the dist folder, the person who installs your plugin does not have to run any build script. All of our example plugins have a build script configured.
+You can use any build system that supports `systemjs`. All the built content should end up in a folder named `dist` and be committed to the repository. By committing the dist folder, the person who installs your plugin does not have to run any build script. All of our example plugins have a build script configured.
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. See our [documentation](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/) for changes in
+New versions of Grafana can sometimes cause plugins to break. See our [documentation]({{< relref "../migration-guide" >}}) for changes in
 Grafana that can impact your plugin.
 
 ## Metadata
 
-See the [coding styleguide]({{< relref "style-guide/" >}}) for details on the metadata.
+See the [coding styleguide]({{< relref "./style-guide.md" >}}) for details on the metadata.
 
 ## module.(js|ts)
 
 This is the entry point for every plugin. This is the place where you should export
 your plugin implementation. Depending on what kind of plugin you are developing you
-will be expected to export different things. You can find what's expected for [datasource]({{< relref "data-sources/" >}}), [panels]({{< relref "panels/" >}})
-and [apps]({{< relref "apps/" >}}) plugins in the documentation.
+will be expected to export different things. You can find what's expected for [datasource]({{< relref "./data-sources.md" >}}), [panels]({{< relref "./panels.md" >}})
+and [apps]({{< relref "./apps.md" >}}) plugins in the documentation.
 
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/main/public/app/plugins/sdk.ts)
 
-The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "data-sources/" >}}).
+The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "./data-sources.md" >}}).
 
 Example:
 
@@ -91,7 +97,7 @@ export { WorldmapCtrl as PanelCtrl };
 There are three ways that you can start developing a Grafana plugin.
 
 1. Set up a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md) and place your plugin in the `data/plugins` folder.
-1. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/administration/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
+1. Install Grafana and place your plugin in the plugins directory which is set in your config file. By default this is `/var/lib/grafana/plugins` on Linux systems.
 1. Place your plugin directory anywhere you like and specify it grafana.ini.
 
 We encourage people to set up the full Grafana environment so that you can get inspiration from the rest of the Grafana code base.
@@ -110,7 +116,7 @@ There are a number of Grafana events that a plugin can hook into:
 - `data-snapshot-load` is an event triggered to load data when in snapshot mode.
 - `data-error` is used to handle errors on dashboard refresh.
 
-If a panel receives data and hooks into the `data-received` event then it should handle snapshot mode too. Otherwise the panel will not work if saved as a snapshot. [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode/" >}}) describes how to add support for this.
+If a panel receives data and hooks into the `data-received` event then it should handle snapshot mode too. Otherwise the panel will not work if saved as a snapshot. [Getting Plugins to work in Snapshot Mode]({{< relref "./snapshot-mode" >}}) describes how to add support for this.
 
 ## Examples
 
@@ -124,9 +130,9 @@ We have three different examples that you can fork/download to get started devel
 
 ## Other Articles
 
-- [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode/" >}})
-- [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode/" >}})
-- [Grafana Plugin Code Styleguide]({{< relref "style-guide/" >}})
-- [Grafana Apps]({{< relref "apps/" >}})
-- [Grafana Data Sources]({{< relref "data-sources/" >}})
-- [plugin.json Schema]({{< relref "../metadata/" >}})
+- [Getting Plugins to work in Snapshot Mode]({{< relref "./snapshot-mode.md" >}})
+- [Plugin Defaults and Editor Mode]({{< relref "./defaults-and-editor-mode.md" >}})
+- [Grafana Plugin Code Styleguide]({{< relref "./style-guide.md" >}})
+- [Grafana Apps]({{< relref "./apps.md" >}})
+- [Grafana Data Sources]({{< relref "./data-sources.md" >}})
+- [plugin.json Schema]({{< relref "../metadata.md" >}})

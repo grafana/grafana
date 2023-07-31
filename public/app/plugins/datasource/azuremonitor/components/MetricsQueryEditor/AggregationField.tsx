@@ -14,13 +14,13 @@ interface AggregationFieldProps extends AzureQueryEditorFieldProps {
   isLoading: boolean;
 }
 
-const AggregationField: React.FC<AggregationFieldProps> = ({
+const AggregationField = ({
   query,
   variableOptionGroup,
   onQueryChange,
   aggregationOptions,
   isLoading,
-}) => {
+}: AggregationFieldProps) => {
   const handleChange = useCallback(
     (change: SelectableValue<string>) => {
       if (!change.value) {

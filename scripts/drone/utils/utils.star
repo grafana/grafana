@@ -13,7 +13,6 @@ drone_change_template = "`.drone.yml` and `starlark` files have been changed on 
 
 def pipeline(
         name,
-        edition,
         trigger,
         steps,
         services = [],
@@ -30,10 +29,9 @@ def pipeline(
 
     Args:
       name: controls the pipeline name.
-      edition: used to differentiate the pipeline for enterprise builds.
       trigger: a Drone trigger for the pipeline.
       steps: the Drone steps for the pipeline.
-      services: auxilliary services used during the pipeline.
+      services: auxiliary services used during the pipeline.
         Defaults to [].
       platform: abstracts platform specific configuration primarily for different Drone behavior on Windows.
         Defaults to 'linux'.
@@ -63,6 +61,10 @@ def pipeline(
             },
         }
 
+    docker_mount_path = "/var/run/docker.sock"
+    if platform == "windows":
+        docker_mount_path = "//./pipe/docker_engine/"
+
     pipeline = {
         "kind": "pipeline",
         "type": "docker",
@@ -77,7 +79,7 @@ def pipeline(
             {
                 "name": "docker",
                 "host": {
-                    "path": "/var/run/docker.sock",
+                    "path": docker_mount_path,
                 },
             },
         ],
@@ -93,12 +95,6 @@ def pipeline(
 
     pipeline["volumes"].extend(volumes)
     pipeline.update(platform_conf)
-
-    if edition in ("enterprise", "enterprise2"):
-        # We have a custom clone step for enterprise
-        pipeline["clone"] = {
-            "disable": True,
-        }
 
     return pipeline
 
@@ -133,4 +129,9 @@ def notify_pipeline(
 def with_deps(steps, deps = []):
     for step in steps:
         step["depends_on"] = deps
+    return steps
+
+def ignore_failure(steps):
+    for step in steps:
+        step["failure"] = "ignore"
     return steps

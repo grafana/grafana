@@ -1,13 +1,13 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Icon } from '@grafana/ui';
 
-interface RuleLocationProps {
+interface Props {
   namespace: string;
   group?: string;
 }
 
-const RuleLocation: FC<RuleLocationProps> = ({ namespace, group }) => {
+const RuleLocation = ({ namespace, group }: Props) => {
   if (!group) {
     return <>{namespace}</>;
   }
