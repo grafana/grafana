@@ -37,7 +37,7 @@ export interface TextProps {
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ element = 'span', variant, weight, color, truncate = false, italic, textAlignment, children }, ref) => {
+  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
         (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
@@ -95,8 +95,9 @@ export const Text = React.forwardRef<HTMLElement, TextProps>(
       const getRidOfTags = html.replace(/(<([^>]+)>)/gi, '');
       return getRidOfTags;
     };
-
-    if (truncate === true && isOverflowing && element !== 'span') {
+    // A 'span' is an inline element therefore it can't be truncated
+    // and it should be wrapped in a parent element that is the one that will show the tooltip
+    if (truncate && isOverflowing && element !== 'span') {
       return (
         <Tooltip ref={internalRef} content={getTooltipText(children)}>
           {childElement}
