@@ -298,9 +298,7 @@ export function deleteLoadedDataSource(): ThunkResult<void> {
       await api.deleteDataSource(uid);
       await getDatasourceSrv().reload();
 
-      const datasourcesUrl = config.featureToggles.dataConnectionsConsole
-        ? CONNECTIONS_ROUTES.DataSources
-        : '/datasources';
+      const datasourcesUrl = CONNECTIONS_ROUTES.DataSources;
 
       locationService.push(datasourcesUrl);
     } catch (err) {

@@ -24,7 +24,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addById, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
+  const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
   const doSubmit = (list: Playlist) => {
     setSaving(true);
@@ -63,7 +63,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                 <h3 className="page-headering">Add dashboards</h3>
 
                 <Field label="Add by title">
-                  <DashboardPicker id="dashboard-picker" onChange={addById} key={items.length} />
+                  <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
                 </Field>
 
                 <Field label="Add by tag">
