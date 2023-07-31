@@ -31,7 +31,7 @@ export interface CloudMonitoringQuery extends common.DataQuery {
    * queryType: #QueryType
    * Time Series List sub-query properties.
    */
-  timeSeriesList?: (TimeSeriesList | AnnotationQuery);
+  timeSeriesList?: TimeSeriesList;
   /**
    * Time Series sub-query properties.
    */
@@ -97,6 +97,14 @@ export interface TimeSeriesList {
    */
   secondaryPerSeriesAligner?: string;
   /**
+   * Annotation text.
+   */
+  text?: string;
+  /**
+   * Annotation title.
+   */
+  title?: string;
+  /**
    * Data view, defaults to FULL.
    */
   view?: string;
@@ -115,20 +123,6 @@ export enum PreprocessorType {
   Delta = 'delta',
   None = 'none',
   Rate = 'rate',
-}
-
-/**
- * Annotation sub-query properties.
- */
-export interface AnnotationQuery extends TimeSeriesList {
-  /**
-   * Annotation text.
-   */
-  text?: string;
-  /**
-   * Annotation title.
-   */
-  title?: string;
 }
 
 /**
@@ -291,7 +285,7 @@ export enum AlignmentTypes {
 }
 
 /**
- * @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+ * @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
  */
 export interface LegacyCloudMonitoringAnnotationQuery {
   /**
