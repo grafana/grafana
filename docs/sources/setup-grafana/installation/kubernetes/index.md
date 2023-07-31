@@ -13,11 +13,11 @@ On this page, you will find instructions for installing and running Grafana on K
 
 ## Before you begin
 
-To follow this guide, you need:
+To follow this guide:
 
-- The latest version of [Kubernetes](https://kubernetes.io/) running either locally or remotely on a public or private cloud.
+- You need the latest version of [Kubernetes](https://kubernetes.io/) running either locally or remotely on a public or private cloud.
 
-- If you plan to use it in a local environment, you can use various Kubernetes options such as Minikube (https://minikube.sigs.k8s.io/docs/), Kind (https://kind.sigs.k8s.io/), Docker Desktop (https://docs.docker.com/desktop/kubernetes/), and others.
+- If you plan to use it in a local environment, you can use various Kubernetes options such as [Minikube](https://minikube.sigs.k8s.io/docs/), [Kind](https://kind.sigs.k8s.io/), [Docker Desktop](https://docs.docker.com/desktop/kubernetes/), and others.
 
 - If you plan to use Kubernetes in a production setting, it's recommended to utilize managed cloud services like [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/), or [Azure Kubernetes Service (AKS)](https://azure.microsoft.com/en-us/products/kubernetes-service/).
 
@@ -33,11 +33,11 @@ This section provides minimum hardware and software requirements.
 
 ### Supported databases
 
-For a list of supported databases, refer to [supported databases](https://grafana.com/docs/grafana/latest/setup-grafana/installation/#supported-databases).
+For a list of supported databases, refer to [supported databases](/docs/grafana/latest/setup-grafana/installation/#supported-databases).
 
 ### Supported web browsers
 
-For a list of support web browsers, refer to [supported web browsers](https://grafana.com/docs/grafana/latest/setup-grafana/installation/#supported-web-browsers).
+For a list of support web browsers, refer to [supported web browsers](/docs/grafana/latest/setup-grafana/installation/#supported-web-browsers).
 
 {{% admonition type="note" %}}
 Enable port `3000` in your network environment, as this is the Grafana default port.
@@ -45,11 +45,11 @@ Enable port `3000` in your network environment, as this is the Grafana default p
 
 ## Deploy Grafana OSS on Kubernetes
 
-This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes, refer to [Deploy Grafana Enterprise on Kubernetes](https://grafana.com/docs/grafana/latest/setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes).
+This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes, refer to [Deploy Grafana Enterprise on Kubernetes](/docs/grafana/latest/setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes).
 
 If you deploy an application in Kubernetes, it will use the default namespace which may already have other applications running. This can result in conflicts and other issues.
 
-It is recommended to create a new namespace in Kubernetes to better manage, organize, allocate, and manage cluster resources. For more information about Namespaces, refer to the official [Kubernetes documentation]( https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
+It is recommended to create a new namespace in Kubernetes to better manage, organize, allocate, and manage cluster resources. For more information about Namespaces, refer to the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 1. To create a namespace, run the following command:
 
@@ -290,7 +290,7 @@ This option uses the `type: LoadBalancer` in the `grafana.yaml` service manifest
 
 ### Option 2: Use port forwarding
 
-If Option 1 does not work in your minikube environment (mostly depends on the network), then as an alternative you can use the **port forwarding** option for the Grafana service on port `3000`.
+If Option 1 does not work in your minikube environment (this mostly depends on the network), then as an alternative you can use the port forwarding option for the Grafana service on port `3000`.
 
 For more information about port forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
@@ -695,100 +695,100 @@ kubectl create configmap ge-config --from-file=/path/to/your/grafana.ini
 
 1. Create a `grafana.yaml` file, and copy-and-paste the following content into it.
 
-The following YAML is identical to the one for a Grafana installation, except for the additional references to the Configmap that contains your Grafana configuration file and the secret that has your license.
+   The following YAML is identical to the one for a Grafana installation, except for the additional references to the Configmap that contains your Grafana configuration file and the secret that has your license.
 
-```yaml
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: grafana
-  name: grafana
-spec:
-  selector:
-    matchLabels:
-      app: grafana
-  template:
-    metadata:
-      labels:
-        app: grafana
-    spec:
-      securityContext:
-        fsGroup: 472
-        supplementalGroups:
-          - 0
-      containers:
-        - image: grafana/grafana-enterprise:latest
-          imagePullPolicy: IfNotPresent
-          name: grafana
-          ports:
-            - containerPort: 3000
-              name: http-grafana
-              protocol: TCP
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /robots.txt
-              port: 3000
-              scheme: HTTP
-            initialDelaySeconds: 10
-            periodSeconds: 30
-            successThreshold: 1
-            timeoutSeconds: 2
-          resources:
-            limits:
-              memory: 4Gi
-            requests:
-              cpu: 100m
-              memory: 2Gi
-          volumeMounts:
-            - mountPath: /var/lib/grafana
-              name: grafana-pv
-            - mountPath: /etc/grafana
-              name: ge-config
-            - mountPath: /etc/grafana/license
-              name: ge-license
-      volumes:
-        - name: grafana-pv
-          persistentVolumeClaim:
-            claimName: grafana-pvc
-        - name: ge-config
-          configMap:
-            name: ge-config
-        - name: ge-license
-          secret:
-            secretName: ge-license
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: grafana
-spec:
-  ports:
-    - port: 3000
-      protocol: TCP
-      targetPort: http-grafana
-  selector:
-    app: grafana
-  sessionAffinity: None
-  type: LoadBalancer
-```
+   ```yaml
+   ---
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: grafana-pvc
+   spec:
+     accessModes:
+       - ReadWriteOnce
+     resources:
+       requests:
+         storage: 1Gi
+   ---
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     labels:
+       app: grafana
+     name: grafana
+   spec:
+     selector:
+       matchLabels:
+         app: grafana
+     template:
+       metadata:
+         labels:
+           app: grafana
+       spec:
+         securityContext:
+           fsGroup: 472
+           supplementalGroups:
+             - 0
+         containers:
+           - image: grafana/grafana-enterprise:latest
+             imagePullPolicy: IfNotPresent
+             name: grafana
+             ports:
+               - containerPort: 3000
+                 name: http-grafana
+                 protocol: TCP
+             readinessProbe:
+               failureThreshold: 3
+               httpGet:
+                 path: /robots.txt
+                 port: 3000
+                 scheme: HTTP
+               initialDelaySeconds: 10
+               periodSeconds: 30
+               successThreshold: 1
+               timeoutSeconds: 2
+             resources:
+               limits:
+                 memory: 4Gi
+               requests:
+                 cpu: 100m
+                 memory: 2Gi
+             volumeMounts:
+               - mountPath: /var/lib/grafana
+                 name: grafana-pv
+               - mountPath: /etc/grafana
+                 name: ge-config
+               - mountPath: /etc/grafana/license
+                 name: ge-license
+         volumes:
+           - name: grafana-pv
+             persistentVolumeClaim:
+               claimName: grafana-pvc
+           - name: ge-config
+             configMap:
+               name: ge-config
+           - name: ge-license
+             secret:
+               secretName: ge-license
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: grafana
+   spec:
+     ports:
+       - port: 3000
+         protocol: TCP
+         targetPort: http-grafana
+     selector:
+       app: grafana
+     sessionAffinity: None
+     type: LoadBalancer
+   ```
 
-{{% admonition type="caution" %}}
-If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
-{{% /admonition %}}
+   {{% admonition type="caution" %}}
+   If you use `LoadBalancer` in the Service and depending on your cloud platform and network configuration, doing so might expose your Grafana instance to the Internet. To eliminate this risk, use `ClusterIP` to restrict access from within the cluster Grafana is deployed to.
+   {{% /admonition %}}
 
 1. To send the manifest to Kubernetes API Server, run the following command:
    `kubectl apply -f grafana.yaml`
