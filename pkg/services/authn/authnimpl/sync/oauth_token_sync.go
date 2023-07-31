@@ -68,7 +68,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	idTokenExpires, err := getIDTokenExpiry(token)
+	idTokenExpiry, err := getIDTokenExpiry(token)
 	if err != nil {
 		s.log.FromContext(ctx).Error("Failed to extract expiry of ID token", "id", identity.ID, "error", err)
 	}
@@ -76,7 +76,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	// token has no expire time configured, so we don't have to refresh it
 	if token.OAuthExpiry.IsZero() {
 		// cache the token check, so we don't perform it on every request
-		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, idTokenExpires))
+		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, idTokenExpiry))
 		return nil
 	}
 
@@ -95,12 +95,15 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 	accessTokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
 
-	var idTokenHasExpired bool
-	if !idTokenExpires.IsZero() {
-		idTokenHasExpired = idTokenExpires.Round(0).Add(-oauthtoken.ExpiryDelta).Before(time.Now())
+	hasIdTokenExpired := false
+	idTokenExpires := time.Time{}
+
+	if !idTokenExpiry.IsZero() {
+		idTokenExpires = idTokenExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+		hasIdTokenExpired = idTokenExpires.Before(time.Now())
 	}
 	// token has not expired, so we don't have to refresh it
-	if !accessTokenExpires.Before(time.Now()) && !idTokenHasExpired {
+	if !accessTokenExpires.Before(time.Now()) && !hasIdTokenExpired {
 		// cache the token check, so we don't perform it on every request
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil

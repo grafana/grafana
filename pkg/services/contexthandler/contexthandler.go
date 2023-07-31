@@ -3,8 +3,6 @@ package contexthandler
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -549,12 +547,8 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 		// Check whether the logged in User has a token (whether the User used an OAuth provider to login)
 		oauthToken, exists, _ := h.oauthTokenService.HasOAuthEntry(ctx, queryResult)
 		if exists {
-			idTokenHasExpired, err := h.hasIDTokenExpired(oauthToken)
-			if err != nil {
-				reqContext.Logger.Error("unable to check id token expiry", "userId", oauthToken.UserId, "error", err)
-			}
-			if h.hasAccessTokenExpired(oauthToken) || idTokenHasExpired {
-				reqContext.Logger.Info("access or id token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
+			if h.hasAccessTokenExpired(oauthToken) {
+				reqContext.Logger.Info("access token expired", "userId", query.UserID, "expiry", fmt.Sprintf("%v", oauthToken.OAuthExpiry))
 
 				// If the User doesn't have a refresh_token or refreshing the token was unsuccessful then log out the User and invalidate the OAuth tokens
 				if err = h.oauthTokenService.TryTokenRefresh(ctx, oauthToken); err != nil {
@@ -857,37 +851,4 @@ func (h *ContextHandler) hasAccessTokenExpired(token *login.UserAuth) bool {
 	}
 
 	return token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime())
-}
-
-// hasIDTokenExpired checks if the exp field in the ID token has expired. It does not validate the ID token.
-func (h *ContextHandler) hasIDTokenExpired(token *login.UserAuth) (bool, error) {
-	if token.OAuthIdToken == "" {
-		return false, nil
-	}
-
-	seperatedIDToken := strings.Split(token.OAuthIdToken, ".")
-	if len(seperatedIDToken) != 3 {
-		return false, fmt.Errorf("id token is of invalid format")
-	}
-
-	payload, err := base64.RawURLEncoding.DecodeString(seperatedIDToken[1])
-	if err != nil {
-		return false, fmt.Errorf("unable to base64 decode id token payload: %w", err)
-	}
-
-	p := struct {
-		Exp int64 `json:"exp"`
-	}{}
-	if err = json.Unmarshal(payload, &p); err != nil {
-		return false, fmt.Errorf("unable to json unmarshal id token payload: %w", err)
-	}
-
-	expiry := time.Unix(p.Exp, 0)
-
-	getTime := h.GetTime
-	if getTime == nil {
-		getTime = time.Now
-	}
-
-	return expiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(getTime()), nil
 }

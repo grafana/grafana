@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
+func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
 		desc      string
 		identity  *authn.Identity
@@ -189,94 +188,70 @@ func fakeIDToken(t *testing.T, expiryDate time.Time) string {
 	return fmt.Sprintf("%s.%s.%s", base64.RawURLEncoding.EncodeToString(header), base64.RawURLEncoding.EncodeToString(payload), base64.RawURLEncoding.EncodeToString(fakeSignature))
 }
 
-func Test_getOAuthTokenCacheTTL(t *testing.T) {
-	type args struct {
+func TestOAuthTokenSync_getOAuthTokenCacheTTL(t *testing.T) {
+	defaultTime := time.Now()
+	tests := []struct {
+		name              string
 		accessTokenExpiry time.Time
 		idTokenExpiry     time.Time
-	}
-	tests := []struct {
-		name string
-		args args
-		want time.Duration
+		want              time.Duration
 	}{
 		{
-			name: "should return maxOAuthTokenCacheTTL when no expiry is given",
-			args: args{
-				accessTokenExpiry: time.Time{},
-				idTokenExpiry:     time.Time{},
-			},
+			name:              "should return maxOAuthTokenCacheTTL when no expiry is given",
+			accessTokenExpiry: time.Time{},
+			idTokenExpiry:     time.Time{},
+
 			want: maxOAuthTokenCacheTTL,
 		},
 		{
-			name: "should return maxOAuthTokenCacheTTL when access token is not given and id token expiry is greater than max cache ttl",
-			args: args{
-				accessTokenExpiry: time.Time{},
-				idTokenExpiry:     time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			},
+			name:              "should return maxOAuthTokenCacheTTL when access token is not given and id token expiry is greater than max cache ttl",
+			accessTokenExpiry: time.Time{},
+			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+
 			want: maxOAuthTokenCacheTTL,
 		},
 		{
-			name: "should return idTokenExpiry when access token is not given and id token expiry is less than max cache ttl",
-			args: args{
-				accessTokenExpiry: time.Time{},
-				idTokenExpiry:     time.Now().Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-			},
-			want: time.Until(time.Now().Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
+			name:              "should return idTokenExpiry when access token is not given and id token expiry is less than max cache ttl",
+			accessTokenExpiry: time.Time{},
+			idTokenExpiry:     defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
+			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
 		},
 		{
-			name: "should return maxOAuthTokenCacheTTL when access token is greater than max cache ttl and id token is not given",
-			args: args{
-				accessTokenExpiry: time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-				idTokenExpiry:     time.Time{},
-			},
-			want: maxOAuthTokenCacheTTL,
+			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token is not given",
+			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     time.Time{},
+			want:              maxOAuthTokenCacheTTL,
 		},
 		{
-			name: "should return accessTokenExpiry when access token is less than max cache ttl and id token is not given",
-			args: args{
-				accessTokenExpiry: time.Now().Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-				idTokenExpiry:     time.Time{},
-			},
-			want: time.Until(time.Now().Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
+			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and id token is not given",
+			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     time.Time{},
+			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
 		},
 		{
-			name: "should return maxOAuthTokenCacheTTL when access token is greater than max cache ttl and id token is greater than max cache ttl",
-			args: args{
-				accessTokenExpiry: time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-				idTokenExpiry:     time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			},
-			want: maxOAuthTokenCacheTTL,
+			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and less than id token expiry",
+			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
 		},
 		{
-			name: "should return accessTokenExpiry when access token is less than max cache ttl and less than id token expiry",
-			args: args{
-				accessTokenExpiry: time.Now().Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-				idTokenExpiry:     time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			},
-			want: time.Until(time.Now().Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
+			name:              "should return idTokenExpiry when id token expiry is less than max cache ttl and less than access token expiry",
+			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL),
+			want:              time.Until(defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL)),
 		},
 		{
-			name: "should return idTokenExpiry when id token is less than max cache ttl and less than id token expiry",
-			args: args{
-				accessTokenExpiry: time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-				idTokenExpiry:     time.Now().Add(-3*time.Minute + maxOAuthTokenCacheTTL),
-			},
-			want: time.Until(time.Now().Add(-3*time.Minute + maxOAuthTokenCacheTTL)),
-		},
-		{
-			name: "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token expiry is greater than max cache ttl",
-			args: args{
-				accessTokenExpiry: time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-				idTokenExpiry:     time.Now().Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			},
-			want: maxOAuthTokenCacheTTL,
+			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token expiry is greater than max cache ttl",
+			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			want:              maxOAuthTokenCacheTTL,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getOAuthTokenCacheTTL(tt.args.accessTokenExpiry, tt.args.idTokenExpiry); !reflect.DeepEqual(got.Round(time.Second), tt.want.Round(time.Second)) {
-				t.Errorf("getOAuthTokenCacheTTL() = %v, want %v", got, tt.want)
-			}
+			got := getOAuthTokenCacheTTL(tt.accessTokenExpiry, tt.idTokenExpiry)
+
+			assert.Equal(t, tt.want.Round(time.Second), got.Round(time.Second))
 		})
 	}
 }
