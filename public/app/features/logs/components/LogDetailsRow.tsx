@@ -284,7 +284,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                     />
                   )}
                   {!config.featureToggles.toggleLabelsInLogsUI && (
-                    <IconButton name="search-minus" onClick={this.filterLabel} tooltip="Filter for value" />
+                    <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
                   )}
                   <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
                 </>
