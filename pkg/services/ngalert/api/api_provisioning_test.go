@@ -1170,7 +1170,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	// Encrypt secure settings.
 	c, err := notifier.Load([]byte(testConfig))
 	require.NoError(t, err)
-	err = c.EncryptConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
+	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
 		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
 	})
 	require.NoError(t, err)

@@ -121,9 +121,6 @@ type TempoQuery struct {
 
 	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
-
-	// Use the streaming API to get partial results as they are available
-	Streaming *bool `json:"streaming,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility

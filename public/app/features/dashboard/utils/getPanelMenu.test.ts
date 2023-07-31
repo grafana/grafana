@@ -105,7 +105,7 @@ describe('getPanelMenu()', () => {
         {
           "iconClassName": "compass",
           "onClick": [Function],
-          "shortcut": "x",
+          "shortcut": "p x",
           "text": "Explore",
         },
         {
@@ -522,7 +522,7 @@ describe('getPanelMenu()', () => {
           {
             "iconClassName": "compass",
             "onClick": [Function],
-            "shortcut": "x",
+            "shortcut": "p x",
             "text": "Explore",
           },
           {

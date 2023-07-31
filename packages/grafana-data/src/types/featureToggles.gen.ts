@@ -64,6 +64,7 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
+  gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   prometheusResourceBrowserCache?: boolean;
@@ -101,7 +102,6 @@ export interface FeatureToggles {
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
-  elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
@@ -109,10 +109,12 @@ export interface FeatureToggles {
   transformationsRedesign?: boolean;
   toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
-  disableTraceQLStreaming?: boolean;
+  traceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  prometheusConfigOverhaulAuth?: boolean;
+  configurableSchedulerTick?: boolean;
 }
