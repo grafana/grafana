@@ -100,7 +100,7 @@ const ConfigPublicDashboard = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
-      activeTab: 'public-dashboard',
+      activeTab: 'public_dashboard',
     });
   };
 
