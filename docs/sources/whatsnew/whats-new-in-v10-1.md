@@ -82,7 +82,7 @@ The transformations tab has an improved user experience and visual redesign. Now
 
 _Available in public preview in all editions of Grafana_
 
-When working with date and time data, it can be useful to have different time formats. With the new Format Time transformation, you can convert any time format to any other one supported by Moment.js. When used in conjunction with the Group by Value transformation, this can also be used to bucket days, weeks, and other time windows together.
+When working with date and time data, it can be useful to have different time formats. With the new Format Time transformation, you can convert any time format to any other one supported by [Moment.js](https://momentjs.com/docs/#/displaying/). When used in conjunction with the _Group by_ transformation, this can also be used to bucket days, weeks, and other time windows together.
 
 {{< figure src="/media/docs/grafana/format-time-10-1.gif" max-width="750px" caption="Format time transformation" >}}
 
