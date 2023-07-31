@@ -2,6 +2,7 @@ package statsimpl
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strconv"
 	"time"
@@ -89,8 +90,6 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
 
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboards,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`, dialect.BooleanStr(false))
-		sb.Write(`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max,`, dialect.BooleanStr(false))
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS folders,`, dialect.BooleanStr(true))
 
 		sb.Write(`(
@@ -143,6 +142,22 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 
 		return nil
 	})
+
+	// Execute dashboard analysis in its own query
+	if err == nil {
+		var rows *sql.Rows
+		db := ss.db.GetSqlxSession()
+		rows, err = db.Query(ctx, `SELECT `+
+			`(SELECT SUM(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_total,`+
+			`(SELECT MAX(LENGTH(data)) FROM `+dialect.Quote("dashboard")+` WHERE is_folder = ?) AS dashboard_bytes_max`,
+			dialect.BooleanStr(false), dialect.BooleanStr(false))
+		if err != nil {
+			return result, err
+		}
+		if rows.Next() {
+			err = rows.Scan(&result.DashboardBytesTotal, &result.DashboardBytesMax)
+		}
+	}
 
 	return result, err
 }
