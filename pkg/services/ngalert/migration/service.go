@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -21,20 +20,18 @@ const KVNamespace = "ngalert.migration"
 const migratedKey = "migrated"
 
 type MigrationService struct {
-	store               db.DB
-	cfg                 *setting.Cfg
-	log                 log.Logger
-	kv                  *kvstore.NamespacedKVStore
-	provisioningService provisioning.ProvisioningService
+	store db.DB
+	cfg   *setting.Cfg
+	log   log.Logger
+	kv    *kvstore.NamespacedKVStore
 }
 
-func NewMigrationService(log log.Logger, store db.DB, cfg *setting.Cfg, kvStore kvstore.KVStore, provisioningService provisioning.ProvisioningService) MigrationService {
+func NewMigrationService(log log.Logger, store db.DB, cfg *setting.Cfg, kvStore kvstore.KVStore) MigrationService {
 	return MigrationService{
-		log:                 log,
-		cfg:                 cfg,
-		store:               store,
-		kv:                  kvstore.WithNamespace(kvStore, kvstore.AllOrganizations, KVNamespace),
-		provisioningService: provisioningService,
+		log:   log,
+		cfg:   cfg,
+		store: store,
+		kv:    kvstore.WithNamespace(kvStore, kvstore.AllOrganizations, KVNamespace),
 	}
 }
 
@@ -84,10 +81,6 @@ func (ms *MigrationService) Start(ctx context.Context) error {
 		}
 		ms.log.Info("Legacy migration reverted")
 		return nil
-	}
-
-	if err := ms.provisioningService.ProvisionDashboards(ctx); err != nil {
-		return fmt.Errorf("failed dashboard provisioning: %w", err)
 	}
 
 	ms.log.Info("Starting legacy migration")
