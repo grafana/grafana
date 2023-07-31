@@ -26,7 +26,7 @@ const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
     const tableData = getDiffTooltipData(data, item, totalTicks);
     content = (
       <InteractiveTable
-        className={styles.table}
+        className={styles.tooltipTable}
         columns={[
           { id: 'label', header: '' },
           { id: 'baseline', header: 'Baseline' },
@@ -193,8 +193,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: 10px;
   `,
 
-  table: css`
-    title: table;
+  tooltipTable: css`
+    title: tooltipTable;
     max-width: 300px;
   `,
 });
