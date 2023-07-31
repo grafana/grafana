@@ -36,7 +36,7 @@ func TestSources_List(t *testing.T) {
 		require.Len(t, srcs, 3)
 
 		require.Equal(t, srcs[0].PluginClass(ctx), plugins.ClassCore)
-		require.Equal(t, srcs[0].PluginURIs(ctx), []string{"app/plugins/datasource", "app/plugins/panel"})
+		require.Equal(t, srcs[0].PluginURIs(ctx), []string{"app/plugins/datasource", "app/plugins/panel", "plugins"})
 		sig, exists := srcs[0].DefaultSignature(ctx)
 		require.True(t, exists)
 		require.Equal(t, plugins.SignatureStatusInternal, sig.Status)
