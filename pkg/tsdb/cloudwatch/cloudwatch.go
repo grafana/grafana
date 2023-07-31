@@ -55,7 +55,7 @@ var logger = log.New("tsdb.cloudwatch")
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	logger.Debug("Initializing")
 
-	// logs timeout deafult is 30 minutes, the same as timeout in frontend logs query
+	// logs timeout default is 30 minutes, the same as timeout in frontend logs query
 	// note: for alerting queries, the context will be cancelled before that unless evaluation_timeout_seconds in defaults.ini is increased (default: 30s)
 	defaultLogsTimeout := time.Minute * 30
 

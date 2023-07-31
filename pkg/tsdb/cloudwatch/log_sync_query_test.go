@@ -334,9 +334,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			},
 		})
 		assert.Error(t, err)
-
 		cli.AssertNumberOfCalls(t, "GetQueryResultsWithContext", 1)
-
 	})
 	t.Run("when logsTimeout setting is defined, the polling period will be set to that variable", func(t *testing.T) {
 		cli = &mockLogsSyncClient{}
@@ -365,9 +363,6 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			},
 		})
 		assert.Error(t, err)
-
 		cli.AssertNumberOfCalls(t, "GetQueryResultsWithContext", 1)
-
 	})
-
 }
