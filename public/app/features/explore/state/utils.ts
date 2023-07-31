@@ -157,6 +157,43 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 }
 
+/**
+ * DOC that params are off
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliane
+ */
+export function fromURLRange(range: RawTimeRange): RawTimeRange {
+  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
+  let parsedRange = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+  if (parsedRange.from !== null && parsedRange.to !== null) {
+    rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
+  }
+  return rawTimeRange;
+}
+
+/**
+ * Docs
+ * @param range
+ */
+export const toURLTimeRange = (range: RawTimeRange): RawTimeRange => {
+  let from = range.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString();
+  }
+
+  let to = range.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString();
+  }
+
+  return {
+    from,
+    to,
+  };
+};
+
 function parseRawTime(value: string | DateTime): TimeFragment | null {
   if (value === null) {
     return null;
