@@ -3707,7 +3707,7 @@ __metadata:
     "@grafana/e2e": 10.1.0-128299pre
     "@grafana/e2e-selectors": 10.1.0-128299pre
     "@grafana/eslint-config": 6.0.0
-    "@grafana/eslint-plugin": "workspace:*"
+    "@grafana/eslint-plugin": "link:../../../packages/grafana-eslint-rules"
     "@grafana/runtime": 10.1.0-128299pre
     "@grafana/schema": 10.1.0-128299pre
     "@grafana/tsconfig": ^1.3.0-rc1
@@ -4017,13 +4017,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Ftestdata":
+  version: 0.0.0-use.local
+  resolution: "@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Ftestdata"
+  languageName: node
+  linkType: soft
+
 "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-plugin@link:./packages/grafana-eslint-rules::locator=grafana%40workspace%3A."
   languageName: node
   linkType: soft
 
-"@grafana/eslint-plugin@workspace:*, @grafana/eslint-plugin@workspace:packages/grafana-eslint-rules":
+"@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules":
   version: 0.0.0-use.local
   resolution: "@grafana/eslint-plugin@workspace:packages/grafana-eslint-rules"
   dependencies:
