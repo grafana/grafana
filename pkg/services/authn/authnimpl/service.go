@@ -84,7 +84,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features, anonDeviceService))
 	}
 
 	if s.cfg.AnonymousEnabled {

@@ -282,6 +282,8 @@ type Cfg struct {
 	AuthConfigUIAdminAccess bool
 	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
 	AuthBrokerEnabled bool
+	// TO REMOVE: Not documented & not supported. Remove in 10.3
+	TagAuthedDevices bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -1528,6 +1530,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
+	cfg.TagAuthedDevices = auth.Key("tag_authed_devices").MustBool(true)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
