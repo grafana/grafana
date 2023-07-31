@@ -27,6 +27,7 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
     scriptCode = transformPluginSourceForCDN({
       url,
       source: scriptCode,
+      transformSourceMapURL: true,
     });
   }
 
@@ -46,6 +47,7 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     pluginCode = transformPluginSourceForCDN({
       url,
       source: pluginCode,
+      transformSourceMapURL: true,
     });
     return pluginCode;
   } else {

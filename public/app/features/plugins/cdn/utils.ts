@@ -3,7 +3,15 @@
   Plugins that require loading via a CDN need to have their asset paths translated to point to the configured CDN.
   e.g. public/plugins/my-plugin/data/ -> http://my-host.com/my-plugin/0.3.3/public/plugins/my-plugin/data/
  */
-export function transformPluginSourceForCDN({ url, source }: { url: string; source: string }): string {
+export function transformPluginSourceForCDN({
+  url,
+  source,
+  transformSourceMapURL = false,
+}: {
+  url: string;
+  source: string;
+  transformSourceMapURL?: boolean;
+}): string {
   const splitUrl = url.split('/public/plugins/');
   const baseAddress = splitUrl[0];
   const pluginId = splitUrl[1].split('/')[0];
@@ -12,10 +20,13 @@ export function transformPluginSourceForCDN({ url, source }: { url: string; sour
   let newSource = source;
   newSource = newSource.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
   newSource = newSource.replace(/(["|'])(plugins\/.+?.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
-  // TODO: SystemJS 6 already does this transform, do we need it for sandbox?
-  newSource = newSource.replace(
-    /(\/\/#\ssourceMappingURL=)(.+)\.map/g,
-    `$1${baseAddress}/public/plugins/${pluginId}/$2.map`
-  );
+
+  if (transformSourceMapURL) {
+    newSource = newSource.replace(
+      /(\/\/#\ssourceMappingURL=)(.+)\.map/g,
+      `$1${baseAddress}/public/plugins/${pluginId}/$2.map`
+    );
+  }
+
   return newSource;
 }

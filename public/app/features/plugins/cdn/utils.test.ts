@@ -60,7 +60,7 @@ describe('Plugin CDN Utils', () => {
       expect(translatedLoad).toBe(expectedSource);
     });
 
-    it('should replace sourcemap locations', () => {
+    it('should only replace sourcemap locations if transformSourceMapUrl is true', () => {
       const source = `
         Zn(t,e)},t.Rectangle=ui,t.rectangle=function(t,e){return new ui(t,e)},t.Map=He,t.map=function(t,e){return new He(t,e)}}(e)}])});
         //# sourceMappingURL=module.js.map
@@ -71,7 +71,11 @@ describe('Plugin CDN Utils', () => {
       `;
       const translatedLoad = transformPluginSourceForCDN({ url, source });
 
-      expect(translatedLoad).toBe(expectedSource);
+      expect(translatedLoad).toBe(source);
+
+      const translatedLoadWithSourceMapUrl = transformPluginSourceForCDN({ url, source, transformSourceMapURL: true });
+
+      expect(translatedLoadWithSourceMapUrl).toBe(expectedSource);
     });
 
     it('should replace css paths', () => {
