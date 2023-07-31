@@ -5590,28 +5590,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.0.3, @lezer/common@npm:^1.0.0":
-  version: 1.0.3
-  resolution: "@lezer/common@npm:1.0.3"
-  checksum: cc90dc2f0aeaebeb3fe886cbd27f8b1e8bee817d8c2efff178604807debd68c5db820fd23afb830962780063d21891afbdf564420221faca2822e77bc6327184
+"@lezer/common@npm:1.0.2, @lezer/common@npm:^1.0.0":
+  version: 1.0.2
+  resolution: "@lezer/common@npm:1.0.2"
+  checksum: bbcc58e07be02652bf0700d2856042ec089d5be0b95893d628b3e18192ade864fac83b61b19653e10b9f1472261a178b12318d934e9004edd5483a577c0db56b
   languageName: node
   linkType: hard
 
-"@lezer/highlight@npm:1.1.6":
-  version: 1.1.6
-  resolution: "@lezer/highlight@npm:1.1.6"
+"@lezer/highlight@npm:1.1.3":
+  version: 1.1.3
+  resolution: "@lezer/highlight@npm:1.1.3"
   dependencies:
     "@lezer/common": ^1.0.0
-  checksum: 411a702394c4c996b7d7f145a38f3a85a8cc698b3918acc7121c629255bb76d4ab383753f69009e011dc415210c6acbbb5b27bde613259ab67e600b29397b03b
+  checksum: 90ec143ce46b32f6779c3b245f1b5a540d66686939816d3daed8318821acc4bc719466dc222336cfd483bf04a8de4fdc6f279e904cf114d4d9f786f9feccbbd8
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.3.9":
-  version: 1.3.9
-  resolution: "@lezer/lr@npm:1.3.9"
+"@lezer/lr@npm:1.3.3":
+  version: 1.3.3
+  resolution: "@lezer/lr@npm:1.3.3"
   dependencies:
     "@lezer/common": ^1.0.0
-  checksum: d10982bae6c0b2f5a3ab8710a41dc689a4f9e81afafd3d2de4f0bec169f5c3fc9a321c0e90010a51682d41a6755ae90e1f3199134ff194b3ff4058ea5bcdf353
+  checksum: 1804074c794005a31c54d80ab72127f19ae5be29bb627c52bc001a57b1af97a9e62732ff13e3aeb7bc53b330202b6bd3747272c64d87f257dbba533e75a183a3
   languageName: node
   linkType: hard
 
@@ -19294,9 +19294,9 @@ __metadata:
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
     "@leeoniya/ufuzzy": 1.0.8
-    "@lezer/common": 1.0.3
-    "@lezer/highlight": 1.1.6
-    "@lezer/lr": 1.3.9
+    "@lezer/common": 1.0.2
+    "@lezer/highlight": 1.1.3
+    "@lezer/lr": 1.3.3
     "@locker/near-membrane-dom": ^0.12.15
     "@locker/near-membrane-shared": ^0.12.15
     "@locker/near-membrane-shared-dom": ^0.12.15
