@@ -22,9 +22,8 @@ interface OwnProps {}
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  const { settings, isLoading, providerStatuses } = state.authConfig;
+  const { isLoading, providerStatuses } = state.authConfig;
   return {
-    settings,
     isLoading,
     providerStatuses,
   };
@@ -36,12 +35,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({
-  settings,
-  providerStatuses,
-  isLoading,
-  loadSettings,
-}: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSettings }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
