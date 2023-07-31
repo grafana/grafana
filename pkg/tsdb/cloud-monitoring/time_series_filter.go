@@ -46,7 +46,8 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	}
 	if len(response.TimeSeries) > 0 {
 		dl := query.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit, params.Get("aggregation.alignmentPeriod"))
+		aggregationAlignmentString := params.Get("aggregation.alignmentPeriod")
+		frames = addConfigData(frames, dl, response.Unit, &aggregationAlignmentString)
 	}
 
 	queryRes.Frames = frames
@@ -152,11 +153,11 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
 	// and the aggregation that is specified in the UI becomes the secondary aggregation
 	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
-	t := toPreprocessorType(string(*timeSeriesFilter.parameters.Preprocessor))
-	if t != PreprocessorTypeNone {
+	if timeSeriesFilter.parameters.Preprocessor != nil && toPreprocessorType(string(*timeSeriesFilter.parameters.Preprocessor)) != PreprocessorTypeNone {
 		// Move aggregation to secondaryAggregations
 		timeSeriesFilter.parameters.SecondaryAlignmentPeriod = timeSeriesFilter.parameters.AlignmentPeriod
-		timeSeriesFilter.parameters.SecondaryCrossSeriesReducer = &timeSeriesFilter.parameters.CrossSeriesReducer
+		scsr := timeSeriesFilter.parameters.CrossSeriesReducer
+		timeSeriesFilter.parameters.SecondaryCrossSeriesReducer = &scsr
 		timeSeriesFilter.parameters.SecondaryPerSeriesAligner = timeSeriesFilter.parameters.PerSeriesAligner
 		timeSeriesFilter.parameters.SecondaryGroupBys = timeSeriesFilter.parameters.GroupBys
 
@@ -167,10 +168,10 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
 
 		// Set aligner based on preprocessor type
 		aligner := "ALIGN_RATE"
-		if t == PreprocessorTypeDelta {
+		if timeSeriesFilter.parameters.Preprocessor != nil && toPreprocessorType(string(*timeSeriesFilter.parameters.Preprocessor)) == PreprocessorTypeDelta {
 			aligner = "ALIGN_DELTA"
 		}
-		timeSeriesFilter.parameters.PerSeriesAligner = strPtr(aligner)
+		timeSeriesFilter.parameters.PerSeriesAligner = &aligner
 	}
 }
 
@@ -182,14 +183,17 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 	params.Add("interval.endTime", endTime.UTC().Format(time.RFC3339))
 
 	params.Add("filter", timeSeriesFilter.getFilter())
-	params.Add("view", *query.View)
+	if query.View != nil {
+		params.Add("view", *query.View)
+	}
 
 	if query.CrossSeriesReducer == "" {
 		query.CrossSeriesReducer = crossSeriesReducerDefault
 	}
 
-	if query.PerSeriesAligner == strPtr("") {
-		query.PerSeriesAligner = strPtr(perSeriesAlignerDefault)
+	alignMean := perSeriesAlignerDefault
+	if query.PerSeriesAligner == nil {
+		query.PerSeriesAligner = &alignMean
 	}
 
 	if timeSeriesFilter.parameters.Preprocessor == nil {
@@ -197,37 +201,33 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 		timeSeriesFilter.parameters.Preprocessor = &p
 	}
 
+	alignmentPeriodString := ""
+	if query.AlignmentPeriod != nil {
+		alignmentPeriodString = *query.AlignmentPeriod
+	}
+
 	timeSeriesFilter.setPreprocessor()
 
-	if query.AlignmentPeriod == nil {
-		query.AlignmentPeriod = strPtr("")
-	}
-
-	if query.PerSeriesAligner == nil {
-		query.PerSeriesAligner = strPtr("")
-	}
-
-	alignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
+	alignmentPeriod := calculateAlignmentPeriod(alignmentPeriodString, intervalMs, durationSeconds)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)
 	if query.CrossSeriesReducer != "" {
 		params.Add("aggregation.crossSeriesReducer", query.CrossSeriesReducer)
 	}
-	if query.PerSeriesAligner != strPtr("") {
+	if query.PerSeriesAligner != nil {
 		params.Add("aggregation.perSeriesAligner", *query.PerSeriesAligner)
 	}
 	for _, groupBy := range query.GroupBys {
 		params.Add("aggregation.groupByFields", groupBy)
 	}
 
-	if query.SecondaryAlignmentPeriod != strPtr("") {
-		secondaryAlignmentPeriod := calculateAlignmentPeriod(*query.AlignmentPeriod, intervalMs, durationSeconds)
+	if query.SecondaryAlignmentPeriod != nil && *query.SecondaryAlignmentPeriod != "" {
+		secondaryAlignmentPeriod := calculateAlignmentPeriod(alignmentPeriodString, intervalMs, durationSeconds)
 		params.Add("secondaryAggregation.alignmentPeriod", secondaryAlignmentPeriod)
 	}
-	if query.SecondaryCrossSeriesReducer == nil {
-		query.SecondaryCrossSeriesReducer = strPtr("")
+	if query.SecondaryCrossSeriesReducer != nil && *query.SecondaryCrossSeriesReducer != "" {
 		params.Add("secondaryAggregation.crossSeriesReducer", *query.SecondaryCrossSeriesReducer)
 	}
-	if query.SecondaryAlignmentPeriod != strPtr("") {
+	if query.SecondaryPerSeriesAligner != nil {
 		params.Add("secondaryAggregation.perSeriesAligner", *query.SecondaryPerSeriesAligner)
 	}
 	for _, groupBy := range query.SecondaryGroupBys {
@@ -235,8 +235,4 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 	}
 
 	timeSeriesFilter.params = params
-}
-
-func strPtr(s string) *string {
-	return &s
 }

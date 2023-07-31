@@ -221,6 +221,10 @@ func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) [
 	return metricTypeFilterArray
 }
 
+func strPtr(s string) *string {
+	return &s
+}
+
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
 		var rawQuery map[string]interface{}
@@ -403,8 +407,9 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				logger:  logger,
 				aliasBy: q.AliasBy,
 			}
-			if q.TimeSeriesList.View == strPtr("") {
-				q.TimeSeriesList.View = strPtr("FULL")
+			if q.TimeSeriesList.View == nil || *q.TimeSeriesList.View == "" {
+				fullString := "FULL"
+				q.TimeSeriesList.View = &fullString
 			}
 			cmtsf.parameters = q.TimeSeriesList
 			cmtsf.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
@@ -607,7 +612,7 @@ func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringRe
 	return data, nil
 }
 
-func addConfigData(frames data.Frames, dl string, unit string, period string) data.Frames {
+func addConfigData(frames data.Frames, dl string, unit string, period *string) data.Frames {
 	for i := range frames {
 		if frames[i].Fields[1].Config == nil {
 			frames[i].Fields[1].Config = &data.FieldConfig{}
@@ -628,8 +633,8 @@ func addConfigData(frames data.Frames, dl string, unit string, period string) da
 		if frames[i].Fields[0].Config == nil {
 			frames[i].Fields[0].Config = &data.FieldConfig{}
 		}
-		if period != "" {
-			err := addInterval(period, frames[i].Fields[0])
+		if period != nil && *period != "" {
+			err := addInterval(*period, frames[i].Fields[0])
 			if err != nil {
 				slog.Error("Failed to add interval", "error", err)
 			}

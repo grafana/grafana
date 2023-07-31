@@ -16,11 +16,11 @@ import (
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	// GraphPeriod needs to be explicitly disabled.
 	// If not set, the default behavior is to set an automatic value
-	if timeSeriesQuery.parameters.GraphPeriod != strPtr("disabled") {
-		if timeSeriesQuery.parameters.GraphPeriod == strPtr("auto") || timeSeriesQuery.parameters.GraphPeriod == strPtr("") {
+	if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod != "disabled" {
+		if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod == "auto" || *timeSeriesQuery.parameters.GraphPeriod == "" {
 			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-			timeSeriesQuery.parameters.GraphPeriod = strPtr(interval.Text)
+			timeSeriesQuery.parameters.GraphPeriod = &interval.Text
 		}
 		return fmt.Sprintf(" | graph_period %s", *timeSeriesQuery.parameters.GraphPeriod)
 	}
@@ -78,7 +78,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit, *timeSeriesQuery.parameters.GraphPeriod)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.parameters.GraphPeriod)
 	}
 
 	queryRes.Frames = frames
