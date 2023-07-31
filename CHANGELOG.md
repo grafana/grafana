@@ -89,7 +89,7 @@
 - **XYChart:** Fix variable interpolation in datalinks/toggletip. [#70210](https://github.com/grafana/grafana/issues/70210), [@leeoniya](https://github.com/leeoniya)
 - **XYChart:** Fix formatting of axis ticks (units, decimals). [#70193](https://github.com/grafana/grafana/issues/70193), [@leeoniya](https://github.com/leeoniya)
 - **Auth:** Show invite button if disable login form is set to false. [#70155](https://github.com/grafana/grafana/issues/70155), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
-- **TextPanel:** Fix <summary> styling missing the disclosure triangle. [#70138](https://github.com/grafana/grafana/issues/70138), [@joshhunt](https://github.com/joshhunt)
+- **TextPanel:** Fix &lt;summary&gt; styling missing the disclosure triangle. [#70138](https://github.com/grafana/grafana/issues/70138), [@joshhunt](https://github.com/joshhunt)
 - **Alerting:** Fix email template for text/plain emails. [#70111](https://github.com/grafana/grafana/issues/70111), [@grobinson-grafana](https://github.com/grobinson-grafana)
 - **Explore:** Fixed Starred query history tab to show all starred queries. [#70092](https://github.com/grafana/grafana/issues/70092), [@harisrozajac](https://github.com/harisrozajac)
 - **CodeEditor:** Ensure suggestions only apply to the instance of the edit…. [#70067](https://github.com/grafana/grafana/issues/70067), [@ashharrison90](https://github.com/ashharrison90)
