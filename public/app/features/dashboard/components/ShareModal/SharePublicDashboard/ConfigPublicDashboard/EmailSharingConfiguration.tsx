@@ -25,6 +25,7 @@ import {
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
 
+import { sharedCategory } from '../../utils';
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
@@ -55,12 +56,18 @@ const EmailList = ({
   const isLoading = isDeleteLoading || isReshareLoading;
 
   const onDeleteEmail = (recipientUid: string) => {
-    reportInteraction('grafana_dashboards_public_delete_sharing_email_clicked');
+    reportInteraction('dashboards_sharing_actions_clicked', {
+      item: 'delete_email',
+      sharing_category: sharedCategory.publicDashboard,
+    });
     deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
-    reportInteraction('grafana_dashboards_public_reshare_email_clicked');
+    reportInteraction('dashboards_sharing_actions_clicked', {
+      item: 'reshare_email',
+      sharing_category: sharedCategory.publicDashboard,
+    });
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
@@ -147,7 +154,10 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     //TODO: add if it's domain or not when developed.
-    reportInteraction('dashboards_sharing_actions_clicked', { item: 'invite_public_dashboard' });
+    reportInteraction('dashboards_sharing_actions_clicked', {
+      item: 'invite_public_dashboard',
+      sharing_category: sharedCategory.publicDashboard,
+    });
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
@@ -166,8 +176,9 @@ export const EmailSharingConfiguration = () => {
                 size={width < 480 ? 'sm' : 'md'}
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
-                  reportInteraction('grafana_dashboards_public_share_type_clicked', {
-                    type: shareType,
+                  reportInteraction('dashboards_sharing_actions_clicked', {
+                    item: `share_type_${shareType.toLowerCase()}`,
+                    sharing_category: sharedCategory.publicDashboard,
                   });
                   setValue('shareType', shareType);
                   onShareTypeChange(shareType);

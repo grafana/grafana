@@ -7,6 +7,8 @@ import { reportInteraction } from '@grafana/runtime/src';
 import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 
+import { sharedCategory } from '../../utils';
+
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -37,8 +39,9 @@ export const Configuration = ({
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
               onChange={(e) => {
-                reportInteraction('grafana_dashboards_public_time_selection_clicked', {
-                  action: e.currentTarget.checked ? 'enable' : 'disable',
+                reportInteraction('dashboards_sharing_actions_clicked', {
+                  item: e.currentTarget.checked ? 'enable_time' : 'disable_time',
+                  sharing_category: sharedCategory.publicDashboard,
                 });
                 onChange('isTimeSelectionEnabled', e.currentTarget.checked);
               }}
@@ -49,8 +52,9 @@ export const Configuration = ({
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                reportInteraction('grafana_dashboards_public_annotations_clicked', {
-                  action: e.currentTarget.checked ? 'enable' : 'disable',
+                reportInteraction('dashboards_sharing_actions_clicked', {
+                  item: e.currentTarget.checked ? 'enable_annotations' : 'disable_annotations',
+                  sharing_category: sharedCategory.publicDashboard,
                 });
                 onChange('isAnnotationsEnabled', e.currentTarget.checked);
               }}

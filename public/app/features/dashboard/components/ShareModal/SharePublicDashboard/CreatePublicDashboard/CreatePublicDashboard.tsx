@@ -11,6 +11,7 @@ import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
 import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useCreatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
+import { sharedCategory } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
@@ -39,7 +40,10 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const disableInputs = !hasWritePermissions || isSaveLoading || isError;
 
   const onCreate = async () => {
-    reportInteraction('dashboards_sharing_actions_clicked', { item: 'generate_public_url' });
+    reportInteraction('dashboards_sharing_actions_clicked', {
+      item: 'generate_public_url',
+      sharing_category: sharedCategory.publicDashboard,
+    });
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
   };
 

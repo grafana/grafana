@@ -25,6 +25,7 @@ import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
+import { sharedCategory } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
@@ -100,12 +101,15 @@ const ConfigPublicDashboard = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
-      activeTab: 'public_dashboard',
+      activeTab: sharedCategory.publicDashboard,
     });
   };
 
   function onCopyURL() {
-    reportInteraction('dashboards_sharing_actions_clicked', { item: 'copy_public_url' });
+    reportInteraction('dashboards_sharing_actions_clicked', {
+      item: 'copy_public_url',
+      sharing_category: sharedCategory.publicDashboard,
+    });
   }
 
   return (
@@ -145,8 +149,9 @@ const ConfigPublicDashboard = () => {
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              reportInteraction('grafana_dashboards_public_enable_clicked', {
-                action: e.currentTarget.checked ? 'disable' : 'enable',
+              reportInteraction('dashboards_sharing_actions_clicked', {
+                item: e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
+                sharing_category: sharedCategory.publicDashboard,
               });
               onChange('isPaused', e.currentTarget.checked);
             }}
