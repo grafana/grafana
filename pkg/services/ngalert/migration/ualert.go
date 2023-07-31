@@ -29,12 +29,6 @@ const MaxFolderName = 255
 // during alert migration cleanup.
 const FOLDER_CREATED_BY = -8
 
-var migTitle = "move dashboard alerts to unified alerting"
-
-var rmMigTitle = "remove unified alerting data"
-
-const clearMigrationEntryTitle = "clear migration entry %q"
-
 // It is defined in pkg/expr/service.go as "DatasourceType"
 const expressionDatasourceUID = "__expr__"
 

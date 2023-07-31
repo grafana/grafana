@@ -1,6 +1,7 @@
-package migration_test
+package migration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -11,45 +12,42 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TestAddDashAlertMigration tests the AddDashAlertMigration wrapper method that decides when to run the migration based on migration status and settings.
-func TestAddDashAlertMigration(t *testing.T) {
-	x := setupTestDB(t)
-
+// TestServiceStart tests the wrapper method that decides when to run the migration based on migration status and settings.
+func TestServiceStart(t *testing.T) {
 	tc := []struct {
 		name           string
 		config         *setting.Cfg
 		isMigrationRun bool
 		shouldPanic    bool
-		expected       []string // set of migration titles
+		expected       bool
 	}{
 		{
-			name: "when unified alerting enabled and migration not already run, then add main migration and clear rmMigration log entry",
+			name: "when unified alerting enabled and migration not already run, then run migration",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: boolPointer(true),
 				},
 			},
 			isMigrationRun: false,
-			expected:       []string{fmt.Sprintf(migration.ClearMigrationEntryTitle, migration.RmMigTitle), migration.MigTitle},
+			expected:       true,
 		},
 		{
-			name: "when unified alerting disabled and migration is already run, then add rmMigration and clear main migration log entry",
+			name: "when unified alerting disabled, migration is already run and force migration is enabled, then revert migration",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
 					Enabled: boolPointer(false),
@@ -57,7 +55,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 				ForceMigration: true,
 			},
 			isMigrationRun: true,
-			expected:       []string{fmt.Sprintf(migration.ClearMigrationEntryTitle, migration.MigTitle), migration.RmMigTitle},
+			expected:       false,
 		},
 		{
 			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
@@ -68,7 +66,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 				ForceMigration: false,
 			},
 			isMigrationRun: true,
-			expected:       []string{fmt.Sprintf(migration.ClearMigrationEntryTitle, migration.MigTitle), migration.RmMigTitle},
+			expected:       true,
 		},
 		{
 			name: "when unified alerting enabled and migration is already run, then do nothing",
@@ -78,7 +76,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 				},
 			},
 			isMigrationRun: true,
-			expected:       []string{},
+			expected:       true,
 		},
 		{
 			name: "when unified alerting disabled and migration is not already run, then do nothing",
@@ -88,10 +86,11 @@ func TestAddDashAlertMigration(t *testing.T) {
 				},
 			},
 			isMigrationRun: false,
-			expected:       []string{},
+			expected:       false,
 		},
 	}
 
+	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			defer func() {
@@ -100,39 +99,34 @@ func TestAddDashAlertMigration(t *testing.T) {
 					t.Errorf("The code did not panic")
 				}
 			}()
-			if tt.isMigrationRun {
-				log := migrator.MigrationLog{
-					MigrationID: migration.MigTitle,
-					SQL:         "",
-					Timestamp:   time.Now(),
-					Success:     true,
-				}
-				_, err := x.Insert(log)
-				require.NoError(t, err)
-			} else {
-				_, err := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", migration.MigTitle)
-				require.NoError(t, err)
-			}
 
-			mg := migrator.NewMigrator(x, tt.config)
+			ctx := context.Background()
+			service := NewMigrationService(&logtest.Fake{}, sqlStore, tt.config, fakes.NewFakeKVStore(t), provisioning.NewProvisioningServiceMock(ctx))
 
-			migration.AddDashAlertMigration(mg)
-			require.Equal(t, tt.expected, mg.GetMigrationIDs(false))
+			err := service.SetMigrated(ctx, tt.isMigrationRun)
+			require.NoError(t, err)
+
+			err = service.Start(ctx)
+			require.NoError(t, err)
+
+			migrated, err := service.GetMigrated(ctx)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, migrated)
 		})
 	}
 }
 
-// TestAMConfigMigration tests the execution of the main DashAlertMigration specifically for migrations of channels and routes.
+// TestAMConfigMigration tests the execution of the migration specifically for migrations of channels and routes.
 func TestAMConfigMigration(t *testing.T) {
-	// Run initial migration to have a working DB.
-	x := setupTestDB(t)
-
+	sqlStore := db.InitTestDB(t)
+	x := sqlStore.GetEngine()
+	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t), provisioning.NewProvisioningServiceMock(context.Background()))
 	tc := []struct {
 		name           string
 		legacyChannels []*models.AlertNotification
 		alerts         []*models.Alert
 
-		expected map[int64]*migration.PostableUserConfig
+		expected map[int64]*PostableUserConfig
 		expErr   error
 	}{
 		{
@@ -153,43 +147,43 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlert(t, int64(2), int64(3), int64(2), "alert5", []string{"notifier4", "notifier5", "notifier6"}),
 				createAlert(t, int64(2), int64(4), int64(3), "alert6", []string{}),
 			},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier2", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier3", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier2", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier3", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
 							RepeatInterval: nil,
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
-							{Name: "notifier2", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
-							{Name: "notifier3", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier3", Type: "opsgenie"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+							{Name: "notifier2", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
+							{Name: "notifier3", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier3", Type: "opsgenie"}}},
 							{Name: "autogen-contact-point-default"}, // empty default
 						},
 					},
 				},
 				int64(2): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "notifier6",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier4", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier4".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier5", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier5".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier6", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier6".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier4", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier4".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier5", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier5".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier6", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier6".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
-							RepeatInterval: durationPointer(migration.DisabledRepeatInterval),
+							RepeatInterval: durationPointer(DisabledRepeatInterval),
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier4", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier4", Type: "email"}}},
-							{Name: "notifier5", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier5", Type: "slack"}}},
-							{Name: "notifier6", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier6", Type: "opsgenie"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier4", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier4", Type: "email"}}},
+							{Name: "notifier5", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier5", Type: "slack"}}},
+							{Name: "notifier6", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier6", Type: "opsgenie"}}},
 						},
 					},
 				},
@@ -201,19 +195,19 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
 							RepeatInterval: nil,
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
 							{Name: "autogen-contact-point-default"},
 						},
 					},
@@ -226,19 +220,19 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "notifier1",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
-							RepeatInterval: durationPointer(migration.DisabledRepeatInterval),
+							RepeatInterval: durationPointer(DisabledRepeatInterval),
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
 						},
 					},
 				},
@@ -250,19 +244,19 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotificationWithReminder(t, int64(1), "notifier1", "email", emailSettings, true, true, time.Duration(1)*time.Hour),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "notifier1",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(model.Duration(time.Duration(1) * time.Hour))},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(model.Duration(time.Duration(1) * time.Hour))},
 							},
 							RepeatInterval: durationPointer(model.Duration(time.Duration(1) * time.Hour)),
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
 						},
 					},
 				},
@@ -275,22 +269,22 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, true),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier2", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier2", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
-							RepeatInterval: durationPointer(migration.DisabledRepeatInterval),
+							RepeatInterval: durationPointer(DisabledRepeatInterval),
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
-							{Name: "notifier2", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
-							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+							{Name: "notifier2", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
+							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}}},
 						},
 					},
 				},
@@ -303,22 +297,22 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotificationWithReminder(t, int64(1), "notifier2", "slack", slackSettings, true, true, time.Duration(30)*time.Minute),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(model.Duration(time.Duration(1) * time.Hour))},
-								{Receiver: "notifier2", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(model.Duration(time.Duration(30) * time.Minute))},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(model.Duration(time.Duration(1) * time.Hour))},
+								{Receiver: "notifier2", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(model.Duration(time.Duration(30) * time.Minute))},
 							},
 							RepeatInterval: durationPointer(model.Duration(time.Duration(30) * time.Minute)),
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
-							{Name: "notifier2", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
-							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+							{Name: "notifier2", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
+							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier2", Type: "slack"}}},
 						},
 					},
 				},
@@ -332,24 +326,24 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, true), // default
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier2", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier3", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier2", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier3", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier3".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
-							RepeatInterval: durationPointer(migration.DisabledRepeatInterval),
+							RepeatInterval: durationPointer(DisabledRepeatInterval),
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
-							{Name: "notifier2", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
-							{Name: "notifier3", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier3", Type: "opsgenie"}}},
-							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier3", Type: "opsgenie"}}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+							{Name: "notifier2", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
+							{Name: "notifier3", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier3", Type: "opsgenie"}}},
+							{Name: "autogen-contact-point-default", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}, {Name: "notifier3", Type: "opsgenie"}}}},
 					},
 				},
 			},
@@ -364,20 +358,20 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 				createAlert(t, int64(1), int64(1), int64(1), "alert2", []string{"notifier1", "notifier2"}),
 			},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
-								{Receiver: "notifier2", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
+								{Receiver: "notifier2", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier2".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
-							{Name: "notifier2", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+							{Name: "notifier2", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier2", Type: "slack"}}},
 							{Name: "autogen-contact-point-default"},
 						},
 					},
@@ -390,18 +384,18 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
 							{Name: "autogen-contact-point-default"},
 						},
 					},
@@ -416,18 +410,18 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier3", "sensu", "", false),
 			},
 			alerts: []*models.Alert{},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
 							{Name: "autogen-contact-point-default"},
 						},
 					},
@@ -443,18 +437,18 @@ func TestAMConfigMigration(t *testing.T) {
 			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
 			},
-			expected: map[int64]*migration.PostableUserConfig{
+			expected: map[int64]*PostableUserConfig{
 				int64(1): {
-					AlertmanagerConfig: migration.PostableApiAlertingConfig{
-						Route: &migration.Route{
+					AlertmanagerConfig: PostableApiAlertingConfig{
+						Route: &Route{
 							Receiver:   "autogen-contact-point-default",
 							GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
-							Routes: []*migration.Route{
-								{Receiver: "notifier1", ObjectMatchers: migration.ObjectMatchers{{Type: 2, Name: migration.ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(migration.DisabledRepeatInterval)},
+							Routes: []*Route{
+								{Receiver: "notifier1", ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"notifier1".*`}}, Routes: nil, Continue: true, RepeatInterval: durationPointer(DisabledRepeatInterval)},
 							},
 						},
-						Receivers: []*migration.PostableApiReceiver{
-							{Name: "notifier1", GrafanaManagedReceivers: []*migration.PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
+						Receivers: []*PostableApiReceiver{
+							{Name: "notifier1", GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "notifier1", Type: "email"}}},
 							{Name: "autogen-contact-point-default"},
 						},
 					},
@@ -465,19 +459,21 @@ func TestAMConfigMigration(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			defer teardown(t, x)
+			defer teardown(t, x, service)
 			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
-			runDashAlertMigrationTestRun(t, x)
+
+			err := service.Start(context.Background())
+			require.NoError(t, err)
 
 			for orgId := range tt.expected {
 				amConfig := getAlertmanagerConfig(t, x, orgId)
 
 				// Order of nested GrafanaManagedReceivers is not guaranteed.
 				cOpt := []cmp.Option{
-					cmpopts.IgnoreUnexported(migration.PostableApiReceiver{}),
-					cmpopts.IgnoreFields(migration.PostableGrafanaReceiver{}, "UID", "Settings", "SecureSettings"),
-					cmpopts.SortSlices(func(a, b *migration.PostableGrafanaReceiver) bool { return a.Name < b.Name }),
-					cmpopts.SortSlices(func(a, b *migration.PostableApiReceiver) bool { return a.Name < b.Name }),
+					cmpopts.IgnoreUnexported(PostableApiReceiver{}),
+					cmpopts.IgnoreFields(PostableGrafanaReceiver{}, "UID", "Settings", "SecureSettings"),
+					cmpopts.SortSlices(func(a, b *PostableGrafanaReceiver) bool { return a.Name < b.Name }),
+					cmpopts.SortSlices(func(a, b *PostableApiReceiver) bool { return a.Name < b.Name }),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...) {
 					t.Errorf("Unexpected Receivers: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Receivers, amConfig.AlertmanagerConfig.Receivers, cOpt...))
@@ -485,13 +481,13 @@ func TestAMConfigMigration(t *testing.T) {
 
 				// Order of routes is not guaranteed.
 				cOpt = []cmp.Option{
-					cmpopts.SortSlices(func(a, b *migration.Route) bool {
+					cmpopts.SortSlices(func(a, b *Route) bool {
 						if a.Receiver != b.Receiver {
 							return a.Receiver < b.Receiver
 						}
 						return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
 					}),
-					cmpopts.IgnoreUnexported(migration.Route{}, labels.Matcher{}),
+					cmpopts.IgnoreUnexported(Route{}, labels.Matcher{}),
 				}
 				if !cmp.Equal(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...) {
 					t.Errorf("Unexpected Route: %v", cmp.Diff(tt.expected[orgId].AlertmanagerConfig.Route, amConfig.AlertmanagerConfig.Route, cOpt...))
@@ -501,13 +497,14 @@ func TestAMConfigMigration(t *testing.T) {
 	}
 }
 
-// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of models.
+// TestDashAlertMigration tests the execution of the migration specifically for alert rules.
 func TestDashAlertMigration(t *testing.T) {
-	// Run initial migration to have a working DB.
-	x := setupTestDB(t)
+	sqlStore := db.InitTestDB(t)
+	x := sqlStore.GetEngine()
+	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t), provisioning.NewProvisioningServiceMock(context.Background()))
 
 	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
-		defer teardown(t, x)
+		defer teardown(t, x, service)
 		legacyChannels := []*models.AlertNotification{
 			createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
@@ -526,31 +523,32 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
-				"alert1": {Labels: map[string]string{migration.ContactLabel: `"notifier1"`}},
-				"alert2": {Labels: map[string]string{migration.ContactLabel: `"notifier2","notifier3"`}},
-				"alert3": {Labels: map[string]string{migration.ContactLabel: `"notifier3"`}},
+				"alert1": {Labels: map[string]string{ContactLabel: `"notifier1"`}},
+				"alert2": {Labels: map[string]string{ContactLabel: `"notifier2","notifier3"`}},
+				"alert3": {Labels: map[string]string{ContactLabel: `"notifier3"`}},
 			},
 			int64(2): {
-				"alert4": {Labels: map[string]string{migration.ContactLabel: `"notifier4","notifier6"`}},
-				"alert5": {Labels: map[string]string{migration.ContactLabel: `"notifier4","notifier5","notifier6"`}},
+				"alert4": {Labels: map[string]string{ContactLabel: `"notifier4","notifier6"`}},
+				"alert5": {Labels: map[string]string{ContactLabel: `"notifier4","notifier5","notifier6"`}},
 				"alert6": {Labels: map[string]string{}},
 			},
 		}
 		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
-		runDashAlertMigrationTestRun(t, x)
+		err := service.Start(context.Background())
+		require.NoError(t, err)
 
 		for orgId := range expected {
 			rules := getAlertRules(t, x, orgId)
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				require.Equal(t, expectedRulesMap[r.Title].Labels[migration.ContactLabel], r.Labels[migration.ContactLabel])
+				require.Equal(t, expectedRulesMap[r.Title].Labels[ContactLabel], r.Labels[ContactLabel])
 			}
 		}
 	})
 
 	t.Run("when DashAlertMigration create ContactLabel with sanitized name if name contains double quote", func(t *testing.T) {
-		defer teardown(t, x)
+		defer teardown(t, x, service)
 		legacyChannels := []*models.AlertNotification{
 			createAlertNotification(t, int64(1), "notif\"ier1", "email", emailSettings, false),
 		}
@@ -559,23 +557,25 @@ func TestDashAlertMigration(t *testing.T) {
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
-				"alert1": {Labels: map[string]string{migration.ContactLabel: `"notif_ier1"`}},
+				"alert1": {Labels: map[string]string{ContactLabel: `"notif_ier1"`}},
 			},
 		}
 		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
-		runDashAlertMigrationTestRun(t, x)
+		err := service.Start(context.Background())
+		require.NoError(t, err)
 
 		for orgId := range expected {
 			rules := getAlertRules(t, x, orgId)
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				require.Equal(t, expectedRulesMap[r.Title].Labels[migration.ContactLabel], r.Labels[migration.ContactLabel])
+				require.Equal(t, expectedRulesMap[r.Title].Labels[ContactLabel], r.Labels[ContactLabel])
 			}
 		}
 	})
 
 	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
+		defer teardown(t, x, service)
 		o := createOrg(t, 1)
 		folder1 := createDashboard(t, 1, o.ID, "folder-1")
 		folder1.IsFolder = true
@@ -590,13 +590,14 @@ func TestDashAlertMigration(t *testing.T) {
 		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
 		require.NoError(t, err)
 
-		runDashAlertMigrationTestRun(t, x)
+		err = service.Start(context.Background())
+		require.NoError(t, err)
 
 		rules := getAlertRules(t, x, o.ID)
 		require.Len(t, rules, 2)
 
 		var generalFolder dashboards.Dashboard
-		_, err = x.Table(&dashboards.Dashboard{}).Where("title = ? AND org_id = ?", migration.GENERAL_FOLDER, o.ID).Get(&generalFolder)
+		_, err = x.Table(&dashboards.Dashboard{}).Where("title = ? AND org_id = ?", GENERAL_FOLDER, o.ID).Get(&generalFolder)
 		require.NoError(t, err)
 
 		require.NotNil(t, generalFolder)
@@ -618,27 +619,6 @@ const (
 	slackSettings    = `{"recipient": "test", "token": "test"}`
 	opsgenieSettings = `{"apiKey": "test"}`
 )
-
-// setupTestDB prepares the sqlite database and runs OSS migrations to initialize the schemas.
-func setupTestDB(t *testing.T) *xorm.Engine {
-	t.Helper()
-	testDB := sqlutil.SQLite3TestDB()
-
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-
-	err = migrator.NewDialect(x.DriverName()).CleanDB(x)
-	require.NoError(t, err)
-
-	mg := migrator.NewMigrator(x, &setting.Cfg{Raw: ini.Empty()})
-	migrations := &migrations.OSSMigrations{}
-	migrations.AddMigration(mg)
-
-	err = mg.Start(false, 0)
-	require.NoError(t, err)
-
-	return x
-}
 
 var (
 	now = time.Now()
@@ -747,7 +727,7 @@ func createOrg(t *testing.T, id int64) *org.Org {
 }
 
 // teardown cleans the input tables between test cases.
-func teardown(t *testing.T, x *xorm.Engine) {
+func teardown(t *testing.T, x *xorm.Engine, service MigrationService) {
 	_, err := x.Exec("DELETE from org")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert")
@@ -758,22 +738,11 @@ func teardown(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from data_source")
 	require.NoError(t, err)
+	err = service.Revert(context.Background())
+	require.NoError(t, err)
 }
 
-// setupDashAlertMigrationTestRun runs DashAlertMigration for a new test run.
-func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
-	_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", migration.MigTitle)
-	require.NoError(t, errDeleteMig)
-
-	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
-	alertMigrator.AddMigration(migration.RmMigTitle, &migration.RmMigration{})
-	migration.AddDashAlertMigration(alertMigrator)
-
-	errRunningMig := alertMigrator.Start(false, 0)
-	require.NoError(t, errRunningMig)
-}
-
-// setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
+// setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the
 func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
@@ -818,12 +787,12 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 }
 
 // getAlertmanagerConfig retreives the Alertmanager Config from the database for a given orgId.
-func getAlertmanagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *migration.PostableUserConfig {
+func getAlertmanagerConfig(t *testing.T, x *xorm.Engine, orgId int64) *PostableUserConfig {
 	amConfig := ""
 	_, err := x.Table("alert_configuration").Where("org_id = ?", orgId).Cols("alertmanager_configuration").Get(&amConfig)
 	require.NoError(t, err)
 
-	config := migration.PostableUserConfig{}
+	config := PostableUserConfig{}
 	err = json.Unmarshal([]byte(amConfig), &config)
 	require.NoError(t, err)
 	return &config
@@ -840,8 +809,4 @@ func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertR
 
 func boolPointer(b bool) *bool {
 	return &b
-}
-
-func durationPointer(d model.Duration) *model.Duration {
-	return &d
 }
