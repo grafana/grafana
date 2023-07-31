@@ -29,4 +29,4 @@ This section contains how-to topics for developing Grafana plugins:
 
 Additional resources:
 
-- [Build a Grafana plugin with the create-plugin tool](https://grafana.github.io/plugin-tools/docs/creating-a-plugin)
+- [Build a Grafana plugin with the create-plugin tool](https://grafana.github.io/plugin-tools/docs/getting-started/creating-a-plugin)

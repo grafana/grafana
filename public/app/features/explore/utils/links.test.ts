@@ -105,8 +105,12 @@ describe('explore links utils', () => {
       );
       expect(links[0].title).toBe('test_ds');
 
+      const preventDefault = jest.fn();
+
       if (links[0].onClick) {
-        links[0].onClick({});
+        links[0].onClick({
+          preventDefault,
+        });
       }
 
       expect(splitfn).toBeCalledWith({
@@ -119,6 +123,8 @@ describe('explore links utils', () => {
           },
         },
       });
+
+      expect(preventDefault).toBeCalled();
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
         app: CoreApp.Explore,
