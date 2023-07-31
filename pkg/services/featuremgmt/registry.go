@@ -577,13 +577,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "elasticToggleableFilters",
-			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between vizualizations and widgets",
 			Stage:        FeatureStageExperimental,
