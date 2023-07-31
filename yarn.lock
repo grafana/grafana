@@ -19548,7 +19548,7 @@ __metadata:
     react-transition-group: 4.4.5
     react-use: 17.4.0
     react-virtual: 2.10.4
-    react-virtualized-auto-sizer: 1.0.20
+    react-virtualized-auto-sizer: 1.0.7
     react-window: 1.8.9
     react-window-infinite-loader: 1.0.9
     redux: 4.2.1
@@ -28151,16 +28151,6 @@ __metadata:
   peerDependencies:
     react: ^16.6.3 || ^17.0.0
   checksum: 1bebc741b01057829a7d7f29256114caecf0597d41b187cb41e75af77f24a87c780bc1a81ec11205b78ee2e9c801fc5e36b20a9e1ab7ddc70a18dd95417795f8
-  languageName: node
-  linkType: hard
-
-"react-virtualized-auto-sizer@npm:1.0.20":
-  version: 1.0.20
-  resolution: "react-virtualized-auto-sizer@npm:1.0.20"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
-    react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc
-  checksum: 2c616ec7587de64a46aa8c6c301e75fee87eb7a39013f25d940b0fe95eee5e8a8a3c109923e241b427752d71fba80f44cd2c8557750967df0777d99ebd16ba24
   languageName: node
   linkType: hard
 
