@@ -85,7 +85,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       // We allow collapsing this only when it is shown together with trace view.
       collapsible={!!withTraceView}
       defaultExpanded={withTraceView ? !withTraceView : true}
-      toggleCollapse={!!withTraceView ? () => toggled() : undefined}
+      toggleCollapse={withTraceView ? () => toggled() : undefined}
     >
       <div
         ref={containerRef}
