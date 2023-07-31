@@ -77,7 +77,7 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *Service) (*backend.CheckHealthResult, error) {
 	logger := logger.FromContext(ctx)
 	queryString := "SHOW measurements"
-	hcRequest, err := s.createRequest(ctx, logger, dsInfo, queryString)
+	hcRequest, err := s.createRequest(ctx, logger, dsInfo, queryString, defaultRetentionPolicy)
 	if err != nil {
 		return getHealthCheckMessage(logger, "error creating influxDB healthcheck request", err)
 	}

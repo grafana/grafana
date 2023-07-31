@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
+const defaultRetentionPolicy = "default"
+
 var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
@@ -128,7 +130,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logger.Debug("Influxdb query", "raw query", allRawQueries)
 	}
 
-	request, err := s.createRequest(ctx, logger, dsInfo, allRawQueries)
+	request, err := s.createRequest(ctx, logger, dsInfo, allRawQueries, "")
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -148,7 +150,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return resp, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, query string) (*http.Request, error) {
+func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, query string, retentionPolicy string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -179,6 +181,11 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 	params := req.URL.Query()
 	params.Set("db", dsInfo.DbName)
 	params.Set("epoch", "ms")
+	// default is hardcoded default retention policy
+	// InfluxDB will use the default policy when it is not added to the request
+	if retentionPolicy != "" && retentionPolicy != "default" {
+		params.Set("rp", retentionPolicy)
+	}
 
 	if httpMode == "GET" {
 		params.Set("q", query)

@@ -25,7 +25,7 @@ func TestExecutor_createRequest(t *testing.T) {
 	}
 
 	t.Run("createRequest with GET httpMode", func(t *testing.T) {
-		req, err := s.createRequest(context.Background(), logger, datasource, query)
+		req, err := s.createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 
 		require.NoError(t, err)
 
@@ -39,7 +39,7 @@ func TestExecutor_createRequest(t *testing.T) {
 
 	t.Run("createRequest with POST httpMode", func(t *testing.T) {
 		datasource.HTTPMode = "POST"
-		req, err := s.createRequest(context.Background(), logger, datasource, query)
+		req, err := s.createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -58,7 +58,7 @@ func TestExecutor_createRequest(t *testing.T) {
 
 	t.Run("createRequest with PUT httpMode", func(t *testing.T) {
 		datasource.HTTPMode = "PUT"
-		_, err := s.createRequest(context.Background(), logger, datasource, query)
+		_, err := s.createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 		require.EqualError(t, err, ErrInvalidHttpMode.Error())
 	})
 }
