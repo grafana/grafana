@@ -19,22 +19,22 @@ weight: 1300
 
 # Prometheus data source
 
-Prometheus is an open-source database that uses an telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?]({{< relref "../../fundamentals/intro-to-prometheus/" >}}).
+Prometheus is an open-source database that uses an telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?][intro-to-prometheus].
 
 Grafana provides native support for Prometheus.
-For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
+For instructions on downloading Prometheus see [Get started with Grafana and Prometheus][get-started-prometheus].
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization `administrator` role can add data sources and edit existing data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Prometheus data source, you can [configure it](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
+Once you've added the Prometheus data source, you can [configure it][configure-prometheus-data-source] so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations]({{< relref "./query-editor#apply-annotations" >}}).
 
 The following guides will help you get started with the Prometheus data source:
 
-- [Configure the Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/)
-- [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/)
-- [Template variables](/docs/grafana/latest/datasources/prometheus/template-variables/)
+- [Configure the Prometheus data source][configure-prometheus-data-source]
+- [Prometheus query editor]({{< relref "./query-editor" >}})
+- [Template variables]({{< relref "./template-variables" >}})
 
 ## Prometheus API
 
@@ -48,7 +48,7 @@ For more information on how to query other Prometheus-compatible projects from G
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 {{% admonition type="note" %}}
 Once you have provisioned a data source you cannot edit it.
@@ -93,14 +93,14 @@ We also bundle a dashboard within Grafana so you can start viewing your metrics 
 
 **To import the bundled dashboard:**
 
-1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
+1. Navigate to the data source's [configuration page](#configure-the-data-source).
 1. Select the **Dashboards** tab.
 
 This displays dashboards for Grafana and Prometheus.
 
 1. Select **Import** for the dashboard to import.
 
-For details about these metrics, refer to [Internal Grafana metrics]({{< relref "../../setup-grafana/set-up-grafana-monitoring/" >}}).
+For details about these metrics, refer to [Internal Grafana metrics][set-up-grafana-monitoring].
 
 ## Amazon Managed Service for Prometheus
 
@@ -124,7 +124,7 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 The Prometheus data source works with Azure authentication. To configure Azure authentication see [Configure Azure Active Directory (AD) authentication](/docs/grafana/latest/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication).
 
-In Grafana Enterprise, update the .ini configuration file: [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/). Depending on your setup, the .ini file is located [here](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location).
+In Grafana Enterprise, update the .ini configuration file: [Configure Grafana][configure-grafana]. Depending on your setup, the .ini file is located [here][configure-grafana-configuration-file-location].
 Add the following setting in the **[auth]** section :
 
 ```bash
@@ -138,7 +138,7 @@ If you are using Azure authentication settings do not enable `Forward OAuth iden
 
 ## Exemplars
 
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars]({{< relref "../../fundamentals/exemplars/" >}}) in Prometheus documentation for detailed information on how they work.
+Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars][exemplars] in Prometheus documentation for detailed information on how they work.
 
 {{% admonition type="note" %}}
 Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
@@ -148,7 +148,7 @@ Grafana 7.4 and higher can show exemplars data alongside a metric both in Explor
 
 {{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
-See the Exemplars section in [Configure Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/).
+See the Exemplars section in [Configure Prometheus data source][configure-prometheus-data-source].
 
 {{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" caption="Exemplars" >}}
 
@@ -164,3 +164,35 @@ Increasing the duration of the `incrementalQueryOverlapWindow` will increase the
 ## Recording Rules (beta)
 
 The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
+
+{{% docs/reference %}}
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[configure-grafana-configuration-file-location]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+[configure-grafana-configuration-file-location]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+
+[configure-grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+[configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+
+[configure-prometheus-data-source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/configure-prometheus-data-source"
+[configure-prometheus-data-source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/configure-prometheus-data-source"
+
+[exemplars]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
+[exemplars]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[get-started-prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/getting-started/get-started-grafana-prometheus#get-started-with-grafana-and-prometheus"
+[get-started-prometheus]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/getting-started/get-started-grafana-prometheus#get-started-with-grafana-and-prometheus"
+
+[intro-to-prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-to-prometheus"
+[intro-to-prometheus]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-to-prometheus"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+
+[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+{{% /docs/reference %}}

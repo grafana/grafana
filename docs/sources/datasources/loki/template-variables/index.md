@@ -25,7 +25,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
 
 ## Use query variables
 
@@ -45,13 +45,13 @@ The form has these options:
 Loki supports the special **Ad hoc filters** variable type.
 You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Loki queries.
 
-For more information, refer to [Add ad hoc filters]({{< relref "../../../dashboards/variables/add-template-variables#add-ad-hoc-filters" >}}).
+For more information, refer to [Add ad hoc filters][add-template-variables-add-ad-hoc-filters].
 
 ## Use interval and range variables
 
 You can use some global built-in variables in query variables: `$__interval`, `$__interval_ms`, `$__range`, `$__range_s`, and `$__range_ms`.
 
-For more information, refer to [Global built-in variables]({{< relref "../../../dashboards/variables/add-template-variables#global-variables" >}}).
+For more information, refer to [Global built-in variables][add-template-variables-global-variables].
 
 ### Label Extraction and Indexing in Loki:
 
@@ -78,3 +78,17 @@ By effectively extracting and indexing labels, Loki enables users to perform com
 Utilizing Loki's indexed labels in combination with Grafana's template variables provides a powerful way to interactively explore and visualize log data. Template variables allow users to create dynamic queries, selecting and filtering logs based on various labels, such as job names, instance IDs, severity levels, or any other contextual information attached to the log entries.
 
 In conclusion, Loki's label extraction and indexing mechanisms are key components that contribute to its ability to handle vast amounts of log data efficiently. By making use of labels and template variables, users can easily gain valuable insights from their log data and troubleshoot issues effectively.
+
+{{% docs/reference %}}
+[add-template-variables-add-ad-hoc-filters]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
+[add-template-variables-add-ad-hoc-filters]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
+
+[add-template-variables-global-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+[add-template-variables-global-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+
+[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}
