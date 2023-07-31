@@ -9,7 +9,7 @@ const NUM_NESTED_FOLDERS = 60;
 const NUM_NESTED_DASHBOARDS = 60;
 
 // TODO enable this test when nested folders goes live
-describe('Dashboard browse (nested)', () => {
+describe.skip('Dashboard browse (nested)', () => {
   const dashboardUIDsToCleanUp: string[] = [];
   const folderUIDsToCleanUp: string[] = [];
 
