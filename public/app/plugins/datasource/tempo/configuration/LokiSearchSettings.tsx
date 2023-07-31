@@ -1,8 +1,12 @@
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
+} from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { TempoJsonData } from '../types';
 
@@ -33,7 +37,7 @@ export function LokiSearchSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.lokiSearch?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'lokiSearch', {
                 datasourceUid: ds.uid,
               })
