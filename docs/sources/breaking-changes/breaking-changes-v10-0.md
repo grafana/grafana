@@ -343,7 +343,7 @@ Here are some of the benefits of create-plugin:
 
 - **Improved testing capabilities:** Testing plugins with @grafana/create-plugin is much easier with GitHub workflows that automate unit and e2e test runs whenever changes are pushed to GitHub.
 
-- **Better documentation:** The [documentation](https://grafana.github.io/plugin-tools/docs/creating-a-plugin) for @grafana/create-plugin is more comprehensive and easier to discover than that of @grafana/toolkit.
+- **Better documentation:** The [documentation](https://grafana.github.io/plugin-tools/docs/getting-started/creating-a-plugin) for @grafana/create-plugin is more comprehensive and easier to discover than that of @grafana/toolkit.
 
 #### Migration path
 
