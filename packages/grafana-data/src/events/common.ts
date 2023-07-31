@@ -55,6 +55,12 @@ export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoaded
   static type = 'dashboard-loaded';
 }
 
-export class DataSourceUpdatedSuccessfully extends BusEventBase {
+export type DataSourceUpdatedEventPayload = {
+  trackingData?: Record<string, string>;
+};
+export class DataSourceUpdatedSuccessfully extends BusEventWithPayload<DataSourceUpdatedEventPayload> {
   static type = 'datasource-updated-successfully';
+}
+export class DataSourceUpdateFailed extends BusEventWithPayload<DataSourceUpdatedEventPayload> {
+  static type = 'datasource-update-failed';
 }

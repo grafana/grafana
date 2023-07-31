@@ -10,6 +10,7 @@ import {
   PluginExtensionDataSourceConfigContext,
   DataSourceJsonData,
   DataSourceUpdatedSuccessfully,
+  DataSourceUpdateFailed,
 } from '@grafana/data';
 import { getDataSourceSrv, getPluginComponentExtensions } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -128,11 +129,13 @@ export function EditDataSourceView({
     e.preventDefault();
     trackDsConfigClicked('save_and_test');
 
+    const eventData = parseEventDataFromDataSource(dataSource);
     try {
       await onUpdate({ ...dataSource });
       trackDsConfigUpdated({ item: 'success' });
-      appEvents.publish(new DataSourceUpdatedSuccessfully());
+      appEvents.publish(new DataSourceUpdatedSuccessfully(eventData));
     } catch (error) {
+      appEvents.publish(new DataSourceUpdateFailed(eventData));
       trackDsConfigUpdated({ item: 'fail', error });
       return;
     }
@@ -247,3 +250,10 @@ export function EditDataSourceView({
     </form>
   );
 }
+
+const parseEventDataFromDataSource = (dataSource: DataSourceSettingsType<DataSourceJsonData, {}>) => {
+  return {
+    datasourceType: dataSource.type,
+    trackingData: dataSource.jsonData?.trackingData,
+  };
+};

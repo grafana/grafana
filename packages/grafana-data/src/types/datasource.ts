@@ -574,6 +574,8 @@ export interface DataSourceJsonData {
   profile?: string;
   manageAlerts?: boolean;
   alertmanagerUid?: string;
+  /* store anonymous data in tracking data to be sent along in the event bus for tracking purposes */
+  trackingData?: Record<string, string>;
 }
 
 /**
