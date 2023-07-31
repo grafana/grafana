@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -65,6 +66,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
 	pipeline.ProvideBootstrapStage,
 	wire.Bind(new(bootstrap.Bootstrapper), new(*bootstrap.Bootstrap)),
+	pipeline.ProvideInitializationStage,
+	wire.Bind(new(initialization.Initializer), new(*initialization.Initialize)),
 
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,
