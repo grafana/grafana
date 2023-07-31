@@ -10,6 +10,7 @@ weight: 200
 ---
 
 # Grafana Enterprise
+# Grafana Cloud
 
 Grafana Enterprise is a commercial edition of Grafana that includes additional features not found in the open source version.
 
