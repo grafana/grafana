@@ -63,7 +63,7 @@ As best practice, create a new namespace, as Kubernetes does allow users to crea
    ```
    The output of the above command will provide more information about the newly created namespace.
 
-1. Create a file called `grafana.yaml`. This file will contain the YAML code aka manifest for deploying Grafana.
+1. Create a YAML manifest file named `grafana.yaml`. This file will contain the necessary code for deployment.
    
    ```bash
    touch grafana.yaml
