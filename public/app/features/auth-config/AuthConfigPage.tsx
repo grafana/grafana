@@ -81,19 +81,6 @@ export const AuthConfigPageUnconnected = ({
     reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
   };
 
-  const getName = (providertype: string) => {
-    // FIXME: could be refactored to be better to detect the different names of the providers we have?
-    console.log(`inside the provider type for name`);
-    console.log(providertype);
-    console.log(`settings`);
-    console.log(settings['auth.saml']);
-    if (providertype === 'SAML') {
-      console.log(`auth.saml name`);
-      return settings['auth.saml']['name'];
-    }
-    return '';
-  };
-
   return (
     <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
@@ -104,7 +91,7 @@ export const AuthConfigPageUnconnected = ({
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
-                displayName={getName(provider.type) ? getName(provider.type) : provider.displayName}
+                displayName={providerStatuses[provider.id]?.name || provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
                 configPath={provider.configPath}
@@ -130,7 +117,7 @@ export const AuthConfigPageUnconnected = ({
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
-                displayName={getName(provider.type) ? getName(provider.type) : provider.displayName}
+                displayName={providerStatuses[provider.id]?.name || provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
                 configPath={provider.configPath}
