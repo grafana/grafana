@@ -2,7 +2,15 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EmbeddedScene, PanelBuilders, SceneFlexItem, SceneFlexLayout, SceneQueryRunner } from '@grafana/scenes';
+import {
+  EmbeddedScene,
+  PanelBuilders,
+  SceneDataTransformer,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneQueryRunner,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 const FIRING_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
@@ -25,6 +33,7 @@ function getScene() {
       {
         refId: 'A',
         expr: FIRING_QUERIES_LAST_WEEK,
+        title: 'Firing',
       },
     ],
   });
@@ -56,18 +65,68 @@ function getScene() {
     ],
   });
 
+  const queryRunner4 = new SceneQueryRunner({
+    datasource: {
+      type: 'loki',
+      uid: 'CKA1_2hVz',
+    },
+    queries: [
+      {
+        refId: 'A',
+        expr: FIRING_QUERIES_LAST_WEEK,
+      },
+    ],
+    $timeRange: new SceneTimeRange({ from: 'now-1w', to: 'now' }),
+  });
+
+  const queryRunner5 = new SceneQueryRunner({
+    datasource: {
+      type: 'loki',
+      uid: 'CKA1_2hVz',
+    },
+    queries: [
+      {
+        refId: 'A',
+        expr: FIRING_QUERIES_LAST_WEEK,
+      },
+    ],
+    $timeRange: new SceneTimeRange({ from: 'now-2w', to: 'now-1w' }),
+  });
+
+  //this accepts the same format as the one outputted when inspecting a panel transformation as JSON
+  /*const transformedQueryData = new SceneDataTransformer({
+    $data: queryRunner1,
+    transformations: [
+      {
+        id: 'calculateField',
+        options: {
+          title: '%',
+          mode: 'reduceRow',
+          reduce: {
+            reducer: 'allValues',
+          },
+        },
+      },
+    ],
+  });*/
+
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       direction: 'row',
       wrap: 'wrap',
       children: [
         new SceneFlexItem({
+          width: '100%',
           height: 300,
-          body: PanelBuilders.stat().setTitle('Firing queries last week').setData(queryRunner1).build(),
+          body: PanelBuilders.stat().setTitle('Total queries this week').setData(queryRunner2).build(),
         }),
         new SceneFlexItem({
           height: 300,
-          body: PanelBuilders.stat().setTitle('Total queries last week').setData(queryRunner2).build(),
+          body: PanelBuilders.stat().setTitle('Total Firing 2 weeks from now').setData(queryRunner5).build(),
+        }),
+        new SceneFlexItem({
+          height: 300,
+          body: PanelBuilders.stat().setTitle('Total Firing last week').setData(queryRunner4).build(),
         }),
         new SceneFlexItem({
           width: '100%',
@@ -82,7 +141,7 @@ function getScene() {
                 .matchFieldsWithName('Time')
                 .overrideCustomFieldConfig('hidden', true)
                 .matchFieldsWithName('Value #A')
-                .overrideDisplayName('Fires Last Week')
+                .overrideDisplayName('Fires this week')
                 .matchFieldsWithName('labels_grafana_folder')
                 .overrideDisplayName('Folder')
                 .matchFieldsWithName('group')
