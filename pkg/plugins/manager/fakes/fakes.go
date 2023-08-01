@@ -463,3 +463,36 @@ func (pr *FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Typ
 
 	return result
 }
+
+type FakeDiscoverer struct {
+	DiscoverFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
+}
+
+func (f *FakeDiscoverer) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+	if f.DiscoverFunc != nil {
+		return f.DiscoverFunc(ctx, src)
+	}
+	return []*plugins.FoundBundle{}, nil
+}
+
+type FakeBootstrapper struct {
+	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	if f.BootstrapFunc != nil {
+		return f.BootstrapFunc(ctx, src, bundles)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeInitializer struct {
+	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.IntializeFunc != nil {
+		return f.IntializeFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}

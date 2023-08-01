@@ -39,17 +39,25 @@ func New(cfg *config.Cfg, opts Opts) *Initialize {
 }
 
 func (i *Initialize) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
-	var err error
+	if len(i.initializeSteps) == 0 {
+		return ps, nil
+	}
 
+	var err error
 	initializedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
+		var ip *plugins.Plugin
+		stepFailed := false
 		for _, init := range i.initializeSteps {
-			p, err = init(ctx, p)
+			ip, err = init(ctx, p)
 			if err != nil {
+				stepFailed = true
 				i.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
-				continue
+				break
 			}
-			initializedPlugins = append(initializedPlugins, p)
+		}
+		if !stepFailed {
+			initializedPlugins = append(initializedPlugins, ip)
 		}
 	}
 

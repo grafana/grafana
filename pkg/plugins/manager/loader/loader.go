@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	initializ "github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
@@ -32,7 +31,6 @@ type Loader struct {
 	processManager          process.Service
 	pluginRegistry          registry.Service
 	roleRegistry            plugins.RoleRegistry
-	pluginInitializer       initializ.Initializer
 	signatureValidator      signature.Validator
 	externalServiceRegistry oauth.ExternalServiceRegistry
 	assetPath               *assetpath.Service
@@ -44,23 +42,20 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
+func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
 	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer) *Loader {
-	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, angularInspector, externalServiceRegistry, discovery, bootstrap, initializer)
+	return New(cfg, authorizer, pluginRegistry, process.NewManager(pluginRegistry), roleRegistry, assetPath,
+		angularInspector, externalServiceRegistry, discovery, bootstrap, initializer)
 }
 
-func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer, pluginRegistry registry.Service,
 	processManager process.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
 	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer) *Loader {
 	return &Loader{
 		pluginRegistry:          pluginRegistry,
-		pluginInitializer:       initializ.New(cfg, backendProvider, license),
 		signatureValidator:      signature.NewValidator(authorizer),
 		processManager:          processManager,
 		errs:                    make(map[string]*plugins.SignatureError),
