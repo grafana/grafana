@@ -240,7 +240,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
 				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
-				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
