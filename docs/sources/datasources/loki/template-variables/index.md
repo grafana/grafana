@@ -53,13 +53,13 @@ You can use some global built-in variables in query variables: `$__interval`, `$
 
 For more information, refer to [Global built-in variables][add-template-variables-global-variables].
 
-### Label Extraction and Indexing in Loki:
+## Label extraction and indexing in Loki
 
-Labels play a fundamental role in Loki's log aggregation and querying capabilities. When logs are ingested into Loki, they are often accompanied by metadata called labels, which provide contextual information about the log entries. These labels consist of key-value pairs and are essential for organizing, filtering, and searching log data efficiently.
+Labels play a fundamental role in Loki's log aggregation and querying capabilities. When logs are ingested into Loki, they are often accompanied by metadata called `labels`, which provide contextual information about the log entries. These labels consist of `key-value` pairs and are essential for organizing, filtering, and searching log data efficiently.
 
-#### 1. Label Extraction:
+### Label extraction
 
-During the ingestion process, Loki performs label extraction from the log lines. Loki's approach to label extraction is based on regular expressions, allowing users to specify custom patterns for parsing log lines and extracting relevant label key-value pairs. This flexibility enables Loki to adapt to various log formats and schemas.
+During the ingestion process, Loki performs label extraction from log lines. Loki's approach to label extraction is based on `regular expressions`, allowing users to specify custom patterns for parsing log lines and extracting relevant label key-value pairs. This flexibility enables Loki to adapt to various log formats and schemas.
 
 For example, suppose you have log lines in the following format:
 
@@ -67,7 +67,7 @@ For example, suppose you have log lines in the following format:
 
 To extract labels from this log format, you could define a regular expression to extract the log level ("INFO"), IP address ("A.B.C.D"), and endpoint ("/api/data") as labels. These labels can later be used to filter and aggregate log entries.
 
-#### 2. Indexing Labels:
+### Indexing labels
 
 Once labels are extracted, Loki efficiently indexes them. The index serves as a lookup mechanism that maps labels to the corresponding log entries. This indexing process enables faster retrieval of logs based on specific label criteria, significantly enhancing query performance.
 
