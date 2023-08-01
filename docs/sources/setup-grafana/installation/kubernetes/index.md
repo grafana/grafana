@@ -33,11 +33,11 @@ This section provides minimum hardware and software requirements.
 
 ### Supported databases
 
-For a list of supported databases, refer to [supported databases](/docs/grafana/latest/setup-grafana/installation/#supported-databases).
+For a list of supported databases, refer to [supported databases](/docs/grafana/latest/setup-grafana/installation#supported-databases).
 
 ### Supported web browsers
 
-For a list of support web browsers, refer to [supported web browsers](/docs/grafana/latest/setup-grafana/installation/#supported-web-browsers).
+For a list of support web browsers, refer to [supported web browsers](/docs/grafana/latest/setup-grafana/installation#supported-web-browsers).
 
 {{% admonition type="note" %}}
 Enable port `3000` in your network environment, as this is the Grafana default port.
@@ -519,7 +519,7 @@ For more information about accessing Kubernetes application logs, refer to [Pods
 
 ### Increasing log levels to debug mode
 
-By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](/docs/grafana/latest/setup-grafana/configure-grafana/#log).
+By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](/docs/grafana/latest/setup-grafana/configure-grafana#log).
 
 The following example uses the Kubernetes ConfigMap which is an API object that stores non-confidential data in key-value pairs. For more information, refer to [Kubernetes ConfigMap Concept](https://kubernetes.io/docs/concepts/configuration/configmap/).
 
