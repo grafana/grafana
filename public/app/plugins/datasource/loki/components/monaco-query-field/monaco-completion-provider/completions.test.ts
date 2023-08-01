@@ -212,6 +212,7 @@ describe('getCompletions', () => {
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([
+      { insertText: '$__auto', label: '$__auto', type: 'DURATION' },
       { insertText: '$__interval', label: '$__interval', type: 'DURATION' },
       { insertText: '$__range', label: '$__range', type: 'DURATION' },
       { insertText: '1m', label: '1m', type: 'DURATION' },
