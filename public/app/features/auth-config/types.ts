@@ -22,6 +22,7 @@ export interface AuthProviderStatus {
   enabled: boolean;
   configured: boolean;
   configFoundInIniFile?: boolean;
+  name?: string;
   hide?: boolean;
 }
 
