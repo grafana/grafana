@@ -113,7 +113,7 @@ func (rt *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func GetMockService(version string, rt RoundTripper) *Service {
 	return &Service{
-		queryParser:    &InfluxdbQueryParser{},
+		queryParser:    &models.InfluxdbQueryParser{},
 		responseParser: &ResponseParser{},
 		im: &fakeInstance{
 			version:          version,

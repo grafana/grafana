@@ -26,7 +26,7 @@ const defaultRetentionPolicy = "default"
 var logger log.Logger = log.New("tsdb.influxdb")
 
 type Service struct {
-	queryParser    *InfluxdbQueryParser
+	queryParser    *models.InfluxdbQueryParser
 	responseParser *ResponseParser
 
 	im instancemgmt.InstanceManager
@@ -36,7 +36,7 @@ var ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'
 
 func ProvideService(httpClient httpclient.Provider) *Service {
 	return &Service{
-		queryParser:    &InfluxdbQueryParser{},
+		queryParser:    &models.InfluxdbQueryParser{},
 		responseParser: &ResponseParser{},
 		im:             datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 	}
@@ -107,7 +107,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	logger.Debug("Making a non-Flux type query")
 
 	var allRawQueries string
-	queries := make([]Query, 0, len(req.Queries))
+	queries := make([]models.Query, 0, len(req.Queries))
 
 	for _, reqQuery := range req.Queries {
 		query, err := s.queryParser.Parse(reqQuery)

@@ -93,7 +93,7 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *
 		}
 	}()
 
-	resp := s.responseParser.Parse(res.Body, res.StatusCode, []Query{{
+	resp := s.responseParser.Parse(res.Body, res.StatusCode, []models.Query{{
 		RefID:       refID,
 		UseRawQuery: true,
 		RawQuery:    queryString,

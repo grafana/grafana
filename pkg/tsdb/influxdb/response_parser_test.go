@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -20,8 +21,8 @@ func prepare(text string) io.ReadCloser {
 	return io.NopCloser(strings.NewReader(text))
 }
 
-func addQueryToQueries(query Query) []Query {
-	var queries []Query
+func addQueryToQueries(query models.Query) []models.Query {
+	var queries []models.Query
 	query.RefID = "A"
 	query.RawQuery = "Test raw query"
 	queries = append(queries, query)
@@ -34,7 +35,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		response := `{ invalid }`
 
-		query := &Query{}
+		query := &models.Query{}
 
 		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 
@@ -66,7 +67,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
 
@@ -155,8 +156,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		var queries []Query
-		queries = append(queries, Query{RefID: "metricFindQuery"})
+		var queries []models.Query
+		queries = append(queries, models.Query{RefID: "metricFindQuery"})
 		newField := data.NewField("Value", nil, []string{
 			"cpu", "disk", "logs",
 		})
@@ -194,8 +195,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		var queries []Query
-		queries = append(queries, Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
+		var queries []models.Query
+		queries = append(queries, models.Query{RawQuery: "SHOW TAG VALUES", RefID: "metricFindQuery"})
 		newField := data.NewField("Value", nil, []string{
 			"cpu-total", "cpu0", "cpu1",
 		})
@@ -227,9 +228,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 		var queries = addQueryToQueries(*query)
-		queryB := &Query{}
+		queryB := &models.Query{}
 		queryB.RefID = "B"
 		queries = append(queries, *queryB)
 		result := parser.Parse(prepare(response), 200, queries)
@@ -263,7 +264,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 		query.RawQuery = "Test raw query"
 		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 
@@ -294,7 +295,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 
 		newField := data.NewField("Value", nil, []*float64{
 			util.Pointer(50.0), nil, util.Pointer(52.0),
@@ -343,7 +344,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 
 		newField := data.NewField("Value", nil, []*float64{
 			util.Pointer(50.0), util.Pointer(52.0),
@@ -395,7 +396,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{Alias: "series alias"}
+		query := &models.Query{Alias: "series alias"}
 		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
 		require.Nil(t, err)
 		newField := data.NewField("Value", labels, []*float64{
@@ -417,7 +418,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $m $measurement", Measurement: "10m"}
+			query = &models.Query{Alias: "alias $m $measurement", Measurement: "10m"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 
 			frame = result.Responses["A"]
@@ -428,7 +429,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $col", Measurement: "10m"}
+			query = &models.Query{Alias: "alias $col", Measurement: "10m"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias mean"
@@ -448,7 +449,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $tag_datacenter"}
+			query = &models.Query{Alias: "alias $tag_datacenter"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias America"
@@ -462,7 +463,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
+			query = &models.Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias America/America"
@@ -476,7 +477,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[col]]", Measurement: "10m"}
+			query = &models.Query{Alias: "alias [[col]]", Measurement: "10m"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias mean"
@@ -486,7 +487,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $0 $1 $2 $3 $4"}
+			query = &models.Query{Alias: "alias $0 $1 $2 $3 $4"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias cpu upc $2 $3 $4"
@@ -496,7 +497,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $0, $1 - $2 - $3, $4: something"}
+			query = &models.Query{Alias: "alias $0, $1 - $2 - $3, $4: something"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias cpu, upc - $2 - $3, $4: something"
@@ -506,7 +507,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $1"}
+			query = &models.Query{Alias: "alias $1"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias upc"
@@ -516,7 +517,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias $5"}
+			query = &models.Query{Alias: "alias $5"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias $5"
@@ -526,7 +527,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "series alias"}
+			query = &models.Query{Alias: "series alias"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "series alias"
@@ -536,7 +537,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
+			query = &models.Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias 10m 10m"
@@ -546,7 +547,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[tag_datacenter]]"}
+			query = &models.Query{Alias: "alias [[tag_datacenter]]"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias America"
@@ -556,7 +557,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[tag_dc.region.name]]"}
+			query = &models.Query{Alias: "alias [[tag_dc.region.name]]"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Northeast"
@@ -566,7 +567,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[tag_cluster-name]]"}
+			query = &models.Query{Alias: "alias [[tag_cluster-name]]"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Cluster"
@@ -576,7 +577,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[tag_/cluster/name/]]"}
+			query = &models.Query{Alias: "alias [[tag_/cluster/name/]]"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Cluster/"
@@ -586,7 +587,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias [[tag_@cluster@name@]]"}
+			query = &models.Query{Alias: "alias [[tag_@cluster@name@]]"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Cluster@"
@@ -597,7 +598,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 		})
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
-			query = &Query{Alias: "alias words with no brackets"}
+			query = &models.Query{Alias: "alias words with no brackets"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame := result.Responses["A"]
 			name := "alias words with no brackets"
@@ -607,7 +608,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias Test 1.5"}
+			query = &models.Query{Alias: "alias Test 1.5"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Test 1.5"
@@ -617,7 +618,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			query = &Query{Alias: "alias Test -1"}
+			query = &models.Query{Alias: "alias Test -1"}
 			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Test -1"
@@ -656,9 +657,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 		var queries = addQueryToQueries(*query)
-		queryB := &Query{}
+		queryB := &models.Query{}
 		queryB.RefID = "B"
 		queries = append(queries, *queryB)
 		labels, err := data.LabelsFromString("datacenter=America")
@@ -696,7 +697,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 		`
 
-		query := &Query{}
+		query := &models.Query{}
 
 		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
 
@@ -789,8 +790,8 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 		}
 		`
 
-		var queries []Query
-		queries = append(queries, Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
+		var queries []models.Query
+		queries = append(queries, models.Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
 		policyFrame := data.NewFrame("",
 			data.NewField("Value", nil, []string{
 				"bar", "autogen", "5m_avg", "1m_avg",
@@ -870,7 +871,7 @@ func TestResponseParser_Parse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			parser := &ResponseParser{}
-			got := parser.Parse(prepare(tt.input), 200, addQueryToQueries(Query{}))
+			got := parser.Parse(prepare(tt.input), 200, addQueryToQueries(models.Query{}))
 			require.NotNil(t, got)
 			if tt.f != nil {
 				tt.f(t, got)

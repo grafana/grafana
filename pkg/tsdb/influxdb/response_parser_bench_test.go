@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 //go:embed testdata/response.json
@@ -15,7 +17,7 @@ var testResponse string
 // go tool pprof -http=localhost:9999 memprofile.out
 func BenchmarkParseJson(b *testing.B) {
 	parser := &ResponseParser{}
-	query := &Query{}
+	query := &models.Query{}
 	queries := addQueryToQueries(*query)
 
 	b.ResetTimer()

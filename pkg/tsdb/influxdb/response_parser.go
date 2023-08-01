@@ -11,6 +11,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 type ResponseParser struct{}
@@ -19,13 +21,13 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, statusCode int, queries []Query) *backend.QueryDataResponse {
+func (rp *ResponseParser) Parse(buf io.ReadCloser, statusCode int, queries []models.Query) *backend.QueryDataResponse {
 	return rp.parse(buf, statusCode, queries)
 }
 
 // parse is the same as Parse, but without the io.ReadCloser (we don't need to
 // close the buffer)
-func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []Query) *backend.QueryDataResponse {
+func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []models.Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
 	response, jsonErr := parseJSON(buf)
 
@@ -54,8 +56,8 @@ func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []Query) *ba
 	return resp
 }
 
-func parseJSON(buf io.Reader) (Response, error) {
-	var response Response
+func parseJSON(buf io.Reader) (models.Response, error) {
+	var response models.Response
 
 	dec := json.NewDecoder(buf)
 	dec.UseNumber()
@@ -65,7 +67,7 @@ func parseJSON(buf io.Reader) (Response, error) {
 	return response, err
 }
 
-func transformRows(rows []Row, query Query) data.Frames {
+func transformRows(rows []models.Row, query models.Query) data.Frames {
 	// pre-allocate frames - this can save many allocations
 	cols := 0
 	for _, row := range rows {
@@ -106,7 +108,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 	return frames
 }
 
-func newFrameWithTimeField(row Row, column string, colIndex int, query Query, frameName []byte) *data.Frame {
+func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
 	var timeArray []time.Time
 	var floatArray []*float64
 	var stringArray []*string
@@ -164,7 +166,7 @@ func newFrameWithTimeField(row Row, column string, colIndex int, query Query, fr
 	return newDataFrame(name, query.RawQuery, timeField, valueField)
 }
 
-func newFrameWithoutTimeField(row Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
 	var values []string
 
 	if retentionPolicyQuery {
@@ -213,7 +215,7 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 	return frame
 }
 
-func formatFrameName(row Row, column string, query Query, frameName []byte) []byte {
+func formatFrameName(row models.Row, column string, query models.Query, frameName []byte) []byte {
 	if query.Alias == "" {
 		return buildFrameNameFromQuery(row, column, frameName)
 	}
@@ -253,7 +255,7 @@ func formatFrameName(row Row, column string, query Query, frameName []byte) []by
 	return result
 }
 
-func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
+func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []byte {
 	frameName = append(frameName, row.Name...)
 	frameName = append(frameName, '.')
 	frameName = append(frameName, column...)
@@ -329,10 +331,10 @@ func parseNumber(value interface{}) *float64 {
 	return &fvalue
 }
 
-func isTagValuesQuery(query Query) bool {
+func isTagValuesQuery(query models.Query) bool {
 	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
 }
 
-func isRetentionPolicyQuery(query Query) bool {
+func isRetentionPolicyQuery(query models.Query) bool {
 	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW RETENTION POLICIES"))
 }
