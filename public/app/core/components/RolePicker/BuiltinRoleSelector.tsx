@@ -9,10 +9,6 @@ import { getStyles } from './styles';
 const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
   label: r === OrgRole.None ? 'No basic role' : r,
   value: r,
-  tooltip:
-    r === OrgRole.None
-      ? 'This role has no permissions by default. You may still add specific permissions with the help of RBAC.'
-      : undefined,
 }));
 
 interface Props {
@@ -20,9 +16,10 @@ interface Props {
   onChange: (value: OrgRole) => void;
   disabled?: boolean;
   disabledMesssage?: string;
+  tooltipMessage?: string;
 }
 
-export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage }: Props) => {
+export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage, tooltipMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
@@ -32,6 +29,11 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
         <span style={{ marginRight: theme.spacing(1) }}>Basic roles</span>
         {disabled && disabledMesssage && (
           <Tooltip placement="right-end" interactive={true} content={<div>{disabledMesssage}</div>}>
+            <Icon name="question-circle" />
+          </Tooltip>
+        )}
+        {!disabled && tooltipMessage && (
+          <Tooltip placement="right-end" interactive={true} content={<div>{tooltipMessage}</div>}>
             <Icon name="question-circle" />
           </Tooltip>
         )}

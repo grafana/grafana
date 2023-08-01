@@ -6,7 +6,6 @@ import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
-import { Tooltip } from '../../Tooltip/Tooltip';
 
 import { RadioButtonSize, RadioButton } from './RadioButton';
 
@@ -23,6 +22,7 @@ export interface RadioButtonGroupProps<T> {
   className?: string;
   autoFocus?: boolean;
   invalid?: boolean;
+  isHorizontal?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -38,6 +38,7 @@ export function RadioButtonGroup<T>({
   fullWidth = false,
   autoFocus = false,
   invalid = false,
+  isHorizontal = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -59,6 +60,33 @@ export function RadioButtonGroup<T>({
     },
     [onClick]
   );
+
+  const getStyles = (theme: GrafanaTheme2) => {
+    return {
+      radioGroup: css({
+        display: 'inline-flex',
+        flexDirection: 'row',
+        flexWrap: 'nowrap',
+        border: isHorizontal ? `1px solid ${theme.components.input.borderColor}` : 'none',
+        borderRadius: theme.shape.borderRadius(),
+        padding: '2px',
+      }),
+      fullWidth: css({
+        display: 'grid',
+      }),
+      icon: css({
+        marginRight: '6px',
+      }),
+      img: css({
+        width: theme.spacing(2),
+        height: theme.spacing(2),
+        marginRight: theme.spacing(1),
+      }),
+      invalid: css({
+        border: `1px solid ${theme.colors.error.border}`,
+      }),
+    };
+  };
 
   const internalId = id ?? uniqueId('radiogroup-');
   const groupName = useRef(internalId);
@@ -92,15 +120,11 @@ export function RadioButtonGroup<T>({
             description={opt.description}
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
+            isHorizontal={isHorizontal}
           >
             {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
             {opt.label} {opt.component ? <opt.component /> : null}
-            {opt.tooltip && (
-              <Tooltip placement="right-end" interactive={true} content={opt.tooltip}>
-                <Icon name="question-circle" />
-              </Tooltip>
-            )}
           </RadioButton>
         );
       })}
@@ -109,30 +133,3 @@ export function RadioButtonGroup<T>({
 }
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    radioGroup: css({
-      display: 'inline-flex',
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
-      border: `1px solid ${theme.components.input.borderColor}`,
-      borderRadius: theme.shape.borderRadius(),
-      padding: '2px',
-    }),
-    fullWidth: css({
-      display: 'grid',
-    }),
-    icon: css({
-      marginRight: '6px',
-    }),
-    img: css({
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-      marginRight: theme.spacing(1),
-    }),
-    invalid: css({
-      border: `1px solid ${theme.colors.error.border}`,
-    }),
-  };
-};

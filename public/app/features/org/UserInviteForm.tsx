@@ -12,10 +12,6 @@ import { addInvitee } from '../invites/state/actions';
 const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
   label: r === OrgRole.None ? 'No basic role' : r,
   value: r,
-  tooltip:
-    r === OrgRole.None
-      ? 'This role has no permissions by default. You may still add specific permissions with the help of RBAC.'
-      : undefined,
 }));
 
 export interface FormModel {
@@ -57,9 +53,15 @@ export const UserInviteForm = () => {
               <Field invalid={!!errors.name} label="Name">
                 <Input {...register('name')} placeholder="(optional)" />
               </Field>
-              <Field invalid={!!errors.role} label="Role">
+              <Field
+                invalid={!!errors.role}
+                label="Role"
+                tooltipMessage='You can now select the "No basic role" option and add permissions to your custom needs.'
+              >
                 <InputControl
-                  render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
+                  render={({ field: { ref, ...field } }) => (
+                    <RadioButtonGroup {...field} options={roles} isHorizontal={true} />
+                  )}
                   control={control}
                   name="role"
                 />

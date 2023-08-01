@@ -207,6 +207,7 @@ export const RolePickerMenu = ({
                 onChange={onSelectedBuiltinRoleChange}
                 disabled={basicRoleDisabled}
                 disabledMesssage={disabledMessage}
+                tooltipMessage='You can now select the "No basic role" option and add permissions to your custom needs.'
               />
             </div>
           )}
