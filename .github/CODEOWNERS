@@ -13,7 +13,7 @@
 
 # Documentation
 /.changelog-archive @grafana/docs-grafana
-/CHANGELOG.md @grafana/docs-grafana
+/CHANGELOG.md @grafana/grafana-delivery
 /CODE_OF_CONDUCT.md @grafana/docs-grafana
 /CONTRIBUTING.md @grafana/docs-grafana
 /GOVERNANCE.md @RichiH
@@ -87,7 +87,6 @@
 /pkg/infra/metrics/ @grafana/backend-platform
 /pkg/infra/network/ @grafana/backend-platform
 /pkg/infra/process/ @grafana/backend-platform
-/pkg/infra/proxy/ @grafana/hosted-grafana-team
 /pkg/infra/remotecache/ @grafana/backend-platform
 /pkg/infra/serverlock/ @grafana/backend-platform
 /pkg/infra/slugify/ @grafana/backend-platform
@@ -147,6 +146,7 @@
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
 /pkg/tsdb/sqleng/ @grafana/backend-platform
+/pkg/tsdb/sqleng/proxyutil @grafana/hosted-grafana-team
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
@@ -163,6 +163,7 @@
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
 /devenv/docker/blocks/elastic* @grafana/observability-logs
+/devenv/docker/blocks/self-instrumentation* @grafana/observability-metrics
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-backend-product
@@ -593,18 +594,19 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
+/.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend-product
 /.github/workflows/auto-milestone.yml @grafana/grafana-delivery
 /.github/workflows/backport.yml @grafana/grafana-delivery
 /.github/workflows/bump-version.yml @grafana/grafana-delivery
 /.github/workflows/close-milestone.yml @grafana/grafana-delivery
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-datasources @grafana/aws-datasources
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
+/.github/workflows/community-release.yml @grafana/grafana-delivery
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
-/.github/workflows/github-release.yml @torkelo
+/.github/workflows/github-release.yml @grafana/grafana-delivery
 /.github/workflows/issue-labeled.yml @armandgrillet
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo

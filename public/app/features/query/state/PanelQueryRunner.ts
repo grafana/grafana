@@ -27,10 +27,10 @@ import {
   transformDataFrame,
   preProcessPanelData,
   ApplyFieldOverrideOptions,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -179,6 +179,16 @@ export class PanelQueryRunner {
                     ...fieldConfig!,
                   }),
                 };
+                if (processedData.annotations) {
+                  processedData.annotations = applyFieldOverrides({
+                    data: processedData.annotations,
+                    ...fieldConfig!,
+                    fieldConfig: {
+                      defaults: {},
+                      overrides: [],
+                    },
+                  });
+                }
                 isFirstPacket = false;
               }
             }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	gdata "github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		t.Run("and alias template is not specified", func(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				parameters: &timeSeriesQuery{
+				parameters: &dataquery.TimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -41,7 +42,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		t.Run("and alias template is specified", func(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				parameters: &timeSeriesQuery{
+				parameters: &dataquery.TimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -68,7 +69,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringTimeSeriesQuery{
-				parameters: &timeSeriesQuery{
+				parameters: &dataquery.TimeSeriesQuery{
 					ProjectName: "test-proj",
 					Query:       "test-query",
 				},
@@ -93,7 +94,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesQuery{
-			parameters: &timeSeriesQuery{
+			parameters: &dataquery.TimeSeriesQuery{
 				ProjectName: "test-proj",
 				Query:       "test-query",
 			},
@@ -120,10 +121,10 @@ func TestTimeSeriesQuery(t *testing.T) {
 		fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 		res := &backend.DataResponse{}
 		query := &cloudMonitoringTimeSeriesQuery{
-			parameters: &timeSeriesQuery{
+			parameters: &dataquery.TimeSeriesQuery{
 				ProjectName: "test-proj",
 				Query:       "test-query",
-				GraphPeriod: "60s",
+				GraphPeriod: strPtr("60s"),
 			},
 			timeRange: backend.TimeRange{
 				From: fromStart,
@@ -138,12 +139,12 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("appends graph_period to the query", func(t *testing.T) {
-		query := &cloudMonitoringTimeSeriesQuery{parameters: &timeSeriesQuery{}}
+		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{}}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), " | graph_period 1ms")
 	})
 
 	t.Run("skips graph_period if disabled", func(t *testing.T) {
-		query := &cloudMonitoringTimeSeriesQuery{parameters: &timeSeriesQuery{GraphPeriod: "disabled"}}
+		query := &cloudMonitoringTimeSeriesQuery{parameters: &dataquery.TimeSeriesQuery{GraphPeriod: strPtr("disabled")}}
 		assert.Equal(t, query.appendGraphPeriod(&backend.QueryDataRequest{Queries: []backend.DataQuery{{}}}), "")
 	})
 }

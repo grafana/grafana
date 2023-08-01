@@ -25,8 +25,8 @@ import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
 import { Trace } from '../../types';
-import NewTracePageSearchBar from '../SearchBar/NewTracePageSearchBar';
 import NextPrevResult from '../SearchBar/NextPrevResult';
+import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 
 export type SpanFilterProps = {
   trace: Trace;
@@ -348,15 +348,17 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 options={[toOption('>'), toOption('>=')]}
                 value={search.fromOperator}
               />
-              <IntervalInput
-                ariaLabel="Select min span duration"
-                onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
-                isInvalidError="Invalid duration"
-                placeholder="e.g. 100ms, 1.2s"
-                width={18}
-                value={search.from || ''}
-                validationRegex={durationRegex}
-              />
+              <div className={styles.intervalInput}>
+                <IntervalInput
+                  ariaLabel="Select min span duration"
+                  onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
+                  isInvalidError="Invalid duration"
+                  placeholder="e.g. 100ms, 1.2s"
+                  width={18}
+                  value={search.from || ''}
+                  validationRegex={durationRegex}
+                />
+              </div>
               <Select
                 aria-label="Select max span operator"
                 onChange={(v) => setSpanFiltersSearch({ ...search, toOperator: v.value! })}
@@ -375,7 +377,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.tagsRow}>
           <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log fields in your spans.">
             <div>
               {search.tags.map((tag, i) => (
@@ -447,7 +449,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
 
-        <NewTracePageSearchBar
+        <TracePageSearchBar
           trace={trace}
           search={search}
           spanFilterMatches={spanFilterMatches}
@@ -486,6 +488,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     addTag: css`
       margin: 0 0 0 10px;
+    `,
+    intervalInput: css`
+      margin: 0 -4px 0 0;
+    `,
+    tagsRow: css`
+      margin: -4px 0 0 0;
     `,
     tagValues: css`
       max-width: 200px;

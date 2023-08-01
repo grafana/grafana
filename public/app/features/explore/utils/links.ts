@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash';
+import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -16,6 +16,7 @@ import {
   DataLinkConfigOrigin,
   CoreApp,
   SplitOpenOptions,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -50,6 +51,41 @@ export interface ExploreFieldLinkModel extends LinkModel<Field> {
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
 /**
+ * Creates an internal link supplier specific to Explore
+ */
+export const exploreDataLinkPostProcessorFactory = (
+  splitOpenFn: SplitOpen | undefined,
+  range: TimeRange
+): DataLinkPostProcessor => {
+  const exploreDataLinkPostProcessor: DataLinkPostProcessor = (options) => {
+    const { field, dataLinkScopedVars: vars, frame: dataFrame, link, linkModel } = options;
+    const { valueRowIndex: rowIndex } = options.config;
+
+    if (!link.internal || rowIndex === undefined) {
+      return linkModel;
+    }
+
+    /**
+     * Even though getFieldLinksForExplore can produce internal and external links we re-use the logic for creating
+     * internal links only. Eventually code from getFieldLinksForExplore can be moved here and getFieldLinksForExplore
+     * can be removed (once all Explore panels start using field.getLinks).
+     */
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex,
+      splitOpenFn,
+      range,
+      vars,
+      dataFrame,
+      linksToProcess: [link],
+    });
+
+    return links.length ? first(links) : undefined;
+  };
+  return exploreDataLinkPostProcessor;
+};
+
+/**
  * Get links from the field of a dataframe and in addition check if there is associated
  * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
  * that we just supply datasource name and field value and Explore split window will know how to render that
@@ -58,6 +94,7 @@ const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
  *
  * Note: accessing a field via ${__data.fields.variable} will stay consistent with dashboards and return as existing but with an empty string
  * Accessing a field with ${variable} will return undefined as this is unique to explore.
+ * @deprecated Use field.getLinks directly
  */
 export const getFieldLinksForExplore = (options: {
   field: Field;
@@ -66,6 +103,8 @@ export const getFieldLinksForExplore = (options: {
   range: TimeRange;
   vars?: ScopedVars;
   dataFrame?: DataFrame;
+  // if not provided, field.config.links are used
+  linksToProcess?: DataLink[];
 }): ExploreFieldLinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
@@ -108,8 +147,10 @@ export const getFieldLinksForExplore = (options: {
     };
   }
 
-  if (field.config.links) {
-    const links = field.config.links.filter((link) => {
+  const linksToProcess = options.linksToProcess || field.config.links;
+
+  if (linksToProcess) {
+    const links = linksToProcess.filter((link) => {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
