@@ -230,7 +230,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
                 valueField,
                 valueField.state!.scopedVars,
                 context.replaceVariables,
-                options.timeZone
+                options.timeZone,
+                options.dataLinkPostProcessor
               );
             }
           }
