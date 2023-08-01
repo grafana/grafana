@@ -87,7 +87,7 @@ const result = new MutableDataFrame({
 
 ### Show log results in Explore's Logs view
 
-> To be implemented in logs data frame as meta
+> Must be implemented in the data frame as a meta attribute
 
 To ensure that your log results are displayed in interactive Logs view, add data `meta` attribute to `preferredVisualisationType` in your log result data frame.
 
