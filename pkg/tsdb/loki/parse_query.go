@@ -52,7 +52,6 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 
 	if queryType == dataquery.LokiQueryTypeRange {
 		expr = strings.ReplaceAll(expr, varAuto, stepText)
-
 	}
 
 	// this is duplicated code, hopefully this can be handled in a nicer way when

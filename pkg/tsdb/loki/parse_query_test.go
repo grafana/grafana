@@ -92,5 +92,4 @@ func TestParseQuery(t *testing.T) {
 
 		require.Equal(t, "rate({compose_project=\"docker-compose\"}[10s])", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
-
 }

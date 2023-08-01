@@ -90,7 +90,7 @@ describe('Loki query builder', () => {
     e2e().contains('instance1|instance2').should('be.visible');
     e2e().contains('logfmt').should('be.visible');
     e2e().contains('__error__').should('be.visible');
-    e2e().contains('$__interval').should('be.visible');
+    e2e().contains('$__auto').should('be.visible');
 
     // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();
