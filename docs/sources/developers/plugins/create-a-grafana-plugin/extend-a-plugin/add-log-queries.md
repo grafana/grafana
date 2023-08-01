@@ -39,7 +39,7 @@ The data frame should include following fields:
 | **body**       | `string`                                | Field with the content of the log line content, non nullable.                                                                                                                                                                                  |
 | **severity**   | `string`                                | Represents the severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More info about log level can be find [here](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
 | **id**         | `string`                                | Unique identifier of the log line.                                                                                                                                                                                                         |
-| **attributes** | `json raw message` (go) or `other` (ts) | This field represent additional attributes of the log line. Other systems may refer to this with other names, for example Loki calls these "labels". Value should be represented with Record<string,any> type in javascript.               |
+| **attributes** | `json raw message` (go) or `other` (ts) | This field represents additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Its value should be represented with Record<string,any> type in javascript.               |
 
 Logs data frame's `type` needs to be set to `type: DataFrameType.LogLines` in data frame's meta.
 
