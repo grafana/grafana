@@ -71,17 +71,7 @@ const BUILT_IN_FUNCTIONS_COMPLETIONS: Completion[] = BUILT_IN_FUNCTIONS.map((f) 
   documentation: f.documentation,
 }));
 
-const DURATION_COMPLETIONS: Completion[] = [
-  '$__auto',
-  '$__interval',
-  '$__range',
-  '1m',
-  '5m',
-  '10m',
-  '30m',
-  '1h',
-  '1d',
-].map((text) => ({
+const DURATION_COMPLETIONS: Completion[] = ['$__auto', '1m', '5m', '10m', '30m', '1h', '1d'].map((text) => ({
   type: 'DURATION',
   label: text,
   insertText: text,

@@ -30,8 +30,6 @@ const NS_IN_MS = 1000000;
 // @see public/app/plugins/datasource/prometheus/promql.ts
 const RATE_RANGES: CompletionItem[] = [
   { label: '$__auto', sortValue: '$__auto' },
-  { label: '$__interval', sortValue: '$__interval' },
-  { label: '$__range', sortValue: '$__range' },
   { label: '1m', sortValue: '00:01:00' },
   { label: '5m', sortValue: '00:05:00' },
   { label: '10m', sortValue: '00:10:00' },
