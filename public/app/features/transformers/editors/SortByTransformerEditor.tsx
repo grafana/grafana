@@ -23,7 +23,7 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
     [onChange, options]
   );
 
-  const sorts = options.sort?.length ? options.sort : [{} as SortByField];
+  const sorts: SortByField[] = options.sort?.length ? options.sort : [{} as SortByField];
 
   return (
     <div>
