@@ -76,7 +76,7 @@ tag_trigger = {
 def rgm_build(script = "drone_publish_main.sh"):
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "grafana/grafana-build:main",
+        "image": "grafana/grafana-build:dev-dec7506",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
