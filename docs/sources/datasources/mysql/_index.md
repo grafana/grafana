@@ -21,7 +21,7 @@ weight: 1000
 
 > Starting from Grafana v5.1 you can name the time column _time_ in addition to earlier supported _time_sec_. Usage of _time_sec_ will eventually be deprecated.
 
-Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database.
+Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database like MariaDB or Percona Server.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
