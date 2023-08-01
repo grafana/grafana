@@ -319,6 +319,7 @@ type Cfg struct {
 	JWTAuthJWKSetURL               string
 	JWTAuthCacheTTL                time.Duration
 	JWTAuthKeyFile                 string
+	JWTAuthKeyID                   string
 	JWTAuthJWKSetFile              string
 	JWTAuthAutoSignUp              bool
 	JWTAuthRoleAttributePath       string
@@ -1601,6 +1602,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
 	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthKeyID = authJWT.Key("key_id").MustString("")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
