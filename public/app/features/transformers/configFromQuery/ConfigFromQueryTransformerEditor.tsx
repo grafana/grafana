@@ -42,7 +42,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: value.value! } });
   };
 
-  const onMatcherConfigChange = (matcherOption: any) => {
+  const onMatcherConfigChange = (matcherOption: unknown) => {
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 

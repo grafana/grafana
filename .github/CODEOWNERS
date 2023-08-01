@@ -436,7 +436,6 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
-/public/app/polyfills/old-mediaquerylist.ts @grafana/grafana-frontend-platform
 /public/app/routes/ @grafana/grafana-frontend-platform
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
