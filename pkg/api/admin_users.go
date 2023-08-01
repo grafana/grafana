@@ -167,6 +167,19 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
+		oAuthExternallySynced := false
+		if oauthInfo := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_")); oauthInfo != nil {
+			oAuthExternallySynced = oauthInfo.AllowAssignGrafanaAdmin
+		}
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthExternallySynced) {
+			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
+		}
+	} else {
+		return response.Error(http.StatusInternalServerError, "Could not fetch user auth information", err)
+	}
+
 	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
