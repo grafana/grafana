@@ -18,23 +18,6 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
 
-  const generateQueryStats = () => {
-    if (typeof queryStats === 'string') {
-      return queryStats;
-    } else {
-      return `This query will process approximately ${convertUnits()}.`;
-    }
-  };
-
-  const convertUnits = (): string => {
-    if (typeof queryStats === 'string' || !queryStats?.bytes) {
-      return '';
-    }
-
-    const { text, suffix } = getValueFormat('bytes')(queryStats.bytes, 1);
-    return text + suffix;
-  };
-
   return (
     <div className={styles.wrapper}>
       <Collapse
@@ -57,7 +40,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
       >
         <div className={styles.body}>{children}</div>
       </Collapse>
-      {queryStats && <p className={styles.stats}>{generateQueryStats()}</p>}
+      {queryStats && <p className={styles.stats}>{generateQueryStats(queryStats)}</p>}
     </div>
   );
 }
@@ -105,4 +88,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
+};
+
+const generateQueryStats = (queryStats: QueryStats | string) => {
+  if (typeof queryStats === 'string') {
+    return queryStats;
+  } else {
+    return `This query will process approximately ${convertUnits(queryStats)}.`;
+  }
+};
+
+const convertUnits = (queryStats: QueryStats | string): string => {
+  if (typeof queryStats === 'string' || !queryStats?.bytes) {
+    return '';
+  }
+
+  const { text, suffix } = getValueFormat('bytes')(queryStats.bytes, 1);
+  return text + suffix;
 };
