@@ -1,33 +1,55 @@
-import React, { useEffect } from 'react';
-import useAsyncFn from 'react-use/lib/useAsyncFn';
+import { createApi, BaseQueryFn } from '@reduxjs/toolkit/query/react';
+import React from 'react';
+import { lastValueFrom } from 'rxjs';
 
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 
-const getToggles = async () => {
-  return await getBackendSrv().get('/api/featuremgmt');
+type FeatureToggle = {
+  name: string;
+  enabled: boolean;
+  description: string;
 };
 
-const getErrorMessage = (error: Error) => {
-  return isFetchError(error) ? error?.data?.message : 'An unexpected error happened.';
-};
+const backendSrvBaseQuery =
+  ({ baseUrl }: { baseUrl: string }): BaseQueryFn<{ url: string }> =>
+  async ({ url }) => {
+    try {
+      const { data } = await lastValueFrom(getBackendSrv().fetch({ url: baseUrl + url }));
+      return { data };
+    } catch (error) {
+      return { error };
+    }
+  };
+
+export const togglesApi = createApi({
+  reducerPath: 'togglesApi',
+  baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
+  endpoints: (builder) => ({
+    getFeatureToggles: builder.query<FeatureToggle[], void>({
+      query: () => ({ url: '/featuremgmt' }),
+    }),
+  }),
+});
+
+export const { useGetFeatureTogglesQuery } = togglesApi;
 
 export default function AdminFeatureTogglesPage() {
-  const [state, fetchToggles] = useAsyncFn(async () => await getToggles(), []);
+  const { data: featureToggles, isLoading, isError } = useGetFeatureTogglesQuery();
 
-  useEffect(() => {
-    fetchToggles();
-  }, [fetchToggles]);
+  const getErrorMessage = () => {
+    return 'Error fetching feature toggles';
+  };
 
   return (
     <Page navId="feature-toggles">
       <Page.Contents>
         <>
-          {state.error && getErrorMessage(state.error)}
-          {state.loading && 'Fetching feature toggles'}
-          {state.value && <AdminFeatureTogglesTable featureToggles={state.value} />}
+          {isError && getErrorMessage()}
+          {isLoading && 'Fetching feature toggles'}
+          {featureToggles && <AdminFeatureTogglesTable featureToggles={featureToggles} />}
         </>
       </Page.Contents>
     </Page>
