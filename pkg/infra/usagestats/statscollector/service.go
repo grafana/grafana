@@ -2,6 +2,7 @@ package statscollector
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -20,6 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	MIN_DELAY = 30
+	MAX_DELAY = 120
 )
 
 type Service struct {
@@ -91,13 +97,21 @@ func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageS
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	updateStatsTicker := time.NewTicker(time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds))
+	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
+	nextSendInterval := time.Duration(rand.Intn(MAX_DELAY-MIN_DELAY)+MIN_DELAY) * time.Second
+	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
+	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()
 
 	for {
 		select {
 		case <-updateStatsTicker.C:
 			s.updateTotalStats(ctx)
+
+			if nextSendInterval != sendInterval {
+				nextSendInterval = sendInterval
+				updateStatsTicker.Reset(nextSendInterval)
+			}
 		case <-ctx.Done():
 			return ctx.Err()
 		}
