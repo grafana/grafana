@@ -49,5 +49,7 @@ const expectSubMenuScenario = (subMenu: string, menuItem: string, extension: str
   e2e.components.Panels.Panel.menuItems(menuItem).click({ force: true });
 
   // https://www.browserstack.com/docs/automate/cypress/file-download-testing
-  cy.readFile(`cypress/downloads/${PANEL_UNDER_TEST}-1970-01-01 01_00_00${extension}`);
+  if (Cypress.browser.isHeaded) {
+    cy.readFile(`cypress/downloads/${PANEL_UNDER_TEST}-1970-01-01 01_00_00${extension}`);
+  }
 };

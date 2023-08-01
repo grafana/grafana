@@ -57,7 +57,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       selectedDataFrame: 0,
       dataFrameIndex: 0,
       transformId: DataTransformerID.noop,
-      transformationOptions: buildTransformationOptions(),
+      transformationOptions: this.buildTransformationOptions(),
       transformedData: props.data ?? [],
       downloadForExcel: false,
     };
@@ -89,6 +89,21 @@ export class InspectDataTab extends PureComponent<Props, State> {
       this.setState({ transformedData: this.props.data });
       return;
     }
+  }
+
+  buildTransformationOptions() {
+    const transformations: Array<SelectableValue<DataTransformerID>> = [
+      {
+        value: DataTransformerID.joinByField,
+        label: t('dashboard.inspect-data.transformation', 'Series joined by time'),
+        transformer: {
+          id: DataTransformerID.joinByField,
+          options: { byField: undefined }, // defaults to time field
+        },
+      },
+    ];
+
+    return transformations;
   }
 
   exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
@@ -163,29 +178,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }));
   };
 
-  /*  getProcessedData(): DataFrame[] {
-    const { options, panel, timeZone } = this.props;
-    const data = this.state.transformedData;
-
-    if (!options.withFieldConfig || !panel) {
-      return applyRawFieldOverrides(data);
-    }
-
-    const fieldConfig = this.cleanTableConfigFromFieldConfig(panel.type, panel.fieldConfig);
-
-    // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
-    // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
-    return applyFieldOverrides({
-      data,
-      theme: config.theme2,
-      fieldConfig,
-      timeZone, // NO NEED FOR TIMEZONE
-      replaceVariables: (value: string) => {
-        return value;
-      },
-    });
-  }
-
   // Because we visualize this data in a table we have to remove any custom table display settings
   cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: FieldConfigSource): FieldConfigSource {
     if (panelPluginId !== 'table') {
@@ -207,7 +199,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
 
     return fieldConfig;
-  } */
+  }
 
   render() {
     const { isLoading, options, data, panel, onOptionsChange, app } = this.props;
@@ -362,19 +354,4 @@ function cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: Fie
   }
 
   return fieldConfig;
-}
-
-function buildTransformationOptions() {
-  const transformations: Array<SelectableValue<DataTransformerID>> = [
-    {
-      value: DataTransformerID.joinByField,
-      label: t('dashboard.inspect-data.transformation', 'Series joined by time'),
-      transformer: {
-        id: DataTransformerID.joinByField,
-        options: { byField: undefined }, // defaults to time field
-      },
-    },
-  ];
-
-  return transformations;
 }
