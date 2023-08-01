@@ -47,7 +47,6 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRangeS, rangeSText)
 	expr = strings.ReplaceAll(expr, varRange, rangeSText+"s")
 	if queryType == dataquery.LokiQueryTypeInstant {
-	// For instant we want to replace with $__range
 		expr = strings.ReplaceAll(expr, varAuto, rangeSText+"s")
 	} 
 
