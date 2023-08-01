@@ -42,7 +42,7 @@ func TestParseQuery(t *testing.T) {
 		step := time.Millisecond * 100
 		timeRange := time.Millisecond * 750
 
-		require.Equal(t, "go_goroutines 50ms 50 1s 1 750", interpolateVariables(expr, interval, timeRange, queryType, step ))
+		require.Equal(t, "go_goroutines 50ms 50 1s 1 750", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
 	t.Run("parsing query model, range below 0.5s", func(t *testing.T) {
 		expr := "go_goroutines $__interval $__interval_ms $__range $__range_s $__range_ms"
@@ -51,7 +51,7 @@ func TestParseQuery(t *testing.T) {
 		step := time.Millisecond * 100
 		timeRange := time.Millisecond * 250
 
-		require.Equal(t, "go_goroutines 50ms 50 0s 0 250", interpolateVariables(expr, interval, timeRange, queryType, step ))
+		require.Equal(t, "go_goroutines 50ms 50 0s 0 250", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
 	t.Run("interpolate variables, curly-braces syntax", func(t *testing.T) {
 		expr := "go_goroutines ${__interval} ${__interval_ms} ${__range} ${__range_s} ${__range_ms}"
@@ -60,9 +60,9 @@ func TestParseQuery(t *testing.T) {
 		step := time.Millisecond * 100
 		timeRange := time.Second * 50
 
-		require.Equal(t, "go_goroutines 2s 2000 50s 50 50000", interpolateVariables(expr, interval, timeRange, queryType, step ))
+		require.Equal(t, "go_goroutines 2s 2000 50s 50 50000", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
-	
+
 	t.Run("interpolate variables should work with $__auto and instant query type", func(t *testing.T) {
 		expr := "rate({compose_project=\"docker-compose\"}[$__auto])"
 		queryType := dataquery.LokiQueryTypeInstant
@@ -70,7 +70,7 @@ func TestParseQuery(t *testing.T) {
 		step := time.Millisecond * 100
 		timeRange := time.Second * 50
 
-		require.Equal(t, "rate({compose_project=\"docker-compose\"}[50s])", interpolateVariables(expr, interval, timeRange, queryType, step ))
+		require.Equal(t, "rate({compose_project=\"docker-compose\"}[50s])", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
 
 	t.Run("interpolate variables should work with $__auto and range query type", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestParseQuery(t *testing.T) {
 		step := time.Millisecond * 100
 		timeRange := time.Second * 50
 
-		require.Equal(t, "rate({compose_project=\"docker-compose\"}[100ms])", interpolateVariables(expr, interval, timeRange, queryType, step ))
+		require.Equal(t, "rate({compose_project=\"docker-compose\"}[100ms])", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
 
 	t.Run("interpolate variables should return original query if no variables", func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestParseQuery(t *testing.T) {
 		step := time.Millisecond * 100
 		timeRange := time.Second * 50
 
-		require.Equal(t, "rate({compose_project=\"docker-compose\"}[10s])", interpolateVariables(expr, interval, timeRange, queryType, step ))
+		require.Equal(t, "rate({compose_project=\"docker-compose\"}[10s])", interpolateVariables(expr, interval, timeRange, queryType, step))
 	})
 
 }
