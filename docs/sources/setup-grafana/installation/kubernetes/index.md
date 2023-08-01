@@ -9,7 +9,7 @@ weight: 500
 
 # Deploy Grafana on Kubernetes
 
-On this page, you will find instructions for installing and running Grafana on Kubernetes (K8s) using Kubernetes manifests for the setup. If Helm is your preferred option, refer to [Grafana Helm community charts](https://github.com/grafana/helm-charts).
+On this page, you will find instructions for installing and running Grafana on Kubernetes using Kubernetes manifests for the setup. If Helm is your preferred option, refer to [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
 ## Before you begin
 
@@ -29,7 +29,7 @@ This section provides minimum hardware and software requirements.
 
 - Disk space: 1 GB
 - Memory: 750 MiB (approx 750 MB)
-- CPU: 250m (approx 2.5 cores)
+- CPU: 2500m (approx 2.5 cores)
 
 ### Supported databases
 
@@ -45,7 +45,7 @@ Enable port `3000` in your network environment, as this is the Grafana default p
 
 ## Deploy Grafana OSS on Kubernetes
 
-This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes, refer to [Deploy Grafana Enterprise on Kubernetes](/docs/grafana/latest/setup-grafana/installation/kubernetes/#deploy-grafana-enterprise-on-kubernetes).
+This section explains how to install Grafana OSS using Kubernetes. If you want to install Grafana Enterprise on Kubernetes, refer to [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).
 
 If you deploy an application in Kubernetes, it will use the default namespace which may already have other applications running. This can result in conflicts and other issues.
 
@@ -317,7 +317,7 @@ For more information about port forwarding, refer to [Use Port Forwarding to Acc
    grafana-58445b6986-dxrrw   1/1     Running   0          9m54s
    ```
 
-   The output shows the Grafana POD name in the NAME column, that you use for port forwarding.
+   The output shows the Grafana POD name in the `NAME` column, that you use for port forwarding.
 
 1. Run the following command for enabling the port forwarding on the POD:
 
@@ -449,7 +449,7 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 This means that `REVISION#2` is the current version.
 
 {{% admonition type="note" %}}
-**Note:** The last line of the `kubectl rollout history deployment` command output is the one which is currnetly active and running on your Kubernetes enviorment.
+The last line of the `kubectl rollout history deployment` command output is the one which is currnetly active and running on your Kubernetes enviorment.
 {{% /admonition %}}
 
 ### Roll back a deployment
@@ -519,7 +519,7 @@ For more information about accessing Kubernetes application logs, refer to [Pods
 
 ### Increasing log levels to debug mode
 
-By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#log).
+By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](/docs/grafana/latest/setup-grafana/configure-grafana/#log).
 
 The following example uses the Kubernetes ConfigMap which is an API object that stores non-confidential data in key-value pairs. For more information, refer to [Kubernetes ConfigMap Concept](https://kubernetes.io/docs/concepts/configuration/configmap/).
 
@@ -532,7 +532,7 @@ The following example uses the Kubernetes ConfigMap which is an API object that 
    level = debug
    ```
 
-   This example adds the portion of the log section from the configuration file. You can refer to the [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) documentation to view all the default configuration settings.
+   This example adds the portion of the log section from the configuration file. You can refer to the [Configure Grafana](/docs/grafana/latest/setup-grafana/configure-grafana/) documentation to view all the default configuration settings.
 
 1. To add the configuration file into the Kubernetes cluster via the ConfigMap object, run the following command:
 
