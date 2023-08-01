@@ -62,7 +62,7 @@ frame := data.NewFrame(
 	})
 ```
 
-Example of constructing a logs data frame in `typescript`:
+Example of constructing a logs data frame in `Typescript`:
 
 > Note: Should be used if you are creating data frames on frontend in typescript code.
 
