@@ -5,8 +5,7 @@ import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Alert, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
