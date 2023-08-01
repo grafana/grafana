@@ -168,8 +168,6 @@ describe('getTimeRange', () => {
   it('should return the range duration for an instant metric query', () => {
     // metric queries with instant type should request range duration
     // in this case (5 minutes)
-    jest.spyOn(global.Date.prototype, 'getTime').mockReturnValue(1672639200000); // 02 Jan 2023 06:00:00 GMT
-
     query.queryType = LokiQueryType.Instant;
     query.expr = 'rate({job="grafana"}[5m])';
 

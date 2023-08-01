@@ -74,7 +74,7 @@ export function getTimeRange(
       // metric query with instant type
       // we want the request timerange to be the query duration e.g. [5m]
       // with the query -- rate({label="value"} [1h]) -- the range we want to request is: "now - 1h"
-      end = new Date().getTime() * NS_IN_MS;
+      end = ds.getTimeRangeParams().end;
       start = end - intervalToMs(durations[idx]) * NS_IN_MS;
     } else {
       // metric query with range type
