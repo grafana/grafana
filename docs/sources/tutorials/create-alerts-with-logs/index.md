@@ -38,7 +38,7 @@ This optional step will create sample logs that you can use later in this tutori
 
 1. [Install promtail](https://grafana.com/docs/loki/latest/clients/promtail/installation/) on your local machine and configure it to send logs to your Loki instance.
 1. Install Python3 on your local machine if needed.
-1. Copy the python script below and paste it into a new file on your local machine
+1. Copy the python script below and paste it into a new file on your local machine.
 
     ```#!/bin/env python3
     ​
@@ -81,12 +81,18 @@ This optional step will create sample logs that you can use later in this tutori
     In a terminal window use:
     `chmod 755  ./web-server-logs-simulator.py`
 
-1. Run the script as a user that has access to the directory that promtail is watching.
+1. Run the script. 
 
-1. Use the `tee` parameter to direct the script output to the console and the specified file path. For example, if promtail is
+*  Use `tee` to direct the script output to the console and the specified file path. For example, if promtail is
  configured to monitor `/var/log` for `.log` files you can direct the script output to `/var/log/web_requests.log` file.
 
-    `python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log`
+* To avoid running the script with elevated permissions, create the log file manually and change the permissions for the output file only.
+
+    ```
+    sudo touch /var/log/web_requests.log
+    chmod 755 /var/log/web_requests.log
+    python3 ./web-server-logs-simulator.py | tee -a /var/log/web_requests.log
+    ```
 
 1. Verify that the logs are showing up in Grafana’s Explore view:
 
@@ -96,6 +102,13 @@ This optional step will create sample logs that you can use later in this tutori
     * Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
     * Click **Run Query**.
     * You should see logs and a graph of log volume.
+
+    **Troubleshooting:**
+    If you don't see the logs in Explore, check these things: 
+    * Does the output file exist, check /var/log/web_requests.log to see if it contains logs.
+        * If the file is empty, check that you followed the steps above to create the file and change the permissions.
+        * If the file exists, verify that promtail is running and check that it is configured correctly.
+    * In Grafana Explore, check that the time range is only for the last 5 minutes.
 
 ## Optional: Running the tutorial using Grafana, Loki and Promtail with Docker compose
 
@@ -201,48 +214,48 @@ This optional step will create sample logs that you can use later in this tutori
     * You should see logs and a graph of log volume.
 
 ## Create an alert
-Create an alert and define an expression to evaluate. This example uses a classic condition.
+In these steps you will create an alert and define an expression to evaluate. These examples use a classic condition.
 
-1. Navigate in Grafana to Alerting & IRM, then to Alert Rules and click  **+ Create alert rule**
-     
 ### Create a Grafana-managed alert
 
+1. Navigate in Grafana to **Alerting**, then to **Alert Rules** and click  **+ Create alert rule**
 1. Choose **Grafana Managed Alert** to create an alert that uses expressions
 1. Select your Loki datasource from the drop-down
-1. Enter the alert query in the query editor using the code option instead of builder
+1. Enter the alert query in the query editor, switch to **code** mode in the top right corner of the editor to paste the query below:
 
     ```
     sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [$__interval]))
     ```
 
-    This query will count the number of status codes that are not 200 (OK) over the interval period chosen from the alert time range drop-down
-    and sum them up by message type. It uses the logql pattern parser to add a new label called `message` that contains the level, method, url,
-    and status from the log line.
+    This query will search the interval period selected in the **time range** and count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type. It uses the logql pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
-    You can use the explain query toggle button for a full explanation of the query syntax.
+    You can use the **explain query** toggle button for a full explanation of the query syntax.
 
-    The optional script will output a sample log line similar to this
+    The optional log-generating script creates a sample log line similar to this:
     ```
     2023-04-22T02:49:32.562825+00:00 level=info method=GET url=/ status=200 duration=171ms
     ```
 
-    There are two expressions automatically added in box B  and box C. Update the expressions to the values shown in the tables below:
+    There are two expressions automatically added in box B  and box C. Update the expressions to match the values shown in the tables below:
 
     **Box B - reduce expression**
 
     |                  |                           |
     | ---------------- | ------------------------- |
     | Function         | Sum                       |
-    | Input            | Query A                   |
+    | Input            | A                         |
+    | Mode             | Strict                    |
 
     **Box C - threshold expression**
     |                  |                           |
     | ---------------- | --------------------------|
-    | Input            | Expression B              |
+    | Input            | B                         |
     | Expression value | Is above 5                |
-    | Alert condition  | checked with green        |
+    | Alert condition  |This is the alert condition|
 
-1. Click on **preview alert** to see a preview of the query result and alert evaluation.
+    Expand the **Options** and select **Range** as the type. 
+
+1. Click on **preview** to see a preview of the query result and alert evaluation. If you see **No Data** check that you changed the query type to **Range**.
 
 1. Expression B will show a table of labels and values returned. The message label includes this string
  `level=info method=GET url=/ status=500` and the number of times that string occurs during the evaluation interval.
@@ -252,19 +265,20 @@ Create an alert and define an expression to evaluate. This example uses a classi
     |  message=level=info method=GET url=/ status=500 | 27 |
     |  message=level=info method=POST url=/ status=500 | 1 |
 
-1. **Add folder & evaluation interval**
-    * Choose a folder or use +add new to add a new folder for this alert in the Alert Evaluation section
-    * Choose an evaluation group from the drop-down or create a new one if this is your first alert
-    * Use a for value of 0s so the alert will fire instantly
-    * Leave Configure no data and error handling No data handling on the default values
+1. **Choose your alert evaluation behavior**
+    * Choose a folder or use **+add new** to add a new folder for this alert.
+    * Choose an existing evaluation group from the drop-down or create a new one if this is your first alert.
+    * Set the **for** value to **0s** so the alert will fire instantly.
+    * Leave Configure no data and error handling No data handling on the default values.
 
-1. Add an annotation using labels & values
-    To refer to labels and values from the query in your alert notification, add a new annotation to the alert:
+1. Add an annotation
 
+    An annotation enables you to reference labels and values from the query result in your alert notification.
+    To add an annotation:
     * Select +Add new and add the following:
-    * **Annotation name:** AlertValues
-    * **Annotation value:**
-    ```{{ $labels.message }}  has returned an error status {{$values.B}} times.```
+        * **Annotation name:** AlertValues
+        * **Annotation value:**
+        ```{{ $labels.message }}  has returned an error status {{$values.B}} times.```
 
 1. Click the **Save and exit** button at the top of the alert definition page
 
