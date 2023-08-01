@@ -498,7 +498,6 @@ func TestLoader_Load(t *testing.T) {
 
 					steps = append(steps, "bootstrap")
 					return []*plugins.Plugin{p}, nil
-
 				},
 			}, &fakes.FakeInitializer{
 				IntializeFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
