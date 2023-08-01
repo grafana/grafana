@@ -142,7 +142,7 @@ export const ResourcePickerPopover = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   resourcePickerPopover: css`
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     box-shadow: ${theme.shadows.z3};
     background: ${theme.colors.background.primary};
     border: 1px solid ${theme.colors.border.weak};
@@ -182,7 +182,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourcePickerPopoverTabs: css`
     display: flex;
     width: 100%;
-    border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
+    border-radius: ${theme.shape.radius.default} ${theme.shape.radius.default} 0 0;
   `,
   buttonRow: css({
     display: 'flex',
