@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Switch } from '@grafana/ui';
+import { Switch, InteractiveTable, type CellProps } from '@grafana/ui';
 
 type FeatureToggle = {
   name: string;
@@ -13,38 +13,27 @@ interface Props {
 }
 
 export function AdminFeatureTogglesTable({ featureToggles }: Props) {
-  return (
-    <table className="filter-table form-inline filter-table--hover">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Description</th>
-          <th>State</th>
-        </tr>
-      </thead>
-      <tbody>
-        {featureToggles.map((featureToggle) => (
-          <tr key={`${featureToggle.name}`}>
-            <td>
-              <div>{featureToggle.name}</div>
-            </td>
-            <td
-              style={{
-                overflowWrap: 'break-word',
-                wordWrap: 'break-word',
-                whiteSpace: 'normal',
-              }}
-            >
-              <div>{featureToggle.description}</div>
-            </td>
-            <td style={{ lineHeight: 'normal' }}>
-              <div>
-                <Switch value={featureToggle.enabled} disabled={true} />
-              </div>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+  const columns = [
+    {
+      id: 'name',
+      header: 'Name',
+      cell: ({ cell: { value } }: CellProps<FeatureToggle, string>) => <div>{value}</div>,
+    },
+    {
+      id: 'description',
+      header: 'Description',
+      cell: ({ cell: { value } }: CellProps<FeatureToggle, string>) => <div>{value}</div>,
+    },
+    {
+      id: 'enabled',
+      header: 'State',
+      cell: ({ cell: { value } }: CellProps<FeatureToggle, boolean>) => (
+        <div>
+          <Switch value={value} disabled={true} />
+        </div>
+      ),
+    },
+  ];
+
+  return <InteractiveTable columns={columns} data={featureToggles} getRowId={(featureToggle) => featureToggle.name} />;
 }
