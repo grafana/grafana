@@ -208,7 +208,7 @@ const result = new MutableDataFrame({
 
 > To be implemented in data source trough implementing DataSourceWithXXXSupport interface
 
-[Log context]({{< relref "../../../../explore/logs-integration/#log-context" >}}) feature in Explore that enables the display of additional lines of context surrounding a log entry that matches a specific search query. This feature allows users to gain deeper insights into the log data by viewing the log entry in its relevant context. By showing the surrounding log lines, users can better understand the sequence of events and the context in which the log entry occurred, facilitating more comprehensive log analysis and troubleshooting.
+[Log context]({{< relref "../../../../explore/logs-integration/#log-context" >}}) is a feature in Explore that enables the display of additional lines of context surrounding a log entry that matches a specific search query. This feature allows users to gain deeper insights into the log data by viewing the log entry within its relevant context. By showing the surrounding log lines, users can have a better understanding of the sequence of events and the context in which the log entry occurred, facilitating a more comprehensive log analysis and troubleshooting.
 
 ```ts
 import {
