@@ -1,7 +1,7 @@
 ---
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 authors:
-  - grant_pinkos
+  - melori_arellano
 categories:
   - alerting
 description: Create alerts with Logs
@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
     - loki
-status: published
+status: draft
 summary: Create alerts with Logs
 tags:
   - advanced
