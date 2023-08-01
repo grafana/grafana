@@ -184,14 +184,25 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, err
 	}
 
+	childrenUIDs := make([]string, 0, len(children))
+	for _, f := range children {
+		childrenUIDs = append(childrenUIDs, f.UID)
+	}
+
+	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, childrenUIDs)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+	}
+
 	filtered := make([]*folder.Folder, 0, len(children))
 	for _, f := range children {
 		// fetch folder from dashboard store
-		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
-		if err != nil {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
+		dashFolder, ok := dashFolders[f.UID]
+		if !ok {
+			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
 			continue
 		}
+
 		// always expose the dashboard store sequential ID
 		f.ID = dashFolder.ID
 
@@ -500,9 +511,14 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			result = append(result, subfolders...)
 		}
 
+		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, result)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+		}
+
 		for _, folder := range result {
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
-			if err != nil {
+			dashFolder, ok := dashFolders[folder]
+			if !ok {
 				return err
 			}
 
