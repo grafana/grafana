@@ -6,8 +6,12 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
-  outerJoinDataFrames,
+  getLinksSupplier,
+  InterpolateFunction,
+  ScopedVars,
   PanelData,
+  LinkModel,
+  Field,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
@@ -32,6 +36,8 @@ interface Props {
   dismiss: () => void;
   canAnnotate: boolean;
   panelData: PanelData;
+  replaceVars: InterpolateFunction;
+  scopedVars: ScopedVars[];
 }
 
 export const HeatmapTooltip = (props: Props) => {
@@ -51,6 +57,8 @@ const HeatmapTooltipHover = ({
   canAnnotate,
   panelData,
   showColorScale = false,
+  scopedVars,
+  replaceVars,
 }: Props) => {
   const data = dataRef.current;
 
@@ -126,26 +134,35 @@ const HeatmapTooltipHover = ({
 
   const count = countVals?.[index];
 
-  // @TODO Add data links
-  // const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  // const links: Array<LinkModel<Field>> = [];
-  // const linkLookup = new Set<string>();
-  //
-  // for (const field of visibleFields ?? []) {
-  //   // TODO: Currently always undefined? (getLinks)
-  //   if (field.getLinks) {
-  //     const v = field.values[index];
-  //     const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
-  //
-  //     field.getLinks({ calculatedValue: disp, valueRowIndex: index }).forEach((link) => {
-  //       const key = `${link.title}/${link.href}`;
-  //       if (!linkLookup.has(key)) {
-  //         links.push(link);
-  //         linkLookup.add(key);
-  //       }
-  //     });
-  //   }
-  // }
+  const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
+
+  for (const field of visibleFields ?? []) {
+    const hasLinks = field.config.links && field.config.links.length > 0;
+
+    if (hasLinks && data.heatmap) {
+      const appropriateScopedVars = scopedVars?.find(
+        (scopedVar) =>
+          scopedVar && scopedVar.__dataContext && scopedVar.__dataContext.value.field.name === nonNumericOrdinalDisplay
+      );
+
+      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars || {}, replaceVars);
+    }
+
+    if (field.getLinks) {
+      const value = field.values[index];
+      const display = field.display ? field.display(value) : { text: `${value}`, numeric: +value };
+
+      field.getLinks({ calculatedValue: display, valueRowIndex: index }).forEach((link) => {
+        const key = `${link.title}/${link.href}`;
+        if (!linkLookup.has(key)) {
+          links.push(link);
+          linkLookup.add(key);
+        }
+      });
+    }
+  }
 
   let can = useRef<HTMLCanvasElement>(null);
 
@@ -335,7 +352,7 @@ const HeatmapTooltipHover = ({
         customValueDisplay={getCustomValueDisplay()}
       />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
-      {isPinned && <VizTooltipFooter />}
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
     </div>
   );
 };
@@ -345,5 +362,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 280px;
     display: flex;
     flex-direction: column;
+    padding: ${theme.spacing(0.5)};
   `,
 });

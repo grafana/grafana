@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   outerJoinDataFrames,
   PanelProps,
+  ScopedVars,
   TimeRange,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
@@ -59,7 +60,7 @@ export const HeatmapPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
 
   //  necessary for enabling datalinks in hover view
-  let scopedVarsFromRawData = [];
+  let scopedVarsFromRawData: ScopedVars[] = [];
   for (const series of data.series) {
     for (const field of series.fields) {
       if (field.state?.scopedVars) {
@@ -245,6 +246,8 @@ export const HeatmapPanel = ({
                       showColorScale={options.tooltip.showColorScale}
                       canAnnotate={enableAnnotationCreation}
                       panelData={data}
+                      replaceVars={replaceVariables}
+                      scopedVars={scopedVarsFromRawData}
                     />
                   );
                 }}
