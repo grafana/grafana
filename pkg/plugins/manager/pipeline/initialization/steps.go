@@ -12,10 +12,10 @@ import (
 
 // BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
 //
-// It uses the envvars.Provider to get the environment variables for the plugin and the plugins.BackendFactoryProvider
-// to get fetch backend plugin factory uses to form a connection to the backend plugin process.
+// It uses the envvars.Provider to retrieve the environment variables required for the plugin and the plugins.BackendFactoryProvider
+// to get fetch backend factory, which is used to form a connection to the backend plugin process.
 //
-// Note: It does not start the backend plugin process.
+// Note: This step does not start the backend plugin process.
 type BackendClientInit struct {
 	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
@@ -37,7 +37,7 @@ func newBackendProcessRegistration(envVarProvider envvars.Provider,
 	}
 }
 
-// Initialize registers a backend plugin process for the plugin if the plugin is a backend plugin.
+// Initialize will initialize a backend plugin client, if the plugin is a backend plugin.
 func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.Backend {
 		backendFactory := b.backendProvider.BackendFactory(ctx, p)

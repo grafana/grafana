@@ -39,7 +39,7 @@ func New(cfg *config.Cfg, opts Opts) *Initialize {
 	}
 }
 
-// Initialize will execute the Initialize stage of the Initialization stage.
+// Initialize will execute the Initialize steps of the Initialization stage.
 func (i *Initialize) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
 	if len(i.initializeSteps) == 0 {
 		return ps, nil
