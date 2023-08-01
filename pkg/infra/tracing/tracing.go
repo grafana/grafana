@@ -272,7 +272,7 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address))
 	} else if host, port, err := net.SplitHostPort(ots.Address); err == nil {
 		ots.log.Debug("using jaeger agent", "host", host, "port", port)
-		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port))
+		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
 	} else {
 		return nil, fmt.Errorf("invalid tracer address: %s", ots.Address)
 	}
