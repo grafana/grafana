@@ -2,11 +2,7 @@ import React from 'react';
 
 import { Switch, InteractiveTable, type CellProps } from '@grafana/ui';
 
-type FeatureToggle = {
-  name: string;
-  enabled: boolean;
-  description: string;
-};
+import { type FeatureToggle } from './AdminFeatureTogglesAPI';
 
 interface Props {
   featureToggles: FeatureToggle[];

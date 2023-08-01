@@ -1,7 +1,7 @@
 import { AnyAction, combineReducers } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
-import { togglesApi } from 'app/features/admin/AdminFeatureTogglesPage';
+import { togglesApi } from 'app/features/admin/AdminFeatureTogglesAPI';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
 import apiKeysReducers from 'app/features/api-keys/state/reducers';
