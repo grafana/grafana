@@ -153,7 +153,6 @@ export const EmailSharingConfiguration = () => {
   };
 
   function onChangeShareType(shareType: PublicDashboardShareType) {
-    reportInteraction(shareType);
     reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
       item: `share_type_${shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public'}`,
       sharing_category: shareDashboardType.publicDashboard,
