@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
 
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
 import { StoreState, useSelector } from 'app/types';
@@ -17,6 +17,8 @@ import {
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isAddNewConnectionPageOverridden = Boolean(navIndex['standalone-plugin-page-/connections/add-new-connection']);
+
+  const { search } = useLocation();
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -40,6 +42,17 @@ export default function Connections() {
         {!isAddNewConnectionPageOverridden && (
           <Route exact sensitive path={ROUTES.AddNewConnection} component={AddNewConnectionPage} />
         )}
+
+        {/* Redirect from earlier routes to updated routes */}
+        <Redirect
+          from={ROUTES.ConnectDataOutdated}
+          to={{
+            pathname: ROUTES.AddNewConnection,
+            search,
+          }}
+        />
+        <Redirect from={`${ROUTES.Base}/your-connections/:page`} to={`${ROUTES.Base}/:page`} />
+        <Redirect from={ROUTES.YourConnectionsOutdated} to={ROUTES.DataSources} />
 
         {/* Not found */}
         <Route component={() => <Redirect to="/notfound" />} />
