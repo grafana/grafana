@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import {
   EmbeddedScene,
   PanelBuilders,
-  SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
   SceneQueryRunner,
@@ -14,35 +13,22 @@ import {
 import { useStyles2 } from '@grafana/ui';
 
 const FIRING_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
-const TOTAL_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json [1w]))';
+const TOTAL_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json[1w]))';
 
 const WORST_OFFENDERS_ALERTS_THIS_WEEK =
   'sum by (labels_grafana_folder, group) (count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
 
-//since all cloud instances have a provisioned alert state history data source,
-//we should be able to use its uid here
-const datasourceUid = 'CKA1_2hVz';
+//all cloud instances are guaranteed to have this datasource uid for the alert state history loki datasource
+const datasourceUid = 'grafanacloud-alert-state-history';
+
+const datasource = {
+  type: 'loki',
+  uid: datasourceUid,
+};
 
 function getScene() {
   const queryRunner1 = new SceneQueryRunner({
-    datasource: {
-      type: 'loki',
-      uid: datasourceUid,
-    },
-    queries: [
-      {
-        refId: 'A',
-        expr: FIRING_QUERIES_LAST_WEEK,
-        title: 'Firing',
-      },
-    ],
-  });
-
-  const queryRunner2 = new SceneQueryRunner({
-    datasource: {
-      type: 'loki',
-      uid: datasourceUid,
-    },
+    datasource,
     queries: [
       {
         refId: 'A',
@@ -51,25 +37,19 @@ function getScene() {
     ],
   });
 
-  const queryRunner3 = new SceneQueryRunner({
-    datasource: {
-      type: 'loki',
-      uid: 'CKA1_2hVz',
-    },
+  const queryRunner2 = new SceneQueryRunner({
+    datasource,
     queries: [
       {
         refId: 'A',
-        instant: true,
-        expr: WORST_OFFENDERS_ALERTS_THIS_WEEK,
+        expr: FIRING_QUERIES_LAST_WEEK,
       },
     ],
+    $timeRange: new SceneTimeRange({ from: 'now-2w', to: 'now-1w' }),
   });
 
-  const queryRunner4 = new SceneQueryRunner({
-    datasource: {
-      type: 'loki',
-      uid: 'CKA1_2hVz',
-    },
+  const queryRunner3 = new SceneQueryRunner({
+    datasource,
     queries: [
       {
         refId: 'A',
@@ -79,18 +59,15 @@ function getScene() {
     $timeRange: new SceneTimeRange({ from: 'now-1w', to: 'now' }),
   });
 
-  const queryRunner5 = new SceneQueryRunner({
-    datasource: {
-      type: 'loki',
-      uid: 'CKA1_2hVz',
-    },
+  const queryRunner4 = new SceneQueryRunner({
+    datasource,
     queries: [
       {
         refId: 'A',
-        expr: FIRING_QUERIES_LAST_WEEK,
+        instant: true,
+        expr: WORST_OFFENDERS_ALERTS_THIS_WEEK,
       },
     ],
-    $timeRange: new SceneTimeRange({ from: 'now-2w', to: 'now-1w' }),
   });
 
   //this accepts the same format as the one outputted when inspecting a panel transformation as JSON
@@ -118,22 +95,22 @@ function getScene() {
         new SceneFlexItem({
           width: '100%',
           height: 300,
-          body: PanelBuilders.stat().setTitle('Total queries this week').setData(queryRunner2).build(),
+          body: PanelBuilders.stat().setTitle('Total queries this week').setData(queryRunner1).build(),
         }),
         new SceneFlexItem({
           height: 300,
-          body: PanelBuilders.stat().setTitle('Total Firing 2 weeks from now').setData(queryRunner5).build(),
+          body: PanelBuilders.stat().setTitle('Total Firing 2 weeks from now').setData(queryRunner2).build(),
         }),
         new SceneFlexItem({
           height: 300,
-          body: PanelBuilders.stat().setTitle('Total Firing last week').setData(queryRunner4).build(),
+          body: PanelBuilders.stat().setTitle('Total Firing last week').setData(queryRunner3).build(),
         }),
         new SceneFlexItem({
           width: '100%',
           height: 300,
           body: PanelBuilders.table()
             .setTitle('Worst Offender Alerts - This Week')
-            .setData(queryRunner3)
+            .setData(queryRunner4)
             .setOverrides((b) =>
               b
                 .matchFieldsWithNameByRegex('.*')
