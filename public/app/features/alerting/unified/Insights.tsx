@@ -9,7 +9,7 @@ const FIRING_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | j
 const TOTAL_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json [1w]))';
 
 const WORST_OFFENDERS_ALERTS_THIS_WEEK =
-  'sum by (folderUID, group) (count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+  'sum by (labels_grafana_folder, group) (count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
 
 //since all cloud instances have a provisioned alert state history data source,
 //we should be able to use its uid here
@@ -59,14 +59,13 @@ function getScene() {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       direction: 'row',
+      wrap: 'wrap',
       children: [
         new SceneFlexItem({
-          width: '50%',
           height: 300,
           body: PanelBuilders.stat().setTitle('Firing queries last week').setData(queryRunner1).build(),
         }),
         new SceneFlexItem({
-          width: '50%',
           height: 300,
           body: PanelBuilders.stat().setTitle('Total queries last week').setData(queryRunner2).build(),
         }),
@@ -74,7 +73,7 @@ function getScene() {
           width: '100%',
           height: 300,
           body: PanelBuilders.table()
-            .setTitle(WORST_OFFENDERS_ALERTS_THIS_WEEK)
+            .setTitle('Worst Offender Alerts - This Week')
             .setData(queryRunner3)
             .setOverrides((b) =>
               b
@@ -82,8 +81,12 @@ function getScene() {
                 .overrideFilterable(false)
                 .matchFieldsWithName('Time')
                 .overrideCustomFieldConfig('hidden', true)
-                .matchFieldsWithName('Value')
+                .matchFieldsWithName('Value #A')
                 .overrideDisplayName('Fires Last Week')
+                .matchFieldsWithName('labels_grafana_folder')
+                .overrideDisplayName('Folder')
+                .matchFieldsWithName('group')
+                .overrideDisplayName('Group')
             )
             .build(),
         }),
