@@ -122,9 +122,13 @@ export const ExemplarMarker = ({
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
-    // Put the traceID field in front.
-    const traceIDField = dataFrame.fields.find((field) => field.name === 'traceID') || dataFrame.fields[0];
-    const orderedDataFrameFields = [traceIDField, ...dataFrame.fields.filter((field) => traceIDField !== field)];
+    //Put fields with links on the top
+    const fieldsWithLinks =
+      dataFrame.fields.filter((field) => field.config.links?.length && field.config.links?.length > 0) || [];
+    const orderedDataFrameFields = [
+      ...fieldsWithLinks,
+      ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
+    ];
 
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
