@@ -1,4 +1,4 @@
-import { createDataFrame, FieldType, DataFrameDTO } from '@grafana/data';
+import { createDataFrame, DataFrameDTO, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
 
@@ -75,7 +75,7 @@ describe('nestedSetToLevels', () => {
         { name: 'level', values: [0, 1, 1, 1] },
         { name: 'value', values: [10, 5, 3, 1] },
         { name: 'valueRight', values: [10, 4, 2, 1] },
-        { name: 'label', values: ['1', '2', '3', '4'] },
+        { name: 'label', values: ['1', '2', '3', '4'], type: FieldType.string },
         { name: 'self', values: [10, 5, 3, 1] },
         { name: 'selfRight', values: [10, 4, 2, 1] },
       ],
@@ -193,7 +193,7 @@ function diffFlamebearerToDataFrameDTO(levels: number[][], names: string[]) {
     meta: { preferredVisualisationType: 'flamegraph' },
     fields: [
       { name: 'level', values: levelValues },
-      { name: 'label', values: labelValues },
+      { name: 'label', values: labelValues, type: FieldType.string },
       { name: 'self', values: selfValues },
       { name: 'value', values: valueValues },
       { name: 'selfRight', values: selfRightValues },
