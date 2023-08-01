@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justify-self: center;
       cursor: pointer;
       background: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       color: ${theme.colors.text.primary};
       border: unset;
       width: 100%;

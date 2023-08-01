@@ -133,7 +133,7 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       left: 0,
       right: 0,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
     },
 
     '&:focus-visible': {

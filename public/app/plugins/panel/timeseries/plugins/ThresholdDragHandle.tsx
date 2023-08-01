@@ -98,12 +98,12 @@ const getStyles = (theme: GrafanaTheme2, step: Threshold, outOfBounds: OutOfBoun
       margin-top: -9px;
       border-color: ${mainColor};
       cursor: ${disabled ? 'initial' : 'grab'};
-      border-top-right-radius: ${theme.shape.borderRadius(1)};
-      border-bottom-right-radius: ${theme.shape.borderRadius(1)};
+      border-top-right-radius: ${theme.shape.radius.default};
+      border-bottom-right-radius: ${theme.shape.radius.default};
       ${isOutOfBounds &&
       css`
         margin-top: 0;
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
       `}
       background: ${mainColor};
       font-size: ${theme.typography.bodySmall.fontSize};
