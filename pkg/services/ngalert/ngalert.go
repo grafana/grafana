@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -97,10 +96,7 @@ func ProvideService(
 		store:                ruleStore,
 	}
 
-	// Migration
-	ng.MigrationService = migration.NewMigrationService(ng.Log, ng.SQLStore, ng.Cfg, ng.KVStore)
-
-	if ng.isDisabled() {
+	if ng.IsDisabled() {
 		return ng, nil
 	}
 
@@ -142,9 +138,6 @@ type AlertNG struct {
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
-
-	// Migration service
-	MigrationService migration.MigrationService
 
 	bus          bus.Bus
 	pluginsStore pluginstore.Store
@@ -327,14 +320,6 @@ func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleSt
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting")
 
-	if err := ng.MigrationService.Start(ctx); err != nil {
-		return err
-	}
-
-	if ng.isDisabled() {
-		return nil
-	}
-
 	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
@@ -354,9 +339,8 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	return children.Wait()
 }
 
-// isDisabled returns true if unified alerting  is disabled for this instance.
-// This is purposefully not exported so that the legacy migration rollback can run with unified alerting disabled.
-func (ng *AlertNG) isDisabled() bool {
+// IsDisabled returns true if the alerting service is disabled for this instance.
+func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
 		return true
 	}

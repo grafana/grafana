@@ -26,39 +26,29 @@ type MigrationService struct {
 	kv    *kvstore.NamespacedKVStore
 }
 
-func NewMigrationService(log log.Logger, store db.DB, cfg *setting.Cfg, kvStore kvstore.KVStore) MigrationService {
-	return MigrationService{
-		log:   log,
+func ProvideService(
+	cfg *setting.Cfg,
+	sqlStore db.DB,
+	kv kvstore.KVStore,
+) (*MigrationService, error) {
+	return &MigrationService{
+		log:   log.New("ngalert.migration"),
 		cfg:   cfg,
-		store: store,
-		kv:    kvstore.WithNamespace(kvStore, kvstore.AllOrganizations, KVNamespace),
-	}
+		store: sqlStore,
+		kv:    kvstore.WithNamespace(kv, kvstore.AllOrganizations, KVNamespace),
+	}, nil
 }
 
-func (ms *MigrationService) GetMigrated(ctx context.Context) (bool, error) {
-	content, exists, err := ms.kv.Get(ctx, migratedKey)
-	if err != nil {
-		return false, err
-	}
-
-	if !exists {
-		return false, nil
-	}
-
-	return strconv.ParseBool(content)
-}
-
-func (ms *MigrationService) SetMigrated(ctx context.Context, migrated bool) error {
-	return ms.kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
-}
-
-func (ms *MigrationService) Start(ctx context.Context) error {
+// Run starts the migration.
+func (ms *MigrationService) Run(ctx context.Context) error {
+	ms.log.Info("Starting")
 	migrated, err := ms.GetMigrated(ctx)
 	if err != nil {
 		return fmt.Errorf("getting migration status: %w", err)
 	}
 	if migrated == ms.cfg.UnifiedAlerting.IsEnabled() {
 		// Nothing to do.
+		ms.log.Info("Nothing to do")
 		return nil
 	}
 
@@ -114,6 +104,28 @@ func (ms *MigrationService) Start(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// IsDisabled returns true if the cfg is nil.
+func (ms *MigrationService) IsDisabled() bool {
+	return ms.cfg == nil
+}
+
+func (ms *MigrationService) GetMigrated(ctx context.Context) (bool, error) {
+	content, exists, err := ms.kv.Get(ctx, migratedKey)
+	if err != nil {
+		return false, err
+	}
+
+	if !exists {
+		return false, nil
+	}
+
+	return strconv.ParseBool(content)
+}
+
+func (ms *MigrationService) SetMigrated(ctx context.Context, migrated bool) error {
+	return ms.kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
 }
 
 func (ms *MigrationService) Revert(ctx context.Context) error {
