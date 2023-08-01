@@ -65,9 +65,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 	}
-	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		srv.DBMigration(db)
-	}
+	srv.DBMigration(db)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))

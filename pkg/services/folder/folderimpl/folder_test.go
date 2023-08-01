@@ -53,7 +53,8 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
+		db := sqlstore.InitTestDB(t)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, db, &featuremgmt.FeatureManager{})
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
