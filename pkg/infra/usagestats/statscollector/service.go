@@ -91,7 +91,6 @@ func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageS
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	s.updateTotalStats(ctx)
 	updateStatsTicker := time.NewTicker(time.Minute * 30)
 	defer updateStatsTicker.Stop()
 
