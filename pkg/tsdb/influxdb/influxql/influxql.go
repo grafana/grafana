@@ -3,7 +3,6 @@ package influxql
 import (
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -54,21 +53,9 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.Quer
 		return &backend.QueryDataResponse{}, err
 	}
 
-	res, err := dsInfo.HTTPClient.Do(request)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
+	resp, err := execute(dsInfo, logger, queries, request)
 
-	respBody, respStatusCode, err := execute(dsInfo, logger, request)
-
-	resp := ResponseParse(respBody, respStatusCode, queries)
-
-	return resp, nil
+	return resp, err
 }
 
 func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, query string, retentionPolicy string) (*http.Request, error) {
@@ -120,15 +107,16 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	return req, nil
 }
 
-func execute(dsInfo *models.DatasourceInfo, logger log.Logger, request *http.Request) (io.ReadCloser, int, error) {
+func execute(dsInfo *models.DatasourceInfo, logger log.Logger, queries []models.Query, request *http.Request) (*backend.QueryDataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
-		return res.Body, res.StatusCode, err
+		return &backend.QueryDataResponse{}, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	return res.Body, res.StatusCode, nil
+	resp := ResponseParse(res.Body, res.StatusCode, queries)
+	return resp, nil
 }

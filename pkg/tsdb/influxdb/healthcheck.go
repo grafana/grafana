@@ -34,7 +34,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	case influxVersionFlux:
 		return CheckFluxHealth(ctx, dsInfo, req)
 	case influxVersionInfluxQL:
-		return CheckInfluxQLHealth(ctx, dsInfo, s)
+		return CheckInfluxQLHealth(ctx, dsInfo)
 	default:
 		return getHealthCheckMessage(logger, "", errors.New("unknown influx version"))
 	}
@@ -75,37 +75,15 @@ func CheckFluxHealth(ctx context.Context, dsInfo *models.DatasourceInfo,
 	return getHealthCheckMessage(logger, "", errors.New("error getting flux query buckets"))
 }
 
-func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *Service) (*backend.CheckHealthResult, error) {
+func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo) (*backend.CheckHealthResult, error) {
 	logger := logger.FromContext(ctx)
-	// queryString := "SHOW measurements"
-	// hcRequest, err := s.createRequest(ctx, logger, dsInfo, queryString, defaultRetentionPolicy)
-	// if err != nil {
-	// 	return getHealthCheckMessage(logger, "error creating influxDB healthcheck request", err)
-	// }
-	//
-	// res, err := dsInfo.HTTPClient.Do(hcRequest)
-	// if err != nil {
-	// 	return getHealthCheckMessage(logger, "error performing influxQL query", err)
-	// }
-	//
-	// defer func() {
-	// 	if err := res.Body.Close(); err != nil {
-	// 		logger.Warn("failed to close response body", "err", err)
-	// 	}
-	// }()
-	//
-	// resp := s.responseParser.Parse(res.Body, res.StatusCode, []models.Query{{
-	// 	RefID:       refID,
-	// 	UseRawQuery: true,
-	// 	RawQuery:    queryString,
-	// }})
 
 	resp, err := influxql.Query(ctx, dsInfo, &backend.QueryDataRequest{
 		Queries: []backend.DataQuery{
 			{
 				RefID:     refID,
 				QueryType: "health",
-				JSON:      []byte(`{"query": "SHOW measurements"}`),
+				JSON:      []byte(`{"query": "SHOW measurements", "rawQuery": true}`),
 			},
 		},
 	})
