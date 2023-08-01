@@ -130,7 +130,11 @@ export class UserAdminPage extends PureComponent<Props> {
               {isLDAPUser && isUserSynced && featureEnabled('ldapsync') && ldapSyncInfo && canReadLDAPStatus && (
                 <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
               )}
-              <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
+              <UserPermissions
+                isGrafanaAdmin={user.isGrafanaAdmin}
+                isExternalUser={user?.isGrafanaAdminExternallySynced}
+                onGrafanaAdminChange={this.onGrafanaAdminChange}
+              />
             </>
           )}
 
