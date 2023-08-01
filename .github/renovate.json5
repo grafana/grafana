@@ -4,6 +4,9 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
+    "@types/slate", // we are planning to remove slate
+    "@types/slate-plain-serializer", // we are planning to remove slate
+    "@types/slate-react", // we are planning to remove slate
     "@types/systemjs",
     "commander", // we are planning to remove this, so no need to update it
     "execa", // we should bump this once we move to esm modules
@@ -13,6 +16,9 @@
     "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
     "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
     "react-router-dom", // we should bump this together with history
+    "slate", // we are planning to remove slate
+    "slate-plain-serializer", // we are planning to remove slate
+    "slate-react", // we are planning to remove slate
     "systemjs",
     "ts-loader", // we should remove ts-loader and use babel-loader instead
     "ora", // we should bump this once we move to esm modules
@@ -44,15 +50,6 @@
       "matchPackageNames": [
         "moveable",
         "react-moveable"
-      ]
-    },
-    {
-      "groupName": "Slate",
-      "matchPackageNames": [
-        "@types/slate",
-        "@types/slate-react",
-        "slate",
-        "slate-react"
       ]
     },
     {
