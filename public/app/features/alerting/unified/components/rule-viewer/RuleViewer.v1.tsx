@@ -268,7 +268,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     collapse: css`
       margin-top: ${theme.spacing(2)};
       border-color: ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     queriesTitle: css`
       padding: ${theme.spacing(2, 0.5)};

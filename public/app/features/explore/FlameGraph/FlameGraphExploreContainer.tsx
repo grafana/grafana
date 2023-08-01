@@ -25,6 +25,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flow-root;
     padding: 0 ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)};
     border: 1px solid ${theme.components.panel.borderColor};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
   `,
 });

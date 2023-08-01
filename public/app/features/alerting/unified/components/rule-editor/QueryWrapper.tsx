@@ -278,7 +278,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
     border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
 
     button {
       overflow: visible;

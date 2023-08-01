@@ -148,7 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       css`
         display: flex;
         align-items: center;
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
         font-weight: ${theme.typography.fontWeightMedium};
         border: 1px solid ${theme.colors.border.weak};
         white-space: nowrap;

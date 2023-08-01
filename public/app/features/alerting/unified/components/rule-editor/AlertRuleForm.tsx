@@ -365,7 +365,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentOuter: css`
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       overflow: hidden;
       flex: 1;
       margin-top: ${theme.spacing(1)};

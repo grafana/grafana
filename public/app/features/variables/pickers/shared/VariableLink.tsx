@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0 ${theme.spacing(1)};
     background-color: ${theme.components.input.background};
     border: 1px solid ${theme.components.input.borderColor};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     display: flex;
     align-items: center;
     color: ${theme.colors.text};
