@@ -169,11 +169,11 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		oAuthExternallySynced := false
+		oAuthAndAllowAssignGrafanaAdmin := false
 		if oauthInfo := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_")); oauthInfo != nil {
-			oAuthExternallySynced = oauthInfo.AllowAssignGrafanaAdmin
+			oAuthAndAllowAssignGrafanaAdmin = oauthInfo.AllowAssignGrafanaAdmin
 		}
-		if login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthExternallySynced) {
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthAndAllowAssignGrafanaAdmin) {
 			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
 		}
 	} else {

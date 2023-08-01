@@ -114,7 +114,7 @@ func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
 	return true
 }
 
-func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oAuthExternallySynced bool) bool {
+func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oAuthAndAllowAssignGrafanaAdmin bool) bool {
 	if !IsExternallySynced(cfg, authModule) {
 		return false
 	}
@@ -123,7 +123,7 @@ func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oAuthEx
 	case JWTModule:
 		return cfg.JWTAuthAllowAssignGrafanaAdmin
 	default:
-		return oAuthExternallySynced
+		return oAuthAndAllowAssignGrafanaAdmin
 	}
 }
 
