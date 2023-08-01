@@ -1,4 +1,5 @@
 import { cloneDeep, groupBy, isEqual, uniqBy } from 'lodash';
+import { lastValueFrom } from 'rxjs';
 
 import { DataFrame, DataFrameJSON, PanelData } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
@@ -120,14 +121,22 @@ export const updatePanelDataWithASHFromLoki = async (panelDataProcessed: PanelDa
 
   try {
     // fetch data from Loki state history
-    let annotationsWithHistory = await getBackendSrv().get('/api/v1/rules/history', {
-      panelID: panelDataProcessed.request?.panelId,
-      dashboardUID: panelDataProcessed.request?.dashboardUID,
-      from: panelDataProcessed.timeRange.from.unix(),
-      to: panelDataProcessed.timeRange.to.unix(),
-      limit: 250,
-    });
-    const records = getRuleHistoryRecordsForPanel(annotationsWithHistory);
+    let annotationsWithHistory = await lastValueFrom(
+      getBackendSrv().fetch<DataFrameJSON>({
+        url: '/api/v1/rules/history',
+        method: 'GET',
+        params: {
+          panelID: panelDataProcessed.request?.panelId,
+          dashboardUID: panelDataProcessed.request?.dashboardUID,
+          from: panelDataProcessed.timeRange.from.unix(),
+          to: panelDataProcessed.timeRange.to.unix(),
+          limit: 250,
+        },
+        showErrorAlert: false,
+        showSuccessAlert: false,
+      })
+    );
+    const records = getRuleHistoryRecordsForPanel(annotationsWithHistory.data);
     const clonedPanel = cloneDeep(panelDataProcessed);
     // annotations can be undefined
     clonedPanel.annotations = panelDataProcessed.annotations
