@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './dataTransform';
 
@@ -13,7 +13,7 @@ describe('nestedSetToLevels', () => {
       fields: [
         { name: 'level', values: [0, 1, 2, 3, 2, 1, 2, 3, 4] },
         { name: 'value', values: [10, 5, 3, 1, 1, 4, 3, 2, 1] },
-        { name: 'label', values: ['1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+        { name: 'label', values: ['1', '2', '3', '4', '5', '6', '7', '8', '9'], type: FieldType.string },
         { name: 'self', values: [0, 0, 0, 0, 0, 0, 0, 0, 0] },
       ],
     });
@@ -50,7 +50,7 @@ describe('nestedSetToLevels', () => {
       fields: [
         { name: 'level', values: [0, 1, 1, 1] },
         { name: 'value', values: [10, 5, 3, 1] },
-        { name: 'label', values: ['1', '2', '3', '4'] },
+        { name: 'label', values: ['1', '2', '3', '4'], type: FieldType.string },
         { name: 'self', values: [10, 5, 3, 1] },
       ],
     });
