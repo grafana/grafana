@@ -6,7 +6,7 @@ import { LokiDatasource } from '../datasource';
 import { getNodesFromQuery, isLogsQuery } from '../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../types';
 
-export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | string | null> {
+export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | null> {
   if (!query) {
     return null;
   }
@@ -15,10 +15,6 @@ export async function getStats(datasource: LokiDatasource, query: LokiQuery): Pr
 
   if (!response) {
     return null;
-  }
-
-  if (response.message) {
-    return response.message;
   }
 
   return Object.values(response).every((v) => v === 0) ? null : response;

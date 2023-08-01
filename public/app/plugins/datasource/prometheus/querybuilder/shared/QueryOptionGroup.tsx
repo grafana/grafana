@@ -10,7 +10,7 @@ import { QueryStats } from 'app/plugins/datasource/loki/types';
 export interface Props {
   title: string;
   collapsedInfo: string[];
-  queryStats?: QueryStats | string | null;
+  queryStats?: QueryStats | null;
   children: React.ReactNode;
 }
 
@@ -90,19 +90,15 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const generateQueryStats = (queryStats: QueryStats | string) => {
-  if (typeof queryStats === 'string') {
-    return queryStats;
-  } else {
-    return `This query will process approximately ${convertUnits(queryStats)}.`;
+const generateQueryStats = (queryStats: QueryStats) => {
+  if (queryStats.message) {
+    return queryStats.message;
   }
+
+  return `This query will process approximately ${convertUnits(queryStats)}.`;
 };
 
-const convertUnits = (queryStats: QueryStats | string): string => {
-  if (typeof queryStats === 'string' || !queryStats?.bytes) {
-    return '';
-  }
-
+const convertUnits = (queryStats: QueryStats): string => {
   const { text, suffix } = getValueFormat('bytes')(queryStats.bytes, 1);
   return text + suffix;
 };

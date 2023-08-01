@@ -17,7 +17,7 @@ export interface Props {
   onRunQuery: () => void;
   maxLines: number;
   app?: CoreApp;
-  queryStats: QueryStats | string | null;
+  queryStats: QueryStats | null;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
