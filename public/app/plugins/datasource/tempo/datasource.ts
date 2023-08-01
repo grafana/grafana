@@ -651,7 +651,7 @@ function errorAndDurationQuery(
 
   let labels = [];
   if (request.app === CoreApp.Explore) {
-    if (rateResponse.data[0][0]?.fields[1]?.values) {
+    if (rateResponse.data[0][0]?.fields[1]?.name === 'span_name' && rateResponse.data[0][0]?.fields[1]?.values) {
       labels = rateResponse.data[0][0]?.fields[1]?.values;
     }
   } else if (rateResponse.data[0]) {
