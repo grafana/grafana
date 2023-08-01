@@ -34,7 +34,6 @@ func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWat
 		instance.Profile = config.Database
 	}
 
-
 	// logs timeout default is 30 minutes, the same as timeout in frontend logs query
 	// note: for alerting queries, the context will be cancelled before that unless evaluation_timeout_seconds in defaults.ini is increased (default: 30s)
 	if instance.LogsTimeout == 0 {

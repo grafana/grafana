@@ -81,7 +81,6 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
-
 	return e
 }
 
@@ -118,8 +117,6 @@ type cloudWatchExecutor struct {
 	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
-	// can be reduced to shorten tests
-	logsTimeoutDefault time.Duration
 }
 
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
