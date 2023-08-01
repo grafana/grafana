@@ -175,10 +175,10 @@ func TestPluginMetricsScrapeTargetsEndpoint(t *testing.T) {
 
 		t.Run("Only external plugin scrape targets are returned", func(t *testing.T) {
 			hs.pluginStore = &fakes.FakePluginStore{PluginList: []plugins.PluginDTO{
-				{Class: plugins.External, JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}},
-				{Class: plugins.Core, JSONData: plugins.JSONData{ID: "foo-datasource", Type: plugins.DataSource}},
-				{Class: plugins.External, JSONData: plugins.JSONData{ID: "grafana-app", Type: plugins.App}},
-				{Class: plugins.Bundled, JSONData: plugins.JSONData{ID: "bar-datasource", Type: plugins.App}},
+				{Class: plugins.ClassExternal, JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}},
+				{Class: plugins.ClassCore, JSONData: plugins.JSONData{ID: "foo-datasource", Type: plugins.TypeDataSource}},
+				{Class: plugins.ClassExternal, JSONData: plugins.JSONData{ID: "grafana-app", Type: plugins.TypeApp}},
+				{Class: plugins.ClassBundled, JSONData: plugins.JSONData{ID: "bar-datasource", Type: plugins.TypeApp}},
 			}}
 
 			req := s.NewGetRequest("/metrics/plugins")
