@@ -1609,8 +1609,8 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/testdata/img/testdata.svg",
-        "large": "public/app/plugins/datasource/testdata/img/testdata.svg"
+        "small": "public/plugins/testdata/dist/img/testdata.svg",
+        "large": "public/plugins/testdata/dist/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
