@@ -140,7 +140,7 @@ export const EmailSharingConfiguration = () => {
     mode: 'onSubmit',
   });
 
-  const onShareTypeChange = (shareType: PublicDashboardShareType) => {
+  const onUpdateShareType = (shareType: PublicDashboardShareType) => {
     const req = {
       dashboard,
       payload: {
@@ -151,6 +151,17 @@ export const EmailSharingConfiguration = () => {
 
     updateShareType(req);
   };
+
+  function onChangeShareType(shareType: PublicDashboardShareType) {
+    reportInteraction(shareType);
+    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
+      item: `share_type_${shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public'}`,
+      sharing_category: shareDashboardType.publicDashboard,
+    });
+
+    setValue('shareType', shareType);
+    onUpdateShareType(shareType);
+  }
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     //TODO: add if it's domain or not when developed.
@@ -175,14 +186,7 @@ export const EmailSharingConfiguration = () => {
                 {...rest}
                 size={width < 480 ? 'sm' : 'md'}
                 options={options}
-                onChange={(shareType: PublicDashboardShareType) => {
-                  reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
-                    item: `share_type_${shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public'}`,
-                    sharing_category: shareDashboardType.publicDashboard,
-                  });
-                  setValue('shareType', shareType);
-                  onShareTypeChange(shareType);
-                }}
+                onChange={onChangeShareType}
               />
             );
           }}
