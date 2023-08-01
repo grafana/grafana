@@ -84,7 +84,7 @@ export function createV1Theme(theme: Omit<GrafanaTheme2, 'v1'>): GrafanaTheme {
     },
     border: {
       radius: {
-        sm: theme.shape.borderRadius(1),
+        sm: theme.shape.radius.default,
         md: theme.shape.borderRadius(2),
         lg: theme.shape.borderRadius(3),
       },
