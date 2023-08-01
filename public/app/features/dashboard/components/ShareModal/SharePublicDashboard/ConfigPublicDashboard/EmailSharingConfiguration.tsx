@@ -155,7 +155,7 @@ export const EmailSharingConfiguration = () => {
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     //TODO: add if it's domain or not when developed.
     reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
-      item: 'invite_public_dashboard',
+      item: 'invite_email',
       sharing_category: shareDashboardType.publicDashboard,
     });
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
@@ -177,7 +177,7 @@ export const EmailSharingConfiguration = () => {
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
                   reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
-                    item: `share_type_${shareType.toLowerCase()}`,
+                    item: `share_type_${shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public'}`,
                     sharing_category: shareDashboardType.publicDashboard,
                   });
                   setValue('shareType', shareType);
