@@ -28,7 +28,7 @@ def authenticate_gcr_step():
     return {
         "name": "authenticate-gcr",
         "image": "docker:dind",
-        "commands": ['echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io'],
+        "commands": ["echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io"],
         "environment": {
             "GCR_CREDENTIALS": from_secret("gcr_credentials"),
         },
