@@ -173,6 +173,9 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	corePluginsDir := filepath.Join(publicDir, "app/plugins")
 	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "app/plugins"), corePluginsDir)
 	require.NoError(t, err)
+	decoupledCorePluginsDir := filepath.Join(publicDir, "plugins")
+	err = fs.CopyRecursive(filepath.Join(rootDir, "public", "plugins"), decoupledCorePluginsDir)
+	require.NoError(t, err)
 
 	cfg := ini.Empty()
 	dfltSect := cfg.Section("")
