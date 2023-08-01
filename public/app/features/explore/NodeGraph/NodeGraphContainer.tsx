@@ -81,7 +81,8 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   return (
     <PanelChrome
-      title={`Node graph${countWarning}`}
+      title={`Node graph`}
+      titleItems={countWarning}
       // We allow collapsing this only when it is shown together with trace view.
       collapsible={!!withTraceView}
       defaultExpanded={withTraceView ? !withTraceView : true}
