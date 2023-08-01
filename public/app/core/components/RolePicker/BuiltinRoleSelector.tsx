@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Icon, RadioButtonGroup, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
@@ -33,17 +33,17 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
           </Tooltip>
         )}
         {!disabled && tooltipMessage && (
-          <Tooltip placement="right-end" interactive={true} content={<div>{tooltipMessage}</div>}>
-            <Icon name="question-circle" />
+          <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
+            <Icon name="question-circle" size="xs" />
           </Tooltip>
         )}
       </div>
-      <RadioButtonGroup
+      <RadioButtonList
+        name="Basic Role Selector"
         className={styles.basicRoleSelector}
         options={BasicRoleOption}
         value={value}
         onChange={onChange}
-        fullWidth={true}
         disabled={disabled}
       />
     </>

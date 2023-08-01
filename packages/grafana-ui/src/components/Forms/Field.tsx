@@ -70,6 +70,9 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
         whiteSpace: 'nowrap',
       },
     }),
+    tooltipIcon: css({
+      marginLeft: theme.spacing(0.5),
+    }),
   };
 });
 
@@ -103,7 +106,7 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
           {`${label}${required ? ' *' : ''}`}
           {tooltipMessage && (
             <Tooltip placement="right-end" content={tooltipMessage}>
-              <Icon name="question-circle" />
+              <Icon name="question-circle" size="xs" className={styles.tooltipIcon} />
             </Tooltip>
           )}
         </Label>

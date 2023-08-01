@@ -59,9 +59,7 @@ export const UserInviteForm = () => {
                 tooltipMessage='You can now select the "No basic role" option and add permissions to your custom needs.'
               >
                 <InputControl
-                  render={({ field: { ref, ...field } }) => (
-                    <RadioButtonGroup {...field} options={roles} isHorizontal={true} />
-                  )}
+                  render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
                   control={control}
                   name="role"
                 />
