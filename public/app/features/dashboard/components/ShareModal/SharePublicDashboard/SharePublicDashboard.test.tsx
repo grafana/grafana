@@ -14,6 +14,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
+import { shareAnalyticsEventNames, shareDashboardType } from '../utils';
+
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
 import {
   getExistentPublicDashboardResponse,
@@ -334,6 +336,17 @@ describe('SharePublic - Report interactions', () => {
     );
   });
 
+  it('reports interaction when public dashboard tab is clicked', async () => {
+    await renderSharePublicDashboard();
+
+    await waitFor(() => {
+      expect(reportInteraction).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).lastCalledWith(shareAnalyticsEventNames.sharingCategoryClicked, {
+        item: shareDashboardType.publicDashboard,
+      });
+    });
+  });
+
   it('reports interaction when time range is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
@@ -344,11 +357,15 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
-        action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
+      expect(reportInteraction).toHaveBeenCalledTimes(2);
+      // if time range was enabled, then the item is now disable_time
+      expect(reportInteraction).toHaveBeenLastCalledWith(shareAnalyticsEventNames.sharingActionClicked, {
+        item: pubdashResponse.timeSelectionEnabled ? 'disable_time' : 'enable_time',
+        sharing_category: shareDashboardType.publicDashboard,
       });
     });
   });
+
   it('reports interaction when show annotations is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
@@ -359,8 +376,10 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
-        action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
+      // if annotations was enabled, then the item is now disable_annotations
+      expect(reportInteraction).toHaveBeenCalledWith(shareAnalyticsEventNames.sharingActionClicked, {
+        item: pubdashResponse.annotationsEnabled ? 'disable_annotations' : 'enable_annotations',
+        sharing_category: shareDashboardType.publicDashboard,
       });
     });
   });
@@ -372,8 +391,11 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
-        action: pubdashResponse.isEnabled ? 'disable' : 'enable',
+      expect(reportInteraction).toHaveBeenCalledTimes(2);
+      // if sharing was enabled, then the item is now disable_sharing
+      expect(reportInteraction).toHaveBeenLastCalledWith(shareAnalyticsEventNames.sharingActionClicked, {
+        item: pubdashResponse.isEnabled ? 'disable_sharing' : 'enable_sharing',
+        sharing_category: shareDashboardType.publicDashboard,
       });
     });
   });
