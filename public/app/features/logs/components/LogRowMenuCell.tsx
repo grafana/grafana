@@ -44,6 +44,10 @@ export const LogRowMenuCell = React.memo(
       },
       [onOpenContext, row]
     );
+    /**
+     * For better accessibility support, we listen to the onBlur event here (to hide this component), and
+     * to onFocus in LogRow (to show this component).
+     */
     const handleBlur = useCallback(
       (e: FocusEvent) => {
         if (!e.currentTarget.contains(e.relatedTarget) && onBlur) {
@@ -54,7 +58,7 @@ export const LogRowMenuCell = React.memo(
     );
     const getLogText = useCallback(() => logText, [logText]);
     return (
-      // TODO: fix keyboard a11y
+      // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick} onBlur={handleBlur}>
         {pinned && !mouseIsOver && (
