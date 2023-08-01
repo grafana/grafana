@@ -1713,7 +1713,7 @@ If set to `true`, then total stats generation (`stat_totals_*` metrics) is disab
 
 ### total_stats_collector_interval_seconds
 
-Sets the total stats collector interval. The dedault is 1800 seconds (30 minutes).
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
 
 ### basic_auth_username and basic_auth_password
 
