@@ -1607,18 +1607,18 @@
         "url": "https://grafana.com"
       },
       "description": "Generates test data in different forms",
-      "links": null,
+      "links": [],
       "logos": {
         "small": "public/plugins/testdata/dist/img/testdata.svg",
         "large": "public/plugins/testdata/dist/img/testdata.svg"
       },
       "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
+      "screenshots": [],
+      "version": "1.0.0",
+      "updated": "2023-08-01"
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=9.5.3",
       "grafanaVersion": "*",
       "plugins": []
     },
