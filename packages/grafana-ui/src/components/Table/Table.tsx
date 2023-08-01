@@ -115,16 +115,12 @@ export const Table = memo((props: Props) => {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const nestedFields = useMemo(() => data.fields.filter((f) => f.type === FieldType.nestedFrames), [data]);
-  const nestedFrames = useMemo(
-    () => (nestedFields && nestedFields[0] && nestedFields[0].values ? nestedFields[0].values : []),
-    [nestedFields]
-  );
+  const nestedFrames = useMemo(() => data.fields.find((f) => f.type === FieldType.nestedFrames)?.values || [], [data]);
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, !!nestedFields?.length, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, nestedFields, isCountRowsSet]
+    () => getColumns(data, width, columnMinWidth, !!nestedFrames?.length, footerItems, isCountRowsSet),
+    [data, width, columnMinWidth, footerItems, nestedFrames, isCountRowsSet]
   );
 
   // Internal react table state reducer
@@ -226,37 +222,34 @@ export const Table = memo((props: Props) => {
     (rowIndex: number) => {
       const subTables: ReactElement[] = [];
 
-      nestedFrames?.forEach((nfs: DataFrame[], nfsIndex) => {
-        if (rowIndex === nfsIndex && state.expanded[rowIndex]) {
-          // rowIndex === nfsIndex so we get appropriate nestedFields based on row
-          let top = tableStyles.rowHeight; // initial height for row that expands above sub tables
-          nfs.forEach((nf, nfIndex) => {
-            const noHeader = !!nf.meta?.custom?.noHeader;
-            const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
+      if (nestedFrames[rowIndex] && state.expanded[rowIndex]) {
+        let top = tableStyles.rowHeight; // initial height for row that expands above sub tables
+        nestedFrames[rowIndex].forEach((nf: DataFrame, nfIndex: number) => {
+          const noHeader = !!nf.meta?.custom?.noHeader;
+          const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
 
-            const subTableStyle: CSSProperties = {
-              height: height,
-              background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
-              paddingLeft: EXPANDER_WIDTH,
-              position: 'absolute',
-              top,
-            };
-            top += height;
+          const subTableStyle: CSSProperties = {
+            height: height,
+            background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
+            paddingLeft: EXPANDER_WIDTH,
+            position: 'absolute',
+            top,
+          };
+          top += height;
 
-            subTables.push(
-              <div style={subTableStyle} key={`subTable_${nfsIndex}_${nfIndex}`}>
-                <Table
-                  data={nf}
-                  width={width - EXPANDER_WIDTH}
-                  height={tableStyles.rowHeight * (nf.length + 1)}
-                  noHeader={noHeader}
-                  cellHeight={cellHeight}
-                />
-              </div>
-            );
-          });
-        }
-      });
+          subTables.push(
+            <div style={subTableStyle} key={`subTable_${rowIndex}_${nfIndex}`}>
+              <Table
+                data={nf}
+                width={width - EXPANDER_WIDTH}
+                height={tableStyles.rowHeight * (nf.length + 1)}
+                noHeader={noHeader}
+                cellHeight={cellHeight}
+              />
+            </div>
+          );
+        });
+      }
 
       return subTables;
     },
@@ -282,7 +275,7 @@ export const Table = memo((props: Props) => {
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedFields.length > 0 && renderSubTables(rowIndexForPagination(rowIndex))}
+          {nestedFrames.length > 0 && renderSubTables(rowIndexForPagination(rowIndex))}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -303,7 +296,7 @@ export const Table = memo((props: Props) => {
       enablePagination,
       prepareRow,
       tableStyles,
-      nestedFields.length,
+      nestedFrames.length,
       renderSubTables,
       rowIndexForPagination,
       page,
