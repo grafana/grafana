@@ -2,6 +2,8 @@ import { Settings, SettingsSection } from 'app/types';
 
 import { AuthProviderInfo, GetStatusHook, AuthProviderStatus } from './types';
 
+export * from './types';
+
 const registeredAuthProviders: AuthProviderInfo[] = [];
 const authProvidersConfigHooks: Record<string, GetStatusHook> = {};
 
