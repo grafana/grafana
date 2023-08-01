@@ -162,7 +162,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0 ${theme.spacing(1, 1, 1)};
       border: 1px solid ${debugBorder};
       background: ${theme.isLight ? theme.v1.palette.white : theme.v1.palette.gray05};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       width: 100%;
       min-height: 300px;
       display: flex;
