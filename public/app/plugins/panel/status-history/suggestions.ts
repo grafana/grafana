@@ -1,7 +1,7 @@
 import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelOptions, PanelFieldConfig } from './panelcfg.gen';
+import { Options, FieldConfig } from './panelcfg.gen';
 
 export class StatusHistorySuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -31,7 +31,7 @@ export class StatusHistorySuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<PanelOptions, PanelFieldConfig>({
+    const list = builder.getListAppender<Options, FieldConfig>({
       name: '',
       pluginId: 'status-history',
       options: {},

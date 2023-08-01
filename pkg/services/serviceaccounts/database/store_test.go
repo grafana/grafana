@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Service Account should not create an org on its own
@@ -79,6 +77,40 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 	})
 }
 
+func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
+	_, store := setupTestDatabase(t)
+	orgQuery := &org.CreateOrgCommand{Name: orgimpl.MainOrgName}
+	orgResult, err := store.orgService.CreateWithMember(context.Background(), orgQuery)
+	require.NoError(t, err)
+
+	serviceAccountName := "new Service Account"
+	serviceAccountOrgId := orgResult.ID
+	serviceAccountRole := org.RoleNone
+	saForm := serviceaccounts.CreateServiceAccountForm{
+		Name:       serviceAccountName,
+		Role:       &serviceAccountRole,
+		IsDisabled: nil,
+	}
+
+	saDTO, err := store.CreateServiceAccount(context.Background(), serviceAccountOrgId, &saForm)
+	require.NoError(t, err)
+	assert.Equal(t, "sa-new-service-account", saDTO.Login)
+	assert.Equal(t, serviceAccountName, saDTO.Name)
+	assert.Equal(t, 0, int(saDTO.Tokens))
+
+	retrieved, err := store.RetrieveServiceAccount(context.Background(), serviceAccountOrgId, saDTO.Id)
+	require.NoError(t, err)
+	assert.Equal(t, "sa-new-service-account", retrieved.Login)
+	assert.Equal(t, serviceAccountName, retrieved.Name)
+	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
+	assert.Equal(t, string(serviceAccountRole), retrieved.Role)
+
+	retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+	require.NoError(t, err)
+	assert.Equal(t, saDTO.Id, retrievedId)
+	assert.Equal(t, saDTO.Role, string(org.RoleNone))
+}
+
 func TestStore_DeleteServiceAccount(t *testing.T) {
 	cases := []struct {
 		desc        string
@@ -118,7 +150,7 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
@@ -221,11 +253,13 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 
 func TestStore_MigrateAllApiKeys(t *testing.T) {
 	cases := []struct {
-		desc                   string
-		keys                   []tests.TestApiKey
-		orgId                  int64
-		expectedServiceAccouts int64
-		expectedErr            error
+		desc                    string
+		keys                    []tests.TestApiKey
+		orgId                   int64
+		expectedServiceAccounts int64
+		expectedErr             error
+		expectedMigratedResults *serviceaccounts.MigrationResult
+		ctxWithFastCancel       bool
 	}{
 		{
 			desc: "api keys should be migrated to service account tokens within provided org",
@@ -234,9 +268,16 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1},
 				{Name: "test3", Role: org.RoleEditor, Key: "secret3", OrgId: 2},
 			},
-			orgId:                  1,
-			expectedServiceAccouts: 2,
-			expectedErr:            nil,
+			orgId:                   1,
+			expectedServiceAccounts: 2,
+			expectedErr:             nil,
+			expectedMigratedResults: &serviceaccounts.MigrationResult{
+				Total:           2,
+				Migrated:        2,
+				Failed:          0,
+				FailedApikeyIDs: []int64{},
+				FailedDetails:   []string{},
+			},
 		},
 		{
 			desc: "api keys from another orgs shouldn't be migrated",
@@ -244,9 +285,16 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 2},
 				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 2},
 			},
-			orgId:                  1,
-			expectedServiceAccouts: 0,
-			expectedErr:            nil,
+			orgId:                   1,
+			expectedServiceAccounts: 0,
+			expectedErr:             nil,
+			expectedMigratedResults: &serviceaccounts.MigrationResult{
+				Total:           0,
+				Migrated:        0,
+				Failed:          0,
+				FailedApikeyIDs: []int64{},
+				FailedDetails:   []string{},
+			},
 		},
 		{
 			desc: "expired api keys should be migrated",
@@ -254,9 +302,16 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				{Name: "test1", Role: org.RoleEditor, Key: "secret1", OrgId: 1},
 				{Name: "test2", Role: org.RoleEditor, Key: "secret2", OrgId: 1, IsExpired: true},
 			},
-			orgId:                  1,
-			expectedServiceAccouts: 2,
-			expectedErr:            nil,
+			orgId:                   1,
+			expectedServiceAccounts: 2,
+			expectedErr:             nil,
+			expectedMigratedResults: &serviceaccounts.MigrationResult{
+				Total:           2,
+				Migrated:        2,
+				Failed:          0,
+				FailedApikeyIDs: []int64{},
+				FailedDetails:   []string{},
+			},
 		},
 	}
 
@@ -273,7 +328,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				tests.SetupApiKey(t, db, key)
 			}
 
-			err = store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
+			results, err := store.MigrateApiKeysToServiceAccounts(context.Background(), c.orgId)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
@@ -296,8 +351,8 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				}
 				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
 				require.NoError(t, err)
-				require.Equal(t, c.expectedServiceAccouts, serviceAccounts.TotalCount)
-				if c.expectedServiceAccouts > 0 {
+				require.Equal(t, c.expectedServiceAccounts, serviceAccounts.TotalCount)
+				if c.expectedServiceAccounts > 0 {
 					saMigrated := serviceAccounts.ServiceAccounts[0]
 					require.Equal(t, string(c.keys[0].Role), saMigrated.Role)
 
@@ -308,104 +363,7 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 					require.NoError(t, err)
 					require.Len(t, tokens, 1)
 				}
-			}
-		})
-	}
-}
-
-func TestStore_RevertApiKey(t *testing.T) {
-	cases := []struct {
-		desc                        string
-		key                         tests.TestApiKey
-		forceMismatchServiceAccount bool
-		expectedErr                 error
-	}{
-		{
-			desc:        "service account token should be reverted to api key",
-			key:         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
-			expectedErr: nil,
-		},
-		{
-			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
-			key:                         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
-			forceMismatchServiceAccount: true,
-			expectedErr:                 ErrServiceAccountAndTokenMismatch,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.desc, func(t *testing.T) {
-			db, store := setupTestDatabase(t)
-			store.cfg.AutoAssignOrg = true
-			store.cfg.AutoAssignOrgId = 1
-			store.cfg.AutoAssignOrgRole = "Viewer"
-			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
-			require.NoError(t, err)
-
-			key := tests.SetupApiKey(t, db, c.key)
-			err = store.CreateServiceAccountFromApikey(context.Background(), key)
-			require.NoError(t, err)
-
-			var saId int64
-			if c.forceMismatchServiceAccount {
-				saId = rand.Int63()
-			} else {
-				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgID,
-					Query: "",
-					Page:  1,
-					Limit: 50,
-					SignedInUser: &user.SignedInUser{
-						UserID: 1,
-						OrgID:  1,
-						Permissions: map[int64]map[string][]string{
-							key.OrgID: {
-								"serviceaccounts:read": {"serviceaccounts:id:*"},
-							},
-						},
-					},
-				}
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
-				require.NoError(t, err)
-				saId = serviceAccounts.ServiceAccounts[0].Id
-			}
-
-			err = store.RevertApiKey(context.Background(), saId, key.ID)
-
-			if c.expectedErr != nil {
-				require.ErrorIs(t, err, c.expectedErr)
-			} else {
-				require.NoError(t, err)
-				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgID,
-					Query: "",
-					Page:  1,
-					Limit: 50,
-					SignedInUser: &user.SignedInUser{
-						UserID: 1,
-						OrgID:  1,
-						Permissions: map[int64]map[string][]string{
-							key.OrgID: {
-								"serviceaccounts:read": {"serviceaccounts:id:*"},
-							},
-						},
-					},
-				}
-				serviceAccounts, err := store.SearchOrgServiceAccounts(context.Background(), &q)
-				require.NoError(t, err)
-				// Service account should be deleted
-				require.Equal(t, int64(0), serviceAccounts.TotalCount)
-
-				apiKeys, err := store.apiKeyService.GetAllAPIKeys(context.Background(), 1)
-				require.NoError(t, err)
-				require.Len(t, apiKeys, 1)
-				apiKey := apiKeys[0]
-				require.Equal(t, c.key.Name, apiKey.Name)
-				require.Equal(t, c.key.OrgId, apiKey.OrgID)
-				require.Equal(t, c.key.Role, apiKey.Role)
-				require.Equal(t, key.Key, apiKey.Key)
-				// Api key should not be linked to service account
-				require.Nil(t, apiKey.ServiceAccountId)
+				require.Equal(t, c.expectedMigratedResults, results)
 			}
 		})
 	}

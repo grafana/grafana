@@ -35,7 +35,7 @@ export const UserInviteForm = () => {
 
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
-    locationService.push('/org/users/');
+    locationService.push('/admin/users/');
   };
 
   return (
@@ -67,7 +67,7 @@ export const UserInviteForm = () => {
             </FieldSet>
             <Stack>
               <Button type="submit">Submit</Button>
-              <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/org/users')} variant="secondary">
+              <LinkButton href={locationUtil.assureBaseUrl(getConfig().appSubUrl + '/admin/users')} variant="secondary">
                 Back
               </LinkButton>
             </Stack>

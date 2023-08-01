@@ -8,9 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
-export interface PanelOptions {
+export interface Options {
   limit: number;
   navigateAfter: string;
   navigateBefore: string;
@@ -23,7 +21,7 @@ export interface PanelOptions {
   tags: Array<string>;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   limit: 10,
   navigateAfter: '10m',
   navigateBefore: '10m',

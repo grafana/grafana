@@ -8,8 +8,6 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 export enum TextMode {
   Code = 'code',
   HTML = 'html',
@@ -45,13 +43,13 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
   showMiniMap: false,
 };
 
-export interface PanelOptions {
+export interface Options {
   code?: CodeOptions;
   content: string;
   mode: TextMode;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,

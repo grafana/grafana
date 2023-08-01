@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -32,7 +32,7 @@ func TestServer_Login_UserBind_Fail(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	cfg.LDAPEnabled = true
+	cfg.LDAPAuthEnabled = true
 	server := &Server{
 		cfg: cfg,
 		Config: &ServerConfig{
@@ -106,7 +106,7 @@ func TestServer_Login_ValidCredentials(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	cfg.LDAPEnabled = true
+	cfg.LDAPAuthEnabled = true
 
 	server := &Server{
 		cfg: cfg,
@@ -143,7 +143,7 @@ func TestServer_Login_UnauthenticatedBind(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	cfg.LDAPEnabled = true
+	cfg.LDAPAuthEnabled = true
 
 	server := &Server{
 		cfg: cfg,
@@ -190,7 +190,7 @@ func TestServer_Login_AuthenticatedBind(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	cfg.LDAPEnabled = true
+	cfg.LDAPAuthEnabled = true
 
 	server := &Server{
 		cfg: cfg,
@@ -233,7 +233,7 @@ func TestServer_Login_UserWildcardBind(t *testing.T) {
 	}
 
 	cfg := setting.NewCfg()
-	cfg.LDAPEnabled = true
+	cfg.LDAPAuthEnabled = true
 
 	server := &Server{
 		cfg: cfg,

@@ -3,71 +3,23 @@ package validation
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidatePublicDashboard(t *testing.T) {
-	t.Run("Returns validation error when dashboard has template variables", func(t *testing.T) {
-		templateVars := []byte(`{
-			"templating": {
-				 "list": [
-				   {
-					  "name": "templateVariableName"
-				   }
-				]
-			}
-		}`)
-		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := dashboards.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
-
-		err := ValidatePublicDashboard(dto, dashboard)
-		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Error())
-	})
-
-	t.Run("Returns no validation error when dashboard has no template variables", func(t *testing.T) {
-		templateVars := []byte(`{
-			"templating": {
-				 "list": []
-			}
-		}`)
-		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := dashboards.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{}}
-
-		err := ValidatePublicDashboard(dto, dashboard)
-		require.NoError(t, err)
-	})
-
 	t.Run("Returns no error when valid shareType value is received", func(t *testing.T) {
-		templateVars := []byte(`{
-			"templating": {
-				 "list": []
-			}
-		}`)
-		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := dashboards.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{Share: EmailShareType}}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: EmailShareType}}
 
-		err := ValidatePublicDashboard(dto, dashboard)
+		err := ValidatePublicDashboard(dto)
 		require.NoError(t, err)
 	})
 
 	t.Run("Returns error when invalid shareType value", func(t *testing.T) {
-		templateVars := []byte(`{
-			"templating": {
-				 "list": []
-			}
-		}`)
-		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := dashboards.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{Share: "invalid"}}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: "invalid"}}
 
-		err := ValidatePublicDashboard(dto, dashboard)
+		err := ValidatePublicDashboard(dto)
 		require.Error(t, err)
 	})
 }
@@ -88,7 +40,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 				req: PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 1000,
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "now-1h",
 						To:   "now",
 					},
@@ -136,7 +88,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range from is invalid",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "invalid",
 						To:   "1622560000000",
 					},
@@ -151,7 +103,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range to is invalid",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "1622560000000",
 						To:   "invalid",
 					},
@@ -166,7 +118,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range from or to is blank",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "",
 						To:   "",
 					},

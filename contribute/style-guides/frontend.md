@@ -353,11 +353,25 @@ static defaultProps: Partial<Props> = { ... }
 
 ### How to declare functional components
 
-We recommend using named regular functions when creating a new react functional component.
+We prefer using function declarations over function expressions when creating a new react functional component.
 
 ```typescript
+// bad
+export const Component = (props: Props) => { ... }
+
+// bad
+export const Component: React.FC<Props> = (props) => { ... }
+
+// good
 export function Component(props: Props) { ... }
 ```
+
+Some interesting readings on the topic:
+
+- [Create React App: Remove React.FC from typescript template](https://github.com/facebook/create-react-app/pull/8177)
+- [Kent C. Dodds: How to write a React Component in Typescript](https://kentcdodds.com/blog/how-to-write-a-react-component-in-typescript)
+- [Kent C. Dodds: Function forms](https://kentcdodds.com/blog/function-forms)
+- [Sam Hendrickx: Why you probably shouldn't use React.FC?](https://medium.com/raccoons-group/why-you-probably-shouldnt-use-react-fc-to-type-your-react-components-37ca1243dd13)
 
 ## State management
 

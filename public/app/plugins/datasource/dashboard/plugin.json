@@ -5,14 +5,14 @@
   "builtIn": true,
 
   "info": {
-    "description": "TODO",
+    "description": "Uses the result set from another panel in the same dashboard",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "public/img/icn-datasource.svg",
-      "large": "public/img/icn-datasource.svg"
+      "small": "img/icn-reusequeries.svg",
+      "large": "img/icn-reusequeries.svg"
     }
   },
 

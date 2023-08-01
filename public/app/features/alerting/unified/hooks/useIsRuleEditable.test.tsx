@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -173,7 +173,7 @@ function mockPermissions(grantedPermissions: AccessControlAction[]) {
 function getProviderWrapper() {
   const dataSources = getMockedDataSources();
   const store = mockUnifiedAlertingStore({ dataSources });
-  const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+  const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
   return wrapper;
 }
 

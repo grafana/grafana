@@ -1,5 +1,5 @@
 import { useId } from '@react-aria/utils';
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { TextArea, useStyles2 } from '@grafana/ui';
@@ -10,7 +10,7 @@ import { getStyles } from './VariableTextAreaField';
 
 export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEditor';
 
-export const LegacyVariableQueryEditor: FC<VariableQueryEditorProps> = ({ onChange, query }) => {
+export const LegacyVariableQueryEditor = ({ onChange, query }: VariableQueryEditorProps) => {
   const styles = useStyles2(getStyles);
   const [value, setValue] = useState(query);
   const onValueChange = (event: React.FormEvent<HTMLTextAreaElement>) => {

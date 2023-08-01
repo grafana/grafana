@@ -8,6 +8,11 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
@@ -15,32 +20,51 @@ weight: 400
 
 # Prometheus template variables
 
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables. Grafana refers to such variables as **template** variables.
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
+For an introduction to templating and template variables, see [Templating][variables] and [Add and manage variables][add-template-variables].
 
 ## Use query variables
 
-You can use variables of the type _Query_ to query Prometheus for a list of metrics, labels, or label values.
+You have the option to use several different variable types, but variables of the type `Query` will query Prometheus for a list of metrics, labels, label values, a query result or a series.
 
-You can use these Prometheus data source functions in the **Query** input field:
+Select a Prometheus data source query type and enter the required inputs:
 
-| Name                          | Description                                                             | Used API endpoints                |
-| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
-| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                    |
-| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values      |
-| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series                    |
-| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values |
-| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                     |
+| Query Type     | Input(\* required)        | Description                                                                           | Used API endpoints                             |
+| -------------- | ------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `Label names`  | `metric`                  | Returns a list of all label names matching the specified `metric` regex.              | /api/v1/labels                                 |
+| `Label values` | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric. | /api/v1/label/`label`/values or /api/v1/series |
+| `Metrics`      | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                      | /api/v1/label/\_\_name\_\_/values              |
+| `Query result` | `query`                   | Returns a list of Prometheus query result for the `query`.                            | /api/v1/query                                  |
+| `Series query` | `metric`, `label` or both | Returns a list of time series associated with the entered data.                       | /api/v1/series                                 |
 
 For details on _metric names_, _label names_, and _label values_, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+
+### Query options
+
+Under the query variable type, you can set the following query options:
+
+| Option                | Description                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Data source**       | Select your data source from the dropdown list.                                                         |
+| **Select query type** | Options are `default`, `value` and `metric name`. Each query type hits a different Prometheus endpoint. |
+| **Regex**             | Optional, if you want to extract part of a series name or metric node segment.                          |
+| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical` and `alphabetical case-sensitive`.   |
+| **Refresh**           | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
+
+### Selection options
+
+The following selection options are available:
+
+- **Multi-value** - Check this option to enable multiple values to be selected at the same time.
+
+- **Include All option** - Check this option to include all variables.
 
 ### Use interval and range variables
 
 You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`.
-For details, see [Global built-in variables]({{< relref "../../../dashboards/variables/add-template-variables#global-variables" >}}).
+For details, see [Global built-in variables][add-template-variables-global-variables].
 The `label_values` function doesn't support queries, so you can use these variables in conjunction with the `query_result` function to filter variable queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
@@ -63,7 +87,9 @@ Regex:
 
 ## Use `$__rate_interval`
 
-> **Note:** Available in Grafana v7.2 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.2 and higher.
+{{% /admonition %}}
 
 We recommend using `$__rate_interval` in the `rate` and `increase` functions instead of `$__interval` or a fixed interval value.
 Because `$__rate_interval` is always at least four times the value of the Scrape interval, it avoid problems specific to Prometheus.
@@ -106,5 +132,19 @@ If you've enabled the _Multi-value_ or _Include all value_ options, Grafana conv
 
 ## Use the ad hoc filters variable type
 
-Prometheus supports the special [ad hoc filters]({{< relref "../../../dashboards/variables/add-template-variables#add-ad-hoc-filters" >}}) variable type, which you can use to specify any number of label/value filters on the fly.
+Prometheus supports the special [ad hoc filters][add-template-variables-add-ad-hoc-filters] variable type, which you can use to specify any number of label/value filters on the fly.
 These filters are automatically applied to all your Prometheus queries.
+
+{{% docs/reference %}}
+[add-template-variables-add-ad-hoc-filters]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
+[add-template-variables-add-ad-hoc-filters]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
+
+[add-template-variables-global-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+[add-template-variables-global-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+
+[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

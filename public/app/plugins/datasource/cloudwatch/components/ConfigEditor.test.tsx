@@ -150,7 +150,7 @@ describe('Render', () => {
 
   it('should display log group selector field', async () => {
     setup();
-    await waitFor(async () => expect(await screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(async () => expect(await screen.getByText('Select log groups')).toBeInTheDocument());
   });
 
   it('should only display the first two default log groups and show all of them when clicking "Show all" button', async () => {
@@ -215,8 +215,8 @@ describe('Render', () => {
 
     render(<ConfigEditor {...newProps} />);
 
-    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() =>
       expect(screen.getByText('You need to save the data source before adding log groups.')).toBeInTheDocument()
     );
@@ -232,7 +232,7 @@ describe('Render', () => {
       },
     };
     const { rerender } = render(<ConfigEditor {...newProps} />);
-    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     const rerenderProps = {
       ...newProps,
       options: {
@@ -245,7 +245,7 @@ describe('Render', () => {
     };
     rerender(<ConfigEditor {...rerenderProps} />);
     await waitFor(() => expect(screen.getByText('AWS SDK Default')).toBeInTheDocument());
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() =>
       expect(
         screen.getByText(
@@ -265,7 +265,7 @@ describe('Render', () => {
       },
     };
     const { rerender } = render(<ConfigEditor {...newProps} />);
-    await waitFor(() => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     const rerenderProps = {
       ...newProps,
       options: {
@@ -274,7 +274,7 @@ describe('Render', () => {
       },
     };
     rerender(<ConfigEditor {...rerenderProps} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('Log group name prefix')).toBeInTheDocument());
   });
 });

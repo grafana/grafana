@@ -54,7 +54,7 @@ export const jsonDiff = (lhs: any, rhs: any): Diffs => {
 
   const sortByLineNumber = (diffs: Diff[]) => sortBy(diffs, 'startLineNumber');
   const groupByPath = (diffs: Diff[]) =>
-    diffs.reduce<Record<string, any>>((acc, value) => {
+    diffs.reduce<Record<string, Diff[]>>((acc, value) => {
       const groupKey: string = value.path[0];
       if (!acc[groupKey]) {
         acc[groupKey] = [];

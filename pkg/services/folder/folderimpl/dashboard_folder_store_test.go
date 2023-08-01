@@ -19,7 +19,7 @@ import (
 func TestIntegrationDashboardFolderStore(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var cfg *setting.Cfg
-	var dashboardStore *database.DashboardStore
+	var dashboardStore dashboards.Store
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
@@ -96,7 +96,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	})
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64, folderId int64, tags ...interface{}) *dashboards.Dashboard {
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderId int64, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
@@ -116,7 +116,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *database.DashboardStore, 
 	return dash
 }
 
-func insertTestFolder(t *testing.T, dashboardStore *database.DashboardStore, title string, orgId int64, folderId int64, tags ...interface{}) *dashboards.Dashboard {
+func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderId int64, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,

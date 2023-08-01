@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { VariableSuggestion } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import { DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
 import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DataLinkConfig } from '../types';
 
@@ -97,6 +97,7 @@ export const DataLink = (props: Props) => {
         <FormField
           className={styles.urlDisplayLabelField}
           inputWidth={null}
+          labelWidth={7}
           label="URL Label"
           type="text"
           value={value.urlDisplayLabel}
@@ -125,7 +126,7 @@ export const DataLink = (props: Props) => {
           <DataSourcePicker
             tracing={true}
             // Uid and value should be always set in the db and so in the items.
-            onChange={(ds) => {
+            onChange={(ds: DataSourceInstanceSettings) => {
               onChange({
                 ...value,
                 datasourceUid: ds.uid,

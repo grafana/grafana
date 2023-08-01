@@ -1,7 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
@@ -14,7 +13,8 @@ import {
   InputControl,
   Legend,
 } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
   DashboardInput,
@@ -37,7 +37,7 @@ interface Props extends Pick<FormAPI<ImportDashboardDTO>, 'register' | 'errors' 
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
 }
 
-export const ImportDashboardForm: FC<Props> = ({
+export const ImportDashboardForm = ({
   register,
   errors,
   control,
@@ -49,7 +49,7 @@ export const ImportDashboardForm: FC<Props> = ({
   onCancel,
   onSubmit,
   watch,
-}) => {
+}: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
   const watchDataSources = watch('dataSources');
   const watchFolder = watch('folder');
@@ -82,7 +82,7 @@ export const ImportDashboardForm: FC<Props> = ({
       <Field label="Folder">
         <InputControl
           render={({ field: { ref, ...field } }) => (
-            <FolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
+            <OldFolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
           )}
           name="folder"
           control={control}
@@ -118,6 +118,7 @@ export const ImportDashboardForm: FC<Props> = ({
           return (
             <Field
               label={input.label}
+              description={input.description}
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}

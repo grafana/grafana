@@ -9,12 +9,6 @@
 
 package dataquery
 
-// Defines values for EditorMode.
-const (
-	EditorModeBuilder EditorMode = "builder"
-	EditorModeCode    EditorMode = "code"
-)
-
 // Defines values for LokiQueryDirection.
 const (
 	LokiQueryDirectionBackward LokiQueryDirection = "backward"
@@ -41,26 +35,55 @@ const (
 	SupportingQueryTypeLogsVolume SupportingQueryType = "logsVolume"
 )
 
-// LokiDataQuery defines model for LokiDataQuery.
-type LokiDataQuery struct {
+// These are the common properties available to all queries in all datasources.
+// Specific implementations will *extend* this interface, adding the required
+// properties for the given context.
+type DataQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
-	EditorMode *EditorMode  `json:"editorMode,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
+
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide *bool `json:"hide,omitempty"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+}
+
+// LokiDataQuery defines model for LokiDataQuery.
+type LokiDataQuery struct {
+	// DataQuery These are the common properties available to all queries in all datasources.
+	// Specific implementations will *extend* this interface, adding the required
+	// properties for the given context.
+	DataQuery
+
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *any             `json:"datasource,omitempty"`
+	EditorMode *QueryEditorMode `json:"editorMode,omitempty"`
 
 	// The LogQL query.
 	Expr string `json:"expr"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
 	// @deprecated, now use queryType.
 	Instant *bool `json:"instant,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// Used to override the name of the series.
 	LegendFormat *string `json:"legendFormat,omitempty"`
@@ -75,15 +98,17 @@ type LokiDataQuery struct {
 	// @deprecated, now use queryType.
 	Range *bool `json:"range,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
-	// Used to scale the interval value.
+	// @deprecated, now use step.
 	Resolution *int64 `json:"resolution,omitempty"`
-}
 
-// EditorMode defines model for LokiDataQuery.EditorMode.
-type EditorMode string
+	// Used to set step value for range queries.
+	Step *string `json:"step,omitempty"`
+}
 
 // LokiQueryDirection defines model for LokiQueryDirection.
 type LokiQueryDirection string

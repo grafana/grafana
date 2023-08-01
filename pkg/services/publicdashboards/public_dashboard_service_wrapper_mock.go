@@ -14,6 +14,20 @@ type FakePublicDashboardServiceWrapper struct {
 	mock.Mock
 }
 
+// Delete provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardServiceWrapper) Delete(ctx context.Context, uid string) error {
+	ret := _m.Called(ctx, uid)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, uid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindByDashboardUid provides a mock function with given fields: ctx, orgId, dashboardUid
 func (_m *FakePublicDashboardServiceWrapper) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)

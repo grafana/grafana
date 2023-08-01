@@ -79,7 +79,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					OrgRoles:       map[int64]roletype.RoleType{1: org.RoleAdmin, 2: org.RoleEditor},
 					IsGrafanaAdmin: ptrBool(false),
 					ClientParams: authn.ClientParams{
-						SyncUser: true,
+						SyncOrgRoles: true,
 						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test"),
@@ -97,7 +97,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				OrgID:          1, //set using org
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
-					SyncUser: true,
+					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test"),

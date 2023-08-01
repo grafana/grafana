@@ -15,9 +15,10 @@ import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
+  id?: string;
 }
 
-export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
+export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) {
   useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
 
   const {

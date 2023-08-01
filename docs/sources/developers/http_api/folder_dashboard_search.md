@@ -11,6 +11,10 @@ keywords:
   - search
   - folder
   - dashboard
+labels:
+  products:
+    - enterprise
+    - oss
 title: Folder/Dashboard Search HTTP API
 ---
 
@@ -20,7 +24,7 @@ title: Folder/Dashboard Search HTTP API
 
 `GET /api/search/`
 
-> Note: When using [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}), search results will contain only dashboards and folders which you have access to.
+> Note: When using [Role-based access control]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control" >}}), search results will contain only dashboards and folders which you have access to.
 
 Query parameters:
 

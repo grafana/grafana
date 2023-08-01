@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
 export type MetricAggregation = (Count | PipelineMetricAggregation | MetricAggregationWithSettings);
@@ -20,7 +18,7 @@ export type BucketAggregationType = ('terms' | 'filters' | 'geohash_grid' | 'dat
 
 export interface BaseBucketAggregation {
   id: string;
-  settings?: Record<string, unknown>;
+  settings?: unknown;
   type: BucketAggregationType;
 }
 
@@ -29,6 +27,13 @@ export interface BucketAggregationWithField extends BaseBucketAggregation {
 }
 
 export interface DateHistogram extends BucketAggregationWithField {
+  settings?: {
+    interval?: string;
+    min_doc_count?: string;
+    trimEdges?: string;
+    offset?: string;
+    timeZone?: string;
+  };
   type: 'date_histogram';
 }
 
@@ -41,6 +46,10 @@ export interface DateHistogramSettings {
 }
 
 export interface Histogram extends BucketAggregationWithField {
+  settings?: {
+    interval?: string;
+    min_doc_count?: string;
+  };
   type: 'histogram';
 }
 
@@ -52,10 +61,18 @@ export interface HistogramSettings {
 export type TermsOrder = ('desc' | 'asc');
 
 export interface Nested extends BucketAggregationWithField {
+  settings?: Record<string, unknown>;
   type: 'nested';
 }
 
 export interface Terms extends BucketAggregationWithField {
+  settings?: {
+    order?: TermsOrder;
+    size?: string;
+    min_doc_count?: string;
+    orderBy?: string;
+    missing?: string;
+  };
   type: 'terms';
 }
 
@@ -68,6 +85,9 @@ export interface TermsSettings {
 }
 
 export interface Filters extends BaseBucketAggregation {
+  settings?: {
+    filters?: Array<Filter>;
+  };
   type: 'filters';
 }
 
@@ -85,6 +105,9 @@ export const defaultFiltersSettings: Partial<FiltersSettings> = {
 };
 
 export interface GeoHashGrid extends BucketAggregationWithField {
+  settings?: {
+    precision?: string;
+  };
   type: 'geohash_grid';
 }
 
@@ -134,7 +157,7 @@ export interface Count extends BaseMetricAggregation {
 export interface Average extends MetricAggregationWithField, MetricAggregationWithMissingSupport, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'avg';
@@ -143,7 +166,7 @@ export interface Average extends MetricAggregationWithField, MetricAggregationWi
 export interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'sum';
@@ -152,7 +175,7 @@ export interface Sum extends MetricAggregationWithField, MetricAggregationWithIn
 export interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'max';
@@ -161,7 +184,7 @@ export interface Max extends MetricAggregationWithField, MetricAggregationWithIn
 export interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'min';
@@ -178,7 +201,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   field?: string;
   meta?: Record<string, unknown>;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
     sigma?: string;
   };
@@ -188,7 +211,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
 export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
     percents?: Array<string>;
   };
@@ -234,6 +257,7 @@ export interface Rate extends MetricAggregationWithField {
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
   pipelineAgg?: string;
+  type: PipelineMetricAggregationType;
 }
 
 export interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {

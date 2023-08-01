@@ -9,6 +9,11 @@ keywords:
   - panels
   - node graph
   - directed graph
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Node graph
 weight: 850
 ---
@@ -32,7 +37,9 @@ Both nodes and edges can have associated metadata or statistics. The data source
 
 ### Nodes
 
-> **Note:** Node graph can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+{{% admonition type="note" %}}
+Node graph can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+{{% /admonition %}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
 
@@ -112,11 +119,13 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                    |
-| ------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| title         | string        | Name of the node visible in just under the node.                                                                                                                                               |
-| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                              |
-| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                  |
-| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                          |
-| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`. |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                               |
+| Field name    | Type          | Description                                                                                                                                                                                                                                                                                                                                                               |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| title         | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                          |
+| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                         |
+| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                             |
+| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                     |
+| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                            |
+| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                          |
+| color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behaviour depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
+| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana built in icons are allowed (see the available icons [here](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)).                                                                                                                      |

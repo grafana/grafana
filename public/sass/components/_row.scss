@@ -16,10 +16,6 @@
       opacity: 1;
     }
 
-    .dashboard-row__actions {
-      visibility: hidden;
-    }
-
     .dashboard-row__toggle-target {
       flex: 1;
       cursor: pointer;
@@ -27,9 +23,9 @@
     }
   }
 
-  &:hover {
+  &:hover,
+  &:focus-within {
     .dashboard-row__actions {
-      visibility: visible;
       opacity: 1;
     }
   }
@@ -52,7 +48,6 @@
 
 .dashboard-row__actions {
   color: $text-muted;
-  visibility: hidden;
   opacity: 0;
   transition: 200ms opacity ease-in 200ms;
 

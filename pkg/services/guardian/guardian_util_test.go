@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type scenarioContext struct {
@@ -54,7 +55,7 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 				UID: q.UID,
 			}
 		}).Return(qResult, nil)
-		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, fakeDashboardService, &teamtest.FakeService{})
+		guard, err := newDashboardGuardian(context.Background(), setting.NewCfg(), dashboardID, orgID, user, store, fakeDashboardService, &teamtest.FakeService{})
 		require.NoError(t, err)
 
 		sc := &scenarioContext{
@@ -86,7 +87,7 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 				UID: q.UID,
 			}
 		}).Return(qResult, nil)
-		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
+		guard, err := newDashboardGuardian(context.Background(), setting.NewCfg(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 		require.NoError(t, err)
 
 		sc := &scenarioContext{
@@ -128,7 +129,7 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		}).Return(qResultDash, nil)
 
 		sc.permissionScenario = desc
-		g, err := newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
+		g, err := newDashboardGuardian(context.Background(), setting.NewCfg(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
 		require.NoError(t, err)
 		sc.g = g
 

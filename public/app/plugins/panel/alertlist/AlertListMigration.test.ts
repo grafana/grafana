@@ -5,7 +5,7 @@ import { AlertListOptions, ShowOption, SortOrder } from './types';
 
 describe('AlertList Panel Migration', () => {
   it('should migrate from < 7.5', () => {
-    const panel: Omit<PanelModel, 'fieldConfig'> & Record<string, any> = {
+    const panel: Omit<PanelModel, 'fieldConfig'> & Record<string, unknown> = {
       id: 7,
       links: [],
       pluginVersion: '7.4.0',
@@ -23,7 +23,7 @@ describe('AlertList Panel Migration', () => {
       options: {},
     };
 
-    const newOptions = alertListPanelMigrationHandler(panel as PanelModel);
+    const newOptions = alertListPanelMigrationHandler(panel as unknown as PanelModel);
     expect(newOptions).toMatchObject({
       showOptions: ShowOption.Current,
       maxItems: 10,
@@ -51,7 +51,7 @@ describe('AlertList Panel Migration', () => {
   });
 
   it('should handle >= 7.5', () => {
-    const panel: Omit<PanelModel<AlertListOptions>, 'fieldConfig'> & Record<string, any> = {
+    const panel: Omit<PanelModel<AlertListOptions>, 'fieldConfig'> & Record<string, unknown> = {
       id: 7,
       links: [],
       pluginVersion: '7.5.0',
@@ -78,7 +78,7 @@ describe('AlertList Panel Migration', () => {
       },
     };
 
-    const newOptions = alertListPanelMigrationHandler(panel as PanelModel);
+    const newOptions = alertListPanelMigrationHandler(panel as unknown as PanelModel);
     expect(newOptions).toMatchObject({
       showOptions: 'current',
       maxItems: 10,
@@ -110,7 +110,7 @@ describe('AlertList Panel Migration', () => {
   });
 
   it('should handle config with no options or stateFilter', () => {
-    const panel: Omit<PanelModel, 'fieldConfig'> & Record<string, any> = {
+    const panel: Omit<PanelModel, 'fieldConfig'> & Record<string, unknown> = {
       id: 7,
       links: [],
       pluginVersion: '7.4.0',
@@ -121,7 +121,7 @@ describe('AlertList Panel Migration', () => {
       options: {},
     };
 
-    const newOptions = alertListPanelMigrationHandler(panel as PanelModel);
+    const newOptions = alertListPanelMigrationHandler(panel as unknown as PanelModel);
     expect(newOptions).toMatchObject({
       showOptions: ShowOption.Current,
       maxItems: 10,

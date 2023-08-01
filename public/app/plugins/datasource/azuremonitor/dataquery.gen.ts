@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export interface AzureMonitorQuery extends common.DataQuery {
   /**
    * Azure Monitor Logs sub-query properties.
@@ -25,6 +23,10 @@ export interface AzureMonitorQuery extends common.DataQuery {
    * Azure Resource Graph sub-query properties.
    */
   azureResourceGraph?: AzureResourceGraphQuery;
+  /**
+   * Application Insights Traces sub-query properties.
+   */
+  azureTraces?: AzureTracesQuery;
   /**
    * @deprecated Legacy template variable support.
    */
@@ -60,6 +62,7 @@ export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   AzureResourceGraph = 'Azure Resource Graph',
+  AzureTraces = 'Azure Traces',
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
@@ -159,6 +162,10 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  */
 export interface AzureLogsQuery {
   /**
+   * If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+   */
+  intersectTime?: boolean;
+  /**
    * KQL query to be executed.
    */
   query?: string;
@@ -184,9 +191,65 @@ export const defaultAzureLogsQuery: Partial<AzureLogsQuery> = {
   resources: [],
 };
 
+/**
+ * Application Insights Traces sub-query properties
+ */
+export interface AzureTracesQuery {
+  /**
+   * Filters for property values.
+   */
+  filters?: Array<AzureTracesFilter>;
+  /**
+   * Operation ID. Used only for Traces queries.
+   */
+  operationId?: string;
+  /**
+   * KQL query to be executed.
+   */
+  query?: string;
+  /**
+   * Array of resource URIs to be queried.
+   */
+  resources?: Array<string>;
+  /**
+   * Specifies the format results should be returned as.
+   */
+  resultFormat?: ResultFormat;
+  /**
+   * Types of events to filter by.
+   */
+  traceTypes?: Array<string>;
+}
+
+export const defaultAzureTracesQuery: Partial<AzureTracesQuery> = {
+  filters: [],
+  resources: [],
+  traceTypes: [],
+};
+
+export interface AzureTracesFilter {
+  /**
+   * Values to filter by.
+   */
+  filters: Array<string>;
+  /**
+   * Comparison operator to use. Either equals or not equals.
+   */
+  operation: string;
+  /**
+   * Property name, auto-populated based on available traces.
+   */
+  property: string;
+}
+
+export const defaultAzureTracesFilter: Partial<AzureTracesFilter> = {
+  filters: [],
+};
+
 export enum ResultFormat {
   Table = 'table',
   TimeSeries = 'time_series',
+  Trace = 'trace',
 }
 
 export interface AzureResourceGraphQuery {

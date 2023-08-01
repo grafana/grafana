@@ -2,12 +2,11 @@ package notifier
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 	"os"
 	"testing"
 
-	"github.com/grafana/alerting/images"
+	alertingImages "github.com/grafana/alerting/images"
 	alertingLogging "github.com/grafana/alerting/logging"
 	"github.com/grafana/alerting/receivers"
 	alertingEmail "github.com/grafana/alerting/receivers/email"
@@ -112,11 +111,11 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			expSnippets: []string{
 				"2 firing instances",
 				"<strong>severity</strong>",
-				"warning\n",
-				"critical\n",
+				"warning",
+				"critical",
 				"<strong>alertname</strong>",
-				"FiringTwo\n",
-				"FiringOne\n",
+				"FiringTwo",
+				"FiringOne",
 				"<a href=\"http://fix.me\"",
 				"<a href=\"http://localhost/base/d/abc",
 				"<a href=\"http://localhost/base/d/abc?viewPanel=5",
@@ -188,40 +187,20 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns receivers.NotificationSender) *alertingEmail.Notifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns receivers.EmailSender) *alertingEmail.Notifier {
 	t.Helper()
-
-	jsonData := map[string]interface{}{
-		"addresses":   "someops@example.com;somedev@example.com",
-		"singleEmail": true,
+	if subjectTmpl == "" {
+		subjectTmpl = alertingTemplates.DefaultMessageTitleEmbed
 	}
-	if messageTmpl != "" {
-		jsonData["message"] = messageTmpl
-	}
-
-	if subjectTmpl != "" {
-		jsonData["subject"] = subjectTmpl
-	}
-	bytes, err := json.Marshal(jsonData)
-	require.NoError(t, err)
-
-	fc := receivers.FactoryConfig{
-		Config: &receivers.NotificationChannelConfig{
-			Name:     "ops",
-			Type:     "alertingEmail",
-			Settings: json.RawMessage(bytes),
+	return alertingEmail.New(alertingEmail.Config{
+		SingleEmail: true,
+		Addresses: []string{
+			"someops@example.com",
+			"somedev@example.com",
 		},
-		NotificationService: ns,
-		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
-			return fallback
-		},
-		ImageStore: &images.UnavailableImageStore{},
-		Template:   emailTmpl,
-		Logger:     &alertingLogging.FakeLogger{},
-	}
-	emailNotifier, err := alertingEmail.New(fc)
-	require.NoError(t, err)
-	return emailNotifier
+		Message: messageTmpl,
+		Subject: subjectTmpl,
+	}, receivers.Metadata{}, emailTmpl, ns, &alertingImages.UnavailableProvider{}, &alertingLogging.FakeLogger{})
 }
 
 func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {

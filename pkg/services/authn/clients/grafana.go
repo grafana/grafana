@@ -32,12 +32,14 @@ func (c *Grafana) String() string {
 
 func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
 	identity := &authn.Identity{
-		AuthModule: login.AuthProxyAuthModule,
-		AuthID:     username,
+		AuthenticatedBy: login.AuthProxyAuthModule,
+		AuthID:          username,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
 			FetchSyncedUser: true,
+			SyncOrgRoles:    true,
+			SyncPermissions: true,
 			AllowSignUp:     c.cfg.AuthProxyAutoSignUp,
 		},
 	}
@@ -69,15 +71,11 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 	}
 
 	if v, ok := additional[proxyFieldRole]; ok {
-		role := org.RoleType(v)
-		if role.IsValid() {
-			orgID := int64(1)
-			if c.cfg.AutoAssignOrg && c.cfg.AutoAssignOrgId > 0 {
-				orgID = int64(c.cfg.AutoAssignOrgId)
-			}
-			identity.OrgID = orgID
-			identity.OrgRoles = map[int64]org.RoleType{orgID: role}
-		}
+		orgRoles, isGrafanaAdmin, _ := getRoles(c.cfg, func() (org.RoleType, *bool, error) {
+			return org.RoleType(v), nil, nil
+		})
+		identity.OrgRoles = orgRoles
+		identity.IsGrafanaAdmin = isGrafanaAdmin
 	}
 
 	if v, ok := additional[proxyFieldGroups]; ok {
@@ -111,7 +109,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 		return nil, err
 	}
 
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{}), nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}, login.PasswordAuthModule), nil
 }
 
 func comparePassword(password, salt, hash string) bool {

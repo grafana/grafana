@@ -15,6 +15,7 @@ import (
 
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider          func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error)
+	RotateTokenProvider          func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
 	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
@@ -72,6 +73,10 @@ func (s *FakeUserAuthTokenService) Init() error {
 
 func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
 	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
+}
+
+func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+	return s.RotateTokenProvider(ctx, cmd)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {

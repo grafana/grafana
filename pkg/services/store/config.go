@@ -44,34 +44,6 @@ func LoadStorageConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*
 		changed = true
 	}
 
-	if g.Roots == nil && features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
-		g.Roots = append(g.Roots, RootStorageConfig{
-			Type:   "git",
-			Prefix: "it-A",
-			Name:   "Repository that requires pull requests",
-			Git: &StorageGitConfig{
-				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-A",
-				Branch:             "main",
-				Root:               "dashboards", // the dashboard files
-				RequirePullRequest: true,
-				AccessToken:        "$GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN",
-			},
-		})
-		g.Roots = append(g.Roots, RootStorageConfig{
-			Type:   "git",
-			Prefix: "it-B",
-			Name:   "Another repo (can push to main)",
-			Git: &StorageGitConfig{
-				Remote:             "https://github.com/grafana/hackathon-2022-03-git-dash-B",
-				Branch:             "main",
-				Root:               "dashboards", // the dashboard files
-				RequirePullRequest: false,
-				AccessToken:        "$GRAFANA_STORAGE_GITHUB_ACCESS_TOKEN",
-			},
-		})
-		changed = true
-	}
-
 	g.filepath = fpath
 
 	// Also configured from ini files

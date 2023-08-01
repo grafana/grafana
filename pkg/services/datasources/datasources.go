@@ -19,7 +19,7 @@ type DataSourceService interface {
 	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) ([]*DataSource, error)
 
 	// GetAllDataSources gets all datasources.
-	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) error
+	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) (res []*DataSource, err error)
 
 	// GetDataSourcesByType gets datasources by type.
 	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
@@ -54,6 +54,11 @@ type DataSourceService interface {
 	// DecryptedPassword decrypts the encrypted datasource password and returns the
 	// decrypted value.
 	DecryptedPassword(ctx context.Context, ds *DataSource) (string, error)
+
+	// CustomHeaders returns a map of custom headers the user might have
+	// configured for this Datasource. Not every datasource can has the option
+	// to configure those.
+	CustomHeaders(ctx context.Context, ds *DataSource) (map[string]string, error)
 }
 
 // CacheService interface for retrieving a cached datasource.

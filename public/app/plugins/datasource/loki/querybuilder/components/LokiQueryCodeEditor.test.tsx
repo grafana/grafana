@@ -20,6 +20,7 @@ const createDefaultProps = () => {
     onRunQuery: () => {},
     onChange: () => {},
     showExplain: false,
+    setQueryStats: () => {},
   };
 
   return props;

@@ -32,7 +32,7 @@ func (hs *HTTPServer) AdminReEncryptSecrets(c *contextmodel.ReqContext) response
 	}
 
 	if !success {
-		return response.Error(http.StatusPartialContent, "Something unexpected happened, refer to the server logs for more details", err)
+		return response.Error(http.StatusPartialContent, fmt.Sprintf("Something unexpected happened - %s", hs.Cfg.UserFacingDefaultError), err)
 	}
 
 	return response.Respond(http.StatusOK, "Secrets re-encrypted successfully")
@@ -45,7 +45,7 @@ func (hs *HTTPServer) AdminRollbackSecrets(c *contextmodel.ReqContext) response.
 	}
 
 	if !success {
-		return response.Error(http.StatusPartialContent, "Something unexpected happened, refer to the server logs for more details", err)
+		return response.Error(http.StatusPartialContent, fmt.Sprintf("Something unexpected happened - %s", hs.Cfg.UserFacingDefaultError), err)
 	}
 
 	return response.Respond(http.StatusOK, "Secrets rolled back successfully")

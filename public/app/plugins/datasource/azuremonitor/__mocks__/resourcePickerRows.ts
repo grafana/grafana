@@ -1,5 +1,4 @@
 import { ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
-import { AzureMonitorLocations } from '../types';
 
 export const createMockSubscriptions = (): ResourceRowGroup => [
   {
@@ -88,7 +87,6 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
     type: ResourceRowType.Resource,
     location: 'northeurope',
   },
-
   {
     id: 'db-server',
     uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server',
@@ -106,6 +104,22 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
     type: ResourceRowType.Resource,
     location: 'northeurope',
   },
+  {
+    id: 'app-insights-1',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.insights/components/app-insights-1',
+    name: 'app-insights-1',
+    typeLabel: 'Microsoft.Insights/components',
+    type: ResourceRowType.Resource,
+    location: 'northeurope',
+  },
+  {
+    id: 'app-insights-2',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.insights/components/app-insights-2',
+    name: 'app-insights-2',
+    typeLabel: 'Microsoft.Insights/components',
+    type: ResourceRowType.Resource,
+    location: 'northeurope',
+  },
 ];
 
 export const mockSearchResults = (): ResourceRowGroup => [
@@ -118,6 +132,3 @@ export const mockSearchResults = (): ResourceRowGroup => [
     location: 'northeurope',
   },
 ];
-
-export const mockGetValidLocations = (): Map<string, AzureMonitorLocations> =>
-  new Map([['northeurope', { displayName: 'North Europe', name: 'northeurope', supportsLogs: true }]]);

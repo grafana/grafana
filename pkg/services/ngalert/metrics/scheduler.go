@@ -7,6 +7,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
+const (
+	AlertRuleActiveLabelValue = "active"
+	AlertRulePausedLabelValue = "paused"
+)
+
 type Scheduler struct {
 	Registerer                          prometheus.Registerer
 	BehindSeconds                       prometheus.Gauge
@@ -69,9 +74,9 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "rule_group_rules",
-				Help:      "The number of rules.",
+				Help:      "The number of alert rules that are scheduled, both active and paused.",
 			},
-			[]string{"org"},
+			[]string{"org", "state"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{

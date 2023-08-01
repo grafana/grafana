@@ -190,6 +190,12 @@ for context.
 
 If a column, or column combination, should be unique, add a corresponding uniqueness constraint through a migration.
 
+### Usage of XORM Session.Insert() and Session.InsertOne()
+
+The [Session.Insert()](https://pkg.go.dev/github.com/go-xorm/xorm#Session.Insert) and [Session.InsertOne()](https://pkg.go.dev/github.com/go-xorm/xorm#Session.InsertOne) are poorly documented and return the number of affected rows contrary to a common mistake that they return the newly introduced primary key. Therefore, contributors should be extra cautious when using them.
+
+The same applies for the respective [Engine.Insert()](https://pkg.go.dev/github.com/go-xorm/xorm#Engine.Insert) and [Engine.InsertOne()](https://pkg.go.dev/github.com/go-xorm/xorm#Engine.InsertOne)
+
 ## JSON
 
 The simplejson package is used a lot throughout the backend codebase,

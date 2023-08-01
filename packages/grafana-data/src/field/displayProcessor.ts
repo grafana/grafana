@@ -44,6 +44,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const field = options.field as Field;
   const config = field.config ?? {};
+  const { palette } = options.theme.visualization;
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
@@ -53,8 +54,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
     if (field.values && field.values.length > 1) {
-      let start = field.values.get(0);
-      let end = field.values.get(field.values.length - 1);
+      let start = field.values[0];
+      let end = field.values[field.values.length - 1];
       if (typeof start === 'string') {
         start = dateTimeParse(start).unix();
         end = dateTimeParse(end).unix();
@@ -112,6 +113,28 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
         if (mappingResult.icon != null) {
           icon = mappingResult.icon;
+        }
+      }
+    } else if (field.type === FieldType.enum) {
+      // Apply enum display handling if field is enum type and no mappings are specified
+      if (value == null) {
+        return {
+          text: '',
+          numeric: NaN,
+        };
+      }
+
+      const enumIndex = +value;
+      if (config && config.type && config.type.enum) {
+        const { text: enumText, color: enumColor } = config.type.enum;
+
+        text = enumText ? enumText[enumIndex] : `${value}`;
+        // If no color specified in enum field config we will fallback to iterating through the theme palette
+        color = enumColor ? enumColor[enumIndex] : undefined;
+
+        if (color == null) {
+          const namedColor = palette[enumIndex % palette.length];
+          color = options.theme.visualization.getColorByName(namedColor);
         }
       }
     }

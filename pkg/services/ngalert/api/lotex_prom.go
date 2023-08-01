@@ -82,7 +82,7 @@ func (p *LotexProm) getEndpoints(ctx *contextmodel.ReqContext) (*promEndpoints, 
 		return nil, fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := p.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
+	ds, err := p.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
 	if err != nil {
 		return nil, err
 	}

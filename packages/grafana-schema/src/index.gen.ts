@@ -7,10 +7,22 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Raw generated types from AccessPolicy kind.
+export type {
+  AccessPolicy,
+  RoleRef,
+  ResourceRef,
+  AccessRule
+} from './raw/accesspolicy/x/accesspolicy_types.gen';
+
+// Raw generated enums and default consts from accesspolicy kind.
+export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen';
+
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
-  AnnotationQuery,
+  AnnotationPanelFilter,
+  VariableOption,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -26,7 +38,6 @@ export type {
   SpecialValueMap,
   ValueMappingResult,
   LibraryPanelRef,
-  RowPanel,
   GraphPanel,
   HeatmapPanel
 } from './raw/dashboard/x/dashboard_types.gen';
@@ -34,7 +45,9 @@ export type {
 // Raw generated enums and default consts from dashboard kind.
 export {
   defaultAnnotationTarget,
-  defaultAnnotationQuery,
+  defaultAnnotationPanelFilter,
+  VariableRefresh,
+  VariableSort,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -44,8 +57,7 @@ export {
   MappingType,
   SpecialValueMatch,
   DashboardCursorSync,
-  defaultDashboardCursorSync,
-  defaultRowPanel
+  defaultDashboardCursorSync
 } from './raw/dashboard/x/dashboard_types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -59,13 +71,16 @@ export {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
   Dashboard,
+  AnnotationContainer,
+  AnnotationQuery,
   VariableModel,
   DataSourceRef,
   DataTransformerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,
-  FieldConfig
+  FieldConfig,
+  RowPanel
 } from './veneer/dashboard.types';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -79,13 +94,19 @@ export type {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export {
   defaultDashboard,
+  defaultAnnotationContainer,
+  defaultAnnotationQuery,
   defaultVariableModel,
   VariableHide,
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,
-  defaultFieldConfig
+  defaultFieldConfig,
+  defaultRowPanel
 } from './veneer/dashboard.types';
+
+// Raw generated types from Folder kind.
+export type { Folder } from './raw/folder/x/folder_types.gen';
 
 // Raw generated types from LibraryPanel kind.
 export type {
@@ -116,23 +137,23 @@ export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 // Raw generated types from Preferences kind.
 export type {
   Preferences,
-  QueryHistoryPreference
+  QueryHistoryPreference,
+  CookiePreferences
 } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
 
-// Raw generated types from ServiceAccount kind.
-export type {
-  ServiceAccount,
-  OrgRole
-} from './raw/serviceaccount/x/serviceaccount_types.gen';
+// Raw generated types from Role kind.
+export type { Role } from './raw/role/x/role_types.gen';
 
-// Raw generated enums and default consts from serviceaccount kind.
-export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
+// Raw generated types from RoleBinding kind.
+export type {
+  RoleBinding,
+  CustomRoleRef,
+  BuiltinRoleRef,
+  RoleBindingSubject
+} from './raw/rolebinding/x/rolebinding_types.gen';
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
-
-// Raw generated enums and default consts from team kind.
-export { Permission } from './raw/team/x/team_types.gen';

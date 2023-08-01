@@ -1,66 +1,109 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { createTheme, Field, getDisplayProcessor, Vector } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { getValueFormat, GrafanaTheme2 } from '@grafana/data/src';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-import { Metadata, SampleUnit } from '../types';
+import { ClickedItemData } from '../types';
 
-import { ItemWithStart } from './dataTransform';
+import { FlameGraphDataContainer } from './dataTransform';
 
 type Props = {
-  levels: ItemWithStart[][];
-  topLevelIndex: number;
-  selectedBarIndex: number;
-  valueField: Field<number, Vector<number>>;
+  data: FlameGraphDataContainer;
   totalTicks: number;
+  onFocusPillClick: () => void;
+  onSandwichPillClick: () => void;
+  focusedItem?: ClickedItemData;
+  sandwichedLabel?: string;
 };
 
-const FlameGraphMetadata = React.memo(({ levels, topLevelIndex, selectedBarIndex, valueField, totalTicks }: Props) => {
-  const styles = useStyles2(getStyles);
-  if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
-    const bar = levels[topLevelIndex][selectedBarIndex];
-    const metadata = getMetadata(valueField, bar.value, totalTicks);
-    const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
-    return <>{<div className={styles.metadata}>{metadataText}</div>}</>;
-  }
-  return <></>;
-});
+const FlameGraphMetadata = React.memo(
+  ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
+    const styles = useStyles2(getStyles);
+    const parts: ReactNode[] = [];
+    const ticksVal = getValueFormat('short')(totalTicks);
 
-export const getMetadata = (field: Field, value: number, totalTicks: number): Metadata => {
-  let unitTitle;
-  const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
-  const displayValue = processor(value);
-  const percentValue = Math.round(10000 * (value / totalTicks)) / 100;
-  let unitValue = displayValue.text + displayValue.suffix;
-
-  switch (field.config.unit) {
-    case SampleUnit.Bytes:
-      unitTitle = 'RAM';
-      break;
-    case SampleUnit.Nanoseconds:
-      unitTitle = 'Time';
-      break;
-    default:
-      unitTitle = 'Count';
+    const displayValue = data.valueDisplayProcessor(totalTicks);
+    let unitValue = displayValue.text + displayValue.suffix;
+    const unitTitle = data.getUnitTitle();
+    if (unitTitle === 'Count') {
       if (!displayValue.suffix) {
         // Makes sure we don't show 123undefined or something like that if suffix isn't defined
         unitValue = displayValue.text;
       }
-      break;
-  }
+    }
 
-  return {
-    percentValue,
-    unitTitle,
-    unitValue,
-    samples: totalTicks.toLocaleString(),
-  };
-};
+    parts.push(
+      <div className={styles.metadataPill} key={'default'}>
+        {unitValue} | {ticksVal.text}
+        {ticksVal.suffix} samples ({unitTitle})
+      </div>
+    );
+
+    if (sandwichedLabel) {
+      parts.push(
+        <span key={'sandwich'}>
+          <Icon size={'sm'} name={'angle-right'} />
+          <div className={styles.metadataPill}>
+            <Icon size={'sm'} name={'gf-show-context'} />{' '}
+            {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
+            <IconButton
+              className={styles.pillCloseButton}
+              name={'times'}
+              size={'sm'}
+              onClick={onSandwichPillClick}
+              tooltip={'Remove sandwich view'}
+              aria-label={'Remove sandwich view'}
+            />
+          </div>
+        </span>
+      );
+    }
+
+    if (focusedItem) {
+      const percentValue = Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100;
+      parts.push(
+        <span key={'focus'}>
+          <Icon size={'sm'} name={'angle-right'} />
+          <div className={styles.metadataPill}>
+            <Icon size={'sm'} name={'eye'} /> {percentValue}% of total
+            <IconButton
+              className={styles.pillCloseButton}
+              name={'times'}
+              size={'sm'}
+              onClick={onFocusPillClick}
+              tooltip={'Remove focus'}
+              aria-label={'Remove focus'}
+            />
+          </div>
+        </span>
+      );
+    }
+
+    return <>{<div className={styles.metadata}>{parts}</div>}</>;
+  }
+);
 
 FlameGraphMetadata.displayName = 'FlameGraphMetadata';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  metadataPill: css`
+    label: metadataPill;
+    display: inline-block;
+    background: ${theme.colors.background.secondary};
+    border-radius: ${theme.shape.borderRadius(8)};
+    padding: ${theme.spacing(0.5, 1)};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    line-height: ${theme.typography.bodySmall.lineHeight};
+    color: ${theme.colors.text.secondary};
+  `,
+
+  pillCloseButton: css`
+    label: pillCloseButton;
+    vertical-align: text-bottom;
+    margin: ${theme.spacing(0, 0.5)};
+  `,
   metadata: css`
     margin: 8px 0;
     text-align: center;

@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -26,7 +24,6 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
-	OrgID            int64
 }
 
 type TestApiKey struct {
@@ -50,12 +47,17 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	u1, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
+		Name: "test org",
+	})
+	require.NoError(t, err)
+
+	u1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
 		Name:             testUser.Name,
-		OrgID:            testUser.OrgID,
+		OrgID:            org.ID,
 	})
 	require.NoError(t, err)
 	return u1
@@ -83,32 +85,20 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	quotaService := quotatest.New(false, nil)
 	apiKeyService, err := apikeyimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	err = apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
+	key, err := apiKeyService.AddAPIKey(context.Background(), addKeyCmd)
 	require.NoError(t, err)
 
 	if testKey.IsExpired {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
-			key := apikey.APIKey{Expires: &expires}
-			rowsAffected, err := sess.ID(addKeyCmd.Result.ID).Update(&key)
+			expiringKey := apikey.APIKey{Expires: &expires}
+			rowsAffected, err := sess.ID(key.ID).Update(&expiringKey)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
 		})
 		require.NoError(t, err)
 	}
 
-	return addKeyCmd.Result
-}
-
-func SetupMockAccesscontrol(t *testing.T,
-	userpermissionsfunc func(c context.Context, siu *user.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
-	disableAccessControl bool) *accesscontrolmock.Mock {
-	t.Helper()
-	acmock := accesscontrolmock.New()
-	if disableAccessControl {
-		acmock = acmock.WithDisabled()
-	}
-	acmock.GetUserPermissionsFunc = userpermissionsfunc
-	return acmock
+	return key
 }

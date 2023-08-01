@@ -4,34 +4,40 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
-	ClientAPIKey    = "auth.client.api-key" // #nosec G101
-	ClientAnonymous = "auth.client.anonymous"
-	ClientBasic     = "auth.client.basic"
-	ClientJWT       = "auth.client.jwt"
-	ClientRender    = "auth.client.render"
-	ClientSession   = "auth.client.session"
-	ClientForm      = "auth.client.form"
-	ClientProxy     = "auth.client.proxy"
-	ClientSAML      = "auth.client.saml"
+	ClientAPIKey      = "auth.client.api-key" // #nosec G101
+	ClientAnonymous   = "auth.client.anonymous"
+	ClientBasic       = "auth.client.basic"
+	ClientJWT         = "auth.client.jwt"
+	ClientExtendedJWT = "auth.client.extended-jwt"
+	ClientRender      = "auth.client.render"
+	ClientSession     = "auth.client.session"
+	ClientForm        = "auth.client.form"
+	ClientProxy       = "auth.client.proxy"
+	ClientSAML        = "auth.client.saml"
 )
 
 const (
 	MetaKeyUsername   = "username"
 	MetaKeyAuthModule = "authModule"
+	MetaKeyIsLogin    = "isLogin"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -47,10 +53,14 @@ type ClientParams struct {
 	FetchSyncedUser bool
 	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature
 	SyncTeams bool
+	// SyncOrgRoles will sync the roles from the identity to orgs in grafana
+	SyncOrgRoles bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
+	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
+	SyncPermissions bool
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -191,9 +201,9 @@ type Identity struct {
 	Email string
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
-	// AuthModule is the name of the external system. For example, "auth_ldap" or "auth_saml".
-	// Empty if the identity is provided by Grafana.
-	AuthModule string
+	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
+	// For example, "password", "apikey", "auth_ldap" or "auth_azuread".
+	AuthenticatedBy string
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
@@ -211,10 +221,12 @@ type Identity struct {
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
 	// SessionToken is the session token used to authenticate the entity.
-	SessionToken *auth.UserToken
+	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams
+	// Permissions is the list of permissions the entity has.
+	Permissions map[int64]map[string][]string
 }
 
 // Role returns the role of the identity in the active organization.
@@ -251,22 +263,22 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	u := &user.SignedInUser{
-		UserID:             0,
-		OrgID:              i.OrgID,
-		OrgName:            i.OrgName,
-		OrgRole:            i.Role(),
-		ExternalAuthModule: i.AuthModule,
-		ExternalAuthID:     i.AuthID,
-		Login:              i.Login,
-		Name:               i.Name,
-		Email:              i.Email,
-		OrgCount:           i.OrgCount,
-		IsGrafanaAdmin:     isGrafanaAdmin,
-		IsAnonymous:        i.IsAnonymous,
-		IsDisabled:         i.IsDisabled,
-		HelpFlags1:         i.HelpFlags1,
-		LastSeenAt:         i.LastSeenAt,
-		Teams:              i.Teams,
+		UserID:          0,
+		OrgID:           i.OrgID,
+		OrgName:         i.OrgName,
+		OrgRole:         i.Role(),
+		Login:           i.Login,
+		Name:            i.Name,
+		Email:           i.Email,
+		AuthenticatedBy: i.AuthenticatedBy,
+		OrgCount:        i.OrgCount,
+		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsAnonymous:     i.IsAnonymous,
+		IsDisabled:      i.IsDisabled,
+		HelpFlags1:      i.HelpFlags1,
+		LastSeenAt:      i.LastSeenAt,
+		Teams:           i.Teams,
+		Permissions:     i.Permissions,
 	}
 
 	namespace, id := i.NamespacedID()
@@ -284,7 +296,7 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	_, id := i.NamespacedID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
-		AuthModule:     i.AuthModule,
+		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
 		UserId:         id,
 		Email:          i.Email,
@@ -298,26 +310,97 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 }
 
 // IdentityFromSignedInUser creates an identity from a SignedInUser.
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams) *Identity {
+func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams, authenticatedBy string) *Identity {
 	return &Identity{
-		ID:             id,
-		OrgID:          usr.OrgID,
-		OrgName:        usr.OrgName,
-		OrgRoles:       map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-		Login:          usr.Login,
-		Name:           usr.Name,
-		Email:          usr.Email,
-		OrgCount:       usr.OrgCount,
-		IsGrafanaAdmin: &usr.IsGrafanaAdmin,
-		IsDisabled:     usr.IsDisabled,
-		HelpFlags1:     usr.HelpFlags1,
-		LastSeenAt:     usr.LastSeenAt,
-		Teams:          usr.Teams,
-		ClientParams:   params,
+		ID:              id,
+		OrgID:           usr.OrgID,
+		OrgName:         usr.OrgName,
+		OrgRoles:        map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
+		Login:           usr.Login,
+		Name:            usr.Name,
+		Email:           usr.Email,
+		AuthenticatedBy: authenticatedBy,
+		OrgCount:        usr.OrgCount,
+		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
+		IsDisabled:      usr.IsDisabled,
+		HelpFlags1:      usr.HelpFlags1,
+		LastSeenAt:      usr.LastSeenAt,
+		Teams:           usr.Teams,
+		ClientParams:    params,
+		Permissions:     usr.Permissions,
 	}
 }
 
 // ClientWithPrefix returns a client name prefixed with "auth.client."
 func ClientWithPrefix(name string) string {
 	return fmt.Sprintf("auth.client.%s", name)
+}
+
+type RedirectValidator func(url string) error
+
+// HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
+	result := map[string]interface{}{"message": "Logged in"}
+	if redirectURL := handleLogin(r, w, cfg, identity, validator); redirectURL != cfg.AppSubURL+"/" {
+		result["redirectUrl"] = redirectURL
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
+// HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
+func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
+	redirectURL := handleLogin(r, w, cfg, identity, validator)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+// HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator))
+}
+
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
+	redirectURL := cfg.AppSubURL + "/"
+	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 && validator(redirectTo) == nil {
+		cookies.DeleteCookie(w, "redirect_to", nil)
+		redirectURL = redirectTo
+	}
+
+	WriteSessionCookie(w, cfg, identity.SessionToken)
+	return redirectURL
+}
+
+func getRedirectURL(r *http.Request) string {
+	cookie, err := r.Cookie("redirect_to")
+	if err != nil {
+		return ""
+	}
+
+	v, _ := url.QueryUnescape(cookie.Value)
+	return v
+}
+
+const sessionExpiryCookie = "grafana_session_expiry"
+
+func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoken.UserToken) {
+	maxAge := int(cfg.LoginMaxLifetime.Seconds())
+	if cfg.LoginMaxLifetime <= 0 {
+		maxAge = -1
+	}
+
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
+	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
+	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
+		opts := cookies.NewCookieOptions()
+		opts.NotHttpOnly = true
+		return opts
+	})
+}
+
+func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
+	cookies.DeleteCookie(w, cfg.LoginCookieName, nil)
+	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
+		opts := cookies.NewCookieOptions()
+		opts.NotHttpOnly = true
+		return opts
+	})
 }

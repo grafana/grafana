@@ -2,15 +2,20 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
+  DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import { ConfigSection } from '@grafana/experimental';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
+import { IntervalInput } from '../IntervalInput/IntervalInput';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
+import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
@@ -36,21 +41,19 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to metrics</h3>
-
-      <div className={styles.infoText}>
-        Trace to metrics lets you navigate from a trace span to the selected data source.
-      </div>
-
       <InlineFieldRow className={styles.row}>
-        <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
+        <InlineField
+          tooltip="The Prometheus data source the trace is going to navigate to"
+          label="Data source"
+          labelWidth={26}
+        >
           <DataSourcePicker
             inputId="trace-to-metrics-data-source-picker"
             pluginId="prometheus"
             current={options.jsonData.tracesToMetrics?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 datasourceUid: ds.uid,
@@ -77,7 +80,39 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
 
       <InlineFieldRow>
-        <InlineField tooltip="Tags that will be used in the metrics query." label="Tags" labelWidth={26}>
+        <IntervalInput
+          label={getTimeShiftLabel('start')}
+          tooltip={getTimeShiftTooltip('start', '-2m')}
+          value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+          onChange={(val) => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+              ...options.jsonData.tracesToMetrics,
+              spanStartTimeShift: val,
+            });
+          }}
+          placeholder={'-2m'}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('end')}
+          tooltip={getTimeShiftTooltip('end', '2m')}
+          value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
+          onChange={(val) => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+              ...options.jsonData.tracesToMetrics,
+              spanEndTimeShift: val,
+            });
+          }}
+          placeholder={'2m'}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>
           <TagMappingInput
             values={options.jsonData.tracesToMetrics?.tags ?? []}
             onChange={(v) =>
@@ -90,58 +125,15 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span start time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the start time of the span. Default 0 (Time units can be used here, for example: 5s, 1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="-1h"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanStartTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-
-      <InlineFieldRow>
-        <InlineField
-          label="Span end time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the end time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h"
-        >
-          <Input
-            type="text"
-            placeholder="1h"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanEndTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-
       {options.jsonData.tracesToMetrics?.queries?.map((query, i) => (
         <div key={i} className={styles.queryRow}>
-          <InlineField label="Link Label" labelWidth={10}>
+          <InlineField label="Link Label" labelWidth={26} tooltip="Descriptive label for the linked query">
             <Input
               label="Link Label"
               type="text"
               allowFullScreen
               value={query.name}
+              width={40}
               onChange={(e) => {
                 let newQueries = options.jsonData.tracesToMetrics?.queries.slice() ?? [];
                 newQueries[i].name = e.currentTarget.value;
@@ -155,7 +147,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
           <InlineField
             label="Query"
             labelWidth={10}
-            tooltip="The Prometheus query that will run when navigating from a trace to metrics. Interpolate tags using the `$__tags` keyword."
+            tooltip="The Prometheus query that will run when navigating from a trace to metrics. Interpolate tags using the `$__tags` keyword"
             grow
           >
             <Input
@@ -209,6 +201,25 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   );
 }
 
+export const TraceToMetricsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to metrics"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's metrics."
+          suffix={`${options.type}/#trace-to-metrics`}
+          feature="trace to metrics"
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToMetricsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
     padding-bottom: ${theme.spacing(2)};
@@ -219,6 +230,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: baseline;
   `,
   queryRow: css`
+    label: queryRow;
     display: flex;
+    flex-flow: wrap;
   `,
 });

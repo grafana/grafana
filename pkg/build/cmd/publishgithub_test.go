@@ -224,3 +224,15 @@ func (m *mockGithubRepositoryServiceImpl) UploadReleaseAsset(ctx context.Context
 	assetUrl := "testurl.com.br"
 	return &github.ReleaseAsset{Name: &assetName, BrowserDownloadURL: &assetUrl}, &github.Response{}, m.uploadErr
 }
+
+func (m *mockGithubRepositoryServiceImpl) DeleteReleaseAsset(ctx context.Context, owner string, repo string, id int64) (*github.Response, error) {
+	return nil, nil
+}
+
+func (m *mockGithubRepositoryServiceImpl) ListReleaseAssets(ctx context.Context, owner string, repo string, id int64, opts *github.ListOptions) ([]*github.ReleaseAsset, *github.Response, error) {
+	resp := github.Response{}
+	resp.LastPage = 1
+	resp.FirstPage = 1
+	resp.NextPage = 0
+	return []*github.ReleaseAsset{}, &resp, nil
+}

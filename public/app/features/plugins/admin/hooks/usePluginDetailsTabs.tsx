@@ -21,7 +21,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
   const { loading, error, value: pluginConfig } = usePluginConfig(plugin);
   const { pathname } = useLocation();
   const defaultTab = useDefaultPage(plugin, pluginConfig);
-  const parentUrl = pathname.substring(0, pathname.lastIndexOf('/'));
   const isPublished = Boolean(plugin?.isPublished);
 
   const currentPageId = pageId || defaultTab;
@@ -98,7 +97,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
   const navModel: NavModelItem = {
     text: plugin?.name ?? '',
     img: plugin?.info.logos.small,
-    breadcrumbs: [{ title: 'Plugins', url: parentUrl }],
     children: [
       {
         text: PluginTabLabels.OVERVIEW,

@@ -50,21 +50,23 @@ func TestAdjustFrame(t *testing.T) {
 		timeNs3 := strconv.FormatInt(time3.UnixNano(), 10)
 		timeNs4 := strconv.FormatInt(time4.UnixNano(), 10)
 
-		frame := data.NewFrame("",
-			data.NewField("__labels", nil, []json.RawMessage{
-				json.RawMessage(`{"level":"info"}`),
-				json.RawMessage(`{"level":"error"}`),
-				json.RawMessage(`{"level":"error"}`),
-				json.RawMessage(`{"level":"info"}`),
-			}),
-			data.NewField("Time", nil, []time.Time{
-				time1, time2, time3, time4,
-			}),
-			data.NewField("Line", nil, []string{"line1", "line2", "line2", "line3"}),
-			data.NewField("TS", nil, []string{
-				timeNs1, timeNs2, timeNs3, timeNs4,
-			}),
-		)
+		makeFrame := func() *data.Frame {
+			return data.NewFrame("",
+				data.NewField("__labels", nil, []json.RawMessage{
+					json.RawMessage(`{"level":"info"}`),
+					json.RawMessage(`{"level":"error"}`),
+					json.RawMessage(`{"level":"error"}`),
+					json.RawMessage(`{"level":"info"}`),
+				}),
+				data.NewField("Time", nil, []time.Time{
+					time1, time2, time3, time4,
+				}),
+				data.NewField("Line", nil, []string{"line1", "line2", "line2", "line3"}),
+				data.NewField("TS", nil, []string{
+					timeNs1, timeNs2, timeNs3, timeNs4,
+				}),
+			)
+		}
 
 		query := &lokiQuery{
 			Expr:      `{type="important"}`,
@@ -72,30 +74,58 @@ func TestAdjustFrame(t *testing.T) {
 			RefID:     "A",
 		}
 
-		err := adjustFrame(frame, query)
+		verifyFrame := func(frame *data.Frame) {
+			fields := frame.Fields
+
+			idField := fields[len(fields)-1]
+			require.Equal(t, "id", idField.Name)
+			require.Equal(t, data.FieldTypeString, idField.Type())
+			require.Equal(t, 4, idField.Len())
+			require.Equal(t, "1641092645000000006_a36f4e1b", idField.At(0))
+			require.Equal(t, "1641092705000000006_1d77c9ca", idField.At(1))
+			require.Equal(t, "1641092705000000006_1d77c9ca_1", idField.At(2))
+			require.Equal(t, "1641092765000000006_948c1a7d", idField.At(3))
+		}
+
+		frame := makeFrame()
+
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
+		verifyFrame(frame)
 
-		fields := frame.Fields
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+		verifyFrame(frame)
 
-		require.Equal(t, 5, len(fields))
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
 
-		idField := fields[4]
-		require.Equal(t, "id", idField.Name)
-		require.Equal(t, data.FieldTypeString, idField.Type())
-		require.Equal(t, 4, idField.Len())
-		require.Equal(t, "1641092645000000006_a36f4e1b_A", idField.At(0))
-		require.Equal(t, "1641092705000000006_1d77c9ca_A", idField.At(1))
-		require.Equal(t, "1641092705000000006_1d77c9ca_1_A", idField.At(2))
-		require.Equal(t, "1641092765000000006_948c1a7d_A", idField.At(3))
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, false, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
 	})
 
 	t.Run("naming inside metric fields should be correct", func(t *testing.T) {
-		field1 := data.NewField("", nil, make([]time.Time, 0))
-		field2 := data.NewField("", nil, make([]float64, 0))
-		field2.Labels = data.Labels{"app": "Application", "tag2": "tag2"}
+		makeFrame := func() *data.Frame {
+			field1 := data.NewField("", nil, make([]time.Time, 0))
+			field2 := data.NewField("", nil, make([]float64, 0))
+			field2.Labels = data.Labels{"app": "Application", "tag2": "tag2"}
 
-		frame := data.NewFrame("test", field1, field2)
-		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+			frame := data.NewFrame("", field1, field2)
+			frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+			return frame
+		}
+
+		verifyFrame := func(frame *data.Frame, expectedFrameName string) {
+			require.Equal(t, frame.Name, expectedFrameName)
+			require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
+			require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
+			require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		}
 
 		query := &lokiQuery{
 			Expr:         "up(ALERTS)",
@@ -104,13 +134,29 @@ func TestAdjustFrame(t *testing.T) {
 			Step:         time.Second * 42,
 		}
 
-		err := adjustFrame(frame, query)
+		frame := makeFrame()
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 
-		require.Equal(t, frame.Name, "legend Application")
-		require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
-		require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
-		require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		verifyFrame(frame, "legend Application")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "legend Application")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, false, true)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "")
 	})
 
 	t.Run("should set interval-attribute in response", func(t *testing.T) {
@@ -119,24 +165,44 @@ func TestAdjustFrame(t *testing.T) {
 			QueryType: QueryTypeRange,
 		}
 
-		field1 := data.NewField("", nil, make([]time.Time, 0))
-		field2 := data.NewField("", nil, make([]float64, 0))
+		makeFrame := func() *data.Frame {
+			field1 := data.NewField("", nil, make([]time.Time, 0))
+			field2 := data.NewField("", nil, make([]float64, 0))
 
-		frame := data.NewFrame("test", field1, field2)
-		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+			frame := data.NewFrame("", field1, field2)
+			frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+			return frame
+		}
 
-		err := adjustFrame(frame, query)
+		verifyFrame := func(frame *data.Frame) {
+			// to keep the test simple, we assume the
+			// first field is the time-field
+			timeField := frame.Fields[0]
+			require.NotNil(t, timeField)
+			require.Equal(t, data.FieldTypeTime, timeField.Type())
+
+			timeFieldConfig := timeField.Config
+			require.NotNil(t, timeFieldConfig)
+			require.Equal(t, float64(42000), timeFieldConfig.Interval)
+		}
+
+		frame := makeFrame()
+
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
+		verifyFrame(frame)
 
-		// to keep the test simple, we assume the
-		// first field is the time-field
-		timeField := frame.Fields[0]
-		require.NotNil(t, timeField)
-		require.Equal(t, data.FieldTypeTime, timeField.Type())
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+		verifyFrame(frame)
 
-		timeFieldConfig := timeField.Config
-		require.NotNil(t, timeFieldConfig)
-		require.Equal(t, float64(42000), timeFieldConfig.Interval)
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		err = adjustFrame(frame, query, false, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
 	})
 
 	t.Run("should parse response stats", func(t *testing.T) {

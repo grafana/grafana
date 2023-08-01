@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Alert, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -21,9 +21,6 @@ import {
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
-  getApiKeysMigrationStatus,
-  getApiKeysMigrationInfo,
-  closeApiKeysMigrationInfo,
 } from './state/actions';
 
 interface OwnProps {}
@@ -44,9 +41,6 @@ const mapDispatchToProps = {
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
-  getApiKeysMigrationStatus,
-  getApiKeysMigrationInfo,
-  closeApiKeysMigrationInfo,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -57,8 +51,6 @@ export const ServiceAccountsListPageUnconnected = ({
   roleOptions,
   query,
   serviceAccountStateFilter,
-  apiKeysMigrated,
-  showApiKeysMigrationInfo,
   changeQuery,
   fetchACOptions,
   fetchServiceAccounts,
@@ -66,9 +58,6 @@ export const ServiceAccountsListPageUnconnected = ({
   updateServiceAccount,
   changeStateFilter,
   createServiceAccountToken,
-  getApiKeysMigrationStatus,
-  getApiKeysMigrationInfo,
-  closeApiKeysMigrationInfo,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -79,12 +68,10 @@ export const ServiceAccountsListPageUnconnected = ({
 
   useEffect(() => {
     fetchServiceAccounts({ withLoadingIndicator: true });
-    getApiKeysMigrationStatus();
-    getApiKeysMigrationInfo();
     if (contextSrv.licensedAccessControlEnabled()) {
       fetchACOptions();
     }
-  }, [fetchACOptions, fetchServiceAccounts, getApiKeysMigrationStatus, getApiKeysMigrationInfo]);
+  }, [fetchACOptions, fetchServiceAccounts]);
 
   const noServiceAccountsCreated =
     serviceAccounts.length === 0 && serviceAccountStateFilter === ServiceAccountStateFilter.All && !query;
@@ -160,10 +147,6 @@ export const ServiceAccountsListPageUnconnected = ({
     setCurrentServiceAccount(null);
   };
 
-  const onMigrationInfoClose = () => {
-    closeApiKeysMigrationInfo();
-  };
-
   const docsLink = (
     <a
       className="external-link"
@@ -171,50 +154,28 @@ export const ServiceAccountsListPageUnconnected = ({
       target="_blank"
       rel="noopener noreferrer"
     >
-      here.
+      documentation.
     </a>
   );
   const subTitle = (
     <span>
-      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more {docsLink}
+      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
+      {docsLink}
     </span>
   );
 
   return (
     <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
-        {apiKeysMigrated && showApiKeysMigrationInfo && (
-          <Alert
-            title="API keys migrated to Service accounts. Your keys are now called tokens and live inside respective service
-          accounts. Learn more."
-            severity="success"
-            onRemove={onMigrationInfoClose}
-          ></Alert>
-        )}
-        <Page.OldNavOnly>
-          <div className={styles.pageHeader}>
-            <h2>Service accounts</h2>
-            <div className={styles.apiKeyInfoLabel}>
-              <Tooltip
-                placement="bottom"
-                interactive
-                content={<>API keys are now service accounts with tokens. Find out more {docsLink}</>}
-              >
-                <Icon name="question-circle" />
-              </Tooltip>
-              <span>Looking for API keys?</span>
-            </div>
-          </div>
-        </Page.OldNavOnly>
         <div className="page-action-bar">
-          <div className="gf-form gf-form--grow">
+          <InlineField grow>
             <FilterInput
               placeholder="Search service account by name"
               value={query}
               onChange={onQueryChange}
               width={50}
             />
-          </div>
+          </InlineField>
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },

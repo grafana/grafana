@@ -12,5 +12,5 @@ import (
 // TODO: This package also contains implementations of this interface.
 // TODO: This type should be moved to the side of the consumer, when the consumer is created in the future. We add it here temporarily to more clearly define this package's interface.
 type Querier interface {
-	QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error)
+	Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error)
 }

@@ -10,13 +10,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/web"
 )
 
+var (
+	once                 sync.Once
+	pluginProxyTransport *http.Transport
+)
+
 func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
-	var once sync.Once
-	var pluginProxyTransport *http.Transport
 	once.Do(func() {
 		pluginProxyTransport = &http.Transport{
 			TLSClientConfig: &tls.Config{

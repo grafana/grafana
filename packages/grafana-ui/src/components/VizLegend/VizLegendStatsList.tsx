@@ -7,10 +7,14 @@ import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineList } from '../List/InlineList';
 
+interface Props {
+  stats: DisplayValue[];
+}
+
 /**
  * @internal
  */
-export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
+export const VizLegendStatsList = ({ stats }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (stats.length === 0) {
@@ -31,13 +35,13 @@ export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[]
 };
 
 const getStyles = () => ({
-  list: css`
-    flex-grow: 1;
-    text-align: right;
-  `,
-  item: css`
-    margin-left: 8px;
-  `,
+  list: css({
+    flexGrow: 1,
+    textAlign: 'right',
+  }),
+  item: css({
+    marginLeft: '8px',
+  }),
 });
 
 VizLegendStatsList.displayName = 'VizLegendStatsList';

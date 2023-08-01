@@ -6,7 +6,11 @@ import (
 	"net/http"
 	"sort"
 	"sync"
+
+	"github.com/grafana/grafana/pkg/expr"
 )
+
+var grafanaDatasources = []string{expr.DatasourceType, "datasource"}
 
 type listPluginResponse struct {
 	Items []struct {
@@ -40,6 +44,8 @@ func GetCompatibleDatasources(baseUrl string) ([]string, error) {
 			supported = append(supported, datasource.Slug)
 		}
 	}
+
+	supported = append(supported, grafanaDatasources...)
 
 	sort.Strings(supported)
 	return supported, nil

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -18,7 +19,9 @@ var (
 	ErrGuardianPermissionExists    = errors.New("permission already exists")
 	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
 	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
+	ErrGuardianGetFolderFailure    = errutil.NewBase(errutil.StatusInternal, "guardian.getFolderFailure", errutil.WithPublicMessage("Failed to get folder"))
 	ErrGuardianDashboardNotFound   = errutil.NewBase(errutil.StatusNotFound, "guardian.dashboardNotFound")
+	ErrGuardianFolderNotFound      = errutil.NewBase(errutil.StatusNotFound, "guardian.folderNotFound")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -42,6 +45,7 @@ type DashboardGuardian interface {
 }
 
 type dashboardGuardianImpl struct {
+	cfg              *setting.Cfg
 	user             *user.SignedInUser
 	dashId           int64
 	orgId            int64
@@ -72,8 +76,14 @@ var NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId
 	panic("no guardian factory implementation provided")
 }
 
+// NewByFolder factory for creating a new folder guardian instance
+// When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
+var NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	panic("no guardian factory implementation provided")
+}
+
 // newDashboardGuardian creates a dashboard guardian by the provided dashId.
-func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardian(ctx context.Context, cfg *setting.Cfg, dashId int64, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	if dashId != 0 {
 		q := &dashboards.GetDashboardQuery{
 			ID:    dashId,
@@ -89,6 +99,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 	}
 
 	return &dashboardGuardianImpl{
+		cfg:              cfg,
 		user:             user,
 		dashId:           dashId,
 		orgId:            orgId,
@@ -101,7 +112,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 }
 
 // newDashboardGuardianByUID creates a dashboard guardian by the provided dashUID.
-func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByUID(ctx context.Context, cfg *setting.Cfg, dashUID string, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	dashID := int64(0)
 	if dashUID != "" {
 		q := &dashboards.GetDashboardQuery{
@@ -120,6 +131,7 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 	}
 
 	return &dashboardGuardianImpl{
+		cfg:              cfg,
 		user:             user,
 		dashId:           dashID,
 		orgId:            orgId,
@@ -134,10 +146,29 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 // newDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboard.
 // This constructor should be preferred over the other two if the dashboard in available
 // since it avoids querying the database for fetching the dashboard.
-func newDashboardGuardianByDashboard(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+func newDashboardGuardianByDashboard(ctx context.Context, cfg *setting.Cfg, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
 	return &dashboardGuardianImpl{
+		cfg:              cfg,
 		user:             user,
 		dashId:           dash.ID,
+		orgId:            orgId,
+		log:              log.New("dashboard.permissions"),
+		ctx:              ctx,
+		store:            store,
+		dashboardService: dashSvc,
+		teamService:      teamSvc,
+	}, nil
+}
+
+// newDashboardGuardianByFolder creates a dashboard guardian by the provided folder.
+// This constructor should be preferred over the other two if the dashboard in available
+// since it avoids querying the database for fetching the dashboard.
+// The folder.ID should be the sequence ID in the dashboard table.
+func newDashboardGuardianByFolder(ctx context.Context, cfg *setting.Cfg, f *folder.Folder, orgId int64, user *user.SignedInUser, store db.DB, dashSvc dashboards.DashboardService, teamSvc team.Service) (*dashboardGuardianImpl, error) {
+	return &dashboardGuardianImpl{
+		cfg:              cfg,
+		user:             user,
+		dashId:           f.ID,
 		orgId:            orgId,
 		log:              log.New("dashboard.permissions"),
 		ctx:              ctx,
@@ -152,7 +183,7 @@ func (g *dashboardGuardianImpl) CanSave() (bool, error) {
 }
 
 func (g *dashboardGuardianImpl) CanEdit() (bool, error) {
-	if setting.ViewersCanEdit {
+	if g.cfg.ViewersCanEdit {
 		return g.HasPermission(dashboards.PERMISSION_VIEW)
 	}
 
@@ -475,6 +506,14 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 		mock.OrgID = orgId
 		mock.DashUID = dash.UID
 		mock.DashID = dash.ID
+		mock.User = user
+		return mock, nil
+	}
+
+	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+		mock.OrgID = orgId
+		mock.DashUID = f.UID
+		mock.DashID = f.ID
 		mock.User = user
 		return mock, nil
 	}

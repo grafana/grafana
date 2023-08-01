@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import {
+  CustomVariableModel,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
   PluginMetaInfo,
@@ -11,7 +12,6 @@ import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
-import { CustomVariableModel } from 'app/features/variables/types';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
@@ -254,5 +254,13 @@ export const accountIdVariable: CustomVariableModel = {
     selected: true,
   },
   options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
+};
+
+export const statisticVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'statistic',
+  name: 'statistic',
+  current: { value: 'some stat', text: 'some stat', selected: true },
   multi: false,
 };

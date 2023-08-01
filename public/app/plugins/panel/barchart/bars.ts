@@ -286,7 +286,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     : {};
 
   let barsBuilder = uPlot.paths.bars!({
-    radius: barRadius,
+    radius: pctStacked
+      ? 0
+      : !isStacked
+      ? barRadius
+      : (u: uPlot, seriesIdx: number) => {
+          let isTopmostSeries = seriesIdx === u.data.length - 1;
+          return isTopmostSeries ? [barRadius, 0] : [0, 0];
+        },
     disp: {
       x0: {
         unit: 2,
@@ -487,11 +494,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let widthReduce = 0;
 
         // get height of bar rect at same index of the series below the hovered one
-        if (isStacked && isHovered && hRect!.sidx > 1) {
-          if (isXHorizontal) {
-            heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
-          } else {
-            widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+        if (isStacked && isHovered) {
+          const rect = hRect && hRect.sidx > 1 && findRect(qt, hRect.sidx - 1, hRect.didx);
+          if (rect) {
+            if (isXHorizontal) {
+              heightReduce = rect.h;
+            } else {
+              widthReduce = rect.w;
+            }
           }
         }
 

@@ -41,7 +41,7 @@ func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username
 		return nil, err
 	}
 
-	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+	return c.identityFromLDAPInfo(r.OrgID, info), nil
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
@@ -66,26 +66,28 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 		return nil, err
 	}
 
-	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+	return c.identityFromLDAPInfo(r.OrgID, info), nil
 }
 
-func identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo, allowSignup bool) *authn.Identity {
+func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *authn.Identity {
 	return &authn.Identity{
-		OrgID:          orgID,
-		OrgRoles:       info.OrgRoles,
-		Login:          info.Login,
-		Name:           info.Name,
-		Email:          info.Email,
-		IsGrafanaAdmin: info.IsGrafanaAdmin,
-		AuthModule:     info.AuthModule,
-		AuthID:         info.AuthId,
-		Groups:         info.Groups,
+		OrgID:           orgID,
+		OrgRoles:        info.OrgRoles,
+		Login:           info.Login,
+		Name:            info.Name,
+		Email:           info.Email,
+		IsGrafanaAdmin:  info.IsGrafanaAdmin,
+		AuthenticatedBy: info.AuthModule,
+		AuthID:          info.AuthId,
+		Groups:          info.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeams:           true,
 			EnableDisabledUsers: true,
 			FetchSyncedUser:     true,
-			AllowSignUp:         allowSignup,
+			SyncPermissions:     true,
+			SyncOrgRoles:        !c.cfg.LDAPSkipOrgRoleSync,
+			AllowSignUp:         c.cfg.LDAPAllowSignup,
 			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,
