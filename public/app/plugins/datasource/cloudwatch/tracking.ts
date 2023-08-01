@@ -1,4 +1,4 @@
-import { DashboardLoadedEvent } from '@grafana/data';
+import { DashboardLoadedEvent, DataSourceUpdatedEventPayload } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
@@ -126,3 +126,11 @@ export const onDashboardLoadedHandler = ({
 
 const isMetricSearchBuilder = (q: CloudWatchMetricsQuery) =>
   Boolean(q.metricQueryType === MetricQueryType.Search && q.metricEditorMode === MetricEditorMode.Builder);
+
+export const onDataSourceUpdatedSuccessfullyHandler = ({ payload }: { payload: DataSourceUpdatedEventPayload }) => {
+  reportInteraction('cloudwatch_datasource_update_succeeded', { authType: payload?.trackingData?.authType || '' });
+};
+
+export const onDataSourceUpdateFailedHandler = ({ payload }: { payload: DataSourceUpdatedEventPayload }) => {
+  reportInteraction('cloudwatch_datasource_update_failed', { authType: payload?.trackingData?.authType || '' });
+};
