@@ -270,7 +270,7 @@ export class ExampleDatasource implements DataSourceWithLogsContextSupport<Examp
 
 > To be implemented trough data source method
 
-Every log line has expandable part called log details that can be opened by clicking on the line. Within the Log details, [Fields]({{< relref "../../../../explore/logs-integration/#fields" >}}) associated with that log entry are shown. If data source implements `modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;` API, then filtering functionality is available for each field. For logs, 2 filtering options are currently available:
+Every log line has an expandable part called "Log details" that can be opened by clicking on the line. Within Log details, [Fields]({{< relref "../../../../explore/logs-integration/#fields" >}}) associated with that log entry are displayed. If the data source implements `modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;` API, then filtering functionality is available for each field. For logs, two filtering options are currently available:
 
 - `ADD_FILTER` - to filter for log lines that include selected fields
 - `ADD_FILTER_OUT` - to filter for log lines that do not include selected fields
