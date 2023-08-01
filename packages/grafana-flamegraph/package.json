@@ -1,0 +1,66 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/flamegraph",
+  "version": "0.0.1-pre",
+  "description": "Grafana flamegraph visualization component",
+  "keywords": [
+    "grafana",
+    "flamegraph",
+    "profiling",
+    "pyroscope"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-flamegraph"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "./dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "./LICENSE_APACHE2"
+  ],
+  "scripts": {
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "bundle": "rollup -c rollup.config.ts",
+    "clean": "rimraf ./dist ./compiled ./package.tgz",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
+    "postpack": "mv package.json.bak package.json"
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11"
+  ],
+  "dependencies": {
+    "@emotion/css": "11.11.2",
+    "@grafana/data": "10.2.0-pre",
+    "@grafana/ui": "10.2.0-pre",
+    "@leeoniya/ufuzzy": "1.0.8",
+    "lodash": "4.17.21",
+    "react-use": "17.4.0",
+    "react-virtualized-auto-sizer": "1.0.7",
+    "tinycolor2": "1.6.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "5.16.5",
+    "@testing-library/react": "14.0.0",
+    "@testing-library/user-event": "14.4.3",
+    "@types/lodash": "4.14.195",
+    "@types/tinycolor2": "1.4.3"
+  },
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0"
+  }
+}

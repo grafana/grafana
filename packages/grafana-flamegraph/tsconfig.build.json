@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@emotion/core": ["./src/types/emotion-core-stub.d.ts"],
+      "@grafana/ui": ["."]
+    }
+  },
+  "exclude": [
+    "**/*.test.ts*",
+    "dist",
+    "node_modules",
+  ],
+  "extends": "./tsconfig.json"
+}
