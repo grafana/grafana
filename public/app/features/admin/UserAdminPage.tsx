@@ -4,7 +4,6 @@ import { connect, ConnectedProps } from 'react-redux';
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
