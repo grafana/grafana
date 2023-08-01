@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -129,15 +128,16 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	return nil
 }
 
-func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if r.GetMeta(authn.MetaKeyIsLogin) != "" {
+		// Do not sync last seen for login requests
+		return nil
+	}
+
 	namespace, id := identity.NamespacedID()
 
 	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
 		// skip sync
-		return nil
-	}
-
-	if !shouldUpdateLastSeen(identity.LastSeenAt) {
 		return nil
 	}
 
@@ -148,7 +148,9 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: userID}); err != nil {
+		if err := s.userService.UpdateLastSeenAt(context.Background(),
+			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
+			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
 	}(id)
@@ -392,8 +394,4 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
-}
-
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
 }

@@ -562,11 +562,23 @@ func TestEvaluate(t *testing.T) {
 			Data: []models.AlertQuery{{
 				RefID:         "A",
 				DatasourceUID: "test",
+			}, {
+				RefID:         "B",
+				DatasourceUID: expr.DatasourceUID,
+			}, {
+				RefID:         "C",
+				DatasourceUID: expr.OldDatasourceUID,
+			}, {
+				RefID:         "D",
+				DatasourceUID: expr.MLDatasourceUID,
 			}},
 		},
 		resp: backend.QueryDataResponse{
 			Responses: backend.Responses{
 				"A": {Frames: nil},
+				"B": {Frames: []*data.Frame{{Fields: nil}}},
+				"C": {Frames: nil},
+				"D": {Frames: []*data.Frame{{Fields: nil}}},
 			},
 		},
 		expected: Results{{
@@ -595,6 +607,111 @@ func TestEvaluate(t *testing.T) {
 				"datasource_uid": "test",
 				"ref_id":         "A",
 			},
+		}},
+	}, {
+		name: "results contains captured values for exact label matches",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+				},
+			},
+		},
+		expected: Results{{
+			State: Alerting,
+			Instance: data.Labels{
+				"foo": "bar",
+			},
+			Values: map[string]NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(10.0),
+				},
+				"B": {
+					Var:    "B",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(1.0),
+				},
+			},
+			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={foo=bar} value=1 ]",
+		}},
+	}, {
+		name: "results contains captured values for subset of labels",
+		cond: models.Condition{
+			Condition: "B",
+		},
+		resp: backend.QueryDataResponse{
+			Responses: backend.Responses{
+				"A": {
+					Frames: []*data.Frame{{
+						RefID: "A",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar"},
+								[]*float64{util.Pointer(10.0)},
+							),
+						},
+					}},
+				},
+				"B": {
+					Frames: []*data.Frame{{
+						RefID: "B",
+						Fields: []*data.Field{
+							data.NewField(
+								"Value",
+								data.Labels{"foo": "bar", "bar": "baz"},
+								[]*float64{util.Pointer(1.0)},
+							),
+						},
+					}},
+				},
+			},
+		},
+		expected: Results{{
+			State: Alerting,
+			Instance: data.Labels{
+				"foo": "bar",
+				"bar": "baz",
+			},
+			Values: map[string]NumberValueCapture{
+				"A": {
+					Var:    "A",
+					Labels: data.Labels{"foo": "bar"},
+					Value:  util.Pointer(10.0),
+				},
+				"B": {
+					Var:    "B",
+					Labels: data.Labels{"foo": "bar", "bar": "baz"},
+					Value:  util.Pointer(1.0),
+				},
+			},
+			EvaluationString: "[ var='A' labels={foo=bar} value=10 ], [ var='B' labels={bar=baz, foo=bar} value=1 ]",
 		}},
 	}}
 

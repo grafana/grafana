@@ -31,10 +31,6 @@ import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
-type TExtractUiFindFromStateReturn = {
-  uiFind: string | undefined;
-};
-
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     TraceTimelineViewer: css`
@@ -71,7 +67,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export type TProps = TExtractUiFindFromStateReturn & {
+export type TProps = {
   registerAccessors: (accessors: Accessors) => void;
   findMatchesIDs: Set<string> | TNil;
   traceTimeline: TTraceTimeline;
@@ -99,7 +95,6 @@ export type TProps = TExtractUiFindFromStateReturn & {
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
-  setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];

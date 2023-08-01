@@ -26,8 +26,6 @@ module.exports = {
     'length-zero-no-unit': null,
     'max-nesting-depth': null,
     'number-no-trailing-zeros': null,
-    'order/order': null,
-    'order/properties-alphabetical-order': null,
     'property-no-vendor-prefix': null,
     'rule-empty-line-before': null,
     'scss/at-function-pattern': null,

@@ -222,10 +222,16 @@ describe('checkLogsError()', () => {
 describe('logRowsToReadableJson', () => {
   const testRow: LogRowModel = {
     rowIndex: 0,
-    entryFieldIndex: 0,
+    entryFieldIndex: 1,
     dataFrame: {
       length: 1,
       fields: [
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: [1],
+        },
         {
           name: 'body',
           type: FieldType.string,
@@ -253,6 +259,12 @@ describe('logRowsToReadableJson', () => {
     length: 1,
     fields: [
       {
+        name: 'timestamp',
+        type: FieldType.time,
+        config: {},
+        values: [1],
+      },
+      {
         name: 'body',
         type: FieldType.string,
         config: {},
@@ -268,7 +280,7 @@ describe('logRowsToReadableJson', () => {
   };
   const testRow2: LogRowModel = {
     rowIndex: 0,
-    entryFieldIndex: -1,
+    entryFieldIndex: 1,
     dataFrame: testDf,
     entry: 'test entry',
     hasAnsi: false,

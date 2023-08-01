@@ -48,7 +48,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
     (p) => providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.enabled
   );
   const availableProviders = authProviders.filter(
-    (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured
+    (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.hide
   );
   const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
@@ -88,7 +88,6 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 displayName={provider.displayName}
                 authType={provider.type}
                 enabled={providerStatuses[provider.id]?.enabled}
-                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
                 onClick={() => {
                   onProviderCardClick(provider);
@@ -103,9 +102,6 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
             buttonIcon="plus-circle"
             buttonLink={getProviderUrl(firstAvailableProvider)}
             buttonTitle={`Configure ${firstAvailableProvider.type}`}
-            description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
-              Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.
-              No changes will be written into .ini file.`}
             onClick={onCTAClick}
           />
         )}
@@ -118,7 +114,6 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 displayName={provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
-                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
               />
             ))}
