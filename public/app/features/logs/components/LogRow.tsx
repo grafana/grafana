@@ -203,6 +203,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onClick={this.toggleDetails}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          onFocus={this.onMouseEnter}
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>
@@ -241,6 +242,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           ) : (
             <LogRowMessage
@@ -256,6 +258,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           )}
         </tr>
