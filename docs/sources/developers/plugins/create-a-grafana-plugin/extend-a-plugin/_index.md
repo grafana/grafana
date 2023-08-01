@@ -33,6 +33,6 @@ This section contains how-to topics for extending or enhancing Grafana plugins:
 
 Additional resources:
 
-- [Automate development with CI](https://grafana.github.io/plugin-tools/docs/ci)
-- [Create nested plugins](https://grafana.github.io/plugin-tools/docs/nested-plugins)
-- [Extend configurations](https://grafana.github.io/plugin-tools/docs/advanced-configuration)
+- [Automate development with CI](https://grafana.github.io/plugin-tools/docs/development/ci)
+- [Create nested plugins](https://grafana.github.io/plugin-tools/docs/advanced-usage/nested-plugins)
+- [Extend configurations](https://grafana.github.io/plugin-tools/docs/advanced-usage/advanced-configuration)

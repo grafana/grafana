@@ -1,4 +1,12 @@
-import { createTheme, DataFrame, DisplayProcessor, Field, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import {
+  createTheme,
+  DataFrame,
+  DisplayProcessor,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+} from '@grafana/data';
 
 import { SampleUnit } from '../types';
 
@@ -69,6 +77,57 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
   return [levels, uniqueLabels];
 }
 
+export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
+  if (wrongFields.missingFields.length) {
+    return `Data is missing fields: ${wrongFields.missingFields.join(', ')}`;
+  }
+
+  if (wrongFields.wrongTypeFields.length) {
+    return `Data has fields of wrong type: ${wrongFields.wrongTypeFields
+      .map((f) => `${f.name} has type ${f.type} but should be ${f.expectedTypes.join(' or ')}`)
+      .join(', ')}`;
+  }
+
+  return '';
+}
+
+export type CheckFieldsResult = {
+  wrongTypeFields: Array<{ name: string; expectedTypes: FieldType[]; type: FieldType }>;
+  missingFields: string[];
+};
+
+export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
+  const fields: Array<[string, FieldType[]]> = [
+    ['label', [FieldType.string, FieldType.enum]],
+    ['level', [FieldType.number]],
+    ['value', [FieldType.number]],
+    ['self', [FieldType.number]],
+  ];
+
+  const missingFields = [];
+  const wrongTypeFields = [];
+
+  for (const field of fields) {
+    const [name, types] = field;
+    const frameField = data.fields.find((f) => f.name === name);
+    if (!frameField) {
+      missingFields.push(name);
+      continue;
+    }
+    if (!types.includes(frameField.type)) {
+      wrongTypeFields.push({ name, expectedTypes: types, type: frameField.type });
+    }
+  }
+
+  if (missingFields.length > 0 || wrongTypeFields.length > 0) {
+    return {
+      wrongTypeFields,
+      missingFields,
+    };
+  }
+  return undefined;
+}
+
 export class FlameGraphDataContainer {
   data: DataFrame;
   labelField: Field;
@@ -85,14 +144,16 @@ export class FlameGraphDataContainer {
 
   constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
+
+    const wrongFields = checkFields(data);
+    if (wrongFields) {
+      throw new Error(getMessageCheckFieldsResult(wrongFields));
+    }
+
     this.labelField = data.fields.find((f) => f.name === 'label')!;
     this.levelField = data.fields.find((f) => f.name === 'level')!;
     this.valueField = data.fields.find((f) => f.name === 'value')!;
     this.selfField = data.fields.find((f) => f.name === 'self')!;
-
-    if (!(this.labelField && this.levelField && this.valueField && this.selfField)) {
-      throw new Error('Malformed dataFrame: value, level and label and self fields are required.');
-    }
 
     const enumConfig = this.labelField?.config?.type?.enum;
     // Label can actually be an enum field so depending on that we have to access it through display processor. This is

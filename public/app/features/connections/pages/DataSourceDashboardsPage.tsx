@@ -8,7 +8,7 @@ import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
 
 export function DataSourceDashboardsPage() {
   const { uid } = useParams<{ uid: string }>();
-  const { navId, pageNav } = useDataSourceSettingsNav();
+  const { navId, pageNav } = useDataSourceSettingsNav('dashboards');
 
   return (
     <Page navId={navId} pageNav={pageNav}>
