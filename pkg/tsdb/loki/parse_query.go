@@ -19,7 +19,7 @@ const (
 	varRange      = "$__range"
 	varRangeS     = "$__range_s"
 	varRangeMs    = "$__range_ms"
-	varAuto			  = "$__auto"
+	varAuto       = "$__auto"
 )
 
 const (
@@ -48,7 +48,7 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	expr = strings.ReplaceAll(expr, varRange, rangeSText+"s")
 	if queryType == dataquery.LokiQueryTypeInstant {
 		expr = strings.ReplaceAll(expr, varAuto, rangeSText+"s")
-	} 
+	}
 
 	if queryType == dataquery.LokiQueryTypeRange {
 		expr = strings.ReplaceAll(expr, varAuto, stepText)
