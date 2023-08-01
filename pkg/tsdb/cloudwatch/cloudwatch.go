@@ -55,11 +55,7 @@ var logger = log.New("tsdb.cloudwatch")
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
 	logger.Debug("Initializing")
 
-	// logs timeout default is 30 minutes, the same as timeout in frontend logs query
-	// note: for alerting queries, the context will be cancelled before that unless evaluation_timeout_seconds in defaults.ini is increased (default: 30s)
-	defaultLogsTimeout := time.Minute * 30
-
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features, defaultLogsTimeout)
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
 
 	return &CloudWatchService{
 		Cfg:      cfg,
@@ -76,7 +72,7 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles, logsTimeout ...time.Duration) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
@@ -85,10 +81,6 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
-
-	if len(logsTimeout) == 1 && logsTimeout[0] != 0 {
-		e.logsTimeoutDefault = logsTimeout[0]
-	}
 
 	return e
 }

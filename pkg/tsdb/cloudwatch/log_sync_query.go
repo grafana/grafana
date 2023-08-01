@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-const alertPollPeriod = time.Second
+const initialAlertPollPeriod = time.Second
 
 var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
@@ -80,7 +80,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 }
 
 func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext backend.DataQuery, logsQuery models.LogsQuery, logsTimeout string) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	queryContext backend.DataQuery, logsQuery models.LogsQuery, logsTimeout models.Duration) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {
 		return nil, err
@@ -101,17 +101,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 		frontend, but because alerts and expressions are executed on the backend the logic needs to be reimplemented here.
 	*/
 
-	logsTimeoutDuration := e.logsTimeoutDefault
-
-	if logsTimeout != "" {
-		logsTimeoutDuration, err = time.ParseDuration(logsTimeout)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	ticker := time.NewTicker(alertPollPeriod)
+	ticker := time.NewTicker(initialAlertPollPeriod)
 	defer ticker.Stop()
 
 	attemptCount := 1
@@ -123,7 +113,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 		if isTerminated(*res.Status) {
 			return res, err
 		}
-		if time.Duration(attemptCount*int(time.Second)) >= logsTimeoutDuration {
+		if (time.Duration(attemptCount) * time.Second) >= time.Duration(logsTimeout) {
 			return res, fmt.Errorf("time to fetch query results exceeded logs timeout")
 		}
 

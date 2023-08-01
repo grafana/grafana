@@ -2,6 +2,7 @@ package models
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -70,5 +71,40 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 		assert.Equal(t, "https://monitoring.us-east-1.amazonaws.com", s.Endpoint)
 		assert.Equal(t, "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", s.SecretKey)
 		assert.Equal(t, "AKIAIOSFODNN7EXAMPLE", s.AccessKey)
+	})
+	t.Run("Should set logsTimeout to default duration if it is not defined", func(t *testing.T) {
+		settings := backend.DataSourceInstanceSettings{
+			ID: 33,
+			JSONData: []byte(`{
+			"authType": "arn",
+			"assumeRoleArn": "arn:aws:iam::123456789012:role/grafana"
+		  }`),
+			DecryptedSecureJSONData: map[string]string{
+				"accessKey": "AKIAIOSFODNN7EXAMPLE",
+				"secretKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+			},
+		}
+
+		s, err := LoadCloudWatchSettings(settings)
+		require.NoError(t, err)
+		assert.Equal(t, Duration(time.Minute * 30), s.LogsTimeout)
+	})
+	t.Run("Should correctly parse logsTimeout json field", func(t *testing.T) {
+		settings := backend.DataSourceInstanceSettings{
+			ID: 33,
+			JSONData: []byte(`{
+			"authType": "arn",
+			"assumeRoleArn": "arn:aws:iam::123456789012:role/grafana",
+			"logsTimeout": "10m"
+		  }`),
+			DecryptedSecureJSONData: map[string]string{
+				"accessKey": "AKIAIOSFODNN7EXAMPLE",
+				"secretKey": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+			},
+		}
+
+		s, err := LoadCloudWatchSettings(settings)
+		require.NoError(t, err)
+		assert.Equal(t, Duration(time.Minute * 10), s.LogsTimeout)
 	})
 }
