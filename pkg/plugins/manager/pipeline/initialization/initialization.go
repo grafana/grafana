@@ -13,6 +13,7 @@ type Initializer interface {
 	Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
 }
 
+// InitializeFunc is the function used for the Initialize step of the Initialization stage.
 type InitializeFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
 
 type Initialize struct {
@@ -38,6 +39,7 @@ func New(cfg *config.Cfg, opts Opts) *Initialize {
 	}
 }
 
+// Initialize will execute the Initialize stage of the Initialization stage.
 func (i *Initialize) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
 	if len(i.initializeSteps) == 0 {
 		return ps, nil

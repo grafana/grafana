@@ -37,7 +37,7 @@ func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *a
 func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing, bp plugins.BackendFactoryProvider) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			initialization.NewBackendProcessRegistrationStep(envvars.NewProvider(cfg, l), bp),
+			initialization.NewBackendClientInitStep(envvars.NewProvider(cfg, l), bp),
 			initialization.NewPluginRegistrationStep(pr),
 		},
 	})

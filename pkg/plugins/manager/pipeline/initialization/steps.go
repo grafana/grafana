@@ -10,27 +10,35 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
-type BackendProcessRegistration struct {
+// BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
+//
+// It uses the envvars.Provider to get the environment variables for the plugin and the plugins.BackendFactoryProvider
+// to get fetch backend plugin factory uses to form a connection to the backend plugin process.
+//
+// Note: It does not start the backend plugin process.
+type BackendClientInit struct {
 	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
 	log             log.Logger
 }
 
-func NewBackendProcessRegistrationStep(envVarProvider envvars.Provider,
+// NewBackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
+func NewBackendClientInitStep(envVarProvider envvars.Provider,
 	backendProvider plugins.BackendFactoryProvider) InitializeFunc {
 	return newBackendProcessRegistration(envVarProvider, backendProvider).Initialize
 }
 
 func newBackendProcessRegistration(envVarProvider envvars.Provider,
-	backendProvider plugins.BackendFactoryProvider) *BackendProcessRegistration {
-	return &BackendProcessRegistration{
+	backendProvider plugins.BackendFactoryProvider) *BackendClientInit {
+	return &BackendClientInit{
 		backendProvider: backendProvider,
 		envVarProvider:  envVarProvider,
 		log:             log.New("plugins.backend.registration"),
 	}
 }
 
-func (b *BackendProcessRegistration) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+// Initialize registers a backend plugin process for the plugin if the plugin is a backend plugin.
+func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.Backend {
 		backendFactory := b.backendProvider.BackendFactory(ctx, p)
 		if backendFactory == nil {
@@ -50,11 +58,13 @@ func (b *BackendProcessRegistration) Initialize(ctx context.Context, p *plugins.
 	return p, nil
 }
 
+// PluginRegistration implements an InitializeFunc for registering a plugin with the plugin registry.
 type PluginRegistration struct {
 	pluginRegistry registry.Service
 	log            log.Logger
 }
 
+// NewPluginRegistrationStep returns a new InitializeFunc for registering a plugin with the plugin registry.
 func NewPluginRegistrationStep(pluginRegistry registry.Service) InitializeFunc {
 	return newPluginRegistration(pluginRegistry).Initialize
 }
@@ -66,6 +76,7 @@ func newPluginRegistration(pluginRegistry registry.Service) *PluginRegistration 
 	}
 }
 
+// Initialize registers the plugin with the plugin registry.
 func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.pluginRegistry.Add(ctx, p); err != nil {
 		r.log.Error("Could not register plugin", "pluginID", p.ID, "err", err)

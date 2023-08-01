@@ -56,16 +56,6 @@ var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 })
 
 func TestLoader_Load(t *testing.T) {
-	corePluginDir, err := filepath.Abs("./../../../../public")
-	if err != nil {
-		t.Errorf("could not construct absolute path of core plugins dir")
-		return
-	}
-	parentDir, err := filepath.Abs("../")
-	if err != nil {
-		t.Errorf("could not construct absolute path of current dir")
-		return
-	}
 	tests := []struct {
 		name         string
 		class        plugins.Class
@@ -78,7 +68,7 @@ func TestLoader_Load(t *testing.T) {
 			name:        "Load a Core plugin",
 			class:       plugins.ClassCore,
 			cfg:         &config.Cfg{},
-			pluginPaths: []string{filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")},
+			pluginPaths: []string{filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -118,7 +108,7 @@ func TestLoader_Load(t *testing.T) {
 					Module:  "app/plugins/datasource/cloudwatch/module",
 					BaseURL: "public/app/plugins/datasource/cloudwatch",
 
-					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
+					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
 					Class:     plugins.ClassCore,
 				},
@@ -128,7 +118,7 @@ func TestLoader_Load(t *testing.T) {
 			name:        "Load a Bundled plugin",
 			class:       plugins.ClassBundled,
 			cfg:         &config.Cfg{},
-			pluginPaths: []string{"../testdata/valid-v2-signature"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "valid-v2-signature")},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -157,7 +147,7 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Module:        "plugins/test-datasource/module",
 					BaseURL:       "public/plugins/test-datasource",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-signature/plugin/")),
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
@@ -168,7 +158,7 @@ func TestLoader_Load(t *testing.T) {
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
-			pluginPaths: []string{"../testdata/symbolic-plugin-dirs"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "symbolic-plugin-dirs")},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -234,7 +224,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:         plugins.ClassExternal,
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/includes-symlinks")),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "includes-symlinks")),
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
 					SignatureOrg:  "Grafana Labs",
@@ -246,7 +236,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				DevMode: true,
 			},
-			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -274,7 +264,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:     plugins.ClassExternal,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
 					Signature: "unsigned",
 				},
 			},
@@ -282,7 +272,7 @@ func TestLoader_Load(t *testing.T) {
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
-			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
@@ -297,7 +287,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
-			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -325,7 +315,7 @@ func TestLoader_Load(t *testing.T) {
 					Class:     plugins.ClassExternal,
 					Module:    "plugins/test-datasource/module",
 					BaseURL:   "public/plugins/test-datasource",
-					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
 					Signature: plugins.SignatureStatusUnsigned,
 				},
 			},
@@ -334,7 +324,7 @@ func TestLoader_Load(t *testing.T) {
 			name:        "Load a plugin with v1 manifest should return signatureInvalid",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
-			pluginPaths: []string{"../testdata/lacking-files"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
@@ -344,12 +334,12 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
+			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvalid",
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
-			pluginPaths: []string{"../testdata/lacking-files"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
@@ -364,7 +354,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
-			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-missing-file")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
@@ -379,7 +369,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
 			},
-			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-extra-file")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
@@ -394,7 +384,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-app"},
 			},
-			pluginPaths: []string{"../testdata/test-app-with-includes"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-includes")},
 			want: []*plugins.Plugin{
 				{JSONData: plugins.JSONData{
 					ID:   "test-app",
@@ -429,7 +419,7 @@ func TestLoader_Load(t *testing.T) {
 					Backend: false,
 				},
 					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app-with-includes")),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-includes")),
 					Class:         plugins.ClassExternal,
 					Signature:     plugins.SignatureStatusUnsigned,
 					Module:        "plugins/test-app/module",
@@ -464,12 +454,6 @@ func TestLoader_Load(t *testing.T) {
 
 func TestLoader_Load_CustomSource(t *testing.T) {
 	t.Run("Load a plugin", func(t *testing.T) {
-		parentDir, err := filepath.Abs("../")
-		if err != nil {
-			t.Errorf("could not construct absolute path of current dir")
-			return
-		}
-
 		cfg := &config.Cfg{
 			PluginsCDNURLTemplate: "https://cdn.example.com",
 			PluginSettings: setting.PluginSettings{
@@ -477,7 +461,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			},
 		}
 
-		pluginPaths := []string{"../testdata/cdn"}
+		pluginPaths := []string{filepath.Join(testDataDir(t), "cdn")}
 		expected := []*plugins.Plugin{{
 			JSONData: plugins.JSONData{
 				ID:   "grafana-worldmap-panel",
@@ -514,7 +498,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 					Plugins:        []plugins.Dependency{},
 				},
 			},
-			FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/cdn/plugin")),
+			FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "cdn/plugin")),
 			Class:     plugins.ClassBundled,
 			Signature: plugins.SignatureStatusValid,
 			BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
@@ -544,12 +528,6 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 }
 
 func TestLoader_Load_MultiplePlugins(t *testing.T) {
-	parentDir, err := filepath.Abs("../")
-	if err != nil {
-		t.Errorf("could not construct absolute path of current dir")
-		return
-	}
-
 	t.Run("Load multiple", func(t *testing.T) {
 		tests := []struct {
 			name            string
@@ -565,9 +543,9 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					GrafanaAppURL: "http://localhost:3000",
 				},
 				pluginPaths: []string{
-					"../testdata/invalid-plugin-json",    // test-app
-					"../testdata/valid-v2-pvt-signature", // test
-					"../testdata/unsigned-panel",         // test-panel
+					filepath.Join(testDataDir(t), "invalid-plugin-json"),    // test-app
+					filepath.Join(testDataDir(t), "valid-v2-pvt-signature"), // test
+					filepath.Join(testDataDir(t), "unsigned-panel"),         // test-panel
 				},
 				want: []*plugins.Plugin{
 					{
@@ -598,7 +576,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						Class:         plugins.ClassExternal,
 						Module:        "plugins/test-datasource/module",
 						BaseURL:       "public/plugins/test-datasource",
-						FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin")),
+						FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature/plugin")),
 						Signature:     "valid",
 						SignatureType: plugins.SignatureTypePrivate,
 						SignatureOrg:  "Will Browne",
@@ -646,12 +624,6 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 }
 
 func TestLoader_Load_RBACReady(t *testing.T) {
-	pluginDir, err := filepath.Abs("../testdata/test-app-with-roles")
-	if err != nil {
-		t.Errorf("could not construct absolute path of current dir")
-		return
-	}
-
 	tests := []struct {
 		name            string
 		cfg             *config.Cfg
@@ -664,7 +636,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			cfg: &config.Cfg{
 				GrafanaAppURL: "http://localhost:3000",
 			},
-			pluginPaths: []string{"../testdata/test-app-with-roles"},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-roles")},
 			want: []*plugins.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -707,7 +679,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 						},
 						Backend: false,
 					},
-					FS:            mustNewStaticFSForTests(t, pluginDir),
+					FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-roles")),
 					Class:         plugins.ClassExternal,
 					Signature:     plugins.SignatureStatusValid,
 					SignatureType: plugins.SignatureTypePrivate,
@@ -746,16 +718,8 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 }
 
 func TestLoader_Load_Signature_RootURL(t *testing.T) {
-	const defaultAppURL = "http://localhost:3000/grafana"
-
-	parentDir, err := filepath.Abs("../")
-	if err != nil {
-		t.Errorf("could not construct absolute path of current dir")
-		return
-	}
-
 	t.Run("Private signature verification ignores trailing slash in root URL", func(t *testing.T) {
-		paths := []string{"../testdata/valid-v2-pvt-signature-root-url-uri"}
+		const defaultAppURL = "http://localhost:3000/grafana"
 
 		expected := []*plugins.Plugin{
 			{
@@ -777,7 +741,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 					Backend:      true,
 					Executable:   "test",
 				},
-				FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
+				FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri/plugin")),
 				Class:         plugins.ClassExternal,
 				Signature:     plugins.SignatureStatusValid,
 				SignatureType: plugins.SignatureTypePrivate,
@@ -797,7 +761,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
-				return paths
+				return []string{filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri")}
 			},
 		})
 		require.NoError(t, err)
@@ -811,11 +775,6 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 
 func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 	t.Run("Load duplicate plugin folders", func(t *testing.T) {
-		pluginDir, err := filepath.Abs("../testdata/test-app")
-		if err != nil {
-			t.Errorf("could not construct absolute path of plugin dir")
-			return
-		}
 		expected := []*plugins.Plugin{
 			{
 				JSONData: plugins.JSONData{
@@ -858,7 +817,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 					},
 					Backend: false,
 				},
-				FS:            mustNewStaticFSForTests(t, pluginDir),
+				FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app")),
 				Class:         plugins.ClassExternal,
 				Signature:     plugins.SignatureStatusValid,
 				SignatureType: plugins.SignatureTypeGrafana,
@@ -878,7 +837,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{pluginDir, pluginDir}
+				return []string{filepath.Join(testDataDir(t), "test-app"), filepath.Join(testDataDir(t), "test-app")}
 			},
 		})
 		require.NoError(t, err)
@@ -893,16 +852,9 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 
 func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 	t.Run("Load duplicate plugin folders", func(t *testing.T) {
-		pluginDir1, err := filepath.Abs("../testdata/test-app")
-		if err != nil {
-			t.Errorf("could not construct absolute path of plugin dir")
-			return
-		}
-		pluginDir2, err := filepath.Abs("../testdata/valid-v2-signature")
-		if err != nil {
-			t.Errorf("could not construct absolute path of plugin dir")
-			return
-		}
+		pluginDir1 := filepath.Join(testDataDir(t), "test-app")
+		pluginDir2 := filepath.Join(testDataDir(t), "valid-v2-signature")
+
 		expected := []*plugins.Plugin{
 			{
 				JSONData: plugins.JSONData{
@@ -1020,7 +972,7 @@ func TestLoader_AngularClass(t *testing.T) {
 					return tc.class
 				},
 				PluginURIsFunc: func(ctx context.Context) []string {
-					return []string{"../testdata/valid-v2-signature"}
+					return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
@@ -1043,7 +995,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 			return plugins.ClassExternal
 		},
 		PluginURIsFunc: func(ctx context.Context) []string {
-			return []string{"../testdata/valid-v2-signature"}
+			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
 		},
 	}
 	for _, cfgTc := range []struct {
@@ -1088,11 +1040,6 @@ func TestLoader_Load_Angular(t *testing.T) {
 }
 
 func TestLoader_Load_NestedPlugins(t *testing.T) {
-	rootDir, err := filepath.Abs("../")
-	if err != nil {
-		t.Errorf("could not construct absolute path of root dir")
-		return
-	}
 	parent := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:   "test-datasource",
@@ -1119,7 +1066,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-datasource/module",
 		BaseURL:       "public/plugins/test-datasource",
-		FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/nested-plugins/parent")),
+		FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent")),
 		Signature:     plugins.SignatureStatusValid,
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
@@ -1151,7 +1098,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		},
 		Module:        "plugins/test-panel/module",
 		BaseURL:       "public/plugins/test-panel",
-		FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/nested-plugins/parent/nested")),
+		FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent/nested")),
 		Signature:     plugins.SignatureStatusValid,
 		SignatureType: plugins.SignatureTypeGrafana,
 		SignatureOrg:  "Grafana Labs",
@@ -1164,15 +1111,16 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	t.Run("Load nested External plugins", func(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
+		reg := fakes.NewFakePluginRegistry()
 		cfg := &config.Cfg{}
-		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), procMgr, procPrvdr)
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr)
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"../testdata/nested-plugins"}
+				return []string{filepath.Join(testDataDir(t), "nested-plugins")}
 			},
 		})
 		require.NoError(t, err)
@@ -1187,7 +1135,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, l.pluginRegistry, procPrvdr, procMgr)
+		verifyState(t, expected, reg, procPrvdr, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
 			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1195,7 +1143,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					return plugins.ClassExternal
 				},
 				PluginURIsFunc: func(ctx context.Context) []string {
-					return []string{"../testdata/nested-plugins"}
+					return []string{filepath.Join(testDataDir(t), "nested-plugins")}
 				},
 			})
 			require.NoError(t, err)
@@ -1209,7 +1157,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 			}
 
-			verifyState(t, expected, l.pluginRegistry, procPrvdr, procMgr)
+			verifyState(t, expected, reg, procPrvdr, procMgr)
 		})
 	})
 
@@ -1286,7 +1234,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:        "plugins/myorgid-simple-app/module",
 			BaseURL:       "public/plugins/myorgid-simple-app",
-			FS:            mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/app-with-child/dist")),
+			FS:            mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist")),
 			DefaultNavURL: "/plugins/myorgid-simple-app/page/root-page-react",
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeGrafana,
@@ -1324,7 +1272,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			},
 			Module:          "plugins/myorgid-simple-app/child/module",
 			BaseURL:         "public/plugins/myorgid-simple-app",
-			FS:              mustNewStaticFSForTests(t, filepath.Join(rootDir, "testdata/app-with-child/dist/child")),
+			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureStatusValid,
 			SignatureType:   plugins.SignatureTypeGrafana,
@@ -1346,7 +1294,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				return plugins.ClassExternal
 			},
 			PluginURIsFunc: func(ctx context.Context) []string {
-				return []string{"../testdata/app-with-child"}
+				return []string{filepath.Join(testDataDir(t), "app-with-child")}
 			},
 		})
 		require.NoError(t, err)
@@ -1413,4 +1361,22 @@ func mustNewStaticFSForTests(t *testing.T, dir string) plugins.FS {
 	sfs, err := plugins.NewStaticFS(plugins.NewLocalFS(dir))
 	require.NoError(t, err)
 	return sfs
+}
+
+func testDataDir(t *testing.T) string {
+	dir, err := filepath.Abs("../../../plugins/manager/testdata")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return ""
+	}
+	return dir
+}
+
+func corePluginDir(t *testing.T) string {
+	dir, err := filepath.Abs("./../../../../public")
+	if err != nil {
+		t.Errorf("could not construct absolute path of core plugins dir")
+		return ""
+	}
+	return dir
 }
