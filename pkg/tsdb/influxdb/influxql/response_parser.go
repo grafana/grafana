@@ -1,4 +1,4 @@
-package influxdb
+package influxql
 
 import (
 	"encoding/json"
@@ -15,19 +15,17 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
-type ResponseParser struct{}
-
 var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, statusCode int, queries []models.Query) *backend.QueryDataResponse {
-	return rp.parse(buf, statusCode, queries)
+func ResponseParse(buf io.ReadCloser, statusCode int, queries []models.Query) *backend.QueryDataResponse {
+	return parse(buf, statusCode, queries)
 }
 
 // parse is the same as Parse, but without the io.ReadCloser (we don't need to
 // close the buffer)
-func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []models.Query) *backend.QueryDataResponse {
+func parse(buf io.Reader, statusCode int, queries []models.Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
 	response, jsonErr := parseJSON(buf)
 

@@ -1,4 +1,4 @@
-package influxdb
+package influxql
 
 import (
 	"encoding/json"
@@ -31,21 +31,17 @@ func addQueryToQueries(query models.Query) []models.Query {
 
 func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser should handle invalid JSON", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `{ invalid }`
 
 		query := &models.Query{}
 
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 		require.Nil(t, result.Responses["A"].Frames)
 		require.Error(t, result.Responses["A"].Error)
 	})
 
 	t.Run("Influxdb response parser should parse everything normally including nil bools and nil strings", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -119,7 +115,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		boolFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 		frame := result.Responses["A"]
 		if diff := cmp.Diff(floatFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -134,8 +130,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser should parse metricFindQueries normally", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -165,7 +159,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 
-		result := parser.Parse(prepare(response), 200, queries)
+		result := ResponseParse(prepare(response), 200, queries)
 
 		frame := result.Responses["metricFindQuery"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -174,8 +168,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser should parse metricFindQueries->SHOW TAG VALUES normally", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -204,7 +196,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 
-		result := parser.Parse(prepare(response), 200, queries)
+		result := ResponseParse(prepare(response), 200, queries)
 
 		frame := result.Responses["metricFindQuery"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -213,8 +205,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser should parse two responses with different refIDs", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -233,7 +223,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		queryB := &models.Query{}
 		queryB.RefID = "B"
 		queries = append(queries, *queryB)
-		result := parser.Parse(prepare(response), 200, queries)
+		result := ResponseParse(prepare(response), 200, queries)
 
 		assert.Len(t, result.Responses, 2)
 		assert.Contains(t, result.Responses, "A")
@@ -242,8 +232,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser populates the RawQuery in the response meta ExecutedQueryString", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -266,15 +254,13 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		query := &models.Query{}
 		query.RawQuery = "Test raw query"
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 		frame := result.Responses["A"]
 		assert.Equal(t, frame.Frames[0].Meta.ExecutedQueryString, "Test raw query")
 	})
 
 	t.Run("Influxdb response parser with invalid value-format", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -312,7 +298,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 		frame := result.Responses["A"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -321,8 +307,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -360,7 +344,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 		frame := result.Responses["A"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -369,8 +353,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with alias", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -411,7 +393,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 		t.Run("should parse aliases", func(t *testing.T) {
 			frame := result.Responses["A"]
 			if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -419,7 +401,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $m $measurement", Measurement: "10m"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 			frame = result.Responses["A"]
 			name := "alias 10m 10m"
@@ -430,7 +412,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $col", Measurement: "10m"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias mean"
 			testFrame.Name = name
@@ -450,7 +432,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $tag_datacenter"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias America"
 			testFrame.Name = name
@@ -464,7 +446,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $tag_datacenter/$tag_datacenter"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias America/America"
 			testFrame.Name = name
@@ -478,7 +460,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[col]]", Measurement: "10m"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias mean"
 			testFrame.Name = name
@@ -488,7 +470,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $0 $1 $2 $3 $4"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias cpu upc $2 $3 $4"
 			testFrame.Name = name
@@ -498,7 +480,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $0, $1 - $2 - $3, $4: something"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias cpu, upc - $2 - $3, $4: something"
 			testFrame.Name = name
@@ -508,7 +490,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $1"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias upc"
 			testFrame.Name = name
@@ -518,7 +500,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias $5"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias $5"
 			testFrame.Name = name
@@ -528,7 +510,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "series alias"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "series alias"
 			testFrame.Name = name
@@ -538,7 +520,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[m]] [[measurement]]", Measurement: "10m"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias 10m 10m"
 			testFrame.Name = name
@@ -548,7 +530,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[tag_datacenter]]"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias America"
 			testFrame.Name = name
@@ -558,7 +540,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[tag_dc.region.name]]"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Northeast"
 			testFrame.Name = name
@@ -568,7 +550,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[tag_cluster-name]]"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Cluster"
 			testFrame.Name = name
@@ -578,7 +560,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[tag_/cluster/name/]]"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Cluster/"
 			testFrame.Name = name
@@ -588,7 +570,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias [[tag_@cluster@name@]]"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Cluster@"
 			testFrame.Name = name
@@ -599,7 +581,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		})
 		t.Run("shouldn't parse aliases", func(t *testing.T) {
 			query = &models.Query{Alias: "alias words with no brackets"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame := result.Responses["A"]
 			name := "alias words with no brackets"
 			testFrame.Name = name
@@ -609,7 +591,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias Test 1.5"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Test 1.5"
 			testFrame.Name = name
@@ -619,7 +601,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			}
 
 			query = &models.Query{Alias: "alias Test -1"}
-			result = parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+			result = ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 			frame = result.Responses["A"]
 			name = "alias Test -1"
 			testFrame.Name = name
@@ -631,8 +613,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with errors", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"results": [
@@ -678,7 +658,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			newField,
 		)
 		testFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
-		result := parser.Parse(prepare(response), 200, queries)
+		result := ResponseParse(prepare(response), 200, queries)
 
 		frame := result.Responses["A"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -689,8 +669,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	})
 
 	t.Run("Influxdb response parser with top-level error", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 			"error": "error parsing query: found THING"
@@ -699,7 +677,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		query := &models.Query{}
 
-		result := parser.Parse(prepare(response), 200, addQueryToQueries(*query))
+		result := ResponseParse(prepare(response), 200, addQueryToQueries(*query))
 
 		require.Nil(t, result.Responses["A"].Frames)
 
@@ -737,8 +715,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 	t.Run("Influxdb response parser should parse metricFindQueries->SHOW RETENTION POLICIES normally", func(t *testing.T) {
-		parser := &ResponseParser{}
-
 		response := `
 		{
 		  "results": [
@@ -798,7 +774,7 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 			}),
 		)
 
-		result := parser.Parse(prepare(response), 200, queries)
+		result := ResponseParse(prepare(response), 200, queries)
 
 		frame := result.Responses["metricFindQuery"]
 		if diff := cmp.Diff(policyFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
@@ -870,8 +846,7 @@ func TestResponseParser_Parse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := &ResponseParser{}
-			got := parser.Parse(prepare(tt.input), 200, addQueryToQueries(models.Query{}))
+			got := ResponseParse(prepare(tt.input), 200, addQueryToQueries(models.Query{}))
 			require.NotNil(t, got)
 			if tt.f != nil {
 				tt.f(t, got)
