@@ -180,8 +180,6 @@ const (
 type Identity struct {
 	// OrgID is the active organization for the entity.
 	OrgID int64
-	// OrgCount is the number of organizations the entity is a member of.
-	OrgCount int
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
@@ -271,7 +269,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Name:            i.Name,
 		Email:           i.Email,
 		AuthenticatedBy: i.AuthenticatedBy,
-		OrgCount:        i.OrgCount,
 		IsGrafanaAdmin:  isGrafanaAdmin,
 		IsAnonymous:     i.IsAnonymous,
 		IsDisabled:      i.IsDisabled,
@@ -320,7 +317,6 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Name:            usr.Name,
 		Email:           usr.Email,
 		AuthenticatedBy: authenticatedBy,
-		OrgCount:        usr.OrgCount,
 		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
 		IsDisabled:      usr.IsDisabled,
 		HelpFlags1:      usr.HelpFlags1,

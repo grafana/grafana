@@ -117,56 +117,53 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 		},
 	}
 
-	// can be removed once ff is removed
-	authBrokerStates := map[string]bool{"none": false, "authnService": true}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+				AuthBrokerEnabled: true,
+			})
+			addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
+			createdUser := testinfra.CreateUser(t, store, user.CreateUserCommand{
+				Login:    "admin",
+				Password: "admin",
+				Email:    "admin@grafana.com",
+				OrgID:    1,
+			})
 
-	for k, enabled := range authBrokerStates {
-		for _, tc := range testCases {
-			t.Run(tc.name+"-"+k, func(t *testing.T) {
-				grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{AuthBrokerEnabled: enabled})
-				addr, store := testinfra.StartGrafana(t, grafDir, cfgPath)
-				createdUser := testinfra.CreateUser(t, store, user.CreateUserCommand{
-					Login:    "admin",
-					Password: "admin",
-					Email:    "admin@grafana.com",
-					OrgID:    1,
-				})
+			secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
+			authInfoStore := databaseAuthInfo.ProvideAuthInfoStore(store, secretsService, nil)
 
-				secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(store))
-				authInfoStore := databaseAuthInfo.ProvideAuthInfoStore(store, secretsService, nil)
-
-				// insert user_auth relationship
+			// insert user_auth relationship
+			err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
+				AuthModule: tc.authModule,
+				AuthId:     tc.setID,
+				UserId:     createdUser.ID,
+			})
+			require.NoError(t, err)
+			if tc.secondModule != "" {
+				// wait for the user_auth relationship to be inserted. TOFIX: this is a hack
+				time.Sleep(1 * time.Second)
 				err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
-					AuthModule: tc.authModule,
-					AuthId:     tc.setID,
+					AuthModule: tc.secondModule,
+					AuthId:     tc.secondID,
 					UserId:     createdUser.ID,
 				})
 				require.NoError(t, err)
-				if tc.secondModule != "" {
-					// wait for the user_auth relationship to be inserted. TOFIX: this is a hack
-					time.Sleep(1 * time.Second)
-					err := authInfoStore.SetAuthInfo(context.Background(), &login.SetAuthInfoCommand{
-						AuthModule: tc.secondModule,
-						AuthId:     tc.secondID,
-						UserId:     createdUser.ID,
-					})
-					require.NoError(t, err)
-				}
+			}
 
-				// nolint:bodyclose
-				response, html := makeRequest(t, addr, "admin", "admin")
-				assert.Equal(t, http.StatusOK, response.StatusCode)
+			// nolint:bodyclose
+			response, html := makeRequest(t, addr, "admin", "admin")
+			assert.Equal(t, http.StatusOK, response.StatusCode)
 
-				// parse User.Analytics HTML view into user.AnalyticsSettings model
-				parsedHTML := strings.Split(html, "analytics\":")[1]
-				parsedHTML = strings.Split(parsedHTML, "},\n")[0]
+			// parse User.Analytics HTML view into user.AnalyticsSettings model
+			parsedHTML := strings.Split(html, "analytics\":")[1]
+			parsedHTML = strings.Split(parsedHTML, "},\n")[0]
 
-				var analyticsSettings user.AnalyticsSettings
-				require.NoError(t, json.Unmarshal([]byte(parsedHTML), &analyticsSettings))
+			var analyticsSettings user.AnalyticsSettings
+			require.NoError(t, json.Unmarshal([]byte(parsedHTML), &analyticsSettings))
 
-				require.NotEmpty(t, analyticsSettings.IntercomIdentifier)
-				require.Equal(t, tc.wantIdentifier, analyticsSettings.Identifier)
-			})
-		}
+			require.NotEmpty(t, analyticsSettings.IntercomIdentifier)
+			require.Equal(t, tc.wantIdentifier, analyticsSettings.Identifier)
+		})
 	}
 }
