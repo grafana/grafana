@@ -607,7 +607,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         font-size: ${theme.typography.bodySmall.fontSize};
 
         border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
       `,
     };
   },
@@ -640,7 +640,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     background: ${theme.colors.background.secondary};
 
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
 
     ${hasFocus &&
@@ -674,7 +674,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-align: center;
 
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
 
     padding: 0;
   `,

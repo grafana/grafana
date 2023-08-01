@@ -28,9 +28,9 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-const fieldLookupSettings: StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings> = {
+const fieldLookupSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, GazetteerPathEditorConfigSettings>;
 
 export const FieldLookupTransformerEditor = ({ input, options, onChange }: TransformerUIProps<FieldLookupOptions>) => {
   const onPickLookupField = useCallback(
@@ -60,7 +60,7 @@ export const FieldLookupTransformerEditor = ({ input, options, onChange }: Trans
             context={{ data: input }}
             value={options?.lookupField ?? ''}
             onChange={onPickLookupField}
-            item={fieldNamePickerSettings as any}
+            item={fieldNamePickerSettings}
           />
         </InlineField>
       </InlineFieldRow>
