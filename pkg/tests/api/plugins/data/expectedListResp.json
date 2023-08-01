@@ -1609,13 +1609,13 @@
       "description": "Generates test data in different forms",
       "links": [],
       "logos": {
-        "small": "public/plugins/testdata/dist/img/testdata.svg",
-        "large": "public/plugins/testdata/dist/img/testdata.svg"
+        "small": "public/plugins/testdata/src/img/testdata.svg",
+        "large": "public/plugins/testdata/src/img/testdata.svg"
       },
       "build": {},
       "screenshots": [],
-      "version": "1.0.0",
-      "updated": "2023-08-01"
+      "version": "%VERSION%",
+      "updated": "%TODAY%"
     },
     "dependencies": {
       "grafanaDependency": "\u003e=9.5.3",
