@@ -203,7 +203,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 
 	authSect, err := cfg.NewSection("auth")
 	require.NoError(t, err)
-	_, err = authSect.NewKey("broker", "true")
+	authBrokerState := "false"
+	if len(opts) > 0 && opts[0].AuthBrokerEnabled {
+		authBrokerState = "true"
+	}
+	_, err = authSect.NewKey("broker", authBrokerState)
 	require.NoError(t, err)
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
@@ -391,6 +395,7 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+	AuthBrokerEnabled                     bool
 }
 
 func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {
