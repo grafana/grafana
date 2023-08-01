@@ -22,7 +22,6 @@ export interface RadioButtonGroupProps<T> {
   className?: string;
   autoFocus?: boolean;
   invalid?: boolean;
-  isHorizontal?: boolean;
 }
 
 export function RadioButtonGroup<T>({
@@ -38,7 +37,6 @@ export function RadioButtonGroup<T>({
   fullWidth = false,
   autoFocus = false,
   invalid = false,
-  isHorizontal = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -67,7 +65,7 @@ export function RadioButtonGroup<T>({
         display: 'inline-flex',
         flexDirection: 'row',
         flexWrap: 'nowrap',
-        border: isHorizontal ? `1px solid ${theme.components.input.borderColor}` : 'none',
+        border: `1px solid ${theme.components.input.borderColor}`,
         borderRadius: theme.shape.borderRadius(),
         padding: '2px',
       }),
@@ -120,7 +118,6 @@ export function RadioButtonGroup<T>({
             description={opt.description}
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
-            isHorizontal={isHorizontal}
           >
             {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}

@@ -22,7 +22,6 @@ export interface RadioButtonProps {
   fullWidth?: boolean;
   'aria-label'?: StringSelector;
   children?: React.ReactNode;
-  isHorizontal?: boolean;
 }
 
 export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
@@ -39,12 +38,11 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
       description,
       fullWidth,
       'aria-label': ariaLabel,
-      isHorizontal = false,
     },
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getRadioButtonStyles(theme, size, fullWidth, isHorizontal);
+    const styles = getRadioButtonStyles(theme, size, fullWidth);
 
     return (
       <>
@@ -70,61 +68,57 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
 RadioButton.displayName = 'RadioButton';
 
-const getRadioButtonStyles = stylesFactory(
-  (theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean, isHorizontal?: boolean) => {
-    const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
+const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioButtonSize, fullWidth?: boolean) => {
+  const { fontSize, height, padding } = getPropertiesForButtonSize(size, theme);
 
-    const textColor = theme.colors.text.secondary;
-    const textColorHover = theme.colors.text.primary;
-    // remove the group inner padding (set on RadioButtonGroup)
-    const labelHeight = height * theme.spacing.gridSize - 4 - 2;
+  const textColor = theme.colors.text.secondary;
+  const textColorHover = theme.colors.text.primary;
+  // remove the group inner padding (set on RadioButtonGroup)
+  const labelHeight = height * theme.spacing.gridSize - 4 - 2;
 
-    return {
-      radio: css({
-        position: isHorizontal ? 'absolute' : 'inherit',
-        opacity: isHorizontal ? 0 : 'inherit',
-        zIndex: isHorizontal ? -1000 : 'inherit',
+  return {
+    radio: css({
+      position: 'absolute',
+      opacity: 0,
+      zIndex: -1000,
 
-        'label:has(&:checked)': {
-          color: theme.colors.text.primary,
-          fontWeight: theme.typography.fontWeightMedium,
-          background: theme.colors.action.selected,
-          zIndex: 3,
-        },
+      'label:has(&:checked)': {
+        color: theme.colors.text.primary,
+        fontWeight: theme.typography.fontWeightMedium,
+        background: theme.colors.action.selected,
+        zIndex: 3,
+      },
 
-        '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
+      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
 
-        '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
+      '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
 
-        '&:disabled + label': {
-          color: theme.colors.text.disabled,
-          cursor: 'not-allowed',
-        },
-      }),
-      radioLabel: css({
-        display: isHorizontal ? 'inline-block' : 'grid',
-        gridTemplateColumns: isHorizontal ? 'auto' : '16px auto auto',
-        gap: isHorizontal ? '0px' : '8px',
-        justifyContent: isHorizontal ? 'inherit' : 'start',
-        fontSize,
-        height: `${labelHeight}px`,
-        // Deduct border from line-height for perfect vertical centering on windows and linux
-        lineHeight: `${labelHeight}px`,
-        color: textColor,
-        padding: theme.spacing(0, isHorizontal ? padding : '2px'),
-        borderRadius: theme.shape.borderRadius(),
-        background: theme.colors.background.primary,
-        cursor: 'pointer',
-        zIndex: 1,
-        flex: fullWidth ? `1 0 0` : 'none',
-        textAlign: 'center',
-        userSelect: 'none',
-        whiteSpace: 'nowrap',
+      '&:disabled + label': {
+        color: theme.colors.text.disabled,
+        cursor: 'not-allowed',
+      },
+    }),
+    radioLabel: css({
+      display: 'inline-block',
+      position: 'relative',
+      fontSize,
+      height: `${labelHeight}px`,
+      // Deduct border from line-height for perfect vertical centering on windows and linux
+      lineHeight: `${labelHeight}px`,
+      color: textColor,
+      padding: theme.spacing(0, padding),
+      borderRadius: theme.shape.borderRadius(),
+      background: theme.colors.background.primary,
+      cursor: 'pointer',
+      zIndex: 1,
+      flex: fullWidth ? `1 0 0` : 'none',
+      textAlign: 'center',
+      userSelect: 'none',
+      whiteSpace: 'nowrap',
 
-        '&:hover': {
-          color: textColorHover,
-        },
-      }),
-    };
-  }
-);
+      '&:hover': {
+        color: textColorHover,
+      },
+    }),
+  };
+});
