@@ -13,7 +13,7 @@ const createStorybookTheme = (theme: GrafanaTheme2) => {
     appBg: theme.colors.background.canvas,
     appContentBg: theme.colors.background.primary,
     appBorderColor: theme.colors.border.medium,
-    appBorderRadius: parseInt(theme.shape.radius.default, 10),
+    appBorderRadius: parseInt(theme.shape.borderRadius(1), 10),
 
     // Typography
     fontBase: theme.typography.fontFamily,
@@ -32,7 +32,7 @@ const createStorybookTheme = (theme: GrafanaTheme2) => {
     inputBg: theme.components.input.background,
     inputBorder: theme.components.input.borderColor,
     inputTextColor: theme.components.input.text,
-    inputBorderRadius: parseInt(theme.shape.radius.default, 10),
+    inputBorderRadius: parseInt(theme.shape.borderRadius(1), 10),
 
     brandTitle: 'Grafana UI',
     brandUrl: './',

@@ -116,7 +116,7 @@ Example use cases:
 
 | Example                     | Result |
 | --------------------------- | ------ |
-| theme.shape.radius.default  | 2px    |
+| theme.shape.borderRadius(1) | 2px    |
 | theme.shape.borderRadius(2) | 4px    |
 
 ### Typography
