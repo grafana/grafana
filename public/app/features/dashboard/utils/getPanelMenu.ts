@@ -68,23 +68,18 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
 
-  //================= WORKING HERE
-
   const onExportPanel = (exportType: ExportType) => {
-    reportInteraction('dashboards_panelheader_menu', {
-      item: 'createExportPanel',
-      exportType: exportType ?? ExportType.jpeg,
-    });
-
     exportPanel(
       document.documentElement.querySelector(`[data-panelid="${panel.id}"]`)!,
       panel,
       exportType ?? ExportType.jpeg,
       data
     );
+    reportInteraction('dashboards_panelheader_menu', {
+      item: 'createExportPanel',
+      exportType: exportType ?? ExportType.jpeg,
+    });
   };
-
-  //=================
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -169,73 +164,56 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  const subMenuEnable = true; // ============
-
   const exportMenu: PanelMenuItem[] = [];
-  let exportImageMenu = exportMenu;
-  let exportDataMenu = exportMenu;
 
-  if (subMenuEnable) {
-    exportImageMenu = [];
+  // geomap, logs, and news panels not supported by image
+  if (!(['geomap', 'logs', 'news'].indexOf(panel.type) > -1)) {
+    let exportImageMenu = [];
 
-    exportDataMenu = [];
-  }
-
-  exportImageMenu.push({
-    text: `PNG`,
-    onClick: () => onExportPanel(ExportType.png),
-  });
-
-  exportImageMenu.push({
-    text: `JPEG`,
-    onClick: () => onExportPanel(ExportType.jpeg),
-  });
-
-  exportImageMenu.push({
-    text: `BMP`,
-    onClick: () => onExportPanel(ExportType.bmp),
-  });
-
-  if (!subMenuEnable) {
     exportImageMenu.push({
-      type: 'divider',
-      text: '',
-    });
-  }
-
-  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
-    exportDataMenu.push({
-      text: `CSV`,
-      onClick: () => onExportPanel(ExportType.csv),
+      text: t('panel.header-menu.export-png', `PNG`),
+      onClick: () => onExportPanel(ExportType.png),
     });
 
-    exportDataMenu.push({
-      text: `Excel`,
-      onClick: () => onExportPanel(ExportType.xlsx),
+    exportImageMenu.push({
+      text: t('panel.header-menu.export-jpeg', `JPEG`),
+      onClick: () => onExportPanel(ExportType.jpeg),
     });
 
-    exportDataMenu.push({
-      text: `Data JSON`,
-      onClick: () => onExportPanel(ExportType.dataJson),
+    exportImageMenu.push({
+      text: t('panel.header-menu.export-bmp', `BMP`),
+      onClick: () => onExportPanel(ExportType.bmp),
     });
 
-    exportDataMenu.push({
-      text: `DataFrame JSON`,
-      onClick: () => onExportPanel(ExportType.dataFrameJson),
-    });
-  }
-
-  exportDataMenu.push({
-    text: `Panel JSON`,
-    onClick: () => onExportPanel(ExportType.panelJson),
-  });
-
-  if (subMenuEnable) {
     exportMenu.push({
       type: 'submenu',
       text: `Image`,
       iconClassName: 'image-v',
       subMenu: exportImageMenu,
+    });
+  }
+
+  if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
+    let exportDataMenu = [];
+
+    exportDataMenu.push({
+      text: t('panel.header-menu.export-csv', `CSV`),
+      onClick: () => onExportPanel(ExportType.csv),
+    });
+
+    exportDataMenu.push({
+      text: t('panel.header-menu.export-excel', `Excel`),
+      onClick: () => onExportPanel(ExportType.xlsx),
+    });
+
+    exportDataMenu.push({
+      text: t('panel.header-menu.export-data', `Data JSON`),
+      onClick: () => onExportPanel(ExportType.dataJson),
+    });
+
+    exportDataMenu.push({
+      text: t('panel.header-menu.export-dataframe', `DataFrame JSON`),
+      onClick: () => onExportPanel(ExportType.dataFrameJson),
     });
 
     exportMenu.push({
@@ -243,6 +221,12 @@ export function getPanelMenu(
       text: `Data`,
       iconClassName: 'book',
       subMenu: exportDataMenu,
+    });
+  } else {
+    exportMenu.push({
+      text: t('panel.header-menu.export-json', `Panel JSON`),
+      iconClassName: 'book',
+      onClick: () => onExportPanel(ExportType.panelJson),
     });
   }
 
