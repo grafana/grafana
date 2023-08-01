@@ -109,7 +109,7 @@ function getScene() {
           width: '100%',
           height: 300,
           body: PanelBuilders.table()
-            .setTitle('Worst Offender Alerts - This Week')
+            .setTitle('Alerts that fired the most this week')
             .setData(queryRunner4)
             .setOverrides((b) =>
               b
