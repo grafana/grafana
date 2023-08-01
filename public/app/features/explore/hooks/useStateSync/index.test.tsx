@@ -396,7 +396,7 @@ describe('useStateSync', () => {
     expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-6h', to: 'now' });
   });
 
-  it('Changes time rage when the range in the URL is updated to absolute range', async () => {
+  it('Changes time range when the range in the URL is updated to absolute range', async () => {
     const { waitForNextUpdate, rerender, store } = setup({
       queryParams: {
         panes: JSON.stringify({
