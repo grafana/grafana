@@ -92,3 +92,28 @@ func (u *SignedInUser) GetCacheKey() (string, error) {
 	}
 	return "", ErrNoUniqueID
 }
+
+func (u *SignedInUser) GetIsGrafanaAdmin() bool {
+	return u.IsGrafanaAdmin
+}
+
+func (u *SignedInUser) GetLogin() string {
+	return u.Login
+}
+
+func (u *SignedInUser) GetOrgID() int64 {
+	return u.OrgID
+}
+
+func (u *SignedInUser) GetPermissions(orgID int64) map[string][]string {
+	if u.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	return u.Permissions[orgID]
+}
+
+// FIXME: remove this method once all services are using an interface
+func (u *SignedInUser) IsNil() bool {
+	return u == nil
+}
