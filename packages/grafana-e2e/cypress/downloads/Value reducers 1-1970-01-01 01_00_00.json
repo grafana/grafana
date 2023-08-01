@@ -1,0 +1,84 @@
+{
+  "datasource": {
+    "uid": "-- Dashboard --",
+    "type": "datasource"
+  },
+  "cacheTimeout": null,
+  "gridPos": {
+    "h": 8,
+    "w": 9,
+    "x": 6,
+    "y": 8
+  },
+  "id": 6,
+  "links": [],
+  "options": {
+    "reduceOptions": {
+      "values": false,
+      "calcs": ["last"],
+      "fields": ""
+    },
+    "orientation": "horizontal",
+    "displayMode": "lcd",
+    "valueMode": "color",
+    "showUnfilled": true,
+    "minVizWidth": 0,
+    "minVizHeight": 10
+  },
+  "pluginVersion": "10.2.0-pre",
+  "targets": [
+    {
+      "panelId": 2,
+      "refId": "A",
+      "datasource": {
+        "uid": "-- Dashboard --",
+        "type": "datasource"
+      }
+    }
+  ],
+  "timeFrom": null,
+  "timeShift": null,
+  "title": "Value reducers 1",
+  "type": "bargauge",
+  "fieldConfig": {
+    "defaults": {
+      "mappings": [
+        {
+          "id": 0,
+          "op": "=",
+          "text": "N/A",
+          "type": 1,
+          "value": "null"
+        }
+      ],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          },
+          {
+            "color": "red",
+            "value": 80
+          }
+        ]
+      },
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Drill it down!",
+          "url": "/d/wfTJJL5Wz/datalinks-source\n?var-fieldName=${__field.name}\n&var-labelDatacenter=${__field.labels.datacenter}\n&var-labelDatacenterRegion=${__field.labels[\"datacenter.region\"]}\n&var-valueNumeric=${__value.numeric}\n&var-valueText=${__value.text}\n&var-valueCalc=${__value.calc}"
+        }
+      ],
+      "max": 100,
+      "min": 0,
+      "unit": "none",
+      "color": {
+        "mode": "thresholds"
+      },
+      "displayName": "${__series.name} - $__calc"
+    },
+    "overrides": []
+  }
+}

@@ -37,7 +37,7 @@ declare -A cypressConfig=(
   [defaultCommandTimeout]=30000
   [viewportWidth]=1920
   [viewportHeight]=1080
-  [trashAssetsBeforeRuns]=false
+  [trashAssetsBeforeRuns]=true
   [videoUploadOnPasses]=false
   [reporter]=../../e2e/log-reporter.js
 )
