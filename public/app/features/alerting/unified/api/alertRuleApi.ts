@@ -1,3 +1,5 @@
+import { compact, isEmpty, isNil, omit, omitBy } from 'lodash';
+
 import { RelativeTimeRange } from '@grafana/data';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
@@ -137,15 +139,16 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
     prometheusRuleNamespaces: build.query<RuleNamespace[], { ruleIdentifier: RuleIdentifier }>({
       query: ({ ruleIdentifier }) => {
-        const queryParams = new URLSearchParams();
+        const queryParams: Record<string, string | undefined> = {};
         if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
-          queryParams.set('file', ruleIdentifier.namespace);
-          queryParams.set('rule_group', ruleIdentifier.groupName);
+          queryParams['file'] = ruleIdentifier.namespace;
+          queryParams['rule_group'] = ruleIdentifier.groupName;
+          queryParams['rule_name'] = ruleIdentifier.ruleName;
         }
 
         return {
           url: `api/prometheus/${getDatasourceAPIUid(ruleIdentifier.ruleSourceName)}/api/v1/rules`,
-          params: Object.fromEntries(queryParams),
+          params: queryParams,
         };
       },
       transformResponse: (response: PromRulesResponse): RuleNamespace[] => {

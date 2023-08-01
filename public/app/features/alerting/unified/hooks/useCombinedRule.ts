@@ -164,13 +164,14 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
       return;
     }
 
-    if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
+    if (isCloudRuleIdentifier(ruleIdentifier)) {
       fetchRulerRuleGroup({
         rulerConfig: dsFeatures.rulerConfig,
         namespace: ruleIdentifier.namespace,
         group: ruleIdentifier.groupName,
       });
     } else if (isGrafanaRuleIdentifier(ruleIdentifier)) {
+      // TODO Fetch a single group for Grafana managed rules
       fetchRulerRules({ rulerConfig: dsFeatures.rulerConfig });
     }
   }, [dsFeatures, fetchRulerRuleGroup, fetchRulerRules, ruleIdentifier]);
@@ -201,20 +202,19 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
     }
 
     if (
-      promRuleNs.length === 1 &&
+      promRuleNs.length > 0 &&
       (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier))
     ) {
-      const namespace = combinePromAndRulerRules(dsSettings, promRuleNs[0], rulerRuleGroup);
-      if (!namespace) {
-        return;
-      }
+      const namespaces = promRuleNs.map((ns) => combinePromAndRulerRules(dsSettings, ns, rulerRuleGroup));
 
-      for (const group of namespace.groups) {
-        for (const rule of group.rules) {
-          const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+      for (const namespace of namespaces) {
+        for (const group of namespace.groups) {
+          for (const rule of group.rules) {
+            const id = ruleId.fromCombinedRule(ruleSourceName, rule);
 
-          if (ruleId.equal(id, ruleIdentifier)) {
-            return rule;
+            if (ruleId.equal(id, ruleIdentifier)) {
+              return rule;
+            }
           }
         }
       }
@@ -222,6 +222,16 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
 
     return;
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, rulerRules, dsSettings]);
+
+  // if (dsFeatures?.rulerConfig && rule) {
+  //   rule.rulerRule = {
+  //     alert: rule.name,
+  //     expr: rule.query,
+  //     for: '0', // Could try to use `duration` from promRule but not specified in typescript
+  //     annotations: rule.annotations,
+  //     labels: rule.labels,
+  //   };
+  // }
 
   return {
     loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || isLoadingRulerRules,

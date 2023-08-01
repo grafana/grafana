@@ -1,7 +1,7 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { byRole } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -10,8 +10,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
-import { useCombinedRule } from '../../hooks/useCombinedRule';
+// import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
+import { setupMswServer } from '../../mockApi';
 import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../mocks';
 
 import { RuleViewer } from './RuleViewer.v1';
@@ -30,7 +31,7 @@ const mockRoute: GrafanaRouteComponentProps<{ id?: string; sourceName?: string }
   staticContext: {},
 };
 
-jest.mock('../../hooks/useCombinedRule');
+// jest.mock('../../hooks/useCombinedRule');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -44,14 +45,10 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const renderRuleViewer = () => {
-  return act(async () => {
-    render(
-      <TestProvider>
-        <RuleViewer {...mockRoute} />
-      </TestProvider>
-    );
-  });
+jest.mock('../../hooks/useIsRuleEditable');
+
+const mocks = {
+  useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
 
 const ui = {
@@ -61,23 +58,35 @@ const ui = {
     delete: byRole('button', { name: /delete/i }),
     silence: byRole('link', { name: 'Silence' }),
   },
+  loadingIndicator: byText(/Loading rule/i),
 };
-jest.mock('../../hooks/useIsRuleEditable');
 
-const mocks = {
-  useIsRuleEditable: jest.mocked(useIsRuleEditable),
+const renderRuleViewer = async () => {
+  render(
+    <TestProvider>
+      <RuleViewer {...mockRoute} />
+    </TestProvider>
+  );
+
+  await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 };
+
+const server = setupMswServer();
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
 });
 
-describe('RuleViewer', () => {
-  let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+afterEach(() => {
+  server.resetHandlers();
+});
 
-  beforeEach(() => {
-    mockCombinedRule = jest.mocked(useCombinedRule);
-  });
+describe('RuleViewer', () => {
+  let mockCombinedRule = jest.fn();
+
+  // beforeEach(() => {
+  //   mockCombinedRule = jest.mocked(useCombinedRule);
+  // });
 
   afterEach(() => {
     mockCombinedRule.mockReset();
@@ -114,10 +123,10 @@ describe('RuleViewer', () => {
 
 describe('RuleDetails RBAC', () => {
   describe('Grafana rules action buttons in details', () => {
-    let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+    let mockCombinedRule = jest.fn();
 
     beforeEach(() => {
-      mockCombinedRule = jest.mocked(useCombinedRule);
+      // mockCombinedRule = jest.mocked(useCombinedRule);
     });
 
     afterEach(() => {
@@ -228,10 +237,10 @@ describe('RuleDetails RBAC', () => {
     });
   });
   describe('Cloud rules action buttons', () => {
-    let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;
+    let mockCombinedRule = jest.fn();
 
     beforeEach(() => {
-      mockCombinedRule = jest.mocked(useCombinedRule);
+      // mockCombinedRule = jest.mocked(useCombinedRule);
     });
 
     afterEach(() => {
