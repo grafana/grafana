@@ -19,7 +19,7 @@ import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
-import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
+import { changeCorrelationsEditorMode, richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import {
@@ -73,6 +73,10 @@ export function changePanelState(
         },
       })
     );
+
+    if (panelsState.correlations !== undefined && !getState().explore.correlationsEditorMode) {
+      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+    }
   };
 }
 

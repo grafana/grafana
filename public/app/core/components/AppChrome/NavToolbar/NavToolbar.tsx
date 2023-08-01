@@ -35,7 +35,6 @@ export function NavToolbar({
 }: Props) {
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = useStyles2(getStyles);
-  console.log("toolbar", sectionNav, pageNav, homeNav)
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
   return (

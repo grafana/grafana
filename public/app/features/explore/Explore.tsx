@@ -27,8 +27,6 @@ import {
   withTheme2,
   PanelContainer,
   AdHocFilterItem,
-  InfoBox,
-  Button,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
@@ -40,6 +38,7 @@ import { AbsoluteTimeEvent } from 'app/types/events';
 
 import { getTimeZone } from '../profile/state/selectors';
 
+import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -62,7 +61,6 @@ import { splitOpen } from './state/main';
 import {
   addQueryRow,
   modifyQueries,
-  saveCurrentCorrelation,
   scanStart,
   scanStopAction,
   selectIsWaitingForData,
@@ -496,7 +494,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       timeZone,
       showLogsSample,
       panelsState,
-      saveCurrentCorrelation,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -520,17 +517,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       let correlationsBox = undefined;
       if (panelsState && panelsState.correlations !== undefined) {
         const vars = Object.entries(panelsState.correlations.vars);
-        correlationsBox = <InfoBox>
-          You can use following variables to set up your correlations:
-          <pre>
-          {
-            vars.map((entry, index) => {
-              return `\$\{${entry[0]}\} = ${entry[1]}\n`
-            })
-          }
-          </pre>
-          Once you&#39;re happy with your setup, click <Button onClick={saveCurrentCorrelation}>Save</Button>
-        </InfoBox>
+        correlationsBox = <CorrelationHelper vars={vars} />
       }
 
     return (
@@ -686,7 +673,6 @@ const mapDispatchToProps = {
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
-  saveCurrentCorrelation
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

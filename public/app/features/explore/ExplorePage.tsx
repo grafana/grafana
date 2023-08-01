@@ -46,6 +46,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
   const panes = useSelector(selectPanesEntries);
+  console.log(panes.map(pane => pane[1]?.panelsState?.correlations !== undefined).includes(true));
   const hasSplit = useSelector(isSplit);
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
 

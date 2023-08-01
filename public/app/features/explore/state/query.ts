@@ -1258,7 +1258,7 @@ export function reloadCorrelations(exploreId: string): ThunkResult<void> {
   }
 }
 
-export function saveCurrentCorrelation(): ThunkResult<void> {
+export function saveCurrentCorrelation(label?: string, description?: string): ThunkResult<void> {
   return async (dispatch, getState) => {
 
     const keys = Object.keys(getState().explore!.panes);
@@ -1269,7 +1269,8 @@ export function saveCurrentCorrelation(): ThunkResult<void> {
       const correlation: CreateCorrelationParams = {
         sourceUID: sourcePane.datasourceInstance.uid,
         targetUID: targetPane.datasourceInstance.uid,
-        label: `${sourcePane.datasourceInstance.name} to ${targetPane.datasourceInstance.name}`,
+        label: label || `${sourcePane.datasourceInstance.name} to ${targetPane.datasourceInstance.name}`,
+        description,
         config: {
           field: targetPane.panelsState.correlations.resultField,
           target: targetPane.queries[0],
