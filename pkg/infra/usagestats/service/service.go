@@ -26,6 +26,8 @@ type UsageStats struct {
 
 	externalMetrics     []usagestats.MetricsFunc
 	sendReportCallbacks []usagestats.SendReportCallbackFunc
+
+	readyToReport bool
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -107,6 +109,10 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 
 func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbackFunc) {
 	uss.sendReportCallbacks = append(uss.sendReportCallbacks, c)
+}
+
+func (uss *UsageStats) SetReadyToReport(context.Context) {
+	uss.readyToReport = true
 }
 
 func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
