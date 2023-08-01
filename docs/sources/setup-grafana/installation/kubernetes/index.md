@@ -613,7 +613,7 @@ Performing a dry run can be useful for catching errors or unintended consequence
 
 Example:
 
-Perform a dry run when you make changes to the `grafana.yaml` such as using a new image version, or adding new labels and you want to determine if there are syntax errors or conflicts.
+The following example shows how to perform a dry run when you make changes to the `grafana.yaml` such as using a new image version, or adding new labels and you want to determine if there are syntax errors or conflicts.
 
 To perform a dry run, run the following command:
 
