@@ -46,19 +46,19 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
     return (
       <>
+        <input
+          type="radio"
+          className={styles.radio}
+          onChange={onChange}
+          onClick={onClick}
+          disabled={disabled}
+          id={id}
+          checked={active}
+          name={name}
+          aria-label={ariaLabel || description}
+          ref={ref}
+        />
         <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
-          <input
-            type="radio"
-            className={styles.radio}
-            onChange={onChange}
-            onClick={onClick}
-            disabled={disabled}
-            id={id}
-            checked={active}
-            name={name}
-            aria-label={ariaLabel || description}
-            ref={ref}
-          />
           {children}
         </label>
       </>
@@ -82,7 +82,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       opacity: 0,
       zIndex: -1000,
 
-      'label:has(&:checked)': {
+      '&:checked + label': {
         color: theme.colors.text.primary,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.action.selected,

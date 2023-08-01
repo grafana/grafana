@@ -59,33 +59,6 @@ export function RadioButtonGroup<T>({
     [onClick]
   );
 
-  const getStyles = (theme: GrafanaTheme2) => {
-    return {
-      radioGroup: css({
-        display: 'inline-flex',
-        flexDirection: 'row',
-        flexWrap: 'nowrap',
-        border: `1px solid ${theme.components.input.borderColor}`,
-        borderRadius: theme.shape.borderRadius(),
-        padding: '2px',
-      }),
-      fullWidth: css({
-        display: 'grid',
-      }),
-      icon: css({
-        marginRight: '6px',
-      }),
-      img: css({
-        width: theme.spacing(2),
-        height: theme.spacing(2),
-        marginRight: theme.spacing(1),
-      }),
-      invalid: css({
-        border: `1px solid ${theme.colors.error.border}`,
-      }),
-    };
-  };
-
   const internalId = id ?? uniqueId('radiogroup-');
   const groupName = useRef(internalId);
   const styles = useStyles2(getStyles);
@@ -130,3 +103,30 @@ export function RadioButtonGroup<T>({
 }
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    radioGroup: css({
+      display: 'inline-flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      border: `1px solid ${theme.components.input.borderColor}`,
+      borderRadius: theme.shape.borderRadius(),
+      padding: '2px',
+    }),
+    fullWidth: css({
+      display: 'grid',
+    }),
+    icon: css({
+      marginRight: '6px',
+    }),
+    img: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      marginRight: theme.spacing(1),
+    }),
+    invalid: css({
+      border: `1px solid ${theme.colors.error.border}`,
+    }),
+  };
+};
