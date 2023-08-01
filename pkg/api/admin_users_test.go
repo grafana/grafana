@@ -347,7 +347,6 @@ func Test_AdminUpdateUserPermissions(t *testing.T) {
 			sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 
 			assert.Equal(t, tc.expectedRespCode, sc.resp.Code)
-
 		})
 	}
 }
