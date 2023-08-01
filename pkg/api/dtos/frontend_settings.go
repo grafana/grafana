@@ -17,7 +17,6 @@ type FrontendSettingsAuthDTO struct {
 	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
 	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
 	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
-	DisableSyncLock             bool `json:"DisableSyncLock"`
 	AuthProxyEnableLoginToken   bool `json:"AuthProxyEnableLoginToken"`
 }
 
