@@ -110,6 +110,7 @@ export interface CurrentUserDTO {
   email: string;
   name: string;
   theme: string; // dark | light | system
+  orgCount: number;
   orgId: number;
   orgName: string;
   orgRole: OrgRole | '';
