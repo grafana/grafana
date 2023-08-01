@@ -254,8 +254,6 @@ const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
     card: css({
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.medium}`,
-      display: 'flex',
-      flexDirection: 'column',
       cursor: 'grab',
       borderRadius: theme.shape.borderRadius(1),
       position: 'relative',

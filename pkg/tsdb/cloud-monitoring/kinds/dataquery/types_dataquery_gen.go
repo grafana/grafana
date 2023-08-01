@@ -86,18 +86,6 @@ const (
 // AlignmentTypes defines model for AlignmentTypes.
 type AlignmentTypes string
 
-// Annotation sub-query properties.
-type AnnotationQuery struct {
-	// TimeSeriesList Time Series List sub-query properties.
-	TimeSeriesList
-
-	// Annotation text.
-	Text *string `json:"text,omitempty"`
-
-	// Annotation title.
-	Title *string `json:"title,omitempty"`
-}
-
 // CloudMonitoringQuery defines model for CloudMonitoringQuery.
 type CloudMonitoringQuery struct {
 	// DataQuery These are the common properties available to all queries in all datasources.
@@ -114,10 +102,8 @@ type CloudMonitoringQuery struct {
 	// SLO sub-query properties.
 	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
 
-	// GCM query type.
-	// queryType: #QueryType
 	// Time Series List sub-query properties.
-	TimeSeriesList *any `json:"timeSeriesList,omitempty"`
+	TimeSeriesList *TimeSeriesList `json:"timeSeriesList,omitempty"`
 
 	// Time Series sub-query properties.
 	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
@@ -166,7 +152,7 @@ type Filter struct {
 // GoogleCloudMonitoringDataQuery defines model for GoogleCloudMonitoringDataQuery.
 type GoogleCloudMonitoringDataQuery = map[string]any
 
-// @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+// @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
 type LegacyCloudMonitoringAnnotationQuery struct {
 	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
 	Filters    []string   `json:"filters"`
@@ -304,6 +290,12 @@ type TimeSeriesList struct {
 
 	// Only present if a preprocessor is selected. Alignment function to be used. Defaults to ALIGN_MEAN.
 	SecondaryPerSeriesAligner *string `json:"secondaryPerSeriesAligner,omitempty"`
+
+	// Annotation text.
+	Text *string `json:"text,omitempty"`
+
+	// Annotation title.
+	Title *string `json:"title,omitempty"`
 
 	// Data view, defaults to FULL.
 	View *string `json:"view,omitempty"`

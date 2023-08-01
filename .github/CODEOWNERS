@@ -13,7 +13,7 @@
 
 # Documentation
 /.changelog-archive @grafana/docs-grafana
-/CHANGELOG.md @grafana/docs-grafana
+/CHANGELOG.md @grafana/grafana-delivery
 /CODE_OF_CONDUCT.md @grafana/docs-grafana
 /CONTRIBUTING.md @grafana/docs-grafana
 /GOVERNANCE.md @RichiH
@@ -602,10 +602,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
+/.github/workflows/community-release.yml @grafana/grafana-delivery
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
-/.github/workflows/github-release.yml @torkelo
+/.github/workflows/github-release.yml @grafana/grafana-delivery
 /.github/workflows/issue-labeled.yml @armandgrillet
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
