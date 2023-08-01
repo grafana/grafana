@@ -90,6 +90,18 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     [parsedOptions.alertInstanceLabelFilter]
   );
 
+  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
+  //See https://github.com/grafana/grafana/pull/70482
+  const {
+    currentData: grafanaPromRules = [],
+    isLoading: grafanaRulesLoading,
+    refetch: refetchGrafanaPromRules,
+  } = usePrometheusRulesByNamespaceQuery({
+    limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+    matcher: matcherList,
+    state: stateList,
+  });
+
   useEffect(() => {
     if (props.options.groupMode === GroupMode.Default) {
       dispatch(
@@ -111,19 +123,20 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
         state: stateList,
       })
     );
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
+      refetchGrafanaPromRules();
       dispatch(
         fetchAllPromAndRulerRulesAction(false, {
           limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
           matcher: matcherList,
           state: stateList,
         })
-      )
-    );
+      );
+    });
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard, matcherList, stateList, toggleLimit, limitInstances]);
+  }, [dispatch, dashboard, matcherList, stateList, toggleLimit, limitInstances, refetchGrafanaPromRules]);
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
@@ -159,15 +172,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
 
-  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
-  //See https://github.com/grafana/grafana/pull/70482
-  const { currentData: promRules = [], isLoading: grafanaRulesLoading } = usePrometheusRulesByNamespaceQuery({
-    limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-    matcher: matcherList,
-    state: stateList,
-  });
-
-  const combinedRules = useCombinedRuleNamespaces(undefined, promRules);
+  const combinedRules = useCombinedRuleNamespaces(undefined, grafanaPromRules);
 
   const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
   const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
