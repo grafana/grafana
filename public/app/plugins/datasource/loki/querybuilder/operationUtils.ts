@@ -56,9 +56,7 @@ export function createRangeOperation(name: string, isRangeOperationWithGrouping?
       if (op.params[0] === '$__interval') {
         return `${opDocs} \`$__interval\` is a variable that will be replaced with the [calculated interval](https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval) based on the time range and width of the graph. In Dashboards, you can affect the interval variable using **Max data points** and **Min interval**. You can find these options under **Query options** right of the data source select dropdown.`;
       } else if (op.params[0] === '$__auto') {
-        // Todo: Improve this. We can use:
-        // The default value equals to the value of $__interval variable, which is calculated using the time range and the width of the graph (the number of pixels).
-        return `${opDocs} \`$__auto\` is a variable that will be replaced with step for range queries and $__range value for instant queries.`;
+        return `${opDocs} \`$__auto\` is a variable that will be replaced with the [value of step](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries and with the value of selected time range (calculated to - from) for instant queries.`;
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
       }
