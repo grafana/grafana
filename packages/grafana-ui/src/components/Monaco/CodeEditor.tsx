@@ -178,7 +178,7 @@ export const CodeEditor = withTheme2(UnthemedCodeEditor);
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.components.input.borderColor}`,
     }),
   };

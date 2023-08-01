@@ -2,16 +2,10 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import {
-  AccessControlAction,
-  Settings,
-  ThunkResult,
-  SettingsError,
-  UpdateSettingsQuery,
-  AuthProviderStatus,
-} from 'app/types';
+import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
 import { getAuthProviderStatus, getRegisteredAuthProviders } from '..';
+import { AuthProviderStatus, SettingsError } from '../types';
 
 import { loadingBegin, loadingEnd, providerStatusesLoaded, resetError, setError, settingsUpdated } from './reducers';
 

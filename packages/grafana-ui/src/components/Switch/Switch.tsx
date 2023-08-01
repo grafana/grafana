@@ -151,7 +151,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
       alignItems: 'center',
       background: transparent ? 'transparent' : theme.components.input.background,
       border: `1px solid ${transparent ? 'transparent' : theme.components.input.borderColor}`,
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
 
       '&:hover': {
         border: `1px solid ${transparent ? 'transparent' : theme.components.input.borderHover}`,
