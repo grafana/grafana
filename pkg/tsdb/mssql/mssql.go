@@ -231,9 +231,9 @@ func getAzureCredentialDSNFragment(azureCredentials azcredentials.AzureCredentia
 	switch c := azureCredentials.(type) {
 	case *azcredentials.AzureManagedIdentityCredentials:
 		if cfg.Azure.ManagedIdentityClientId != "" {
-			connStr += fmt.Sprintf("user id=%s", cfg.Azure.ManagedIdentityClientId)
+			connStr += fmt.Sprintf("user id=%s;", cfg.Azure.ManagedIdentityClientId)
 		}
-		connStr += fmt.Sprintf("fedauth=%s",
+		connStr += fmt.Sprintf("fedauth=%s;",
 			"ActiveDirectoryManagedIdentity")
 	case *azcredentials.AzureClientSecretCredentials:
 		connStr += fmt.Sprintf("user id=%s@%s;password=%s;fedauth=%s;",
