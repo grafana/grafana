@@ -275,7 +275,6 @@ type Cfg struct {
 	AdminPassword                string
 	DisableLogin                 bool
 	AdminEmail                   string
-	DisableSyncLock              bool
 	DisableLoginForm             bool
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
@@ -1523,9 +1522,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
-
-	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
-	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
