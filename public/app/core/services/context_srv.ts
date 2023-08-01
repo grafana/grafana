@@ -19,7 +19,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   name: string;
   externalUserId: string;
   theme: string;
-  orgCount: number;
   orgId: number;
   orgName: string;
   orgRole: OrgRole | '';
@@ -45,7 +44,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.orgName = '';
     this.login = '';
     this.externalUserId = '';
-    this.orgCount = 0;
     this.timezone = '';
     this.fiscalYearStartMonth = 0;
     this.helpFlags1 = 0;
