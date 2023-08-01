@@ -23,7 +23,7 @@ weight: 400
 
 [Explore]({{< relref "../../../../explore" >}}) provides an excellent place for investigating incidents and troubleshooting using logs. If the data source produces log results, we highly recommend implementing the following APIs to empower your users to fully utilize the logs UI and its features within Explore.
 
-This guide will walk you through the process of extending functionality for Explore queries in a data source plugin, enabling seamless integration and maximizing the potential of log analysis in your data source. By implementing these APIs, you can enhance the user experience and provide valuable insights through Explore's powerful log investigation capabilities.
+This guide will walk you through the process of adding support for Explore features in a data source plugin through a seamless integration, maximizing the potential for logs analysis. By implementing these APIs, you can enhance the user experience and provide valuable insights through Explore's powerful log investigation capabilities.
 
 ## Supported APIs for external plugin developers
 
