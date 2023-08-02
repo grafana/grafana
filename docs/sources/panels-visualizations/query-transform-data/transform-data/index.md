@@ -971,3 +971,11 @@ This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modi
 {{% /admonition %}}
 
 Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type]({{< relref "../../visualizations/table/#sparkline" >}}), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+### Format Time
+
+{{% admonition type="note" %}}
+This transformation is available in Grafana 10.1+ as an alpha feature.
+{{% /admonition %}}
+
+Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
