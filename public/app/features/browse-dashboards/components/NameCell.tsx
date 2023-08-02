@@ -59,7 +59,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
             onFolderClick(item.uid, !isOpen);
           }}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+          aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
         />
       ) : (
         <span className={styles.folderButtonSpacer} />
