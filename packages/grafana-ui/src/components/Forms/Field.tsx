@@ -5,8 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getChildId } from '../../utils/reactUtils';
-import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
 
 import { FieldValidationMessage } from './FieldValidationMessage';
 import { Label } from './Label';
@@ -32,8 +30,6 @@ export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   horizontal?: boolean;
   /** make validation message overflow horizontally. Prevents pushing out adjacent inline components */
   validationMessageHorizontalOverflow?: boolean;
-  /** Adds tooltip next to the label */
-  tooltipMessage?: string;
 
   className?: string;
   /**
@@ -70,9 +66,6 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme2) => {
         whiteSpace: 'nowrap',
       },
     }),
-    tooltipIcon: css({
-      marginLeft: theme.spacing(0.5),
-    }),
   };
 });
 
@@ -91,7 +84,6 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       className,
       validationMessageHorizontalOverflow,
       htmlFor,
-      tooltipMessage,
       ...otherProps
     }: FieldProps,
     ref
@@ -104,11 +96,6 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
       typeof label === 'string' ? (
         <Label htmlFor={inputId} description={description}>
           {`${label}${required ? ' *' : ''}`}
-          {tooltipMessage && (
-            <Tooltip placement="right-end" content={tooltipMessage}>
-              <Icon name="question-circle" size="xs" className={styles.tooltipIcon} />
-            </Tooltip>
-          )}
         </Label>
       ) : (
         label
