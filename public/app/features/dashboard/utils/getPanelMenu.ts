@@ -235,7 +235,7 @@ export function getPanelMenu(
     });
   }
 
-  // TODO: Re-implement feature toggle
+  // TODO: Re-implement real feature toggle
 
   const featureToggleEnabled = true;
 

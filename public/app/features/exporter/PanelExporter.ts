@@ -34,8 +34,6 @@ export async function exportSelect(payload: ExportPayload) {
     });
   }
 
-  // TODO: Add custom exporting and/or all panel exports
-
   switch (payload.format) {
     case ExportType.jpeg:
     case ExportType.png:

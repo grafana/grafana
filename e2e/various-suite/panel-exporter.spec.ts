@@ -5,9 +5,8 @@ const PANEL_UNDER_TEST = 'Value reducers 1';
 Cypress.config('defaultCommandTimeout', 60000);
 
 e2e.scenario({
-  // using inspect-drawer.spec.ts as a basis to write these tests
   describeName: 'Export Panel tests',
-  itName: 'Tests all file formats are succesfully downloaded', // particularly image files need to be tested I think
+  itName: 'Tests all file formats are succesfully downloaded',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
@@ -39,7 +38,7 @@ e2e.scenario({
 });
 
 const expectSubMenuScenario = (subMenu: string, menuItem: string, extension: string) => {
-  // testing opening inspect drawer from sub menus under Inspect in header menu
+  // testing opening the panel menu for the given panel
   e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible').click();
   e2e.components.Panels.Panel.menu(PANEL_UNDER_TEST).click({ force: true });
 
@@ -48,7 +47,7 @@ const expectSubMenuScenario = (subMenu: string, menuItem: string, extension: str
   e2e.components.Panels.Panel.menuItems(subMenu).trigger('mouseover', { force: true });
   e2e.components.Panels.Panel.menuItems(menuItem).click({ force: true });
 
-  // https://www.browserstack.com/docs/automate/cypress/file-download-testing
+  // breaks on headless GitHub action test
   if (Cypress.browser.isHeaded) {
     cy.readFile(`cypress/downloads/${PANEL_UNDER_TEST}-1970-01-01 01_00_00${extension}`);
   }
