@@ -17,11 +17,12 @@ jobs:
             echo has-secrets=1 >> "${GITHUB_OUTPUT}"
           fi
   sync:
-    if: github.repository == 'grafana/grafana'
+    needs: config
+    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
     runs-on: ubuntu-latest
     steps:
       - name: Generate token
-        id: generate_token
+        id: generate-token
         uses: tibdex/github-app-token@v1
         with:
           app: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_ID }}
@@ -37,7 +38,7 @@ jobs:
           sparse-checkout: |
             action.yml
             entrypoint.sh
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Publish to website repository (next)
         uses: ./.github/actions/website-sync
@@ -50,6 +51,6 @@ jobs:
           # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
           # GitHub administrator to update the organization secret.
           # The IT helpdesk can update the organization secret.
-          github_pat: grafanabot:${{ steps.generate_token.outputs.token }}
+          github_pat: grafanabot:${{ steps.generate-token.outputs.token }}
           source_folder: docs/sources
           target_folder: content/docs/grafana/next
