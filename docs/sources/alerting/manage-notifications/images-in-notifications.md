@@ -1,10 +1,16 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/
 description: How to use images in notifications
 keywords:
   - grafana
   - alerting
   - images
   - notifications
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Use images in notifications
 weight: 405
 ---

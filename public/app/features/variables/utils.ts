@@ -1,6 +1,6 @@
 import { isArray, isEqual } from 'lodash';
 
-import { ScopedVars, UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
+import { UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
@@ -27,38 +27,6 @@ export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^
 export const variableRegexExec = (variableString: string) => {
   variableRegex.lastIndex = 0;
   return variableRegex.exec(variableString);
-};
-
-export const SEARCH_FILTER_VARIABLE = '__searchFilter';
-
-export const containsSearchFilter = (query: string | unknown): boolean =>
-  query && typeof query === 'string' ? query.indexOf(SEARCH_FILTER_VARIABLE) !== -1 : false;
-
-export interface SearchFilterOptions {
-  searchFilter?: string;
-}
-
-export const getSearchFilterScopedVar = (args: {
-  query: string;
-  wildcardChar: string;
-  options?: SearchFilterOptions;
-}): ScopedVars => {
-  const { query, wildcardChar } = args;
-  if (!containsSearchFilter(query)) {
-    return {};
-  }
-
-  let { options } = args;
-
-  options = options || { searchFilter: '' };
-  const value = options.searchFilter ? `${options.searchFilter}${wildcardChar}` : `${wildcardChar}`;
-
-  return {
-    __searchFilter: {
-      value,
-      text: '',
-    },
-  };
 };
 
 export function containsVariable(...args: any[]) {
@@ -258,7 +226,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   return count ? changes : undefined;
 }
 
-export function ensureStringValues(value: any | any[]): string | string[] {
+export function ensureStringValues(value: unknown | unknown[]): string | string[] {
   if (Array.isArray(value)) {
     return value.map(String);
   }

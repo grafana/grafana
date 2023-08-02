@@ -2,12 +2,15 @@ package registry
 
 import (
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
+
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 )
 
 type Registry interface{}
@@ -22,6 +25,9 @@ func ProvideRegistry(
 	apiServer grafanaapiserver.Service,
 	backgroundServiceRunner *backgroundsvcs.BackgroundServiceRunner,
 	certGenerator certgenerator.ServiceInterface,
+	httpServer *api.HTTPServer,
+	provisioningService *provisioning.ProvisioningServiceImpl,
+	secretsMigrator *migrations.SecretMigrationProviderImpl,
 ) *registry {
 	return newRegistry(
 		log.New("modules.registry"),
@@ -29,6 +35,9 @@ func ProvideRegistry(
 		apiServer,
 		backgroundServiceRunner,
 		certGenerator,
+		httpServer,
+		provisioningService,
+		secretsMigrator,
 	)
 }
 

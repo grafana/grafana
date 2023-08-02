@@ -4,7 +4,6 @@ export { QueryType };
 export {
   TimeSeriesList,
   PreprocessorType,
-  AnnotationQuery,
   TimeSeriesQuery,
   SLOQuery,
   MetricQuery,

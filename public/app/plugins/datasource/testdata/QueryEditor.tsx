@@ -4,7 +4,6 @@ import { useAsync } from 'react-use';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
-import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
@@ -166,13 +165,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, csvWave });
   };
 
-  const onDropPercentChanged = (dropPercent: number | undefined) => {
-    if (!dropPercent) {
-      dropPercent = undefined;
-    }
-    onChange({ ...query, dropPercent });
-  };
-
   const options = useMemo(
     () =>
       (scenarioList || [])
@@ -234,12 +226,14 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
         {show.dropPercent && (
           <InlineField label="Drop" tooltip={'Drop a random set of points'}>
-            <NumberInput
+            <Input
+              type="number"
               min={0}
               max={100}
               step={5}
               width={8}
-              onChange={onDropPercentChanged}
+              onChange={onInputChange}
+              name="dropPercent"
               placeholder="0"
               value={query.dropPercent}
               suffix={<Icon name="percentage" />}
@@ -346,6 +340,17 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             rows={10}
             placeholder="Copy base64 text data from query result"
             onChange={onInputChange}
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === TestDataQueryType.FlameGraph && (
+        <InlineField label={'Diff profile'} grow>
+          <InlineSwitch
+            value={Boolean(query.flamegraphDiff)}
+            onChange={(e) => {
+              onUpdate({ ...query, flamegraphDiff: e.currentTarget.checked });
+            }}
           />
         </InlineField>
       )}

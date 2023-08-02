@@ -99,7 +99,10 @@ func (b *Builder) applyFilters() (ordering string) {
 
 	for _, f := range b.Filters {
 		if f, ok := f.(FilterLeftJoin); ok {
-			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+			s := f.LeftJoin()
+			if s != "" {
+				joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", s))
+			}
 		}
 
 		if f, ok := f.(FilterWhere); ok {

@@ -26,7 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   common: css`
     display: inline-block;
     color: white;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     font-size: ${theme.typography.size.sm};
     text-transform: capitalize;
     line-height: 1.2;

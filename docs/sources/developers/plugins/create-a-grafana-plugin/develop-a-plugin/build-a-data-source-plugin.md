@@ -1,13 +1,17 @@
 ---
-title: Build a data source plugin
 description: Create a plugin to add support for your own data sources.
-weight: 300
 keywords:
   - grafana
   - plugins
   - plugin
   - data source
   - datasource
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a data source plugin
+weight: 300
 ---
 
 ## Introduction

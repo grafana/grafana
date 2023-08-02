@@ -153,6 +153,7 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 // WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
+	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
 
 	idx := 0
@@ -165,10 +166,11 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 			idx++
 		}
 
+		features[key] = &FeatureFlag{Name: key, Enabled: val}
 		if val {
 			enabled[key] = true
 		}
 	}
 
-	return &FeatureManager{enabled: enabled}
+	return &FeatureManager{enabled: enabled, flags: features}
 }

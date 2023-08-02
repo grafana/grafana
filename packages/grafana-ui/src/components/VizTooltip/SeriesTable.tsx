@@ -18,35 +18,35 @@ export interface SeriesTableRowProps {
 
 const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
   return {
-    icon: css`
-      margin-right: ${theme.spacing(1)};
-      vertical-align: middle;
-    `,
-    seriesTable: css`
-      display: table;
-    `,
-    seriesTableRow: css`
-      display: table-row;
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    seriesTableCell: css`
-      display: table-cell;
-    `,
-    label: css`
-      word-break: break-all;
-    `,
-    value: css`
-      padding-left: ${theme.spacing(2)};
-      text-align: right;
-    `,
-    activeSeries: css`
-      font-weight: ${theme.typography.fontWeightBold};
-      color: ${theme.colors.text.maxContrast};
-    `,
-    timestamp: css`
-      font-weight: ${theme.typography.fontWeightBold};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
+    icon: css({
+      marginRight: theme.spacing(1),
+      verticalAlign: 'middle',
+    }),
+    seriesTable: css({
+      display: 'table',
+    }),
+    seriesTableRow: css({
+      display: 'table-row',
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    seriesTableCell: css({
+      display: 'table-cell',
+    }),
+    label: css({
+      wordBreak: 'break-all',
+    }),
+    value: css({
+      paddingLeft: theme.spacing(2),
+      textAlign: 'right',
+    }),
+    activeSeries: css({
+      fontWeight: theme.typography.fontWeightBold,
+      color: theme.colors.text.maxContrast,
+    }),
+    timestamp: css({
+      fontWeight: theme.typography.fontWeightBold,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
   };
 };
 

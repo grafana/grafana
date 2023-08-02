@@ -8,6 +8,11 @@ keywords:
   - queries
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Graphite template variables
 weight: 300
@@ -19,7 +24,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
 
 ## Select a query type
 
@@ -63,7 +68,7 @@ Non-tag queries use the default glob formatting for multi-value variables.
 server=~${servers:regex}
 ```
 
-For more information, refer to [Advanced variable format options]({{< relref "../../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}).
+For more information, refer to [Advanced variable format options][variable-syntax-advanced-variable-format-options].
 
 ## Use other query variables
 
@@ -139,3 +144,14 @@ The Graphite data source supports two variable syntaxes for use in the **Query**
 ### Templated dashboard example
 
 To view an example templated dashboard, refer to [Graphite Templated Dashboard](https://play.grafana.org/dashboard/db/graphite-templated-nested).
+
+{{% docs/reference %}}
+[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[variable-syntax-advanced-variable-format-options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
+[variable-syntax-advanced-variable-format-options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

@@ -184,4 +184,31 @@ describe('LogsQueryEditor', () => {
       })
     );
   });
+
+  it('should update the intersectTime prop', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    const onChange = jest.fn();
+
+    render(
+      <LogsQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const intersectionOption = await screen.findByLabelText('Intersection');
+    await userEvent.click(intersectionOption);
+
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          intersectTime: true,
+        }),
+      })
+    );
+  });
 });
