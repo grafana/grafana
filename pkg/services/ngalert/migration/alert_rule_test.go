@@ -74,7 +74,7 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			model, err := tt.input.Encode()
 			require.NoError(t, err)
-			queries, err := migrateAlertRuleQueries(&logtest.Fake{}, []alertQuery{{Model: model}})
+			queries, err := migrateAlertRuleQueries(&logtest.Fake{}, []models.AlertQuery{{Model: model}})
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
@@ -183,7 +183,7 @@ func TestMakeAlertRule(t *testing.T) {
 
 		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 		require.Nil(t, err)
-		require.Equal(t, string(models.NoData), ar.NoDataState)
+		require.Equal(t, models.NoData, ar.NoDataState)
 	})
 
 	t.Run("use default if execution of Error is not known", func(t *testing.T) {
@@ -194,7 +194,7 @@ func TestMakeAlertRule(t *testing.T) {
 
 		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 		require.Nil(t, err)
-		require.Equal(t, string(models.ErrorErrState), ar.ExecErrState)
+		require.Equal(t, models.ErrorErrState, ar.ExecErrState)
 	})
 
 	t.Run("migrate message template", func(t *testing.T) {

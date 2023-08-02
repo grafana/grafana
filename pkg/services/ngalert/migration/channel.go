@@ -4,19 +4,20 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -50,11 +51,11 @@ type uidOrID any
 // channelReceiver is a convenience struct that contains a notificationChannel and its corresponding migrated PostableApiReceiver.
 type channelReceiver struct {
 	channel  *notificationChannel
-	receiver *PostableApiReceiver
+	receiver *apimodels.PostableApiReceiver
 }
 
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
-func (m *migration) setupAlertmanagerConfigs(ctx context.Context, rulesPerOrg map[int64]map[*alertRule][]uidOrID) (amConfigsPerOrg, error) {
+func (m *migration) setupAlertmanagerConfigs(ctx context.Context, rulesPerOrg map[int64]map[*ngmodels.AlertRule][]uidOrID) (amConfigsPerOrg, error) {
 	// allChannels: channelUID -> channelConfig
 	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap(ctx)
 	if err != nil {
@@ -63,9 +64,9 @@ func (m *migration) setupAlertmanagerConfigs(ctx context.Context, rulesPerOrg ma
 
 	amConfigPerOrg := make(amConfigsPerOrg, len(allChannelsPerOrg))
 	for orgID, channels := range allChannelsPerOrg {
-		amConfig := &PostableUserConfig{
-			AlertmanagerConfig: PostableApiAlertingConfig{
-				Receivers: make([]*PostableApiReceiver, 0),
+		amConfig := &apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Receivers: make([]*apimodels.PostableApiReceiver, 0),
 			},
 		}
 		amConfigPerOrg[orgID] = amConfig
@@ -196,7 +197,7 @@ func (m *migration) getNotificationChannelMap(ctx context.Context) (channelsPerO
 }
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
-func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaReceiver, error) {
+func (m *migration) createNotifier(c *notificationChannel) (*apimodels.PostableGrafanaReceiver, error) {
 	uid, err := m.determineChannelUid(c)
 	if err != nil {
 		return nil, err
@@ -207,20 +208,25 @@ func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaRece
 		return nil, err
 	}
 
-	return &PostableGrafanaReceiver{
+	data, err := settings.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &apimodels.PostableGrafanaReceiver{
 		UID:                   uid,
 		Name:                  c.Name,
 		Type:                  c.Type,
 		DisableResolveMessage: c.DisableResolveMessage,
-		Settings:              settings,
+		Settings:              data,
 		SecureSettings:        secureSettings,
 	}, nil
 }
 
 // Create one receiver for every unique notification channel.
-func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []channelReceiver, error) {
+func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*apimodels.PostableApiReceiver, []channelReceiver, error) {
 	receivers := make([]channelReceiver, 0, len(allChannels))
-	receiversMap := make(map[uidOrID]*PostableApiReceiver)
+	receiversMap := make(map[uidOrID]*apimodels.PostableApiReceiver)
 
 	set := make(map[string]struct{}) // Used to deduplicate sanitized names.
 	for _, c := range allChannels {
@@ -242,9 +248,13 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 
 		cr := channelReceiver{
 			channel: c,
-			receiver: &PostableApiReceiver{
-				Name:                    sanitizedName, // Channel name is unique within an Org.
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
+			receiver: &apimodels.PostableApiReceiver{
+				Receiver: config.Receiver{
+					Name: sanitizedName, // Channel name is unique within an Org.
+				},
+				PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{notifier},
+				},
 			},
 		}
 
@@ -264,17 +274,21 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 }
 
 // Create the root-level route with the default receiver. If no new receiver is created specifically for the root-level route, the returned receiver will be nil.
-func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificationChannel) (*PostableApiReceiver, *Route, error) {
+func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificationChannel) (*apimodels.PostableApiReceiver, *apimodels.Route, error) {
 	defaultReceiverName := "autogen-contact-point-default"
-	defaultRoute := &Route{
+	defaultRoute := &apimodels.Route{
 		Receiver:       defaultReceiverName,
-		Routes:         make([]*Route, 0),
-		GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
+		Routes:         make([]*apimodels.Route, 0),
+		GroupByStr:     []string{ngmodels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
 		RepeatInterval: nil,
 	}
-	newDefaultReceiver := &PostableApiReceiver{
-		Name:                    defaultReceiverName,
-		GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
+	newDefaultReceiver := &apimodels.PostableApiReceiver{
+		Receiver: config.Receiver{
+			Name: defaultReceiverName,
+		},
+		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{},
+		},
 	}
 
 	// Return early if there are no default channels
@@ -316,7 +330,7 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 }
 
 // Create one route per contact point, matching based on ContactLabel.
-func createRoute(cr channelReceiver) (*Route, error) {
+func createRoute(cr channelReceiver) (*apimodels.Route, error) {
 	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it sends to.
 	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`"contact1","contact2"` and will match both routes looking
 	// for `.*"contact1".*` and `.*"contact2".*`.
@@ -333,16 +347,16 @@ func createRoute(cr channelReceiver) (*Route, error) {
 		repeatInterval = cr.channel.Frequency
 	}
 
-	return &Route{
+	return &apimodels.Route{
 		Receiver:       cr.receiver.Name,
-		ObjectMatchers: ObjectMatchers{mat},
+		ObjectMatchers: apimodels.ObjectMatchers{mat},
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
 		RepeatInterval: &repeatInterval,
 	}, nil
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.
-func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]any {
+func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*apimodels.PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]any {
 	if len(channelIDs) == 0 {
 		// If there are no channels associated, we use the default route.
 		return nil
@@ -463,54 +477,4 @@ func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json,
 // Below is a snapshot of all the config and supporting functions imported
 // to avoid vendoring those packages.
 
-type PostableUserConfig struct {
-	TemplateFiles      map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-}
-
-type amConfigsPerOrg = map[int64]*PostableUserConfig
-
-type PostableApiAlertingConfig struct {
-	Route     *Route                 `yaml:"route,omitempty" json:"route,omitempty"`
-	Templates []string               `yaml:"templates" json:"templates"`
-	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-type Route struct {
-	Receiver       string          `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	ObjectMatchers ObjectMatchers  `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
-	Routes         []*Route        `yaml:"routes,omitempty" json:"routes,omitempty"`
-	Continue       bool            `yaml:"continue,omitempty" json:"continue,omitempty"`
-	GroupByStr     []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
-	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
-}
-
-type ObjectMatchers labels.Matchers
-
-// MarshalJSON implements the json.Marshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
-func (m ObjectMatchers) MarshalJSON() ([]byte, error) {
-	if len(m) == 0 {
-		return nil, nil
-	}
-	result := make([][3]string, len(m))
-	for i, matcher := range m {
-		result[i] = [3]string{matcher.Name, matcher.Type.String(), matcher.Value}
-	}
-	return json.Marshal(result)
-}
-
-type PostableApiReceiver struct {
-	Name                    string                     `yaml:"name" json:"name"`
-	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
-}
-
-type PostableGrafanaReceiver CreateAlertNotificationCommand
-
-type CreateAlertNotificationCommand struct {
-	UID                   string            `json:"uid"`
-	Name                  string            `json:"name"`
-	Type                  string            `json:"type"`
-	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              *simplejson.Json  `json:"settings"`
-	SecureSettings        map[string]string `json:"secureSettings"`
-}
+type amConfigsPerOrg = map[int64]*apimodels.PostableUserConfig

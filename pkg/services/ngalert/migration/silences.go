@@ -15,6 +15,8 @@ import (
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const (
@@ -24,7 +26,7 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
-func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
+func (m *migration) addErrorSilence(da dashAlert, rule *models.AlertRule) error {
 	if da.ParsedSettings.ExecutionErrorState != "keep_state" {
 		return nil
 	}
@@ -63,7 +65,7 @@ func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
 	return nil
 }
 
-func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
+func (m *migration) addNoDataSilence(da dashAlert, rule *models.AlertRule) error {
 	if da.ParsedSettings.NoDataState != "keep_state" {
 		return nil
 	}

@@ -7,13 +7,12 @@ import (
 	"strconv"
 	"time"
 
-	pb "github.com/prometheus/alertmanager/silence/silencepb"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,17 +21,21 @@ const KVNamespace = "ngalert.migration"
 
 // migratedKey is the kvstore key used for the migration status.
 const migratedKey = "migrated"
+
+// actionName is the unique row-level lock name for serverlock.ServerLockService.
 const actionName = "alerting migration"
 
 //nolint:stylecheck
 var ForceMigrationError = fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
 
 type MigrationService struct {
-	lock  *serverlock.ServerLockService
-	store db.DB
-	cfg   *setting.Cfg
-	log   log.Logger
-	kv    *kvstore.NamespacedKVStore
+	lock          *serverlock.ServerLockService
+	store         db.DB
+	cfg           *setting.Cfg
+	log           log.Logger
+	kv            *kvstore.NamespacedKVStore
+	ruleStore     RuleStore
+	alertingStore AlertingStore
 }
 
 func ProvideService(
@@ -40,13 +43,16 @@ func ProvideService(
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
+	ruleStore *store.DBstore,
 ) (*MigrationService, error) {
 	return &MigrationService{
-		lock:  lock,
-		log:   log.New("ngalert.migration"),
-		cfg:   cfg,
-		store: sqlStore,
-		kv:    kvstore.WithNamespace(kv, 0, KVNamespace),
+		lock:          lock,
+		log:           log.New("ngalert.migration"),
+		cfg:           cfg,
+		store:         sqlStore,
+		kv:            kvstore.WithNamespace(kv, 0, KVNamespace),
+		ruleStore:     ruleStore,
+		alertingStore: ruleStore,
 	}, nil
 }
 
@@ -90,15 +96,7 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 			}
 
 			ms.log.Info("Starting legacy migration")
-			mg := migration{
-				// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-				seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: ms.store.GetDialect().SupportEngine()},
-				silences: make(map[int64][]*pb.MeshSilence),
-				log:      ms.log,
-				dialect:  ms.store.GetDialect(),
-				cfg:      ms.cfg,
-				store:    ms.store,
-			}
+			mg := newMigration(ms.log, ms.cfg, ms.store, ms.ruleStore, ms.alertingStore, ms.store.GetDialect())
 
 			err = mg.Exec(ctx)
 			if err != nil {

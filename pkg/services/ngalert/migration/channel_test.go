@@ -6,11 +6,13 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -18,26 +20,17 @@ func TestFilterReceiversForAlert(t *testing.T) {
 	tc := []struct {
 		name             string
 		channelIds       []uidOrID
-		receivers        map[uidOrID]*PostableApiReceiver
+		receivers        map[uidOrID]*apimodels.PostableApiReceiver
 		defaultReceivers map[string]struct{}
 		expected         map[string]any
 	}{
 		{
 			name:       "when an alert has multiple channels, each should filter for the correct receiver",
 			channelIds: []uidOrID{"uid1", "uid2"},
-			receivers: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "recv1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
-				"uid2": {
-					Name:                    "recv2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
-				"uid3": {
-					Name:                    "recv3",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
+			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+				"uid1": createPostableApiReceiver("recv1", nil),
+				"uid2": createPostableApiReceiver("recv2", nil),
+				"uid3": createPostableApiReceiver("recv3", nil),
 			},
 			defaultReceivers: map[string]struct{}{},
 			expected: map[string]any{
@@ -48,19 +41,10 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		{
 			name:       "when default receivers exist, they should be added to an alert's filtered receivers",
 			channelIds: []uidOrID{"uid1"},
-			receivers: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "recv1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
-				"uid2": {
-					Name:                    "recv2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
-				"uid3": {
-					Name:                    "recv3",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
+			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+				"uid1": createPostableApiReceiver("recv1", nil),
+				"uid2": createPostableApiReceiver("recv2", nil),
+				"uid3": createPostableApiReceiver("recv3", nil),
 			},
 			defaultReceivers: map[string]struct{}{
 				"recv2": {},
@@ -73,11 +57,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		{
 			name:       "when an alert has a channels associated by ID instead of UID, it should be included",
 			channelIds: []uidOrID{int64(42)},
-			receivers: map[uidOrID]*PostableApiReceiver{
-				int64(42): {
-					Name:                    "recv1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
+			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+				int64(42): createPostableApiReceiver("recv1", nil),
 			},
 			defaultReceivers: map[string]struct{}{},
 			expected: map[string]any{
@@ -87,19 +68,10 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		{
 			name:       "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
 			channelIds: []uidOrID{"uid1"},
-			receivers: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "recv1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
-				"uid2": {
-					Name:                    "recv2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
-				"uid3": {
-					Name:                    "recv3",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-				},
+			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+				"uid1": createPostableApiReceiver("recv1", nil),
+				"uid2": createPostableApiReceiver("recv2", nil),
+				"uid3": createPostableApiReceiver("recv3", nil),
 			},
 			defaultReceivers: map[string]struct{}{
 				"recv1": {},
@@ -123,18 +95,16 @@ func TestCreateRoute(t *testing.T) {
 	tc := []struct {
 		name     string
 		channel  *notificationChannel
-		recv     *PostableApiReceiver
-		expected *Route
+		recv     *apimodels.PostableApiReceiver
+		expected *apimodels.Route
 	}{
 		{
 			name:    "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
 			channel: &notificationChannel{},
-			recv: &PostableApiReceiver{
-				Name: "recv1",
-			},
-			expected: &Route{
+			recv:    createPostableApiReceiver("recv1", nil),
+			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -144,12 +114,10 @@ func TestCreateRoute(t *testing.T) {
 		{
 			name:    "notification channel should be escaped for regex in the matcher",
 			channel: &notificationChannel{},
-			recv: &PostableApiReceiver{
-				Name: `. ^ $ * + - ? ( ) [ ] { } \ |`,
-			},
-			expected: &Route{
+			recv:    createPostableApiReceiver(`. ^ $ * + - ? ( ) [ ] { } \ |`, nil),
+			expected: &apimodels.Route{
 				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \( \) \[ \] \{ \} \\ \|".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"\. \^ \$ \* \+ - \? \( \) \[ \] \{ \} \\ \|".*`}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -159,12 +127,10 @@ func TestCreateRoute(t *testing.T) {
 		{
 			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
 			channel: &notificationChannel{SendReminder: true, Frequency: model.Duration(time.Duration(42) * time.Hour)},
-			recv: &PostableApiReceiver{
-				Name: "recv1",
-			},
-			expected: &Route{
+			recv:    createPostableApiReceiver("recv1", nil),
+			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -174,12 +140,10 @@ func TestCreateRoute(t *testing.T) {
 		{
 			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
 			channel: &notificationChannel{SendReminder: false, Frequency: model.Duration(time.Duration(42) * time.Hour)},
-			recv: &PostableApiReceiver{
-				Name: "recv1",
-			},
-			expected: &Route{
+			recv:    createPostableApiReceiver("recv1", nil),
+			expected: &apimodels.Route{
 				Receiver:       "recv1",
-				ObjectMatchers: ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
+				ObjectMatchers: apimodels.ObjectMatchers{{Type: 2, Name: ContactLabel, Value: `.*"recv1".*`}},
 				Routes:         nil,
 				Continue:       true,
 				GroupByStr:     nil,
@@ -198,13 +162,13 @@ func TestCreateRoute(t *testing.T) {
 
 			// Order of nested routes is not guaranteed.
 			cOpt := []cmp.Option{
-				cmpopts.SortSlices(func(a, b *Route) bool {
+				cmpopts.SortSlices(func(a, b *apimodels.Route) bool {
 					if a.Receiver != b.Receiver {
 						return a.Receiver < b.Receiver
 					}
 					return a.ObjectMatchers[0].Value < b.ObjectMatchers[0].Value
 				}),
-				cmpopts.IgnoreUnexported(Route{}, labels.Matcher{}),
+				cmpopts.IgnoreUnexported(apimodels.Route{}, labels.Matcher{}),
 			}
 
 			if !cmp.Equal(tt.expected, res, cOpt...) {
@@ -229,106 +193,61 @@ func TestCreateReceivers(t *testing.T) {
 		name            string
 		allChannels     []*notificationChannel
 		defaultChannels []*notificationChannel
-		expRecvMap      map[uidOrID]*PostableApiReceiver
+		expRecvMap      map[uidOrID]*apimodels.PostableApiReceiver
 		expRecv         []channelReceiver
 		expErr          error
 	}{
 		{
 			name:        "when given notification channels migrate them to receivers",
 			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			expRecvMap: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				"uid2": {
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-				},
-				int64(1): {
-					Name:                    "name1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-				},
-				int64(2): {
-					Name:                    "name2",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-				},
+			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
+				"uid1":   createPostableApiReceiver("name1", []string{"name1"}),
+				"uid2":   createPostableApiReceiver("name2", []string{"name2"}),
+				int64(1): createPostableApiReceiver("name1", []string{"name1"}),
+				int64(2): createPostableApiReceiver("name2", []string{"name2"}),
 			},
 			expRecv: []channelReceiver{
 				{
-					channel: createNotChannel(t, "uid1", int64(1), "name1"),
-					receiver: &PostableApiReceiver{
-						Name:                    "name1",
-						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}},
-					},
+					channel:  createNotChannel(t, "uid1", int64(1), "name1"),
+					receiver: createPostableApiReceiver("name1", []string{"name1"}),
 				},
 				{
-					channel: createNotChannel(t, "uid2", int64(2), "name2"),
-					receiver: &PostableApiReceiver{
-						Name:                    "name2",
-						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name2"}},
-					},
+					channel:  createNotChannel(t, "uid2", int64(2), "name2"),
+					receiver: createPostableApiReceiver("name2", []string{"name2"}),
 				},
 			},
 		},
 		{
 			name:        "when given notification channel contains double quote sanitize with underscore",
 			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1")},
-			expRecvMap: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "name_1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
-				},
-				int64(1): {
-					Name:                    "name_1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
-				},
+			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
+				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
+				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
 			},
 			expRecv: []channelReceiver{
 				{
-					channel: createNotChannel(t, "uid1", int64(1), "name\"1"),
-					receiver: &PostableApiReceiver{
-						Name:                    "name_1",
-						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
-					},
+					channel:  createNotChannel(t, "uid1", int64(1), "name\"1"),
+					receiver: createPostableApiReceiver("name_1", []string{"name_1"}),
 				},
 			},
 		},
 		{
 			name:        "when given notification channels collide after sanitization add short hash to end",
 			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
-			expRecvMap: map[uidOrID]*PostableApiReceiver{
-				"uid1": {
-					Name:                    "name_1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
-				},
-				"uid2": {
-					Name:                    "name_1_dba13d",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
-				},
-				int64(1): {
-					Name:                    "name_1",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
-				},
-				int64(2): {
-					Name:                    "name_1_dba13d",
-					GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
-				},
+			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
+				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
+				"uid2":   createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
+				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
+				int64(2): createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
 			},
 			expRecv: []channelReceiver{
 				{
-					channel: createNotChannel(t, "uid1", int64(1), "name\"1"),
-					receiver: &PostableApiReceiver{
-						Name:                    "name_1",
-						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1"}},
-					},
+					channel:  createNotChannel(t, "uid1", int64(1), "name\"1"),
+					receiver: createPostableApiReceiver("name_1", []string{"name_1"}),
 				},
 				{
-					channel: createNotChannel(t, "uid2", int64(2), "name_1"),
-					receiver: &PostableApiReceiver{
-						Name:                    "name_1_dba13d",
-						GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name_1_dba13d"}},
-					},
+					channel:  createNotChannel(t, "uid2", int64(2), "name_1"),
+					receiver: createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
 				},
 			},
 		},
@@ -364,22 +283,19 @@ func TestCreateReceivers(t *testing.T) {
 func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 	tc := []struct {
 		name            string
-		amConfig        *PostableUserConfig
+		amConfig        *apimodels.PostableUserConfig
 		defaultChannels []*notificationChannel
-		expRecv         *PostableApiReceiver
-		expRoute        *Route
+		expRecv         *apimodels.PostableApiReceiver
+		expRoute        *apimodels.Route
 		expErr          error
 	}{
 		{
 			name:            "when given multiple default notification channels migrate them to a single receiver",
 			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			expRecv: &PostableApiReceiver{
-				Name:                    "autogen-contact-point-default",
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
-			},
-			expRoute: &Route{
+			expRecv:         createPostableApiReceiver("autogen-contact-point-default", []string{"name1", "name2"}),
+			expRoute: &apimodels.Route{
 				Receiver:       "autogen-contact-point-default",
-				Routes:         make([]*Route, 0),
+				Routes:         make([]*apimodels.Route, 0),
 				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 				RepeatInterval: durationPointer(DisabledRepeatInterval),
 			},
@@ -390,13 +306,10 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 				createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42)),
 				createNotChannelWithReminder(t, "uid2", int64(2), "name2", model.Duration(100000)),
 			},
-			expRecv: &PostableApiReceiver{
-				Name:                    "autogen-contact-point-default",
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{{Name: "name1"}, {Name: "name2"}},
-			},
-			expRoute: &Route{
+			expRecv: createPostableApiReceiver("autogen-contact-point-default", []string{"name1", "name2"}),
+			expRoute: &apimodels.Route{
 				Receiver:       "autogen-contact-point-default",
-				Routes:         make([]*Route, 0),
+				Routes:         make([]*apimodels.Route, 0),
 				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 				RepeatInterval: durationPointer(model.Duration(42)),
 			},
@@ -404,13 +317,10 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		{
 			name:            "when given no default notification channels create a single empty receiver for default",
 			defaultChannels: []*notificationChannel{},
-			expRecv: &PostableApiReceiver{
-				Name:                    "autogen-contact-point-default",
-				GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-			},
-			expRoute: &Route{
+			expRecv:         createPostableApiReceiver("autogen-contact-point-default", nil),
+			expRoute: &apimodels.Route{
 				Receiver:       "autogen-contact-point-default",
-				Routes:         make([]*Route, 0),
+				Routes:         make([]*apimodels.Route, 0),
 				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 				RepeatInterval: nil,
 			},
@@ -419,9 +329,9 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			name:            "when given a single default notification channels don't create a new default receiver",
 			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
 			expRecv:         nil,
-			expRoute: &Route{
+			expRoute: &apimodels.Route{
 				Receiver:       "name1",
-				Routes:         make([]*Route, 0),
+				Routes:         make([]*apimodels.Route, 0),
 				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 				RepeatInterval: durationPointer(DisabledRepeatInterval),
 			},
@@ -430,9 +340,9 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			name:            "when given a single default notification channel with SendReminder=true, use the channels Frequency as the RepeatInterval",
 			defaultChannels: []*notificationChannel{createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42))},
 			expRecv:         nil,
-			expRoute: &Route{
+			expRoute: &apimodels.Route{
 				Receiver:       "name1",
-				Routes:         make([]*Route, 0),
+				Routes:         make([]*apimodels.Route, 0),
 				GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel},
 				RepeatInterval: durationPointer(model.Duration(42)),
 			},
@@ -463,6 +373,21 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 			require.Equal(t, tt.expRecv, recv)
 			require.Equal(t, tt.expRoute, route)
 		})
+	}
+}
+
+func createPostableApiReceiver(name string, integrationNames []string) *apimodels.PostableApiReceiver {
+	integrations := make([]*apimodels.PostableGrafanaReceiver, 0, len(integrationNames))
+	for _, integrationName := range integrationNames {
+		integrations = append(integrations, &apimodels.PostableGrafanaReceiver{Name: integrationName})
+	}
+	return &apimodels.PostableApiReceiver{
+		Receiver: config.Receiver{
+			Name: name,
+		},
+		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+			GrafanaManagedReceivers: integrations,
+		},
 	}
 }
 
