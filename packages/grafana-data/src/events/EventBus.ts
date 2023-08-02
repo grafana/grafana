@@ -109,7 +109,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
 export class ScopedEventBus implements EventBusWithFiltering {
   constructor(
     private eventBus: EventBus,
-    private _filterConfig: EventFilterOptions = { filter: EventFilter.NoLocal }
+    private _filterConfig: EventFilterOptions = { filter: EventFilter.OnlyLocal }
   ) {}
 
   publish<T extends BusEvent>(event: T): void {

@@ -361,7 +361,7 @@ npx @grafana/create-plugin@latest migrate
 
 #### Learn more
 
-- [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/)
+- [Migration guide](https://grafana.github.io/plugin-tools/docs/getting-started/migrating-from-toolkit/)
 
 ## Deprecations
 

@@ -10,6 +10,7 @@ import {
   CoreApp,
   DataFrame,
   ScopedEventBus,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 
 import { AdHocFilterItem } from '../Table/types';
@@ -73,6 +74,7 @@ export interface PanelContext {
   /**
    * onSplitOpen is used in Explore to open the split view. It can be used in panels which has intercations and used in Explore as well.
    * For example TimeSeries panel.
+   * @deprecated will be removed in the future. It's not needed as visualization can just field.getLinks now
    */
   onSplitOpen?: SplitOpen;
 
@@ -92,6 +94,12 @@ export interface PanelContext {
    * in a the Promise resolving to a false value.
    */
   onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
+
+  /**
+   * Optional supplier for internal data links. If not provided a link pointing to Explore will be generated.
+   * @internal
+   */
+  dataLinkPostProcessor?: DataLinkPostProcessor;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({
