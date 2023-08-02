@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { ConfirmButton, RadioButtonGroup, Icon } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ConfirmButton, RadioButtonGroup, Icon, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ExternalUserTooltip } from 'app/features/admin/UserOrgs';
 import { AccessControlAction } from 'app/types';
@@ -34,11 +35,7 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
 
   const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsUpdate) && !isExternalUser;
 
-  const tooltipContainer = css`
-    display: flex;
-    justify-content: flex-end;
-    margin-right: 3rem;
-  `;
+  const styles = useStyles2(getTooltipStyles);
 
   return (
     <>
@@ -81,7 +78,7 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
                     </ConfirmButton>
                   )}
                   {isExternalUser && (
-                    <div className={tooltipContainer}>
+                    <div className={styles.lockMessageClass}>
                       <ExternalUserTooltip lockMessage={lockMessage} />
                     </div>
                   )}
@@ -94,3 +91,12 @@ export function UserPermissions({ isGrafanaAdmin, isExternalUser, lockMessage, o
     </>
   );
 }
+
+const getTooltipStyles = (theme: GrafanaTheme2) => ({
+  lockMessageClass: css`
+    display: flex;
+    justify-content: flex-end;
+    font-style: italic;
+    margin-right: ${theme.spacing(0.6)};
+  `,
+});
