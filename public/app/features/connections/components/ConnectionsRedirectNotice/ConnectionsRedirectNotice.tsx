@@ -27,7 +27,7 @@ export function ConnectionsRedirectNotice() {
     <Alert severity="warning" title="">
       <div className={styles.alertContent}>
         <p className={styles.alertParagraph}>
-          Data sources have a new home! You can discover new data sources or manage existing ones in the new Connections
+          Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
           page, accessible from the main menu.
         </p>
         <LinkButton aria-label="Link to Connections" icon="arrow-right" href={ROUTES.DataSources} fill="text">
