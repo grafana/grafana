@@ -62,7 +62,6 @@ alertStateHistoryLokiPrimary,experimental,@grafana/alerting-squad,false,false,fa
 alertStateHistoryLokiOnly,experimental,@grafana/alerting-squad,false,false,false,false
 unifiedRequestLog,experimental,@grafana/backend-platform,false,false,false,false
 renderAuthJWT,preview,@grafana/grafana-as-code,false,false,false,false
-pyroscopeFlameGraph,experimental,@grafana/observability-traces-and-profiling,false,false,false,false
 externalServiceAuth,experimental,@grafana/grafana-authnz-team,true,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false,false
 useCachingService,GA,@grafana/grafana-operator-experience-squad,false,false,true,false
