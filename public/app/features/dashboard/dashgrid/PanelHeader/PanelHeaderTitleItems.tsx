@@ -54,13 +54,7 @@ export function PanelHeaderTitleItems(props: Props) {
     </>
   );
 
-  const message = `This ${
-    angularNotice?.isAngularPanel
-      ? 'panel'
-      : angularNotice?.isAngularDatasource
-      ? 'data source'
-      : 'panel or data source'
-  } requires Angular (deprecated).`;
+  const message = `This ${pluginType(angularNotice)} requires Angular (deprecated).`;
   const angularNoticeTooltip = (
     <Tooltip content={message}>
       <PanelChrome.TitleItem className={styles.angularNotice} data-testid="angular-deprecation-icon">
@@ -82,6 +76,16 @@ export function PanelHeaderTitleItems(props: Props) {
     </>
   );
 }
+
+const pluginType = (angularNotice?: AngularNotice): string => {
+  if (angularNotice?.isAngularPanel) {
+    return 'panel';
+  }
+  if (angularNotice?.isAngularDatasource) {
+    return 'data source';
+  }
+  return 'panel or data source';
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
