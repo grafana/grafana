@@ -12,11 +12,14 @@ import {
   PanelModel,
   transformDataFrame,
 } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { getProcessedData } from 'app/features/inspector/InspectDataTab';
 import { getPrettyJSON } from 'app/features/inspector/InspectJSONTab';
 import { downloadDataFrameAsCsv } from 'app/features/inspector/utils/download';
+import { ShowModalReactEvent } from 'app/types/events';
 
+import { CustomExportModal } from './CustomExportModal';
 import { ExportType, ExportPayload } from './types';
 
 export async function exportSelect(payload: ExportPayload) {
@@ -38,6 +41,13 @@ export async function exportSelect(payload: ExportPayload) {
 
   switch (payload.format) {
     case ExportType.jpeg:
+    /* appEvents.publish(
+        new ShowModalReactEvent({
+          component: CustomExportModal,
+          props: {
+          },
+        }));
+        break; */
     case ExportType.png:
     case ExportType.bmp:
       const panelCanvas = await toCanvas(payload.htmlElement, {
@@ -116,8 +126,6 @@ export function exportExcel(data: DataFrame, title: string) {
   const fileName = `${title}-${dateTimeFormat(new Date())}.xlsx`;
   saveAs(blob, fileName);
 }
-
-// TODO: maybe borders and/or watermarK?
 
 export async function exportImage(panelCanvas: HTMLCanvasElement, format: ExportType, title: string) {
   const fileName = `${title}-${dateTimeFormat(new Date())}.${format}`;

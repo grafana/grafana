@@ -89,14 +89,8 @@ describe('getPanelMenu()', () => {
             },
             {
               "iconClassName": "book",
-              "subMenu": [
-                {
-                  "onClick": [Function],
-                  "text": "Panel JSON",
-                },
-              ],
-              "text": "Data",
-              "type": "submenu",
+              "onClick": [Function],
+              "text": "Panel JSON",
             },
           ],
           "text": "Export",
@@ -506,14 +500,8 @@ describe('getPanelMenu()', () => {
               },
               {
                 "iconClassName": "book",
-                "subMenu": [
-                  {
-                    "onClick": [Function],
-                    "text": "Panel JSON",
-                  },
-                ],
-                "text": "Data",
-                "type": "submenu",
+                "onClick": [Function],
+                "text": "Panel JSON",
               },
             ],
             "text": "Export",

@@ -166,7 +166,7 @@ export function getPanelMenu(
 
   const exportMenu: PanelMenuItem[] = [];
 
-  // geomap, logs, and news panels not supported by image
+  // geomap, logs, and news panels not currently supported by image export
   if (!(['geomap', 'logs', 'news'].indexOf(panel.type) > -1)) {
     let exportImageMenu = [];
 
@@ -207,6 +207,11 @@ export function getPanelMenu(
     });
 
     exportDataMenu.push({
+      text: t('panel.header-menu.export-json', `Panel JSON`),
+      onClick: () => onExportPanel(ExportType.panelJson),
+    });
+
+    exportDataMenu.push({
       text: t('panel.header-menu.export-data', `Data JSON`),
       onClick: () => onExportPanel(ExportType.dataJson),
     });
@@ -231,12 +236,10 @@ export function getPanelMenu(
   }
 
   // TODO: Re-implement feature toggle
-  // TODO: Remove optional submenu syntax
 
   const featureToggleEnabled = true;
 
   if (featureToggleEnabled) {
-    // PLACEHOLDER FEATURE TOGGLE THING
     menu.push({
       type: 'submenu',
       text: t('panel.header-menu.export', `Export`),
