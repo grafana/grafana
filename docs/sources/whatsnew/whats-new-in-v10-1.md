@@ -407,7 +407,7 @@ _Generally available in all editions of Grafana_
 
 This change impacts all instances that use an external authentication provider and have role mapping enabled.
 
-Previously, it was possible to manually update a user's organization role (Viewer, Editor, or Admin) even if this role was managed by an external authentication provider.
+Previously, it was possible to manually update a user's organization role (Viewer, Editor, Admin, or Grafana Admin) even if this role was managed by an external authentication provider.
 This means that roles could be manually set for the duration of a user's session, but were overridden by the external authentication provider the next time the user logged in.
 If the `onlyExternalOrgRoleSync` feature toggle was enabled, only then were manual role updates for externally managed roles not allowed.
 
