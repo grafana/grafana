@@ -4,7 +4,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -17,16 +16,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
 	authConfigUIAvailable := s.license.FeatureEnabled("saml")
-
-	if hasAccess(datasources.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Data sources",
-			Icon:     "database",
-			SubTitle: "Add and configure data sources",
-			Id:       "datasources",
-			Url:      s.cfg.AppSubURL + "/datasources",
-		})
-	}
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
 	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
@@ -121,12 +110,6 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.cfg.LDAPAuthEnabled && hasAccess(ac.EvalPermission(ac.ActionLDAPStatusRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
-		})
-	}
-
 	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
 		storage := &navtree.NavLink{
 			Text:     "Storage",
@@ -157,8 +140,8 @@ func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 }
 
 func evalAuthenticationSettings() ac.Evaluator {
-	return ac.EvalAll(
+	return ac.EvalAny(ac.EvalAll(
 		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
 		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
-	)
+	), ac.EvalPermission(ac.ActionLDAPStatusRead))
 }

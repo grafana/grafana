@@ -5,15 +5,16 @@ import (
 	"os"
 	"testing"
 
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	otlp "go.opentelemetry.io/collector/model/otlp"
-	"go.opentelemetry.io/collector/model/pdata"
 )
 
 func TestTraceToFrame(t *testing.T) {
 	t.Run("should transform tempo protobuf response into dataframe", func(t *testing.T) {
-		// For what ever reason you cannot easily create pdata.Traces for the TraceToFrame from something more readable
+		// For what ever reason you cannot easily create ptrace.Traces for the TraceToFrame from something more readable
 		// like json. You could tediously create the structures manually using all the setters for everything or use
 		// https://github.com/grafana/tempo/tree/master/pkg/tempopb to create the protobuf structs from something like
 		// json. At the moment just saving some real tempo proto response into file and loading was the easiest and
@@ -21,7 +22,8 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		pbUnmarshaler := ptrace.ProtoUnmarshaler{}
+		otTrace, err := pbUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		frame, err := TraceToFrame(otTrace)
@@ -56,18 +58,19 @@ func TestTraceToFrame(t *testing.T) {
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
-		otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(proto)
+		pbUnmarshaler := ptrace.ProtoUnmarshaler{}
+		otTrace, err := pbUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
 
 		var index int
-		otTrace.ResourceSpans().RemoveIf(func(rsp pdata.ResourceSpans) bool {
-			rsp.InstrumentationLibrarySpans().RemoveIf(func(sp pdata.InstrumentationLibrarySpans) bool {
-				sp.Spans().RemoveIf(func(span pdata.Span) bool {
+		otTrace.ResourceSpans().RemoveIf(func(rsp ptrace.ResourceSpans) bool {
+			rsp.ScopeSpans().RemoveIf(func(sp ptrace.ScopeSpans) bool {
+				sp.Spans().RemoveIf(func(span ptrace.Span) bool {
 					if index == 0 {
-						span.SetTraceID(pdata.NewTraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
+						span.SetTraceID(pcommon.TraceID([16]byte{0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}
 					if index == 1 {
-						span.SetTraceID(pdata.NewTraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
+						span.SetTraceID(pcommon.TraceID([16]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7}))
 					}
 					index++
 					return false
@@ -123,7 +126,7 @@ func (f *BetterFrame) FindRowWithValue(fieldName string, value interface{}) Row 
 }
 
 func rootSpan(frame *BetterFrame) Row {
-	return frame.FindRowWithValue("parentSpanID", "")
+	return frame.FindRowWithValue("parentSpanID", "0000000000000000")
 }
 
 func fieldNames(frame *data.Frame) []string {

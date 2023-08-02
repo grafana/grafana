@@ -44,35 +44,34 @@ const SpectrumPalette = ({ color, onChange }: SpectrumPaletteProps) => {
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    flex-grow: 1;
-  `,
-  root: css`
-    &.react-colorful {
-      width: auto;
-    }
+  wrapper: css({
+    flexGrow: 1,
+  }),
+  root: css({
+    '&.react-colorful': {
+      width: 'auto',
+    },
 
-    .react-colorful {
-      &__saturation {
-        border-radius: ${theme.shape.borderRadius(1)} ${theme.shape.borderRadius(1)} 0 0;
-      }
-      &__alpha {
-        border-radius: 0 0 ${theme.shape.borderRadius(1)} ${theme.shape.borderRadius(1)};
-      }
-      &__alpha,
-      &__hue {
-        height: ${theme.spacing(2)};
-        position: relative;
-      }
-      &__pointer {
-        height: ${theme.spacing(2)};
-        width: ${theme.spacing(2)};
-      }
-    }
-  `,
-  colorInput: css`
-    margin-top: ${theme.spacing(2)};
-  `,
+    '.react-colorful': {
+      '&__saturation': {
+        borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      },
+      '&__alpha': {
+        borderRadius: `0 0 ${theme.shape.radius.default} ${theme.shape.radius.default}`,
+      },
+      '&__alpha, &__hue': {
+        height: theme.spacing(2),
+        position: 'relative',
+      },
+      '&__pointer': {
+        height: theme.spacing(2),
+        width: theme.spacing(2),
+      },
+    },
+  }),
+  colorInput: css({
+    marginTop: theme.spacing(2),
+  }),
 });
 
 export default SpectrumPalette;

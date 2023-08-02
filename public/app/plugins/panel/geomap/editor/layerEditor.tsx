@@ -106,7 +106,7 @@ export function getLayerEditor(opts: LayerEditorOptions): NestedPanelOptions<Map
         addLocationFields('Location', 'location.', builder, options.location, data);
       }
       if (handler.registerOptionsUI) {
-        handler.registerOptionsUI(builder);
+        handler.registerOptionsUI(builder, context);
       }
       if (!isEqual(opts.category, ['Base layer'])) {
         if (!layer.hideOpacity) {

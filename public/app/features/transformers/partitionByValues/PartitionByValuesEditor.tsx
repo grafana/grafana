@@ -6,6 +6,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   SelectableValue,
+  TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, ValuePicker, Button, HorizontalGroup, FieldValidationMessage } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
@@ -104,4 +105,5 @@ export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<Par
   name: partitionByValuesTransformer.name,
   description: partitionByValuesTransformer.description,
   state: PluginState.alpha,
+  categories: new Set([TransformerCategory.Reformat]),
 };

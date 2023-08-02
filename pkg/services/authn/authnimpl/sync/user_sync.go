@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -76,13 +75,13 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	// Does user exist in the database?
 	usr, userAuth, errUserInDB := s.getUser(ctx, id)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		s.log.FromContext(ctx).Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+		s.log.FromContext(ctx).Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
-			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errUserSignupDisabled.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
@@ -90,13 +89,13 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
-			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to create user")
 		}
 	} else {
 		// update user
 		if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to update user")
 		}
 	}
@@ -129,15 +128,16 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	return nil
 }
 
-func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if r.GetMeta(authn.MetaKeyIsLogin) != "" {
+		// Do not sync last seen for login requests
+		return nil
+	}
+
 	namespace, id := identity.NamespacedID()
 
 	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
 		// skip sync
-		return nil
-	}
-
-	if !shouldUpdateLastSeen(identity.LastSeenAt) {
 		return nil
 	}
 
@@ -148,7 +148,9 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: userID}); err != nil {
+		if err := s.userService.UpdateLastSeenAt(context.Background(),
+			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
+			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
 	}(id)
@@ -174,7 +176,7 @@ func (s *UserSync) EnableDisabledUserHook(ctx context.Context, identity *authn.I
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
-	if identity.AuthModule == "" {
+	if identity.AuthenticatedBy == "" {
 		return nil
 	}
 
@@ -184,7 +186,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	if createConnection {
 		return s.authInfoService.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
 			UserId:     userID,
-			AuthModule: identity.AuthModule,
+			AuthModule: identity.AuthenticatedBy,
 			AuthId:     identity.AuthID,
 			OAuthToken: identity.OAuthToken,
 		})
@@ -194,13 +196,13 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 	return s.authInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 		UserId:     userID,
 		AuthId:     identity.AuthID,
-		AuthModule: identity.AuthModule,
+		AuthModule: identity.AuthenticatedBy,
 		OAuthToken: identity.OAuthToken,
 	})
 }
 
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
-	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
+	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
 	}
 	// sync user info
@@ -286,8 +288,8 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 
 func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user.User, *login.UserAuth, error) {
 	// Check auth info fist
-	if identity.AuthID != "" && identity.AuthModule != "" {
-		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthModule}
+	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
+		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 
 		if errGetAuthInfo != nil && !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
@@ -307,7 +309,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 			// if the user connected to user auth does not exist try to clean it up
 			if errors.Is(errGetByID, user.ErrUserNotFound) {
 				if err := s.authInfoService.DeleteUserAuthInfo(ctx, authInfo.UserId); err != nil {
-					s.log.FromContext(ctx).Error("Failed to clean up user auth", "error", err, "auth_module", identity.AuthModule, "auth_id", identity.AuthID)
+					s.log.FromContext(ctx).Error("Failed to clean up user auth", "error", err, "auth_module", identity.AuthenticatedBy, "auth_id", identity.AuthID)
 				}
 			}
 		}
@@ -322,8 +324,8 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	var userAuth *login.UserAuth
 	// Special case for generic oauth: generic oauth does not store authID,
 	// so we need to find the user first then check for the userAuth connection by module and userID
-	if identity.AuthModule == login.GenericOAuthModule {
-		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthModule, UserId: usr.ID}
+	if identity.AuthenticatedBy == login.GenericOAuthModule {
+		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, nil, err
@@ -385,15 +387,10 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.Email = usr.Email
 	identity.OrgID = usr.OrgID
 	identity.OrgName = usr.OrgName
-	identity.OrgCount = usr.OrgCount
 	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
 	identity.HelpFlags1 = usr.HelpFlags1
 	identity.Teams = usr.Teams
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
-}
-
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
 }

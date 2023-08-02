@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
@@ -15,6 +15,7 @@ import {
   type Column,
   type CellProps,
   type SortByFn,
+  Pagination,
   Icon,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -41,6 +42,7 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
+  const page = useRef(1);
 
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
@@ -54,61 +56,59 @@ export default function CorrelationsPage() {
     get: { execute: fetchCorrelations, ...get },
   } = useCorrelations();
 
-  useEffect(() => {
-    fetchCorrelations();
-    // we only want to fetch data on first render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdded = useCallback(() => {
     reportInteraction('grafana_correlations_added');
-    fetchCorrelations();
+    fetchCorrelations({ page: page.current });
     setIsAdding(false);
   }, [fetchCorrelations]);
 
   const handleUpdated = useCallback(() => {
     reportInteraction('grafana_correlations_edited');
-    fetchCorrelations();
+    fetchCorrelations({ page: page.current });
   }, [fetchCorrelations]);
 
   const handleDelete = useCallback(
-    (params: RemoveCorrelationParams) => {
-      remove.execute(params);
+    async (params: RemoveCorrelationParams, isLastRow: boolean) => {
+      await remove.execute(params);
+      reportInteraction('grafana_correlations_deleted');
+
+      if (isLastRow) {
+        page.current--;
+      }
+      fetchCorrelations({ page: page.current });
     },
-    [remove]
+    [remove, fetchCorrelations]
   );
 
-  // onDelete - triggers when deleting a correlation
   useEffect(() => {
-    if (remove.value) {
-      reportInteraction('grafana_correlations_deleted');
-    }
-  }, [remove.value]);
-
-  useEffect(() => {
-    if (!remove.error && !remove.loading && remove.value) {
-      fetchCorrelations();
-    }
-  }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
+    fetchCorrelations({ page: page.current });
+  }, [fetchCorrelations]);
 
   const RowActions = useCallback(
     ({
       row: {
+        index,
         original: {
           source: { uid: sourceUID, readOnly },
           uid,
         },
       },
-    }: CellProps<CorrelationData, void>) =>
-      !readOnly && (
-        <DeleteButton
-          aria-label="delete correlation"
-          onConfirm={() => handleDelete({ sourceUID, uid })}
-          closeOnConfirm
-        />
-      ),
+    }: CellProps<CorrelationData, void>) => {
+      return (
+        !readOnly && (
+          <DeleteButton
+            aria-label="delete correlation"
+            onConfirm={() =>
+              handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && data?.correlations.length === 1)
+            }
+            closeOnConfirm
+          />
+        )
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [handleDelete]
   );
 
@@ -144,8 +144,8 @@ export default function CorrelationsPage() {
   );
 
   const data = useMemo(() => get.value, [get.value]);
-  const showEmptyListCTA = data?.length === 0 && !isAdding && !get.error;
-  const addButton = canWriteCorrelations && data?.length !== 0 && data !== undefined && !isAdding && (
+  const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !get.error;
+  const addButton = canWriteCorrelations && data?.correlations?.length !== 0 && data !== undefined && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
       Add new
     </Button>
@@ -188,19 +188,28 @@ export default function CorrelationsPage() {
 
           {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
-          {data && data.length >= 1 && (
-            <InteractiveTable
-              renderExpandedRow={(correlation) => (
-                <ExpendedRow
-                  correlation={correlation}
-                  onUpdated={handleUpdated}
-                  readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
-                />
-              )}
-              columns={columns}
-              data={data}
-              getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
-            />
+          {data && data.correlations.length >= 1 && (
+            <>
+              <InteractiveTable
+                renderExpandedRow={(correlation) => (
+                  <ExpendedRow
+                    correlation={correlation}
+                    onUpdated={handleUpdated}
+                    readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
+                  />
+                )}
+                columns={columns}
+                data={data.correlations}
+                getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
+              />
+              <Pagination
+                currentPage={page.current}
+                numberOfPages={Math.ceil(data.totalCount / data.limit)}
+                onNavigate={(toPage: number) => {
+                  fetchCorrelations({ page: (page.current = toPage) });
+                }}
+              />
+            </>
           )}
         </div>
       </Page.Contents>

@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 )
 
 var (
@@ -58,16 +58,30 @@ func (m *PluginManifest) isV2() bool {
 }
 
 type Signature struct {
-	log log.Logger
 	kr  plugins.KeyRetriever
+	cfg *config.Cfg
+	log log.Logger
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
 func ProvideService(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
+	return NewCalculator(cfg, kr)
+}
+
+func NewCalculator(cfg *config.Cfg, kr plugins.KeyRetriever) *Signature {
 	return &Signature{
-		log: log.New("plugin.signature"),
 		kr:  kr,
+		cfg: cfg,
+		log: log.New("plugins.signature"),
+	}
+}
+
+func DefaultCalculator(cfg *config.Cfg) *Signature {
+	return &Signature{
+		kr:  statickey.New(),
+		cfg: cfg,
+		log: log.New("plugins.signature"),
 	}
 }
 
@@ -162,12 +176,12 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	// Validate that plugin is running within defined root URLs
 	if len(manifest.RootURLs) > 0 {
-		if match, err := urlMatch(manifest.RootURLs, setting.AppUrl, manifest.SignatureType); err != nil {
+		if match, err := urlMatch(manifest.RootURLs, s.cfg.GrafanaAppURL, manifest.SignatureType); err != nil {
 			s.log.Warn("Could not verify if root URLs match", "plugin", plugin.JSONData.ID, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{}, err
 		} else if !match {
 			s.log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.JSONData.ID,
-				"appUrl", setting.AppUrl, "rootUrls", manifest.RootURLs)
+				"appUrl", s.cfg.GrafanaAppURL, "rootUrls", manifest.RootURLs)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusInvalid,
 			}, nil

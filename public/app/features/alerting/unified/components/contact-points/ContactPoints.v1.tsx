@@ -1,23 +1,15 @@
-import { css } from '@emotion/css';
-import pluralize from 'pluralize';
 import React, { useEffect } from 'react';
-import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
+import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Alert, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { ContactPointsState, useDispatch } from 'app/types';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
-import { useGetContactPointsState } from '../../api/receiversApi';
-import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from '../../state/actions';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { initialAsyncRequestState } from '../../utils/redux';
-import { AlertManagerPicker } from '../AlertManagerPicker';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
-import { NoAlertManagerWarning } from '../NoAlertManagerWarning';
 import { DuplicateTemplateView } from '../receivers/DuplicateTemplateView';
 import { EditReceiverView } from '../receivers/EditReceiverView';
 import { EditTemplateView } from '../receivers/EditTemplateView';
@@ -30,48 +22,12 @@ export interface NotificationErrorProps {
   errorCount: number;
 }
 
-function NotificationError({ errorCount }: NotificationErrorProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <div className={styles.error} data-testid="receivers-notification-error">
-      <Stack alignItems="flex-end" direction="column" gap={0}>
-        <Stack alignItems="center" gap={1}>
-          <Icon name="exclamation-circle" />
-          <div>{`${errorCount} ${pluralize('error', errorCount)} with contact points`}</div>
-        </Stack>
-        <div>{'Some alert notifications might not be delivered'}</div>
-      </Stack>
-    </div>
-  );
-}
-
 const Receivers = () => {
-  const alertManagers = useAlertManagersByPermission('notification');
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+  const { selectedAlertmanager: alertManagerSourceName } = useAlertmanager();
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
-
-  const location = useLocation();
-  const isRoot = location.pathname.endsWith('/alerting/notifications');
-  const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const {
-    result: config,
-    loading,
-    error,
-  } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
+  const { currentData: config, isLoading: loading, error } = useAlertmanagerConfig(alertManagerSourceName);
 
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
-
-  const shouldLoadConfig = isRoot || !config;
-  const shouldRenderNotificationStatus = isRoot;
-
-  useEffect(() => {
-    if (alertManagerSourceName && shouldLoadConfig) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch, shouldLoadConfig]);
 
   useEffect(() => {
     if (
@@ -82,32 +38,12 @@ const Receivers = () => {
     }
   }, [alertManagerSourceName, dispatch, receiverTypes]);
 
-  const contactPointsState: ContactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
-  const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
-
-  const disableAmSelect = !isRoot;
-
   if (!alertManagerSourceName) {
-    return isRoot ? (
-      <NoAlertManagerWarning availableAlertManagers={alertManagers} />
-    ) : (
-      <Redirect to="/alerting/notifications" />
-    );
+    return null;
   }
 
   return (
     <>
-      <div className={styles.headingContainer}>
-        <AlertManagerPicker
-          current={alertManagerSourceName}
-          disabled={disableAmSelect}
-          onChange={setAlertManagerSourceName}
-          dataSources={alertManagers}
-        />
-        {shouldRenderNotificationStatus && integrationsErrorCount > 0 && (
-          <NotificationError errorCount={integrationsErrorCount} />
-        )}
-      </div>
       {error && !loading && (
         <Alert severity="error" title="Error loading Alertmanager config">
           {error.message || 'Unknown error.'}
@@ -169,13 +105,3 @@ const Receivers = () => {
 };
 
 export default Receivers;
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  error: css`
-    color: ${theme.colors.error.text};
-  `,
-  headingContainer: css`
-    display: flex;
-    justify-content: space-between;
-  `,
-});

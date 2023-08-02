@@ -21,7 +21,10 @@ export const intervalMap: IntervalMap = {
 export class IndexPattern {
   private dateLocale = 'en';
 
-  constructor(private pattern: string, private interval?: keyof typeof intervalMap) {}
+  constructor(
+    private pattern: string,
+    private interval?: keyof typeof intervalMap
+  ) {}
 
   getIndexForToday() {
     if (this.interval) {

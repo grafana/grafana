@@ -3,6 +3,10 @@ aliases:
   - ../administration/configuration/
   - ../installation/configuration/
 description: Configuration documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure Grafana
 weight: 200
 ---
@@ -615,7 +619,7 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
 
 ### cookie_secure
 
@@ -698,6 +702,11 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 ### csrf_always_check
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
+### disable_frontend_sandbox_for_plugins
+
+Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
+option for plugins that are known to have problems running inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -822,7 +831,9 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
+If set to `detect`, the default UI language will be determined by browser preference.
+The default is `en-US`.
 
 ### home_page
 
@@ -919,11 +930,13 @@ reset to the default organization role on every login. [See `auto_assign_org_rol
 
 `skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-`skip_org_role_sync` default value is `false`.
+The default value for `skip_org_role_sync` is `false`.
 
 With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+> **Note**: Enabling `skip_org_role_sync` also disables the synchronization of Grafana Admins from the external provider, as such `allow_assign_grafana_admin` is ignored.
 
 Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
 
@@ -1664,6 +1677,14 @@ Enable or disable the Profile section. Default is `enabled`.
 
 Enables the news feed section. Default is `true`
 
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1671,6 +1692,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 

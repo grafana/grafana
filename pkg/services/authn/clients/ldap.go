@@ -71,15 +71,15 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 
 func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *authn.Identity {
 	return &authn.Identity{
-		OrgID:          orgID,
-		OrgRoles:       info.OrgRoles,
-		Login:          info.Login,
-		Name:           info.Name,
-		Email:          info.Email,
-		IsGrafanaAdmin: info.IsGrafanaAdmin,
-		AuthModule:     info.AuthModule,
-		AuthID:         info.AuthId,
-		Groups:         info.Groups,
+		OrgID:           orgID,
+		OrgRoles:        info.OrgRoles,
+		Login:           info.Login,
+		Name:            info.Name,
+		Email:           info.Email,
+		IsGrafanaAdmin:  info.IsGrafanaAdmin,
+		AuthenticatedBy: info.AuthModule,
+		AuthID:          info.AuthId,
+		Groups:          info.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeams:           true,

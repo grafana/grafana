@@ -93,10 +93,7 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *
 		}
 	}()
 
-	if res.StatusCode/100 != 2 {
-		return getHealthCheckMessage(logger, "", fmt.Errorf("error reading InfluxDB. Status Code: %d", res.StatusCode))
-	}
-	resp := s.responseParser.Parse(res.Body, []Query{{
+	resp := s.responseParser.Parse(res.Body, res.StatusCode, []Query{{
 		RefID:       refID,
 		UseRawQuery: true,
 		RawQuery:    queryString,

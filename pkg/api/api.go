@@ -106,7 +106,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
-	r.Get("/admin/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
+	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 		r.Get("/admin/storage", reqSignedIn, hs.Index)
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
@@ -147,6 +147,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagDashboardEmbed) {
+		r.Get("/d-embed", reqSignedIn, middleware.AddAllowEmbeddingHeader(), hs.Index)
+	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
@@ -209,10 +213,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	if hs.License.FeatureEnabled("saml") {
-		// TODO change the scope when we extend the auth UI to more providers
-		r.Get("/admin/authentication/", authorize(ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML)), hs.Index)
-	}
+	r.Get("/admin/authentication/", authorize(evalAuthenticationSettings()), hs.Index)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -419,6 +420,12 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Post("/:pluginId/settings", authorize(ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
+
+		if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+			apiRoute.Group("/featuremgmt", func(featuremgmtRoute routing.RouteRegister) {
+				featuremgmtRoute.Get("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureToggles)
+			})
+		}
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
@@ -644,4 +651,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
+}
+
+func evalAuthenticationSettings() ac.Evaluator {
+	return ac.EvalAny(ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
+	), ac.EvalPermission(ac.ActionLDAPStatusRead))
 }

@@ -59,6 +59,9 @@ trigger = {
             "latest.json",
         ],
     },
+    "repo": [
+        "grafana/grafana",
+    ],
 }
 
 def main_pipelines():
@@ -88,7 +91,7 @@ def main_pipelines():
         lint_backend_pipeline(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
-        windows(trigger, edition = "oss", ver_mode = ver_mode),
+        windows(trigger, ver_mode = ver_mode),
         notify_pipeline(
             name = "notify-drone-changes",
             slack_channel = "slack-webhooks-test",

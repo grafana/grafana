@@ -151,6 +151,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
+		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
@@ -164,7 +165,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
 			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
 			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
-			DisableSyncLock:             hs.Cfg.DisableSyncLock,
+			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
 		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{

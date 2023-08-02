@@ -1,16 +1,16 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { reportInteraction, config } from '@grafana/runtime';
+import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { config } from '../../../../core/config';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
-import { SelectedView, TextAlign } from './types';
+import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
+import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
   app: CoreApp;
@@ -22,6 +22,10 @@ type Props = {
   onReset: () => void;
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
+  showResetButton: boolean;
+  colorScheme: ColorScheme | ColorSchemeDiff;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
 };
 
 const FlameGraphHeader = ({
@@ -34,6 +38,10 @@ const FlameGraphHeader = ({
   onReset,
   textAlign,
   onTextAlignChange,
+  showResetButton,
+  colorScheme,
+  onColorSchemeChange,
+  isDiffMode,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
   function interaction(name: string, context: Record<string, string | number>) {
@@ -46,34 +54,52 @@ const FlameGraphHeader = ({
 
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
+  const suffix =
+    localSearch !== '' ? (
+      <Button
+        icon="times"
+        fill="text"
+        size="sm"
+        onClick={() => {
+          // We could set only one and wait them to sync but there is no need to debounce this.
+          setSearch('');
+          setLocalSearch('');
+        }}
+      >
+        Clear
+      </Button>
+    ) : null;
+
   return (
     <div className={styles.header}>
-      <div className={styles.leftContainer}>
-        <div className={styles.inputContainer}>
-          <Input
-            value={localSearch || ''}
-            onChange={(v) => {
-              setLocalSearch(v.currentTarget.value);
-            }}
-            placeholder={'Search..'}
-            width={44}
-          />
-        </div>
-        <Button
-          type={'button'}
-          variant="secondary"
-          onClick={() => {
-            onReset();
-            // We could set only one and wait them to sync but there is no need to debounce this.
-            setSearch('');
-            setLocalSearch('');
+      <div className={styles.inputContainer}>
+        <Input
+          value={localSearch || ''}
+          onChange={(v) => {
+            setLocalSearch(v.currentTarget.value);
           }}
-        >
-          Reset view
-        </Button>
+          placeholder={'Search..'}
+          width={44}
+          suffix={suffix}
+        />
       </div>
 
       <div className={styles.rightContainer}>
+        {showResetButton && (
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            icon={'history-alt'}
+            tooltip={'Reset focus and sandwich state'}
+            onClick={() => {
+              onReset();
+            }}
+            className={styles.buttonSpacing}
+            aria-label={'Reset focus and sandwich state'}
+          />
+        )}
+        <ColorSchemeButton app={app} value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -98,6 +124,57 @@ const FlameGraphHeader = ({
     </div>
   );
 };
+
+type ColorSchemeButtonProps = {
+  app: CoreApp;
+  value: ColorScheme | ColorSchemeDiff;
+  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
+};
+function ColorSchemeButton(props: ColorSchemeButtonProps) {
+  const styles = useStyles2((theme) => getStyles(theme, props.app));
+
+  let menu = (
+    <Menu>
+      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
+      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+    </Menu>
+  );
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+  }
+
+  // Show a bit different gradient as a way to indicate selected value
+  const colorDotStyle =
+    {
+      [ColorScheme.ValueBased]: styles.colorDotByValue,
+      [ColorScheme.PackageBased]: styles.colorDotByPackage,
+      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
+      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
+    }[props.value] || styles.colorDotByValue;
+
+  return (
+    <Dropdown overlay={menu}>
+      <Button
+        variant={'secondary'}
+        fill={'outline'}
+        size={'sm'}
+        tooltip={'Change color scheme'}
+        onClick={() => {}}
+        className={styles.buttonSpacing}
+        aria-label={'Change color scheme'}
+      >
+        <span className={cx(styles.colorDot, colorDotStyle)} />
+      </Button>
+    </Dropdown>
+  );
+}
 
 const alignOptions: Array<SelectableValue<TextAlign>> = [
   { value: 'left', description: 'Align text left', icon: 'align-left' },
@@ -150,7 +227,9 @@ function useSearchInput(
 
 const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   header: css`
-    display: flow-root;
+    label: header;
+    display: flex;
+    justify-content: space-between;
     width: 100%;
     background: ${theme.colors.background.primary};
     top: 0;
@@ -164,17 +243,52 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
       : ''};
   `,
   inputContainer: css`
-    float: left;
+    label: inputContainer;
     margin-right: 20px;
   `,
-  leftContainer: css`
-    float: left;
-  `,
   rightContainer: css`
-    float: right;
+    label: rightContainer;
+    display: flex;
+    align-items: flex-start;
   `,
   buttonSpacing: css`
+    label: buttonSpacing;
     margin-right: ${theme.spacing(1)};
+  `,
+
+  resetButton: css`
+    label: resetButton;
+    display: flex;
+    margin-right: ${theme.spacing(2)};
+  `,
+  resetButtonIconWrapper: css`
+    label: resetButtonIcon;
+    padding: 0 5px;
+    color: ${theme.colors.text.disabled};
+  `,
+  colorDot: css`
+    label: colorDot;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  `,
+  colorDotByValue: css`
+    label: colorDotByValue;
+    background: ${byValueGradient};
+  `,
+  colorDotByPackage: css`
+    label: colorDotByPackage;
+    background: ${byPackageGradient};
+  `,
+  colorDotDiffDefault: css`
+    label: colorDotDiffDefault;
+    background: ${diffDefaultGradient};
+  `,
+
+  colorDotDiffColorBlind: css`
+    label: colorDotDiffColorBlind;
+    background: ${diffColorBlindGradient};
   `,
 });
 
