@@ -17,14 +17,14 @@ var testResponse string
 // go tool pprof -http=localhost:9999 memprofile.out
 func BenchmarkParseJson(b *testing.B) {
 	query := &models.Query{}
-	queries := addQueryToQueries(*query)
+	// queries := addQueryToQueries(*query)
 
 	b.ResetTimer()
 
 	for n := 0; n < b.N; n++ {
 		buf := strings.NewReader(testResponse)
-		result := parse(buf, 200, queries)
-		require.NotNil(b, result.Responses["A"].Frames)
-		require.NoError(b, result.Responses["A"].Error)
+		result := parse(buf, 200, query)
+		require.NotNil(b, result.Frames)
+		require.NoError(b, result.Error)
 	}
 }
