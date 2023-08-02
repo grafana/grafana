@@ -60,7 +60,6 @@ func ProvideService(cfg *setting.Cfg,
 func (uss *UsageStats) Run(ctx context.Context) error {
 	// try to load last sent time from kv store
 	lastSent := time.Now()
-	start := lastSent
 	if val, ok, err := uss.kvStore.Get(ctx, "last_sent"); err != nil {
 		uss.log.Error("Failed to get last sent time", "error", err)
 	} else if ok {
@@ -85,27 +84,22 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-sendReportTicker.C:
-			if uss.readyToReport {
-				if traceID, err := uss.sendUsageStats(ctx); err != nil {
-					uss.log.Warn("Failed to send usage stats", "error", err, "traceID", traceID)
-				}
+			if traceID, err := uss.sendUsageStats(ctx); err != nil {
+				uss.log.Warn("Failed to send usage stats", "error", err, "traceID", traceID)
+			}
 
-				lastSent = time.Now()
-				if err := uss.kvStore.Set(ctx, "last_sent", lastSent.Format(time.RFC3339)); err != nil {
-					uss.log.Warn("Failed to update last sent time", "error", err)
-				}
-
-				for _, callback := range uss.sendReportCallbacks {
-					callback()
-				}
+			lastSent = time.Now()
+			if err := uss.kvStore.Set(ctx, "last_sent", lastSent.Format(time.RFC3339)); err != nil {
+				uss.log.Warn("Failed to update last sent time", "error", err)
 			}
 
 			if nextSendInterval != sendInterval {
-				// reset ticker only if it has run at least once
-				if lastSent.After(start) {
-					nextSendInterval = sendInterval
-					sendReportTicker.Reset(nextSendInterval)
-				}
+				nextSendInterval = sendInterval
+				sendReportTicker.Reset(nextSendInterval)
+			}
+
+			for _, callback := range uss.sendReportCallbacks {
+				callback()
 			}
 		case <-ctx.Done():
 			return ctx.Err()

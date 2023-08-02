@@ -99,6 +99,10 @@ func (uss *UsageStats) sendUsageStats(ctx context.Context) (string, error) {
 	if !uss.Cfg.ReportingEnabled {
 		return "", nil
 	}
+	if !uss.readyToReport {
+		uss.log.Debug("Not sending usage stats, not ready to report")
+		return "", nil
+	}
 	ctx, span := uss.tracer.Start(ctx, "UsageStats.BackgroundJob")
 	defer span.End()
 	traceID := tracing.TraceIDFromContext(ctx, false)

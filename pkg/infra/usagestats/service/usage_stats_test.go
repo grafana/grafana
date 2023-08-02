@@ -69,6 +69,24 @@ func TestMetrics(t *testing.T) {
 		require.False(t, statsSent)
 	})
 
+	t.Run("Given not ready to report and sending usage stats", func(t *testing.T) {
+		origSendUsageStats := sendUsageStats
+		t.Cleanup(func() {
+			sendUsageStats = origSendUsageStats
+		})
+		statsSent := false
+		sendUsageStats = func(uss *UsageStats, ctx context.Context, b *bytes.Buffer) error {
+			statsSent = true
+			return nil
+		}
+
+		uss.Cfg.ReportingEnabled = true
+		_, err := uss.sendUsageStats(context.Background())
+		require.NoError(t, err)
+
+		require.False(t, statsSent)
+	})
+
 	t.Run("Given reporting enabled, stats should be gathered and sent to HTTP endpoint", func(t *testing.T) {
 		origCfg := uss.Cfg
 		t.Cleanup(func() {
@@ -84,6 +102,7 @@ func TestMetrics(t *testing.T) {
 			Packaging:            "deb",
 			ReportingDistributor: "hosted-grafana",
 		}
+		uss.readyToReport = true
 
 		ch := make(chan httpResp)
 		ticker := time.NewTicker(2 * time.Second)
