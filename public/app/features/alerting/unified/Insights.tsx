@@ -138,7 +138,6 @@ export default function GettingStarted() {
 
   return (
     <div className={styles.container}>
-      <p>Information about your alerts</p>
       <div className={styles.panelsContainer}>
         <scene.Component model={scene} />
       </div>

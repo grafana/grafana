@@ -3,7 +3,7 @@ import { Enable, Disable } from 'react-enable';
 
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 
-import GettingStarted from './GettingStarted';
+import GettingStarted, { WelcomeHeader } from './GettingStarted';
 import Insights from './Insights';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertingFeature } from './features';
@@ -16,6 +16,7 @@ export default function Home() {
   return (
     <AlertingPageWrapper pageId={'alerting'}>
       <Enable feature={AlertingFeature.InsightsPage}>
+        <WelcomeHeader />
         <TabsBar>
           <Tab
             key={'insights'}
@@ -27,7 +28,7 @@ export default function Home() {
           />
           <Tab
             key={'gettingStarted'}
-            label={'Getting started'}
+            label={'Overview'}
             active={activeTab === 'gettingStarted'}
             onChangeTab={() => {
               setActiveTab('gettingStarted');
@@ -40,7 +41,7 @@ export default function Home() {
         </TabContent>
       </Enable>
       <Disable feature={AlertingFeature.InsightsPage}>
-        <GettingStarted />
+        <GettingStarted showWelcomeHeader={true} />
       </Disable>
     </AlertingPageWrapper>
   );

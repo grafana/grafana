@@ -6,13 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-export default function GettingStarted() {
+export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeader?: boolean }) {
   const theme = useTheme2();
   const styles = useStyles2(getWelcomePageStyles);
 
   return (
     <div className={styles.grid}>
-      <WelcomeHeader className={styles.ctaContainer} />
+      {showWelcomeHeader && <WelcomeHeader className={styles.ctaContainer} />}
       <ContentBox className={styles.flowBlock}>
         <div>
           <h3>How it works</h3>
@@ -127,7 +127,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function WelcomeHeader({ className }: { className?: string }) {
+export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
