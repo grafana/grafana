@@ -39,6 +39,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
@@ -63,6 +64,7 @@ import {
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 import { getErrorMessage } from './utils';
+import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
 
@@ -115,6 +117,41 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ],
       };
     }
+
+    this.variables = new TempoVariableSupport(this);
+  }
+
+  async executeVariableQuery(query: TempoVariableQuery) {
+    // Avoid failing if the user did not select the query type (label names, label values, etc.)
+    if (query.type === undefined) {
+      return;
+    }
+
+    switch (query.type) {
+      case TempoVariableQueryType.LabelNames: {
+        return await this.labelNamesQuery();
+      }
+      case TempoVariableQueryType.LabelValues: {
+        return this.labelValuesQuery(query.label);
+      }
+      default: {
+        throw Error('Invalid query type', query.type);
+      }
+    }
+  }
+
+  async labelNamesQuery() {
+    const result = await this.metadataRequest('/api/search/tags');
+    return result.data.tagNames.map((value: string) => ({ text: value }));
+  }
+
+  async labelValuesQuery(labelName: string | undefined) {
+    if (!labelName) {
+      return [];
+    }
+
+    const result = await this.metadataRequest(`/api/search/tag/${labelName}/values`);
+    return result.data.tagValues.map((value: string) => ({ text: value }));
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
