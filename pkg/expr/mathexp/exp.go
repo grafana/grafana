@@ -64,26 +64,38 @@ func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Result
 func (e *Expr) executeState(s *State) (r Results, err error) {
 	defer errRecover(&err, s)
 	r, err = s.walk(e.Tree.Root)
-	noticeText := strings.Builder{}
+	nT := strings.Builder{}
 	if s.DropCount > 0 && len(r.Values) > 0 {
-		noticeText.WriteString(fmt.Sprintf("%v items dropped from union(s)", s.DropCount))
+		nT.WriteString(fmt.Sprintf("%v items dropped from union(s)", s.DropCount))
+
+		itemsPerNodeLimit := 5 // Limit on dropped items shown per each node in the binary node
 		if len(s.Drops) > 0 {
-			noticeText.WriteString(": ")
+			nT.WriteString(": ")
 			for biNodeText, biNodeDrops := range s.Drops {
-				noticeText.WriteString(fmt.Sprintf(`["%s": `, biNodeText))
+				nT.WriteString(fmt.Sprintf(`["%s": `, biNodeText))
+
 				for inputNode, droppedItems := range biNodeDrops {
-					noticeText.WriteString(fmt.Sprintf("(%s: ", inputNode))
+					nT.WriteString(fmt.Sprintf("(%s: ", inputNode))
+					
+					itemCount := 0
 					for _, item := range droppedItems {
-						noticeText.WriteString(fmt.Sprintf("{%s}", item))
-						noticeText.WriteString(")")
+						nT.WriteString(fmt.Sprintf("{%s}", item))
+						nT.WriteString(")")
+						
+						itemCount++
+						if itemCount == itemsPerNodeLimit {
+							nT.WriteString(fmt.Sprintf("...%v more...", len(droppedItems)-itemsPerNodeLimit))
+							break
+						}
 					}
 				}
-				noticeText.WriteString("]")
+				nT.WriteString("]")
 			}
 		}
+
 		r.Values[0].AddNotice(data.Notice{
 			Severity: data.NoticeSeverityWarning,
-			Text:     noticeText.String(),
+			Text:     nT.String(),
 		})
 	}
 	return
