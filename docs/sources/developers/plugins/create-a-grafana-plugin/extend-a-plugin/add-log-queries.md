@@ -126,7 +126,7 @@ Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 [Copy link to log line]({{< relref "../../../../explore/logs-integration/#copy-link-to-log-line" >}}) is a feature that allows you to generate a link to a specific log line for easy sharing and referencing. This feature is supported in data sources that produce log data frames with `id` fields.
 
-In a case where original database does not return `id` field, you can implement one within data source. For instance, in Loki data source, a combination of nanosecond timestamp, labels, and the content of the log line is used to create a unique id. On the other hand, Elasticsearch returns an `_id` field that is unique for the specified index. In such cases, to ensure uniqueness, both the `index name` and `_id` are used to create a unique id.
+In the case where the underlying database does not return an `id` field, you can implement one within the data source. For example, in the Loki data source, a combination of nanosecond timestamp, labels, and the content of the log line is used to create a unique id. On the other hand, Elasticsearch returns an `_id` field that is unique for the specified index. In such cases, to ensure uniqueness, both the `index name` and `_id` are used to create a unique id.
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
