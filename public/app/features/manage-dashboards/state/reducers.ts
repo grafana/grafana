@@ -34,6 +34,7 @@ export enum LibraryPanelInputState {
 export interface DashboardInput {
   name: string;
   label: string;
+  description?: string;
   info: string;
   value: string;
   type: InputType;
@@ -100,7 +101,7 @@ const importDashboardSlice = createSlice({
       state.inputs = {
         dataSources: action.payload.filter((p) => p.type === InputType.DataSource),
         constants: action.payload.filter((p) => p.type === InputType.Constant),
-        libraryPanels: [],
+        libraryPanels: state.inputs.libraryPanels || [],
       };
     },
     setLibraryPanelInputs: (state: Draft<ImportDashboardState>, action: PayloadAction<LibraryPanelInput[]>) => {

@@ -19,6 +19,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
     app: CoreApp.Explore,
     styles,
     mouseIsOver: true,
+    onBlur: jest.fn(),
     ...(propOverrides || {}),
   };
 

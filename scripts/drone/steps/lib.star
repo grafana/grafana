@@ -261,7 +261,6 @@ def validate_modfile_step():
     return {
         "name": "validate-modfile",
         "image": images["go_image"],
-        "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
         ],
@@ -1362,7 +1361,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
                     "windows-init",
                 ],
                 "environment": {
-                    "GCP_KEY": from_secret("gcp_key"),
+                    "GCP_KEY": from_secret(gcp_grafanauploads_base64),
                     "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },

@@ -488,7 +488,7 @@ interface ExternalUserTooltipProps {
   lockMessage?: string;
 }
 
-const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
+export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (
