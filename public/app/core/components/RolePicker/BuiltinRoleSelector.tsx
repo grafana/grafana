@@ -34,7 +34,7 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
         )}
         {!disabled && tooltipMessage && (
           <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
-            <Icon name="question-circle" size="xs" />
+            <Icon name="info-circle" size="xs" />
           </Tooltip>
         )}
       </div>

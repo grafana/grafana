@@ -77,7 +77,7 @@ export const UserInviteForm = () => {
                         interactive={true}
                         content='You can now select the "No basic role" option and add permissions to your custom needs.'
                       >
-                        <Icon name="question-circle" size="xs" />
+                        <Icon name="info-circle" size="xs" />
                       </Tooltip>
                     </Stack>
                   </Label>
