@@ -83,7 +83,10 @@ function generateInternalHref<T extends DataQuery = any>(
   return locationUtil.assureBaseUrl(
     `/explore?left=${encodeURIComponent(
       serializeStateToUrlParam({
-        ...(range && range.from && range.to ? { range: toURLRange(range.raw) } : {}),
+        // @deprecated mapInternalLinkToExplore required passing range. Some consumers to generate the URL
+        // with defaults pass range as `{} as any`. This is why we need to check for `range?.raw` not just
+        // `range ? ...` here. This behavior will be marked as deprecated in #72498
+        ...(range?.raw ? { range: toURLRange(range.raw) } : {}),
         datasource: datasourceUid,
         queries: [query],
         panelsState: panelsState,
