@@ -92,4 +92,3 @@ In conclusion, Loki's label extraction and indexing mechanisms are key component
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 {{% /docs/reference %}}
-
