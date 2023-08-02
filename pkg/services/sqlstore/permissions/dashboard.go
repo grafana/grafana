@@ -198,11 +198,9 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					switch f.recursiveQueriesAreSupported {
 					case true:
 						builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-						if len(permSelectorArgs) > 0 {
-							recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-							f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-							builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
-						}
+						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
+						builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
 					default:
 						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.folder_id", "d.id")
 						builder.WriteRune('(')
