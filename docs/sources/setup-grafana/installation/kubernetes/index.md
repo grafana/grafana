@@ -449,7 +449,7 @@ Instead of using the `annotate` flag, you can still use the `--record` flag. How
 This means that `REVISION#2` is the current version.
 
 {{% admonition type="note" %}}
-The last line of the `kubectl rollout history deployment` command output is the one which is currnetly active and running on your Kubernetes environment.
+The last line of the `kubectl rollout history deployment` command output is the one which is currently active and running on your Kubernetes environment.
 {{% /admonition %}}
 
 ### Roll back a deployment
