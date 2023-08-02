@@ -136,7 +136,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 
 	namespace, id := identity.NamespacedID()
 
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+	if id <= 0 || (namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount) {
 		// skip sync
 		return nil
 	}
