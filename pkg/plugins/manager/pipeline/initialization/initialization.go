@@ -28,7 +28,7 @@ type Opts struct {
 
 // New returns a new Initialization stage.
 func New(cfg *config.Cfg, opts Opts) *Initialize {
-	if len(opts.InitializeFuncs) == 0 {
+	if opts.InitializeFuncs == nil {
 		opts.InitializeFuncs = []InitializeFunc{}
 	}
 
