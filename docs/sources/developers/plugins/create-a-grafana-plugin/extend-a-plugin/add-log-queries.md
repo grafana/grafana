@@ -173,7 +173,7 @@ const result = new MutableDataFrame({
 
 > To be implemented in logs data frame as meta
 
-Logs visualisation can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically utilized to highlight search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, search words need to be included in the data frame's meta information
+The kogs visualisation can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically utilized for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, search words need to be included in the data frame's meta information
 
 Example of constructing a data frame that includes searchWords in `go`:
 
