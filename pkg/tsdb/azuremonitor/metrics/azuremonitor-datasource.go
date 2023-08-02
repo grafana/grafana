@@ -344,8 +344,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 
 	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
 	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
+		logger.Warn(err.Error())
 	}
 
 	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl, subscription)
