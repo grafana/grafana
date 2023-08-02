@@ -134,7 +134,7 @@ Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 > To be implemented in logs data frame as field and/or meta
 
-[Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs result to the user. Information that can be shared with user:
+[Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
 
 - **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
 - **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
