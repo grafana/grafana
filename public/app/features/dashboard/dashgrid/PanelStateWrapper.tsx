@@ -9,7 +9,6 @@ import {
   CoreApp,
   DashboardCursorSync,
   DataFrame,
-  EventFilterOptions,
   FieldConfigSource,
   ScopedEventBus,
   getDataSourceRef,
@@ -88,13 +87,13 @@ export interface State {
 export class PanelStateWrapper extends PureComponent<Props, State> {
   private readonly timeSrv: TimeSrv = getTimeSrv();
   private subs = new Subscription();
-  private eventFilter: EventFilterOptions = { filter: EventFilter.NoLocal };
 
   constructor(props: Props) {
     super(props);
-
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
-    const eventBus = new ScopedEventBus(props.dashboard.events);
+    const eventBus = new ScopedEventBus(props.dashboard.events, {
+      filter: this.getSync() === DashboardCursorSync.Off ? EventFilter.OnlyLocal : EventFilter.NoLocal,
+    });
 
     this.state = {
       isFirstLoad: true,
