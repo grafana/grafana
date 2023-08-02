@@ -1,0 +1,10 @@
+apiVersion: 1
+
+datasources:
+  - name: Robust Perception
+    uid: robustperception
+    type: prometheus
+    access: proxy
+    url: http://demo.robustperception.io:9090
+    isDefault: true
+
