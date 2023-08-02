@@ -248,7 +248,7 @@ func copyData(field *data.Field, col arrow.Array) error {
 	case arrow.DURATION:
 		copyBasic[int64](field, array.NewInt64Data(colData))
 	default:
-		fmt.Println(fmt.Sprintf("datatype %s is unhandled", col.DataType().ID()))
+		fmt.Printf("datatype %s is unhandled", col.DataType().ID())
 	}
 
 	return nil
