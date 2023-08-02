@@ -79,26 +79,27 @@ Grafana uses the following roles to control user access:
 - **Organization administrator**: Has access to all organization resources, including dashboards, users, and teams.
 - **Editor**: Can view and edit dashboards, folders, and playlists.
 - **Viewer**: Can view dashboards and playlists.
+- **No Basic Role**: Has no permissions. Permissions will be added with RBAC as needed.
 
 The following table lists permissions for each role.
 
-| Permission                     | Organization administrator | Editor | Viewer |
-| :----------------------------- | :------------------------: | :----: | :----: |
-| View dashboards                |             x              |   x    |   x    |
-| Add, edit, delete dashboards   |             x              |   x    |        |
-| Add, edit, delete folders      |             x              |   x    |        |
-| View playlists                 |             x              |   x    |   x    |
-| Add, edit, delete playlists    |             x              |   x    |        |
-| Create library panels          |             x              |   x    |        |
-| View annotations               |             x              |   x    |   x    |
-| Add, edit, delete annotations  |             x              |   x    |        |
-| Access Explore                 |             x              |   x    |        |
-| Add, edit, delete data sources |             x              |        |        |
-| Add and edit users             |             x              |        |        |
-| Add and edit teams             |             x              |        |        |
-| Change organizations settings  |             x              |        |        |
-| Change team settings           |             x              |        |        |
-| Configure application plugins  |             x              |        |        |
+| Permission                     | Organization administrator | Editor | Viewer | No Basic Role |
+| :----------------------------- | :------------------------: | :----: | :----: | :-----------: |
+| View dashboards                |                            |   x    |   x    |               |
+| Add, edit, delete dashboards   |             x              |   x    |        |               |
+| Add, edit, delete folders      |             x              |   x    |        |               |
+| View playlists                 |             x              |   x    |   x    |               |
+| Add, edit, delete playlists    |             x              |   x    |        |               |
+| Create library panels          |             x              |   x    |        |               |
+| View annotations               |             x              |   x    |   x    |               |
+| Add, edit, delete annotations  |             x              |   x    |        |               |
+| Access Explore                 |             x              |   x    |        |               |
+| Add, edit, delete data sources |             x              |        |        |               |
+| Add and edit users             |             x              |        |        |               |
+| Add and edit teams             |             x              |        |        |               |
+| Change organizations settings  |             x              |        |        |               |
+| Change team settings           |             x              |        |        |               |
+| Configure application plugins  |             x              |        |        |               |
 
 ## Dashboard permissions
 
