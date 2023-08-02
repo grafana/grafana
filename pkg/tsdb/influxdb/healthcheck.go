@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -34,6 +35,8 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return CheckFluxHealth(ctx, dsInfo, req)
 	case influxVersionInfluxQL:
 		return CheckInfluxQLHealth(ctx, dsInfo, s)
+	case influxVersionSQL:
+		return CheckSQLHealth(ctx, dsInfo, req)
 	default:
 		return getHealthCheckMessage(logger, "", errors.New("unknown influx version"))
 	}
@@ -113,6 +116,41 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *
 	}
 
 	return getHealthCheckMessage(logger, "", errors.New("error connecting influxDB influxQL"))
+}
+
+func CheckSQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ds, err := fsql.Query(ctx, dsInfo, backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Queries: []backend.DataQuery{
+			{
+				RefID:         refID,
+				JSON:          []byte(`{ "query": "select 1", "resultFormat": "table" }`),
+				Interval:      1 * time.Minute,
+				MaxDataPoints: 423,
+				TimeRange: backend.TimeRange{
+					From: time.Now().AddDate(0, 0, -1),
+					To:   time.Now(),
+				},
+			},
+		},
+	})
+
+	if err != nil {
+		return getHealthCheckMessage(logger, "error performing sql query", err)
+	}
+
+	res := ds.Responses[refID]
+	if res.Error != nil {
+		return &backend.CheckHealthResult{
+			Status:  backend.HealthStatusError,
+			Message: fmt.Sprintf("ERROR: %s", res.Error),
+		}, nil
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "OK",
+	}, nil
 }
 
 func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
