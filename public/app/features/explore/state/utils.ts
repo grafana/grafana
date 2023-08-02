@@ -158,8 +158,7 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
 }
 
 /**
- * DOC that params are off
- * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliane
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
  */
 export function fromURLRange(range: RawTimeRange): RawTimeRange {
   let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
