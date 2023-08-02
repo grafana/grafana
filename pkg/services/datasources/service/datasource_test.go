@@ -890,12 +890,14 @@ func TestService_getProxySettings(t *testing.T) {
 		require.Equal(t, opts.ProxyOptions.Auth.Username, ds.UID)
 	})
 
-	t.Run("Can override username and password", func(t *testing.T) {
+	t.Run("Can override options", func(t *testing.T) {
 		sjson := simplejson.New()
 		pass := "testpass"
 		user := "testuser"
 		sjson.Set("enableSecureSocksProxy", true)
 		sjson.Set("secureSocksProxyUsername", user)
+		sjson.Set("timeout", 10)
+		sjson.Set("keepAlive", 5)
 		ds := datasources.DataSource{
 			ID:       1,
 			OrgID:    1,
@@ -919,6 +921,8 @@ func TestService_getProxySettings(t *testing.T) {
 		require.True(t, opts.ProxyOptions.Enabled)
 		require.Equal(t, opts.ProxyOptions.Auth.Username, user)
 		require.Equal(t, opts.ProxyOptions.Auth.Password, pass)
+		require.Equal(t, opts.ProxyOptions.Timeouts.Timeout, 10*time.Second)
+		require.Equal(t, opts.ProxyOptions.Timeouts.KeepAlive, 5*time.Second)
 	})
 }
 

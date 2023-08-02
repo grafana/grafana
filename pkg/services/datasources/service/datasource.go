@@ -492,6 +492,14 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		if val, exists, err := s.DecryptedValue(ctx, ds, "secureSocksProxyPassword"); err == nil && exists {
 			proxyOpts.Auth.Password = val
 		}
+
+		proxyOpts.Timeouts = &sdkproxy.DefaultTimeoutOptions
+		if val, err := ds.JsonData.Get("timeout").Float64(); err == nil {
+			proxyOpts.Timeouts.Timeout = time.Duration(val) * time.Second
+		}
+		if val, err := ds.JsonData.Get("keepAlive").Float64(); err == nil {
+			proxyOpts.Timeouts.KeepAlive = time.Duration(val) * time.Second
+		}
 	}
 	opts.ProxyOptions = proxyOpts
 
