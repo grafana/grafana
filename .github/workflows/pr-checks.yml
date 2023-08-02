@@ -17,6 +17,9 @@ concurrency:
   group: pr-checks-${{ github.event.number }}
 jobs:
   main:
+    permissions:
+      actions: write
+      contents: read
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
