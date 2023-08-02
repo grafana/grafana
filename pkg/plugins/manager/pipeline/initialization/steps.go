@@ -80,7 +80,7 @@ func newPluginRegistration(pluginRegistry registry.Service) *PluginRegistration 
 func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.pluginRegistry.Add(ctx, p); err != nil {
 		r.log.Error("Could not register plugin", "pluginID", p.ID, "err", err)
-		return nil, errors.New("could not register plugin") // is this okay?
+		return nil, errors.New("could not register plugin")
 	}
 	if !p.IsCorePlugin() {
 		r.log.Info("Plugin registered", "pluginID", p.ID)
