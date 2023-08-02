@@ -122,7 +122,7 @@ Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 ### Copy link to log line
 
-> To be implemented in logs data frame as field
+> Must be implemented in the data frame as a field
 
 [Copy link to log line]({{< relref "../../../../explore/logs-integration/#copy-link-to-log-line" >}}) is a feature that allows you to generate a link to a specific log line for easy sharing or reference. This feature is supported for data sources that produce log data frames with `id` field.
 
