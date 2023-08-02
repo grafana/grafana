@@ -116,6 +116,7 @@ export interface FeatureToggles {
   splitScopes?: boolean;
   decoupleCorePlugins?: boolean;
   azureMonitorDataplane?: boolean;
+  permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
 }
