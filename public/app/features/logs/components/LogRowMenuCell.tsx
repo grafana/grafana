@@ -16,7 +16,7 @@ interface Props {
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
-  onBlur?: () => void;
+  onBlur: () => void;
 }
 
 export const LogRowMenuCell = React.memo(
