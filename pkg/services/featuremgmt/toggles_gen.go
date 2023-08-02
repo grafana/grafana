@@ -259,10 +259,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagPyroscopeFlameGraph
-	// Changes flame graph to pyroscope one
-	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
-
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
