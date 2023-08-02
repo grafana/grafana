@@ -45,7 +45,7 @@ func TestIntegration_QueryData(t *testing.T) {
 					"bucket": "bucket",
 				},
 			},
-			Secure: false,
+			SecureGrpc: false,
 		},
 		backend.QueryDataRequest{
 			Queries: []backend.DataQuery{
