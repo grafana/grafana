@@ -95,7 +95,7 @@ Example of constructing a data frame with specific meta information in `Go`:
 
 ```go
 frame.Meta = &data.FrameMeta{
-	PreferredVisualization: visType,
+	PreferredVisualization: "logs",
 }
 ```
 
