@@ -147,13 +147,13 @@ const result = new MutableDataFrame({
 
 ### Log result meta information
 
-> Must be implemented in the data frame as a meta attribute
+> Must be implemented in the data frame as a meta attribute, or in the data frame as a field
 
 [Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
 
 - **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
 - **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
-- **Common labels**: Labels, or attributes that are the same for all displayed log lines are shown as meta information. This feature is supported for data sources that produce log data frames with an `attributes` field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
+- **Common labels**: Displays attributes present in the `attributes` data frame field that are the same for all displayed log lines. This feature is supported for data sources that produce log data frames with an attributes field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 Example of constructing a data frame with specific meta information in `Go`:
 
@@ -188,7 +188,7 @@ const result = new MutableDataFrame({
 
 > Must be implemented in the data frame as a field
 
-Color coded [log levels]({{< relref "../../../../explore/logs-integration/#log-level" >}}) are displayed at the beginning of each log line. It improves the log visualization by allowing users to quickly assess the severity of log entrie, facilitating log analysis and troubleshooting. The log level is determined from the `severity` field of the data frame. In the case where the `severity` field is not present, Grafana tries to evaluate the level based on the content of the log line. If inferring the log level from the content is not possible, the log level is then set to `unknown`.
+Color coded [log levels]({{< relref "../../../../explore/logs-integration/#log-level" >}}) are displayed at the beginning of each log line. It improves the log visualization by allowing users to quickly assess the severity of log entries, facilitating log analysis and troubleshooting. The log level is determined from the `severity` field of the data frame. In the case where the `severity` field is not present, Grafana tries to evaluate the level based on the content of the log line. If inferring the log level from the content is not possible, the log level is then set to `unknown`.
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
