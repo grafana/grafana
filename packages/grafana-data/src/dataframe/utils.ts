@@ -26,3 +26,34 @@ export function anySeriesWithTimeField(data: DataFrame[]) {
   }
   return false;
 }
+
+/**
+ * Given data frames representing time series from different time windows, this function shifts the time values
+ * of the frames so that they are graphable.
+ * This function assumes that the first frame contains the reference time range, while consecutive frames
+ * are time shifted.
+ */
+export function shiftComparisonFramesTimestamps(frames: DataFrame[]) {
+  // First frame that holds a time field that's used as comparison diffs reference
+  let timeComparisonReferenceFrame: DataFrame | undefined;
+
+  const referenceFrame = frames[0];
+  for (let field of referenceFrame.fields) {
+    if (field.type === FieldType.time && referenceFrame?.meta?.timeRange) {
+      timeComparisonReferenceFrame = referenceFrame;
+    }
+  }
+
+  frames.forEach((frame) => {
+    frame.fields.forEach((f) => {
+      if (timeComparisonReferenceFrame && frame !== timeComparisonReferenceFrame) {
+        const diff = timeComparisonReferenceFrame.meta?.timeRange?.from.diff(frame.meta?.timeRange?.from!);
+        if (f.type === FieldType.time) {
+          f.values = f.values.map((v) => {
+            return v + (diff || 0);
+          });
+        }
+      }
+    });
+  });
+}
