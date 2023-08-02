@@ -15,6 +15,8 @@ import { useLinks } from '../utils/links';
 const getStyles = (theme: GrafanaTheme2) => ({
   warningText: css`
     label: warningText;
+    display: flex;
+    align-items: center;
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
   `,
