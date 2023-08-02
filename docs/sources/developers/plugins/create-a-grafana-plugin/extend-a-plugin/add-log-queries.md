@@ -43,8 +43,6 @@ Logs data frame's `type` needs to be set to `type: DataFrameType.LogLines` in da
 
 Example of constructing a logs data frame in `Go`:
 
-> Note: Should be used if you are creating data frames in Go
-
 ```go
 frame := data.NewFrame(
     "logs",
@@ -61,8 +59,6 @@ frame := data.NewFrame(
 ```
 
 Example of constructing a logs data frame in `Typescript`:
-
-> Note: Should be used if you are creating data frames in Typescript
 
 ```ts
 const result = new MutableDataFrame({
@@ -91,8 +87,6 @@ To ensure that your log results are displayed in an interactive Logs view, add a
 
 Example of constructing a data frame with specific meta information in `Go`:
 
-> Note: Should be used if you are creating data frames in Go
-
 ```go
 frame.Meta = &data.FrameMeta{
 	PreferredVisualization: "logs",
@@ -100,8 +94,6 @@ frame.Meta = &data.FrameMeta{
 ```
 
 Example of constructing a data frame with specific meta information in `Typescript`:
-
-> Note: Should be used if you are creating data frames in Typescript
 
 ```ts
 const result = new MutableDataFrame({
@@ -120,8 +112,6 @@ The logs visualisation can [highlight specific words or strings]({{< relref "../
 
 Example of constructing a data frame that includes searchWords in `Go`:
 
-> Note: Should be used if you are creating data frames in Go
-
 ```go
 frame.Meta = &data.FrameMeta{
 	Custom: map[string]interface{}{
@@ -131,8 +121,6 @@ frame.Meta = &data.FrameMeta{
 ```
 
 Example of constructing a data frame that includes searchWords in `Typescript`:
-
-> Note: Should be used if you are creating data frames in Typescript
 
 ```ts
 const result = new MutableDataFrame({
@@ -157,8 +145,6 @@ const result = new MutableDataFrame({
 
 Example of constructing a data frame with specific meta information in `Go`:
 
-> Note: Should be used if you are creating data frames in Go
-
 ```go
 frame.Meta = &data.FrameMeta{
 	Custom: map[string]interface{}{
@@ -169,8 +155,6 @@ frame.Meta = &data.FrameMeta{
 ```
 
 Example of constructing a data frame with specific meta information in `Typescript`:
-
-> Note: Should be used if you are creating data frames in Typescript
 
 ```ts
 const result = new MutableDataFrame({
