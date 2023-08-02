@@ -13,6 +13,7 @@ import (
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -481,6 +482,16 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			Password: password,
 		}
 	}
+
+	proxyOpts := &proxy.Options{}
+	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
+		proxyOpts.Enabled = true
+		proxyOpts.Auth = &proxy.AuthOptions{
+			Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(ds.UID),
+			Password: ds.JsonData.Get("secureSocksProxyPassword").MustString(""),
+		}
+	}
+	opts.ProxyOptions = proxyOpts
 
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
