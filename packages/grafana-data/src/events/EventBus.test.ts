@@ -191,7 +191,40 @@ describe('ScopedEventBus', () => {
     expect(events.length).toBe(2);
   });
 
-  it('Filters out local events by default', () => {
+  it('Filters out local events', () => {
+    const sourceBus = new EventBusSrv();
+
+    const events: LoginEvent[] = [];
+    const filteredEvents1: LoginEvent[] = [];
+    const filteredEvents2: LoginEvent[] = [];
+
+    sourceBus.subscribe(LoginEvent, (event) => {
+      events.push(event);
+    });
+
+    const scoped1 = new ScopedEventBus(sourceBus, { filter: EventFilter.NoLocal });
+    const scoped2 = new ScopedEventBus(sourceBus, { filter: EventFilter.NoLocal });
+
+    scoped1.subscribe(LoginEvent, (event) => {
+      filteredEvents1.push(event);
+    });
+
+    scoped2.subscribe(LoginEvent, (event) => {
+      filteredEvents2.push(event);
+    });
+
+    scoped1.publish(new LoginEvent({ logins: 10 }));
+    scoped1.publish(new LoginEvent({ logins: 11 }));
+
+    // reacted to all events
+    expect(events.length).toBe(2);
+    // ignored local events
+    expect(filteredEvents1.length).toBe(0);
+    // reacted to all events
+    expect(filteredEvents2.length).toBe(2);
+  });
+
+  it('Listens to local events only by default', () => {
     const sourceBus = new EventBusSrv();
 
     const events: LoginEvent[] = [];
@@ -215,39 +248,6 @@ describe('ScopedEventBus', () => {
 
     scoped1.publish(new LoginEvent({ logins: 10 }));
     scoped1.publish(new LoginEvent({ logins: 11 }));
-
-    // reacted to all events
-    expect(events.length).toBe(2);
-    // ignored local events
-    expect(filteredEvents1.length).toBe(0);
-    // reacted to all events
-    expect(filteredEvents2.length).toBe(2);
-  });
-
-  it('Allows listening to local events only', () => {
-    const sourceBus = new EventBusSrv();
-
-    const events: LoginEvent[] = [];
-    const filteredEvents1: LoginEvent[] = [];
-    const filteredEvents2: LoginEvent[] = [];
-
-    sourceBus.subscribe(LoginEvent, (event) => {
-      events.push(event);
-    });
-
-    const scoped1 = new ScopedEventBus(sourceBus, { filter: EventFilter.OnlyLocal });
-    const scoped2 = new ScopedEventBus(sourceBus);
-
-    scoped1.subscribe(LoginEvent, (event) => {
-      filteredEvents1.push(event);
-    });
-
-    scoped2.subscribe(LoginEvent, (event) => {
-      filteredEvents2.push(event);
-    });
-
-    scoped1.publish(new LoginEvent({ logins: 10 }));
-    scoped1.publish(new LoginEvent({ logins: 11 }));
     scoped2.publish(new LoginEvent({ logins: 11 }));
     sourceBus.publish(new LoginEvent({ logins: 11 }));
 
@@ -256,7 +256,7 @@ describe('ScopedEventBus', () => {
     // reacted to scoped1 bus events only
     expect(filteredEvents1.length).toBe(2);
     // reacted to sourceBus and scoped1 bus events
-    expect(filteredEvents2.length).toBe(3);
+    expect(filteredEvents2.length).toBe(1);
   });
 
   it('Allows listening to all events ', () => {
