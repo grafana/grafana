@@ -311,7 +311,7 @@ const getContentStyle = (
   padding: string,
   theme: GrafanaTheme2,
   headerHeight: number,
-  isPanelOpen: boolean,
+  isOpen: boolean,
   height?: number,
   width?: number
 ) => {
@@ -330,7 +330,7 @@ const getContentStyle = (
     innerHeight = height - headerHeight - panelPadding - panelBorder;
   }
 
-  if (!isPanelOpen) {
+  if (!isOpen) {
     innerHeight = headerHeight;
   }
 
