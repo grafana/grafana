@@ -64,59 +64,7 @@ func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Result
 func (e *Expr) executeState(s *State) (r Results, err error) {
 	defer errRecover(&err, s)
 	r, err = s.walk(e.Tree.Root)
-	nT := strings.Builder{}
-
-	if s.DropCount > 0 && len(r.Values) > 0 {
-		itemsPerNodeLimit := 5 // Limit on dropped items shown per each node in the binary node
-
-		nT.WriteString(fmt.Sprintf("%v items dropped from union(s)", s.DropCount))
-		if len(s.Drops) > 0 {
-			nT.WriteString(": ")
-
-			biNodeDropCount := 0
-			for biNodeText, biNodeDrops := range s.Drops {
-				nT.WriteString(fmt.Sprintf(`["%s": `, biNodeText))
-
-				nodeCount := 0
-				for inputNode, droppedItems := range biNodeDrops {
-					nT.WriteString(fmt.Sprintf("(%s: ", inputNode))
-
-					itemCount := 0
-					for _, item := range droppedItems {
-						nT.WriteString(fmt.Sprintf("{%s}", item))
-
-						itemCount++
-						if itemCount == itemsPerNodeLimit {
-							nT.WriteString(fmt.Sprintf("...%v more...", len(droppedItems)-itemsPerNodeLimit))
-							break
-						}
-						if itemCount < len(droppedItems) {
-							nT.WriteString(" ")
-						}
-					}
-
-					nT.WriteString(")")
-
-					nodeCount++
-					if nodeCount < len(biNodeDrops) {
-						nT.WriteString(" ")
-					}
-				}
-
-				nT.WriteString("]")
-
-				biNodeDropCount++
-				if biNodeDropCount < len(biNodeDrops) {
-					nT.WriteString(" ")
-				}
-			}
-		}
-
-		r.Values[0].AddNotice(data.Notice{
-			Severity: data.NoticeSeverityWarning,
-			Text:     nT.String(),
-		})
-	}
+	s.addDropNotices(&r)
 	return
 }
 
@@ -641,4 +589,60 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 		}
 	}
 	return res, nil
+}
+
+func (s *State) addDropNotices(r *Results) {
+	nT := strings.Builder{}
+
+	if s.DropCount > 0 && len(r.Values) > 0 {
+		itemsPerNodeLimit := 5 // Limit on dropped items shown per each node in the binary node
+
+		nT.WriteString(fmt.Sprintf("%v items dropped from union(s)", s.DropCount))
+		if len(s.Drops) > 0 {
+			nT.WriteString(": ")
+
+			biNodeDropCount := 0
+			for biNodeText, biNodeDrops := range s.Drops {
+				nT.WriteString(fmt.Sprintf(`["%s": `, biNodeText))
+
+				nodeCount := 0
+				for inputNode, droppedItems := range biNodeDrops {
+					nT.WriteString(fmt.Sprintf("(%s: ", inputNode))
+
+					itemCount := 0
+					for _, item := range droppedItems {
+						nT.WriteString(fmt.Sprintf("{%s}", item))
+
+						itemCount++
+						if itemCount == itemsPerNodeLimit {
+							nT.WriteString(fmt.Sprintf("...%v more...", len(droppedItems)-itemsPerNodeLimit))
+							break
+						}
+						if itemCount < len(droppedItems) {
+							nT.WriteString(" ")
+						}
+					}
+
+					nT.WriteString(")")
+
+					nodeCount++
+					if nodeCount < len(biNodeDrops) {
+						nT.WriteString(" ")
+					}
+				}
+
+				nT.WriteString("]")
+
+				biNodeDropCount++
+				if biNodeDropCount < len(biNodeDrops) {
+					nT.WriteString(" ")
+				}
+			}
+		}
+
+		r.Values[0].AddNotice(data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     nT.String(),
+		})
+	}
 }
