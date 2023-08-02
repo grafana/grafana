@@ -369,7 +369,7 @@ func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPass
 
 func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
 	if cmd.UserID <= 0 {
-		return user.ErrNoUniqueID
+		return user.ErrUpdateInvalidID
 	}
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
