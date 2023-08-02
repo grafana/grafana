@@ -45,17 +45,17 @@ Example of constructing a logs data frame in `Go`:
 
 ```go
 frame := data.NewFrame(
-    "logs",
-    data.NewField("timestamp", nil, []time.Time{time.UnixMilli(1645030244810), time.UnixMilli(1645030247027), time.UnixMilli(1645030247027)}),
-    data.NewField("body", nil, []string{"message one", "message two", "message three"}),
-    data.NewField("severity", nil, []string{"critical", "error", "warning"}),
-    data.NewField("id", nil, []string{"xxx-001", "xyz-002", "111-003"}),
-    data.NewField("attributes", nil, []json.RawMessage{[]byte(`{}`), []byte(`{"hello":"world"}`), []byte(`{"hello":"world", "foo": 123.45, "bar" :["yellow","red"], "baz" : { "name": "alice" }}`)}),
+   "logs",
+  data.NewField("timestamp", nil, []time.Time{time.UnixMilli(1645030244810), time.UnixMilli(1645030247027), time.UnixMilli(1645030247027)}),
+  data.NewField("body", nil, []string{"message one", "message two", "message three"}),
+  data.NewField("severity", nil, []string{"critical", "error", "warning"}),
+  data.NewField("id", nil, []string{"xxx-001", "xyz-002", "111-003"}),
+  data.NewField("attributes", nil, []json.RawMessage{[]byte(`{}`), []byte(`{"hello":"world"}`), []byte(`{"hello":"world", "foo": 123.45, "bar" :["yellow","red"], "baz" : { "name": "alice" }}`)}),
 )
 
-	frame.SetMeta(&data.FrameMeta{
-		Type:   data.FrameTypeLogLines,
-	})
+frame.SetMeta(&data.FrameMeta{
+	Type:   data.FrameTypeLogLines,
+})
 ```
 
 Example of constructing a logs data frame in `Typescript`:
@@ -160,10 +160,10 @@ Example of constructing a data frame with specific meta information in `Typescri
 const result = new MutableDataFrame({
     fields: [...],
     meta: {
-        custom: {
-          limit: 1000,
-          error: "Error information"
-        }
+      custom: {
+        limit: 1000,
+        error: "Error information"
+      }
     },
 });
 ```
