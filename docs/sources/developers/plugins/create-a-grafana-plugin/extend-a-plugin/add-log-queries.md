@@ -89,9 +89,9 @@ const result = new MutableDataFrame({
 
 To ensure that your log results are displayed in an interactive Logs view, add a `meta` attribute to `preferredVisualisationType` in your log result data frame.
 
-Example of constructing a data frame with specific meta information in `go`:
+Example of constructing a data frame with specific meta information in `Go`:
 
-> Note: Should be used if you are creating data frames on backend in go code.
+> Note: Should be used if you are creating the data frames in the backend.
 
 ```go
 frame.Meta = &data.FrameMeta{
