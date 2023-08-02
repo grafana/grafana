@@ -395,6 +395,10 @@ const (
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
+	// FlagPermissionsFilterRemoveSubquery
+	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
+	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
+
 	// FlagPrometheusConfigOverhaulAuth
 	// Update the Prometheus configuration page with the new auth component
 	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
