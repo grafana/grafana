@@ -4,65 +4,29 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-// UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
-func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
-	var rawMatchers [][3]string
-	if err := json.Unmarshal(data, &rawMatchers); err != nil {
-		return err
-	}
-	for _, rawMatcher := range rawMatchers {
-		var matchType labels.MatchType
-		switch rawMatcher[1] {
-		case "=":
-			matchType = labels.MatchEqual
-		case "!=":
-			matchType = labels.MatchNotEqual
-		case "=~":
-			matchType = labels.MatchRegexp
-		case "!~":
-			matchType = labels.MatchNotRegexp
-		default:
-			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
-		}
-
-		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
-		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
-
-		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
-		if err != nil {
-			return err
-		}
-		*m = append(*m, matcher)
-	}
-	sort.Sort(labels.Matchers(*m))
-	return nil
-}
 
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {
 		name      string
-		receivers []*PostableGrafanaReceiver
+		receivers []*apimodels.PostableGrafanaReceiver
 		err       error
 	}{
 		{
 			name: "when a slack receiver does not have a valid URL - it should error",
-			receivers: []*PostableGrafanaReceiver{
+			receivers: []*apimodels.PostableGrafanaReceiver{
 				{
 					UID:            "test-uid",
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
+					Settings:       mustRawMessage(map[string]any{}),
 					SecureSettings: map[string]string{"url": invalidUri},
 				},
 			},
@@ -70,24 +34,24 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",
-			receivers: []*PostableGrafanaReceiver{
+			receivers: []*apimodels.PostableGrafanaReceiver{
 				{
 					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadRecipient",
 					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "this passes"}),
+					Settings:       mustRawMessage(map[string]any{"recipient": "this passes"}),
 					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
 				},
 			},
 		},
 		{
 			name: "when the configuration is valid - it should not error",
-			receivers: []*PostableGrafanaReceiver{
+			receivers: []*apimodels.PostableGrafanaReceiver{
 				{
 					UID:            util.GenerateShortUID(),
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
-					Settings:       simplejson.NewFromAny(map[string]interface{}{"recipient": "#a-good-channel"}),
+					Settings:       mustRawMessage(map[string]interface{}{"recipient": "#a-good-channel"}),
 					SecureSettings: map[string]string{"url": "http://webhook.slack.com/myuser"},
 				},
 			},
@@ -99,7 +63,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			mg := newTestMigration(t)
 
 			config := configFromReceivers(t, tt.receivers)
-			require.NoError(t, config.EncryptSecureSettings()) // make sure we encrypt the settings
+			require.NoError(t, encryptSecureSettings(config)) // make sure we encrypt the settings
 			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
@@ -111,19 +75,19 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	}
 }
 
-func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *PostableUserConfig {
+func configFromReceivers(t *testing.T, receivers []*apimodels.PostableGrafanaReceiver) *apimodels.PostableUserConfig {
 	t.Helper()
 
-	return &PostableUserConfig{
-		AlertmanagerConfig: PostableApiAlertingConfig{
-			Receivers: []*PostableApiReceiver{
-				{GrafanaManagedReceivers: receivers},
+	return &apimodels.PostableUserConfig{
+		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+			Receivers: []*apimodels.PostableApiReceiver{
+				{PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{GrafanaManagedReceivers: receivers}},
 			},
 		},
 	}
 }
 
-func (c *PostableUserConfig) EncryptSecureSettings() error {
+func encryptSecureSettings(c *apimodels.PostableUserConfig) error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
@@ -185,4 +149,9 @@ func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
 	}
 
 	require.Equal(t, len(s.set), len(deduped))
+}
+
+func mustRawMessage[T any](s T) apimodels.RawMessage {
+	js, _ := json.Marshal(s)
+	return js
 }

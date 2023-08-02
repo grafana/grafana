@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -44,12 +46,29 @@ func (e *MigrationError) Unwrap() error { return e.Err }
 
 type migration struct {
 	log     log.Logger
-	store   db.DB
 	dialect migrator.Dialect
 	cfg     *setting.Cfg
 
 	seenUIDs uidSet
 	silences map[int64][]*pb.MeshSilence
+
+	store         db.DB
+	ruleStore     RuleStore
+	alertingStore AlertingStore
+}
+
+func newMigration(log log.Logger, cfg *setting.Cfg, store db.DB, ruleStore RuleStore, alertingStore AlertingStore, dialect migrator.Dialect) *migration {
+	return &migration{
+		// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
+		seenUIDs:      uidSet{set: make(map[string]struct{}), caseInsensitive: dialect.SupportEngine()},
+		silences:      make(map[int64][]*pb.MeshSilence),
+		log:           log,
+		dialect:       dialect,
+		cfg:           cfg,
+		store:         store,
+		ruleStore:     ruleStore,
+		alertingStore: alertingStore,
+	}
 }
 
 func getSilenceFileNamesForAllOrgs(dataPath string) ([]string, error) {
@@ -106,7 +125,7 @@ func (m *migration) Exec(ctx context.Context) error {
 	}
 
 	// Per org map of newly created rules to which notification channels it should send to.
-	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
+	rulesPerOrg := make(map[int64]map[*models.AlertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
 		l := m.log.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
@@ -204,7 +223,7 @@ func (m *migration) Exec(ctx context.Context) error {
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
-			rulesPerOrg[rule.OrgID] = make(map[*alertRule][]uidOrID)
+			rulesPerOrg[rule.OrgID] = make(map[*models.AlertRule][]uidOrID)
 		}
 		if _, ok := rulesPerOrg[rule.OrgID][rule]; !ok {
 			rulesPerOrg[rule.OrgID][rule] = extractChannelIDs(da)
@@ -241,73 +260,51 @@ func (m *migration) Exec(ctx context.Context) error {
 	return nil
 }
 
-func (m *migration) insertRules(ctx context.Context, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
-	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		for _, rules := range rulesPerOrg {
-			for rule := range rules {
-				var err error
-				if strings.HasPrefix(m.dialect.DriverName(), migrator.Postgres) {
-					err = m.store.WithTransactionalDbSession(context.Background(), func(nestedSess *db.Session) error {
-						_, err := nestedSess.Insert(rule)
-						return err
-					})
-				} else {
-					_, err = sess.Insert(rule)
-				}
-				if err != nil {
-					// TODO better error handling, if constraint
-					rule.Title += fmt.Sprintf(" %v", rule.UID)
-					rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
+func (m *migration) insertRules(ctx context.Context, rulesPerOrg map[int64]map[*models.AlertRule][]uidOrID) error {
+	for _, orgRules := range rulesPerOrg {
+		titleDedup := make(map[string]map[string]struct{}) // Namespace -> Title -> struct{}
 
-					_, err = sess.Insert(rule)
-					if err != nil {
-						return err
-					}
-				}
-
-				// create entry in alert_rule_version
-				_, err = sess.Insert(rule.makeVersion())
-				if err != nil {
-					return err
-				}
+		rules := make([]models.AlertRule, 0, len(orgRules))
+		for rule := range orgRules {
+			existingTitles, ok := titleDedup[rule.NamespaceUID]
+			if !ok {
+				existingTitles = make(map[string]struct{})
+				titleDedup[rule.NamespaceUID] = existingTitles
 			}
+			if _, ok := existingTitles[rule.Title]; ok {
+				rule.Title += fmt.Sprintf(" %v", rule.UID)
+				rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
+			}
+
+			existingTitles[rule.Title] = struct{}{}
+			rules = append(rules, *rule)
 		}
-		return nil
-	})
-	if err != nil {
-		return err
+		_, err := m.ruleStore.InsertAlertRules(ctx, rules)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (m *migration) writeAlertmanagerConfig(ctx context.Context, orgID int64, amConfig *PostableUserConfig) error {
+func (m *migration) writeAlertmanagerConfig(ctx context.Context, orgID int64, amConfig *apimodels.PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
 		return err
 	}
-	err = m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		// remove an existing configuration, which could have been left during switching back to legacy alerting
-		_, _ = sess.Delete(AlertConfiguration{OrgID: orgID})
 
-		// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
-		_, err = sess.Insert(AlertConfiguration{
-			AlertmanagerConfiguration: string(rawAmConfig),
-			// Since we are migration for a snapshot of the code, it is always going to migrate to
-			// the v1 config.
-			ConfigurationVersion: "v1",
-			OrgID:                orgID,
-		})
-		return err
-	})
-	if err != nil {
-		return err
+	cmd := models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(rawAmConfig),
+		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
+		Default:                   false,
+		OrgID:                     orgID,
+		LastApplied:               0,
 	}
-
-	return nil
+	return m.alertingStore.SaveAlertmanagerConfiguration(ctx, &cmd)
 }
 
 // validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
-func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error {
+func (m *migration) validateAlertmanagerConfig(config *apimodels.PostableUserConfig) error {
 	for _, r := range config.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			data, err := gr.Settings.MarshalJSON()
@@ -348,15 +345,6 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 	}
 
 	return nil
-}
-
-type AlertConfiguration struct {
-	ID    int64 `xorm:"pk autoincr 'id'"`
-	OrgID int64 `xorm:"org_id"`
-
-	AlertmanagerConfiguration string
-	ConfigurationVersion      string
-	CreatedAt                 int64 `xorm:"created"`
 }
 
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.

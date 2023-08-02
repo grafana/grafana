@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/util"
@@ -153,7 +154,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 				return nil, err
 			}
 
-			alertQuery := alertQuery{
+			alertQuery := ngmodels.AlertQuery{
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
@@ -201,7 +202,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 		return nil, err
 	}
 
-	ccAlertQuery := alertQuery{
+	ccAlertQuery := ngmodels.AlertQuery{
 		RefID:         ccRefID,
 		Model:         exprModelJSON,
 		DatasourceUID: expressionDatasourceUID,
@@ -223,7 +224,7 @@ type condition struct {
 	OrgID     int64  `json:"-"`
 
 	// Data is an array of data source queries and/or server side expressions.
-	Data []alertQuery `json:"data"`
+	Data []ngmodels.AlertQuery `json:"data"`
 }
 
 const alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -250,7 +251,7 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 
 // getRelativeDuration turns the alerting durations for dashboard conditions
 // into a relative time range.
-func getRelativeDuration(rawFrom, rawTo string) (*relativeTimeRange, error) {
+func getRelativeDuration(rawFrom, rawTo string) (*ngmodels.RelativeTimeRange, error) {
 	fromD, err := getFrom(rawFrom)
 	if err != nil {
 		return nil, err
@@ -260,9 +261,9 @@ func getRelativeDuration(rawFrom, rawTo string) (*relativeTimeRange, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &relativeTimeRange{
-		From: duration(fromD),
-		To:   duration(toD),
+	return &ngmodels.RelativeTimeRange{
+		From: ngmodels.Duration(fromD),
+		To:   ngmodels.Duration(toD),
 	}, nil
 }
 
