@@ -98,7 +98,7 @@
 /pkg/services/apikey/ @grafana/grafana-authnz-team
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
-/pkg/services/correlations/ @grafana/backend-platform
+/pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
