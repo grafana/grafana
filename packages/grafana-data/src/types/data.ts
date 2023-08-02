@@ -4,7 +4,7 @@ import { ApplyFieldOverrideOptions } from './fieldOverrides';
 import { DataTopic } from './query';
 import { DataTransformerConfig } from './transformations';
 
-import { PanelPluginDataSupport } from '.';
+import { PanelPluginDataSupport, TimeRange } from '.';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -101,6 +101,11 @@ export interface QueryResultMeta {
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
   instant?: boolean;
+
+  /**
+   * Indicates a time range that the data source was queried with.
+   */
+  timeRange?: TimeRange;
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
