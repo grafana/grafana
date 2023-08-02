@@ -9,8 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-type Duration time.Duration
-
+type Duration struct {
+	time.Duration
+}
 type CloudWatchSettings struct {
 	awsds.AWSDatasourceSettings
 	Namespace               string        `json:"customMetricsNamespaces"`
@@ -36,8 +37,8 @@ func LoadCloudWatchSettings(config backend.DataSourceInstanceSettings) (CloudWat
 
 	// logs timeout default is 30 minutes, the same as timeout in frontend logs query
 	// note: for alerting queries, the context will be cancelled before that unless evaluation_timeout_seconds in defaults.ini is increased (default: 30s)
-	if instance.LogsTimeout == 0 {
-		instance.LogsTimeout = Duration(30 * time.Minute)
+	if instance.LogsTimeout.Duration == 0 {
+		instance.LogsTimeout = Duration{30 * time.Minute}
 	}
 
 	instance.AccessKey = config.DecryptedSecureJSONData["accessKey"]
@@ -56,13 +57,13 @@ func (duration *Duration) UnmarshalJSON(b []byte) error {
 
 	switch value := unmarshalledJson.(type) {
 	case float64:
-		*duration = Duration(time.Duration(value))
+		*duration = Duration{time.Duration(value)}
 	case string:
 		dur, err := time.ParseDuration(value)
 		if err != nil {
 			return err
 		}
-		*duration = Duration(dur)
+		*duration = Duration{dur}
 	default:
 		return fmt.Errorf("invalid duration: %#v", unmarshalledJson)
 	}
