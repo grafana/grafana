@@ -1,10 +1,10 @@
-package initializer
+package initialization
 
 import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -28,19 +28,15 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassCore,
 		}
 
-		i := &Initializer{
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-			envVarProvider: &fakeEnvVarsProvider{},
-		}
+		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
-		err := i.Initialize(context.Background(), p)
-		assert.NoError(t, err)
+		var err error
+		p, err = stepFunc(context.Background(), p)
+		require.NoError(t, err)
 
 		c, exists := p.Client()
-		assert.True(t, exists)
-		assert.NotNil(t, c)
+		require.True(t, exists)
+		require.NotNil(t, c)
 	})
 
 	t.Run("renderer", func(t *testing.T) {
@@ -56,19 +52,15 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		i := &Initializer{
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-			envVarProvider: &fakeEnvVarsProvider{},
-		}
+		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
-		err := i.Initialize(context.Background(), p)
-		assert.NoError(t, err)
+		var err error
+		p, err = stepFunc(context.Background(), p)
+		require.NoError(t, err)
 
 		c, exists := p.Client()
-		assert.True(t, exists)
-		assert.NotNil(t, c)
+		require.True(t, exists)
+		require.NotNil(t, c)
 	})
 
 	t.Run("secretsmanager", func(t *testing.T) {
@@ -84,19 +76,15 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		i := &Initializer{
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-			envVarProvider: &fakeEnvVarsProvider{},
-		}
+		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
-		err := i.Initialize(context.Background(), p)
-		assert.NoError(t, err)
+		var err error
+		p, err = stepFunc(context.Background(), p)
+		require.NoError(t, err)
 
 		c, exists := p.Client()
-		assert.True(t, exists)
-		assert.NotNil(t, c)
+		require.True(t, exists)
+		require.NotNil(t, c)
 	})
 
 	t.Run("non backend plugin app", func(t *testing.T) {
@@ -106,19 +94,17 @@ func TestInitializer_Initialize(t *testing.T) {
 			},
 		}
 
-		i := &Initializer{
-			backendProvider: &fakeBackendProvider{
-				plugin: p,
-			},
-			envVarProvider: &fakeEnvVarsProvider{},
-		}
+		i := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
+			plugin: p,
+		})
 
-		err := i.Initialize(context.Background(), p)
-		assert.NoError(t, err)
+		var err error
+		p, err = i(context.Background(), p)
+		require.NoError(t, err)
 
 		c, exists := p.Client()
-		assert.False(t, exists)
-		assert.Nil(t, c)
+		require.False(t, exists)
+		require.Nil(t, c)
 	})
 }
 

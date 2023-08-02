@@ -11,9 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -24,13 +24,13 @@ import (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	discovery discovery.Discoverer
-	bootstrap bootstrap.Bootstrapper
+	discovery   discovery.Discoverer
+	bootstrap   bootstrap.Bootstrapper
+	initializer initialization.Initializer
 
 	processManager          process.Service
 	pluginRegistry          registry.Service
 	roleRegistry            plugins.RoleRegistry
-	pluginInitializer       initializer.Initializer
 	signatureValidator      signature.Validator
 	externalServiceRegistry oauth.ExternalServiceRegistry
 	assetPath               *assetpath.Service
@@ -42,23 +42,20 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
+func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
+	pluginRegistry registry.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper) *Loader {
-	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, angularInspector, externalServiceRegistry, discovery, bootstrap)
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer) *Loader {
+	return New(cfg, authorizer, pluginRegistry, process.NewManager(pluginRegistry), roleRegistry, assetPath,
+		angularInspector, externalServiceRegistry, discovery, bootstrap, initializer)
 }
 
-func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer, pluginRegistry registry.Service,
 	processManager process.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper) *Loader {
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer) *Loader {
 	return &Loader{
 		pluginRegistry:          pluginRegistry,
-		pluginInitializer:       initializer.New(cfg, backendProvider, license),
 		signatureValidator:      signature.NewValidator(authorizer),
 		processManager:          processManager,
 		errs:                    make(map[string]*plugins.SignatureError),
@@ -70,6 +67,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		externalServiceRegistry: externalServiceRegistry,
 		discovery:               discovery,
 		bootstrap:               bootstrap,
+		initializer:             initializer,
 	}
 }
 
@@ -144,24 +142,9 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	// </VERIFICATION STAGE>
 
 	// <INITIALIZATION STAGE>
-	initializedPlugins := make([]*plugins.Plugin, 0, len(verifiedPlugins))
-	for _, p := range verifiedPlugins {
-		err = l.pluginInitializer.Initialize(ctx, p)
-		if err != nil {
-			l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
-			continue
-		}
-
-		if err = l.pluginRegistry.Add(ctx, p); err != nil {
-			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
-			continue
-		}
-
-		if !p.IsCorePlugin() {
-			l.log.Info("Plugin registered", "pluginID", p.ID)
-		}
-
-		initializedPlugins = append(initializedPlugins, p)
+	initializedPlugins, err := l.initializer.Initialize(ctx, verifiedPlugins)
+	if err != nil {
+		return nil, err
 	}
 	// </INITIALIZATION STAGE>
 

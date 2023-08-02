@@ -45,7 +45,7 @@ func New(cfg *config.Cfg, opts Opts) *Discovery {
 		opts.FindFunc = DefaultFindFunc(cfg)
 	}
 
-	if len(opts.FindFilterFuncs) == 0 {
+	if opts.FindFilterFuncs == nil {
 		opts.FindFilterFuncs = []FindFilterFunc{} // no filters by default
 	}
 
