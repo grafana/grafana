@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
-import { ConfirmModal } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { ConfirmModal, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
