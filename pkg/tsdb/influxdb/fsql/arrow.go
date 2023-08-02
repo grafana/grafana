@@ -212,6 +212,8 @@ func copyData(field *data.Field, col arrow.Array) error {
 				d = value.(*scalar.Int64).Value
 			case arrow.LIST:
 				d = value.(*scalar.List).Value
+			default:
+				d = value.(*scalar.Null)
 			}
 			b, err := json.Marshal(d)
 			if err != nil {
@@ -245,6 +247,8 @@ func copyData(field *data.Field, col arrow.Array) error {
 		copyBasic[bool](field, array.NewBooleanData(colData))
 	case arrow.DURATION:
 		copyBasic[int64](field, array.NewInt64Data(colData))
+	default:
+		fmt.Println(fmt.Sprintf("datatype %s is unhandled", col.DataType().ID()))
 	}
 
 	return nil
