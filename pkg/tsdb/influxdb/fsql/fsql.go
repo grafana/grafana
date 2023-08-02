@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/apache/arrow/go/v12/arrow/flight"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
 
@@ -81,11 +80,6 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 
 type runner struct {
 	client *client
-}
-
-// runQuery executes flightSQL and returns a flightSQL typed result.
-func (r *runner) runQuery(ctx context.Context, flightSQLQuery string) (*flight.FlightInfo, error) {
-	return r.client.Execute(ctx, flightSQLQuery)
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
