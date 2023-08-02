@@ -266,6 +266,10 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	if err != nil {
 		logger.Warn("failed to request subscription details: %s", err)
 	}
+	if res == nil {
+		logger.Warn("failed to request subscription details", "err", "no response received from client")
+		return ""
+	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
