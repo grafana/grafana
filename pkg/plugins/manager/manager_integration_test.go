@@ -54,7 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	"github.com/grafana/testdata/pkg/plugin/testdatasource"
 )
 
 func TestIntegrationPluginManager(t *testing.T) {

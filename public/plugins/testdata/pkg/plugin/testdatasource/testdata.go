@@ -10,8 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	// nolint:depguard // Lint exception can be removed once we move testdata to a separate module
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
+	"github.com/grafana/testdata/pkg/plugin/testdatasource/sims"
 )
 
 func ProvideService() *Service {
