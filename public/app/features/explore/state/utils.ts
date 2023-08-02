@@ -166,7 +166,7 @@ export function fromURLRange(range: URLRange): RawTimeRange {
   return rawTimeRange;
 }
 
-export function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
+function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
   if (urlRangeValue === null) {
     return null;
   }
