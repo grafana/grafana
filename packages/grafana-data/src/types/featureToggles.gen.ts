@@ -81,7 +81,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
