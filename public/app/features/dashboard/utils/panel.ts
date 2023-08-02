@@ -71,19 +71,6 @@ export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   );
 };
 
-export const exportPanel = (
-  htmlElement: HTMLElement,
-  panel: PanelModel,
-  format: ExportType,
-  data?: PanelData | null
-) => {
-  if (!htmlElement) {
-    throw new Error('No panel found to export');
-  }
-
-  exportSelect({ panel, data, htmlElement, format });
-};
-
 export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {
   appEvents.publish(
     new ShowModalReactEvent({

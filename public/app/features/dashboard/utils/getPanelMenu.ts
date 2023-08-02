@@ -23,12 +23,12 @@ import {
   addLibraryPanel,
   copyPanel,
   duplicatePanel,
-  exportPanel,
   removePanel,
   sharePanel,
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
+import { exportSelect } from 'app/features/exporter/PanelExporter';
 import { ExportType } from 'app/features/exporter/types';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
@@ -69,12 +69,12 @@ export function getPanelMenu(
   };
 
   const onExportPanel = (exportType: ExportType) => {
-    exportPanel(
-      document.documentElement.querySelector(`[data-panelid="${panel.id}"]`)!,
-      panel,
-      exportType ?? ExportType.jpeg,
-      data
-    );
+    exportSelect({
+      htmlElement: document.documentElement.querySelector(`[data-panelid="${panel.id}"]`)!,
+      panel: panel,
+      format: exportType ?? ExportType.jpeg,
+      data: data,
+    });
     reportInteraction('dashboards_panelheader_menu', {
       item: 'createExportPanel',
       exportType: exportType ?? ExportType.jpeg,
