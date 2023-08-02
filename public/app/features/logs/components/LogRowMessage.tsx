@@ -22,6 +22,7 @@ interface Props {
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
+  onBlur: () => void;
 }
 
 interface LogMessageProps {
@@ -75,10 +76,11 @@ export const LogRowMessage = React.memo((props: Props) => {
     onPinLine,
     pinned,
     mouseIsOver,
+    onBlur,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
-  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  const shouldShowMenu = useMemo(() => mouseIsOver || pinned || true, [mouseIsOver, pinned]);
   return (
     <>
       {
@@ -105,6 +107,7 @@ export const LogRowMessage = React.memo((props: Props) => {
             pinned={pinned}
             styles={styles}
             mouseIsOver={mouseIsOver}
+            onBlur={onBlur}
           />
         )}
       </td>
