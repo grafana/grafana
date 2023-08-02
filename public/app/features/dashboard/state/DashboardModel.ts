@@ -1298,7 +1298,10 @@ export class DashboardModel implements TimeModel {
   }
 
   hasAngularPlugins(): boolean {
-    return this.panels.some((panel) => panel.isAngularPlugin() || isAngularDatasourcePlugin(panel.datasource?.uid));
+    return this.panels.some(
+      (panel) =>
+        panel.isAngularPlugin() || (panel.datasource?.uid ? isAngularDatasourcePlugin(panel.datasource?.uid) : false)
+    );
   }
 }
 

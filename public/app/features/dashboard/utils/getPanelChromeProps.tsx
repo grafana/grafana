@@ -84,7 +84,9 @@ export function getPanelChromeProps(props: CommonProps) {
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
   const alertState = props.data.alertState?.state;
 
-  const isAngularDatasource = isAngularDatasourcePlugin(props.panel.datasource?.uid);
+  const isAngularDatasource = props.panel.datasource?.uid
+    ? isAngularDatasourcePlugin(props.panel.datasource?.uid)
+    : false;
   const isAngularPanel = props.panel.isAngularPlugin();
   const showAngularNotice =
     (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);
