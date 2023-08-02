@@ -136,7 +136,7 @@ jobs:
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
-        HAS_SECRETS: ${{ (github.repository == "grafana/grafana" || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
+        HAS_SECRETS: ${{ (github.repository == 'grafana/grafana' || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
 
     # Add the label
     - name: Add "levitate breaking change" label
