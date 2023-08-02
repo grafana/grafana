@@ -29,8 +29,6 @@ This guide will walk you through the process of adding support for Explore featu
 
 ### Logs data frame format
 
-Here is the proposal for how should data frames for log results look like: https://grafana.github.io/dataplane/logs/.
-
 The data frame should include following fields:
 
 | Field name     | Field type                              | Info                                                                                                                                                                                                                                       |
