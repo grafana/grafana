@@ -173,8 +173,7 @@ export function fromURLRange(range: RawTimeRange): RawTimeRange {
 }
 
 /**
- * Docs
- * @param range
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
  */
 export const toURLTimeRange = (range: RawTimeRange): RawTimeRange => {
   let from = range.from;
