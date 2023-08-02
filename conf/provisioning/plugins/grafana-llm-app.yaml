@@ -1,0 +1,9 @@
+apiVersion: 1
+
+apps:
+  - type: grafana-llm-app
+    jsonData:
+      openAIUrl: https://api.openai.com
+      openAIOrganizationID: org-RXrPv8fY9rahdyxaw5fhwxub
+    secureJsonData:
+      openAIKey: $OPENAI_API_KEY
