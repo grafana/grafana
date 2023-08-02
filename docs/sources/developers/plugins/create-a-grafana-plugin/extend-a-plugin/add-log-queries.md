@@ -138,7 +138,7 @@ Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 - **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frame needs to have "limit" meta information with number of requested log lines.
 - **Error**: Displays possible error in your log results. Data frame needs to have "error" meta information.
-- **Common labels**: Labels, or attributes that are the same for all displayed log lines are shown as meta information. This feature is supported for data sources that produce log data frames with `attributes` field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
+- **Common labels**: Labels, or attributes that are the same for all displayed log lines are shown as meta information. This feature is supported for data sources that produce log data frames with an `attributes` field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 Example of constructing a data frame with specific meta information in `go`:
 
