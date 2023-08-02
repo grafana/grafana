@@ -181,6 +181,14 @@ To restart the Grafana server, complete the following steps:
 
 Restart methods differ depending on whether you installed Grafana using Homebrew or as standalone macOS binaries.
 
+### Start Grafana using Homebrew
+
+Use the [Homebrew](http://brew.sh/) start command:
+
+```bash
+brew services start grafana
+```
+
 ### Restart Grafana using Homebrew
 
 Use the [Homebrew](http://brew.sh/) restart command:
