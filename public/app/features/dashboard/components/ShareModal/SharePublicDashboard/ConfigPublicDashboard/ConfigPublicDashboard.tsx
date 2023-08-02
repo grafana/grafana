@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled } from '@grafana/runtime/src';
 import {
   ClipboardButton,
   Field,
@@ -25,7 +25,8 @@ import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
-import { shareAnalyticsEventNames, shareDashboardType } from '../../utils';
+import { trackDashboardSharingActionPerType } from '../../analytics';
+import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
@@ -106,10 +107,7 @@ const ConfigPublicDashboard = () => {
   };
 
   function onCopyURL() {
-    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
-      item: 'copy_public_url',
-      sharing_category: shareDashboardType.publicDashboard,
-    });
+    trackDashboardSharingActionPerType('copy_public_url', shareDashboardType.publicDashboard);
   }
 
   return (
@@ -149,10 +147,10 @@ const ConfigPublicDashboard = () => {
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
-                item: e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
-                sharing_category: shareDashboardType.publicDashboard,
-              });
+              trackDashboardSharingActionPerType(
+                e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
+                shareDashboardType.publicDashboard
+              );
               onChange('isPaused', e.currentTarget.checked);
             }}
             data-testid={selectors.PauseSwitch}

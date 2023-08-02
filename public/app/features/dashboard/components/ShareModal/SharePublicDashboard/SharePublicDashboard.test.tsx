@@ -6,7 +6,7 @@ import { setupServer } from 'msw/node';
 import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction, setEchoSrv } from '@grafana/runtime';
+import { setEchoSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -14,7 +14,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
-import { shareAnalyticsEventNames, shareDashboardType } from '../utils';
+import { trackDashboardSharingTypeOpen, trackDashboardSharingActionPerType } from '../analytics';
+import { shareDashboardType } from '../utils';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
 import {
@@ -29,7 +30,12 @@ const server = setupServer();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
-  reportInteraction: jest.fn(),
+}));
+
+jest.mock('../analytics', () => ({
+  ...jest.requireActual('../analytics'),
+  trackDashboardSharingTypeOpen: jest.fn(),
+  trackDashboardSharingActionPerType: jest.fn(),
 }));
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -340,10 +346,8 @@ describe('SharePublic - Report interactions', () => {
     await renderSharePublicDashboard();
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
-      expect(reportInteraction).lastCalledWith(shareAnalyticsEventNames.sharingCategoryClicked, {
-        item: shareDashboardType.publicDashboard,
-      });
+      expect(trackDashboardSharingTypeOpen).toHaveBeenCalledTimes(1);
+      expect(trackDashboardSharingTypeOpen).lastCalledWith(shareDashboardType.publicDashboard);
     });
   });
 
@@ -357,12 +361,12 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledTimes(2);
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
       // if time range was enabled, then the item is now disable_time
-      expect(reportInteraction).toHaveBeenLastCalledWith(shareAnalyticsEventNames.sharingActionClicked, {
-        item: pubdashResponse.timeSelectionEnabled ? 'disable_time' : 'enable_time',
-        sharing_category: shareDashboardType.publicDashboard,
-      });
+      expect(trackDashboardSharingActionPerType).toHaveBeenLastCalledWith(
+        pubdashResponse.timeSelectionEnabled ? 'disable_time' : 'enable_time',
+        shareDashboardType.publicDashboard
+      );
     });
   });
 
@@ -376,11 +380,12 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
     await waitFor(() => {
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
       // if annotations was enabled, then the item is now disable_annotations
-      expect(reportInteraction).toHaveBeenCalledWith(shareAnalyticsEventNames.sharingActionClicked, {
-        item: pubdashResponse.annotationsEnabled ? 'disable_annotations' : 'enable_annotations',
-        sharing_category: shareDashboardType.publicDashboard,
-      });
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledWith(
+        pubdashResponse.annotationsEnabled ? 'disable_annotations' : 'enable_annotations',
+        shareDashboardType.publicDashboard
+      );
     });
   });
   it('reports interaction when pause is clicked', async () => {
@@ -391,12 +396,12 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledTimes(2);
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
       // if sharing was enabled, then the item is now disable_sharing
-      expect(reportInteraction).toHaveBeenLastCalledWith(shareAnalyticsEventNames.sharingActionClicked, {
-        item: pubdashResponse.isEnabled ? 'disable_sharing' : 'enable_sharing',
-        sharing_category: shareDashboardType.publicDashboard,
-      });
+      expect(trackDashboardSharingActionPerType).toHaveBeenLastCalledWith(
+        pubdashResponse.isEnabled ? 'disable_sharing' : 'enable_sharing',
+        shareDashboardType.publicDashboard
+      );
     });
   });
 });

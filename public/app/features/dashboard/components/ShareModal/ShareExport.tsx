@@ -1,7 +1,7 @@
 import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -10,8 +10,9 @@ import { DashboardExporter } from 'app/features/dashboard/components/DashExportM
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { ViewJsonModal } from './ViewJsonModal';
+import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { shareAnalyticsEventNames, shareDashboardType } from './utils';
+import { shareDashboardType } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -112,10 +113,7 @@ export class ShareExport extends PureComponent<Props, State> {
     });
     const time = new Date().getTime();
     saveAs(blob, `${dash.title}-${time}.json`);
-    reportInteraction(shareAnalyticsEventNames.sharingActionClicked, {
-      item: 'save_export',
-      sharing_category: shareDashboardType.export,
-    });
+    trackDashboardSharingActionPerType('save_export', shareDashboardType.export);
   };
 
   openJsonModal = (clone: object) => {
