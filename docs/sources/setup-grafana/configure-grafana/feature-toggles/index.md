@@ -129,6 +129,7 @@ Experimental features might be changed or removed without prior notice.
 | `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                              |
 | `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
+| `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
 
 ## Development feature toggles
 

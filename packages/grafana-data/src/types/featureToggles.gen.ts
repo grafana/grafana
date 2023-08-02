@@ -118,4 +118,5 @@ export interface FeatureToggles {
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
+  angularDeprecationUI?: boolean;
 }
