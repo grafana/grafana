@@ -124,7 +124,7 @@ func CheckSQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *bac
 		Queries: []backend.DataQuery{
 			{
 				RefID:         refID,
-				JSON:          []byte(`{ "query": "select 1", "resultFormat": "table" }`),
+				JSON:          []byte(`{ "rawSql": "select 1", "format": "table" }`),
 				Interval:      1 * time.Minute,
 				MaxDataPoints: 423,
 				TimeRange: backend.TimeRange{

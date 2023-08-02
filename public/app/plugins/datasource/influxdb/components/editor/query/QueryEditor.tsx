@@ -24,7 +24,7 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource }: Props) 
         </div>
       );
     case InfluxVersion.SQL:
-      return <FSQLEditor query={query} onChange={onChange} onRunQuery={onRunQuery} />;
+      return <FSQLEditor datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery} />;
     case InfluxVersion.InfluxQL:
     default:
       return (
