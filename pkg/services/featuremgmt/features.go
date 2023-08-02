@@ -113,4 +113,7 @@ type FeatureFlag struct {
 	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
+
+	Enabled  bool `json:"enabled,omitempty"`
+	ReadOnly bool `json:"readOnly,omitempty"`
 }

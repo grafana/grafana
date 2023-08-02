@@ -33,8 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	moduleRegistry "github.com/grafana/grafana/pkg/modules/registry"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
+	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -64,6 +65,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -204,6 +206,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
 	annotationsimpl.ProvideCleanupService,
+	certgenerator.WireSet,
 	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
 	cleanup.ProvideService,
 	shorturlimpl.ProvideService,
@@ -355,6 +358,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	supportbundlesimpl.ProvideService,
+	grafanaapiserver.WireSet,
 	oasimpl.ProvideService,
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,

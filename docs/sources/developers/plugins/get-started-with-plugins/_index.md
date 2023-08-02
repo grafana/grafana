@@ -1,12 +1,16 @@
 ---
-title: Get started with Grafana plugin development
-menuTitle: Get started with plugins
+description: Get started with Grafana plugin development.
 keywords:
   - grafana
   - plugins
   - plugin
   - documentation
-description: Get started with Grafana plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Get started with plugins
+title: Get started with Grafana plugin development
 weight: 200
 ---
 
@@ -20,4 +24,4 @@ Additional resources:
 
 - [Get started with creating a plugin](https://grafana.github.io/plugin-tools/docs/getting-started)
 - [Types of Grafana plugins](/docs/grafana/latest/administration/plugin-management/)
-- [Set up your development environment](https://grafana.github.io/plugin-tools/docs/docker)
+- [Set up your development environment](https://grafana.github.io/plugin-tools/docs/development/docker)

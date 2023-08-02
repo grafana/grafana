@@ -115,47 +115,47 @@ export const CompactTimeZoneOption = (props: React.PropsWithChildren<Props>) => 
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      align-items: center;
-      flex-direction: row;
-      flex-shrink: 0;
-      white-space: nowrap;
-      cursor: pointer;
-      padding: 6px 8px 4px;
+    container: css({
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'row',
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+      cursor: 'pointer',
+      padding: '6px 8px 4px',
 
-      &:hover {
-        background: ${theme.colors.action.hover};
-      }
-    `,
-    containerFocused: css`
-      background: ${theme.colors.action.hover};
-    `,
-    body: css`
-      display: flex;
-      font-weight: ${theme.typography.fontWeightMedium};
-      flex-direction: column;
-      flex-grow: 1;
-    `,
-    row: css`
-      display: flex;
-      flex-direction: row;
-    `,
-    leftColumn: css`
-      flex-grow: 1;
-      text-overflow: ellipsis;
-    `,
-    rightColumn: css`
-      justify-content: flex-end;
-      align-items: center;
-    `,
-    wideRow: css`
-      display: flex;
-      flex-direction: row;
-      align-items: baseline;
-    `,
-    spacer: css`
-      margin-left: 6px;
-    `,
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+    }),
+    containerFocused: css({
+      background: theme.colors.action.hover,
+    }),
+    body: css({
+      display: 'flex',
+      fontWeight: theme.typography.fontWeightMedium,
+      flexDirection: 'column',
+      flexGrow: 1,
+    }),
+    row: css({
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    leftColumn: css({
+      flexGrow: 1,
+      textOverflow: 'ellipsis',
+    }),
+    rightColumn: css({
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    }),
+    wideRow: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'baseline',
+    }),
+    spacer: css({
+      marginLeft: '6px',
+    }),
   };
 });

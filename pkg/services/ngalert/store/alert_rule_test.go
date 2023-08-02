@@ -474,7 +474,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	}
 	rule := createRule(t, store, nil)
 
-	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID)
+	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
 	require.NoError(t, err)
 
 	c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
@@ -538,5 +538,5 @@ func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus)
 }

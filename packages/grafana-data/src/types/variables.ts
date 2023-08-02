@@ -32,7 +32,7 @@ export enum VariableSupportType {
 export abstract class VariableSupportBase<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
 > {
   abstract getType(): VariableSupportType;
 
@@ -50,7 +50,7 @@ export abstract class VariableSupportBase<
 export abstract class StandardVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
 > extends VariableSupportBase<DSType, TQuery, TOptions> {
   getType(): VariableSupportType {
     return VariableSupportType.Standard;
@@ -69,7 +69,7 @@ export abstract class CustomVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   VariableQuery extends DataQuery = any,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
 > extends VariableSupportBase<DSType, TQuery, TOptions> {
   getType(): VariableSupportType {
     return VariableSupportType.Custom;
@@ -87,7 +87,7 @@ export abstract class CustomVariableSupport<
 export abstract class DataSourceVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
 > extends VariableSupportBase<DSType, TQuery, TOptions> {
   getType(): VariableSupportType {
     return VariableSupportType.Datasource;

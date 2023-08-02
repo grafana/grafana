@@ -1,15 +1,11 @@
-import { css } from '@emotion/css';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
-import { FieldSet, Label, Switch, TimeRangeInput, useStyles2, VerticalGroup } from '@grafana/ui/src';
+import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
-import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
-
-import { useSelector } from '../../../../../../types';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
@@ -19,21 +15,16 @@ export const Configuration = ({
   disabled,
   onChange,
   register,
+  timeRange,
 }: {
   disabled: boolean;
   onChange: (name: keyof ConfigPublicDashboardForm, value: boolean) => void;
   register: UseFormRegister<ConfigPublicDashboardForm>;
+  timeRange: TimeRange;
 }) => {
-  const styles = useStyles2(getStyles);
-
-  const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel()!;
-
-  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
-
   return (
     <>
-      <FieldSet disabled={disabled} className={styles.dashboardConfig}>
+      <FieldSet disabled={disabled}>
         <VerticalGroup spacing="md">
           <Layout orientation={1} spacing="xs" justify="space-between">
             <Label description="The public dashboard uses the default time range settings of the dashboard">
@@ -72,9 +63,3 @@ export const Configuration = ({
     </>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  dashboardConfig: css`
-    margin: ${theme.spacing(0, 0, 3, 0)};
-  `,
-});

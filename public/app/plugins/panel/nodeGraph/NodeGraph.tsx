@@ -86,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 5px 8px;
     font-size: 10px;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     align-items: center;
     position: absolute;
     top: 0;

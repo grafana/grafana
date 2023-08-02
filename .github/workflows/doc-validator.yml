@@ -7,7 +7,7 @@ jobs:
   doc-validator:
     runs-on: "ubuntu-latest"
     container:
-      image: "grafana/doc-validator:v3.2.0"
+      image: "grafana/doc-validator:v3.2.1"
     steps:
       - name: "Checkout code"
         uses: "actions/checkout@v3"

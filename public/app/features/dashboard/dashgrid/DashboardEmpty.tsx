@@ -4,8 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
-import { H1, H3, P } from '@grafana/ui/src/unstable';
+import { Button, useStyles2, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
@@ -28,19 +27,19 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
           <div className={styles.headerBig}>
-            <H1 textAlignment="center" weight="medium">
+            <Text element="h1" textAlignment="center" weight="medium">
               <Trans i18nKey="dashboard.empty.add-visualization-header">
                 Start your new dashboard by adding a visualization
               </Trans>
-            </H1>
+            </Text>
           </div>
           <div className={styles.bodyBig}>
-            <P textAlignment="center" color="secondary">
+            <Text element="p" textAlignment="center" color="secondary">
               <Trans i18nKey="dashboard.empty.add-visualization-body">
                 Select a data source and then query and visualize your data with charts, stats and tables or create
                 lists, markdowns and other widgets.
               </Trans>
-            </P>
+            </Text>
           </div>
           <Button
             size="lg"
@@ -61,14 +60,14 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           {config.featureToggles.vizAndWidgetSplit && (
             <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
               <div className={styles.headerSmall}>
-                <H3 textAlignment="center" weight="medium">
+                <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
-                </H3>
+                </Text>
               </div>
               <div className={styles.bodySmall}>
-                <P textAlignment="center" color="secondary">
+                <Text element="p" textAlignment="center" color="secondary">
                   <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
-                </P>
+                </Text>
               </div>
               <Button
                 icon="plus"
@@ -86,16 +85,16 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           )}
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
             <div className={styles.headerSmall}>
-              <H3 textAlignment="center" weight="medium">
+              <Text element="h3" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
-              </H3>
+              </Text>
             </div>
             <div className={styles.bodySmall}>
-              <P textAlignment="center" color="secondary">
+              <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-row-body">
                   Group your visualizations into expandable sections.
                 </Trans>
-              </P>
+              </Text>
             </div>
             <Button
               icon="plus"
@@ -112,16 +111,16 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
             <div className={styles.headerSmall}>
-              <H3 textAlignment="center" weight="medium">
+              <Text element="h3" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
-              </H3>
+              </Text>
             </div>
             <div className={styles.bodySmall}>
-              <P textAlignment="center" color="secondary">
+              <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-import-body">
                   Import visualizations that are shared with other dashboards.
                 </Trans>
-              </P>
+              </Text>
             </div>
             <Button
               icon="plus"

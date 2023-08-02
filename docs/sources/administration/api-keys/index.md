@@ -6,6 +6,10 @@ description: This section contains information about API keys in Grafana
 keywords:
   - API keys
   - Service accounts
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: API keys
 title: API keys
 weight: 700

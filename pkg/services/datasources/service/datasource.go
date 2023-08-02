@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,6 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	maxDatasourceNameLen = 190
+	maxDatasourceUrlLen  = 255
 )
 
 type Service struct {
@@ -172,6 +178,10 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+		return dataSource, err
+	}
+
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -231,6 +241,11 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
+
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
+		return dataSource, err
+	}
+
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -241,6 +256,21 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
+		}
+
+		if cmd.Name != "" && cmd.Name != dataSource.Name {
+			query := &datasources.GetDataSourceQuery{
+				Name:  cmd.Name,
+				OrgID: cmd.OrgID,
+			}
+			exist, err := s.SQLStore.GetDataSource(ctx, query)
+			if exist != nil {
+				return datasources.ErrDataSourceNameExists
+			}
+
+			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return err
+			}
 		}
 
 		err = s.fillWithSecureJSONData(ctx, cmd, dataSource)
@@ -614,9 +644,11 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		cmd.SecureJsonData = make(map[string]string)
 	}
 
-	for k, v := range decrypted {
-		if _, ok := cmd.SecureJsonData[k]; !ok {
-			cmd.SecureJsonData[k] = v
+	if !cmd.IgnoreOldSecureJsonData {
+		for k, v := range decrypted {
+			if _, ok := cmd.SecureJsonData[k]; !ok {
+				cmd.SecureJsonData[k] = v
+			}
 		}
 	}
 
@@ -626,6 +658,18 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func validateFields(name, url string) error {
+	if len(name) > maxDatasourceNameLen {
+		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
+	}
+
+	if len(url) > maxDatasourceUrlLen {
+		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
 	}
 
 	return nil

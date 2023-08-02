@@ -3,14 +3,14 @@ import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange } from '@grafana/data';
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
-import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { truncateTitle } from 'app/features/plugins/extensions/utils';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
+import { ToolbarExtensionPointMenu } from './ToolbarExtensionPointMenu';
 
 const AddToDashboard = lazy(() =>
   import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
@@ -49,24 +49,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
     );
   }
 
-  const menu = (
-    <Menu>
-      {extensions.map((extension) => (
-        <Menu.Item
-          ariaLabel={extension.title}
-          icon={extension?.icon || 'plug'}
-          key={extension.id}
-          label={truncateTitle(extension.title, 25)}
-          onClick={(event) => {
-            if (extension.path) {
-              return setSelectedExtension(extension);
-            }
-            extension.onClick?.(event);
-          }}
-        />
-      ))}
-    </Menu>
-  );
+  const menu = <ToolbarExtensionPointMenu extensions={extensions} onSelect={setSelectedExtension} />;
 
   return (
     <>
@@ -120,6 +103,7 @@ function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtens
     const { extensions } = getPluginLinkExtensions({
       extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
       context: context,
+      limitPerPlugin: 3,
     });
 
     return extensions;

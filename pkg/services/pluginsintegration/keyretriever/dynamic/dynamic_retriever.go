@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -134,8 +135,18 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 		}
 	}()
 
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return err
+	}
+
+	if err := json.Unmarshal(body, &data); err != nil {
+		kr.log.Debug("error unmarshalling response body", "error", err, "body", string(body))
+		return fmt.Errorf("error unmarshalling response body: %w", err)
 	}
 
 	if len(data.Items) == 0 {
