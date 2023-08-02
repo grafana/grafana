@@ -28,7 +28,7 @@ export const DiffValues = ({ diff }: DiffProps) => {
 
 const getStyles = (theme: GrafanaTheme2) => css`
   background-color: ${theme.colors.action.hover};
-  border-radius: ${theme.shape.borderRadius()};
+  border-radius: ${theme.shape.radius.default};
   color: ${theme.colors.text.primary};
   font-size: ${theme.typography.body.fontSize};
   margin: 0 ${theme.spacing(0.5)};
