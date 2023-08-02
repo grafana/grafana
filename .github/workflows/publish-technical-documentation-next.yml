@@ -1,38 +1,59 @@
-name: "publish-technical-documentation-next"
+name: publish-technical-documentation-next
 
 on:
   push:
     branches:
-      - "main"
+      - main
     paths:
-      - "docs/sources/**"
+      - docs/sources/**
   workflow_dispatch:
 jobs:
+  config:
+    runs-on: ubuntu-latest
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: Check for secrets
+        id: check
+        shell: bash
+        run: |
+          if [ -n "${{ (secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_ID != '' && secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_PEM != '') || '' }}" ]; then
+            echo has-secrets=1 >> "${GITHUB_OUTPUT}"
+          fi
   sync:
     if: github.repository == 'grafana/grafana'
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-latest
     steps:
-      - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v3"
-
-      - name: "Clone website-sync Action"
-        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
-        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
-        # GitHub administrator to update the organization secret.
-        # The IT helpdesk can update the organization secret.
-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
-
-      - name: "Publish to website repository (next)"
-        uses: "./.github/actions/website-sync"
-        id: "publish-next"
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
         with:
-          repository: "grafana/website"
-          branch: "master"
-          host: "github.com"
+          app: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_ID }}
+          private_key: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_PEM }}
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Checkout website-sync action
+        uses: actions/checkout@v3
+        with:
+          path: .github/actions/website-sync
+          sparse-checkout: |
+            action.yml
+            entrypoint.sh
+          token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Publish to website repository (next)
+        uses: ./.github/actions/website-sync
+        id: publish-next
+        with:
+          repository: grafana/website
+          branch: master
+          host: github.com
           # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
           # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
           # GitHub administrator to update the organization secret.
           # The IT helpdesk can update the organization secret.
-          github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
-          source_folder: "docs/sources"
-          target_folder: "content/docs/grafana/next"
+          github_pat: grafanabot:${{ steps.generate_token.outputs.token }}
+          source_folder: docs/sources
+          target_folder: content/docs/grafana/next
