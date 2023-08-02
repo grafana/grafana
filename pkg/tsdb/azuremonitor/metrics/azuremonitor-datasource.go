@@ -245,10 +245,10 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 	return params, nil
 }
 
-func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) string {
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
 	req, err := e.createRequest(ctx, logger, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
-		logger.Error("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
+		return "", fmt.Errorf("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
 	}
 	values := req.URL.Query()
 	values.Add("api-version", "2022-12-01")
@@ -264,11 +264,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	logger.Debug("AzureMonitor", "Subscription Details Req")
 	res, err := cli.Do(req)
 	if err != nil {
-		logger.Warn("failed to request subscription details: %s", err)
-	}
-	if res == nil {
-		logger.Warn("failed to request subscription details", "err", "no response received from client")
-		return ""
+		return "", fmt.Errorf("failed to request subscription details: %s", err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
@@ -278,20 +274,20 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		logger.Warn("failed to read response body: %s", err)
+		return "", fmt.Errorf("failed to read response body: %s", err)
 	}
 
 	if res.StatusCode/100 != 2 {
-		logger.Warn("request failed, status: %s, error: %s", res.Status, string(body))
+		return "", fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
 	}
 
 	var data types.SubscriptionsResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Warn("Failed to unmarshal subscription detail response", "error", err, "status", res.Status, "body", string(body))
+		return "", fmt.Errorf("Failed to unmarshal subscription detail response. error: %s, status: %s, body: %s", err, res.Status, string(body))
 	}
 
-	return data.DisplayName
+	return data.DisplayName, nil
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Logger, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
@@ -346,7 +342,11 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	subscription := e.retrieveSubscriptionDetails(cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	if err != nil {
+		dataResponse.Error = err
+		return dataResponse
+	}
 
 	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl, subscription)
 	if err != nil {
