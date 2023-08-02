@@ -686,8 +686,6 @@ Latest Version: 0.3.4 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [aceiot-svg-panel](https://grafana.com/grafana/plugins/aceiot-svg-panel/)
-
 ### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
 
 Latest Version: 1.1.0 | Signature: Community | Last Updated: 2021
