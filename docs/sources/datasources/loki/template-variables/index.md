@@ -49,7 +49,7 @@ For more information, refer to [Add ad hoc filters][add-template-variables-add-a
 
 ## Use $\_\_auto variable for Loki metric queries
 
-Consider using the `$__auto` variable in your Loki metric queries, which will be automatically substituted with the [step value](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries, and with the selected time range's value (computed from the starting and ending times) for instant queries.
+Consider using the `$__auto` variable in your Loki metric queries, which will automatically be substituted with the [step value](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries, and with the selected time range's value (computed from the starting and ending times) for instant queries.
 
 For more information about variables, refer to [Global built-in variables][add-template-variables-global-variables].
 
