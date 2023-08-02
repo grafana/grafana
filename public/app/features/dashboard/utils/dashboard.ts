@@ -1,6 +1,7 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
 
 import { PanelPluginMeta } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -105,16 +106,6 @@ export function getCopiedPanelPlugin(): (PanelPluginMeta & PanelPluginInfo) | un
   return undefined;
 }
 
-export function initLocalStorageDashboard(uid: string | undefined) {
-  // set local storage for panel edit page
-  initLocalStoragePanelEdit(uid);
-}
-
-function initLocalStoragePanelEdit(dashUid: string | undefined) {
-  // Implement logic to handle last used datasource in panel edit page
-  initLastUsedDatasourceLocalStorage(dashUid);
-}
-
 type LastUsedDatasource =
   | {
       dashboardUid: string;
@@ -124,45 +115,53 @@ type LastUsedDatasource =
 
 const PANEL_EDIT_LAST_USED_DATASOURCE = 'grafana.dashboards.panelEdit.lastUsedDatasource';
 
-function initLastUsedDatasourceLocalStorage(dashUid: string | undefined) {
-  // Check if user has any local storage associated with this dashboard
-  if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
-    const lastUsedDatasource: LastUsedDatasource = store.getObject(PANEL_EDIT_LAST_USED_DATASOURCE);
-
-    // is the dashboard the different as the one in local storage?
-    if (lastUsedDatasource?.dashboardUid !== dashUid) {
-      // set new local storage with current dashboard and empty datasource
-      store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashUid, datasourceUid: '' });
-    }
-  } else {
-    // set new local storage with current dashboard
-    store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashUid, datasourceUid: '' });
-  }
-}
-
 // Function that updates local storage with new dashboard uid and keeps existing datasource
 export function updateDashboardUidLastUsedDatasource(dashUid: string) {
   // Check if user has any datasource uid in local storage
-  const lastUsedDatasource = getLastUsedDatasourceFromStorage();
-  // set new local storage with new dashboard uid and existing datasource
-  const datasourceUid = lastUsedDatasource?.datasourceUid ?? '';
+  let datasourceUid = '';
+  if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
+    const oldRegistryLastUsedDatasource: LastUsedDatasource = store.getObject(PANEL_EDIT_LAST_USED_DATASOURCE);
+    //keep existing datasource uid
+    datasourceUid = oldRegistryLastUsedDatasource?.datasourceUid ?? '';
+  }
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashUid, datasourceUid: datasourceUid });
 }
 
-export function getLastUsedDatasourceFromStorage(): LastUsedDatasource {
+export function getLastUsedDatasourceFromStorage(dashboardUid: string): LastUsedDatasource {
   // Check if user has any local storage associated with this dashboard
   if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
     const lastUsedDatasource: LastUsedDatasource = store.getObject(PANEL_EDIT_LAST_USED_DATASOURCE);
-    return lastUsedDatasource;
+    if (lastUsedDatasource?.dashboardUid === dashboardUid) {
+      return lastUsedDatasource;
+    }
   }
   return undefined;
 }
 
+export function initLocalStorageLastUsedDatasource(dashboardUid: string | undefined) {
+  store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: '' });
+}
+
+export function setLastUsedDatasource(dashboardUid: string | undefined, datasourceUid: string) {
+  store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: datasourceUid });
+}
 // Function that updates local storage with new datasource uid and keeps existing dashboard
-export function updateDatasourceUidLastUsedDatasource(dsUid: string) {
+export function updateDatasourceUidLastUsedDatasource(dashUid: string, dsUid: string) {
   // Check if user has any datasource uid in local storage
-  const lastUsedDatasource = getLastUsedDatasourceFromStorage();
-  // set new local storage with new dashboard uid and existing datasource
-  const dashboardUid = lastUsedDatasource?.dashboardUid ?? '';
-  store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: dsUid });
+  const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashUid);
+  if (!lastUsedDatasource) {
+    setLastUsedDatasource(dashUid, dsUid);
+  } else {
+    // set new local storage with new dashboard uid and existing datasource
+    const dashboardUid = lastUsedDatasource?.dashboardUid ?? '';
+    store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: dsUid });
+  }
+}
+
+export function getDashboardUidFromLocation() {
+  // get dashboard uid from the window location
+  const locationObject = locationService.getHistory().location;
+  const matchDashUid = locationObject.pathname.match(/\/d\/(.*)\/.*/);
+  const dashboardUid = matchDashUid ? matchDashUid[1] : '';
+  return dashboardUid;
 }

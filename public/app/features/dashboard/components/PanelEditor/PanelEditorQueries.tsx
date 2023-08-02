@@ -8,7 +8,11 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { PanelModel } from '../../state';
-import { getLastUsedDatasourceFromStorage, updateDatasourceUidLastUsedDatasource } from '../../utils/dashboard';
+import {
+  getDashboardUidFromLocation,
+  getLastUsedDatasourceFromStorage,
+  updateDatasourceUidLastUsedDatasource,
+} from '../../utils/dashboard';
 
 interface Props {
   /** Current panel */
@@ -26,11 +30,13 @@ export class PanelEditorQueries extends PureComponent<Props> {
     if (!datasource.uid) {
       return;
     }
+    const dashboardUid = getDashboardUidFromLocation();
+
     // if datasource is MIXED reset datasource uid in storage, because Mixed datasource can contain multiple ds
     if (datasource.uid === MIXED_DATASOURCE_NAME) {
-      return updateDatasourceUidLastUsedDatasource('');
+      return updateDatasourceUidLastUsedDatasource(dashboardUid!, '');
     }
-    updateDatasourceUidLastUsedDatasource(datasource.uid);
+    updateDatasourceUidLastUsedDatasource(dashboardUid, datasource.uid);
   };
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
@@ -68,7 +74,9 @@ export class PanelEditorQueries extends PureComponent<Props> {
     if (!panel.datasource) {
       let ds;
       // check if we have last used datasource from local storage
-      const lastUsedDatasource = getLastUsedDatasourceFromStorage();
+      // get dashboard uid from the window location
+      const dashboardUid = getDashboardUidFromLocation();
+      const lastUsedDatasource = getLastUsedDatasourceFromStorage(dashboardUid!);
       // do we have a last used datasource for this dashboard
       if (lastUsedDatasource?.datasourceUid !== null) {
         // get datasource from uid

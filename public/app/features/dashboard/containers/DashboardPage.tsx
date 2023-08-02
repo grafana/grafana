@@ -36,7 +36,6 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
-import { initLocalStorageDashboard } from '../utils/dashboard';
 import { calculateNewPanelGridPos } from '../utils/panel';
 
 export interface DashboardPageRouteParams {
@@ -145,8 +144,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       keybindingSrv: this.context.keybindings,
     });
 
-    // local storage to handle last used datasource
-    initLocalStorageDashboard(match.params.uid);
     // small delay to start live updates
     setTimeout(this.updateLiveTimer, 250);
   }
