@@ -132,7 +132,7 @@ Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 ### Log result meta information
 
-> To be implemented in logs data frame as field and/or meta
+> Must be implemented in the data frame as a field and/or as meta attribute
 
 [Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
 
