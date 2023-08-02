@@ -109,19 +109,23 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
-				switch f.recursiveQueriesAreSupported {
-				case true:
-					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-					builder.WriteString("(folder.uid IN (SELECT uid FROM " + recQueryName)
-				default:
-					nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "folder.uid", "")
-					builder.WriteRune('(')
-					builder.WriteString(nestedFoldersSelectors)
-					args = append(args, nestedFoldersArgs...)
+				if len(permSelectorArgs) > 0 {
+					switch f.recursiveQueriesAreSupported {
+					case true:
+						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
+						builder.WriteString("(folder.uid IN (SELECT uid FROM " + recQueryName)
+					default:
+						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "folder.uid", "")
+						builder.WriteRune('(')
+						builder.WriteString(nestedFoldersSelectors)
+						args = append(args, nestedFoldersArgs...)
+					}
+					f.folderIsRequired = true
+					builder.WriteString(") AND NOT dashboard.is_folder)")
+				} else {
+					builder.WriteString("( 1 = 0 AND NOT dashboard.is_folder)")
 				}
-				f.folderIsRequired = true
-				builder.WriteString(") AND NOT dashboard.is_folder)")
 			default:
 				builder.WriteString("(")
 				if len(permSelectorArgs) > 0 {
@@ -177,18 +181,22 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
-				switch f.recursiveQueriesAreSupported {
-				case true:
-					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-					builder.WriteString("(dashboard.uid IN ")
-					builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
-				default:
-					nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.uid", "")
-					builder.WriteRune('(')
-					builder.WriteString(nestedFoldersSelectors)
-					builder.WriteRune(')')
-					args = append(args, nestedFoldersArgs...)
+				if len(permSelectorArgs) > 0 {
+					switch f.recursiveQueriesAreSupported {
+					case true:
+						recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+						f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
+						builder.WriteString("(dashboard.uid IN ")
+						builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
+					default:
+						nestedFoldersSelectors, nestedFoldersArgs := f.nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "dashboard.uid", "")
+						builder.WriteRune('(')
+						builder.WriteString(nestedFoldersSelectors)
+						builder.WriteRune(')')
+						args = append(args, nestedFoldersArgs...)
+					}
+				} else {
+					builder.WriteString("(1 = 0")
 				}
 			default:
 				if len(permSelectorArgs) > 0 {
