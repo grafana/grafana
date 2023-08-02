@@ -402,4 +402,8 @@ const (
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
+
+	// FlagInfluxdbSqlSupport
+	// Enable InfluxDB SQL query language support with new querying UI
+	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
 )
