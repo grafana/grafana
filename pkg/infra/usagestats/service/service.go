@@ -118,6 +118,7 @@ func (uss *UsageStats) RegisterSendReportCallback(c usagestats.SendReportCallbac
 }
 
 func (uss *UsageStats) SetReadyToReport(context.Context) {
+	uss.log.Info("Usage stats are ready to report")
 	uss.readyToReport = true
 }
 
