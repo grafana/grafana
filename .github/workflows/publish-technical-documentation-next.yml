@@ -2,10 +2,6 @@ name: publish-technical-documentation-next
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - docs/sources/**
   workflow_dispatch:
 jobs:
   config:
@@ -48,7 +44,7 @@ jobs:
         id: publish-next
         with:
           repository: grafana/website
-          branch: master
+          branch: jdb/2023-08-use-github-app
           host: github.com
           # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
           # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
