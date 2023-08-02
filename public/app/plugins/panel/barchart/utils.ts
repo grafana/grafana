@@ -13,6 +13,7 @@ import {
   outerJoinDataFrames,
   TimeZone,
   VizOrientation,
+  shiftComparisonFramesTimestamps,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
@@ -362,6 +363,8 @@ export function prepareBarChartDisplayValues(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  shiftComparisonFramesTimestamps(series);
 
   cacheFieldDisplayNames(series);
 

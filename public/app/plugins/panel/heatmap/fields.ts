@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   LinkModel,
   outerJoinDataFrames,
+  shiftComparisonFramesTimestamps,
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
@@ -73,6 +74,8 @@ export function prepareHeatmapData(
   if (!frames?.length) {
     return {};
   }
+
+  shiftComparisonFramesTimestamps(frames);
 
   cacheFieldDisplayNames(frames);
 

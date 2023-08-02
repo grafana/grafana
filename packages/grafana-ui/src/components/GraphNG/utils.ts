@@ -1,4 +1,12 @@
-import { DataFrame, Field, FieldConfig, FieldType, outerJoinDataFrames, TimeRange } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldConfig,
+  FieldType,
+  outerJoinDataFrames,
+  shiftComparisonFramesTimestamps,
+  TimeRange,
+} from '@grafana/data';
 import {
   AxisPlacement,
   GraphDrawStyle,
@@ -52,6 +60,7 @@ function applySpanNullsThresholds(frame: DataFrame, refFieldName?: string | null
 
 export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) {
   let xField: Field;
+
   loop: for (let frame of frames) {
     for (let field of frame.fields) {
       if (dimFields.x(field, frame, frames)) {
@@ -60,6 +69,8 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
       }
     }
   }
+
+  shiftComparisonFramesTimestamps(frames);
 
   // apply null insertions at interval
   frames = frames.map((frame) => {
