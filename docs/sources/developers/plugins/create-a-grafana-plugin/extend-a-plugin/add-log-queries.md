@@ -137,7 +137,7 @@ Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 [Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs result to the user. Information that can be shared with user:
 
 - **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
-- **Error**: Displays possible error in your log results. Data frame needs to have "error" meta information.
+- **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
 - **Common labels**: Labels, or attributes that are the same for all displayed log lines are shown as meta information. This feature is supported for data sources that produce log data frames with an `attributes` field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 Example of constructing a data frame with specific meta information in `go`:
