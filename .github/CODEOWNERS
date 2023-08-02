@@ -352,6 +352,7 @@ lerna.json @grafana/frontend-ops
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
+/lefthook.rc @grafana/frontend-ops
 /scripts/cleanupHusky.mjs
 
 
