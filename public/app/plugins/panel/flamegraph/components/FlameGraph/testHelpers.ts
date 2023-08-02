@@ -1,4 +1,4 @@
-import { arrayToDataFrame } from '@grafana/data';
+import { arrayToDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -77,6 +77,8 @@ export function textToDataContainer(text: string) {
   }
 
   const df = arrayToDataFrame(dfSorted);
+  const labelField = df.fields.find((f) => f.name === 'label')!;
+  labelField.type = FieldType.string;
   return new FlameGraphDataContainer(df);
 }
 
