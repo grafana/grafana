@@ -21,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -106,7 +108,7 @@ func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUse
 	return s.getCachedUserPermissions(ctx, user, options)
 }
 
-func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range accesscontrol.GetOrgRoles(user) {
 		if basicRole, ok := s.roles[builtin]; ok {
@@ -114,11 +116,22 @@ func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUse
 		}
 	}
 
+	namespace, identifier := user.GetNamespacedID()
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		// TOFIX: return error
+		return permissions, nil
+	}
+
+	userID, err := strconv.ParseInt(identifier, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:        user.OrgID,
-		UserID:       user.UserID,
+		OrgID:        user.GetOrgID(),
+		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
-		TeamIDs:      user.Teams,
+		TeamIDs:      user.GetTeams(user.GetOrgID()),
 		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {

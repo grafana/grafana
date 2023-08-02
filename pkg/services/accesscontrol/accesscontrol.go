@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -375,10 +376,10 @@ func IsDisabled(cfg *setting.Cfg) bool {
 }
 
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(user *user.SignedInUser) []string {
-	roles := []string{string(user.OrgRole)}
+func GetOrgRoles(user identity.Requester) []string {
+	roles := []string{string(user.GetOrgRole(user.GetOrgID()))}
 
-	if user.IsGrafanaAdmin {
+	if user.GetIsGrafanaAdmin() {
 		roles = append(roles, RoleGrafanaAdmin)
 	}
 

@@ -105,12 +105,36 @@ func (u *SignedInUser) GetOrgID() int64 {
 	return u.OrgID
 }
 
+// TODO: Add permission fetching if needed for the orgID
 func (u *SignedInUser) GetPermissions(orgID int64) map[string][]string {
 	if u.Permissions == nil {
 		return make(map[string][]string)
 	}
 
 	return u.Permissions[orgID]
+}
+
+// TODO: Add orgID to this method
+func (u *SignedInUser) GetTeams(orgID int64) []int64 {
+	return u.Teams
+}
+
+// TODO: Add orgID to this method
+func (u *SignedInUser) GetOrgRole(orgID int64) roletype.RoleType {
+	return u.OrgRole
+}
+
+func (u *SignedInUser) GetNamespacedID() (string, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return "apikey", fmt.Sprintf("%d", u.ApiKeyID)
+	case u.IsServiceAccount:
+		return "service", fmt.Sprintf("%d", u.UserID)
+	case u.UserID != 0:
+		return "user", fmt.Sprintf("%d", u.UserID)
+	default:
+		return "anonymous", ""
+	}
 }
 
 // FIXME: remove this method once all services are using an interface
