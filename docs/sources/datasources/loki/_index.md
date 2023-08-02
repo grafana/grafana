@@ -34,11 +34,11 @@ The following guides will help you get started with Loki:
 
 ## Adding a data source
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management]
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Loki data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
+Once you've added the Loki data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations]({{< relref "./query-editor#apply-annotations" >}}).
 
 {{% admonition type="note" %}}
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
@@ -47,7 +47,7 @@ To troubleshoot configuration and other issues, check the log file located at `/
 ## Provision the Loki data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 ### Provisioning examples
 
@@ -116,7 +116,7 @@ datasources:
 
 The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -124,4 +124,21 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+
+{{% docs/reference %}}
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[logs-integration-labels-and-detected-fields]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
+[logs-integration-labels-and-detected-fields]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+{{% /docs/reference %}}
