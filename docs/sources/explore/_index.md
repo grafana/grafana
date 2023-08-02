@@ -97,8 +97,8 @@ where:
     // ... any other datasource-specific query parameters
   }[]; // array of queries for this pane
   range: {
-    from: string | number; // the start time, in milliseconds since epoch
-    to: string | number; // the end time, in milliseconds since epoch
+    from: string; // the start time, in milliseconds since epoch
+    to: string; // the end time, in milliseconds since epoch
   }
 }
 ```
