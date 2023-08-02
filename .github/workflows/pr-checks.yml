@@ -18,6 +18,7 @@ concurrency:
   group: pr-checks-${{ github.event.number }}
 
 permissions:
+  statuses: write
   checks: write
   actions: write
   contents: read
