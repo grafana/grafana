@@ -11,6 +11,7 @@ import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
+import { getExemplarPanelOptionsCategory } from './getExemplarPanelOptions';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
 import { getLibraryPanelOptionsCategory } from './getLibraryPanelOptions';
 import { getPanelFrameCategory } from './getPanelFrameOptions';
@@ -25,8 +26,13 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   const [listMode, setListMode] = useState(OptionFilter.All);
   const styles = useStyles2(getStyles);
 
-  const [panelFrameOptions, vizOptions, libraryPanelOptions] = useMemo(
-    () => [getPanelFrameCategory(props), getVisualizationOptions(props), getLibraryPanelOptionsCategory(props)],
+  const [panelFrameOptions, vizOptions, libraryPanelOptions, exemplarOptions] = useMemo(
+    () => [
+      getPanelFrameCategory(props),
+      getVisualizationOptions(props),
+      getLibraryPanelOptionsCategory(props),
+      getExemplarPanelOptionsCategory(props),
+    ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel.configRev, props.data, props.instanceState, searchQuery]
@@ -76,6 +82,8 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
         for (const item of vizOptions) {
           mainBoxElements.push(item.render());
         }
+
+        mainBoxElements.push(exemplarOptions.render());
 
         for (const item of justOverrides) {
           mainBoxElements.push(item.render());

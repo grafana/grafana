@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { ExemplarModalHeader } from '../../heatmap/ExemplarModalHeader';
 
@@ -25,6 +26,7 @@ interface ExemplarMarkerProps {
   exemplarColor?: string;
   clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
   setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
+  options?: PanelModel['options'];
 }
 
 export const ExemplarMarker = ({
@@ -35,6 +37,7 @@ export const ExemplarMarker = ({
   exemplarColor,
   clickedExemplarFieldIndex,
   setClickedExemplarFieldIndex,
+  options,
 }: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
@@ -122,9 +125,16 @@ export const ExemplarMarker = ({
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
-    // Put the traceID field in front.
-    const traceIDField = dataFrame.fields.find((field) => field.name === 'traceID') || dataFrame.fields[0];
-    const orderedDataFrameFields = [traceIDField, ...dataFrame.fields.filter((field) => traceIDField !== field)];
+    //Show only configured labels and in the same order
+    const exemplarLabels = options?.exemplars;
+    let orderedDataFrameFields = [];
+    for (let i in exemplarLabels) {
+      const label = exemplarLabels[i];
+      const field = dataFrame.fields.find((field) => field.name === label);
+      if (field) {
+        orderedDataFrameFields.push(field);
+      }
+    }
 
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
@@ -183,7 +193,6 @@ export const ExemplarMarker = ({
     );
   }, [
     attributes.popper,
-    dataFrame.fields,
     dataFrameFieldIndex,
     onMouseEnter,
     onMouseLeave,
@@ -192,6 +201,8 @@ export const ExemplarMarker = ({
     timeZone,
     isLocked,
     setClickedExemplarFieldIndex,
+    dataFrame.fields,
+    options,
   ]);
 
   const seriesColor = config
