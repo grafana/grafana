@@ -48,7 +48,6 @@ type ImageService interface {
 // screenshots of alert rules that are not associated with a dashboard panel.
 type ScreenshotImageService struct {
 	cache             CacheService
-	dashboards        dashboards.DashboardService
 	limiter           screenshot.RateLimiter
 	logger            log.Logger
 	screenshots       screenshot.ScreenshotService
@@ -61,7 +60,6 @@ type ScreenshotImageService struct {
 // NewScreenshotImageService returns a new ScreenshotImageService.
 func NewScreenshotImageService(
 	cache CacheService,
-	dashboards dashboards.DashboardService,
 	limiter screenshot.RateLimiter,
 	logger log.Logger,
 	screenshots screenshot.ScreenshotService,
@@ -70,7 +68,6 @@ func NewScreenshotImageService(
 	uploads *UploadingService) ImageService {
 	return &ScreenshotImageService{
 		cache:             cache,
-		dashboards:        dashboards,
 		limiter:           limiter,
 		logger:            logger,
 		screenshots:       screenshots,
@@ -109,7 +106,7 @@ func NewScreenshotImageServiceFromCfg(cfg *setting.Cfg, db *store.DBstore, ds da
 		}
 	}
 
-	return NewScreenshotImageService(cache, ds, limiter, log.New("ngalert.image"),
+	return NewScreenshotImageService(cache, limiter, log.New("ngalert.image"),
 		screenshots, screenshotTimeout, db, uploads), nil
 }
 
@@ -141,28 +138,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		OrgID:        r.OrgID,
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
-		From:         screenshot.DefaultFrom,
-		To:           screenshot.DefaultTo,
 		Timeout:      s.screenshotTimeout,
-	}
-
-	// Get the dashboard to set the time range for the screenshot
-	dashboard, err := s.dashboards.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		OrgID: r.OrgID,
-		UID:   dashboardUID,
-	})
-	if err != nil {
-		logger.Error("Failed to get dashboard for screenshot", "error", err)
-		return nil, err
-	}
-
-	tr, err := dashboard.GetTimeRange()
-	if err != nil {
-		logger.Warn("Failed to get time range from dashboard, using default",
-			"from", screenshot.DefaultFrom, "to", screenshot.DefaultTo)
-	} else {
-		opts.From = tr.From
-		opts.To = tr.To
 	}
 
 	// To prevent concurrent screenshots of the same dashboard panel we use singleflight,

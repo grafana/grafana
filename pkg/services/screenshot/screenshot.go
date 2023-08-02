@@ -92,6 +92,17 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 		return nil, err
 	}
 
+	// If To and From have not been set then use the defaults for the panel
+	if opts.To == "" || opts.From == "" {
+		r, err := dashboard.GetTimeRange()
+		if err != nil {
+			s.instrumentError(err)
+			return nil, err
+		}
+		opts.To = r.To
+		opts.From = r.From
+	}
+
 	opts = opts.SetDefaults()
 
 	u := url.URL{}
