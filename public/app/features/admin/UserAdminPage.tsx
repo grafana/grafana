@@ -105,7 +105,7 @@ export class UserAdminPage extends PureComponent<Props> {
     const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
-    const authSource = user?.authLabels?.[0]
+    const authSource = user?.authLabels?.[0];
     const lockMessage = authSource ? `Synced via ${authSource}` : '';
 
     const pageNav: NavModelItem = {
