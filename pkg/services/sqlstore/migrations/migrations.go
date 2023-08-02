@@ -100,6 +100,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	anonservice.AddMigration(mg)
 	signingkeys.AddMigration(mg)
+
+	ualert.MigrationServiceMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
