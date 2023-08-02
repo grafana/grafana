@@ -24,7 +24,6 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
   constructor(props: Props) {
     super(props);
     const { datasource: influxDatasource } = props;
-    console.log('datasource', influxDatasource);
 
     this.datasource = new FlightSQLDatasource({
       url: influxDatasource.urls[0],
@@ -56,7 +55,6 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
   }
 
   transformQuery(query: InfluxQuery & SQLQuery): SQLQuery {
-    console.log('influxQuery', query);
     return {
       ...query,
     };
@@ -67,13 +65,11 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
     const styles = getStyles(theme);
 
     const onRunSQLQuery = () => {
-      console.log('RUN');
       return onRunQuery();
     };
 
     const onSQLChange = (query: SQLQuery) => {
       // query => rawSql for now
-      console.log('ON CHANGE', query);
       onChange({ ...query });
     };
 
