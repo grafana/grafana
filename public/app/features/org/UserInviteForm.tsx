@@ -3,7 +3,20 @@ import React from 'react';
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
-import { Button, LinkButton, Input, Switch, RadioButtonGroup, Form, Field, InputControl, FieldSet } from '@grafana/ui';
+import {
+  Button,
+  LinkButton,
+  Input,
+  Switch,
+  RadioButtonGroup,
+  Form,
+  Field,
+  InputControl,
+  FieldSet,
+  Icon,
+  Tooltip,
+  Label,
+} from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { OrgRole, useDispatch } from 'app/types';
 
@@ -55,8 +68,20 @@ export const UserInviteForm = () => {
               </Field>
               <Field
                 invalid={!!errors.role}
-                label="Role"
-                tooltipMessage='You can now select the "No basic role" option and add permissions to your custom needs.'
+                label={
+                  <Label>
+                    <Stack gap={0.5}>
+                      <span>Role</span>
+                      <Tooltip
+                        placement="right-end"
+                        interactive={true}
+                        content='You can now select the "No basic role" option and add permissions to your custom needs.'
+                      >
+                        <Icon name="question-circle" size="xs" />
+                      </Tooltip>
+                    </Stack>
+                  </Label>
+                }
               >
                 <InputControl
                   render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
