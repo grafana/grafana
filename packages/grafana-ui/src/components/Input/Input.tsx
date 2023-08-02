@@ -106,7 +106,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         display: 'flex',
         width: width ? theme.spacing(width) : '100%',
         height: theme.spacing(theme.components.height.md),
-        borderRadius: theme.shape.borderRadius(),
+        borderRadius: theme.shape.radius.default,
         '&:hover': {
           '> .prefix, .suffix, .input': {
             borderColor: invalid ? theme.colors.error.border : theme.colors.primary.border,
@@ -186,7 +186,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         position: 'relative',
         zIndex: 0,
         flexGrow: 1,
-        borderRadius: theme.shape.borderRadius(),
+        borderRadius: theme.shape.radius.default,
         height: '100%',
         width: '100%',
       })

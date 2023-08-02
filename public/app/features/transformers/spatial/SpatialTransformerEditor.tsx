@@ -11,7 +11,7 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
@@ -90,10 +90,9 @@ const supplier = (
       category: ['Source'],
       path: 'source',
       build: (b, c) => {
-        const loc = (options.source ?? {}) as FrameGeometrySource;
-        if (!loc.mode) {
-          loc.mode = FrameGeometrySourceMode.Auto;
-        }
+        const loc = options.source ?? {
+          mode: FrameGeometrySourceMode.Auto,
+        };
         addLocationFields('Point', '', b, loc);
       },
     });
@@ -102,10 +101,9 @@ const supplier = (
       category: ['Target'],
       path: 'modify',
       build: (b, c) => {
-        const loc = (options.modify?.target ?? {}) as FrameGeometrySource;
-        if (!loc.mode) {
-          loc.mode = FrameGeometrySourceMode.Auto;
-        }
+        const loc = options.modify?.target ?? {
+          mode: FrameGeometrySourceMode.Auto,
+        };
         addLocationFields('Point', 'target.', b, loc);
       },
     });

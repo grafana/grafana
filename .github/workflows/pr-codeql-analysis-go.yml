@@ -7,6 +7,9 @@ on:
     paths:
       - '**/*.go'
 
+permissions:
+  security-events: write
+
 jobs:
   analyze:
     name: Analyze

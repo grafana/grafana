@@ -17,10 +17,10 @@ type queryModel struct {
 // to [(*FlightSQLDatasource).QueryData].
 type queryRequest struct {
 	RefID                string `json:"refId"`
-	RawQuery             string `json:"rawSql"`
+	RawQuery             string `json:"query"`
 	IntervalMilliseconds int    `json:"intervalMs"`
 	MaxDataPoints        int64  `json:"maxDataPoints"`
-	Format               string `json:"format"`
+	Format               string `json:"resultFormat"`
 }
 
 func getQueryModel(dataQuery backend.DataQuery) (*queryModel, error) {

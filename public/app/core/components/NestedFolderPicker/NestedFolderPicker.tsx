@@ -31,6 +31,9 @@ export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
   value?: string;
 
+  /** Show an invalid state around the folder picker */
+  invalid?: boolean;
+
   /* Whether to show the root 'Dashboards' (formally General) folder as selectable */
   showRootFolder?: boolean;
 
@@ -43,7 +46,13 @@ export interface NestedFolderPickerProps {
 
 const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
-export function NestedFolderPicker({ value, showRootFolder = true, excludeUIDs, onChange }: NestedFolderPickerProps) {
+export function NestedFolderPicker({
+  value,
+  invalid,
+  showRootFolder = true,
+  excludeUIDs,
+  onChange,
+}: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -212,6 +221,7 @@ export function NestedFolderPicker({ value, showRootFolder = true, excludeUIDs, 
     return (
       <Trigger
         label={label}
+        invalid={invalid}
         isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
         ref={setTriggerRef}
@@ -234,6 +244,7 @@ export function NestedFolderPicker({ value, showRootFolder = true, excludeUIDs, 
         prefix={label ? <Icon name="folder" /> : null}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
+        invalid={invalid}
         className={styles.search}
         onKeyDown={handleKeyDown}
         onChange={(e) => setSearch(e.currentTarget.value)}

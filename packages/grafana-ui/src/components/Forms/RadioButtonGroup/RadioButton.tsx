@@ -107,7 +107,7 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme2, size: RadioBut
       lineHeight: `${labelHeight}px`,
       color: textColor,
       padding: theme.spacing(0, padding),
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
       cursor: 'pointer',
       zIndex: 1,

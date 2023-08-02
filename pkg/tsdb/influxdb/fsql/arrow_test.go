@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -77,13 +76,13 @@ func TestNewQueryDataResponse(t *testing.T) {
 	record := array.NewRecord(schema, arr, -1)
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	query := sqlutil.Query{Format: sqlutil.FormatOptionTable}
 	resp := newQueryDataResponse(errReader{RecordReader: reader}, query, metadata.MD{})
-	require.NoError(t, resp.Error)
-	require.Len(t, resp.Frames, 1)
-	require.Len(t, resp.Frames[0].Fields, 13)
+	assert.NoError(t, resp.Error)
+	assert.Len(t, resp.Frames, 1)
+	assert.Len(t, resp.Frames[0].Fields, 13)
 
 	frame := resp.Frames[0]
 	f0 := frame.Fields[0]
@@ -183,18 +182,18 @@ func TestNewQueryDataResponse_Error(t *testing.T) {
 		&arrow.Int64Type{},
 		strings.NewReader(`[1, 2, 3]`),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	f64s, _, err := array.FromJSON(
 		alloc,
 		&arrow.Float64Type{},
 		strings.NewReader(`[1.1, 2.2, 3.3]`),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	record := array.NewRecord(schema, []arrow.Array{i64s, f64s}, -1)
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	wrappedReader := errReader{
 		RecordReader: reader,
@@ -202,8 +201,8 @@ func TestNewQueryDataResponse_Error(t *testing.T) {
 	}
 	query := sqlutil.Query{Format: sqlutil.FormatOptionTable}
 	resp := newQueryDataResponse(wrappedReader, query, metadata.MD{})
-	require.Error(t, resp.Error)
-	require.Equal(t, fmt.Errorf("explosion!"), resp.Error)
+	assert.Error(t, resp.Error)
+	assert.Equal(t, fmt.Errorf("explosion!"), resp.Error)
 }
 
 func TestNewQueryDataResponse_WideTable(t *testing.T) {
@@ -222,30 +221,30 @@ func TestNewQueryDataResponse_WideTable(t *testing.T) {
 		&arrow.TimestampType{},
 		strings.NewReader(`["2023-01-01T00:00:00Z", "2023-01-01T00:00:01Z", "2023-01-01T00:00:02Z"]`),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	strs, _, err := array.FromJSON(
 		alloc,
 		&arrow.StringType{},
 		strings.NewReader(`["foo", "bar", "baz"]`),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	i64s, _, err := array.FromJSON(
 		alloc,
 		arrow.PrimitiveTypes.Int64,
 		strings.NewReader(`[1, 2, 3]`),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	record := array.NewRecord(schema, []arrow.Array{times, strs, i64s}, -1)
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	resp := newQueryDataResponse(errReader{RecordReader: reader}, sqlutil.Query{}, metadata.MD{})
-	require.NoError(t, resp.Error)
-	require.Len(t, resp.Frames, 1)
-	require.Equal(t, 3, resp.Frames[0].Rows())
-	require.Len(t, resp.Frames[0].Fields, 4)
+	assert.NoError(t, resp.Error)
+	assert.Len(t, resp.Frames, 1)
+	assert.Equal(t, 3, resp.Frames[0].Rows())
+	assert.Len(t, resp.Frames[0].Fields, 4)
 
 	frame := resp.Frames[0]
 	assert.Equal(t, "time", frame.Fields[0].Name)
@@ -341,20 +340,22 @@ func TestCopyData_String(t *testing.T) {
 	builder.Append("joe")
 	builder.Append("john")
 	builder.Append("jackie")
-	copyData(field, builder.NewArray())
-	require.Equal(t, "joe", field.CopyAt(0))
-	require.Equal(t, "john", field.CopyAt(1))
-	require.Equal(t, "jackie", field.CopyAt(2))
+	err := copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, "joe", field.CopyAt(0))
+	assert.Equal(t, "john", field.CopyAt(1))
+	assert.Equal(t, "jackie", field.CopyAt(2))
 
 	field = data.NewField("field", nil, []*string{})
 	builder = array.NewStringBuilder(memory.DefaultAllocator)
 	builder.Append("joe")
 	builder.AppendNull()
 	builder.Append("jackie")
-	copyData(field, builder.NewArray())
-	require.Equal(t, "joe", *(field.CopyAt(0).(*string)))
-	require.Equal(t, (*string)(nil), field.CopyAt(1))
-	require.Equal(t, "jackie", *(field.CopyAt(2).(*string)))
+	err = copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, "joe", *(field.CopyAt(0).(*string)))
+	assert.Equal(t, (*string)(nil), field.CopyAt(1))
+	assert.Equal(t, "jackie", *(field.CopyAt(2).(*string)))
 }
 
 func TestCopyData_Timestamp(t *testing.T) {
@@ -365,20 +366,22 @@ func TestCopyData_Timestamp(t *testing.T) {
 	builder.Append(arrow.Timestamp(start.Add(time.Hour).UnixNano()))
 	builder.Append(arrow.Timestamp(start.Add(2 * time.Hour).UnixNano()))
 	builder.Append(arrow.Timestamp(start.Add(3 * time.Hour).UnixNano()))
-	copyData(field, builder.NewArray())
-	require.Equal(t, start.Add(time.Hour), field.CopyAt(0))
-	require.Equal(t, start.Add(2*time.Hour), field.CopyAt(1))
-	require.Equal(t, start.Add(3*time.Hour), field.CopyAt(2))
+	err := copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, start.Add(time.Hour), field.CopyAt(0))
+	assert.Equal(t, start.Add(2*time.Hour), field.CopyAt(1))
+	assert.Equal(t, start.Add(3*time.Hour), field.CopyAt(2))
 
 	field = data.NewField("field", nil, []*time.Time{})
 	builder = array.NewTimestampBuilder(memory.DefaultAllocator, &arrow.TimestampType{})
 	builder.Append(arrow.Timestamp(start.Add(time.Hour).UnixNano()))
 	builder.AppendNull()
 	builder.Append(arrow.Timestamp(start.Add(3 * time.Hour).UnixNano()))
-	copyData(field, builder.NewArray())
-	require.Equal(t, start.Add(time.Hour), *field.CopyAt(0).(*time.Time))
-	require.Equal(t, (*time.Time)(nil), field.CopyAt(1))
-	require.Equal(t, start.Add(3*time.Hour), *field.CopyAt(2).(*time.Time))
+	err = copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, start.Add(time.Hour), *field.CopyAt(0).(*time.Time))
+	assert.Equal(t, (*time.Time)(nil), field.CopyAt(1))
+	assert.Equal(t, start.Add(3*time.Hour), *field.CopyAt(2).(*time.Time))
 }
 
 func TestCopyData_Boolean(t *testing.T) {
@@ -387,20 +390,22 @@ func TestCopyData_Boolean(t *testing.T) {
 	builder.Append(true)
 	builder.Append(false)
 	builder.Append(true)
-	copyData(field, builder.NewArray())
-	require.Equal(t, true, field.CopyAt(0))
-	require.Equal(t, false, field.CopyAt(1))
-	require.Equal(t, true, field.CopyAt(2))
+	err := copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, true, field.CopyAt(0))
+	assert.Equal(t, false, field.CopyAt(1))
+	assert.Equal(t, true, field.CopyAt(2))
 
 	field = data.NewField("field", nil, []*bool{})
 	builder = array.NewBooleanBuilder(memory.DefaultAllocator)
 	builder.Append(true)
 	builder.AppendNull()
 	builder.Append(true)
-	copyData(field, builder.NewArray())
-	require.Equal(t, true, *field.CopyAt(0).(*bool))
-	require.Equal(t, (*bool)(nil), field.CopyAt(1))
-	require.Equal(t, true, *field.CopyAt(2).(*bool))
+	err = copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, true, *field.CopyAt(0).(*bool))
+	assert.Equal(t, (*bool)(nil), field.CopyAt(1))
+	assert.Equal(t, true, *field.CopyAt(2).(*bool))
 }
 
 func TestCopyData_Int64(t *testing.T) {
@@ -409,10 +414,11 @@ func TestCopyData_Int64(t *testing.T) {
 	builder.Append(1)
 	builder.Append(2)
 	builder.Append(3)
-	copyData(field, builder.NewArray())
-	require.Equal(t, int64(1), field.CopyAt(0))
-	require.Equal(t, int64(2), field.CopyAt(1))
-	require.Equal(t, int64(3), field.CopyAt(2))
+	err := copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), field.CopyAt(0))
+	assert.Equal(t, int64(2), field.CopyAt(1))
+	assert.Equal(t, int64(3), field.CopyAt(2))
 
 	field = data.NewField("field", nil, []*int64{})
 	builder = array.NewInt64Builder(memory.DefaultAllocator)
@@ -420,10 +426,11 @@ func TestCopyData_Int64(t *testing.T) {
 	builder.AppendNull()
 	builder.Append(3)
 	arr := builder.NewArray()
-	copyData(field, arr)
-	require.Equal(t, int64(1), *field.CopyAt(0).(*int64))
-	require.Equal(t, (*int64)(nil), field.CopyAt(1))
-	require.Equal(t, int64(3), *field.CopyAt(2).(*int64))
+	err = copyData(field, arr)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), *field.CopyAt(0).(*int64))
+	assert.Equal(t, (*int64)(nil), field.CopyAt(1))
+	assert.Equal(t, int64(3), *field.CopyAt(2).(*int64))
 }
 
 func TestCopyData_Float64(t *testing.T) {
@@ -432,20 +439,22 @@ func TestCopyData_Float64(t *testing.T) {
 	builder.Append(1.1)
 	builder.Append(2.2)
 	builder.Append(3.3)
-	copyData(field, builder.NewArray())
-	require.Equal(t, float64(1.1), field.CopyAt(0))
-	require.Equal(t, float64(2.2), field.CopyAt(1))
-	require.Equal(t, float64(3.3), field.CopyAt(2))
+	err := copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, float64(1.1), field.CopyAt(0))
+	assert.Equal(t, float64(2.2), field.CopyAt(1))
+	assert.Equal(t, float64(3.3), field.CopyAt(2))
 
 	field = data.NewField("field", nil, []*float64{})
 	builder = array.NewFloat64Builder(memory.DefaultAllocator)
 	builder.Append(1.1)
 	builder.AppendNull()
 	builder.Append(3.3)
-	copyData(field, builder.NewArray())
-	require.Equal(t, float64(1.1), *field.CopyAt(0).(*float64))
-	require.Equal(t, (*float64)(nil), field.CopyAt(1))
-	require.Equal(t, float64(3.3), *field.CopyAt(2).(*float64))
+	err = copyData(field, builder.NewArray())
+	assert.NoError(t, err)
+	assert.Equal(t, float64(1.1), *field.CopyAt(0).(*float64))
+	assert.Equal(t, (*float64)(nil), field.CopyAt(1))
+	assert.Equal(t, float64(3.3), *field.CopyAt(2).(*float64))
 }
 
 func TestCustomMetadata(t *testing.T) {
@@ -462,12 +471,12 @@ func TestCustomMetadata(t *testing.T) {
 		arrow.PrimitiveTypes.Int64,
 		strings.NewReader(`[1, 2, 3]`),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	record := array.NewRecord(schema, []arrow.Array{i64s}, -1)
 	records := []arrow.Record{record}
 	reader, err := array.NewRecordReader(schema, records)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	md := metadata.MD{}
 	md.Set("trace-id", "abc")
@@ -476,9 +485,9 @@ func TestCustomMetadata(t *testing.T) {
 		Format: sqlutil.FormatOptionTable,
 	}
 	resp := newQueryDataResponse(errReader{RecordReader: reader}, query, md)
-	require.NoError(t, resp.Error)
+	assert.NoError(t, resp.Error)
 
-	require.Equal(t, map[string]any{
+	assert.Equal(t, map[string]any{
 		"headers": metadata.MD{
 			"trace-id":      []string{"abc"},
 			"trace-sampled": []string{"true"},

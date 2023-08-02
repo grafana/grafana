@@ -2,6 +2,7 @@ package fsql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"testing"
 
@@ -19,7 +20,10 @@ import (
 func TestIntegration_QueryData(t *testing.T) {
 	db, err := example.CreateDB()
 	require.NoError(t, err)
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		assert.NoError(t, err)
+	}(db)
 
 	sqliteServer, err := example.NewSQLiteFlightSQLServer(db)
 	require.NoError(t, err)
@@ -28,7 +32,10 @@ func TestIntegration_QueryData(t *testing.T) {
 	server.RegisterFlightService(flightsql.NewFlightServer(sqliteServer))
 	err = server.Init("localhost:12345")
 	require.NoError(t, err)
-	go server.Serve()
+	go func() {
+		err := server.Serve()
+		assert.NoError(t, err)
+	}()
 	defer server.Shutdown()
 
 	resp, err := Query(
@@ -45,7 +52,7 @@ func TestIntegration_QueryData(t *testing.T) {
 					"bucket": "bucket",
 				},
 			},
-			Secure: false,
+			SecureGrpc: false,
 		},
 		backend.QueryDataRequest{
 			Queries: []backend.DataQuery{

@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { Alert, Button, Field, Modal } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { Alert, Button, Field, Modal, Text } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
@@ -23,10 +20,6 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-
-  const handleFolderChange = (newFolder: { uid: string; title: string }) => {
-    setMoveTarget(newFolder.uid);
-  };
 
   const onMove = async () => {
     if (moveTarget !== undefined) {
@@ -59,11 +52,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       <Space v={3} />
 
       <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
-        {config.featureToggles.nestedFolderPicker ? (
-          <NestedFolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
-        ) : (
-          <OldFolderPicker allowEmpty onChange={handleFolderChange} />
-        )}
+        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
       </Field>
 
       <Modal.ButtonRow>

@@ -226,7 +226,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   return count ? changes : undefined;
 }
 
-export function ensureStringValues(value: any | any[]): string | string[] {
+export function ensureStringValues(value: unknown | unknown[]): string | string[] {
   if (Array.isArray(value)) {
     return value.map(String);
   }

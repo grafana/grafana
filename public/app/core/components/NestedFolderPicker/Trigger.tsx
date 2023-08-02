@@ -3,18 +3,19 @@ import React, { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Icon, getInputStyles } from '@grafana/ui';
+import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
 import { focusCss } from '@grafana/ui/src/themes/mixins';
-import { Text } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 
 interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading: boolean;
+  invalid?: boolean;
   label?: ReactNode;
 }
 
-function Trigger({ isLoading, label, ...rest }: TriggerProps, ref: React.ForwardedRef<HTMLButtonElement>) {
-  const styles = useStyles2(getStyles);
+function Trigger({ isLoading, invalid, label, ...rest }: TriggerProps, ref: React.ForwardedRef<HTMLButtonElement>) {
+  const theme = useTheme2();
+  const styles = getStyles(theme, invalid);
 
   return (
     <div className={styles.wrapper}>
@@ -52,8 +53,8 @@ function Trigger({ isLoading, label, ...rest }: TriggerProps, ref: React.Forward
 
 export default forwardRef(Trigger);
 
-const getStyles = (theme: GrafanaTheme2) => {
-  const baseStyles = getInputStyles({ theme });
+const getStyles = (theme: GrafanaTheme2, invalid = false) => {
+  const baseStyles = getInputStyles({ theme, invalid });
 
   return {
     wrapper: baseStyles.wrapper,

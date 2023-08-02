@@ -6,6 +6,7 @@ import { AccessControlAction } from 'app/types';
 
 interface Props {
   isGrafanaAdmin: boolean;
+  isExternalUser?: boolean;
 
   onGrafanaAdminChange: (isGrafanaAdmin: boolean) => void;
 }
@@ -15,7 +16,7 @@ const adminOptions = [
   { label: 'No', value: false },
 ];
 
-export function UserPermissions({ isGrafanaAdmin, onGrafanaAdminChange }: Props) {
+export function UserPermissions({ isGrafanaAdmin, isExternalUser, onGrafanaAdminChange }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [currentAdminOption, setCurrentAdminOption] = useState(isGrafanaAdmin);
 
@@ -28,7 +29,7 @@ export function UserPermissions({ isGrafanaAdmin, onGrafanaAdminChange }: Props)
 
   const handleGrafanaAdminChange = () => onGrafanaAdminChange(currentAdminOption);
 
-  const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsUpdate);
+  const canChangePermissions = contextSrv.hasPermission(AccessControlAction.UsersPermissionsUpdate) && !isExternalUser;
 
   return (
     <>

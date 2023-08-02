@@ -169,15 +169,15 @@ func newDataField[T any](f arrow.Field) *data.Field {
 func copyData(field *data.Field, col arrow.Array) error {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Println(fmt.Errorf("Panic: %s %s", r, string(debug.Stack())))
+			fmt.Println(fmt.Errorf("panic: %s %s", r, string(debug.Stack())))
 		}
 	}()
 
-	data := col.Data()
+	colData := col.Data()
 
 	switch col.DataType().ID() {
 	case arrow.TIMESTAMP:
-		v := array.NewTimestampData(data)
+		v := array.NewTimestampData(colData)
 		for i := 0; i < v.Len(); i++ {
 			if field.Nullable() {
 				if v.IsNull(i) {
@@ -192,7 +192,7 @@ func copyData(field *data.Field, col arrow.Array) error {
 			field.Append(v.Value(i).ToTime(arrow.Nanosecond))
 		}
 	case arrow.DENSE_UNION:
-		v := array.NewDenseUnionData(data)
+		v := array.NewDenseUnionData(colData)
 		for i := 0; i < v.Len(); i++ {
 			sc, err := scalar.GetScalar(v, i)
 			if err != nil {
@@ -200,51 +200,55 @@ func copyData(field *data.Field, col arrow.Array) error {
 			}
 			value := sc.(*scalar.DenseUnion).ChildValue()
 
-			var data any
+			var d any
 			switch value.DataType().ID() {
 			case arrow.STRING:
-				data = value.(*scalar.String).String()
+				d = value.(*scalar.String).String()
 			case arrow.BOOL:
-				data = value.(*scalar.Boolean).Value
+				d = value.(*scalar.Boolean).Value
 			case arrow.INT32:
-				data = value.(*scalar.Int32).Value
+				d = value.(*scalar.Int32).Value
 			case arrow.INT64:
-				data = value.(*scalar.Int64).Value
+				d = value.(*scalar.Int64).Value
 			case arrow.LIST:
-				data = value.(*scalar.List).Value
+				d = value.(*scalar.List).Value
+			default:
+				d = value.(*scalar.Null)
 			}
-			b, err := json.Marshal(data)
+			b, err := json.Marshal(d)
 			if err != nil {
 				return err
 			}
 			field.Append(json.RawMessage(b))
 		}
 	case arrow.STRING:
-		copyBasic[string](field, array.NewStringData(data))
+		copyBasic[string](field, array.NewStringData(colData))
 	case arrow.UINT8:
-		copyBasic[uint8](field, array.NewUint8Data(data))
+		copyBasic[uint8](field, array.NewUint8Data(colData))
 	case arrow.UINT16:
-		copyBasic[uint16](field, array.NewUint16Data(data))
+		copyBasic[uint16](field, array.NewUint16Data(colData))
 	case arrow.UINT32:
-		copyBasic[uint32](field, array.NewUint32Data(data))
+		copyBasic[uint32](field, array.NewUint32Data(colData))
 	case arrow.UINT64:
-		copyBasic[uint64](field, array.NewUint64Data(data))
+		copyBasic[uint64](field, array.NewUint64Data(colData))
 	case arrow.INT8:
-		copyBasic[int8](field, array.NewInt8Data(data))
+		copyBasic[int8](field, array.NewInt8Data(colData))
 	case arrow.INT16:
-		copyBasic[int16](field, array.NewInt16Data(data))
+		copyBasic[int16](field, array.NewInt16Data(colData))
 	case arrow.INT32:
-		copyBasic[int32](field, array.NewInt32Data(data))
+		copyBasic[int32](field, array.NewInt32Data(colData))
 	case arrow.INT64:
-		copyBasic[int64](field, array.NewInt64Data(data))
+		copyBasic[int64](field, array.NewInt64Data(colData))
 	case arrow.FLOAT32:
-		copyBasic[float32](field, array.NewFloat32Data(data))
+		copyBasic[float32](field, array.NewFloat32Data(colData))
 	case arrow.FLOAT64:
-		copyBasic[float64](field, array.NewFloat64Data(data))
+		copyBasic[float64](field, array.NewFloat64Data(colData))
 	case arrow.BOOL:
-		copyBasic[bool](field, array.NewBooleanData(data))
+		copyBasic[bool](field, array.NewBooleanData(colData))
 	case arrow.DURATION:
-		copyBasic[int64](field, array.NewInt64Data(data))
+		copyBasic[int64](field, array.NewInt64Data(colData))
+	default:
+		fmt.Printf("datatype %s is unhandled", col.DataType().ID())
 	}
 
 	return nil

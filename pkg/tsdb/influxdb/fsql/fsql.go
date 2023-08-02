@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/apache/arrow/go/v12/arrow/flight"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
 
@@ -33,7 +32,12 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 	if err != nil {
 		return tRes, err
 	}
-	defer r.client.Close()
+	defer func(client *client) {
+		err := client.Close()
+		if err != nil {
+			logger.Warn("Failed to close fsql client", "err", err)
+		}
+	}(r.client)
 
 	if r.client.md.Len() != 0 {
 		ctx = metadata.NewOutgoingContext(ctx, r.client.md)
@@ -76,16 +80,6 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.Query
 
 type runner struct {
 	client *client
-}
-
-// This is an interface to help testing
-type queryRunner interface {
-	runQuery(ctx context.Context, q string) (*flight.FlightInfo, error)
-}
-
-// runQuery executes flightSQL and returns a flightSQL typed result.
-func (r *runner) runQuery(ctx context.Context, flightSQLQuery string) (*flight.FlightInfo, error) {
-	return r.client.Execute(ctx, flightSQLQuery)
 }
 
 // runnerFromDataSource creates a runner from the datasource model (the datasource instance's configuration).
