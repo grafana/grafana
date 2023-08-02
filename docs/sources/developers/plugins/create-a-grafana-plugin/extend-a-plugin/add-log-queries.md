@@ -114,7 +114,7 @@ const result = new MutableDataFrame({
 
 ### Color coded log levels
 
-> To be implemented in logs data frame as field
+> Must be implemented in the data frame as a field
 
 Color coded [log level]({{< relref "../../../../explore/logs-integration/#log-level" >}}) is displayed at the beginning of the log line. It improves log visualization, allowing users to quickly assess the severity of log entries and facilitating effective log analysis and troubleshooting. Log level is determined from `severity` data frame field. In a case when it does not include `severity` field, Grafana tries to evaluate level based on the content of the log line. In a case it is not possible to do so, the log level is set to `unknown`.
 
