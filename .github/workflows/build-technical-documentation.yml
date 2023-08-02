@@ -1,9 +1,23 @@
 name: Build technical documentation
 on:
   pull_request:
-    paths: ["docs/sources/**"]
+    paths:
+      - docs/sources/**
   workflow_dispatch:
 jobs:
+  config:
+    runs-on: ubuntu-latest
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: Check for secrets
+        id: check
+        shell: bash
+        run: |
+          if [ -n "${{ (secrets.BUILD_TECHNICAL_DOCUMENTATION_APP_ID != '' && secrets.BUILD_TECHNICAL_DOCUMENTATION_APP_PEM != '') || '' }}" ]; then
+            echo has-secrets=1 >> "${GITHUB_OUTPUT}"
+          fi
+
   docs-target:
     runs-on: ubuntu-latest
     outputs:
@@ -25,6 +39,8 @@ jobs:
           ref_name: ${{ github.base_ref }}
 
   with-hugo:
+    needs: config
+    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
     runs-on: ubuntu-latest
     container:
       image: grafana/docs-base:latest
@@ -38,16 +54,15 @@ jobs:
         id: generate-token
         uses: tibdex/github-app-token@v1
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ secrets.BUILD_TECHNICAL_DOCUMENTATION_APP_ID }}
+          private_key: ${{ secrets.BUILD_TECHNICAL_DOCUMENTATION_APP_PEM }}
 
-      - name: Sparse clone website repository
-        run: |
-          git clone --filter=blob:none --no-checkout --sparse --depth 1 "https://x-access-token:${TOKEN}@github.com/grafana/website.git" website
-          git -C website sparse-checkout set content/docs
-          git -C website checkout master
-        env:
-          TOKEN: ${{ steps.generate-token.outputs.token }}
+      - name: Sparse checkout website repository
+        uses: actions/checkout@v3
+        with:
+          repository: grafana/website
+          sparse-checkout: content/docs
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Build website
         # Note that busybox `ln` does not have the `-F` option.
@@ -63,6 +78,8 @@ jobs:
           TARGET: ${{ needs.docs-target.outputs.target }}
 
   doc-validator:
+    needs: config
+    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
     runs-on: ubuntu-latest
     container:
       image: grafana/doc-validator:v3.2.1
@@ -76,16 +93,15 @@ jobs:
         id: generate-token
         uses: tibdex/github-app-token@v1
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ secrets.BUILD_TECHNICAL_DOCUMENTATION_APP_ID }}
+          private_key: ${{ secrets.BUILD_TECHNICAL_DOCUMENTATION_APP_PEM }}
 
-      - name: Sparse clone website repository
-        run: |
-          git clone --filter=blob:none --no-checkout --sparse --depth 1 "https://x-access-token:${TOKEN}@github.com/grafana/website.git" website
-          git -C website sparse-checkout set content/docs
-          git -C website checkout master
-        env:
-          TOKEN: ${{ steps.generate-token.outputs.token }}
+      - name: Sparse checkout website repository
+        uses: actions/checkout@v3
+        with:
+          repository: grafana/website
+          sparse-checkout: content/docs
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Run doc-validator tool
         # Only run doc-validator on specific directories.
