@@ -424,6 +424,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			} else {
 				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 			}
+		default:
+			return user.ErrNoUniqueID
 		}
 		has, err := sess.Get(&signedInUser)
 		if err != nil {
