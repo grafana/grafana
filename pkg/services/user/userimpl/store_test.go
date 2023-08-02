@@ -349,8 +349,15 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("update last seen at", func(t *testing.T) {
-		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{})
+		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{
+			UserID: 10, // Requires UserID
+		})
 		require.NoError(t, err)
+
+		err = userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{
+			UserID: -1,
+		})
+		require.Error(t, err)
 	})
 
 	t.Run("get signed in user", func(t *testing.T) {
