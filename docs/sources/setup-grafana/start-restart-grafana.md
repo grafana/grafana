@@ -183,7 +183,7 @@ Restart methods differ depending on whether you installed Grafana using Homebrew
 
 ### Start Grafana using Homebrew
 
-Use the [Homebrew](http://brew.sh/) start command:
+To start Grafana using [Homebrew](http://brew.sh/), run the following start command:
 
 ```bash
 brew services start grafana
