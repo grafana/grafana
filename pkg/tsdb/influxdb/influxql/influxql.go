@@ -24,8 +24,7 @@ var (
 
 func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
-	var allRawQueries string
-	queries := make([]models.Query, 0, len(req.Queries))
+	response := backend.NewQueryDataResponse()
 
 	for _, reqQuery := range req.Queries {
 		query, err := models.QueryParse(reqQuery)
@@ -38,27 +37,31 @@ func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.Quer
 			return &backend.QueryDataResponse{}, err
 		}
 
-		allRawQueries = allRawQueries + rawQuery + ";"
 		query.RefID = reqQuery.RefID
 		query.RawQuery = rawQuery
-		queries = append(queries, *query)
+
+		if setting.Env == setting.Dev {
+			logger.Debug("Influxdb query", "raw query", rawQuery)
+		}
+
+		request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
+		if err != nil {
+			return &backend.QueryDataResponse{}, err
+		}
+
+		resp, err := execute(dsInfo, logger, query, request)
+
+		if err != nil {
+			response.Responses[query.RefID] = backend.DataResponse{Error: err}
+		} else {
+			response.Responses[query.RefID] = resp
+		}
 	}
 
-	if setting.Env == setting.Dev {
-		logger.Debug("Influxdb query", "raw query", allRawQueries)
-	}
-
-	request, err := createRequest(ctx, logger, dsInfo, allRawQueries, "")
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
-
-	resp, err := execute(dsInfo, logger, queries, request)
-
-	return resp, err
+	return response, nil
 }
 
-func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, query string, retentionPolicy string) (*http.Request, error) {
+func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, queryStr string, retentionPolicy string) (*http.Request, error) {
 	u, err := url.Parse(dsInfo.URL)
 	if err != nil {
 		return nil, err
@@ -76,7 +79,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 		}
 	case "POST":
 		bodyValues := url.Values{}
-		bodyValues.Add("q", query)
+		bodyValues.Add("q", queryStr)
 		body := bodyValues.Encode()
 		req, err = http.NewRequestWithContext(ctx, http.MethodPost, u.String(), strings.NewReader(body))
 		if err != nil {
@@ -96,7 +99,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	}
 
 	if httpMode == "GET" {
-		params.Set("q", query)
+		params.Set("q", queryStr)
 	} else if httpMode == "POST" {
 		req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 	}
@@ -107,16 +110,16 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.Dataso
 	return req, nil
 }
 
-func execute(dsInfo *models.DatasourceInfo, logger log.Logger, queries []models.Query, request *http.Request) (*backend.QueryDataResponse, error) {
+func execute(dsInfo *models.DatasourceInfo, logger log.Logger, query *models.Query, request *http.Request) (backend.DataResponse, error) {
 	res, err := dsInfo.HTTPClient.Do(request)
 	if err != nil {
-		return &backend.QueryDataResponse{}, err
+		return backend.DataResponse{}, err
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	resp := ResponseParse(res.Body, res.StatusCode, queries)
-	return resp, nil
+	resp := ResponseParse(res.Body, res.StatusCode, query)
+	return *resp, nil
 }

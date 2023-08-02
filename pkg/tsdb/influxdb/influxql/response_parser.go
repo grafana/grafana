@@ -19,39 +19,33 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func ResponseParse(buf io.ReadCloser, statusCode int, queries []models.Query) *backend.QueryDataResponse {
-	return parse(buf, statusCode, queries)
+func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
+	return parse(buf, statusCode, query)
 }
 
 // parse is the same as Parse, but without the io.ReadCloser (we don't need to
 // close the buffer)
-func parse(buf io.Reader, statusCode int, queries []models.Query) *backend.QueryDataResponse {
-	resp := backend.NewQueryDataResponse()
+func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {
-		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
 	}
 
 	if jsonErr != nil {
-		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
-		return resp
+		return &backend.DataResponse{Error: jsonErr}
 	}
 
 	if response.Error != "" {
-		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf(response.Error)}
-		return resp
+		return &backend.DataResponse{Error: fmt.Errorf(response.Error)}
 	}
 
-	for i, result := range response.Results {
-		if result.Error != "" {
-			resp.Responses[queries[i].RefID] = backend.DataResponse{Error: fmt.Errorf(result.Error)}
-		} else {
-			resp.Responses[queries[i].RefID] = backend.DataResponse{Frames: transformRows(result.Series, queries[i])}
-		}
+	result := response.Results[0]
+	if result.Error != "" {
+		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
+	} else {
+		return &backend.DataResponse{Frames: transformRows(result.Series, *query)}
 	}
-
-	return resp
 }
 
 func parseJSON(buf io.Reader) (models.Response, error) {
