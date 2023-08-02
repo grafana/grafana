@@ -52,6 +52,24 @@ import { Divider } from '@grafana/ui';
 
 ```
 
+### Modifiers
+
+For the margin to be defined can use the spacing prop and pass a spacing token into it.
+
+```tsx
+import { Divider } from '@grafana/ui';
+
+    <header>
+        <h1>My title here</h1>
+        <Divider direction="vertical" spacing={0.5}/>
+        <img src="logo.png" alt="logo" />
+    </header>
+    <main>
+        <p>Main content goes here</p>
+    </main>
+
+```
+
 ### Dos
 
     - Import and add the Divider component inside the code where you would normally add an hr or a div.
