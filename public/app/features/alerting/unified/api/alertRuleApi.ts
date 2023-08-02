@@ -1,5 +1,3 @@
-import { compact, isEmpty, isNil, omit, omitBy } from 'lodash';
-
 import { RelativeTimeRange } from '@grafana/data';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
