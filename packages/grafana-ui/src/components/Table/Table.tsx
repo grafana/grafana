@@ -21,7 +21,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, Field, FieldType, ReducerID } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaThemeType, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -227,14 +227,16 @@ export const Table = memo((props: Props) => {
         nestedFrames[rowIndex].forEach((nf: DataFrame, nfIndex: number) => {
           const noHeader = !!nf.meta?.custom?.noHeader;
           const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
+          const emphasize = theme.colors.mode === GrafanaThemeType.Dark ? 0.05 : 0.015;
 
           const subTableStyle: CSSProperties = {
             height: height,
-            background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
+            background: theme.colors.emphasize(theme.colors.background.primary, emphasize),
             paddingLeft: EXPANDER_WIDTH,
             position: 'absolute',
             top,
           };
+
           top += height;
 
           subTables.push(
