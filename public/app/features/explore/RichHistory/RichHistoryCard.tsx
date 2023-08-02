@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.border.weak};
       margin: ${theme.spacing(1)} 0;
       background-color: ${cardColor};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       .starred {
         color: ${theme.v1.palette.orange};
       }

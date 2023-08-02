@@ -55,7 +55,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const { retentionPolicies } = useRetentionPolicies(datasource);
 
   useEffect(() => {
-    if (!policy) {
+    if (!policy && retentionPolicies.length > 0) {
       props.onChange({
         ...query,
         policy: retentionPolicies[0],
@@ -133,12 +133,7 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
         <FromSection
           policy={policy}
           measurement={measurement}
-          getPolicyOptions={() =>
-            withTemplateVariableOptions(
-              allTagKeys.then(() => getAllPolicies(datasource)),
-              wrapPure
-            )
-          }
+          getPolicyOptions={() => withTemplateVariableOptions(getAllPolicies(datasource), wrapPure)}
           getMeasurementOptions={(filter) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>

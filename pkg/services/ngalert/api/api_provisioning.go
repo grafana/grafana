@@ -80,6 +80,23 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 	return response.JSON(http.StatusOK, policies)
 }
 
+func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
+	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.OrgID)
+	if err != nil {
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	e, err := AlertingFileExportFromRoute(c.OrgID, policies)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+	}
+
+	return exportResponse(c, e)
+}
+
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgID, tree, alerting_models.Provenance(provenance))

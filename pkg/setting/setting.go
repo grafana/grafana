@@ -275,13 +275,14 @@ type Cfg struct {
 	AdminPassword                string
 	DisableLogin                 bool
 	AdminEmail                   string
-	DisableSyncLock              bool
 	DisableLoginForm             bool
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
 	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
 	AuthBrokerEnabled bool
+	// TO REMOVE: Not documented & not supported. Remove in 10.3
+	TagAuthedDevices bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -551,6 +552,9 @@ type Cfg struct {
 	// This needs to be on the global object since its used in the
 	// sqlstore package and HTTP middlewares.
 	DatabaseInstrumentQueries bool
+
+	// Feature Management Settings
+	FeatureManagement FeatureMgmtSettings
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1236,6 +1240,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	logSection := iniFile.Section("log")
 	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
+	cfg.readFeatureManagementConfig()
+
 	return nil
 }
 
@@ -1517,12 +1523,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 
-	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
-	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
-
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
 	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
+	cfg.TagAuthedDevices = auth.Key("tag_authed_devices").MustBool(true)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
