@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -100,12 +99,12 @@ func TestServiceStart(t *testing.T) {
 			}()
 
 			ctx := context.Background()
-			service := NewMigrationService(&logtest.Fake{}, sqlStore, tt.config, fakes.NewFakeKVStore(t))
+			service := NewMigrationService(t, sqlStore, tt.config)
 
 			err := service.SetMigrated(ctx, tt.isMigrationRun)
 			require.NoError(t, err)
 
-			err = service.Start(ctx)
+			err = service.Run(ctx)
 			require.NoError(t, err)
 
 			migrated, err := service.GetMigrated(ctx)
@@ -119,7 +118,7 @@ func TestServiceStart(t *testing.T) {
 func TestAMConfigMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t))
+	service := NewMigrationService(t, sqlStore, &setting.Cfg{})
 	tc := []struct {
 		name           string
 		legacyChannels []*models.AlertNotification
@@ -461,7 +460,7 @@ func TestAMConfigMigration(t *testing.T) {
 			defer teardown(t, x, service)
 			setupLegacyAlertsTables(t, x, tt.legacyChannels, tt.alerts)
 
-			err := service.Start(context.Background())
+			err := service.Run(context.Background())
 			require.NoError(t, err)
 
 			for orgId := range tt.expected {
@@ -500,7 +499,7 @@ func TestAMConfigMigration(t *testing.T) {
 func TestDashAlertMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(&logtest.Fake{}, sqlStore, &setting.Cfg{}, fakes.NewFakeKVStore(t))
+	service := NewMigrationService(t, sqlStore, &setting.Cfg{})
 
 	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
 		defer teardown(t, x, service)
@@ -533,7 +532,7 @@ func TestDashAlertMigration(t *testing.T) {
 			},
 		}
 		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
-		err := service.Start(context.Background())
+		err := service.Run(context.Background())
 		require.NoError(t, err)
 
 		for orgId := range expected {
@@ -560,7 +559,7 @@ func TestDashAlertMigration(t *testing.T) {
 			},
 		}
 		setupLegacyAlertsTables(t, x, legacyChannels, alerts)
-		err := service.Start(context.Background())
+		err := service.Run(context.Background())
 		require.NoError(t, err)
 
 		for orgId := range expected {
@@ -589,7 +588,7 @@ func TestDashAlertMigration(t *testing.T) {
 		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
 		require.NoError(t, err)
 
-		err = service.Start(context.Background())
+		err = service.Run(context.Background())
 		require.NoError(t, err)
 
 		rules := getAlertRules(t, x, o.ID)
@@ -726,7 +725,7 @@ func createOrg(t *testing.T, id int64) *org.Org {
 }
 
 // teardown cleans the input tables between test cases.
-func teardown(t *testing.T, x *xorm.Engine, service MigrationService) {
+func teardown(t *testing.T, x *xorm.Engine, service *MigrationService) {
 	_, err := x.Exec("DELETE from org")
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from alert")
@@ -804,6 +803,12 @@ func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertR
 	require.NoError(t, err)
 
 	return rules
+}
+
+func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *MigrationService {
+	ms, err := ProvideService(cfg, sqlStore, fakes.NewFakeKVStore(t))
+	require.NoError(t, err)
+	return ms
 }
 
 func boolPointer(b bool) *bool {
