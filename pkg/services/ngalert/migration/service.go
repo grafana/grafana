@@ -35,7 +35,7 @@ func ProvideService(
 		log:   log.New("ngalert.migration"),
 		cfg:   cfg,
 		store: sqlStore,
-		kv:    kvstore.WithNamespace(kv, kvstore.AllOrganizations, KVNamespace),
+		kv:    kvstore.WithNamespace(kv, 0, KVNamespace),
 	}, nil
 }
 
