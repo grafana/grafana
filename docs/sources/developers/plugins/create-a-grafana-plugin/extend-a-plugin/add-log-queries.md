@@ -31,19 +31,19 @@ This guide will walk you through the process of adding support for Explore featu
 
 The data frame should include following fields:
 
-| Field name     | Field type                              | Info                                                                                                                                                                                                                                       |
-| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **timestamp**  | `time`                                  | Field with the timestamp, non nullable.                                                                                                                                                                                                        |
-| **body**       | `string`                                | Field with the content of the log line content, non nullable.                                                                                                                                                                                  |
-| **severity**   | `string`                                | Represents the severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More info about log level can be found [here](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
-| **id**         | `string`                                | Unique identifier of the log line.                                                                                                                                                                                                         |
-| **attributes** | `json raw message` (go) or `other` (ts) | This field represents additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Its value should be represented with Record<string,any> type in javascript.               |
+| Field name     | Field type                                      | Info                                                                                                                                                                                                                                        |
+| -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **timestamp**  | `time`                                          | Field with the timestamp, non nullable.                                                                                                                                                                                                     |
+| **body**       | `string`                                        | Field with the content of the log line content, non nullable.                                                                                                                                                                               |
+| **severity**   | `string`                                        | Represents the severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More info about log level can be found [here](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
+| **id**         | `string`                                        | Unique identifier of the log line.                                                                                                                                                                                                          |
+| **attributes** | `json raw message` (Go) or `other` (Typescript) | This field represents additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Its value should be represented with Record<string,any> type in javascript.                    |
 
 Logs data frame's `type` needs to be set to `type: DataFrameType.LogLines` in data frame's meta.
 
-Example of constructing a logs data frame in `go`:
+Example of constructing a logs data frame in `Go`:
 
-> Note: Should be used if you are creating data frames on backend in go code.
+> Note: Should be used if you are creating data frames in Go
 
 ```go
 frame := data.NewFrame(
@@ -62,7 +62,7 @@ frame := data.NewFrame(
 
 Example of constructing a logs data frame in `Typescript`:
 
-> Note: Should be used if you are creating data frames on frontend in typescript code.
+> Note: Should be used if you are creating data frames in Typescript
 
 ```ts
 const result = new MutableDataFrame({
@@ -91,7 +91,7 @@ To ensure that your log results are displayed in an interactive Logs view, add a
 
 Example of constructing a data frame with specific meta information in `Go`:
 
-> Note: Should be used if you are creating the data frames in the backend.
+> Note: Should be used if you are creating data frames in Go
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -99,15 +99,87 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame with specific meta information in `typescript`:
+Example of constructing a data frame with specific meta information in `Typescript`:
 
-> Note: Should be used if you are creating data frames on frontend in typescript code.
+> Note: Should be used if you are creating data frames in Typescript
 
 ```ts
 const result = new MutableDataFrame({
     fields: [...],
     meta: {
         preferredVisualisationType: 'logs',
+    },
+});
+```
+
+### Highlight searched words
+
+> Must be implemented in the data frame as a meta attribute
+
+The logs visualisation can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically utilized for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, search words need to be included in the data frame's meta information
+
+Example of constructing a data frame that includes searchWords in `Go`:
+
+> Note: Should be used if you are creating data frames in Go
+
+```go
+frame.Meta = &data.FrameMeta{
+	Custom: map[string]interface{}{
+    "searchWords": []string{"foo", "bar", "baz"} ,
+  }
+}
+```
+
+Example of constructing a data frame that includes searchWords in `Typescript`:
+
+> Note: Should be used if you are creating data frames in Typescript
+
+```ts
+const result = new MutableDataFrame({
+    fields: [...],
+    meta: {
+      custom: {
+        searchWords: ["foo", "bar", "baz"],
+      }
+    },
+});
+```
+
+### Log result meta information
+
+> Must be implemented in the data frame as a meta attribute
+
+[Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
+
+- **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
+- **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
+- **Common labels**: Labels, or attributes that are the same for all displayed log lines are shown as meta information. This feature is supported for data sources that produce log data frames with an `attributes` field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
+
+Example of constructing a data frame with specific meta information in `Go`:
+
+> Note: Should be used if you are creating data frames in Go
+
+```go
+frame.Meta = &data.FrameMeta{
+	Custom: map[string]interface{}{
+    "limit": 1000,
+    "error": "Error information",
+  }
+}
+```
+
+Example of constructing a data frame with specific meta information in `Typescript`:
+
+> Note: Should be used if you are creating data frames in Typescript
+
+```ts
+const result = new MutableDataFrame({
+    fields: [...],
+    meta: {
+        custom: {
+          limit: 1000,
+          error: "Error information"
+        }
     },
 });
 ```
@@ -130,140 +202,6 @@ In the case where the underlying database does not return an `id` field, you can
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
-### Log result meta information
-
-> Must be implemented in the data frame as a field and/or as meta attribute
-
-[Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
-
-- **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
-- **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
-- **Common labels**: Labels, or attributes that are the same for all displayed log lines are shown as meta information. This feature is supported for data sources that produce log data frames with an `attributes` field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
-
-Example of constructing a data frame with specific meta information in `go`:
-
-> Note: Should be used if you are creating data frames on backend in go code.
-
-```go
-frame.Meta = &data.FrameMeta{
-	Custom: map[string]interface{}{
-    "limit": 1000,
-    "error": "Error information",
-  }
-}
-```
-
-Example of constructing a data frame with specific meta information in `typescript`:
-
-> Note: Should be used if you are creating data frames on frontend in typescript code.
-
-```ts
-const result = new MutableDataFrame({
-    fields: [...],
-    meta: {
-        custom: {
-          limit: 1000,
-          error: "Error information"
-        }
-    },
-});
-```
-
-### Highlight searched words
-
-> To be implemented in logs data frame as meta
-
-The kogs visualisation can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically utilized for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, search words need to be included in the data frame's meta information
-
-Example of constructing a data frame that includes searchWords in `go`:
-
-> Note: Should be used if you are creating data frames on backend in go code.
-
-```go
-frame.Meta = &data.FrameMeta{
-	Custom: map[string]interface{}{
-    "searchWords": []string{"foo", "bar", "baz"} ,
-  }
-}
-```
-
-Example of constructing a data frame that includes searchWords in `typescript`:
-
-> Note: Should be used if you are creating data frames on frontend in go code.
-
-```ts
-const result = new MutableDataFrame({
-    fields: [...],
-    meta: {
-      custom: {
-        searchWords: ["foo", "bar", "baz"],
-      }
-    },
-});
-```
-
-### Log context
-
-> To be implemented in data source trough implementing DataSourceWithXXXSupport interface
-
-[Log context]({{< relref "../../../../explore/logs-integration/#log-context" >}}) is a feature in Explore that enables the display of additional lines of context surrounding a log entry that matches a specific search query. This feature allows users to gain deeper insights into the log data by viewing the log entry within its relevant context. By showing the surrounding log lines, users can have a better understanding of the sequence of events and the context in which the log entry occurred, facilitating a more comprehensive log analysis and troubleshooting.
-
-```ts
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceWithLogsContextSupport,
-  LogRowContextOptions,
-  LogRowContextQueryDirection,
-  LogRowModel,
-} from '@grafana/data';
-import { catchError, lastValueFrom, of, switchMap, Observable } from 'rxjs';
-
-export class ExampleDatasource implements DataSourceWithLogsContextSupport<ExampleQuery> {
-  // Retrieve context for a given log row
-  async getLogRowContext(
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    query?: ExampleQuery
-  ): Promise<DataQueryResponse> {
-    // createRequestFromQuery is a mocked implementation. Be sure to adjust this based on your data source logic.
-    const request = createRequestFromQuery(row, query, options);
-    return lastValueFrom(
-      // this.query is a mocked implementation. Be sure to adjust this based on your data source logic.
-      this.query(request).pipe(
-        catchError((err) => {
-          const error: DataQueryError = {
-            message: 'Error during context query. Please check JS console logs.',
-            status: err.status,
-            statusText: err.statusText,
-          };
-          throw error;
-        }),
-        // processResultsToDataQueryResponse is a mocked implementation. Be sure to adjust this based on your data source logic.
-        switchMap((res) => of(processResultsToDataQueryResponse(res)))
-      )
-    );
-  }
-
-  // Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view.
-  getLogRowContextQuery(
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    query?: ExampleQuery
-  ): Promise<ExampleQuery | null> {
-    // Data source internal implementation that creates context query based on row, options and original query
-  }
-
-  // This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings,...)
-  showContextToggle(row?: LogRowModel): boolean {
-    // If you want to always show toggle, you can just return true
-    if (row && row.searchWords && row.searchWords.length > 0) {
-      return true;
-    }
-  }
-}
-```
-
 ### Filtering of fields using Log details
 
 > To be implemented trough data source method
@@ -274,7 +212,7 @@ Every log line has an expandable part called "Log details" that can be opened by
 - `ADD_FILTER_OUT` - to filter for log lines that do not include selected fields
 
 ```ts
-export class ExampleDatasource implements DataSourceWithSupplementaryQueriesSupport<ExampleQuery> {
+export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOptions> {
   modifyQuery(query: ExampleQuery, action: QueryFixAction): ExampleQuery {
     let queryText = query.query ?? '';
     switch (action.type) {
@@ -319,13 +257,78 @@ export class ExampleDatasource implements DataSourceWithSupplementaryQueriesSupp
 2. Ensure that your data source's `query` method can handle queries with `liveStreaming` set to true.
 
 ```ts
-export class ExampleDatasource implements DataSourceWithSupplementaryQueriesSupport<ExampleQuery> {
+export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOptions> {
   query(request: DataQueryRequest<ExampleQuery>): Observable<DataQueryResponse> {
     // This is a mocked implementation. Be sure to adjust this based on your data source logic.
     if (request.liveStreaming) {
       return this.runLiveStreamQuery(request);
     }
     return this.runRegularQuery(request);
+  }
+}
+```
+
+### Log context
+
+> To be implemented in data source trough implementing DataSourceWithXXXSupport interface
+
+[Log context]({{< relref "../../../../explore/logs-integration/#log-context" >}}) is a feature in Explore that enables the display of additional lines of context surrounding a log entry that matches a specific search query. This feature allows users to gain deeper insights into the log data by viewing the log entry within its relevant context. By showing the surrounding log lines, users can have a better understanding of the sequence of events and the context in which the log entry occurred, facilitating a more comprehensive log analysis and troubleshooting.
+
+```ts
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceWithLogsContextSupport,
+  LogRowContextOptions,
+  LogRowContextQueryDirection,
+  LogRowModel,
+} from '@grafana/data';
+import { catchError, lastValueFrom, of, switchMap, Observable } from 'rxjs';
+
+export class ExampleDatasource
+  extends DataSourceApi<ExampleQuery, ExampleOptions>
+  implements DataSourceWithLogsContextSupport<ExampleQuery>
+{
+  // Retrieve context for a given log row
+  async getLogRowContext(
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    query?: ExampleQuery
+  ): Promise<DataQueryResponse> {
+    // createRequestFromQuery is a mocked implementation. Be sure to adjust this based on your data source logic.
+    const request = createRequestFromQuery(row, query, options);
+    return lastValueFrom(
+      // this.query is a mocked implementation. Be sure to adjust this based on your data source logic.
+      this.query(request).pipe(
+        catchError((err) => {
+          const error: DataQueryError = {
+            message: 'Error during context query. Please check JS console logs.',
+            status: err.status,
+            statusText: err.statusText,
+          };
+          throw error;
+        }),
+        // processResultsToDataQueryResponse is a mocked implementation. Be sure to adjust this based on your data source logic.
+        switchMap((res) => of(processResultsToDataQueryResponse(res)))
+      )
+    );
+  }
+
+  // Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view.
+  getLogRowContextQuery(
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    query?: ExampleQuery
+  ): Promise<ExampleQuery | null> {
+    // Data source internal implementation that creates context query based on row, options and original query
+  }
+
+  // This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings,...)
+  showContextToggle(row?: LogRowModel): boolean {
+    // If you want to always show toggle, you can just return true
+    if (row && row.searchWords && row.searchWords.length > 0) {
+      return true;
+    }
   }
 }
 ```
@@ -354,7 +357,10 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 
-export class ExampleDatasource implements DataSourceWithSupplementaryQueriesSupport<ExampleQuery> {
+export class ExampleDatasource
+  extends DataSourceApi<ExampleQuery, ExampleOptions>
+  implements DataSourceWithSupplementaryQueriesSupport<ExampleQuery>
+{
   // Returns supplementary query types that data source supports.
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
     return [SupplementaryQueryType.LogsVolume];
@@ -439,7 +445,10 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 
-export class ExampleDatasource implements DataSourceWithSupplementaryQueriesSupport<ExampleQuery> {
+export class ExampleDatasource
+  extends DataSourceApi<ExampleQuery, ExampleOptions>
+  implements DataSourceWithSupplementaryQueriesSupport<ExampleQuery>
+{
   // Returns supplementary query types that data source supports.
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
     return [SupplementaryQueryType.LogsSample];
