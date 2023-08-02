@@ -84,6 +84,12 @@ func (uss *UsageStats) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-sendReportTicker.C:
+			if !uss.readyToReport {
+				nextSendInterval = time.Minute
+				sendReportTicker.Reset(nextSendInterval)
+				continue
+			}
+
 			if traceID, err := uss.sendUsageStats(ctx); err != nil {
 				uss.log.Warn("Failed to send usage stats", "error", err, "traceID", traceID)
 			}
