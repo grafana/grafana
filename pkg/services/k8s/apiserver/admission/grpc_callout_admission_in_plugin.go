@@ -64,15 +64,23 @@ func (g grpcCalloutAdmissionInPlugin) Validate(ctx context.Context, a admission.
 func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces, isMutating bool) error {
 	var finalErr error
 
+	kind := a.GetKind()
+	// quit early if plugin doesn't recognize the kind
+	if kind.Group != "charandas.example.com" || kind.Kind != "TestObject" {
+		return nil
+	}
+
 	wrappedSender := callResourceResponseSenderFunc(func(response *backend.CallResourceResponse) error {
 		// err = errors.New("some validation error")
 		admissionResponse := &admissionV1.AdmissionResponse{}
 		if err := json.Unmarshal(response.Body, &admissionResponse); err != nil {
 			finalErr = errors.New("Admission response from plugin is malformed")
+			return nil
 		}
 
 		if !admissionResponse.Allowed {
 			finalErr = admission.NewForbidden(a, errors.New("could not pass validation performed by plugin"))
+			return nil
 		}
 
 		if isMutating {
@@ -102,7 +110,6 @@ func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, 
 		return nil
 	})
 
-	kind := a.GetKind()
 	userInfo := a.GetUserInfo()
 	admissionRequest := &admissionV1.AdmissionRequest{
 		UID:             "0",
@@ -135,20 +142,19 @@ func (g grpcCalloutAdmissionInPlugin) proxyAdminOrValidate(ctx context.Context, 
 	if isMutating {
 		path = "/k8s/admission/mutation"
 	}
-	if kind.Group == "charandas.example.com" && kind.Kind == "TestObject" {
-		g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
-			Path:   path,
-			Method: "POST",
-			PluginContext: backend.PluginContext{
-				OrgID:                      0,
-				PluginID:                   "charandas-callbackadmissionexample-app",
-				User:                       &backend.User{},
-				AppInstanceSettings:        &backend.AppInstanceSettings{},
-				DataSourceInstanceSettings: nil,
-			},
-			Body: admissionRequestBody,
-		}, wrappedSender)
-	}
+
+	finalErr = g.pluginsClient.CallResource(ctx, &backend.CallResourceRequest{
+		Path:   path,
+		Method: "POST",
+		PluginContext: backend.PluginContext{
+			OrgID:                      0,
+			PluginID:                   "charandas-callbackadmissionexample-app",
+			User:                       &backend.User{},
+			AppInstanceSettings:        &backend.AppInstanceSettings{},
+			DataSourceInstanceSettings: nil,
+		},
+		Body: admissionRequestBody,
+	}, wrappedSender)
 
 	return finalErr
 }
