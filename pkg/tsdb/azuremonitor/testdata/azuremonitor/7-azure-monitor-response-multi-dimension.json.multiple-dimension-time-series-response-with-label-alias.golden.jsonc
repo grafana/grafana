@@ -1,0 +1,229 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 2 Fields by 3 Rows
+//  +-------------------------------+------------------------------------------+
+//  | Name: Time                    | Name: Blob Capacity                      |
+//  | Labels:                       | Labels: blobtype=PageBlob, tier=Standard |
+//  | Type: []time.Time             | Type: []*float64                         |
+//  +-------------------------------+------------------------------------------+
+//  | 2020-06-30 09:58:00 +0000 UTC | 675530                                   |
+//  | 2020-06-30 10:58:00 +0000 UTC | 675530                                   |
+//  | 2020-06-30 11:58:00 +0000 UTC | 675530                                   |
+//  +-------------------------------+------------------------------------------+
+//  
+//  
+//  
+//  Frame[1] 
+//  Name: 
+//  Dimensions: 2 Fields by 3 Rows
+//  +-------------------------------+--------------------------------------+
+//  | Name: Time                    | Name: Blob Capacity                  |
+//  | Labels:                       | Labels: blobtype=BlockBlob, tier=Hot |
+//  | Type: []time.Time             | Type: []*float64                     |
+//  +-------------------------------+--------------------------------------+
+//  | 2020-06-30 09:58:00 +0000 UTC | 0                                    |
+//  | 2020-06-30 10:58:00 +0000 UTC | 0                                    |
+//  | 2020-06-30 11:58:00 +0000 UTC | 0                                    |
+//  +-------------------------------+--------------------------------------+
+//  
+//  
+//  
+//  Frame[2] 
+//  Name: 
+//  Dimensions: 2 Fields by 3 Rows
+//  +-------------------------------+-----------------------------------------------------+
+//  | Name: Time                    | Name: Blob Capacity                                 |
+//  | Labels:                       | Labels: blobtype=Azure Data Lake Storage, tier=Cool |
+//  | Type: []time.Time             | Type: []*float64                                    |
+//  +-------------------------------+-----------------------------------------------------+
+//  | 2020-06-30 09:58:00 +0000 UTC | 0                                                   |
+//  | 2020-06-30 10:58:00 +0000 UTC | 0                                                   |
+//  | 2020-06-30 11:58:00 +0000 UTC | 0                                                   |
+//  +-------------------------------+-----------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanatest%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftestblobaccount%2FblobServices%2Fdefault%2Fproviders%2FMicrosoft.Insights%2Fmetrics%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22default%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Blob Capacity",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "blobtype": "PageBlob",
+              "tier": "Standard"
+            },
+            "config": {
+              "displayName": "grafanatest {Blob Type=PageBlob, Tier=Standard}",
+              "unit": "decbytes",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanatest%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftestblobaccount%2FblobServices%2Fdefault%2Fproviders%2FMicrosoft.Insights%2Fmetrics%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22default%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1593511080000,
+            1593514680000,
+            1593518280000
+          ],
+          [
+            675530,
+            675530,
+            675530
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanatest%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftestblobaccount%2FblobServices%2Fdefault%2Fproviders%2FMicrosoft.Insights%2Fmetrics%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22default%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Blob Capacity",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "blobtype": "BlockBlob",
+              "tier": "Hot"
+            },
+            "config": {
+              "displayName": "grafanatest {Blob Type=BlockBlob, Tier=Hot}",
+              "unit": "decbytes",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanatest%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftestblobaccount%2FblobServices%2Fdefault%2Fproviders%2FMicrosoft.Insights%2Fmetrics%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22default%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1593511080000,
+            1593514680000,
+            1593518280000
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanatest%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftestblobaccount%2FblobServices%2Fdefault%2Fproviders%2FMicrosoft.Insights%2Fmetrics%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22default%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          },
+          {
+            "name": "Blob Capacity",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "blobtype": "Azure Data Lake Storage",
+              "tier": "Cool"
+            },
+            "config": {
+              "displayName": "grafanatest {Blob Type=Azure Data Lake Storage, Tier=Cool}",
+              "unit": "decbytes",
+              "links": [
+                {
+                  "title": "View in Azure Portal",
+                  "targetBlank": true,
+                  "url": "http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%220001-01-01T00%3A00%3A00Z%22%2C%22endTime%22%3A%220001-01-01T00%3A00%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanatest%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Ftestblobaccount%2FblobServices%2Fdefault%2Fproviders%2FMicrosoft.Insights%2Fmetrics%22%7D%2C%22name%22%3A%22%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22%22%2C%22resourceDisplayName%22%3A%22default%22%7D%7D%5D%7D%5D%7D"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1593511080000,
+            1593514680000,
+            1593518280000
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  ]
+}

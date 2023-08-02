@@ -37,19 +37,23 @@ func handleResourceReq(handleFunc handleFn) func(rw http.ResponseWriter, req *ht
 		err := req.ParseForm()
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		data, err := handleFunc(pluginContext, req.URL.Query())
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		body, err := json.Marshal(data)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err))
+			return
 		}
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
 			logger.Error("Unable to write HTTP response", "error", err)
+			return
 		}
 	}
 }

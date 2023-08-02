@@ -26,7 +26,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							showLabels:         bool
 							showCommonLabels:   bool
 							showTime:           bool

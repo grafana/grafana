@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	ErrFileNotExist   = errors.New("file does not exist")
-	ErrPluginFileRead = errors.New("file could not be read")
+	ErrFileNotExist              = errors.New("file does not exist")
+	ErrPluginFileRead            = errors.New("file could not be read")
+	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 )
 
 type Plugin struct {

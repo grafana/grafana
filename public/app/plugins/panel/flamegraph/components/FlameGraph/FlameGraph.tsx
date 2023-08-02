@@ -22,6 +22,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { CoreApp } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { SelectedView, ContextMenuData } from '../types';
@@ -35,7 +36,6 @@ import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
 type Props = {
   data: FlameGraphDataContainer;
   app: CoreApp;
-  flameGraphHeight?: number;
   levels: LevelItem[][];
   topLevelIndex: number;
   selectedBarIndex: number;
@@ -53,7 +53,6 @@ type Props = {
 const FlameGraph = ({
   data,
   app,
-  flameGraphHeight,
   levels,
   topLevelIndex,
   selectedBarIndex,
@@ -66,7 +65,7 @@ const FlameGraph = ({
   setRangeMax,
   selectedView,
 }: Props) => {
-  const styles = getStyles(selectedView, app, flameGraphHeight);
+  const styles = useStyles2(getStyles);
   const totalTicks = data.getValue(0);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
@@ -162,8 +161,15 @@ const FlameGraph = ({
           );
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-            tooltipRef.current.style.left = e.clientX + 10 + 'px';
             tooltipRef.current.style.top = e.clientY + 'px';
+            if (document.documentElement.clientWidth - e.clientX < 400) {
+              tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
+              tooltipRef.current.style.left = 'auto';
+            } else {
+              tooltipRef.current.style.left = e.clientX + 15 + 'px';
+              tooltipRef.current.style.right = 'auto';
+            }
+
             setTooltipItem(levels[levelIndex][barIndex]);
           }
         }
@@ -233,14 +239,12 @@ const FlameGraph = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
+const getStyles = () => ({
   graph: css`
-    float: left;
     overflow: scroll;
-    width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
-    ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 50px)`
-      : ''}; // 50px to adjust for header pushing content down
+    height: 100%;
+    flex-grow: 1;
+    flex-basis: 50%;
   `,
   canvasContainer: css`
     cursor: pointer;

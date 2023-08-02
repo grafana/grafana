@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -12,7 +12,9 @@ export interface AppChromeUpdateProps {
 export const AppChromeUpdate = React.memo<AppChromeUpdateProps>(({ actions }: AppChromeUpdateProps) => {
   const { chrome } = useGrafana();
 
-  useEffect(() => {
+  // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
+  // This prevents flickering actions when going from one dashbaord to another for example
+  useLayoutEffect(() => {
     chrome.update({ actions });
   });
   return null;

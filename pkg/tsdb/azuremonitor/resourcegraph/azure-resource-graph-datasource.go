@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -42,6 +43,7 @@ type AzureResourceGraphQuery struct {
 	JSON              json.RawMessage
 	InterpolatedQuery string
 	TimeRange         backend.TimeRange
+	QueryType         string
 }
 
 const ArgAPIVersion = "2021-06-01-preview"
@@ -110,6 +112,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(logger log.Logger, queries [
 			JSON:              query.JSON,
 			InterpolatedQuery: interpolatedQuery,
 			TimeRange:         query.TimeRange,
+			QueryType:         query.QueryType,
 		})
 	}
 
@@ -193,7 +196,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponseErrorWithExecuted(err)
 	}
 
-	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery)
+	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
 	}
@@ -208,7 +211,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	}
 
 	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
-	frameWithLink := loganalytics.AddConfigLinks(*frame, url)
+	frameWithLink := loganalytics.AddConfigLinks(*frame, url, nil)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
 	}

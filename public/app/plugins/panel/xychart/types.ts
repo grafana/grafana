@@ -7,7 +7,7 @@ import {
   ScatterFieldConfig as GeneratedScatterFieldConfig,
   ScatterSeriesConfig as GeneratedScatterSeriesConfig,
   defaultScatterFieldConfig as generatedDefaultScatterFieldConfig,
-  PanelOptions as GeneratedPanelOptions,
+  Options as GeneratedOptions,
 } from './panelcfg.gen';
 
 /**
@@ -34,7 +34,7 @@ export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
 
 export interface ScatterSeriesConfig extends ScatterFieldConfig, GeneratedScatterSeriesConfig {}
 
-export interface PanelOptions extends Omit<GeneratedPanelOptions, 'series'> {
+export interface Options extends Omit<GeneratedOptions, 'series'> {
   series: ScatterSeriesConfig[];
 }
 

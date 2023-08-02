@@ -27,6 +27,7 @@ type Migrator struct {
 	Logger       log.Logger
 	Cfg          *setting.Cfg
 	isLocked     atomic.Bool
+	logMap       map[string]MigrationLog
 }
 
 type MigrationLog struct {
@@ -97,7 +98,14 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 		logMap[logItem.MigrationID] = logItem
 	}
 
+	mg.logMap = logMap
 	return logMap, nil
+}
+
+func (mg *Migrator) RemoveMigrationLogs(migrationsIDs ...string) {
+	for _, id := range migrationsIDs {
+		delete(mg.logMap, id)
+	}
 }
 
 func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
@@ -128,7 +136,7 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 func (mg *Migrator) run() (err error) {
 	mg.Logger.Info("Starting DB migrations")
 
-	logMap, err := mg.GetMigrationLog()
+	_, err = mg.GetMigrationLog()
 	if err != nil {
 		return err
 	}
@@ -138,7 +146,7 @@ func (mg *Migrator) run() (err error) {
 	start := time.Now()
 	for _, m := range mg.migrations {
 		m := m
-		_, exists := logMap[m.Id()]
+		_, exists := mg.logMap[m.Id()]
 		if exists {
 			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())
 			migrationsSkipped++

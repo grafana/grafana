@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Roles definition
@@ -171,10 +172,27 @@ var (
 			},
 		}),
 	}
+
+	authenticationConfigWriterRole = RoleDTO{
+		Name:        "fixed:authentication.config:writer",
+		DisplayName: "Authentication config writer",
+		Description: "Read and update authentication configuration and access configuration UI.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsSAML,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsSAML,
+			},
+		},
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service) error {
+func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -208,8 +226,18 @@ func DeclareFixedRoles(service Service) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
+	// TODO: Move to own service when implemented
+	authenticationConfigWriter := RoleRegistration{
+		Role:   authenticationConfigWriterRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
+
+	if cfg.AuthConfigUIAdminAccess {
+		authenticationConfigWriter.Grants = append(authenticationConfigWriter.Grants, string(org.RoleAdmin))
+	}
+
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter)
+		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {

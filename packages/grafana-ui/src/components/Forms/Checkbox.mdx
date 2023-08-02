@@ -9,22 +9,27 @@ import { Checkbox } from './Checkbox';
 
 Checked represents true, un-checked represent false. So you can use them to select a binary option or multiple options in a set. `Checkbox` can be used in groups, where the single checkboxes have no dependencies. That means that selecting one doesn’t affect any other `Checkbox`. When adding a description to your `Checkbox`, write positive statements so that "checked" means "yes" and not "no". That way, you can avoid confusion.
 
-**DO:** [ ] Hide options
-**DON'T:** [ ] Do not show options
+- **DO:** [ ] Hide options
+- **DON'T:** [ ] Do not show options
 
 Checkboxes typically only trigger changes after sending a form. If your component should trigger a change immediately, it's better to use a toggle switch instead. Furthermore, checkboxes are not mutually exclusive. That means that selecting one will not disable the others or impact them in any other way. If you want to offer a mutually exclusive choice, use `RadioButtonGroup` or a `Select` dropdown.
 
-**DO:**
-Show series
-[ ] A-series
-[ ] B-series
-[ ] C-series
+**DO:** Show series
 
-**DON'T:**
-Show only
-[ ] A-series
-[ ] B-series
-[ ] C-series
+- [ ] A-series
+- [ ] B-series
+- [ ] C-series
+
+**DON'T:** Show only
+
+- [ ] A-series
+- [ ] B-series
+- [ ] C-series
+
+The indeterminate state of the checkbox should be used when there is a group of child checkboxes that are in a mix of checked and unchecked states. For instance when you have a list of checkboxes representing the columns of a table, and you want to allow the user to select which columns to display. If some of the columns are checked, and some are unchecked, then the parent checkbox should be in an indeterminate state. If all the columns are checked, then the parent should be checked. If none of the columns are checked, then the parent should be unchecked.
+It is discouraged to set both `indeterminate` and `checked` state as a checkboxs emit boolean values which can only ever be TRUE or FALSE, and if something is partially true, then it is false.
+
+- **DON'T:** `<Checkbox checked indeterminate />`
 
 ### Usage
 

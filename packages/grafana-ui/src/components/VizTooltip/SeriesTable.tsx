@@ -37,6 +37,7 @@ const getSeriesTableRowStyles = (theme: GrafanaTheme2) => {
     `,
     value: css`
       padding-left: ${theme.spacing(2)};
+      text-align: right;
     `,
     activeSeries: css`
       font-weight: ${theme.typography.fontWeightBold};

@@ -52,6 +52,8 @@ describe('addLabelToQuery()', () => {
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with an other escaped value'}                             | ${'bar'} | ${'='}   | ${'baz\\\\'}   | ${'{foo="bar"} | logfmt | bar=`baz\\`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
+    ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, > operator and number value'}                            | ${'bar'} | ${'>'}   | ${'5'}         | ${'{foo="bar"} | logfmt | bar>5'}
+    ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, < operator and non-number value'}                        | ${'bar'} | ${'<'}   | ${'5KiB'}      | ${'{foo="bar"} | logfmt | bar<`5KiB`'}
   `(
     'should add label to query:  $query, description: $description',
     ({ query, description, label, operator, value, expectedResult }) => {
@@ -154,6 +156,7 @@ describe('removeCommentsFromQuery', () => {
     ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
     ${`#sum(rate(\n{host="containers"}\n#[1m]))`}                                     | ${`\n{host="containers"}\n`}
     ${`#sum(rate(\n{host="containers"}\n#| logfmt\n#[1m]))`}                          | ${`\n{host="containers"}\n\n`}
+    ${'{job="grafana"}\n#hello\n| logfmt'}                                            | ${'{job="grafana"}\n\n| logfmt'}
   `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });

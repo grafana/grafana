@@ -61,6 +61,15 @@ import (
 //     Responses:
 //       200: GettableHistoricUserConfigs
 
+// swagger:route POST /api/alertmanager/grafana/config/history/{id}/_activate alertmanager RoutePostGrafanaAlertingConfigHistoryActivate
+//
+// revert Alerting configuration to the historical configuration specified by the given id
+//
+//     Responses:
+//       202: Ack
+//       400: ValidationError
+//       404: NotFound
+
 // swagger:route DELETE /api/alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
 //
 // deletes the Alerting config for a tenant
@@ -159,6 +168,19 @@ import (
 //       408: Failure
 //       409: AlertManagerNotReady
 
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/templates/test alertmanager RoutePostTestGrafanaTemplates
+//
+// Test Grafana managed templates without saving them.
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//
+//       200: TestTemplatesResults
+//       400: ValidationError
+//       403: PermissionDenied
+//       409: AlertManagerNotReady
+
 // swagger:route GET /api/alertmanager/grafana/api/v2/silences alertmanager RouteGetGrafanaSilences
 //
 // get silences
@@ -255,7 +277,11 @@ type TestReceiversConfigBodyParams struct {
 }
 
 func (c *TestReceiversConfigBodyParams) ProcessConfig(encrypt EncryptFn) error {
-	return processReceiverConfigs(c.Receivers, encrypt)
+	err := encryptReceiverConfigs(c.Receivers, encrypt)
+	if err != nil {
+		return err
+	}
+	return assignReceiverConfigsUIDs(c.Receivers)
 }
 
 type TestReceiversConfigAlertParams struct {
@@ -283,6 +309,56 @@ type TestReceiverConfigResult struct {
 	Status string `json:"status"`
 	Error  string `json:"error,omitempty"`
 }
+
+// swagger:parameters RoutePostTestGrafanaTemplates
+type TestTemplatesConfigParams struct {
+	// in:body
+	Body TestTemplatesConfigBodyParams
+}
+
+type TestTemplatesConfigBodyParams struct {
+	// Alerts to use as data when testing the template.
+	Alerts []*amv2.PostableAlert `json:"alerts"`
+
+	// Template string to test.
+	Template string `json:"template"`
+
+	// Name of the template file.
+	Name string `json:"name"`
+}
+
+// swagger:model
+type TestTemplatesResults struct {
+	Results []TestTemplatesResult      `json:"results,omitempty"`
+	Errors  []TestTemplatesErrorResult `json:"errors,omitempty"`
+}
+
+type TestTemplatesResult struct {
+	// Name of the associated template definition for this result.
+	Name string `json:"name"`
+
+	// Interpolated value of the template.
+	Text string `json:"text"`
+}
+
+type TestTemplatesErrorResult struct {
+	// Name of the associated template for this error. Will be empty if the Kind is "invalid_template".
+	Name string `json:"name,omitempty"`
+
+	// Kind of template error that occurred.
+	Kind TemplateErrorKind `json:"kind"`
+
+	// Error message.
+	Message string `json:"message"`
+}
+
+// swagger:enum TemplateErrorKind
+type TemplateErrorKind string
+
+const (
+	InvalidTemplate TemplateErrorKind = "invalid_template"
+	ExecutionError  TemplateErrorKind = "execution_error"
+)
 
 // swagger:parameters RouteCreateSilence RouteCreateGrafanaSilence
 type CreateSilenceParams struct {
@@ -458,6 +534,13 @@ type BodyAlertingConfig struct {
 	Body PostableUserConfig
 }
 
+// swagger:parameters RoutePostGrafanaAlertingConfigHistoryActivate
+type HistoricalConfigId struct {
+	// Id should be the id of the GettableHistoricUserConfig
+	// in:path
+	Id int64 `json:"id"`
+}
+
 // alertmanager routes
 // swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // testing routes
@@ -536,9 +619,14 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 	return UIDs
 }
 
-// ProcessConfig parses grafana receivers, encrypts secrets and assigns UUIDs (if they are missing)
-func (c *PostableUserConfig) ProcessConfig(encrypt EncryptFn) error {
-	return processReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
+// EncryptConfig parses grafana receivers and encrypts secrets.
+func (c *PostableUserConfig) EncryptConfig(encrypt EncryptFn) error {
+	return encryptReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
+}
+
+// AssignMissingConfigUIDs assigns missing UUIDs to receiver configs.
+func (c *PostableUserConfig) AssignMissingConfigUIDs() error {
+	return assignReceiverConfigsUIDs(c.AlertmanagerConfig.Receivers)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -1206,8 +1294,7 @@ type PostableGrafanaReceivers struct {
 
 type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
 
-func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
-	seenUIDs := make(map[string]struct{})
+func encryptReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 	// encrypt secure settings for storing them in DB
 	for _, r := range c {
 		switch r.Type() {
@@ -1220,6 +1307,20 @@ func processReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
 					}
 					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
 				}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
+func assignReceiverConfigsUIDs(c []*PostableApiReceiver) error {
+	seenUIDs := make(map[string]struct{})
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
 				if gr.UID == "" {
 					retries := 5
 					for i := 0; i < retries; i++ {

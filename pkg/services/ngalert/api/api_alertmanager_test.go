@@ -108,7 +108,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}, {
 			Name: "test2",
@@ -116,7 +116,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}}))
 	})
@@ -128,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -136,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alertingNotify.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}}))
 	})
@@ -148,7 +148,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.InvalidReceiverError{},
+				Error:  alertingNotify.IntegrationValidationError{},
 			}},
 		}, {
 			Name: "test2",
@@ -156,7 +156,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.IntegrationTimeoutError{},
 			}},
 		}}))
 	})
@@ -174,7 +174,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 12,
 			},
 		}
-		request := createAmConfigRequest(t)
+		request := createAmConfigRequest(t, validConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -191,7 +191,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 1,
 			},
 		}
-		request := createAmConfigRequest(t)
+		request := createAmConfigRequest(t, validConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
@@ -208,11 +208,43 @@ func TestAlertmanagerConfig(t *testing.T) {
 				OrgID: 3, // Org 3 was initialized with broken config.
 			},
 		}
-		request := createAmConfigRequest(t)
+		request := createAmConfigRequest(t, validConfig)
 
 		response := sut.RoutePostAlertingConfig(&rc, request)
 
 		require.Equal(t, 202, response.Status())
+	})
+
+	t.Run("assert config hash doesn't change when sending RouteGetAlertingConfig back to RoutePostAlertingConfig", func(t *testing.T) {
+		rc := contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+		request := createAmConfigRequest(t, validConfigWithSecureSetting)
+
+		r := sut.RoutePostAlertingConfig(&rc, request)
+		require.Equal(t, 202, r.Status())
+
+		am, err := sut.mam.AlertmanagerFor(1)
+		require.NoError(t, err)
+		hash := am.Base.ConfigHash()
+
+		getResponse := sut.RouteGetAlertingConfig(&rc)
+		require.Equal(t, 200, getResponse.Status())
+		postable, err := notifier.Load(getResponse.Body())
+		require.NoError(t, err)
+
+		r = sut.RoutePostAlertingConfig(&rc, *postable)
+		require.Equal(t, 202, r.Status())
+
+		am, err = sut.mam.AlertmanagerFor(1)
+		require.NoError(t, err)
+		newHash := am.Base.ConfigHash()
+		require.Equal(t, hash, newHash)
 	})
 
 	t.Run("when objects are not provisioned", func(t *testing.T) {
@@ -259,7 +291,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
 			rc := createRequestCtxInOrg(1)
-			request := createAmConfigRequest(t)
+			request := createAmConfigRequest(t, validConfig)
 
 			_ = sut.RoutePostAlertingConfig(rc, request)
 
@@ -378,6 +410,86 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 		for _, config := range configs {
 			require.NotZero(tt, config.LastApplied)
 		}
+	})
+}
+
+func TestRoutePostGrafanaAlertingConfigHistoryActivate(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 404 when no historical configurations are found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 404, response.Status())
+	})
+
+	t.Run("assert 202 for a valid org and id", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "0")
+		require.Equal(tt, 202, response.Status())
+	})
+
+	t.Run("assert 400 when id is not parseable", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostGrafanaAlertingConfigHistoryActivate(rc, "abc")
+		require.Equal(tt, 400, response.Status())
+	})
+}
+
+func TestRoutePostTestTemplates(t *testing.T) {
+	sut := createSut(t, nil)
+
+	t.Run("assert 404 when no alertmanager found", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(10)
+
+		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
+		require.Equal(tt, 404, response.Status())
+	})
+
+	t.Run("assert 409 when alertmanager not ready", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(3)
+
+		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
+		require.Equal(tt, 409, response.Status())
+	})
+
+	t.Run("assert 200 for a valid alertmanager", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(1)
+
+		response := sut.RoutePostTestTemplates(rc, apimodels.TestTemplatesConfigBodyParams{})
+		require.Equal(tt, 200, response.Status())
 	})
 }
 
@@ -589,11 +701,11 @@ func createSut(t *testing.T, accessControl accesscontrol.AccessControl) Alertman
 	}
 }
 
-func createAmConfigRequest(t *testing.T) apimodels.PostableUserConfig {
+func createAmConfigRequest(t *testing.T, config string) apimodels.PostableUserConfig {
 	t.Helper()
 
 	request := apimodels.PostableUserConfig{}
-	err := request.UnmarshalJSON([]byte(validConfig))
+	err := request.UnmarshalJSON([]byte(config))
 	require.NoError(t, err)
 
 	return request
@@ -649,6 +761,41 @@ var validConfig = `{
 				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
+				}
+			}]
+		}]
+	}
+}
+`
+
+var validConfigWithSecureSetting = `{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [{
+			"name": "grafana-default-email",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "email receiver",
+				"type": "email",
+				"isDefault": true,
+				"settings": {
+					"addresses": "<example@email.com>"
+				}
+			}]},
+			{
+			"name": "slack",
+			"grafana_managed_receiver_configs": [{
+				"uid": "",
+				"name": "slack1",
+				"type": "slack",
+				"settings": {"text": "slack text"},
+				"secureSettings": {
+					"url": "secure url"
 				}
 			}]
 		}]

@@ -43,7 +43,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             onClick={() => {
               const id = onCreateNewPanel(dashboard, initialDatasource);
               reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
-              locationService.partial({ editPanel: id });
+              locationService.partial({ editPanel: id, firstPanel: true });
               dispatch(setInitialDatasource(undefined));
             }}
             disabled={!canCreate}

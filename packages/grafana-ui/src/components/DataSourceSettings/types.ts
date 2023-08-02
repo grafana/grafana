@@ -31,6 +31,10 @@ export interface HttpSettingsBaseProps<JSONData extends DataSourceJsonData = any
 export interface HttpSettingsProps extends HttpSettingsBaseProps {
   /** The default url for the data source */
   defaultUrl: string;
+  /** Set label for url option */
+  urlLabel?: string;
+  /** Added to default url tooltip */
+  urlDocs?: React.ReactNode;
   /** Show the http access help box */
   showAccessOptions?: boolean;
   /** Show the SigV4 auth toggle option */
@@ -39,4 +43,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   azureAuthSettings?: AzureAuthSettings;
   /** If SIGV4 is enabled, provide an editor for SIGV4 connection config  **/
   renderSigV4Editor?: React.ReactNode;
+  /** Show the Secure Socks Datasource Proxy toggle option */
+  secureSocksDSProxyEnabled?: boolean;
 }

@@ -37,7 +37,7 @@ describe('formAmRouteToAmRoute', () => {
       const amRoute = formAmRouteToAmRoute('test', route, { id: 'root' });
 
       // Assert
-      expect(amRoute.group_by).toStrictEqual([]);
+      expect(amRoute.group_by).toStrictEqual(undefined);
     });
   });
 
@@ -56,10 +56,23 @@ describe('formAmRouteToAmRoute', () => {
 });
 
 describe('amRouteToFormAmRoute', () => {
+  describe('when called with empty group_by array', () => {
+    it('should set overrideGrouping true and groupBy empty', () => {
+      // Arrange
+      const amRoute = buildAmRoute({ group_by: [] });
+
+      // Act
+      const formRoute = amRouteToFormAmRoute(amRoute);
+
+      // Assert
+      expect(formRoute.groupBy).toStrictEqual([]);
+      expect(formRoute.overrideGrouping).toBe(false);
+    });
+  });
+
   describe('when called with empty group_by', () => {
     it.each`
       group_by
-      ${[]}
       ${null}
       ${undefined}
     `("when group_by is '$group_by', should set overrideGrouping false", ({ group_by }) => {
@@ -70,7 +83,7 @@ describe('amRouteToFormAmRoute', () => {
       const formRoute = amRouteToFormAmRoute(amRoute);
 
       // Assert
-      expect(formRoute.groupBy).toStrictEqual([]);
+      expect(formRoute.groupBy).toStrictEqual(undefined);
       expect(formRoute.overrideGrouping).toBe(false);
     });
   });

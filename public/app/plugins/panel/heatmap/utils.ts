@@ -23,7 +23,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { PanelFieldConfig, YAxisConfig } from './types';
+import { FieldConfig, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -75,6 +75,8 @@ interface PrepConfigOpts {
   yAxisConfig: YAxisConfig;
   ySizeDivisor?: number;
   sync?: () => DashboardCursorSync;
+  // Identifies the shared key for uPlot cursor sync
+  eventsScope?: string;
 }
 
 export function prepConfig(opts: PrepConfigOpts) {
@@ -95,6 +97,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     yAxisConfig,
     ySizeDivisor,
     sync,
+    eventsScope = '__global_',
   } = opts;
 
   const xScaleKey = 'x';
@@ -290,7 +293,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   }
 
   // eslint-ignore @typescript-eslint/no-explicit-any
-  const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
+  const yFieldConfig = yField.config?.custom as FieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
@@ -614,7 +617,7 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       scales: [xScaleKey, yScaleKey],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
@@ -967,7 +970,7 @@ export const boundedMinMax = (
 };
 
 export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
-  let range = Math.max(maxValue - minValue, 1);
+  let range = maxValue - minValue || 1;
 
   let paletteSize = palette.length;
 

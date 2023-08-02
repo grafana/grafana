@@ -37,7 +37,6 @@ describe('Datasource reducer', () => {
       graphResult: null,
       logsResult: null,
       tableResult: null,
-      loading: false,
       queryResponse: {
         // When creating an empty query response we also create a timeRange object with the current time.
         // Copying the range from the reducer here prevents intermittent failures when creating them at different times.

@@ -87,12 +87,13 @@ const CustomControl = (props: any) => {
   );
 };
 
-export function SelectBase<T>({
+export function SelectBase<T, Rest = {}>({
   allowCustomValue = false,
   allowCreateWhileLoading = false,
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
+  blurInputOnSelect,
   cacheOptions,
   className,
   closeMenuOnSelect = true,
@@ -144,7 +145,9 @@ export function SelectBase<T>({
   width,
   isValidNewOption,
   formatOptionLabel,
-}: SelectBaseProps<T>) {
+  hideSelectedOptions,
+  ...rest
+}: SelectBaseProps<T> & Rest) {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -212,6 +215,7 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
+    blurInputOnSelect,
     captureMenuScroll: false,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
@@ -222,6 +226,7 @@ export function SelectBase<T>({
     filterOption,
     getOptionLabel,
     getOptionValue,
+    hideSelectedOptions,
     inputValue,
     invalid,
     isClearable,
@@ -353,7 +358,7 @@ export function SelectBase<T>({
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: MultiValueRemove,
+          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           ...components,
         }}
         styles={selectStyles}
@@ -361,6 +366,7 @@ export function SelectBase<T>({
         {...commonSelectProps}
         {...creatableProps}
         {...asyncSelectProps}
+        {...rest}
       />
     </>
   );

@@ -1,13 +1,20 @@
 ---
-title: Stream metrics from Telegraf to Grafana
-summary: Use Telegraf to stream live metrics to Grafana.
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Use Telegraf to stream live metrics to Grafana.
 id: stream-metrics-from-telegraf-to-grafana
-categories: ['administration']
-tags: ['beginner']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Use Telegraf to stream live metrics to Grafana.
+tags:
+  - beginner
+title: Stream metrics from Telegraf to Grafana
 weight: 75
 ---
 
@@ -29,9 +36,9 @@ In this tutorial, you'll:
 
 ## Run Grafana and create admin token
 
-1. Run Grafana following [installation instructions](/docs/grafana/latest/installation/) for your operating system
-1. Log in and go to Configuration -> API Keys
-1. Press "Add API key" button and create a new API token with **Admin** role
+1. Run Grafana following [installation instructions](/docs/grafana/latest/installation/) for your operating system.
+1. Log in and go to Configuration -> API Keys.
+1. Press "Add API key" button and create a new API token with **Admin** role.
 
 ## Configure and run Telegraf
 
@@ -65,12 +72,13 @@ The only thing left here is to create a dashboard with streaming data.
 
 ## Create dashboard with streaming data
 
-1. Create new dashboard
-1. Press Add empty panel
-1. Select `-- Grafana --` datasource
-1. Select `Live Measurements` query type
-1. Find and select `stream/custom_stream_id/cpu` measurement for Channel field
-1. Save dashboard changes
+1. Click **Dashboards** in the left-side menu.
+1. Click **New** and select **New Dashboard**.
+1. On the empty dashboard, click **+ Add visualization**.
+1. In the modal that opens, select the `-- Grafana --` data source.
+1. Select `Live Measurements` query type.
+1. Find and select `stream/custom_stream_id/cpu` measurement for Channel field.
+1. Save dashboard changes.
 
 After making these steps Grafana UI should subscribe to the channel `stream/custom_stream_id/cpu` and you should see CPU data updates coming from Telegraf in near real-time.
 

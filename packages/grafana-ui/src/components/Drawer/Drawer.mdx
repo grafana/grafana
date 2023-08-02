@@ -21,10 +21,20 @@ onClose = () => {
 };
 
 return (
-  <Drawer title="This a Drawer" width="60%" onClose={this.onClose}>
+  <Drawer title="This a Drawer" size="md" onClose={this.onClose}>
     <div>Put your Drawer content here</div>
   </Drawer>
 );
 ```
+
+## Sizes
+
+The Drawer supports 3 sizes: `sm`, `md`, and `lg`. This option defines a width in percentage and as well as a min-width.
+
+- sm: width = 25vh and min-width = 384px
+- md: width = 50vh and min-width = 568px
+- lg: width = 75vh and min-width = 744px
+
+## Props
 
 <Props of={Drawer} />

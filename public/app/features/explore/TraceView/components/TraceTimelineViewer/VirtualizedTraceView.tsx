@@ -113,10 +113,12 @@ type TVirtualizedTraceViewOwnProps = {
   scrollElement?: Element;
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
+  showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
+  headerHeight: number;
 };
 
 export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -133,11 +135,17 @@ const NUM_TICKS = 5;
 function generateRowStates(
   spans: TraceSpan[] | TNil,
   childrenHiddenIDs: Set<string>,
-  detailStates: Map<string, DetailState | TNil>
+  detailStates: Map<string, DetailState | TNil>,
+  findMatchesIDs: Set<string> | TNil,
+  showSpanFilterMatchesOnly: boolean
 ): RowState[] {
   if (!spans) {
     return [];
   }
+  if (showSpanFilterMatchesOnly && findMatchesIDs) {
+    spans = spans.filter((span) => findMatchesIDs.has(span.spanID));
+  }
+
   let collapseDepth = null;
   const rowStates = [];
   for (let i = 0; i < spans.length; i++) {
@@ -184,9 +192,13 @@ function getClipping(currentViewRange: [number, number]) {
 function generateRowStatesFromTrace(
   trace: Trace | TNil,
   childrenHiddenIDs: Set<string>,
-  detailStates: Map<string, DetailState | TNil>
+  detailStates: Map<string, DetailState | TNil>,
+  findMatchesIDs: Set<string> | TNil,
+  showSpanFilterMatchesOnly: boolean
 ): RowState[] {
-  return trace ? generateRowStates(trace.spans, childrenHiddenIDs, detailStates) : [];
+  return trace
+    ? generateRowStates(trace.spans, childrenHiddenIDs, detailStates, findMatchesIDs, showSpanFilterMatchesOnly)
+    : [];
 }
 
 const memoizedGenerateRowStates = memoizeOne(generateRowStatesFromTrace);
@@ -204,7 +216,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidMount() {
-    this.scrollToSpan(this.props.focusedSpanId);
+    this.scrollToSpan(this.props.headerHeight, this.props.focusedSpanId);
   }
 
   shouldComponentUpdate(nextProps: VirtualizedTraceViewProps) {
@@ -226,7 +238,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors, trace } = prevProps;
+    const { registerAccessors, trace, headerHeight } = prevProps;
     const {
       shouldScrollToFirstUiFindMatch,
       clearShouldScrollToFirstUiFindMatch,
@@ -253,17 +265,17 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
 
     if (focusedSpanId !== prevProps.focusedSpanId) {
-      this.scrollToSpan(focusedSpanId);
+      this.scrollToSpan(headerHeight, focusedSpanId);
     }
 
     if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
-      this.scrollToSpan(focusedSpanIdForSearch);
+      this.scrollToSpan(headerHeight, focusedSpanIdForSearch);
     }
   }
 
   getRowStates(): RowState[] {
-    const { childrenHiddenIDs, detailStates, trace } = this.props;
-    return memoizedGenerateRowStates(trace, childrenHiddenIDs, detailStates);
+    const { childrenHiddenIDs, detailStates, trace, findMatchesIDs, showSpanFilterMatchesOnly } = this.props;
+    return memoizedGenerateRowStates(trace, childrenHiddenIDs, detailStates, findMatchesIDs, showSpanFilterMatchesOnly);
   }
 
   getClipping(): { left: boolean; right: boolean } {
@@ -368,13 +380,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
   };
 
-  scrollToSpan = (spanID?: string) => {
+  scrollToSpan = (headerHeight: number, spanID?: string) => {
     if (spanID == null) {
       return;
     }
     const i = this.getRowStates().findIndex((row) => row.span.spanID === spanID);
     if (i >= 0) {
-      this.listView?.scrollToIndex(i);
+      this.listView?.scrollToIndex(i, headerHeight);
     }
   };
 
@@ -396,6 +408,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createSpanLink,
       focusedSpanId,
       focusedSpanIdForSearch,
+      showSpanFilterMatchesOnly,
       theme,
       datasourceType,
     } = this.props;
@@ -450,6 +463,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           isDetailExpanded={isDetailExpanded}
           isMatchingFilter={isMatchingFilter}
           isFocused={isFocused}
+          showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           numTicks={NUM_TICKS}
           onDetailToggled={detailToggle}
           onChildrenToggled={childrenToggle}

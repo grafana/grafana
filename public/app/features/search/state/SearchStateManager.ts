@@ -40,7 +40,9 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
-  initStateFromUrl(folderUid?: string) {
+  lastSearchTimestamp = 0;
+
+  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
     // Force list view when conditions are specified from the URL
@@ -54,8 +56,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    this.doSearch();
+    if (doInitialSearch) {
+      this.doSearch();
+    }
   }
+
   /**
    * Updates internal and url state, then triggers a new search
    */
@@ -92,6 +97,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tag: [],
       panel_type: undefined,
       starred: undefined,
+      sort: undefined,
     });
   };
 
@@ -162,7 +168,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type;
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type || this.state.sort;
   }
 
   getSearchQuery() {
@@ -217,45 +223,42 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     this.setState({ loading: true });
 
-    if (this.state.starred) {
-      getGrafanaSearcher()
-        .starred(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
+    const searcher = getGrafanaSearcher();
+
+    const searchTimestamp = Date.now();
+    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
+
+    searchPromise
+      .then((result) => {
+        // Only keep the results if it's was issued after the most recently resolved search.
+        // This prevents results showing out of order if first request is slower than later ones
+        if (searchTimestamp > this.lastSearchTimestamp) {
+          this.setState({ result, loading: false });
+          this.lastSearchTimestamp = searchTimestamp;
+        }
+      })
+      .catch((error) => {
+        reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+          ...trackingInfo,
+          error: error?.message,
         });
-    } else {
-      getGrafanaSearcher()
-        .search(this.lastQuery)
-        .then((result) => this.setState({ result, loading: false }))
-        .catch((error) => {
-          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-            ...trackingInfo,
-            error: error?.message,
-          });
-          this.setState({ loading: false });
-        });
-    }
+        this.setState({ loading: false });
+      });
   }
 
   // This gets the possible tags from within the query results
   getTagOptions = (): Promise<TermCount[]> => {
-    return getGrafanaSearcher().tags(this.lastQuery!);
+    const query = this.lastQuery ?? {
+      kind: ['dashboard', 'folder'],
+      query: '*',
+    };
+    return getGrafanaSearcher().tags(query);
   };
 
   /**
    * When item is selected clear some filters and report interaction
    */
   onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
-    // Clear some filters only if we're not opening a search item in a new tab
-    if (!e.altKey && !e.ctrlKey && !e.metaKey) {
-      this.setState({ tag: [], starred: false, sort: undefined, query: '', folderUid: undefined });
-    }
-
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -298,4 +301,11 @@ export function getSearchStateManager() {
   }
 
   return stateManager;
+}
+
+export function useSearchStateManager() {
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
+
+  return [state, stateManager] as const;
 }

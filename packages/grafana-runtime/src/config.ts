@@ -67,6 +67,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   jwtUrlLogin = false;
   sigV4AuthEnabled = false;
   azureAuthEnabled = false;
+  secureSocksDSProxyEnabled = false;
   samlEnabled = false;
   samlName = '';
   autoAssignOrg = true;
@@ -80,6 +81,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
+  trustedTypesDefaultPolicyEnabled = false;
+  cspReportOnlyEnabled = false;
   liveEnabled = true;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
@@ -132,7 +135,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled = false;
-  unifiedAlerting = { minInterval: '' };
+  unifiedAlerting = {
+    minInterval: '',
+    alertStateHistoryBackend: undefined,
+    alertStateHistoryPrimary: undefined,
+  };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
   recordedQueries = {
@@ -241,7 +248,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     if (key.startsWith('__feature.')) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
-      const toggleState = value === 'true';
+      const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;
         console.log(`Setting feature toggle ${featureName} = ${toggleState}`);

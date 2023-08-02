@@ -179,7 +179,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(getFrameDisplayName(result.data[0])).toBe(
             data.results.A.series?.length && data.results.A.series[0].target
           );
-          expect(result.data[0].fields[1].values.buffer[0]).toBe(
+          expect(result.data[0].fields[1].values[0]).toBe(
             data.results.A.series?.length && data.results.A.series[0].datapoints[0][0]
           );
         });
@@ -333,7 +333,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         expect(getFrameDisplayName(result.data[0])).toBe(
           data.results.A.series?.length && data.results.A.series[0].target
         );
-        expect(result.data[0].fields[1].values.buffer[0]).toBe(
+        expect(result.data[0].fields[1].values[0]).toBe(
           data.results.A.series?.length && data.results.A.series[0].datapoints[0][0]
         );
       });

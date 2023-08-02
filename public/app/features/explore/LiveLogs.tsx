@@ -2,13 +2,15 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
-import { Icon, Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { Button, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from '../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../logs/components/getLogRowStyles';
+import { sortLogRows } from '../logs/utils';
 
 import { ElapsedTime } from './ElapsedTime';
+import { filterLogRowsByIndex } from './state/utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   logsRowsLive: css`
@@ -57,6 +59,8 @@ export interface Props extends Themeable2 {
   stopLive: () => void;
   onPause: () => void;
   onResume: () => void;
+  onClear: () => void;
+  clearedAtIndex: number | null;
   isPaused: boolean;
 }
 
@@ -76,16 +80,22 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
-    if (!nextProps.isPaused) {
+    if (nextProps.isPaused && nextProps.clearedAtIndex) {
       return {
-        // We update what we show only if not paused. We keep any background subscriptions running and keep updating
-        // our state, but we do not show the updates, this allows us start again showing correct result after resuming
-        // without creating a gap in the log results.
-        logRowsToRender: nextProps.logRows,
+        logRowsToRender: filterLogRowsByIndex(nextProps.clearedAtIndex, state.logRowsToRender),
       };
-    } else {
+    }
+
+    if (nextProps.isPaused) {
       return null;
     }
+
+    return {
+      // We update what we show only if not paused. We keep any background subscriptions running and keep updating
+      // our state, but we do not show the updates, this allows us start again showing correct result after resuming
+      // without creating a gap in the log results.
+      logRowsToRender: nextProps.logRows,
+    };
   }
 
   /**
@@ -107,13 +117,13 @@ class LiveLogs extends PureComponent<Props, State> {
     let { logRowsToRender: rowsToRender = [] } = this.state;
     if (!isPaused) {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
-      rowsToRender = rowsToRender.slice(-100);
+      rowsToRender = sortLogRows(rowsToRender, LogsSortOrder.Ascending).slice(-100);
     }
     return rowsToRender;
   };
 
   render() {
-    const { theme, timeZone, onPause, onResume, isPaused } = this.props;
+    const { theme, timeZone, onPause, onResume, onClear, isPaused } = this.props;
     const styles = getStyles(theme);
     const { logsRow, logsRowLocalTime, logsRowMessage } = getLogRowStyles(theme);
 
@@ -147,20 +157,26 @@ class LiveLogs extends PureComponent<Props, State> {
           </tbody>
         </table>
         <div className={styles.logsRowsIndicator}>
-          <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
-            <Icon name={isPaused ? 'play' : 'pause'} />
-            &nbsp;
+          <Button
+            icon={isPaused ? 'play' : 'pause'}
+            variant="secondary"
+            onClick={isPaused ? onResume : onPause}
+            className={styles.button}
+          >
             {isPaused ? 'Resume' : 'Pause'}
           </Button>
-          <Button variant="secondary" onClick={this.props.stopLive} className={styles.button}>
-            <Icon name="square-shape" size="lg" type="mono" />
-            &nbsp; Exit live mode
+          <Button icon="trash-alt" variant="secondary" onClick={onClear} className={styles.button}>
+            Clear logs
           </Button>
-          {isPaused || (
-            <span>
-              Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
-            </span>
-          )}
+          <Button icon="square-shape" variant="secondary" onClick={this.props.stopLive} className={styles.button}>
+            Exit live mode
+          </Button>
+          {isPaused ||
+            (this.rowsToRender().length > 0 && (
+              <span>
+                Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
+              </span>
+            ))}
         </div>
       </div>
     );

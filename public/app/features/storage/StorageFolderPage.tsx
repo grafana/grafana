@@ -2,8 +2,7 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame, NavModel, NavModelItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Alert, Card, Icon, Spinner } from '@grafana/ui';
+import { Card, Icon, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -22,7 +21,7 @@ export function StorageFolderPage(props: Props) {
 
   const renderListing = () => {
     if (listing.value) {
-      const names = listing.value.fields[0].values.toArray();
+      const names = listing.value.fields[0].values;
       return names.map((item: string) => {
         let name = item;
         const isFolder = name.indexOf('.') < 0;
@@ -49,11 +48,6 @@ export function StorageFolderPage(props: Props) {
 
   return (
     <Page navModel={navModel} pageNav={pageNav}>
-      {!config.featureToggles.topnav && (
-        <div>
-          <Alert title="Enable the topnav feature toggle">This page is designed assuming topnav is enabled</Alert>
-        </div>
-      )}
       {renderListing()}
     </Page>
   );

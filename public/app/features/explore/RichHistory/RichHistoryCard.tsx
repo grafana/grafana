@@ -108,6 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     commentButtonRow: css`
       > * {
+        margin-top: ${theme.spacing(1)};
         margin-right: ${theme.spacing(1)};
       }
     `,

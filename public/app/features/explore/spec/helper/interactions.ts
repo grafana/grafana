@@ -8,7 +8,7 @@ import { ExploreId } from '../../../../types';
 import { withinExplore } from './setup';
 
 export const changeDatasource = async (name: string) => {
-  const datasourcePicker = (await screen.findByLabelText(selectors.components.DataSourcePicker.container)).children[0];
+  const datasourcePicker = (await screen.findByTestId(selectors.components.DataSourcePicker.container)).children[0];
   fireEvent.keyDown(datasourcePicker, { keyCode: 40 });
   const option = screen.getByText(name);
   fireEvent.click(option);

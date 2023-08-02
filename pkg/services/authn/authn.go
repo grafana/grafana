@@ -326,6 +326,8 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Teams:          usr.Teams,
 		ClientParams:   params,
 		Permissions:    usr.Permissions,
+		AuthModule:     usr.ExternalAuthModule,
+		AuthID:         usr.ExternalAuthID,
 	}
 }
 

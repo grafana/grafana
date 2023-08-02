@@ -85,7 +85,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		}
 	}
 
-	dto := preferences.Preferences{}
+	dto := preferences.Spec{}
 
 	if preference.WeekStart != nil && *preference.WeekStart != "" {
 		dto.WeekStart = preference.WeekStart
@@ -302,7 +302,7 @@ type UpdateOrgPreferencesParams struct {
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
-	Body preferences.Preferences `json:"body"`
+	Body preferences.Spec `json:"body"`
 }
 
 // swagger:parameters patchUserPreferences

@@ -491,6 +491,25 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
 	})
+
+	t.Run("Can delete dashboards in folder", func(t *testing.T) {
+		setup()
+		folder := insertTestDashboard(t, dashboardStore, "dash folder", 1, 0, true, "prod", "webapp")
+		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, false, "delete this 1")
+		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, false, "delete this 2")
+
+		err := dashboardStore.DeleteDashboardsInFolder(
+			context.Background(),
+			&dashboards.DeleteDashboardsInFolderRequest{
+				FolderUID: folder.UID,
+				OrgID:     1,
+			})
+		require.NoError(t, err)
+
+		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
+		require.NoError(t, err)
+		require.Equal(t, count, int64(0))
+	})
 }
 
 func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *testing.T) {
@@ -618,6 +637,41 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, dashB.ID, results[0].ID)
+}
+
+func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
+	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, false)
+	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
+	})
+
+	t.Run("Returns no error when dashboard does not exist in root folder", func(t *testing.T) {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Finds a dashboard with existing name in specific folder and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
+		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, true, "prod", "webapp")
+		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, false, "prod", "webapp")
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderID: savedFolder.ID, OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
+	})
 }
 
 func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {

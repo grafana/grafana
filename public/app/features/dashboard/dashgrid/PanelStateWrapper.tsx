@@ -8,6 +8,7 @@ import {
   AnnotationEventUIModel,
   CoreApp,
   DashboardCursorSync,
+  DataFrame,
   EventFilterOptions,
   FieldConfigSource,
   getDataSourceRef,
@@ -37,6 +38,7 @@ import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
+import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
@@ -63,6 +65,7 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
@@ -96,6 +99,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       renderCounter: 0,
       refreshWhenInView: false,
       context: {
+        eventsScope: '__global_',
         eventBus,
         app: this.getPanelContextApp(),
         sync: this.getSync,
@@ -110,6 +114,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
         onAddAdHocFilter: this.onAddAdHocFilter,
+        onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -139,6 +144,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return CoreApp.Dashboard;
   }
+
+  onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
+    return onUpdatePanelSnapshotData(this.props.panel, frames);
+  };
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
@@ -342,7 +351,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         this.setState({ refreshWhenInView: false });
       }
       panel.runAllPanelQueries({
-        dashboardId: dashboard.id,
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
         publicDashboardAccessToken: dashboard.meta.publicDashboardAccessToken,

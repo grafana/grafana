@@ -255,17 +255,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      flex: '1 1 0',
 
       '.show-on-hover': {
-        visibility: 'hidden',
         opacity: '0',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
-          visibility: 'visible',
           opacity: '1',
         },
       },

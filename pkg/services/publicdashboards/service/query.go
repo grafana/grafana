@@ -70,7 +70,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
-				Color:       *anno.IconColor,
+				Color:       anno.IconColor,
 				Time:        item.Time,
 				TimeEnd:     item.TimeEnd,
 				Source:      anno,
@@ -78,7 +78,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
 			// which is only intended for tag and org annotations.
-			if anno.Type == "dashboard" {
+			if anno.Type != nil && *anno.Type == "dashboard" {
 				event.PanelId = item.PanelID
 			}
 
@@ -120,7 +120,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetQueryDataResponse returns a query data response for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
-	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipCache, metricReq)
+	res, err := pd.QueryDataService.QueryData(ctx, anonymousUser, skipDSCache, metricReq)
 
 	reqDatasources := metricReq.GetUniqueDatasourceTypes()
 	if err != nil {
@@ -222,9 +222,9 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 
 		// if uid is for a mixed datasource, get the datasource uids from the targets
 		if uid == "-- Mixed --" {
-			for _, target := range panel.Get("targets").MustArray() {
-				target := simplejson.NewFromAny(target)
-				datasourceUid := target.Get("datasource").Get("uid").MustString()
+			for _, targetObj := range panel.Get("targets").MustArray() {
+				target := simplejson.NewFromAny(targetObj)
+				datasourceUid := getDataSourceUidFromJson(target)
 				if _, ok := exists[datasourceUid]; !ok {
 					datasourceUids = append(datasourceUids, datasourceUid)
 					exists[datasourceUid] = true
@@ -315,7 +315,6 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 		for i := range frames {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
-				frames[i].Meta.Custom = nil
 			}
 		}
 	}

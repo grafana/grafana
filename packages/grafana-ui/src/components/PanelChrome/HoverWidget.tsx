@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -20,6 +21,7 @@ interface Props {
 export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
+  const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
   // Capture the pointer to keep the widget visible while dragging
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     draggableRef.current?.setPointerCapture(e.pointerId);
@@ -39,7 +41,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
     <div
       className={cx(styles.container, { 'show-on-hover': !menuOpen })}
       style={{ top: `${offset}px` }}
-      data-testid="hover-header-container"
+      data-testid={selectors.container}
     >
       {dragClass && (
         <div
@@ -47,11 +49,12 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           ref={draggableRef}
+          data-testid={selectors.dragIcon}
         >
           <Icon name="expand-arrows" className={styles.draggableIcon} />
         </div>
       )}
-      {!title && <h6 className={cx(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
+      {!title && <h6 className={cx(styles.untitled, { [styles.draggable]: !!dragClass }, dragClass)}>Untitled</h6>}
       {children}
       {menu && (
         <PanelMenu

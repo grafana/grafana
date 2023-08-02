@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame } from '@grafana/data';
-import { Collapse, Table, AdHocFilterItem } from '@grafana/ui';
+import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
+import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
+import { selectIsWaitingForData } from './state/query';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
@@ -24,7 +24,8 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { loading: loadingInState, tableResult, range } = item;
+  const { tableResult, range } = item;
+  const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, tableResult, range };
 }
@@ -47,13 +48,12 @@ export class TableContainer extends PureComponent<Props> {
     }
 
     // tries to estimate table height
-    return Math.min(600, Math.max(mainFrame.length * 35, 300) + 35);
+    return Math.min(600, Math.max(mainFrame.length * 36, 300) + 40 + 46);
   }
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
-    const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
     let dataFrames = tableResult;
 
@@ -90,20 +90,29 @@ export class TableContainer extends PureComponent<Props> {
     const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
 
     return (
-      <Collapse label="Table" loading={loading} isOpen>
-        {mainFrame?.length ? (
-          <Table
-            ariaLabel={ariaLabel}
-            data={mainFrame}
-            subData={subFrames}
-            width={tableWidth}
-            height={height}
-            onCellFilterAdded={onCellFilterAdded}
-          />
-        ) : (
-          <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
+      <PanelChrome
+        title="Table"
+        width={width}
+        height={height}
+        loadingState={loading ? LoadingState.Loading : undefined}
+      >
+        {(innerWidth, innerHeight) => (
+          <>
+            {mainFrame?.length ? (
+              <Table
+                ariaLabel={ariaLabel}
+                data={mainFrame}
+                subData={subFrames}
+                width={innerWidth}
+                height={innerHeight}
+                onCellFilterAdded={onCellFilterAdded}
+              />
+            ) : (
+              <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
+            )}
+          </>
         )}
-      </Collapse>
+      </PanelChrome>
     );
   }
 }

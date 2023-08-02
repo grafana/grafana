@@ -1,26 +1,28 @@
 import React, { Component } from 'react';
 
 import { PanelProps } from '@grafana/data';
+import {
+  ColorDimensionConfig,
+  ResourceDimensionConfig,
+  ScalarDimensionConfig,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
+} from '@grafana/schema';
 import { HorizontalConstraint, VerticalConstraint } from 'app/features/canvas';
 import { iconItem } from 'app/features/canvas/elements/icon';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import {
-  ColorDimensionConfig,
   DimensionContext,
   getColorDimensionFromData,
   getResourceDimensionFromData,
   getScalarDimensionFromData,
   getScaleDimensionFromData,
   getTextDimensionFromData,
-  ResourceDimensionConfig,
-  ScalarDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
 } from 'app/features/dimensions';
 
-import { PanelOptions } from './models.gen';
+import { Options } from './models.gen';
 
-interface Props extends PanelProps<PanelOptions> {}
+interface Props extends PanelProps<Options> {}
 
 export class IconPanel extends Component<Props> {
   private element: ElementState;

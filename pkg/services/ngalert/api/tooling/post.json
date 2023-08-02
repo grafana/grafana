@@ -299,6 +299,10 @@
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
+    "activeAt": {
+     "format": "date-time",
+     "type": "string"
+    },
     "alerts": {
      "items": {
       "$ref": "#/definitions/Alert"
@@ -339,6 +343,20 @@
      "description": "State can be \"pending\", \"firing\", \"inactive\".",
      "type": "string"
     },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
+    },
+    "totalsFiltered": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
+    },
     "type": {
      "$ref": "#/definitions/RuleType"
     }
@@ -350,7 +368,7 @@
     "type",
     "state",
     "annotations",
-    "alerts"
+    "activeAt"
    ],
    "type": "object"
   },
@@ -2845,6 +2863,13 @@
       "$ref": "#/definitions/RuleGroup"
      },
      "type": "array"
+    },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
     }
    },
    "required": [
@@ -2878,6 +2903,13 @@
       "$ref": "#/definitions/AlertingRule"
      },
      "type": "array"
+    },
+    "totals": {
+     "additionalProperties": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "object"
     }
    },
    "required": [
@@ -3343,6 +3375,77 @@
    },
    "type": "object"
   },
+  "TestTemplatesConfigBodyParams": {
+   "properties": {
+    "alerts": {
+     "description": "Alerts to use as data when testing the template.",
+     "items": {
+      "$ref": "#/definitions/postableAlert"
+     },
+     "type": "array"
+    },
+    "name": {
+     "description": "Name of the template file.",
+     "type": "string"
+    },
+    "template": {
+     "description": "Template string to test.",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesErrorResult": {
+   "properties": {
+    "kind": {
+     "description": "Kind of template error that occurred.",
+     "enum": [
+      "invalid_template",
+      "execution_error"
+     ],
+     "type": "string"
+    },
+    "message": {
+     "description": "Error message.",
+     "type": "string"
+    },
+    "name": {
+     "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesResult": {
+   "properties": {
+    "name": {
+     "description": "Name of the associated template definition for this result.",
+     "type": "string"
+    },
+    "text": {
+     "description": "Interpolated value of the template.",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "TestTemplatesResults": {
+   "properties": {
+    "errors": {
+     "items": {
+      "$ref": "#/definitions/TestTemplatesErrorResult"
+     },
+     "type": "array"
+    },
+    "results": {
+     "items": {
+      "$ref": "#/definitions/TestTemplatesResult"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "Threshold": {
    "description": "Threshold a single step on the threshold list",
    "properties": {
@@ -3432,7 +3535,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3468,7 +3570,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -3669,6 +3771,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3882,12 +3985,14 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4031,7 +4136,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4606,6 +4710,53 @@
     ]
    }
   },
+  "/api/alertmanager/grafana/config/api/v1/templates/test": {
+   "post": {
+    "operationId": "RoutePostTestGrafanaTemplates",
+    "parameters": [
+     {
+      "in": "body",
+      "name": "Body",
+      "schema": {
+       "$ref": "#/definitions/TestTemplatesConfigBodyParams"
+      }
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "description": "TestTemplatesResults",
+      "schema": {
+       "$ref": "#/definitions/TestTemplatesResults"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
+     "409": {
+      "description": "AlertManagerNotReady",
+      "schema": {
+       "$ref": "#/definitions/AlertManagerNotReady"
+      }
+     }
+    },
+    "summary": "Test Grafana managed templates without saving them.",
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
   "/api/alertmanager/grafana/config/history": {
    "get": {
     "description": "gets Alerting configurations that were successfully applied in the past",
@@ -4622,6 +4773,45 @@
     "responses": {
      "200": {
       "$ref": "#/responses/GettableHistoricUserConfigs"
+     }
+    },
+    "tags": [
+     "alertmanager"
+    ]
+   }
+  },
+  "/api/alertmanager/grafana/config/history/{id}/_activate": {
+   "post": {
+    "description": "revert Alerting configuration to the historical configuration specified by the given id",
+    "operationId": "RoutePostGrafanaAlertingConfigHistoryActivate",
+    "parameters": [
+     {
+      "description": "Id should be the id of the GettableHistoricUserConfig",
+      "format": "int64",
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "type": "integer"
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Ack",
+      "schema": {
+       "$ref": "#/definitions/Ack"
+      }
+     },
+     "400": {
+      "description": "ValidationError",
+      "schema": {
+       "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
      }
     },
     "tags": [

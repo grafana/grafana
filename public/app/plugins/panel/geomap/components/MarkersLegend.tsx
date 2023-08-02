@@ -43,7 +43,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
     }
 
     const rowIndex = props.rowIndex as number; // eslint-disable-line
-    return colorField.values.get(rowIndex);
+    return colorField.values[rowIndex];
   }, [hoverEvent, colorField]);
 
   if (!styleConfig) {

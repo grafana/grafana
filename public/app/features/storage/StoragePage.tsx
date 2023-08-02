@@ -68,7 +68,7 @@ export default function StoragePage(props: Props) {
           frame.fields[0] = {
             ...name,
             getLinks: (cfg: ValueLinkConfig) => {
-              const n = name.values.get(cfg.valueRowIndex ?? 0);
+              const n = name.values[cfg.valueRowIndex ?? 0];
               const p = path + '/' + n;
               return [
                 {
@@ -93,7 +93,7 @@ export default function StoragePage(props: Props) {
     if (listing.value) {
       const length = listing.value.length;
       if (length === 1) {
-        const first = listing.value.fields[0].values.get(0) as string;
+        const first = listing.value.fields[0].values[0] as string;
         isFolder = !path.endsWith(first);
       } else {
         // TODO: handle files/folders which do not exist
@@ -104,12 +104,7 @@ export default function StoragePage(props: Props) {
   }, [path, listing]);
 
   const fileNames = useMemo(() => {
-    return (
-      listing.value?.fields
-        ?.find((f) => f.name === 'name')
-        ?.values?.toArray()
-        ?.filter((v) => typeof v === 'string') ?? []
-    );
+    return listing.value?.fields?.find((f) => f.name === 'name')?.values.filter((v) => typeof v === 'string') ?? [];
   }, [listing]);
 
   const renderView = () => {

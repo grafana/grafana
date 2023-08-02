@@ -13,6 +13,7 @@ import {
   LogsVolumeType,
   MutableDataFrame,
   SupplementaryQueryType,
+  SupplementaryQueryOptions,
   toDataFrame,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -53,7 +54,7 @@ class MockDataSourceWithSupplementaryQuerySupport
     return undefined;
   }
 
-  getSupplementaryQuery(type: SupplementaryQueryType, query: DataQuery): DataQuery | undefined {
+  getSupplementaryQuery(options: SupplementaryQueryOptions, query: DataQuery): DataQuery | undefined {
     return query;
   }
 

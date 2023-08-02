@@ -85,7 +85,7 @@ describe('prepare timeseries graph', () => {
     const frames = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
-    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+    expect(field!.values).toMatchInlineSnapshot(`
       [
         -10,
         null,
@@ -106,7 +106,7 @@ describe('prepare timeseries graph', () => {
     const frames = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
-    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+    expect(field!.values).toMatchInlineSnapshot(`
       [
         1,
         null,
@@ -130,7 +130,7 @@ describe('prepare timeseries graph', () => {
     const frames = prepareGraphableFields([df], createTheme());
 
     const field = frames![0].fields.find((f) => f.name === 'a');
-    expect(field!.values.toArray()).toMatchInlineSnapshot(`
+    expect(field!.values).toMatchInlineSnapshot(`
       [
         1,
         20,

@@ -3,6 +3,7 @@ import { useLocation, useParams } from 'react-router-dom';
 
 import { Page } from 'app/core/components/Page/Page';
 import { EditDataSource } from 'app/features/datasources/components/EditDataSource';
+import { EditDataSourceActions } from 'app/features/datasources/components/EditDataSourceActions';
 
 import { useDataSourceSettingsNav } from '../hooks/useDataSourceSettingsNav';
 
@@ -14,7 +15,7 @@ export function EditDataSourcePage() {
   const { navId, pageNav } = useDataSourceSettingsNav();
 
   return (
-    <Page navId={navId} pageNav={pageNav}>
+    <Page navId={navId} pageNav={pageNav} actions={<EditDataSourceActions uid={uid} />}>
       <Page.Contents>
         <EditDataSource uid={uid} pageId={pageId} />
       </Page.Contents>

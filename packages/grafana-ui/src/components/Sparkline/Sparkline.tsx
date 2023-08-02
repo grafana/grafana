@@ -135,7 +135,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
             return [sparkline.timeRange.from.valueOf(), sparkline.timeRange.to.valueOf()];
           }
           const vals = sparkline.x.values;
-          return [vals.get(0), vals.get(vals.length - 1)];
+          return [vals[0], vals[vals.length - 1]];
         }
         return [0, sparkline.y.values.length - 1];
       },

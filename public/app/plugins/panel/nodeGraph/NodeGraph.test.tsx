@@ -89,7 +89,7 @@ describe('NodeGraph', () => {
     const origError = console.error;
     console.error = jest.fn();
 
-    const node = await screen.findByLabelText(/Node: service:0/);
+    const node = await screen.findByTestId('node-click-rect-0');
     await userEvent.click(node);
     await screen.findByText(/Node traces/);
 

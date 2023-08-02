@@ -56,10 +56,11 @@ export function changePanelPlugin({
   pluginId,
   options,
   fieldConfig,
+  transformations,
 }: ChangePanelPluginAndOptionsArgs): ThunkResult<void> {
   return async (dispatch, getStore) => {
     // ignore action is no change
-    if (panel.type === pluginId && !options && !fieldConfig) {
+    if (panel.type === pluginId && !options && !fieldConfig && !transformations) {
       return;
     }
 
@@ -74,7 +75,7 @@ export function changePanelPlugin({
       panel.changePlugin(plugin);
     }
 
-    if (options || fieldConfig) {
+    if (options || fieldConfig || transformations) {
       const newOptions = getPanelOptionsWithDefaults({
         plugin,
         currentOptions: options || panel.options,
@@ -84,6 +85,7 @@ export function changePanelPlugin({
 
       panel.options = newOptions.options;
       panel.fieldConfig = newOptions.fieldConfig;
+      panel.transformations = transformations || panel.transformations;
       panel.configRev++;
     }
 

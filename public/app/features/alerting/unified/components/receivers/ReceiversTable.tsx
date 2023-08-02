@@ -3,10 +3,10 @@ import React, { useMemo, useState } from 'react';
 
 import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
+import { AccessControlAction, ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
 import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
@@ -84,12 +84,16 @@ interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
   showErrorCount: boolean;
+  tooltip?: string;
 }
 
-function ReceiverError({ errorCount, errorDetail, showErrorCount }: ReceiverErrorProps) {
+function ReceiverError({ errorCount, errorDetail, showErrorCount, tooltip }: ReceiverErrorProps) {
   const text = showErrorCount ? `${errorCount} ${pluralize('error', errorCount)}` : 'Error';
-  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={errorDetail ?? 'Error'} />;
+  const tooltipToRender = tooltip ?? errorDetail ?? 'Error';
+
+  return <Badge color="red" icon="exclamation-circle" text={text} tooltip={tooltipToRender} />;
 }
+
 interface NotifierHealthProps {
   errorsByNotifier: number;
   errorDetail?: string;
@@ -97,13 +101,18 @@ interface NotifierHealthProps {
 }
 
 function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierHealthProps) {
-  const noErrorsColor = isLastNotifyNullDate(lastNotify) ? 'orange' : 'green';
-  const noErrorsText = isLastNotifyNullDate(lastNotify) ? 'No attempts' : 'OK';
-  return errorsByNotifier > 0 ? (
-    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />
-  ) : (
-    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
-  );
+  const hasErrors = errorsByNotifier > 0;
+  const noAttempts = isLastNotifyNullDate(lastNotify);
+
+  if (hasErrors) {
+    return <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />;
+  }
+
+  if (noAttempts) {
+    return <>No attempts</>;
+  }
+
+  return <Badge color="green" text="OK" />;
 }
 
 interface ReceiverHealthProps {
@@ -112,13 +121,23 @@ interface ReceiverHealthProps {
 }
 
 function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
-  const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
-  const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
-  return errorsByReceiver > 0 ? (
-    <ReceiverError errorCount={errorsByReceiver} showErrorCount={true} />
-  ) : (
-    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
-  );
+  const hasErrors = errorsByReceiver > 0;
+
+  if (hasErrors) {
+    return (
+      <ReceiverError
+        errorCount={errorsByReceiver}
+        showErrorCount={true}
+        tooltip="Expand the contact point to see error details."
+      />
+    );
+  }
+
+  if (someWithNoAttempt) {
+    return <>No attempts</>;
+  }
+
+  return <Badge color="green" text="OK" />;
 }
 
 const useContactPointsState = (alertManagerName: string) => {

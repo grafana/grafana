@@ -61,17 +61,9 @@ type FrontendSettingsReportingDTO struct {
 }
 
 type FrontendSettingsUnifiedAlertingDTO struct {
-	MinInterval string `json:"minInterval"`
-}
-
-type DashboardPreviewsSystemRequirements struct {
-	Met                                bool   `json:"met"`
-	RequiredImageRendererPluginVersion string `json:"requiredImageRendererPluginVersion"`
-}
-
-type DashboardPreviewsSetupConfig struct {
-	SystemRequirements DashboardPreviewsSystemRequirements `json:"systemRequirements"`
-	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
+	MinInterval              string `json:"minInterval"`
+	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only
@@ -179,6 +171,8 @@ type FrontendSettingsDTO struct {
 	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
 	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
 	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool   `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool   `json:"cspReportOnlyEnabled"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
@@ -203,6 +197,7 @@ type FrontendSettingsDTO struct {
 	AwsAssumeRoleEnabled             bool                           `json:"awsAssumeRoleEnabled"`
 	SupportBundlesEnabled            bool                           `json:"supportBundlesEnabled"`
 	SnapshotEnabled                  bool                           `json:"snapshotEnabled"`
+	SecureSocksDSProxyEnabled        bool                           `json:"secureSocksDSProxyEnabled"`
 
 	Azure FrontendSettingsAzureDTO `json:"azure"`
 
@@ -215,8 +210,6 @@ type FrontendSettingsDTO struct {
 	SamlEnabled             bool                               `json:"samlEnabled"`
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
-
-	DashboardPreviews DashboardPreviewsSetupConfig `json:"dashboardPreviews,omitempty"`
 
 	GeomapDefaultBaseLayerConfig *map[string]interface{} `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool                    `json:"geomapDisableCustomBaseLayer"`

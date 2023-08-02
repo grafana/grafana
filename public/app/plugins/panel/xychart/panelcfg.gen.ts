@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 export enum SeriesMapping {
   Auto = 'auto',
   Manual = 'manual',
@@ -55,12 +53,12 @@ export interface ScatterSeriesConfig extends ScatterFieldConfig {
   y?: string;
 }
 
-export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   dims: XYDimensionConfig;
   series: Array<ScatterSeriesConfig>;
   seriesMapping?: SeriesMapping;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   series: [],
 };

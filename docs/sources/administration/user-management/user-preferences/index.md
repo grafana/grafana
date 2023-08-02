@@ -8,6 +8,10 @@ keywords:
   - change
   - organization
   - change
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage user preferences
 weight: 400
 ---
@@ -22,7 +26,9 @@ You can also view important information about your account, such as the organiza
 
 You can change your Grafana password at any time.
 
-> **Note**: If your Grafana instance uses an <!--[external authentication provider]({{< relref "../../../setup-grafana/configure-security/configure-authentication/" >}})--> external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+{{% admonition type="note" %}}
+If your Grafana instance uses an external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+{{% /admonition %}}
 
 **To change your password**:
 

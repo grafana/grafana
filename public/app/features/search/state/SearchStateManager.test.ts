@@ -6,6 +6,15 @@ import { SearchLayout } from '../types';
 
 import { getSearchStateManager } from './SearchStateManager';
 
+jest.mock('lodash', () => {
+  const orig = jest.requireActual('lodash');
+
+  return {
+    ...orig,
+    debounce: (d: Function) => d,
+  };
+});
+
 jest.mock('@grafana/runtime', () => {
   const originalModule = jest.requireActual('@grafana/runtime');
   return {
@@ -14,7 +23,8 @@ jest.mock('@grafana/runtime', () => {
 });
 
 describe('SearchStateManager', () => {
-  jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+  const searcher = getGrafanaSearcher();
+  jest.spyOn(searcher, 'search').mockResolvedValue({
     isItemLoaded: jest.fn(),
     loadMoreItems: jest.fn(),
     totalRows: 0,
@@ -44,5 +54,44 @@ describe('SearchStateManager', () => {
       stm.initStateFromUrl();
       expect(stm.state.folderUid).toBe(undefined);
     });
+
+    it('updates search results in order', async () => {
+      const stm = getSearchStateManager();
+
+      jest.spyOn(searcher, 'search').mockReturnValueOnce(
+        new Promise(async (resolve) => {
+          await wait(100);
+
+          resolve({
+            isItemLoaded: jest.fn(),
+            loadMoreItems: jest.fn(),
+            totalRows: 100,
+            view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+          });
+        })
+      );
+      stm.onQueryChange('d');
+
+      jest.spyOn(searcher, 'search').mockReturnValueOnce(
+        new Promise(async (resolve) => {
+          await wait(50);
+
+          resolve({
+            isItemLoaded: jest.fn(),
+            loadMoreItems: jest.fn(),
+            totalRows: 10,
+            view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+          });
+        })
+      );
+
+      stm.onQueryChange('debugging');
+
+      await wait(150);
+
+      expect(stm.state.result?.totalRows).toEqual(10);
+    });
   });
 });
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

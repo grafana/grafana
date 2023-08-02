@@ -23,6 +23,7 @@ export const VariableTextField = ({ interactive, label, onBlur, placeholder, val
         value={localValue}
         onChange={(e) => setLocalValue(e.currentTarget.value)}
         onBlur={() => onBlur(localValue)}
+        width={25}
       />
     </InlineField>
   );

@@ -119,7 +119,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		lvl = lvl.HighestOf(errutil.LevelWarn)
 	}
 
-	if l.flags.IsEnabled(featuremgmt.FlagDatabaseMetrics) {
+	if l.cfg.DatabaseInstrumentQueries {
 		logParams = append(logParams, "db_call_count", log.TotalDBCallCount(c.Req.Context()))
 	}
 

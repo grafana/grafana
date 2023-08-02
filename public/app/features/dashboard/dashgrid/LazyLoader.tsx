@@ -55,7 +55,9 @@ LazyLoader.addCallback = (id: string, c: (e: IntersectionObserverEntry) => void)
 LazyLoader.observer = new IntersectionObserver(
   (entries) => {
     for (const entry of entries) {
-      LazyLoader.callbacks[entry.target.id](entry);
+      if (LazyLoader.callbacks[entry.target.id]) {
+        LazyLoader.callbacks[entry.target.id](entry);
+      }
     }
   },
   { rootMargin: '100px' }

@@ -10,6 +10,7 @@ import {
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
+import { DocsLinkButton } from '../DocsLinkButton';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 
 export interface TraceToMetricsOptions {
@@ -38,7 +39,10 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Trace to metrics</h3>
 
-      <div className={styles.infoText}>Navigate from a trace span to the selected data source&apos;s metrics.</div>
+      <div className={styles.infoText}>
+        Navigate from a trace span to the selected data source&apos;s metrics
+        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-metrics`} />
+      </div>
 
       <InlineFieldRow className={styles.row}>
         <InlineField

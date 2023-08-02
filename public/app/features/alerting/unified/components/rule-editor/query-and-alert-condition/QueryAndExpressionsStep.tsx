@@ -1,16 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { LoadingState, PanelData, getDefaultRelativeTimeRange } from '@grafana/data';
+import { getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Field, Tooltip, InputControl } from '@grafana/ui';
+import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
-import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery } from '../../../utils/rule-form';
@@ -36,6 +35,7 @@ import {
   updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
+import { useAlertQueryRunner } from './useAlertQueryRunner';
 
 interface Props {
   editingExistingRule: boolean;
@@ -43,8 +43,6 @@ interface Props {
 }
 
 export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
-  const runner = useRef(new AlertingQueryRunner());
-
   const {
     setValue,
     getValues,
@@ -52,11 +50,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     formState: { errors },
     control,
   } = useFormContext<RuleFormValues>();
-  const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
+
+  const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
 
   const initialState = {
     queries: getValues('queries'),
-    panelData: {},
   };
 
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
@@ -68,35 +66,16 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const cancelQueries = useCallback(() => {
-    runner.current.cancel();
-  }, []);
-
-  const runQueries = useCallback(() => {
-    runner.current.run(getValues('queries'));
-  }, [getValues]);
+  const runQueriesPreview = useCallback(() => {
+    runQueries(getValues('queries'));
+  }, [runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
     setValue('queries', queries, { shouldValidate: false });
   }, [queries, runQueries, setValue]);
 
-  // set up the AlertQueryRunner
-  useEffect(() => {
-    const currentRunner = runner.current;
-
-    runner.current.get().subscribe((data) => {
-      setPanelData(data);
-    });
-
-    return () => currentRunner.destroy();
-  }, []);
-
   const noCompatibleDataSources = getDefaultOrFirstCompatibleDataSource() === undefined;
-
-  const isDataLoading = useMemo(() => {
-    return Object.values(panelData).some((d) => d.state === LoadingState.Loading);
-  }, [panelData]);
 
   // data queries only
   const dataQueries = useMemo(() => {
@@ -117,9 +96,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       return;
     }
 
-    const error = errorFromSeries(panelData[currentCondition]?.series || []);
+    const error = errorFromSeries(queryPreviewData[currentCondition]?.series || []);
     onDataChange(error?.message || '');
-  }, [panelData, getValues, onDataChange]);
+  }, [queryPreviewData, getValues, onDataChange]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {
@@ -127,11 +106,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         return;
       }
 
-      runQueries(); //we need to run the queries to know if the condition is valid
+      runQueriesPreview(); //we need to run the queries to know if the condition is valid
 
       setValue('condition', refId);
     },
-    [runQueries, setValue]
+    [runQueriesPreview, setValue]
   );
 
   const onUpdateRefId = useCallback(
@@ -154,6 +133,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
+      // Most data sources triggers onChange and onRunQueries consecutively
+      // It means our reducer state is always one step behind when runQueries is invoked
+      // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
+      // As a workaround we update form values as soon as possible to avoid stale state
+      // This way we can access up to date queries in runQueriesPreview without waiting for re-render
+      setValue('queries', updatedQueries, { shouldValidate: false });
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
       // check if we need to rewire expressions
@@ -166,7 +152,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         }
       });
     },
-    [queries]
+    [queries, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -184,19 +170,20 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       const expression = query.model.expr;
 
+      setValue('queries', updatedQueries, { shouldValidate: false });
       setValue('dataSourceName', dataSourceSettings.name);
       setValue('expression', expression);
 
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
-      runQueries();
+      runQueriesPreview();
     },
-    [runQueries, setValue]
+    [runQueriesPreview, setValue]
   );
 
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
 
   useEffect(() => {
-    setPanelData({});
+    clearPreviewData();
     if (type === RuleFormType.cloudRecording) {
       const expr = getValues('expression');
       const datasourceUid =
@@ -217,7 +204,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       };
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: expr }));
     }
-  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues, dataSourceName]);
+  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues, dataSourceName, clearPreviewData]);
 
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
     dispatch(duplicateQuery(query));
@@ -241,9 +228,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <RecordingRuleEditor
             dataSourceName={dataSourceName}
             queries={queries}
-            runQueries={runQueries}
+            runQueries={runQueriesPreview}
             onChangeQuery={onChangeRecordingRulesQueries}
-            panelData={panelData}
+            panelData={queryPreviewData}
           />
         </Field>
       )}
@@ -277,17 +264,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
-            onRunQueries={runQueries}
+            onRunQueries={runQueriesPreview}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
-            panelData={panelData}
+            panelData={queryPreviewData}
             condition={condition}
             onSetCondition={handleSetCondition}
           />
           {/* Expression Queries */}
           <ExpressionsEditor
             queries={queries}
-            panelData={panelData}
+            panelData={queryPreviewData}
             condition={condition}
             onSetCondition={handleSetCondition}
             onRemoveExpression={(refId) => {
@@ -331,13 +318,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
 
-            {isDataLoading && (
+            {isPreviewLoading && (
               <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
                 Cancel
               </Button>
             )}
-            {!isDataLoading && (
-              <Button icon="sync" type="button" onClick={() => runQueries()} disabled={emptyQueries}>
+            {!isPreviewLoading && (
+              <Button icon="sync" type="button" onClick={runQueriesPreview} disabled={emptyQueries}>
                 Preview
               </Button>
             )}

@@ -6,19 +6,21 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles) *LibraryElementService {
 	l := &LibraryElementService{
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
 		RouteRegister: routeRegister,
 		folderService: folderService,
 		log:           log.New("library-elements"),
+		features:      features,
 	}
 	l.registerAPIEndpoints()
 	return l
@@ -41,6 +43,7 @@ type LibraryElementService struct {
 	RouteRegister routing.RouteRegister
 	folderService folder.Service
 	log           log.Logger
+	features      featuremgmt.FeatureToggles
 }
 
 // CreateElement creates a Library Element.

@@ -13,6 +13,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
     title: 'Panel Title',
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: datasource ? { uid: datasource } : null,
+    isNew: true,
   };
 
   dashboard.addPanel(newPanel);

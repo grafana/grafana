@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import {
@@ -35,6 +35,8 @@ export const DynamicConfigValueEditor = ({
   const styles = useStyles2(getStyles);
   const item = registry?.getIfExists(property.id);
 
+  const componentId = useId();
+
   if (!item) {
     return null;
   }
@@ -54,7 +56,11 @@ export const DynamicConfigValueEditor = ({
     (isExpanded = false) =>
       (
         <HorizontalGroup justify="space-between">
-          <Label category={labelCategory} description={includeDescription ? item.description : undefined}>
+          <Label
+            category={labelCategory}
+            description={includeDescription ? item.description : undefined}
+            htmlFor={componentId}
+          >
             <Highlighter
               textToHighlight={item.name}
               searchWords={[searchQuery]}
@@ -106,6 +112,7 @@ export const DynamicConfigValueEditor = ({
             }}
             item={item}
             context={context}
+            id={componentId}
           />
         </Field>
       </div>

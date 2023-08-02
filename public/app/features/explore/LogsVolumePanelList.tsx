@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy, mapValues } from 'lodash';
+import { flatten, groupBy, mapValues, sortBy } from 'lodash';
 import React, { useMemo } from 'react';
 
 import {
@@ -8,14 +8,13 @@ import {
   DataQueryResponse,
   EventBus,
   GrafanaTheme2,
-  isLogsVolumeLimited,
   LoadingState,
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
-import { Button, InlineField, useStyles2 } from '@grafana/ui';
+import { Button, InlineField, Alert, useStyles2 } from '@grafana/ui';
 
-import { mergeLogsVolumeDataFrames } from '../logs/utils';
+import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../logs/utils';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -46,11 +45,25 @@ export const LogsVolumePanelList = ({
   timeZone,
   onClose,
 }: Props) => {
-  const logVolumes: Record<string, DataFrame[]> = useMemo(() => {
-    const grouped = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
-    return mapValues(grouped, (value) => {
-      return mergeLogsVolumeDataFrames(value);
+  const {
+    logVolumes,
+    maximumValue: allLogsVolumeMaximumValue,
+    maximumRange: allLogsVolumeMaximumRange,
+  } = useMemo(() => {
+    let maximumValue = -Infinity;
+    const sorted = sortBy(logsVolumeData?.data || [], 'meta.custom.datasourceName');
+    const grouped = groupBy(sorted, 'meta.custom.datasourceName');
+    const logVolumes = mapValues(grouped, (value) => {
+      const mergedData = mergeLogsVolumeDataFrames(value);
+      maximumValue = Math.max(maximumValue, mergedData.maximum);
+      return mergedData.dataFrames;
     });
+    const maximumRange = getLogsVolumeMaximumRange(flatten(Object.values(logVolumes)));
+    return {
+      maximumValue,
+      maximumRange,
+      logVolumes,
+    };
   }, [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
@@ -64,12 +77,17 @@ export const LogsVolumePanelList = ({
 
   const timeoutError = isTimeoutErrorResponse(logsVolumeData);
 
+  const visibleRange = {
+    from: Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from),
+    to: Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to),
+  };
+
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query is taking too long and has timed out"
+        title="The logs volume query has timed out"
         // Using info to avoid users thinking that the actual query has failed.
         severity="info"
         suggestedAction="Retry"
@@ -80,6 +98,17 @@ export const LogsVolumePanelList = ({
   } else if (logsVolumeData?.error !== undefined) {
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
+
+  if (numberOfLogVolumes === 0) {
+    return (
+      <div className={styles.alertContainer}>
+        <Alert severity="info" title="No logs volume available">
+          No volume information available for the current queries and time range.
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
@@ -87,7 +116,8 @@ export const LogsVolumePanelList = ({
         return (
           <LogsVolumePanel
             key={index}
-            absoluteRange={absoluteRange}
+            absoluteRange={visibleRange}
+            allLogsVolumeMaximum={allLogsVolumeMaximumValue}
             width={width}
             logsVolumeData={logsVolumeData}
             onUpdateTimeRange={onUpdateTimeRange}
@@ -126,6 +156,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     oldInfoText: css`
       font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text.secondary};
+    `,
+    alertContainer: css`
+      width: 50%;
+      min-width: ${theme.breakpoints.values.sm}px;
+      margin: 0 auto;
     `,
   };
 };

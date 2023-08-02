@@ -37,6 +37,7 @@ Basic.args = {
   label: 'Skip TLS cert validation',
   description: 'Set to true if you want to skip TLS cert validation',
   disabled: false,
+  indeterminate: false,
 };
 
 export const StackedList = () => {
@@ -78,6 +79,33 @@ InAField.args = {
   description:
     'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
   disabled: false,
+  indeterminate: false,
+};
+
+export const AllStates: ComponentStory<typeof Checkbox> = (args) => {
+  const [checked, setChecked] = useState(false);
+  const onChange = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
+    [setChecked]
+  );
+
+  return (
+    <div>
+      <VerticalGroup>
+        <Checkbox value={checked} onChange={onChange} {...args} />
+        <Checkbox value={true} label="Checked" />
+        <Checkbox value={false} label="Unchecked" />
+        <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+      </VerticalGroup>
+    </div>
+  );
+};
+
+AllStates.args = {
+  label: 'Props set from controls',
+  description: 'Set to true if you want to skip TLS cert validation',
+  disabled: false,
+  indeterminate: false,
 };
 
 export default meta;

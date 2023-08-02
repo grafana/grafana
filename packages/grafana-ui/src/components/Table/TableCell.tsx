@@ -1,6 +1,8 @@
 import React from 'react';
 import { Cell } from 'react-table';
 
+import { TimeRange } from '@grafana/data';
+
 import { TableStyles } from './styles';
 import { GrafanaTableColumn, TableFilterActionCallback } from './types';
 
@@ -10,10 +12,11 @@ export interface Props {
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
+  timeRange?: TimeRange;
   userProps?: object;
 }
 
-export const TableCell = ({ cell, tableStyles, onCellFilterAdded, userProps }: Props) => {
+export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 
@@ -34,6 +37,7 @@ export const TableCell = ({ cell, tableStyles, onCellFilterAdded, userProps }: P
     onCellFilterAdded,
     cellProps,
     innerWidth,
+    timeRange,
     userProps,
   }) as React.ReactElement;
 };

@@ -50,7 +50,10 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	}
 
 	if alertState.Image != nil {
-		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
+		imageURI := generateImageURI(alertState.Image)
+		if imageURI != "" {
+			nA[alertingModels.ImageTokenAnnotation] = imageURI
+		}
 	}
 
 	if alertState.StateReason != "" {
@@ -166,4 +169,18 @@ func FromAlertsStateToStoppedAlert(firingStates []state.StateTransition, appURL 
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}
 	return alerts
+}
+
+// generateImageURI returns a string that serves as an identifier for the image.
+// It first checks if there is an image URL available, and if not,
+// it prefixes the image token with `token://` and uses it as the URI.
+func generateImageURI(image *ngModels.Image) string {
+	if image.URL != "" {
+		return image.URL
+	}
+	if image.Token != "" {
+		return "token://" + image.Token
+	}
+
+	return ""
 }

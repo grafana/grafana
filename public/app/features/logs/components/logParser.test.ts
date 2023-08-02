@@ -1,4 +1,4 @@
-import { ArrayVector, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { createLogRow } from './__mocks__/logRow';
@@ -12,12 +12,13 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
               type: FieldType.other,
               config: {},
-              values: new ArrayVector([{ place: 'luna', source: 'data' }]),
+              values: [{ place: 'luna', source: 'data' }],
             },
           ],
         }),
@@ -34,12 +35,42 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
               type: FieldType.string,
               config: {},
-              values: new ArrayVector([{ place: 'luna', source: 'data' }]),
+              values: [{ place: 'luna', source: 'data' }],
+            },
+          ],
+        }),
+      });
+      const fields = getAllFields(logRow);
+      expect(fields.length).toBe(2);
+      expect(fields.find((field) => field.keys[0] === 'labels')).not.toBe(undefined);
+    });
+
+    it('should not filter out field with labels name and other type and datalinks', () => {
+      const logRow = createLogRow({
+        entryFieldIndex: 10,
+        dataFrame: new MutableDataFrame({
+          refId: 'A',
+          fields: [
+            testLineField,
+            testStringField,
+            {
+              name: 'labels',
+              type: FieldType.other,
+              config: {
+                links: [
+                  {
+                    title: 'test1',
+                    url: 'url1',
+                  },
+                ],
+              },
+              values: [{ place: 'luna', source: 'data' }],
             },
           ],
         }),
@@ -55,12 +86,13 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'id',
               type: FieldType.string,
               config: {},
-              values: new ArrayVector(['1659620138401000000_8b1f7688_']),
+              values: ['1659620138401000000_8b1f7688_'],
             },
           ],
         }),
@@ -110,7 +142,7 @@ describe('logParser', () => {
         entryFieldIndex: 10,
         dataFrame: new MutableDataFrame({
           refId: 'A',
-          fields: [{ ...testStringField }],
+          fields: [testLineField, { ...testStringField }],
         }),
       });
 
@@ -129,7 +161,7 @@ describe('logParser', () => {
           config: { links: [] },
           name: 'Line',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
+          values: ['a', 'b'],
         },
         title: 'test',
         target: '_self',
@@ -163,7 +195,7 @@ describe('logParser', () => {
           config: { links: [] },
           name: 'Line',
           type: FieldType.string,
-          values: new ArrayVector(['a', 'b']),
+          values: ['a', 'b'],
         },
         title: 'test',
         target: '_self',
@@ -182,16 +214,23 @@ describe('logParser', () => {
   });
 });
 
+const testLineField = {
+  name: 'body',
+  type: FieldType.string,
+  config: {},
+  values: ['line1'],
+};
+
 const testStringField = {
   name: 'test_field_string',
   type: FieldType.string,
   config: {},
-  values: new ArrayVector(['abc']),
+  values: ['abc'],
 };
 
 const testFieldWithNullValue = {
   name: 'test_field_null',
   type: FieldType.string,
   config: {},
-  values: new ArrayVector([null]),
+  values: [null],
 };

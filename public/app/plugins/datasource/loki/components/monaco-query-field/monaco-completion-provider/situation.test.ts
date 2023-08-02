@@ -115,6 +115,13 @@ describe('situation', () => {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
       otherLabels: [],
     });
+
+    ['sum({label="value",^})', '{label="value",^}', '{label="value", ^}'].forEach((query) => {
+      assertSituation(query, {
+        type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
+        otherLabels: [{ name: 'label', value: 'value', op: '=' }],
+      });
+    });
   });
 
   it('identifies labels from queries', () => {

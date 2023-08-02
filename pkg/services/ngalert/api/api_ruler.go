@@ -353,29 +353,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		finalChanges = store.UpdateCalculatedRuleFields(groupChanges)
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
-		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
-			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
-			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
-			for _, update := range finalChanges.Update {
-				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
-				updates = append(updates, ngmodels.UpdateRule{
-					Existing: update.Existing,
-					New:      *update.New,
-				})
-			}
-			for _, rule := range finalChanges.New {
-				inserts = append(inserts, *rule)
-			}
-			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
-			if err != nil {
-				return fmt.Errorf("failed to add rules: %w", err)
-			}
-			err = srv.store.UpdateAlertRules(tranCtx, updates)
-			if err != nil {
-				return fmt.Errorf("failed to update rules: %w", err)
-			}
-		}
-
+		// Delete first as this could prevent future unique constraint violations.
 		if len(finalChanges.Delete) > 0 {
 			UIDs := make([]string, 0, len(finalChanges.Delete))
 			for _, rule := range finalChanges.Delete {
@@ -384,6 +362,32 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.OrgID, UIDs...); err != nil {
 				return fmt.Errorf("failed to delete rules: %w", err)
+			}
+		}
+
+		if len(finalChanges.Update) > 0 {
+			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
+			for _, update := range finalChanges.Update {
+				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				updates = append(updates, ngmodels.UpdateRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
+			}
+			err = srv.store.UpdateAlertRules(tranCtx, updates)
+			if err != nil {
+				return fmt.Errorf("failed to update rules: %w", err)
+			}
+		}
+
+		if len(finalChanges.New) > 0 {
+			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
+			for _, rule := range finalChanges.New {
+				inserts = append(inserts, *rule)
+			}
+			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
+			if err != nil {
+				return fmt.Errorf("failed to add rules: %w", err)
 			}
 		}
 

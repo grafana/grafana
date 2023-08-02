@@ -5,7 +5,10 @@ import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcher
 import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
+import {
+  QueryOperationAction,
+  QueryOperationToggleAction,
+} from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -37,7 +40,7 @@ export const TransformationOperationRow = ({
 }: TransformationOperationRowProps) => {
   const [showDebug, toggleDebug] = useToggle(false);
   const [showHelp, toggleHelp] = useToggle(false);
-  const disabled = configs[index].transformation.disabled;
+  const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
 
@@ -85,29 +88,29 @@ export const TransformationOperationRow = ({
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
-        <QueryOperationAction
-          title="Show/hide transform help"
+        <QueryOperationToggleAction
+          title="Show transform help"
           icon="info-circle"
           onClick={instrumentToggleCallback(toggleHelp, 'help', showHelp)}
           active={showHelp}
         />
         {showFilter && (
-          <QueryOperationAction
+          <QueryOperationToggleAction
             title="Filter"
             icon="filter"
             onClick={instrumentToggleCallback(toggleFilter, 'filter', filter)}
             active={filter}
           />
         )}
-        <QueryOperationAction
+        <QueryOperationToggleAction
           title="Debug"
           disabled={!isOpen}
           icon="bug"
           onClick={instrumentToggleCallback(toggleDebug, 'debug', showDebug)}
           active={showDebug}
         />
-        <QueryOperationAction
-          title="Disable/Enable transformation"
+        <QueryOperationToggleAction
+          title="Disable transformation"
           icon={disabled ? 'eye-slash' : 'eye'}
           onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}

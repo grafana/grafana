@@ -11,7 +11,7 @@ import LanguageProvider from './language_provider';
 import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PrometheusCacheLevel, PromQuery } from './types';
 
-const now = new Date().getTime();
+const now = new Date(1681300293392).getTime();
 const timeRangeDurationSeconds = 1;
 const toPrometheusTime = getPrometheusTime(dateTime(now), false);
 const fromPrometheusTime = getPrometheusTime(dateTime(now - timeRangeDurationSeconds * 1000), false);

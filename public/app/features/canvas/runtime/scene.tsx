@@ -7,17 +7,17 @@ import Selecto from 'selecto';
 
 import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
-import { Portal, stylesFactory } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
-  DimensionContext,
   ResourceDimensionConfig,
   ScalarDimensionConfig,
   ScaleDimensionConfig,
   TextDimensionConfig,
-} from 'app/features/dimensions';
+} from '@grafana/schema';
+import { Portal, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { DimensionContext } from 'app/features/dimensions';
 import {
   getColorDimensionFromData,
   getResourceDimensionFromData,
@@ -144,6 +144,8 @@ export class Scene {
         this.initMoveable(destroySelecto, enableEditing);
         this.currentLayer = this.root;
         this.selection.next([]);
+        this.connections.select(undefined);
+        this.connections.updateState();
       }
     });
     return this.root;
@@ -641,8 +643,8 @@ export class Scene {
 
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
-    const canShowElementTooltip =
-      !this.isEditingEnabled && this.tooltip?.element && this.tooltip.element.data.links?.length > 0;
+    const isTooltipValid = (this.tooltip?.element?.data?.links?.length ?? 0) > 0;
+    const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>

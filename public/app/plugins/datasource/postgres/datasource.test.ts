@@ -141,9 +141,7 @@ describe('PostgreSQLDatasource', () => {
                   entities: {},
                   name: 'time',
                   type: 'time',
-                  values: {
-                    buffer: [1599643351085],
-                  },
+                  values: [1599643351085],
                 },
                 {
                   config: {},
@@ -153,9 +151,7 @@ describe('PostgreSQLDatasource', () => {
                   },
                   name: 'metric',
                   type: 'number',
-                  values: {
-                    buffer: [30.226249741223704],
-                  },
+                  values: [30.226249741223704],
                 },
               ],
               length: 1,
@@ -237,27 +233,21 @@ describe('PostgreSQLDatasource', () => {
                   entities: {},
                   name: 'time',
                   type: 'time',
-                  values: {
-                    buffer: [1599643351085],
-                  },
+                  values: [1599643351085],
                 },
                 {
                   config: {},
                   entities: {},
                   name: 'metric',
                   type: 'string',
-                  values: {
-                    buffer: ['America'],
-                  },
+                  values: ['America'],
                 },
                 {
                   config: {},
                   entities: {},
                   name: 'value',
                   type: 'number',
-                  values: {
-                    buffer: [30.226249741223704],
-                  },
+                  values: [30.226249741223704],
                 },
               ],
               length: 1,

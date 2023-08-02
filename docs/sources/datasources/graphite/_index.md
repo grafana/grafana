@@ -7,6 +7,11 @@ keywords:
   - grafana
   - graphite
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Graphite
 title: Graphite data source
 weight: 600
@@ -50,10 +55,10 @@ To configure basic settings for the data source, complete the following steps:
 
 You can also configure settings specific to the Graphite data source:
 
-| Name        | Description                      |
-| ----------- | -------------------------------- |
-| **Version** | Select your version of Graphite. |
-| **Type**    | Select your type of Graphite.    |
+| Name        | Description                                                                                              |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| **Version** | Select your version of Graphite. If you are using Grafana Cloud Graphite, this should be set to `1.1.x`. |
+| **Type**    | Select your type of Graphite. If you are using Grafana Cloud Graphite, this should be set to `Default`.  |
 
 ### Integrate with Loki
 

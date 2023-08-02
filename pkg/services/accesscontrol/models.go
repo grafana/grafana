@@ -309,7 +309,8 @@ const (
 	ActionServerStatsRead = "server.stats:read"
 
 	// Settings actions
-	ActionSettingsRead = "settings:read"
+	ActionSettingsRead  = "settings:read"
+	ActionSettingsWrite = "settings:write"
 
 	// Datasources actions
 	ActionDatasourcesExplore = "datasources:explore"
@@ -324,7 +325,9 @@ const (
 	ScopeUsersAll = "users:*"
 
 	// Settings scope
-	ScopeSettingsAll = "settings:*"
+	ScopeSettingsAll  = "settings:*"
+	ScopeSettingsAuth = "settings:auth:*"
+	ScopeSettingsSAML = "settings:auth.saml:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"

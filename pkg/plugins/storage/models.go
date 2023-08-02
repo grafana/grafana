@@ -22,27 +22,27 @@ type Dependency struct {
 	Version string
 }
 
-type InstalledPlugin struct {
+type installedPlugin struct {
 	ID           string       `json:"id"`
 	Name         string       `json:"name"`
 	Type         string       `json:"type"`
-	Info         PluginInfo   `json:"info"`
-	Dependencies Dependencies `json:"dependencies"`
+	Info         pluginInfo   `json:"info"`
+	Dependencies dependencies `json:"dependencies"`
 }
 
-type Dependencies struct {
+type dependencies struct {
 	GrafanaVersion string             `json:"grafanaVersion"`
-	Plugins        []PluginDependency `json:"plugins"`
+	Plugins        []pluginDependency `json:"plugins"`
 }
 
-type PluginDependency struct {
+type pluginDependency struct {
 	ID      string `json:"id"`
 	Type    string `json:"type"`
 	Name    string `json:"name"`
 	Version string `json:"version"`
 }
 
-type PluginInfo struct {
+type pluginInfo struct {
 	Version string `json:"version"`
 	Updated string `json:"updated"`
 }

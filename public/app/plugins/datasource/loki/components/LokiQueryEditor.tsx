@@ -34,7 +34,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
-  const [queryStats, setQueryStats] = useState<QueryStats>();
+  const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
   const timerange = datasource.getTimeRange();

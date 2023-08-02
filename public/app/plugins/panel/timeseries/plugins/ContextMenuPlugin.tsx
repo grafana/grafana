@@ -243,7 +243,7 @@ export const ContextMenuView = ({
     if (seriesIdx && dataIdx !== null) {
       const field = data.fields[seriesIdx];
 
-      const displayValue = field.display!(field.values.get(dataIdx));
+      const displayValue = field.display!(field.values[dataIdx]);
 
       const hasLinks = field.config.links && field.config.links.length > 0;
 
@@ -271,7 +271,7 @@ export const ContextMenuView = ({
       // eslint-disable-next-line react/display-name
       renderHeader = () => (
         <GraphContextMenuHeader
-          timestamp={xFieldFmt(xField.values.get(dataIdx)).text}
+          timestamp={xFieldFmt(xField.values[dataIdx]).text}
           displayValue={displayValue}
           seriesColor={displayValue.color!}
           displayName={getFieldDisplayName(field, data, otherProps.frames)}

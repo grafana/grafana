@@ -122,7 +122,7 @@ const PublicDashboardPage = (props: Props) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   gridContainer: css({
     flex: 1,
-    padding: theme.spacing(0, 2, 2, 2),
+    padding: theme.spacing(2, 2, 2, 2),
     overflow: 'auto',
   }),
 });

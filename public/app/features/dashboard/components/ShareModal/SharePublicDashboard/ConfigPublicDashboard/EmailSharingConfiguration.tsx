@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -107,6 +108,7 @@ const EmailList = ({
 };
 
 export const EmailSharingConfiguration = () => {
+  const { width } = useWindowSize();
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
@@ -161,6 +163,7 @@ export const EmailSharingConfiguration = () => {
             return (
               <RadioButtonGroup
                 {...rest}
+                size={width < 480 ? 'sm' : 'md'}
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
                   reportInteraction('grafana_dashboards_public_share_type_clicked', {

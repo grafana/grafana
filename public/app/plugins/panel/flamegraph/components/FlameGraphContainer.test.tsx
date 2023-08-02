@@ -39,11 +39,11 @@ describe('FlameGraphContainer', () => {
 
   it('should update search when row selected in top table', async () => {
     render(<FlameGraphContainerWithProps />);
-    await userEvent.click((await screen.findAllByRole('row'))[1]);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
-    await userEvent.click(screen.getAllByRole('row')[2]);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
     expect(screen.getByDisplayValue('total')).toBeInTheDocument();
-    await userEvent.click(screen.getAllByRole('row')[2]);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
     expect(screen.queryByDisplayValue('total')).not.toBeInTheDocument();
   });
 

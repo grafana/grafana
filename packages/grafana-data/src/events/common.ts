@@ -43,7 +43,7 @@ export class AnnotationChangeEvent extends BusEventWithPayload<Partial<Annotatio
 
 // Loaded the first time a dashboard is loaded (not on every render)
 export type DashboardLoadedEventPayload<T> = {
-  dashboardId: string;
+  dashboardId: string; // eeep, this should be UID
   orgId?: number;
   userId?: number;
   grafanaVersion?: string;

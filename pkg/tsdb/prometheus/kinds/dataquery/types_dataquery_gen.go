@@ -66,6 +66,13 @@ type PrometheusDataQuery struct {
 	// Returns only the latest value that Prometheus has scraped for the requested time series
 	Instant *bool `json:"instant,omitempty"`
 
+	// @deprecated Used to specify how many times to divide max data points by. We use max data points under query options
+	// See https://github.com/grafana/grafana/issues/48081
+	IntervalFactor *float32 `json:"intervalFactor,omitempty"`
+
+	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
+	LegendFormat *string `json:"legendFormat,omitempty"`
+
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`

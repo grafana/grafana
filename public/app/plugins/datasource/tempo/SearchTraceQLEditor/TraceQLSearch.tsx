@@ -13,8 +13,7 @@ import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
-import { CompletionProvider } from '../traceql/autocomplete';
-import { traceqlGrammar } from '../traceql/traceql';
+import { intrinsics, traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
@@ -102,7 +101,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   // filter out tags that already exist in the static fields
   const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
   staticTags.push('duration');
-  const filteredTags = [...CompletionProvider.intrinsics, ...tags].filter((t) => !staticTags.includes(t));
+  const filteredTags = [...intrinsics, ...tags].filter((t) => !staticTags.includes(t));
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
   // The duration tag is a special case since its selector is hard-coded

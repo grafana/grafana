@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -49,12 +50,12 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		ss := db.InitTestDB(t)
 		tagService := tagimpl.ProvideService(ss, ss.Cfg)
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
 		store = &sqlStore{
 			db:         ss,
 			log:        log.New(),
 			cfg:        cfg,
 			tagService: tagService,
+			features:   featuremgmt.WithFeatures(),
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -81,7 +82,10 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		setup(t)
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		signedInUser := &user.SignedInUser{
+			OrgRole: org.RoleAdmin,
+		}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: signedInUser}
 		result, err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
@@ -159,7 +163,13 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
-		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgID: 1}
+		viewerUser := &user.SignedInUser{
+			OrgRole: org.RoleViewer,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}, dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}},
+			},
+		}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: viewerUser}
 		res, err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 

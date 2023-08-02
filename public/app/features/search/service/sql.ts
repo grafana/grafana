@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -182,12 +182,12 @@ export class SQLSearcher implements GrafanaSearcher {
 
     const data: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector(kind) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(name) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(uid) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(url) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector(tags) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(location) },
+        { name: 'kind', type: FieldType.string, config: {}, values: kind },
+        { name: 'name', type: FieldType.string, config: {}, values: name },
+        { name: 'uid', type: FieldType.string, config: {}, values: uid },
+        { name: 'url', type: FieldType.string, config: {}, values: url },
+        { name: 'tags', type: FieldType.other, config: {}, values: tags },
+        { name: 'location', type: FieldType.string, config: {}, values: location },
       ],
       length: name.length,
       meta: {
@@ -206,7 +206,7 @@ export class SQLSearcher implements GrafanaSearcher {
         name: sortMetaName, // Used in display
         type: FieldType.number,
         config: {},
-        values: new ArrayVector(sortBy),
+        values: sortBy,
       });
     }
 

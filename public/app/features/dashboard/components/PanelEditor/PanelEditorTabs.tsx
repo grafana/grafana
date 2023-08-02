@@ -150,7 +150,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0;
       display: flex;
       flex-direction: column;
-      flex-grow: 1;
+      flex: 1;
       min-height: 0;
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.components.panel.borderColor};

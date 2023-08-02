@@ -63,6 +63,10 @@ type QueryJSONModel struct {
 	SupportingQueryType *string `json:"supportingQueryType"`
 }
 
+type ResponseOpts struct {
+	metricDataplane bool
+}
+
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	model := &QueryJSONModel{}
 	err := json.Unmarshal(raw, model)
@@ -144,10 +148,14 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return result, err
 	}
 
-	return queryData(ctx, req, dsInfo, s.tracer)
+	responseOpts := ResponseOpts{
+		metricDataplane: s.features.IsEnabled(featuremgmt.FlagLokiMetricDataplane),
+	}
+
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer)
 }
 
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, logger.FromContext(ctx))
@@ -170,7 +178,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		logger := logger.FromContext(ctx) // get logger with trace-id and other contextual info
 		logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
-		frames, err := runQuery(ctx, api, query)
+		frames, err := runQuery(ctx, api, query, responseOpts)
 
 		span.End()
 		queryRes := backend.DataResponse{}
@@ -187,14 +195,14 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery) (data.Frames, error) {
-	frames, err := api.DataQuery(ctx, *query)
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
+	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
 		return data.Frames{}, err
 	}
 
 	for _, frame := range frames {
-		if err = adjustFrame(frame, query); err != nil {
+		if err = adjustFrame(frame, query, !responseOpts.metricDataplane); err != nil {
 			return data.Frames{}, err
 		}
 		if err != nil {

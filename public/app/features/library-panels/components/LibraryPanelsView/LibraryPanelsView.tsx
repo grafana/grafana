@@ -61,7 +61,16 @@ export const LibraryPanelsView = ({
     [searchString, sortDirection, panelFilter, folderFilter, page, asyncDispatch]
   );
   const onDelete = ({ uid }: LibraryElementDTO) =>
-    asyncDispatch(deleteLibraryPanel(uid, { searchString, page, perPage }));
+    asyncDispatch(
+      deleteLibraryPanel(uid, {
+        searchString,
+        sortDirection,
+        panelFilter,
+        folderFilterUIDs: folderFilter,
+        page,
+        perPage,
+      })
+    );
   const onPageChange = (page: number) => asyncDispatch(changePage({ page }));
 
   return (

@@ -16,6 +16,7 @@ import {
   Switch,
   useStyles2,
   Badge,
+  FieldValidationMessage,
 } from '@grafana/ui';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -190,21 +191,33 @@ export const AmRoutesExpandedForm = ({
               description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
             >
               <InputControl
-                render={({ field: { onChange, ref, ...field } }) => (
-                  <MultiSelect
-                    aria-label="Group by"
-                    {...field}
-                    allowCustomValue
-                    className={formStyles.input}
-                    onCreateOption={(opt: string) => {
-                      setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
+                rules={{
+                  validate: (value) => {
+                    if (!value || value.length === 0) {
+                      return 'At least one group by option is required.';
+                    }
+                    return true;
+                  },
+                }}
+                render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
+                  <>
+                    <MultiSelect
+                      aria-label="Group by"
+                      {...field}
+                      invalid={Boolean(error)}
+                      allowCustomValue
+                      className={formStyles.input}
+                      onCreateOption={(opt: string) => {
+                        setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
 
-                      // @ts-ignore-check: react-hook-form made me do this
-                      setValue('groupBy', [...field.value, opt]);
-                    }}
-                    onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
-                    options={[...commonGroupByOptions, ...groupByOptions]}
-                  />
+                        // @ts-ignore-check: react-hook-form made me do this
+                        setValue('groupBy', [...field.value, opt]);
+                      }}
+                      onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
+                      options={[...commonGroupByOptions, ...groupByOptions]}
+                    />
+                    {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
+                  </>
                 )}
                 control={control}
                 name="groupBy"

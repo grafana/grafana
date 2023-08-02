@@ -26,12 +26,12 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							common.SingleStatBaseOptions
-							graphMode:   common.BigValueGraphMode | *"area"
-							colorMode:   common.BigValueColorMode | *"value"
-							justifyMode: common.BigValueJustifyMode | *"auto"
-							textMode:    common.BigValueTextMode | *"auto"
+							graphMode:   common.BigValueGraphMode & (*"area" | _)
+							colorMode:   common.BigValueColorMode & (*"value" | _)
+							justifyMode: common.BigValueJustifyMode & (*"auto" | _)
+							textMode:    common.BigValueTextMode & (*"auto" | _)
 						} @cuetsy(kind="interface")
 					},
 				]

@@ -7,6 +7,7 @@ import {
   MutableDataFrame,
   NodeGraphDataFrameFieldNames as Fields,
   TimeRange,
+  FieldType,
 } from '@grafana/data';
 
 import { getNonOverlappingDuration, getStats, makeFrames, makeSpanMap } from '../../../core/utils/tracing';
@@ -188,28 +189,35 @@ function createServiceMapDataFrames() {
   }
 
   const nodes = createDF('Nodes', [
-    { name: Fields.id },
-    { name: Fields.title, config: { displayName: 'Service name' } },
-    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    { name: Fields.id, type: FieldType.string },
+    { name: Fields.title, type: FieldType.string, config: { displayName: 'Service name' } },
+    { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
+      type: FieldType.number,
       config: { unit: 'r/sec', displayName: 'Requests per second' },
     },
     {
       name: Fields.arc + 'success',
+      type: FieldType.number,
       config: { displayName: 'Success', color: { fixedColor: 'green', mode: FieldColorModeId.Fixed } },
     },
     {
       name: Fields.arc + 'failed',
+      type: FieldType.number,
       config: { displayName: 'Failed', color: { fixedColor: 'red', mode: FieldColorModeId.Fixed } },
     },
   ]);
   const edges = createDF('Edges', [
-    { name: Fields.id },
-    { name: Fields.source },
-    { name: Fields.target },
-    { name: Fields.mainStat, config: { unit: 'ms/r', displayName: 'Average response time' } },
-    { name: Fields.secondaryStat, config: { unit: 'r/sec', displayName: 'Requests per second' } },
+    { name: Fields.id, type: FieldType.string },
+    { name: Fields.source, type: FieldType.string },
+    { name: Fields.target, type: FieldType.string },
+    { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
+    {
+      name: Fields.secondaryStat,
+      type: FieldType.number,
+      config: { unit: 'r/sec', displayName: 'Requests per second' },
+    },
   ]);
 
   return [nodes, edges];
@@ -307,7 +315,6 @@ function convertToDataFrames(
   edgesMap: Record<string, EdgeObject>,
   range: TimeRange
 ): { nodes: DataFrame; edges: DataFrame } {
-  const rangeMs = range.to.valueOf() - range.from.valueOf();
   const [nodes, edges] = createServiceMapDataFrames();
   for (const nodeId of Object.keys(nodesMap)) {
     const node = nodesMap[nodeId];
@@ -317,7 +324,7 @@ function convertToDataFrames(
       // NaN will not be shown in the node graph. This happens for a root client node which did not process
       // any requests itself.
       [Fields.mainStat]: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN, // Average response time
-      [Fields.secondaryStat]: node.total ? Math.round((node.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
+      [Fields.secondaryStat]: node.total ? Math.round(node.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
       [Fields.arc + 'success']: node.total ? (node.total - Math.min(node.failed || 0, node.total)) / node.total : 1,
       [Fields.arc + 'failed']: node.total ? Math.min(node.failed || 0, node.total) / node.total : 0,
     });
@@ -329,7 +336,7 @@ function convertToDataFrames(
       [Fields.source]: edge.source,
       [Fields.target]: edge.target,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
-      [Fields.secondaryStat]: edge.total ? Math.round((edge.total / (rangeMs / 1000)) * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
+      [Fields.secondaryStat]: edge.total ? Math.round(edge.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
   }
 

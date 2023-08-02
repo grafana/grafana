@@ -63,6 +63,7 @@ import {
   modifyQueries,
   scanStart,
   scanStopAction,
+  selectIsWaitingForData,
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
@@ -76,10 +77,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       // Is needed for some transition animations to work.
       position: relative;
       margin-top: 21px;
-    `,
-    button: css`
-      label: button;
-      margin: 1em 4px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
     `,
     queryContainer: css`
       label: queryContainer;
@@ -298,11 +298,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, loading, showFlameGraph } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <GraphContainer
-        loading={loading}
         data={graphResult!}
         height={showFlameGraph ? 180 : 400}
         width={width}
@@ -359,7 +358,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onClickFilterOutLabel={this.onClickFilterOutLabel}
         onStartScanning={this.onStartScanning}
         onStopScanning={this.onStopScanning}
-        scrollElement={this.scrollElement}
         eventBus={this.logsEventBus}
         splitOpenFn={this.onSplitOpen('logs')}
       />
@@ -567,12 +565,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
     showNodeGraph,
     showFlameGraph,
-    loading,
     isFromCompactUrl,
     showRawPrometheus,
     supplementaryQueries,
   } = item;
 
+  const loading = selectIsWaitingForData(exploreId)(state);
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));

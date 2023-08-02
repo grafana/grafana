@@ -362,7 +362,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return err
 	}
 
-	if ss.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
+	if ss.Cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type, ss.tracer)
 	}
 
@@ -535,7 +535,6 @@ type InitTestDBOpt struct {
 }
 
 var featuresEnabledDuringTests = []string{
-	featuremgmt.FlagDashboardPreviews,
 	featuremgmt.FlagPanelTitleSearch,
 	featuremgmt.FlagEntityStore,
 }

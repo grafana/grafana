@@ -561,8 +561,8 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 	index := 0
 	for {
 		index++
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+		headerNameSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderName, index)
+		headerValueSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderValue, index)
 
 		key := jsonData.Get(headerNameSuffix).MustString()
 		if key == "" {
@@ -650,4 +650,13 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.DataSource)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
 	return limits, nil
+}
+
+// CustomerHeaders returns the custom headers specified in the datasource. The context is used for the decryption operation that might use the store, so consider setting an acceptable timeout for your use case.
+func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+	return s.getCustomHeaders(ds.JsonData, values), nil
 }

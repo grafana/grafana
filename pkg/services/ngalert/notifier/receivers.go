@@ -3,8 +3,6 @@ package notifier
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -14,10 +12,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-)
-
-var (
-	ErrNoReceivers = errors.New("no receivers")
 )
 
 type TestReceiversResult struct {
@@ -38,30 +32,12 @@ type TestReceiverConfigResult struct {
 	Error  error
 }
 
-type InvalidReceiverError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
-	Err      error
-}
-
-func (e InvalidReceiverError) Error() string {
-	return fmt.Sprintf("the receiver is invalid: %s", e.Err)
-}
-
-type ReceiverTimeoutError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
-	Err      error
-}
-
-func (e ReceiverTimeoutError) Error() string {
-	return fmt.Sprintf("the receiver timed out: %s", e.Err)
-}
-
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
-		greceivers := make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
+		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			greceivers = append(greceivers, &alertingNotify.GrafanaReceiver{
+			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
@@ -72,8 +48,8 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		}
 		receivers = append(receivers, &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
-			GrafanaReceivers: alertingNotify.GrafanaReceivers{
-				Receivers: greceivers,
+			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
+				Integrations: integrations,
 			},
 		})
 	}

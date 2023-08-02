@@ -5,7 +5,7 @@ import { useDispatch } from 'app/types';
 
 import { ExploreId } from '../../types';
 
-import { setPausedStateAction, runQueries } from './state/query';
+import { setPausedStateAction, runQueries, clearLogs } from './state/query';
 import { changeRefreshInterval } from './state/time';
 
 /**
@@ -38,11 +38,16 @@ export function useLiveTailControls(exploreId: ExploreId) {
     dispatch(changeRefreshInterval(exploreId, RefreshPicker.liveOption.value));
   }, [exploreId, dispatch]);
 
+  const clear = useCallback(() => {
+    dispatch(clearLogs({ exploreId }));
+  }, [exploreId, dispatch]);
+
   return {
     pause,
     resume,
     stop,
     start,
+    clear,
   };
 }
 

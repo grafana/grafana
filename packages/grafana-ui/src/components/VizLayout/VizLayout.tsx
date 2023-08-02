@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { LegendPlacement } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
@@ -30,6 +30,7 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
  * @beta
  */
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
+  const theme = useTheme2();
   const styles = useStyles2(getVizStyles);
   const containerStyle: CSSProperties = {
     display: 'flex',
@@ -50,7 +51,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     );
   }
 
-  const { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
+  let { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
+
+  if (document.body.clientWidth < theme.breakpoints.values.lg) {
+    placement = 'bottom';
+  }
 
   let size: VizSize | null = null;
 
@@ -61,7 +66,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       containerStyle.flexDirection = 'column';
       legendStyle.maxHeight = maxHeight;
 
-      if (legendMeasure) {
+      if (legendMeasure.height) {
         size = { width, height: height - legendMeasure.height };
       }
       break;
@@ -69,7 +74,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       containerStyle.flexDirection = 'row';
       legendStyle.maxWidth = maxWidth;
 
-      if (legendMeasure) {
+      if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
 

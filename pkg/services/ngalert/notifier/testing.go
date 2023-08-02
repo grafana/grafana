@@ -31,6 +31,10 @@ func (f *fakeConfigStore) GetImage(ctx context.Context, token string) (*models.I
 	return nil, models.ErrImageNotFound
 }
 
+func (f *fakeConfigStore) GetImageByURL(ctx context.Context, url string) (*models.Image, error) {
+	return nil, models.ErrImageNotFound
+}
+
 func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
 	return nil, nil, models.ErrImageNotFound
 }
@@ -152,6 +156,21 @@ func (f *fakeConfigStore) GetAppliedConfigurations(_ context.Context, orgID int6
 	}
 
 	return configs, nil
+}
+
+func (f *fakeConfigStore) GetHistoricalConfiguration(_ context.Context, orgID int64, id int64) (*models.HistoricAlertConfiguration, error) {
+	configsByOrg, ok := f.historicConfigs[orgID]
+	if !ok {
+		return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
+	}
+
+	for _, conf := range configsByOrg {
+		if conf.ID == id && conf.OrgID == orgID {
+			return conf, nil
+		}
+	}
+
+	return &models.HistoricAlertConfiguration{}, store.ErrNoAlertmanagerConfiguration
 }
 
 type FakeOrgStore struct {

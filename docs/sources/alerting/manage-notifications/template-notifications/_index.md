@@ -1,10 +1,16 @@
 ---
-aliases:
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/
+description: How to customize your notifications using templating
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Customize notifications
 weight: 400
 ---
@@ -32,8 +38,6 @@ You cannot use notification templates to:
 [Using Go's templating language]({{< relref "./using-go-templating-language" >}})
 
 Learn how to write the content of your notification templates in Go’s templating language.
-
-[Create notification templates]({{< relref "./create-notification-templates" >}})
 
 Create reusable notification templates for your contact points.
 

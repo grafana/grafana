@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { ConfirmModal } from './ConfirmModal';
@@ -23,8 +23,7 @@ describe('ConfirmModal', () => {
     expect(screen.getByText('Some Body')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Dismiss Text' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Alternative Text' })).toBeInTheDocument();
-    const button = screen.getByRole('button', { name: 'Confirm Modal Danger Button' });
-    expect(within(button).getByText('Please Confirm')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Please Confirm' })).toBeInTheDocument();
   });
 
   it('should render nothing when isOpen is false', () => {
@@ -43,6 +42,6 @@ describe('ConfirmModal', () => {
     expect(screen.queryByText('Some Body')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Dismiss Text' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Alternative Text' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Confirm Modal Danger Button' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
   });
 });

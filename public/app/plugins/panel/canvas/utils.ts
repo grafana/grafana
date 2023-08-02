@@ -1,3 +1,5 @@
+import { isNumber, isString } from 'lodash';
+
 import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
@@ -16,7 +18,7 @@ import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
 import { DimensionContext } from '../../../features/dimensions';
 
-import { AnchorPoint, ConnectionInfo } from './types';
+import { AnchorPoint, ConnectionState } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -139,19 +141,29 @@ export function isConnectionTarget(element: ElementState, sceneByName: Map<strin
 }
 
 export function getConnections(sceneByName: Map<string, ElementState>) {
-  const connections: ConnectionInfo[] = [];
+  const connections: ConnectionState[] = [];
   for (let v of sceneByName.values()) {
     if (v.options.connections) {
-      for (let c of v.options.connections) {
+      v.options.connections.forEach((c, index) => {
+        // @TODO Remove after v10.x
+        if (isString(c.color)) {
+          c.color = { fixed: c.color };
+        }
+
+        if (isNumber(c.size)) {
+          c.size = { fixed: 2, min: 1, max: 10 };
+        }
+
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
         if (target) {
           connections.push({
+            index,
             source: v,
             target,
             info: c,
           });
         }
-      }
+      });
     }
   }
 
@@ -159,7 +171,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
 }
 
 export function getConnectionsByTarget(element: ElementState, scene: Scene) {
-  return getConnections(scene.byName).filter((connection) => connection.target === element);
+  return scene.connections.state.filter((connection) => connection.target === element);
 }
 
 export function updateConnectionsForSource(element: ElementState, scene: Scene) {

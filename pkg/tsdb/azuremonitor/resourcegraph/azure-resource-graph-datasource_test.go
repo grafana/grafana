@@ -125,7 +125,7 @@ func TestAddConfigData(t *testing.T) {
 	frame := data.Frame{
 		Fields: []*data.Field{&field},
 	}
-	frameWithLink := loganalytics.AddConfigLinks(frame, "http://ds")
+	frameWithLink := loganalytics.AddConfigLinks(frame, "http://ds", nil)
 	expectedFrameWithLink := data.Frame{
 		Fields: []*data.Field{
 			{

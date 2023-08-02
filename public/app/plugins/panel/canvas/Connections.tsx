@@ -1,12 +1,15 @@
 import React from 'react';
+import { BehaviorSubject } from 'rxjs';
 
-import { ConnectionPath } from 'app/features/canvas';
+import { config } from '@grafana/runtime';
+import { CanvasConnection, ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
-import { isConnectionSource, isConnectionTarget } from './utils';
+import { ConnectionState } from './types';
+import { getConnections, isConnectionSource, isConnectionTarget } from './utils';
 
 export class Connections {
   scene: Scene;
@@ -17,10 +20,34 @@ export class Connections {
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
   didConnectionLeaveHighlight?: boolean;
+  state: ConnectionState[] = [];
+  readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
 
   constructor(scene: Scene) {
     this.scene = scene;
+    this.updateState();
   }
+
+  select = (connection: ConnectionState | undefined) => {
+    if (connection === this.selection.value) {
+      return;
+    }
+    this.selection.next(connection);
+  };
+
+  updateState = () => {
+    const s = this.selection.value;
+    this.state = getConnections(this.scene.byName);
+
+    if (s) {
+      for (let c of this.state) {
+        if (c.source === s.source && c.index === s.index) {
+          this.selection.next(c);
+          break;
+        }
+      }
+    }
+  };
 
   setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
@@ -174,8 +201,14 @@ export class Connections {
             y: targetY,
           },
           targetName: targetName,
-          color: 'white',
-          size: 10,
+          color: {
+            fixed: config.theme2.colors.text.primary,
+          },
+          size: {
+            fixed: 2,
+            min: 1,
+            max: 10,
+          },
           path: ConnectionPath.Straight,
         };
 
@@ -199,6 +232,8 @@ export class Connections {
       }
 
       this.isDrawingConnection = false;
+      this.updateState();
+      this.scene.save();
     }
   };
 
@@ -222,6 +257,13 @@ export class Connections {
     }
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
+  };
+
+  onChange = (current: ConnectionState, update: CanvasConnection) => {
+    const connections = current.source.options.connections?.splice(0) ?? [];
+    connections[current.index] = update;
+    current.source.onChange({ ...current.source.options, connections });
+    this.updateState();
   };
 
   // used for moveable actions

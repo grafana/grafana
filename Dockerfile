@@ -1,11 +1,10 @@
 # syntax=docker/dockerfile:1
 ARG GF_VERSION
 
-
 ARG BASE_IMAGE=alpine:3.17
 ARG JS_IMAGE=node:18-alpine3.17
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.4-alpine3.17
+ARG GO_IMAGE=golang:1.20.6-alpine3.17
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder

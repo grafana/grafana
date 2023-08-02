@@ -117,7 +117,7 @@ export function MetricStatEditor({
                   !statistic ||
                   (!standardStatistics.includes(statistic) &&
                     !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
-                    !statistic.startsWith('$'))
+                    !datasource.templateSrv.containsTemplate(statistic))
                 ) {
                   return;
                 }

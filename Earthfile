@@ -11,4 +11,4 @@ frontend-test:
 
     RUN yarn install --immutable
 
-    RUN yarn test-ci
+    RUN yarn ci:test-frontend

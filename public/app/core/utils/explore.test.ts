@@ -489,4 +489,10 @@ describe('generateEmptyQuery', () => {
     expect(query.datasource?.type).toBe('loki');
     expect(query.refId).toBe('B');
   });
+
+  it('should generate a query with a unique refId', async () => {
+    const query = await generateEmptyQuery([{ refId: 'A' }], 2);
+
+    expect(query.refId).not.toBe('A');
+  });
 });

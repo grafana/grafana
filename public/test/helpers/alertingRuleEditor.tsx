@@ -25,7 +25,7 @@ export const ui = {
     expr: byTestId('expr'),
   },
   buttons: {
-    save: byRole('button', { name: 'Save' }),
+    save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     // alert type buttons

@@ -25,7 +25,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							// Represents the index of the selected frame
 							frameIndex: number | *0
 							// Controls whether the panel should show the header
@@ -44,7 +44,7 @@ composableKinds: PanelCfg: {
 								reducer: []
 							}
 							// Controls the height of the rows
-							cellHeight?: ui.TableCellHeight | *"sm"
+							cellHeight?: ui.TableCellHeight & (*"sm" | _)
 						} @cuetsy(kind="interface")
 					},
 				]

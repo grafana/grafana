@@ -417,7 +417,7 @@ func TestGroupingResults(t *testing.T) {
 		},
 	}
 
-	groupedResults, err := groupResults(fakeDataFrame, []string{"@log"})
+	groupedResults, err := groupResults(fakeDataFrame, []string{"@log"}, false)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }
@@ -538,7 +538,72 @@ func TestGroupingResultsWithNumericField(t *testing.T) {
 		},
 	}
 
-	groupedResults, err := groupResults(fakeDataFrame, []string{"httpresponse"})
+	groupedResults, err := groupResults(fakeDataFrame, []string{"httpresponse"}, false)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
+}
+
+func TestGroupingResultsWithRemoveNonTimeTrue(t *testing.T) {
+	logField := data.NewField("@log", data.Labels{}, []*string{
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+		aws.String("fakelog-a"),
+		aws.String("fakelog-b"),
+	})
+
+	streamField := data.NewField("stream", data.Labels{}, []*int32{
+		aws.Int32(1),
+		aws.Int32(1),
+		aws.Int32(1),
+		aws.Int32(1),
+	})
+
+	countField := data.NewField("count", data.Labels{}, []*string{
+		aws.String("100"),
+		aws.String("150"),
+		aws.String("57"),
+		aws.String("62"),
+	})
+
+	timeA := time.Time{}
+	timeB := time.Time{}.Add(1 * time.Minute)
+	fakeDataFrame := &data.Frame{
+		Name: "CloudWatchLogsResponse",
+		Fields: []*data.Field{
+			data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeA, &timeB, &timeB}),
+			logField,
+			streamField,
+			countField,
+		},
+		RefID: "",
+	}
+
+	expectedGroupedFrames := []*data.Frame{
+		{
+			Name: "fakelog-a1",
+			Fields: []*data.Field{
+				data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeB}),
+				data.NewField("count", data.Labels{}, []*string{
+					aws.String("100"),
+					aws.String("57"),
+				}),
+			},
+			RefID: "",
+		},
+		{
+			Name: "fakelog-b1",
+			Fields: []*data.Field{
+				data.NewField("@timestamp", data.Labels{}, []*time.Time{&timeA, &timeB}),
+				data.NewField("count", data.Labels{}, []*string{
+					aws.String("150"),
+					aws.String("62"),
+				}),
+			},
+			RefID: "",
+		},
+	}
+
+	groupedResults, err := groupResults(fakeDataFrame, []string{"@log", "stream"}, true)
 	require.NoError(t, err)
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }

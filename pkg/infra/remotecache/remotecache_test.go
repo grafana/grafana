@@ -95,7 +95,8 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	assert.Equal(t, err, nil)
 
 	_, err = client.Get(context.Background(), "key1")
-	assert.Equal(t, err, ErrCacheItemNotFound)
+	// redis client returns redis.Nil error when key does not exist.
+	assert.Error(t, err)
 }
 
 func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
@@ -109,7 +110,8 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 
 	// should not be able to read that value since its expired
 	_, err = client.Get(context.Background(), "key1")
-	assert.Equal(t, err, ErrCacheItemNotFound)
+	// redis client returns redis.Nil error when key does not exist.
+	assert.Error(t, err)
 }
 
 func TestCollectUsageStats(t *testing.T) {
@@ -167,39 +169,6 @@ func TestEncryptedCache(t *testing.T) {
 	v, err = encryptedCache.Get(context.Background(), "foo")
 	require.NoError(t, err)
 	require.Equal(t, "bar", string(v))
-}
-
-type fakeCacheStorage struct {
-	storage map[string][]byte
-}
-
-func (fcs fakeCacheStorage) Set(_ context.Context, key string, value []byte, exp time.Duration) error {
-	fcs.storage[key] = value
-	return nil
-}
-
-func (fcs fakeCacheStorage) Get(_ context.Context, key string) ([]byte, error) {
-	value, exist := fcs.storage[key]
-	if !exist {
-		return nil, ErrCacheItemNotFound
-	}
-
-	return value, nil
-}
-
-func (fcs fakeCacheStorage) Delete(_ context.Context, key string) error {
-	delete(fcs.storage, key)
-	return nil
-}
-
-func (fcs fakeCacheStorage) Count(_ context.Context, prefix string) (int64, error) {
-	return int64(len(fcs.storage)), nil
-}
-
-func NewFakeCacheStorage() CacheStorage {
-	return fakeCacheStorage{
-		storage: map[string][]byte{},
-	}
 }
 
 type fakeSecretsService struct{}

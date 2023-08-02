@@ -12,7 +12,7 @@ jest.mock('./Graph/ExploreGraph', () => {
   };
 });
 
-function renderPanel(logsVolumeData?: DataQueryResponse) {
+function renderPanel(logsVolumeData: DataQueryResponse) {
   render(
     <LogsVolumePanel
       absoluteRange={{ from: 0, to: 1 }}
@@ -24,24 +24,15 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       onLoadLogsVolume={() => {}}
       onHiddenSeriesChanged={() => null}
       eventBus={new EventBusSrv()}
+      allLogsVolumeMaximum={20}
     />
   );
 }
 
 describe('LogsVolumePanel', () => {
-  it('shows no volume data', () => {
-    renderPanel({ state: LoadingState.Done, error: undefined, data: [] });
-    expect(screen.getByText('No volume data.')).toBeInTheDocument();
-  });
-
   it('renders logs volume histogram graph', () => {
     renderPanel({ state: LoadingState.Done, error: undefined, data: [{}] });
     expect(screen.getByText('ExploreGraph')).toBeInTheDocument();
-  });
-
-  it('does not show the panel when there is no volume data', () => {
-    renderPanel(undefined);
-    expect(screen.queryByText('Log volume')).not.toBeInTheDocument();
   });
 
   it('renders a loading indicator when data is streaming', () => {

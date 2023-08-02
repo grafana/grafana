@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -153,6 +154,7 @@ func TestMigrations(t *testing.T) {
 			config: &setting.Cfg{
 				EditorsCanAdmin:        true,
 				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
+				Raw:                    ini.Empty(),
 			},
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
@@ -181,6 +183,7 @@ func TestMigrations(t *testing.T) {
 			desc: "without editors can admin",
 			config: &setting.Cfg{
 				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
+				Raw:                    ini.Empty(),
 			},
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
@@ -256,7 +259,10 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x).CleanDB()
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+	mg := migrator.NewMigrator(x, &setting.Cfg{
+		Logger: log.New("acmigration.test"),
+		Raw:    ini.Empty(),
+	})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 

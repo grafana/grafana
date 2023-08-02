@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React, { LegacyRef } from 'react';
 
-import { useStyles2, Tooltip } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -19,26 +20,18 @@ const FlameGraphTooltip = ({ data, tooltipRef, item, totalTicks }: Props) => {
   if (item) {
     const tooltipData = getTooltipData(data, item, totalTicks);
     content = (
-      <Tooltip
-        content={
-          <div>
-            <p>{data.getLabel(item.itemIndex)}</p>
-            <p className={styles.lastParagraph}>
-              {tooltipData.unitTitle}
-              <br />
-              Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
-              <br />
-              Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
-              <br />
-              Samples: <b>{tooltipData.samples}</b>
-            </p>
-          </div>
-        }
-        placement={'right'}
-        show={true}
-      >
-        <span></span>
-      </Tooltip>
+      <div className={styles.tooltipContent}>
+        <p>{data.getLabel(item.itemIndex)}</p>
+        <p className={styles.lastParagraph}>
+          {tooltipData.unitTitle}
+          <br />
+          Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
+          <br />
+          Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
+          <br />
+          Samples: <b>{tooltipData.samples}</b>
+        </p>
+      </div>
     );
   }
 
@@ -93,14 +86,31 @@ export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, t
   };
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   tooltip: css`
+    title: tooltip;
     position: fixed;
   `,
+  tooltipContent: css`
+    title: tooltipContent;
+    background-color: ${theme.components.tooltip.background};
+    border-radius: ${theme.shape.radius.default};
+    border: 1px solid ${theme.components.tooltip.background};
+    box-shadow: ${theme.shadows.z2};
+    color: ${theme.components.tooltip.text};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    padding: ${theme.spacing(0.5, 1)};
+    transition: opacity 0.3s;
+    z-index: ${theme.zIndex.tooltip};
+    max-width: 400px;
+    overflow-wrap: break-word;
+  `,
   lastParagraph: css`
+    title: lastParagraph;
     margin-bottom: 0;
   `,
   name: css`
+    title: name;
     margin-bottom: 10px;
   `,
 });

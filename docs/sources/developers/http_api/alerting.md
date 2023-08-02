@@ -10,18 +10,24 @@ keywords:
   - api
   - alerting
   - alerts
-title: 'Alerting HTTP API '
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy Alerting API
 ---
 
 # Legacy Alerting API
 
-> **Note:** Starting with v9.0, the Legacy Alerting HTTP API is deprecated. It will be removed in a future release.
+{{% admonition type="note" %}}
+Starting with v9.0, the Legacy Alerting HTTP API is deprecated. It will be removed in a future release.
+{{% /admonition %}}
 
-This topic is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only.
+This topic is relevant for the [legacy dashboard alerts](/docs/grafana/v8.5/alerting/old-alerting/) only.
 
-If you are using Grafana Alerting, refer to [Alerting provisioning API]({{< relref "/docs/grafana/latest/developers/http_api/alerting_provisioning" >}})
+If you are using Grafana Alerting, refer to [Alerting provisioning API]({{< relref "./alerting_provisioning" >}})
 
-You can find Grafana Alerting API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana Alerting alerts documentation]({{< relref "/docs/grafana/latest/alerting" >}}) for details on how to create and manage new alerts.
+You can find Grafana Alerting API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json). Also, refer to [Grafana Alerting alerts documentation]({{< relref "../../alerting" >}}) for details on how to create and manage new alerts.
 
 You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert.
 To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.

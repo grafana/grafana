@@ -9,6 +9,11 @@ export interface PromVisualQuery {
   labels: QueryBuilderLabelFilter[];
   operations: QueryBuilderOperation[];
   binaryQueries?: PromVisualQueryBinary[];
+  // metrics modal additional settings
+  useBackend?: boolean;
+  disableTextWrap?: boolean;
+  excludeNullMetadata?: boolean;
+  fullMetaSearch?: boolean;
 }
 
 export type PromVisualQueryBinary = VisualQueryBinary<PromVisualQuery>;

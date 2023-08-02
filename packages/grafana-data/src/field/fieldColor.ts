@@ -1,5 +1,8 @@
 import { interpolateRgbBasis } from 'd3-interpolate';
+import stringHash from 'string-hash';
+import tinycolor from 'tinycolor2';
 
+import { colorManipulator } from '../themes';
 import { GrafanaTheme2 } from '../themes/types';
 import { reduceField } from '../transformations/fieldReducer';
 import { FALLBACK_COLOR, Field, FieldColorModeId, Threshold } from '../types';
@@ -18,6 +21,7 @@ export interface FieldColorMode extends RegistryItem {
   getColors?: (theme: GrafanaTheme2) => string[];
   isContinuous?: boolean;
   isByValue?: boolean;
+  useSeriesName?: boolean;
 }
 
 /** @internal */
@@ -28,6 +32,12 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Single color',
       description: 'Set a specific color',
       getCalculator: getFixedColor,
+    },
+    {
+      id: FieldColorModeId.Shades,
+      name: 'Shades of a color',
+      description: 'Select shades of a specific color',
+      getCalculator: getShadedColor,
     },
     {
       id: FieldColorModeId.Thresholds,
@@ -48,6 +58,22 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       isByValue: false,
       getColors: (theme: GrafanaTheme2) => {
         return theme.visualization.palette;
+      },
+    }),
+    new FieldColorSchemeMode({
+      id: FieldColorModeId.PaletteClassicByName,
+      name: 'Classic palette (by series name)',
+      isContinuous: false,
+      isByValue: false,
+      useSeriesName: true,
+      getColors: (theme: GrafanaTheme2) => {
+        return theme.visualization.palette.filter(
+          (color) =>
+            colorManipulator.getContrastRatio(
+              theme.visualization.getColorByName(color),
+              theme.colors.background.primary
+            ) >= theme.colors.contrastThreshold
+        );
       },
     }),
     new FieldColorSchemeMode({
@@ -130,6 +156,7 @@ interface FieldColorSchemeModeOptions {
   getColors: (theme: GrafanaTheme2) => string[];
   isContinuous: boolean;
   isByValue: boolean;
+  useSeriesName?: boolean;
 }
 
 export class FieldColorSchemeMode implements FieldColorMode {
@@ -138,6 +165,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
   description?: string;
   isContinuous: boolean;
   isByValue: boolean;
+  useSeriesName?: boolean;
   colorCache?: string[];
   colorCacheTheme?: GrafanaTheme2;
   interpolator?: (value: number) => string;
@@ -150,6 +178,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
     this.getNamedColors = options.getColors;
     this.isContinuous = options.isContinuous;
     this.isByValue = options.isByValue;
+    this.useSeriesName = options.useSeriesName;
   }
 
   getColors(theme: GrafanaTheme2): string[] {
@@ -188,6 +217,10 @@ export class FieldColorSchemeMode implements FieldColorMode {
           return colors[percent * (colors.length - 1)];
         };
       }
+    } else if (this.useSeriesName) {
+      return (_: number, _percent: number, _threshold?: Threshold) => {
+        return colors[Math.abs(stringHash(field.name)) % colors.length];
+      };
     } else {
       return (_: number, _percent: number, _threshold?: Threshold) => {
         const seriesIndex = field.state?.seriesIndex ?? 0;
@@ -234,5 +267,41 @@ export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorSc
 function getFixedColor(field: Field, theme: GrafanaTheme2) {
   return () => {
     return theme.visualization.getColorByName(field.config.color?.fixedColor ?? FALLBACK_COLOR);
+  };
+}
+
+function getShadedColor(field: Field, theme: GrafanaTheme2) {
+  return () => {
+    const baseColorString: string = theme.visualization.getColorByName(
+      field.config.color?.fixedColor ?? FALLBACK_COLOR
+    );
+
+    const colors: string[] = [
+      baseColorString, // start with base color
+    ];
+
+    const shadesCount = 6;
+    const maxHueSpin = 10; // hue spin, max is 360
+    const maxDarken = 35; // max 100%
+    const maxBrighten = 35; // max 100%
+
+    for (let i = 1; i < shadesCount; i++) {
+      // push alternating darker and brighter shades
+      colors.push(
+        tinycolor(baseColorString)
+          .spin((i / shadesCount) * maxHueSpin)
+          .brighten((i / shadesCount) * maxDarken)
+          .toHexString()
+      );
+      colors.push(
+        tinycolor(baseColorString)
+          .spin(-(i / shadesCount) * maxHueSpin)
+          .darken((i / shadesCount) * maxBrighten)
+          .toHexString()
+      );
+    }
+
+    const seriesIndex = field.state?.seriesIndex ?? 0;
+    return colors[seriesIndex % colors.length];
   };
 }

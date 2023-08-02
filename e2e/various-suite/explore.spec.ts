@@ -11,7 +11,15 @@ e2e.scenario({
     e2e.pages.Explore.General.container().should('have.length', 1);
     e2e.components.RefreshPicker.runButtonV2().should('have.length', 1);
 
+    // delete query history queries that would be unrelated
+    e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
+    cy.get('button[title="Delete query"]').each((button) => {
+      button.trigger('click');
+    });
+    e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
+
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
+      .scrollIntoView()
       .should('be.visible')
       .within(() => {
         e2e().get('input[id*="test-data-scenario-select-"]').should('be.visible').click();

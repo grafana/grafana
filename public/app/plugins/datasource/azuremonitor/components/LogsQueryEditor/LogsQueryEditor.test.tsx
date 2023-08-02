@@ -170,7 +170,7 @@ describe('LogsQueryEditor', () => {
     await userEvent.click(advancedSection);
 
     const advancedInput = await screen.findByTestId('input-advanced-resource-picker-1');
-    // const advancedInput = await screen.findByLabelText('Resource URI(s)');
+
     await userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });

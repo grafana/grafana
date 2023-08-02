@@ -5,7 +5,7 @@ composableKinds: PanelCfg: lineage: {
 		{
 			schemas: [
 				{
-					PanelOptions: {
+					Options: {
 						foo: string
 					} @cuetsy(kind="interface")
 				},

@@ -100,12 +100,10 @@ export const InputWithAutoFocus = () => {
   );
 };
 
-export const Basic: ComponentStory<React.ComponentType<SegmentInputProps<string | number>>> = (
-  args: SegmentInputProps<string | number>
-) => {
+export const Basic: ComponentStory<React.ComponentType<SegmentInputProps>> = (args: SegmentInputProps) => {
   const [value, setValue] = useState(args.value);
 
-  const props: SegmentInputProps<string | number> = {
+  const props: SegmentInputProps = {
     ...args,
     value,
     onChange: (value) => {
@@ -117,7 +115,7 @@ export const Basic: ComponentStory<React.ComponentType<SegmentInputProps<string 
 
   return (
     <SegmentSection label="Segment:">
-      <SegmentInput<string | number> {...props} />
+      <SegmentInput {...props} />
     </SegmentSection>
   );
 };

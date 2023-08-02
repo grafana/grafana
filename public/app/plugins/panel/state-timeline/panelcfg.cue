@@ -25,21 +25,21 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							ui.OptionsWithLegend
 							ui.OptionsWithTooltip
 							ui.OptionsWithTimezones
 
 							//Show timeline values on chart
-							showValue: ui.VisibilityMode | *"auto"
+							showValue: ui.VisibilityMode & (*"auto" | _)
 							//Controls the row height
 							rowHeight: float & <=1 | *0.9
 							//Merge equal consecutive values
 							mergeValues?: bool | *true
 							//Controls value alignment on the timelines
-							alignValue?: ui.TimelineValueAlignment | *"left"
+							alignValue?: ui.TimelineValueAlignment & (*"left" | _)
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: {
+						FieldConfig: {
 							ui.HideableFieldConfig
 							lineWidth?:   uint32 & <=10 | *0
 							fillOpacity?: uint32 & <=100 | *70

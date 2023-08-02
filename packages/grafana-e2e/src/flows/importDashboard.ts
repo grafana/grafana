@@ -20,10 +20,9 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
   e2e().visit(fromBaseUrl('/dashboard/import'));
 
   // Note: normally we'd use 'click' and then 'type' here, but the json object is so big that using 'val' is much faster
-  e2e.components.DashboardImportPage.textarea()
-    .should('be.visible')
-    .click()
-    .invoke('val', JSON.stringify(dashboardToImport));
+  e2e.components.DashboardImportPage.textarea().should('be.visible');
+  e2e.components.DashboardImportPage.textarea().click();
+  e2e.components.DashboardImportPage.textarea().invoke('val', JSON.stringify(dashboardToImport));
   e2e.components.DashboardImportPage.submit().should('be.visible').click();
   e2e.components.ImportDashboardForm.name().should('be.visible').click().clear().type(dashboardToImport.title);
   e2e.components.ImportDashboardForm.submit().should('be.visible').click();

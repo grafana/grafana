@@ -15,10 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -36,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -609,11 +609,6 @@ type scenarioContext struct {
 	sqlStore       db.DB
 }
 
-type folderACLItem struct {
-	roleType   org.RoleType
-	permission dashboards.PermissionType
-}
-
 func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement {
 	var libraryElementModel = libraryElementModel{}
 	err := json.Unmarshal(res.Model, &libraryElementModel)
@@ -699,87 +694,49 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	}
 
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
-	ac := acmock.New()
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	service := dashboardservice.ProvideDashboardServiceImpl(
+	dashPermissionService := acmock.NewMockedPermissionsService()
+	dashPermissionService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, dashAlertService,
-		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), ac,
+		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(),
 	)
+	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
 
 	return dashboard
 }
 
-func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user *user.SignedInUser,
-	items []folderACLItem) *folder.Folder {
+func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder {
 	t.Helper()
 
-	ac := acmock.New()
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	features := featuremgmt.WithFeatures()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 
 	t.Logf("Creating folder with title and UID %q", title)
-	ctx := appcontext.WithUser(context.Background(), user)
-	folder, err := s.Create(ctx, &folder.CreateFolderCommand{OrgID: user.OrgID, Title: title, UID: title, SignedInUser: user})
+	ctx := appcontext.WithUser(context.Background(), sc.user)
+	folder, err := s.Create(ctx, &folder.CreateFolderCommand{OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: sc.user})
 	require.NoError(t, err)
-
-	updateFolderACL(t, dashboardStore, folder.ID, items)
 
 	return folder
 }
 
-func updateFolderACL(t *testing.T, dashboardStore dashboards.Store, folderID int64, items []folderACLItem) {
-	t.Helper()
-
-	if len(items) == 0 {
-		return
-	}
-
-	var aclItems []*dashboards.DashboardACL
-	for _, item := range items {
-		role := item.roleType
-		permission := item.permission
-		aclItems = append(aclItems, &dashboards.DashboardACL{
-			DashboardID: folderID,
-			Role:        &role,
-			Permission:  permission,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		})
-	}
-
-	err := dashboardStore.UpdateDashboardACL(context.Background(), folderID, aclItems)
-	require.NoError(t, err)
-}
-
 func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext)) {
-	store := dbtest.NewFakeDB()
-
-	dashSvc := dashboards.NewFakeDashboardService(t)
-	var result *dashboards.Dashboard
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		result = &dashboards.Dashboard{
-			ID:  q.ID,
-			UID: q.UID,
-		}
-	}).Return(result, nil)
-	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, &teamtest.FakeService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
@@ -828,22 +785,31 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
 		orgID := int64(1)
 		role := org.RoleAdmin
 		sqlStore, cfg := db.InitTestDBwithCfg(t)
 		quotaService := quotatest.New(false, nil)
+
+		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
+		dashStore := &dashboards.FakeDashboardStore{}
+		dashStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil)
+		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
+		dashPermissionService := acmock.NewMockedPermissionsService()
+		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
+			setting.NewCfg(), dashStore, folderStore, dashAlertService,
+			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
+			foldertest.NewFakeService(),
+		)
+		require.NoError(t, err)
+		guardian.InitAccessControlGuardian(setting.NewCfg(), sqlStore, ac, acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), dashService)
+
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
-
 		features := featuremgmt.WithFeatures()
-		ac := acmock.New()
-
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures())
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
@@ -858,6 +824,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			OrgID:      orgID,
 			OrgRole:    role,
 			LastSeenAt: time.Now(),
+			// Allow the user to create folders
+			Permissions: map[int64]map[string][]string{
+				orgID: {
+					dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll},
+				},
+			},
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
@@ -883,7 +855,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore:       sqlStore,
 		}
 
-		foldr := createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{})
+		foldr := createFolder(t, sc, "ScenarioFolder")
 		sc.folder = &folder.Folder{
 			ID:        foldr.ID,
 			UID:       foldr.UID,

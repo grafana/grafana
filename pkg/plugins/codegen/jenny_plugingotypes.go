@@ -41,6 +41,7 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 			Group: decl.SchemaInterface.IsGroup(),
 			Config: &copenapi.Config{
 				ExpandReferences: true,
+				MaxCycleDepth:    10,
 			},
 		},
 		PackageName: slotname,

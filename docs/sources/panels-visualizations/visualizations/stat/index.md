@@ -10,6 +10,11 @@ keywords:
   - grafana
   - docs
   - stat panel
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Stat
 weight: 900
 ---
@@ -20,7 +25,9 @@ The Stat panel visualization shows a one large stat value with an optional graph
 
 {{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
-> **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
+{{% admonition type="note" %}}
+This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0 and removed in Grafana 8.0.
+{{% /admonition %}}
 
 By default, the Stat panel displays one of the following:
 

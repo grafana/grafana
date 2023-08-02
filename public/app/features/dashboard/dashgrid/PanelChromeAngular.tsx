@@ -28,6 +28,7 @@ interface OwnProps {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   hideMenu?: boolean;

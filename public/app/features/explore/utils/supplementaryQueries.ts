@@ -73,7 +73,7 @@ const createFallbackLogVolumeProvider = (
   datasourceName: string
 ): Observable<DataQueryResponse> => {
   return new Observable<DataQueryResponse>((observer) => {
-    explorePanelData.subscribe((exploreData) => {
+    return explorePanelData.subscribe((exploreData) => {
       if (
         exploreData.logsResult &&
         exploreData.logsResult.rows &&

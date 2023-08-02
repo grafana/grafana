@@ -38,7 +38,7 @@ composableKinds: PanelCfg: {
 
 						DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" @cuetsy(kind="enum")
 
-						PanelOptions: {
+						Options: {
 							mode:      DebugMode
 							counters?: UpdateConfig
 						} @cuetsy(kind="interface")

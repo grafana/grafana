@@ -45,7 +45,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
 
   return (
     <>
-      <h6>Azure Authentication</h6>
+      <h6>Azure authentication</h6>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
         credentials={credentials}
@@ -55,7 +55,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
       />
       {overrideAudienceAllowed && (
         <>
-          <h6>Azure Configuration</h6>
+          <h6>Azure configuration</h6>
           <div className="gf-form-group">
             <InlineFieldRow>
               <InlineField labelWidth={26} label="Override AAD audience" disabled={dataSourceConfig.readOnly}>

@@ -144,6 +144,11 @@ export function trackQuery(
     return;
   }
 
+  // TODO: We need to re-think this for split queries
+  if (config.featureToggles.lokiQuerySplitting) {
+    return;
+  }
+
   let totalBytes = 0;
   for (const frame of response.data) {
     const byteKey = frame.meta?.custom?.lokiQueryStatKey;
@@ -171,7 +176,8 @@ export function trackQuery(
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
       resolution: query.resolution,
-      simultaneously_sent_query_count: queries.length,
+      simultaneously_executed_query_count: queries.filter((query) => !query.hide).length,
+      simultaneously_hidden_query_count: queries.filter((query) => query.hide).length,
       time_range_from: request?.range?.from?.toISOString(),
       time_range_to: request?.range?.to?.toISOString(),
       time_taken: Date.now() - startTime.getTime(),

@@ -73,10 +73,21 @@ func (b *SearchRequestBuilder) Size(size int) *SearchRequestBuilder {
 	return b
 }
 
-// SortDesc adds a sort to the search request
-func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchRequestBuilder {
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "asc"
+	SortOrderDesc SortOrder = "desc"
+)
+
+// Sort adds a "asc" | "desc" sort to the search request
+func (b *SearchRequestBuilder) Sort(order SortOrder, field string, unmappedType string) *SearchRequestBuilder {
+	if order != SortOrderAsc && order != SortOrderDesc {
+		return b
+	}
+
 	props := map[string]string{
-		"order": "desc",
+		"order": string(order),
 	}
 
 	if unmappedType != "" {
@@ -85,6 +96,12 @@ func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchReque
 
 	b.sort[field] = props
 
+	return b
+}
+
+// AddTimeFieldWithStandardizedFormat adds a time field to fields with standardized time format
+func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) *SearchRequestBuilder {
+	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
 	return b
 }
 
@@ -107,6 +124,16 @@ func (b *SearchRequestBuilder) AddHighlight() *SearchRequestBuilder {
 		"post_tags":     []string{HighlightPostTagsString},
 		"fragment_size": HighlightFragmentSize,
 	}
+	return b
+}
+
+func (b *SearchRequestBuilder) AddSearchAfter(value interface{}) *SearchRequestBuilder {
+	if b.customProps["search_after"] == nil {
+		b.customProps["search_after"] = []interface{}{value}
+	} else {
+		b.customProps["search_after"] = append(b.customProps["search_after"].([]interface{}), value)
+	}
+
 	return b
 }
 

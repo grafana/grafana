@@ -71,6 +71,12 @@ type UnifiedAlertingSettings struct {
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
 	HAPushPullInterval             time.Duration
+	HARedisAddr                    string
+	HARedisPeerName                string
+	HARedisPrefix                  string
+	HARedisUsername                string
+	HARedisPassword                string
+	HARedisDB                      int
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -86,6 +92,8 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -224,6 +232,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(alertmanagerDefaultClusterAddr)
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
+	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
+	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
+	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")
+	uaCfg.HARedisUsername = ua.Key("ha_redis_username").MustString("")
+	uaCfg.HARedisPassword = ua.Key("ha_redis_password").MustString("")
+	uaCfg.HARedisDB = ua.Key("ha_redis_db").MustInt(0)
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
@@ -337,6 +351,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
