@@ -83,11 +83,6 @@ type runner struct {
 	client *client
 }
 
-// This is an interface to help testing
-type queryRunner interface {
-	runQuery(ctx context.Context, q string) (*flight.FlightInfo, error)
-}
-
 // runQuery executes flightSQL and returns a flightSQL typed result.
 func (r *runner) runQuery(ctx context.Context, flightSQLQuery string) (*flight.FlightInfo, error) {
 	return r.client.Execute(ctx, flightSQLQuery)
