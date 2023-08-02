@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 interface DividerProps {
   direction?: 'vertical' | 'horizontal';
@@ -11,8 +11,7 @@ interface DividerProps {
 }
 
 export const Divider = ({ direction = 'horizontal', spacing = 2 }: DividerProps) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme, spacing);
+  const styles = useStyles2(useCallback((theme) => getStyles(theme, spacing), [spacing]));
 
   if (direction === 'vertical') {
     return <div className={styles.verticalDivider}></div>;
