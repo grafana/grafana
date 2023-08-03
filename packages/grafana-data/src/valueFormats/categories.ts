@@ -346,9 +346,9 @@ export const getCategories = (): ValueFormatCategory[] => [
     formats: [
       { name: 'Revolutions per minute (rpm)', id: 'rotrpm', fn: toFixedUnit('rpm') },
       { name: 'Hertz (Hz)', id: 'rothz', fn: SIPrefix('Hz') },
-      { name: 'Kilohertz (kHz)', id: 'rotkhz', fn: SIPrefix('kHz', 1) },
-      { name: 'Megahertz (MHz)', id: 'rotmhz', fn: SIPrefix('MHz', 2) },
-      { name: 'Gigahertz (GHz)', id: 'rotghz', fn: SIPrefix('GHz', 3) },
+      { name: 'Kilohertz (kHz)', id: 'rotkhz', fn: SIPrefix('Hz', 1) },
+      { name: 'Megahertz (MHz)', id: 'rotmhz', fn: SIPrefix('Hz', 2) },
+      { name: 'Gigahertz (GHz)', id: 'rotghz', fn: SIPrefix('Hz', 3) },
       { name: 'Radians per second (rad/s)', id: 'rotrads', fn: toFixedUnit('rad/s') },
       { name: 'Degrees per second (°/s)', id: 'rotdegs', fn: toFixedUnit('°/s') },
     ],
