@@ -13,6 +13,7 @@
 
 # Documentation
 /.changelog-archive @grafana/docs-grafana
+/.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-delivery
 /CODE_OF_CONDUCT.md @grafana/docs-grafana
 /CONTRIBUTING.md @grafana/docs-grafana
