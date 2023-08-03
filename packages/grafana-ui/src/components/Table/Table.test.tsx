@@ -562,6 +562,11 @@ describe('Table', () => {
       expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();
 
       expect(within(rowsAfterClick[2]).queryByRole('table')).toBeNull();
+
+      expect(within(rows[0]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+      expect(within(rows[2]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+      expect(within(rows[3]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+      expect(within(rows[4]).queryByLabelText('Expand row')).not.toBeInTheDocument();
     });
   });
 });
