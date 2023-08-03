@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -518,6 +519,41 @@ func TestLoader_Load(t *testing.T) {
 		require.Equal(t, []*plugins.Plugin{p}, got)
 		require.Equal(t, []string{"discover", "bootstrap", "initialize"}, steps)
 		require.Zero(t, len(l.PluginErrors()))
+	})
+}
+
+func TestLoader_Unload(t *testing.T) {
+	t.Run("Termination stage error is returned from Unload", func(t *testing.T) {
+		pluginID := "grafana-test-panel"
+		cfg := &config.Cfg{}
+		angularInspector, err := angularinspector.NewStaticInspector()
+		require.NoError(t, err)
+
+		tcs := []struct {
+			expectedErr error
+		}{
+			{
+				expectedErr: errors.New("plugin not found"),
+			},
+			{
+				expectedErr: nil,
+			},
+		}
+
+		for _, tc := range tcs {
+			l := New(cfg, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(),
+				fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), angularInspector,
+				&fakes.FakeOauthService{}, &fakes.FakeDiscoverer{}, &fakes.FakeBootstrapper{}, &fakes.FakeInitializer{},
+				&fakes.FakeTerminator{
+					TerminateFunc: func(ctx context.Context, pID string) error {
+						require.Equal(t, pluginID, pID)
+						return tc.expectedErr
+					},
+				})
+
+			err = l.Unload(context.Background(), pluginID)
+			require.ErrorIs(t, err, tc.expectedErr)
+		}
 	})
 }
 
