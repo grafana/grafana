@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
@@ -64,6 +65,7 @@ type service struct {
 
 	restConfig *rest.Config
 	rr         routing.RouteRegister
+	corereg    *corekind.Base
 
 	restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter
 
@@ -73,11 +75,12 @@ type service struct {
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter) (*service, error) {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, restOptionsGetter func(runtime.Codec) genericregistry.RESTOptionsGetter, corereg *corekind.Base) (*service, error) {
 	s := &service{
 		rr:       rr,
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
+		corereg:  corereg,
 
 		restOptionsGetter: restOptionsGetter,
 	}
@@ -129,10 +132,11 @@ func (s *service) start(ctx context.Context) error {
 	// plugins that depend on the Core V1 APIs and informers.
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
+	grafanaAdmission.RegisterSchemaValidate(o.RecommendedOptions.Admission.Plugins, s.corereg)
 	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
