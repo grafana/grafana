@@ -62,7 +62,7 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
-      return filter.tag ? await languageProvider.getOptionsV2(scopedTag) : [];
+      return filter.tag ? await languageProvider.getOptionsV2(scopedTag, query) : [];
     } catch (error) {
       // Display message if Tempo is connected but search 404's
       if (isFetchError(error) && error?.status === 404) {
