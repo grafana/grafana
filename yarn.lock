@@ -3786,9 +3786,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/experimental@grafana/grafana-experimental#664c67d1070e50e7c176036b2b93df2ea7ca987f":
+"@grafana/experimental@grafana/grafana-experimental#44c73c843136cea876b620c127d6d5c76bdcde59":
   version: 1.6.2
-  resolution: "@grafana/experimental@https://github.com/grafana/grafana-experimental.git#commit=664c67d1070e50e7c176036b2b93df2ea7ca987f"
+  resolution: "@grafana/experimental@https://github.com/grafana/grafana-experimental.git#commit=44c73c843136cea876b620c127d6d5c76bdcde59"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
@@ -3801,7 +3801,7 @@ __metadata:
     react-dom: 17.0.2
     react-select: ^5.2.1
     rxjs: 7.8.0
-  checksum: 6192500050a87b75cd65bb03f6ce045bfccc930f55655b57acbeb3e984edea11d151546f97f4b4c7a1d5d5f8a234d63fe795d0062861dd9ce8f678b0d527e5e5
+  checksum: 8d3c8c65aab227ebba0d234de1faf530c29a255e66a4b8ede8163beac6fc325a18d5b340d3bf9882320377a0073a2697c9f3786c0057260f674d87f9b03a1034
   languageName: node
   linkType: hard
 
@@ -19275,7 +19275,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.0
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": "grafana/grafana-experimental#664c67d1070e50e7c176036b2b93df2ea7ca987f"
+    "@grafana/experimental": "grafana/grafana-experimental#44c73c843136cea876b620c127d6d5c76bdcde59"
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1

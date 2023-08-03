@@ -264,7 +264,7 @@
     "@grafana/aws-sdk": "0.0.47",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "grafana/grafana-experimental#664c67d1070e50e7c176036b2b93df2ea7ca987f",
+    "@grafana/experimental": "grafana/grafana-experimental#44c73c843136cea876b620c127d6d5c76bdcde59",
     "@grafana/faro-core": "1.1.2",
     "@grafana/faro-web-sdk": "1.1.2",
     "@grafana/google-sdk": "0.1.1",
