@@ -255,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.medium}`,
       cursor: 'grab',
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
       height: isConflicting ? 'auto' : '100%',

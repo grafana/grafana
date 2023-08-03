@@ -5,8 +5,7 @@ import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Alert, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
@@ -297,7 +296,7 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css`
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
     border-bottom: none;
   `,
@@ -313,8 +312,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.secondary};
 
     border-bottom: solid 1px ${theme.colors.border.weak};
-    border-top-left-radius: ${theme.shape.borderRadius()};
-    border-top-right-radius: ${theme.shape.borderRadius()};
+    border-top-left-radius: ${theme.shape.radius.default};
+    border-top-right-radius: ${theme.shape.radius.default};
   `,
   receiverDescriptionRow: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
@@ -322,8 +321,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css`
     padding: 0 ${theme.spacing(1.5)} ${theme.spacing(1.5)} ${theme.spacing(1.5)};
 
-    border-bottom-left-radius: ${theme.shape.borderRadius()};
-    border-bottom-right-radius: ${theme.shape.borderRadius()};
+    border-bottom-left-radius: ${theme.shape.radius.default};
+    border-bottom-right-radius: ${theme.shape.radius.default};
   `,
   receiversWrapper: css``,
 });
