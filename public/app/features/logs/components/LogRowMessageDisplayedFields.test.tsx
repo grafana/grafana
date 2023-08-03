@@ -21,6 +21,7 @@ const setup = (propOverrides: Partial<Props> = {}, detectedFields = ['place', 'p
     styles,
     detectedFields,
     mouseIsOver: true,
+    onBlur: jest.fn(),
     ...propOverrides,
   };
 

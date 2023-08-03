@@ -2,6 +2,7 @@ package statscollector
 
 import (
 	"context"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -20,6 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	MIN_DELAY = 30
+	MAX_DELAY = 120
 )
 
 type Service struct {
@@ -91,14 +97,21 @@ func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageS
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	s.updateTotalStats(ctx)
-	updateStatsTicker := time.NewTicker(time.Minute * 30)
+	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
+	nextSendInterval := time.Duration(rand.Intn(MAX_DELAY-MIN_DELAY)+MIN_DELAY) * time.Second
+	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
+	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()
 
 	for {
 		select {
 		case <-updateStatsTicker.C:
 			s.updateTotalStats(ctx)
+
+			if nextSendInterval != sendInterval {
+				nextSendInterval = sendInterval
+				updateStatsTicker.Reset(nextSendInterval)
+			}
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -324,6 +337,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalPublicDashboards.Set(float64(statsResult.PublicDashboards))
 
 	metrics.MStatTotalCorrelations.Set(float64(statsResult.Correlations))
+
+	s.usageStats.SetReadyToReport(ctx)
 
 	dsResult, err := s.statsService.GetDataSourceStats(ctx, &stats.GetDataSourceStatsQuery{})
 	if err != nil {
