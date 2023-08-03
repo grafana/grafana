@@ -129,6 +129,7 @@ Experimental features might be changed or removed without prior notice.
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                              |
 | `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
+| `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
 
 ## Development feature toggles
 
