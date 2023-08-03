@@ -36,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const loginCookieName = "grafana_session"
+
 func fakeSetIndexViewData(t *testing.T) {
 	origSetIndexViewData := setIndexViewData
 	t.Cleanup(func() {
@@ -110,7 +112,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		return response.Empty(http.StatusOK)
 	})
 
-	cfg.LoginCookieName = "grafana_session"
+	cfg.LoginCookieName = loginCookieName
 	setting.SecretKey = "login_testing"
 
 	cfg.OAuthAutoLogin = true
@@ -551,7 +553,7 @@ func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 	assert.Equal(t, "/", location[0])
 	setCookie := sc.resp.Header()["Set-Cookie"]
 	require.NotNil(t, setCookie, "Set-Cookie should exist")
-	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
+	assert.Equal(t, fmt.Sprintf("%s=; Path=/; Max-Age=0; HttpOnly", loginCookieName), setCookie[0])
 }
 
 func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T) {
@@ -569,7 +571,7 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	}
 
 	sc := setupScenarioContext(t, "/login")
-	sc.cfg.LoginCookieName = "grafana_session"
+	sc.cfg.LoginCookieName = loginCookieName
 	sc.cfg.OAuthAutoLogin = true
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
@@ -602,14 +604,14 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 	assert.Equal(t, "/", location[0])
 	setCookie := sc.resp.Header()["Set-Cookie"]
 	require.NotNil(t, setCookie, "Set-Cookie should exist")
-	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
+	assert.Equal(t, fmt.Sprintf("%s=; Path=/; Max-Age=0; HttpOnly", loginCookieName), setCookie[0])
 }
 
 func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioContext {
 	fakeSetIndexViewData(t)
 
 	sc := setupScenarioContext(t, "/login")
-	sc.cfg.LoginCookieName = "grafana_session"
+	sc.cfg.LoginCookieName = loginCookieName
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
