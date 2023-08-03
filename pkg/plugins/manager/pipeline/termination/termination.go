@@ -11,11 +11,11 @@ import (
 
 // Terminator is responsible for the Termination stage of the plugin loader pipeline.
 type Terminator interface {
-	Terminate(ctx context.Context, uid string) error
+	Terminate(ctx context.Context, pluginID string) error
 }
 
 // ResolveFunc is the function used for the Resolve step of the Termination stage.
-type ResolveFunc func(ctx context.Context, uid string) (*plugins.Plugin, error)
+type ResolveFunc func(ctx context.Context, pluginID string) (*plugins.Plugin, error)
 
 // TerminateFunc is the function used for the Terminate step of the Termination stage.
 type TerminateFunc func(ctx context.Context, p *plugins.Plugin) error
@@ -52,8 +52,8 @@ func New(cfg *config.Cfg, opts Opts) (*Terminate, error) {
 }
 
 // Terminate will execute the Terminate steps of the Termination stage.
-func (t *Terminate) Terminate(ctx context.Context, uid string) error {
-	p, err := t.resolveStep(ctx, uid)
+func (t *Terminate) Terminate(ctx context.Context, pluginID string) error {
+	p, err := t.resolveStep(ctx, pluginID)
 	if err != nil {
 		return err
 	}

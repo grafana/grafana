@@ -28,8 +28,8 @@ func newTerminablePluginResolver(pluginRegistry registry.Service) *TerminablePlu
 }
 
 // Resolve returns a plugin that can be terminated.
-func (r *TerminablePluginResolver) Resolve(ctx context.Context, uid string) (*plugins.Plugin, error) {
-	p, exists := r.pluginRegistry.Plugin(ctx, uid)
+func (r *TerminablePluginResolver) Resolve(ctx context.Context, pluginID string) (*plugins.Plugin, error) {
+	p, exists := r.pluginRegistry.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, plugins.ErrPluginNotInstalled
 	}
