@@ -90,9 +90,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 enabled={providerStatuses[provider.id]?.enabled}
                 configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
-                onClick={() => {
-                  onProviderCardClick(provider);
-                }}
+                onClick={() => onProviderCardClick(provider)}
               />
             ))}
           </div>
@@ -120,6 +118,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 enabled={providerStatuses[provider.id]?.enabled}
                 configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
+                onClick={() => onProviderCardClick(provider)}
               />
             ))}
           </div>
