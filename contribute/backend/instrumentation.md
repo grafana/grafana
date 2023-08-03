@@ -140,13 +140,15 @@ If you want to guarantee the existence of metrics before any observations has ha
 
 ### How to collect and visualize metrics locally
 
+1. Ensure you have docker installed and running on your machine
 1. Start Prometheus
 
    ```bash
    make devenv sources=prometheus
    ```
 
-2. Use Grafana Explore or dashboards to query any exported Grafana metrics
+1. run grafana, and create a prometheus datasource if you do not have one yet. Set the server url to http://localhost:9090, enable basic auth, and type in the same auth you have for local grafana
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. Can also view them at http://localhost:3000/metrics
 
 ## Traces
 
