@@ -22,12 +22,22 @@ weight: 300
 
 # Elasticsearch query editor
 
-{{< figure src="/static/img/docs/elasticsearch/query-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Elasticsearch Query Editor" >}}
+{{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-This topic explains querying specific to the Elasticsearch data source.
+<!-- This topic explains querying specific to the Elasticsearch data source. -->
+
+Grafana provides a query editor for Elasticsearch's Query DSL language. See [Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html) if you are new to working with Elasticsearch.
+
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
 ## Select and edit metrics
+
+- **Query type** -
+
+metrics -  
+logs -  
+raw data -  
+raw document - _deprecated\*\*_ - Deprecated as of Grafana version xxxx
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
