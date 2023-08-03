@@ -256,7 +256,7 @@ func (e *State) union(aResults, bResults Results, biNode *parse.BinaryNode) []*U
 			return unions
 		}
 	}
-	
+
 	for iA, a := range aResults.Values {
 		for iB, b := range bResults.Values {
 			var labels data.Labels
@@ -596,18 +596,18 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 	return res, nil
 }
 
-func (s *State) addDropNotices(r *Results) {
+func (e *State) addDropNotices(r *Results) {
 	nT := strings.Builder{}
 
-	if s.DropCount > 0 && len(r.Values) > 0 {
+	if e.DropCount > 0 && len(r.Values) > 0 {
 		itemsPerNodeLimit := 5 // Limit on dropped items shown per each node in the binary node
 
-		nT.WriteString(fmt.Sprintf("%v items dropped from union(s)", s.DropCount))
-		if len(s.Drops) > 0 {
+		nT.WriteString(fmt.Sprintf("%v items dropped from union(s)", e.DropCount))
+		if len(e.Drops) > 0 {
 			nT.WriteString(": ")
 
 			biNodeDropCount := 0
-			for biNodeText, biNodeDrops := range s.Drops {
+			for biNodeText, biNodeDrops := range e.Drops {
 				nT.WriteString(fmt.Sprintf(`["%s": `, biNodeText))
 
 				nodeCount := 0
