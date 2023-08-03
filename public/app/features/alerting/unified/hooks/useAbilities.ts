@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
+
 import { OrgRole } from '@grafana/data';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
-import { getNotificationsPermissions } from '../utils/access-control';
+import { getInstancesPermissions, getNotificationsPermissions } from '../utils/access-control';
 import { GRAFANA_DATASOURCE_NAME } from '../utils/datasource';
 
 export enum Action {
@@ -13,10 +15,13 @@ export enum Action {
   EditContactPoint,
   DeleteContactPoint,
   ExportContactPoint,
+  // silences
+  CreateSilence,
+  UpdateSilence,
 }
 
-type Ability = [actionSupported: boolean, actionPermitted: boolean];
-type Abilities = Record<Action, Ability>;
+export type Ability = [actionSupported: boolean, actionPermitted: boolean];
+export type Abilities = Record<Action, Ability>;
 
 const RULER_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
 
@@ -25,7 +30,7 @@ const RULER_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, Al
  *  1. action is supported in the current alertmanager context
  *  2. user is allowed to perform actions based on their set of permissions / assigned role
  */
-function useAbilities(): Abilities {
+export function useAbilities(): Abilities {
   const { selectedAlertmanager, selectedAlertmanagerConfig } = useAlertmanager();
 
   // determine if we're dealing with an Alertmanager data source that supports the ruler API
@@ -39,6 +44,7 @@ function useAbilities(): Abilities {
   // These are used for interacting with Alertmanager resources where we apply alert.notifications:<name> permissions.
   // There are different permissions based on wether the built-in alertmanager is selected (grafana) or an external one.
   const notificationsPermissions = getNotificationsPermissions(selectedAlertmanager!);
+  const instancePermissions = getInstancesPermissions(selectedAlertmanager!);
 
   // list out all of the abilities, and if the user has permissions to perform them
   const abilities: Abilities = {
@@ -64,9 +70,21 @@ function useAbilities(): Abilities {
       isGrafanaFlavoredAlertmanager,
       ctx.hasAccess(notificationsPermissions.provisioning.read, ctx.hasRole(OrgRole.Viewer)),
     ],
+    // -- silences --
+    [Action.CreateSilence]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(instancePermissions.create, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [Action.UpdateSilence]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(instancePermissions.update, ctx.hasRole(OrgRole.Editor)),
+    ],
   };
 
   return abilities;
 }
 
-export default useAbilities;
+export function useAbility(action: Action): Ability {
+  const abilities = useAbilities();
+  return useMemo(() => abilities[action], [abilities, action]);
+}

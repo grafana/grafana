@@ -4,18 +4,17 @@ import React, { useMemo, useState } from 'react';
 import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
+import { ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
 import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
+import { Action, useAbility } from '../../hooks/useAbilities';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
 import { SupportedPlugin } from '../../types/pluginBridges';
-import { getNotificationsPermissions } from '../../utils/access-control';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -35,10 +34,10 @@ interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
 }
 
-function UpdateActions({ permissions, alertManagerName, receiverName, onClickDeleteReceiver }: UpdateActionProps) {
+function UpdateActions({ alertManagerName, receiverName, onClickDeleteReceiver }: UpdateActionProps) {
   return (
     <>
-      <Authorize actions={[permissions.update]}>
+      <Authorize actions={[Action.EditContactPoint]}>
         <ActionIcon
           aria-label="Edit"
           data-testid="edit"
@@ -50,7 +49,7 @@ function UpdateActions({ permissions, alertManagerName, receiverName, onClickDel
           icon="pen"
         />
       </Authorize>
-      <Authorize actions={[permissions.delete]}>
+      <Authorize actions={[Action.DeleteContactPoint]}>
         <ActionIcon
           onClick={() => onClickDeleteReceiver(receiverName)}
           tooltip="Delete contact point"
@@ -62,22 +61,13 @@ function UpdateActions({ permissions, alertManagerName, receiverName, onClickDel
 }
 
 interface ActionProps {
-  permissions: {
-    read: AccessControlAction;
-    create: AccessControlAction;
-    update: AccessControlAction;
-    delete: AccessControlAction;
-    provisioning: {
-      read: AccessControlAction;
-    };
-  };
   alertManagerName: string;
   receiverName: string;
 }
 
-function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps) {
+function ViewAction({ alertManagerName, receiverName }: ActionProps) {
   return (
-    <Authorize actions={[permissions.update]}>
+    <Authorize actions={[Action.EditContactPoint]}>
       <ActionIcon
         data-testid="view"
         to={makeAMLink(`/alerting/notifications/receivers/${encodeURIComponent(receiverName)}/edit`, alertManagerName)}
@@ -88,9 +78,9 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
   );
 }
 
-function ExportAction({ permissions, receiverName }: ActionProps) {
+function ExportAction({ receiverName }: ActionProps) {
   return (
-    <Authorize actions={[permissions.provisioning.read]} fallback={isOrgAdmin()}>
+    <Authorize actions={[Action.ExportContactPoint]}>
       <ActionIcon
         data-testid="export"
         to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
@@ -290,7 +280,6 @@ interface Props {
 export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
-  const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   const configHealth = useAlertmanagerConfigHealth(config.alertmanager_config);
@@ -300,8 +289,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
 
-  const isGrafanaAM = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
-  const showExport = isGrafanaAM && contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
+  const [supportsExport, allowedToExport] = useAbility(Action.ExportContactPoint);
+  const showExport = supportsExport && allowedToExport;
 
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
@@ -346,15 +335,16 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     contactPointsState,
     configHealth,
     onClickDeleteReceiver,
-    permissions,
     isVanillaAM
   );
+
+  const [createSupported, createAllowed] = useAbility(Action.CreateContactPoint);
 
   return (
     <ReceiversSection
       title="Contact points"
       description="Define where notifications are sent, for example, email or Slack."
-      showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
+      showButton={createSupported && createAllowed}
       addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
       exportLink={
@@ -429,15 +419,6 @@ function useGetColumns(
   contactPointsState: ContactPointsState | undefined,
   configHealth: AlertmanagerConfigHealth,
   onClickDeleteReceiver: (receiverName: string) => void,
-  permissions: {
-    read: AccessControlAction;
-    create: AccessControlAction;
-    update: AccessControlAction;
-    delete: AccessControlAction;
-    provisioning: {
-      read: AccessControlAction;
-    };
-  },
   isVanillaAM: boolean
 ): RowTableColumnProps[] {
   const tableStyles = useStyles2(getAlertTableStyles);
@@ -497,25 +478,17 @@ function useGetColumns(
       id: 'actions',
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
-        <Authorize
-          actions={[permissions.update, permissions.delete, permissions.provisioning.read]}
-          fallback={isOrgAdmin()}
-        >
+        <Authorize actions={[Action.EditContactPoint, Action.DeleteContactPoint, Action.ExportContactPoint]}>
           <div className={tableStyles.actionsCell}>
             {!isVanillaAM && !provisioned && (
               <UpdateActions
-                permissions={permissions}
                 alertManagerName={alertManagerName}
                 receiverName={name}
                 onClickDeleteReceiver={onClickDeleteReceiver}
               />
             )}
-            {(isVanillaAM || provisioned) && (
-              <ViewAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
-            )}
-            {isGrafanaAlertManager && (
-              <ExportAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
-            )}
+            {(isVanillaAM || provisioned) && <ViewAction alertManagerName={alertManagerName} receiverName={name} />}
+            {isGrafanaAlertManager && <ExportAction alertManagerName={alertManagerName} receiverName={name} />}
           </div>
         </Authorize>
       ),
