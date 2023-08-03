@@ -483,25 +483,27 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		}
 	}
 
-	proxyOpts := &sdkproxy.Options{}
 	if ds.JsonData != nil && ds.JsonData.Get("enableSecureSocksProxy").MustBool(false) {
-		proxyOpts.Enabled = true
-		proxyOpts.Auth = &sdkproxy.AuthOptions{
-			Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(ds.UID),
+		proxyOpts := &sdkproxy.Options{
+			Enabled: true,
+			Auth: &sdkproxy.AuthOptions{
+				Username: ds.JsonData.Get("secureSocksProxyUsername").MustString(ds.UID),
+			},
+			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 		}
+
 		if val, exists, err := s.DecryptedValue(ctx, ds, "secureSocksProxyPassword"); err == nil && exists {
 			proxyOpts.Auth.Password = val
 		}
-
-		proxyOpts.Timeouts = &sdkproxy.DefaultTimeoutOptions
 		if val, err := ds.JsonData.Get("timeout").Float64(); err == nil {
 			proxyOpts.Timeouts.Timeout = time.Duration(val) * time.Second
 		}
 		if val, err := ds.JsonData.Get("keepAlive").Float64(); err == nil {
 			proxyOpts.Timeouts.KeepAlive = time.Duration(val) * time.Second
 		}
+
+		opts.ProxyOptions = proxyOpts
 	}
-	opts.ProxyOptions = proxyOpts
 
 	if ds.JsonData != nil && ds.JsonData.Get("sigV4Auth").MustBool(false) && setting.SigV4AuthEnabled {
 		opts.SigV4 = &sdkhttpclient.SigV4Config{
