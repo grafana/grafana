@@ -47,7 +47,7 @@ func New(cfg *config.Cfg, opts Opts) (*Terminate, error) {
 		cfg:            cfg,
 		resolveStep:    opts.ResolveFunc,
 		terminateSteps: opts.TerminateFuncs,
-		log:            log.New("plugins.initialization"),
+		log:            log.New("plugins.termination"),
 	}, nil
 }
 
