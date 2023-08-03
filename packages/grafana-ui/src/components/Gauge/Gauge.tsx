@@ -9,9 +9,8 @@ import {
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   GrafanaTheme2,
-  VizOrientation,
 } from '@grafana/data';
-import { VizTextDisplayOptions } from '@grafana/schema';
+import { VizTextDisplayOptions, VizOrientation } from '@grafana/schema';
 
 import { calculateFontSize } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button';
@@ -29,7 +28,7 @@ export interface Props {
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
   theme: GrafanaTheme2;
-  orientation: VizOrientation;
+  orientation?: VizOrientation;
 }
 
 export class Gauge extends PureComponent<Props> {
