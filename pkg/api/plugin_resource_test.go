@@ -47,8 +47,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/web/webtest"
+	"github.com/grafana/testdata/pkg/plugin/testdatasource"
 )
 
 func TestCallResource(t *testing.T) {

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	"github.com/grafana/testdata/pkg/plugin/testdatasource"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests

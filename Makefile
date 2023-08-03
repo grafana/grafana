@@ -18,6 +18,7 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 targets := $(shell echo '$(sources)' | tr "," " ")
 
 GO_INTEGRATION_TESTS := $(shell find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+GO_DECOUPLED_CORE_PLUGIN_TESTS := $(shell find ./public/plugins -type d -name 'pkg' | sed -e 's/$$/\/.../' | sort -u)
 
 all: deps build
 
@@ -125,7 +126,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/...
+	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/... $(GO_DECOUPLED_CORE_PLUGIN_TESTS)
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
@@ -168,7 +169,9 @@ golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
 		--config .golangci.toml \
-		$(GO_FILES)
+		--skip-dirs-use-default=false \
+		$(GO_FILES) \
+		$(GO_DECOUPLED_CORE_PLUGIN_TESTS)
 
 lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
 

@@ -10,8 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	// nolint:depguard // Lint exception can be removed once we move testdata to a separate module
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
+	"github.com/grafana/testdata/pkg/plugin/testdatasource/sims"
 )
 
 func ProvideService() *Service {
@@ -60,4 +59,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	return s.resourceHandler.CallResource(ctx, req, sender)
+}
+
+func (s *Service) CheckHealth(_ context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	return &backend.CheckHealthResult{
+		Status:  backend.HealthStatusOk,
+		Message: "Data source is working",
+	}, nil
 }
