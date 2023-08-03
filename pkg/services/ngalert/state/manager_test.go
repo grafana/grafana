@@ -1213,12 +1213,13 @@ func TestProcessEvalResults(t *testing.T) {
 			m := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
 			hist := historian.NewAnnotationBackend(store, nil, m)
+			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
 				Metrics:                 testMetrics.GetStateMetrics(),
 				ExternalURL:             nil,
 				InstanceStore:           &state.FakeInstanceStore{},
 				Images:                  &state.NotAvailableImageService{},
-				Clock:                   clock.New(),
+				Clock:                   clk,
 				Historian:               hist,
 				MaxStateSaveConcurrency: 1,
 			}
@@ -1237,6 +1238,7 @@ func TestProcessEvalResults(t *testing.T) {
 				for i := 0; i < len(res); i++ {
 					res[i].EvaluatedAt = evalTime
 				}
+				clk.Set(evalTime)
 				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, data.Labels{
 					systemLabelKey: systemLabelValue,
 				})
