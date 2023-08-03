@@ -264,7 +264,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
 	github.com/grafana/go-mssqldb v0.9.1 // @grafana/grafana-bi-squad
-	github.com/grafana/kindsys v0.0.0-20230710031138-57f73e1488a7 //  @grafana/grafana-as-code
+	github.com/grafana/kindsys v0.0.0-20230803163628-16bde441fe34 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
@@ -492,3 +492,5 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421
 replace github.com/lib/pq => github.com/lib/pq v1.10.6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+//replace github.com/grafana/kindsys => ../kindsys
