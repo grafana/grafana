@@ -131,10 +131,14 @@ export const ExemplarMarker = ({
     if (exemplarLabels?.length === 0) {
       const fieldsWithLinks =
         dataFrame.fields.filter((field) => field.config.links?.length && field.config.links?.length > 0) || [];
-      orderedDataFrameFields = [
-        ...fieldsWithLinks,
-        ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
-      ];
+      if (fieldsWithLinks.length > 0) {
+        orderedDataFrameFields = [
+          ...fieldsWithLinks,
+          ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
+        ];
+      } else {
+        orderedDataFrameFields = dataFrame.fields;
+      }
     } else {
       for (let i in exemplarLabels) {
         const label = exemplarLabels[i];
