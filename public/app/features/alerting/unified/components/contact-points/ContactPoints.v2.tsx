@@ -11,7 +11,6 @@ import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
-import useAbilities, { Action } from '../../hooks/useAbilities';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
@@ -123,12 +122,8 @@ interface ContactPointHeaderProps {
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
-  const abilities = useAbilities();
 
   const disableActions = disabled || provisioned;
-
-  const [supportsDelete, allowedToDelete] = abilities[Action.DeleteContactPoint];
-  const [supportsExport, allowedToExport] = abilities[Action.ExportContactPoint];
 
   return (
     <div className={styles.headerWrapper}>
@@ -169,17 +164,15 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         <Dropdown
           overlay={
             <Menu>
-              {supportsExport && <Menu.Item label="Export" icon="download-alt" disabled={!allowedToExport} />}
+              <Menu.Item label="Export" icon="download-alt" />
               <Menu.Divider />
-              {supportsDelete && (
-                <Menu.Item
-                  label="Delete"
-                  icon="trash-alt"
-                  destructive
-                  disabled={disableActions || !allowedToDelete}
-                  onClick={() => onDelete(name)}
-                />
-              )}
+              <Menu.Item
+                label="Delete"
+                icon="trash-alt"
+                destructive
+                disabled={disableActions}
+                onClick={() => onDelete(name)}
+              />
             </Menu>
           }
         >
@@ -304,7 +297,7 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css`
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
     border-bottom: none;
   `,
@@ -320,8 +313,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.secondary};
 
     border-bottom: solid 1px ${theme.colors.border.weak};
-    border-top-left-radius: ${theme.shape.borderRadius()};
-    border-top-right-radius: ${theme.shape.borderRadius()};
+    border-top-left-radius: ${theme.shape.radius.default};
+    border-top-right-radius: ${theme.shape.radius.default};
   `,
   receiverDescriptionRow: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
@@ -329,8 +322,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css`
     padding: 0 ${theme.spacing(1.5)} ${theme.spacing(1.5)} ${theme.spacing(1.5)};
 
-    border-bottom-left-radius: ${theme.shape.borderRadius()};
-    border-bottom-right-radius: ${theme.shape.borderRadius()};
+    border-bottom-left-radius: ${theme.shape.radius.default};
+    border-bottom-right-radius: ${theme.shape.radius.default};
   `,
   receiversWrapper: css``,
 });
