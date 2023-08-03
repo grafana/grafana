@@ -29,6 +29,9 @@ type Kind struct {
 	lin    thema.ConvergentLineage[*Resource]
 	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Resource]
+
+	// map of string name of slot to the currently composed contents of the slot
+	composed map[string][]kindsys.Composable
 }
 
 // type guard - ensure generated Kind type satisfies the kindsys.Core interface
