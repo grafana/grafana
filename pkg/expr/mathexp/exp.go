@@ -216,21 +216,22 @@ func (e *State) union(aResults, bResults Results, biNode *parse.BinaryNode) []*U
 	collectDrops := func() {
 		check := func(v string, matchArray []bool, r *Results) {
 			for i, b := range matchArray {
-				if !b {
-					if e.Drops == nil {
-						e.Drops = make(map[string]map[string][]data.Labels)
-					}
-					if e.Drops[biNode.String()] == nil {
-						e.Drops[biNode.String()] = make(map[string][]data.Labels)
-					}
-
-					if r.Values[i].Type() == parse.TypeNoData {
-						continue
-					}
-
-					e.DropCount++
-					e.Drops[biNode.String()][v] = append(e.Drops[biNode.String()][v], r.Values[i].GetLabels())
+				if b {
+					continue
 				}
+				if e.Drops == nil {
+					e.Drops = make(map[string]map[string][]data.Labels)
+				}
+				if e.Drops[biNode.String()] == nil {
+					e.Drops[biNode.String()] = make(map[string][]data.Labels)
+				}
+
+				if r.Values[i].Type() == parse.TypeNoData {
+					continue
+				}
+
+				e.DropCount++
+				e.Drops[biNode.String()][v] = append(e.Drops[biNode.String()][v], r.Values[i].GetLabels())
 			}
 		}
 		check(aVar, aMatched, &aResults)
