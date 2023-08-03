@@ -93,7 +93,8 @@ export function useCombinedRulesMatching(
 
 export function useCloudCombinedRulesMatching(
   ruleName: string,
-  ruleSourceName: string
+  ruleSourceName: string,
+  filter?: { namespace?: string; groupName?: string }
 ): { loading: boolean; error?: unknown; rules?: CombinedRule[] } {
   const dsSettings = getDataSourceByName(ruleSourceName);
   const { dsFeatures, isLoadingDsFeatures } = useDataSourceFeatures(ruleSourceName);
@@ -105,6 +106,8 @@ export function useCloudCombinedRulesMatching(
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
     ruleSourceName: ruleSourceName,
     ruleName: ruleName,
+    namespace: filter?.namespace,
+    groupName: filter?.groupName,
   });
 
   const [fetchRulerRuleGroup] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
@@ -126,7 +129,8 @@ export function useCloudCombinedRulesMatching(
         .map((namespace) => namespace.groups.map((group) => ({ namespace: namespace, group: group })))
         .flat();
 
-      await Promise.all(
+      // RTK query takes care of deduplication
+      await Promise.allSettled(
         nsGroups.map(async (nsGroup) => {
           const rulerGroup = await fetchRulerRuleGroup({
             rulerConfig: rulerConfig,

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Redirect } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
@@ -24,19 +24,33 @@ function useRuleFindParams() {
   // Relevant issue: https://github.com/remix-run/history/issues/505#issuecomment-453175833
   // It was probably fixed in React-Router v6
   const location = useLocation();
-  const segments = location.pathname?.replace(subUrl, '').split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
 
-  const name = decodeURIComponent(segments[3]);
-  const sourceName = decodeURIComponent(segments[2]);
+  return useMemo(() => {
+    const segments = location.pathname?.replace(subUrl, '').split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
 
-  return { name, sourceName };
+    const name = decodeURIComponent(segments[3]);
+    const sourceName = decodeURIComponent(segments[2]);
+
+    const searchParams = new URLSearchParams(location.search);
+
+    return {
+      name,
+      sourceName,
+      namespace: searchParams.get('namespace') ?? undefined,
+      group: searchParams.get('group') ?? undefined,
+    };
+  }, [location]);
 }
 
 export function RedirectToRuleViewer(): JSX.Element | null {
   const styles = useStyles2(getStyles);
 
-  const { name, sourceName } = useRuleFindParams();
-  const { error, loading, rules = [] } = useCloudCombinedRulesMatching(name, sourceName);
+  const { name, sourceName, namespace, group } = useRuleFindParams();
+  const {
+    error,
+    loading,
+    rules = [],
+  } = useCloudCombinedRulesMatching(name, sourceName, { namespace, groupName: group });
 
   if (!name || !sourceName) {
     return <Redirect to="/notfound" />;
