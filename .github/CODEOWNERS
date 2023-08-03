@@ -615,7 +615,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
-/.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
 /.github/workflows/sync-mirror.yml @grafana/grafana-delivery
