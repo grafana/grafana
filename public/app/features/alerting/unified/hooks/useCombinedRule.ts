@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RuleNamespace, RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -19,7 +19,7 @@ import {
 } from '../utils/rules';
 
 import {
-  combinePromAndRulerRules,
+  attachRulerRulesToCombinedRules,
   combineRulesNamespaces,
   useCombinedRuleNamespaces,
 } from './useCombinedRuleNamespaces';
@@ -91,6 +91,63 @@ export function useCombinedRulesMatching(
   };
 }
 
+export function useCloudCombinedRulesMatching(
+  ruleName: string,
+  ruleSourceName: string
+): { loading: boolean; error?: unknown; rules?: CombinedRule[] } {
+  const dsSettings = getDataSourceByName(ruleSourceName);
+  const { dsFeatures, isLoadingDsFeatures } = useDataSourceFeatures(ruleSourceName);
+
+  const {
+    currentData: promRuleNs = [],
+    isLoading: isLoadingPromRules,
+    error: promRuleNsError,
+  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
+    ruleSourceName: ruleSourceName,
+    ruleName: ruleName,
+  });
+
+  const [fetchRulerRuleGroup] = alertRuleApi.endpoints.rulerRuleGroup.useLazyQuery();
+
+  const { loading, error, value } = useAsync(async () => {
+    if (!dsSettings) {
+      throw new Error('Unable to obtain data source settings');
+    }
+
+    if (promRuleNsError) {
+      throw new Error('Unable to obtain Prometheus rules');
+    }
+
+    const rulerGroups: RulerRuleGroupDTO[] = [];
+    if (dsFeatures?.rulerConfig) {
+      const rulerConfig = dsFeatures.rulerConfig;
+
+      const nsGroups = promRuleNs
+        .map((namespace) => namespace.groups.map((group) => ({ namespace: namespace, group: group })))
+        .flat();
+
+      await Promise.all(
+        nsGroups.map(async (nsGroup) => {
+          const rulerGroup = await fetchRulerRuleGroup({
+            rulerConfig: rulerConfig,
+            namespace: nsGroup.namespace.name,
+            group: nsGroup.group.name,
+          }).unwrap();
+          rulerGroups.push(rulerGroup);
+        })
+      );
+    }
+
+    // TODO Join with ruler rules
+    const namespaces = promRuleNs.map((ns) => attachRulerRulesToCombinedRules(dsSettings, ns, rulerGroups));
+    const rules = namespaces.flatMap((ns) => ns.groups.flatMap((group) => group.rules));
+
+    return rules;
+  }, [dsSettings, dsFeatures, isLoadingPromRules, promRuleNsError, promRuleNs, fetchRulerRuleGroup]);
+
+  return { loading: isLoadingDsFeatures || loading, error: error, rules: value };
+}
+
 function useCombinedRulesLoader(
   rulesSourceName: string | undefined,
   identifier?: RuleIdentifier
@@ -148,7 +205,20 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
     isLoading: isLoadingPromRules,
     error: promRuleNsError,
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-    ruleIdentifier: ruleIdentifier,
+    // TODO Refactor parameters
+    ruleSourceName: ruleIdentifier.ruleSourceName,
+    namespace:
+      isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
+        ? ruleIdentifier.namespace
+        : undefined,
+    groupName:
+      isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
+        ? ruleIdentifier.groupName
+        : undefined,
+    ruleName:
+      isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
+        ? ruleIdentifier.ruleName
+        : undefined,
   });
 
   const [
@@ -164,7 +234,7 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
       return;
     }
 
-    if (isCloudRuleIdentifier(ruleIdentifier)) {
+    if (dsFeatures.rulerConfig && isCloudRuleIdentifier(ruleIdentifier)) {
       fetchRulerRuleGroup({
         rulerConfig: dsFeatures.rulerConfig,
         namespace: ruleIdentifier.namespace,
@@ -203,9 +273,11 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
 
     if (
       promRuleNs.length > 0 &&
-      (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier))
+      (isCloudRuleIdentifier(ruleIdentifier) || isPrometheusRuleIdentifier(ruleIdentifier))
     ) {
-      const namespaces = promRuleNs.map((ns) => combinePromAndRulerRules(dsSettings, ns, rulerRuleGroup));
+      const namespaces = promRuleNs.map((ns) =>
+        attachRulerRulesToCombinedRules(dsSettings, ns, rulerRuleGroup ? [rulerRuleGroup] : [])
+      );
 
       for (const namespace of namespaces) {
         for (const group of namespace.groups) {
@@ -222,16 +294,6 @@ export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleI
 
     return;
   }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, rulerRules, dsSettings]);
-
-  // if (dsFeatures?.rulerConfig && rule) {
-  //   rule.rulerRule = {
-  //     alert: rule.name,
-  //     expr: rule.query,
-  //     for: '0', // Could try to use `duration` from promRule but not specified in typescript
-  //     annotations: rule.annotations,
-  //     labels: rule.labels,
-  //   };
-  // }
 
   return {
     loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup || isLoadingRulerRules,

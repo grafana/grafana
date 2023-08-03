@@ -4,12 +4,12 @@ import { Redirect } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { AlertLabels } from './components/AlertLabels';
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+import { useCloudCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
@@ -36,32 +36,34 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   const styles = useStyles2(getStyles);
 
   const { name, sourceName } = useRuleFindParams();
-  const { error, loading, result: rules, dispatched } = useCombinedRulesMatching(name, sourceName);
+  const { error, loading, rules = [] } = useCloudCombinedRulesMatching(name, sourceName);
+
+  if (!name || !sourceName) {
+    return <Redirect to="/notfound" />;
+  }
 
   if (error) {
     return (
       <RuleViewerLayout title={pageTitle}>
         <Alert title={`Failed to load rules from ${sourceName}`}>
-          <details className={styles.errorMessage}>
-            {error.message}
-            <br />
-            {!!error?.stack && error.stack}
-          </details>
+          {isFetchError(error) && (
+            <details className={styles.errorMessage}>
+              {error.message}
+              <br />
+              {/* {!!error?.stack && error.stack} */}
+            </details>
+          )}
         </Alert>
       </RuleViewerLayout>
     );
   }
 
-  if (loading || !dispatched || !Array.isArray(rules)) {
+  if (loading) {
     return (
       <RuleViewerLayout title={pageTitle}>
         <LoadingPlaceholder text="Loading rule..." />
       </RuleViewerLayout>
     );
-  }
-
-  if (!name || !sourceName) {
-    return <Redirect to="/notfound" />;
   }
 
   const rulesSource = getRulesSourceByName(sourceName);

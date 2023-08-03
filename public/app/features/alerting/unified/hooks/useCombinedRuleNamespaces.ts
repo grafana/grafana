@@ -148,10 +148,10 @@ export function combineRulesNamespaces(
   return Object.values(namespaces);
 }
 
-export function combinePromAndRulerRules(
+export function attachRulerRulesToCombinedRules(
   rulesSource: RulesSource,
   promNamespace: RuleNamespace,
-  rulerGroup?: RulerRuleGroupDTO
+  rulerGroups: RulerRuleGroupDTO[]
 ): CombinedRuleNamespace {
   const ns: CombinedRuleNamespace = {
     rulesSource: rulesSource,
@@ -160,11 +160,25 @@ export function combinePromAndRulerRules(
   };
 
   // The order is important. Adding Ruler rules overrides Prometheus rules.
-  if (rulerGroup) {
-    addRulerGroupsToCombinedNamespace(ns, [rulerGroup]);
-  }
+  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
   addPromGroupsToCombinedNamespace(ns, promNamespace.groups);
 
+  // Remove ruler rules which does not have Prom rule counterpart
+  // This function should only attach Ruler rules to existing Prom rules
+  ns.groups.forEach((group) => {
+    group.rules = group.rules.filter((rule) => rule.promRule);
+  });
+
+  return ns;
+}
+
+export function addCombinedPromAndRulerGroups(
+  ns: CombinedRuleNamespace,
+  promGroups: RuleGroup[],
+  rulerGroups: RulerRuleGroupDTO[]
+): CombinedRuleNamespace {
+  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
+  addPromGroupsToCombinedNamespace(ns, promGroups);
   return ns;
 }
 

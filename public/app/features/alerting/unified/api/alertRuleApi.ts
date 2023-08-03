@@ -135,17 +135,20 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
     }),
 
-    prometheusRuleNamespaces: build.query<RuleNamespace[], { ruleIdentifier: RuleIdentifier }>({
-      query: ({ ruleIdentifier }) => {
+    prometheusRuleNamespaces: build.query<
+      RuleNamespace[],
+      { ruleSourceName: string; namespace?: string; groupName?: string; ruleName?: string }
+    >({
+      query: ({ ruleSourceName, namespace, groupName, ruleName }) => {
         const queryParams: Record<string, string | undefined> = {};
-        if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
-          queryParams['file'] = ruleIdentifier.namespace;
-          queryParams['rule_group'] = ruleIdentifier.groupName;
-          queryParams['rule_name'] = ruleIdentifier.ruleName;
-        }
+        // if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
+        queryParams['file'] = namespace;
+        queryParams['rule_group'] = groupName;
+        queryParams['rule_name'] = ruleName;
+        // }
 
         return {
-          url: `api/prometheus/${getDatasourceAPIUid(ruleIdentifier.ruleSourceName)}/api/v1/rules`,
+          url: `api/prometheus/${getDatasourceAPIUid(ruleSourceName)}/api/v1/rules`,
           params: queryParams,
         };
       },
