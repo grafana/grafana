@@ -242,8 +242,7 @@ export class ContextSrv {
       return false;
     }
 
-    let expires = this.getSessionExpiry();
-    if (expires === 0) {
+    if (this.getSessionExpiry() === 0) {
       return false;
     }
 
