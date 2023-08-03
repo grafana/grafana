@@ -170,19 +170,16 @@ describe('runSplitQuery()', () => {
     });
   });
 
-  describe('Hidden queries', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [
-        { expr: 'count_over_time({a="b"}[1m])', refId: 'A', hide: true },
-        { expr: '{a="b"}', refId: 'B' },
-      ],
-      range,
-    });
+  describe('Hidden and empty queries', () => {
     beforeAll(() => {
       jest.spyOn(logsTimeSplit, 'splitTimeRange').mockReturnValue([]);
       jest.spyOn(metricTimeSplit, 'splitTimeRange').mockReturnValue([]);
-      jest.mocked(trackGroupedQueries).mockClear();
       jest.useFakeTimers().setSystemTime(new Date('Wed May 17 2023 17:20:12 GMT+0200'));
+    });
+    beforeEach(() => {
+      jest.mocked(logsTimeSplit.splitTimeRange).mockClear();
+      jest.mocked(logsTimeSplit.splitTimeRange).mockClear();
+      jest.mocked(trackGroupedQueries).mockClear();
     });
     afterAll(() => {
       jest.mocked(logsTimeSplit.splitTimeRange).mockRestore();
@@ -190,6 +187,13 @@ describe('runSplitQuery()', () => {
       jest.useRealTimers();
     });
     test('Ignores hidden queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', hide: true },
+          { expr: '{a="b"}', refId: 'B' },
+        ],
+        range,
+      });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         expect(logsTimeSplit.splitTimeRange).toHaveBeenCalled();
         expect(metricTimeSplit.splitTimeRange).not.toHaveBeenCalled();
@@ -205,6 +209,38 @@ describe('runSplitQuery()', () => {
               request: {
                 ...request,
                 targets: request.targets.filter((query) => !query.hide),
+              },
+            },
+          ],
+          request,
+          new Date(),
+          { predefinedOperations: '' }
+        );
+      });
+    });
+    test('Ignores empty queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A' },
+          { expr: '', refId: 'B' },
+        ],
+        range,
+      });
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        expect(logsTimeSplit.splitTimeRange).not.toHaveBeenCalled();
+        expect(metricTimeSplit.splitTimeRange).toHaveBeenCalled();
+        expect(trackGroupedQueries).toHaveBeenCalledTimes(1);
+        expect(trackGroupedQueries).toHaveBeenCalledWith(
+          {
+            data: [],
+            state: LoadingState.Done,
+          },
+          [
+            {
+              partition: [],
+              request: {
+                ...request,
+                targets: request.targets.filter((query) => query.expr),
               },
             },
           ],
