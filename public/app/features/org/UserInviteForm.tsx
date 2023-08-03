@@ -1,9 +1,8 @@
 import React from 'react';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { Stack } from '@grafana/experimental';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Button,
   LinkButton,
@@ -19,11 +18,12 @@ import {
   Label,
 } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
 import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
 
-const noBasicRoleFlag = config.licenseInfo.edition === GrafanaEdition.Enterprise;
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
 
 const tooltipMessage = noBasicRoleFlag
   ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
