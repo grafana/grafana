@@ -966,7 +966,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:      []string{"all"},
+		Target:      []string{},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -1025,8 +1025,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
-	Target := valueAsString(iniFile.Section(""), "target", "all")
-	cfg.Target = strings.Split(Target, " ")
+	Target := valueAsString(iniFile.Section(""), "target", "")
+	if Target != "" {
+		cfg.Target = strings.Split(Target, " ")
+	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
