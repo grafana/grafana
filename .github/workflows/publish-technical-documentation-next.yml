@@ -13,7 +13,7 @@ jobs:
         id: check
         shell: bash
         run: |
-          if [ -n "${{ (secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_ID != '' && secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_PEM != '') || '' }}" ]; then
+          if [ -n "${{ (secrets.PUBLISH_TECHNICAL_DOCUMENTATION_ID != '' && secrets.PUBLISH_TECHNICAL_DOCUMENTATION_PEM != '') || '' }}" ]; then
             echo has-secrets=1 >> "${GITHUB_OUTPUT}"
           fi
   sync:
@@ -25,8 +25,8 @@ jobs:
         id: generate-token
         uses: tibdex/github-app-token@v1
         with:
-          app: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_ID }}
-          private_key: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_APP_PEM }}
+          app: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_ID }}
+          private_key: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_PEM }}
 
       - name: Checkout code
         uses: actions/checkout@v3
