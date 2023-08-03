@@ -8,6 +8,14 @@ import (
 name:        "Dashboard"
 maturity:    "experimental"
 description: "A Grafana dashboard."
+slots: {
+	panel: {
+		schemaInterface: "PanelCfg"
+	}
+	query: {
+		schemaInterface: "DataQuery"
+	}
+}
 
 crd: dummySchema: true
 
