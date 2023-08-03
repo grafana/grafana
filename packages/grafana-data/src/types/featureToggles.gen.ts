@@ -117,4 +117,5 @@ export interface FeatureToggles {
   permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
+  influxdbSqlSupport?: boolean;
 }
