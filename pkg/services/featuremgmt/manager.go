@@ -148,6 +148,12 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
+// Check to see if a feature toggle exists by name
+func (fm *FeatureManager) LookupFlag(name string) bool {
+	_, ok := fm.flags[name]
+	return ok
+}
+
 // WithFeatures is used to define feature toggles for testing.
 // The arguments are a list of strings that are optionally followed by a boolean value for example:
 // WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})

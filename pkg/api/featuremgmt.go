@@ -47,5 +47,15 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
+	for _, t := range cmd.FeatureToggles {
+		if !hs.Features.LookupFlag(t.Name) {
+			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
+		} else {
+			// build payload for controller
+		}
+	}
+
+	// post to featureMgmtCfg.UpdateControllerUrl and return response status
+
 	return response.Success("feature toggles updated")
 }
