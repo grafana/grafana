@@ -48,7 +48,7 @@ export function RadioButtonList<T>({
 
         return (
           <RadioButtonDot
-            key={`${option.label}-${index}`}
+            key={index}
             id={itemId}
             name={name}
             label={option.label}
