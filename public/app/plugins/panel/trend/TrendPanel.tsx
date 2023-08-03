@@ -39,7 +39,7 @@ export const TrendPanel = ({
     dimFields = {
       ...dimFields,
       x: (field, frame, frames) => {
-        return getFieldDisplayName(field, frame, frames) === trendXFieldName;
+        return field.name === trendXFieldName;
       },
     };
 
