@@ -314,7 +314,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		}, nil)
 		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Running")}, nil)
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{LogsTimeout: models.Duration(time.Millisecond)}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{LogsTimeout: models.Duration{time.Millisecond}}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
