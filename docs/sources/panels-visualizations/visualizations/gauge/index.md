@@ -49,8 +49,32 @@ Show a separate stat for every row. If you select this option, then you can also
 
 Adjust how the gauge is displayed.
 
+### Orientation
+
+Choose a stacking direction.
+
+- **Auto -** Grafana selects what it thinks is the best orientation.
+- **Horizontal -** Gauges display top to bottom.
+- **Vertical -** Gauges display left to right.
+
 - **Show threshold labels -** Controls if threshold values are shown.
 - **Show threshold markers -** Controls if a threshold band is shown outside the inner gauge value band.
+
+### Min width
+
+Limit the minimum width of the bar column in the vertical direction.
+
+Automatically show x-axis scrollbar when there is a large amount of data.
+
+### Min height
+
+Limit the minimum height of the bar row in the horizontal direction.
+
+Automatically show y-axis scrollbar when there is a large amount of data.
+
+### Neutral
+
+Set the starting value from which every gauge will be filled from.
 
 ## Text size
 
