@@ -66,10 +66,7 @@ func newBackendProcessTerminator(processManager process.Service) *BackendProcess
 func (t *BackendProcessTerminator) Terminate(ctx context.Context, p *plugins.Plugin) error {
 	t.log.Debug("Stopping plugin process", "pluginId", p.ID)
 
-	if err := t.processManager.Stop(ctx, p.ID); err != nil {
-		return err
-	}
-	return nil
+	return t.processManager.Stop(ctx, p.ID)
 }
 
 // Deregister implements a TerminateFunc for removing a plugin from the plugin registry.
